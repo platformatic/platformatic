@@ -94,7 +94,7 @@ async function writeOpenAPIClient (
     })
     await writeFile(join(folder, `${name}.d.ts`), types)
     if (generateImplementation) {
-      await writeFile(join(folder, `${name}.cjs`), implementation)
+      await writeFile(join(folder, `${name}.js`), implementation)
     }
 
     if (!typesOnly) {
@@ -111,7 +111,7 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
   await writeFile(join(folder, `${name}.schema.graphql`), sdl)
   await writeFile(join(folder, `${name}.d.ts`), types)
   if (generateImplementation) {
-    await writeFile(join(folder, `${name}.cjs`), implementation)
+    await writeFile(join(folder, `${name}.js`), implementation)
   }
   await writeFile(join(folder, 'package.json'), getPackageJSON({ name, generateImplementation }))
 }
@@ -425,7 +425,7 @@ function getPackageJSON ({ name, generateImplementation }) {
   }
 
   if (generateImplementation) {
-    obj.main = `./${name}.cjs`
+    obj.main = `./${name}.js`
   }
 
   return JSON.stringify(obj, null, 2)

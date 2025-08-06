@@ -198,7 +198,7 @@ test('generate correct file names', async t => {
   ok(await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf-8'))
 
   await execa('node', [cliPath, app.url])
-  ok(await readFile(join(dir, 'client', 'client.cjs'), 'utf-8'))
+  ok(await readFile(join(dir, 'client', 'client.js'), 'utf-8'))
   ok(await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8'))
 
   // With --name will create foobar.ts and foobar-types.d.ts

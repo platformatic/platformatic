@@ -38,11 +38,11 @@ test('full-request-body', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type PostHelloRequest = {
-    body: {
-      'mainData': Array<{ 'surname'?: string; 'name': string }>;
-    }
-  }`),
+export type PostHelloRequest = {
+  body: {
+    'mainData': Array<{ 'surname'?: string; 'name': string }>;
+  }
+}`),
     true
   )
 })

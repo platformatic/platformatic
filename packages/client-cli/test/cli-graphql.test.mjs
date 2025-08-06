@@ -23,7 +23,7 @@ function findTSCPath () {
   return tscPath
 }
 
-test('graphql client generation (javascript)', async (t) => {
+test('graphql client generation (javascript)', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -45,15 +45,14 @@ test('graphql client generation (javascript)', async (t) => {
   }
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -64,7 +63,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -86,12 +87,15 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('graphql client generation (typescript)', async (t) => {
+test('graphql client generation (typescript)', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -106,16 +110,15 @@ test('graphql client generation (typescript)', async (t) => {
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
-import Fastify from 'fastify';
-import movies from './movies';
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
+const app = Fastify({ logger: true })
 
 app.post('/', async (req) => {
-  const res = await req.movies.graphql({
+  const client = await movies({ url: '${app.url}' })
+
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -126,15 +129,19 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -148,7 +155,9 @@ app.listen({ port: 0 });
   server2.catch(() => {})
 
   t.after(() => server2.kill())
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -167,12 +176,15 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('graphql client generation with relations (typescript)', async (t) => {
+test('graphql client generation with relations (typescript)', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
@@ -192,17 +204,16 @@ import movies from './movies';
 import type { Movie, Quote } from './movies';
 
 const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
 
 app.post('/', async (req) => {
-  const res1 = await req.movies.graphql<Movie>({
+  const client = await movies({ url: '${app.url}' })
+
+  const res1 = await client.graphql<Movie>({
     query: \`mutation {
       saveMovie(input: { title: "foo" }) { id, title } }
     \`
   })
-  const res2 = await req.movies.graphql<Quote>({
+  const res2 = await client.graphql<Quote>({
     query: \`
       mutation saveQuote($movieId: ID!) {
         saveQuote(input: { movieId: $movieId, quote: "foo"}) {
@@ -227,15 +238,19 @@ app.listen({ port: 0});
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -247,7 +262,9 @@ app.listen({ port: 0});
 
   const server2 = execa('node', ['build/index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -266,15 +283,18 @@ app.listen({ port: 0});
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    quote: 'foo',
-    movie: {
-      title: 'foo'
-    }
-  }), true)
+  equal(
+    match(body, {
+      quote: 'foo',
+      movie: {
+        title: 'foo'
+      }
+    }),
+    true
+  )
 })
 
-test('graphql client generation (javascript) with slash at the end of the URL', async (t) => {
+test('graphql client generation (javascript) with slash at the end of the URL', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -289,15 +309,14 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -308,7 +327,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -327,99 +348,15 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('configureClient (typescript)', async (t) => {
-  try {
-    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
-
-  await app.start()
-
-  const dir = await moveToTmpdir(after)
-
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  const toWrite = `
-import Fastify from 'fastify';
-import movies from './movies';
-
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
-
-app.register(async function (app) {
-  app.configureMovies({
-    async getHeaders (req, reply) {
-      return { foo: 'bar' }
-    }
-  })
-});
-
-app.post('/', async (req) => {
-  const res = await req.movies.graphql({
-    query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
-  })
-  return res
-})
-
-app.listen({ port: 0 });
-`
-
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
-
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
-
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-
-  const tsc = findTSCPath()
-  await execa(tsc, [], { env })
-
-  // TODO how can we avoid this copy?
-  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
-
-  const server2 = execa('node', ['build/index.js'])
-  t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
-
-  const stream = server2.stdout.pipe(split(JSON.parse))
-
-  // this is unfortunate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  const res = await request(url, {
-    method: 'POST'
-  })
-  const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
-})
-
-test('graphql client generation (javascript) from a file', async (t) => {
+test('graphql client generation (javascript) from a file', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -441,15 +378,14 @@ test('graphql client generation (javascript) from a file', async (t) => {
   equal(sdl, readSDL)
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -460,7 +396,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -482,7 +420,10 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })

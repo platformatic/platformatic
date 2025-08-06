@@ -38,13 +38,13 @@ test('empty-req-res', async () => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type GetHelloRequest = {
-    
-  }
+export type GetHelloRequest = {
+  
+}
 
-  export type GetHelloResponseOK = unknown
-  export type GetHelloResponses =
-    FullResponse<GetHelloResponseOK, 200>`),
+export type GetHelloResponseOK = unknown
+export type GetHelloResponses =
+  FullResponse<GetHelloResponseOK, 200>`),
     true
   )
 })

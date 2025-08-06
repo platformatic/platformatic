@@ -38,12 +38,12 @@ test(testName, async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type PostHelloRequest = {
-    body: {
-      'name'?: string;
-      'userId'?: string;
-    }
-  }`),
+export type PostHelloRequest = {
+  body: {
+    'name'?: string;
+    'userId'?: string;
+  }
+}`),
     true,
     'properties are optional'
   )
@@ -52,12 +52,12 @@ test(testName, async t => {
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'defaulted', '--full'])
   equal(
     (await readFile(join(dir, 'defaulted', 'defaulted.d.ts'), 'utf-8')).includes(`
-  export type PostHelloRequest = {
-    body: {
-      'name': string;
-      'userId': string;
-    }
-  }`),
+export type PostHelloRequest = {
+  body: {
+    'name': string;
+    'userId': string;
+  }
+}`),
     true,
     'properties are required'
   )

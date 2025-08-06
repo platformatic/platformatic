@@ -1,10 +1,10 @@
-import { isFileAccessible, command } from '../cli.mjs'
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { ok } from 'node:assert'
-import { join } from 'path'
 import { readFile } from 'fs/promises'
+import { ok } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
 import { MockAgent, setGlobalDispatcher } from 'undici'
+import { command, isFileAccessible } from '../cli.mjs'
+import { moveToTmpdir } from './helper.js'
 
 test('retry-request', async () => {
   const dir = await moveToTmpdir(after)
@@ -50,7 +50,7 @@ test('retry-request', async () => {
     '--retry-timeout-ms', '10'
   ])
 
-  ok(await isFileAccessible(join(dir, 'full', 'full.cjs')), 'Implementation file should be created')
+  ok(await isFileAccessible(join(dir, 'full', 'full.js')), 'Implementation file should be created')
   ok(await isFileAccessible(join(dir, 'full', 'full.d.ts')), 'Type definition file should be created')
 
   const typeFile = join(dir, 'full', 'full.d.ts')

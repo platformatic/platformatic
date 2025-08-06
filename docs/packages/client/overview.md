@@ -5,7 +5,7 @@ description: overview
 
 # Platformatic Client
 
-Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL API.
+Create a client for a remote OpenAPI or GraphQL API.
 
 ## Creating a Client
 
@@ -38,15 +38,14 @@ $ npx --package @platformatic/client-cli plt-client http://example.com/to/schema
 Use the client in your JavaScript application, by calling a GraphQL endpoint: 
 
 ```js
-// Use a typescript reference to set up autocompletion
-// and explore the generated APIs.
-
-/// <reference path="./myclient" />
+import myClient from './myclient/myclient.js'
 
 /**  @type {import('fastify').FastifyPluginAsync<{} */
-module.exports = async function (app, opts) {
+export default async function (app, opts) {
+  const client = await myClient({ url: 'URL' })
+
   app.post('/', async (request, reply) => {
-    const res = await request.myclient.graphql({
+    const res = await client.graphql({
       query: 'query { movies { title } }'
     })
     return res
@@ -61,11 +60,13 @@ Use the client in Typescript application, by calling an OpenAPI endpoint:
 
 ```ts
 import { type FastifyInstance } from 'fastify'
-/// <reference path="./myclient" />
+import myClient from './myclient/myclient.js'
 
 export default async function (app: FastifyInstance) {
+  const client = await myClient({ url: 'URL' })
+
   app.get('/', async (request, reply) => {
-    return requests.myclient.get({})
+    return client.get({})
   })
 }
 ```
@@ -90,7 +91,7 @@ We provide a fully typed experience for OpenAPI, typing both the request and res
 each individual OpenAPI operation. Take a look at the example below:
 
 ```typescript
-// Omitting all the individual Request and Reponse payloads for brevity
+// Omitting some types for brevity
 
 interface Client {
   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponse>>;
@@ -111,28 +112,8 @@ interface Client {
   getMovieForQuote(req: GetMovieForQuoteRequest): Promise<GetMovieForQuoteResponse>;
 }
 
-type ClientPlugin = FastifyPluginAsync<NonNullable<client.ClientOptions>>
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    'client': Client;
-  }
-
-  interface FastifyRequest {
-    'client': Client;
-  }
-}
-
-declare namespace Client {
-  export interface ClientOptions {
-    url: string
-  }
-  export const client: ClientPlugin;
-  export { client as default };
-}
-
-declare function client(...params: Parameters<ClientPlugin>): ReturnType<ClientPlugin>;
-export = client;
+export function generateQuotesClient(opts: PlatformaticClientOptions): Promise<Client>;
+export default generateQuotesClient;
 ```
 
 ### GraphQL Types
@@ -141,95 +122,73 @@ We provide a partially typed experience for GraphQL, because we do not want to l
 how you are going to query the remote system. Take a look at this example:
 
 ```typescript
-declare module 'fastify' {
-  interface GraphQLQueryOptions {
-    query: string;
-    headers: Record<string, string>;
-    variables: Record<string, unknown>;
-  }
-  interface GraphQLClient {
-    graphql<T>(GraphQLQuery): PromiseLike<T>;
-  }
-  interface FastifyInstance {
-    'client'
-    : GraphQLClient;
+export interface Movie {
+  'id'?: string;
 
-  }
+  'title'?: string;
 
-  interface FastifyRequest {
-    'client'<T>(GraphQLQuery): PromiseLike<T>;
-  }
+  'realeasedDate'?: string;
+
+  'createdAt'?: string;
+
+  'preferred'?: string;
+
+  'quotes'?: Array<Quote>;
+
+}
+export interface Quote {
+  'id'?: string;
+
+  'quote'?: string;
+
+  'likes'?: number;
+
+  'dislikes'?: number;
+
+  'movie'?: Movie;
+
+}
+export interface MoviesCount {
+  'total'?: number;
+
+}
+export interface QuotesCount {
+  'total'?: number;
+
+}
+export interface MovieDeleted {
+  'id'?: string;
+
+}
+export interface QuoteDeleted {
+  'id'?: string;
+
 }
 
-declare namespace client {
-  export interface Clientoptions {
-    url: string
-  }
-  export interface Movie {
-    'id'?: string;
-
-    'title'?: string;
-
-    'realeasedDate'?: string;
-
-    'createdAt'?: string;
-
-    'preferred'?: string;
-
-    'quotes'?: Array<Quote>;
-
-  }
-  export interface Quote {
-    'id'?: string;
-
-    'quote'?: string;
-
-    'likes'?: number;
-
-    'dislikes'?: number;
-
-    'movie'?: Movie;
-
-  }
-  export interface MoviesCount {
-    'total'?: number;
-
-  }
-  export interface QuotesCount {
-    'total'?: number;
-
-  }
-  export interface MovieDeleted {
-    'id'?: string;
-
-  }
-  export interface QuoteDeleted {
-    'id'?: string;
-
-  }
-  export const client: Clientplugin;
-  export { client as default };
+interface GraphQLQueryOptions {
+  query: string;
+  headers: Record<string, string>;
+  variables: Record<string, unknown>;
 }
 
-declare function client(...params: Parameters<Clientplugin>): ReturnType<Clientplugin>;
-export = client;
+interface GraphQLClient {
+  graphql<T>(options: GraphQLQueryOptions): Promise<T>;
+}
+
+export function generateQuotesClient(opts: PlatformaticClientOptions): Promise<GraphQLClient>;
+export default generateQuotesClient;
 ```
 
 Given only you can know what GraphQL query you are producing, you are responsible for typing
 it accordingly.
 
-## Usage with Standalone Fastify
-
-If a Platformatic configuration file is not found, a complete Fastify plugin is generated to be 
-used in your Fastify application like this:
+## Use the Fastify plugin
 
 ```js
 const fastify = require('fastify')()
-const client = require('./your-client-name')
+const pltClient = require('@platformatic/client/fastify-plugin')
 
-fastify.register(client, {
-  url: 'http://example.com'
-})
+fastify.register(pltClient, { url: 'http://example.com' })
 
 // GraphQL
 fastify.post('/', async (request, reply) => {
@@ -250,11 +209,44 @@ fastify.listen({ port: 3000 })
 
 Note that you would need to install `@platformatic/client` as a dependency.
 
-## Method Names in OpenAPI
+### Adding types information to the fastify Plugin
+
+To add types information to your plugin, you can either extend the `FastifyRequest` interface globally or locally.
+
+```ts
+import { type MoviesClient } from './movies/movies.ts'
+import fastify, { type FastifyRequest } from 'fastify'
+import pltClient from '@platformatic/client/fastify-plugin'
+
+const server = fastify()
+server.register(pltClient, { url: 'http://example.com' })
+
+// Method A: extend the interface globally
+declare module 'fastify' {
+  interface FastifyRequest {
+    movies: MoviesClient
+  }
+}
+
+server.get('/movies', async (request: FastifyRequest, reply: FastifyReply) => {
+  return request.movies.getMovies()
+})
+
+// Method B: use a local request extension
+interface MoviesRequest extends FastifyRequest {
+  movies: MoviesClient
+}
+
+server.get('/movies', async (request: MoviesRequest, reply: FastifyReply) => {
+  return request.movies.getMovies()
+})
+```
+
+### Method Names in OpenAPI
 
 The names of the operations are defined in the OpenAPI specification using the [`operationId`](https://swagger.io/specification/). If it's not specified, the name is generated by combining the parts of the path, like `/something/{param1}/` and a method `GET`, it generates `getSomethingParam1`.
 
-## Authentication
+### Authentication
 
 To add necessary headers for downstream services requiring authentication, configure them in your plugin:
 
@@ -280,7 +272,7 @@ module.exports = async function (app, opts) {
 }
 ```
 
-## Telemetry propagation
+### Telemetry propagation
 To correctly propagate telemetry information, be sure to get the client from the request object:
 
 ```js 

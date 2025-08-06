@@ -1,23 +1,18 @@
-import { 
-  expectAssignable,
-  expectError,
-  expectNotAssignable,
-  expectType
-} from 'tsd'
+import { FastifyError } from '@fastify/error'
 import fastify from 'fastify'
-import pltClient, {
-  errors,
+import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd'
+import { Agent } from 'undici'
+import {
   buildOpenAPIClient,
-  type PlatformaticClientPluginOptions,
+  errors,
   type GetHeadersOptions,
-  type StatusCode2xx,
   type StatusCode1xx,
+  type StatusCode2xx,
   type StatusCode3xx,
   type StatusCode4xx,
-  type StatusCode5xx,
-} from ".";
-import { FastifyError } from "@fastify/error";
-import { Agent } from 'undici';
+  type StatusCode5xx
+} from '.'
+import pltClient, { type PlatformaticClientPluginOptions } from './fastify-plugin.js'
 
 const server = await fastify()
 
@@ -53,7 +48,12 @@ server.register(pltClient, {
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
-  getHeaders: async ({ url }, { sent }, options) => ({ foo: 'bar', url, baz: sent.toString(), opt: JSON.stringify(options) }),
+  getHeaders: async ({ url }, { sent }, options) => ({
+    foo: 'bar',
+    url,
+    baz: sent.toString(),
+    opt: JSON.stringify(options)
+  }),
   headers: { foo: 'bar' },
   name: 'Frassica',
   path: 'Fracchia',
@@ -63,33 +63,34 @@ server.register(pltClient, {
 const key = Symbol.for('plt.operationIdMap')
 type MyType = {
   getFoo: Function
-} & Record<typeof key, { path: string, method: string }>
+} & Record<typeof key, { path: string; method: string }>
 
 const dispatcher = new Agent({ allowH2: true, connections: 10 })
 const openTelemetry = {}
-const client = await buildOpenAPIClient<MyType>({
-  url: 'http://foo.bar',
-  path: 'foobar',
-  fullRequest: true,
-  fullResponse: false,
-  throwOnError: false,
-  validateResponse: false,
-  headers: { foo: 'bar' },
-  bodyTimeout: 900000,
-  headersTimeout: 900000,
-  getHeaders: async (options: GetHeadersOptions) => {
-    const { url } = options;
-    return { href: url.href };
+const client = await buildOpenAPIClient<MyType>(
+  {
+    url: 'http://foo.bar',
+    path: 'foobar',
+    fullRequest: true,
+    fullResponse: false,
+    throwOnError: false,
+    validateResponse: false,
+    headers: { foo: 'bar' },
+    bodyTimeout: 900000,
+    headersTimeout: 900000,
+    getHeaders: async (options: GetHeadersOptions) => {
+      const { url } = options
+      return { href: url.href }
+    },
+    queryParser: query => `${query.toString()}[]`,
+    dispatcher
   },
-  queryParser: (query) => `${query.toString()}[]`,
-  dispatcher
-}, openTelemetry)
+  openTelemetry
+)
 
-const isSuccessfulResponse = (
-  status: number,
-): status is StatusCode2xx => status >= 200 && status <= 299;
+const isSuccessfulResponse = (status: number): status is StatusCode2xx => status >= 200 && status <= 299
 
-const exampleUsageOfStatusCodeType = (status: number) => {
+async function _exampleUsageOfStatusCodeType (status: number) {
   if (isSuccessfulResponse(status)) {
     expectType<StatusCode2xx>(status)
   } else {
@@ -135,15 +136,17 @@ expectNotAssignable<StatusCode5xx>(600)
 // All params and generic passed
 expectType<MyType>(client)
 expectType<Function>(client.getFoo)
-expectType<{ path: string, method: string }>(client[key])
+expectType<{ path: string; method: string }>(client[key])
 
 // Only required params and no generics
-expectType<Promise<unknown>>(buildOpenAPIClient({
-  url: 'https://undici.com/piscina',
-  fullRequest: true,
-  fullResponse: false,
-  throwOnError: false
-}))
+expectType<Promise<unknown>>(
+  buildOpenAPIClient({
+    url: 'https://undici.com/piscina',
+    fullRequest: true,
+    fullResponse: false,
+    throwOnError: false
+  })
+)
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
 expectType<(_: string) => FastifyError>(errors.FormDataRequiredError)

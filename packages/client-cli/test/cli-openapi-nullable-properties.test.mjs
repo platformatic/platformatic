@@ -21,7 +21,7 @@ test('generate types with nullable properties', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type GetSampleResponseOK = { 'rowDisplayOptions'?: Array<string> | null; 'columnDisplayOptions'?: Array<string>; 'entities'?: { 'id'?: string; 'name'?: string | null; 'operator'?: '=' | '!=' | null; 'value'?: 'toto' | 'tata' } | null }`),
+export type GetSampleResponseOK = { 'rowDisplayOptions'?: Array<string> | null; 'columnDisplayOptions'?: Array<string>; 'entities'?: { 'id'?: string; 'name'?: string | null; 'operator'?: '=' | '!=' | null; 'value'?: 'toto' | 'tata' } | null }`),
     true
   )
 })

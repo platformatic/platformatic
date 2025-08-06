@@ -1,4 +1,3 @@
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyError } from '@fastify/error'
 import { Dispatcher } from 'undici';
 
@@ -27,9 +26,9 @@ export interface GetHeadersOptions {
 interface PlatformaticClientOptions {
   url: string;
   path?: string;
-  fullResponse: boolean;
-  fullRequest: boolean;
-  throwOnError: boolean;
+  fullResponse?: boolean;
+  fullRequest?: boolean;
+  throwOnError?: boolean;
   headers?: Headers;
   bodyTimeout?: number;
   headersTimeout?: number;
@@ -40,13 +39,6 @@ interface PlatformaticClientOptions {
 
 type BuildOpenAPIClientOptions  = PlatformaticClientOptions & {
   getHeaders?: (options: GetHeadersOptions) => Promise<Headers>;
-}
-
-export type PlatformaticClientPluginOptions = PlatformaticClientOptions & {
-  type: 'openapi' | 'graphql';
-  name?: string;
-  serviceId?: string;
-  getHeaders?: (request: FastifyRequest, reply: FastifyReply, options: GetHeadersOptions) => Promise<Headers>;
 }
 
 interface AbstractLogger {
@@ -88,12 +80,6 @@ export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTe
 export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry?: OpenTelemetry, logger?: AbstractLogger): Promise<BuildGraphQLClientOutput>
 export function hasDuplicatedParameters(methodMeta: MethodMetaInterface): boolean
 
-export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
-export default plugin
-
-/**
- * All the errors thrown by the plugin.
- */
 export module errors {
   export const OptionsUrlRequiredError: () => FastifyError
   export const FormDataRequiredError: (value: string) => FastifyError
