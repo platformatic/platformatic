@@ -18,48 +18,59 @@
 
 <h1 align="center">
   <br/>
-  The Open Source Toolkit for Node.js
+  The Open Source Node.js Application Platform
   <br/>
 </h1>
 
 <div align="center"> 
 
-  __Platformatic__'s Open Source toolkit helps you build modern Node.js  
-  applications without the endless loop of setup and maintenance. 
+  __Platformatic__ helps you build production-ready Node.js applications  
+  with auto-generated APIs, database integration, and zero-config deployment. 
 </div>
 <br/>
 
-## How does it work?
-Platformatic puts Node development on autopilot, with:
+## Powered by Watt - The Node.js Application Server
 
-- 🧱 Opinionated structures and composable templates
-- 🔋 Batteries-included API setup
-- 📄 Out-of-the-box documentation, logs, and metrics
-- ⚙️ Shareable and reusable configurations 
+**Watt** is our flagship Node.js application server that puts development on autopilot with:
 
-## Ready to get started?
+- 🚀 **Auto-generated APIs** - REST & GraphQL endpoints from your database schema
+- 🔋 **Batteries-included** - Authentication, validation, logging, metrics, and more
+- 🧱 **Composable architecture** - Mix databases, services, and frontend frameworks
+- 📦 **Zero-config deployment** - Docker-ready with built-in observability
 
-### Install
-<hr />
+## Choose Your Path
+
+### New to Node.js or API development?
+**→ [Start with our Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)** - Build a complete Todo API from scratch in 30 minutes
+
+### Want to jump right in?
+**→ [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)** - Create your first application in 5 minutes
 
 ```bash
-# Create a new application
 npm create platformatic@latest
-
-# Or install manually:
-npm install platformatic
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) to get up and running with Platformatic.
+### Looking for inspiration?
+**→ [Browse Examples](https://docs.platformatic.dev/docs/learn/overview)** - Explore real-world applications and patterns
 
-### Documentation
-<hr />
+### Migrating an existing app?
+**→ [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app)** - Add Platformatic to your existing Node.js project
 
-- [Overview](https://docs.platformatic.dev/docs/Overview)
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
-- [Guides](https://docs.platformatic.dev/docs/guides/movie-quotes-app-tutorial)
+---
 
-Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
+## Core Features
+
+- 🧱 Opinionated structures and composable templates
+- 🔋 Batteries-included API setup with auto-generated endpoints
+- 📄 Built-in documentation, logs, and metrics (Prometheus/OpenTelemetry)
+- ⚙️ Shareable and reusable configurations 
+- 🎨 Frontend framework integration (Next.js, Astro, Remix, Vite)
+
+## Need Help?
+
+📖 **Full Documentation**: [docs.platformatic.dev](https://docs.platformatic.dev)  
+💬 **Community Support**: [Discord](https://discord.gg/platformatic)  
+🏢 **Enterprise Plans**: [platformaticHQ.com](https://www.platformatichq.com)
 
 ### Support
 <hr />
