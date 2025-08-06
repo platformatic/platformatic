@@ -27,7 +27,7 @@ const wrappableProperties = {
 }
 
 const engines = {
-  node: '^18.8.0 || >=20.6.0'
+  node: '^22.14.0 || ^20.6.0'
 }
 
 function getRuntimeBaseEnvVars (config) {
