@@ -25,6 +25,7 @@ test('should get service config', async t => {
   delete serviceConfig.$schema
 
   assert.deepStrictEqual(serviceConfig, {
+    application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -55,6 +56,7 @@ test('do not force enable metrics without the management api', async t => {
   delete serviceConfig.$schema
 
   assert.deepStrictEqual(serviceConfig, {
+    application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -85,6 +87,7 @@ test('do not force enable metrics if they are set to false', async t => {
   delete serviceConfig.$schema
 
   assert.deepStrictEqual(serviceConfig, {
+    application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -128,6 +131,7 @@ test('set serviceId in metrics as label in all services', async t => {
   delete serviceConfig.$schema
 
   assert.deepStrictEqual(serviceConfig, {
+    application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
