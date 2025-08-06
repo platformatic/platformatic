@@ -186,7 +186,7 @@ it accordingly.
 
 ```js
 const fastify = require('fastify')()
-const pltClient = require('@platformatic/client/lib/fastify-plugin')
+const pltClient = require('@platformatic/client/fastify-plugin')
 
 fastify.register(pltClient, { url: 'http://example.com' })
 
@@ -208,6 +208,35 @@ fastify.listen({ port: 3000 })
 ```
 
 Note that you would need to install `@platformatic/client` as a dependency.
+
+### Adding types information to the fastify Plugin
+
+To add types information to your plugin, you can either extend the `FastifyRequest` interface globally or locally.
+
+```ts
+import { type MoviesClient } from './movies/movies.ts'
+import { type FastifyRequest } from 'fastify'
+
+// Method A: extend the interface globally
+declare module 'fastify' {
+  interface FastifyRequest {
+    movies: MoviesClient
+  }
+}
+
+server.get('/movies', async (request: FastifyRequest, reply: FastifyReply) => {
+  return request.movies.getMovies()
+})
+
+// Method B: use a local request extension
+interface MoviesRequest extends FastifyRequest {
+  movies: MoviesClient
+}
+
+server.get('/movies', async (request: MoviesRequest, reply: FastifyReply) => {
+  return request.movies.getMovies()
+})
+```
 
 ### Method Names in OpenAPI
 

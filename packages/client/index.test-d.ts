@@ -12,7 +12,7 @@ import {
   type StatusCode4xx,
   type StatusCode5xx
 } from '.'
-import pltClient, { type PlatformaticClientPluginOptions } from './lib/fastify-plugin.js'
+import pltClient, { type PlatformaticClientPluginOptions } from './fastify-plugin.js'
 
 const server = await fastify()
 

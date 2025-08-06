@@ -1,8 +1,8 @@
 'use strict'
 
-const { buildOpenAPIClient, buildGraphQLClient } = require('../index.js')
-const errors = require('./errors.js')
-const { kGetHeaders, kTelemetryContext } = require('./symbols.js')
+const { buildOpenAPIClient, buildGraphQLClient } = require('./index.js')
+const errors = require('./lib/errors.js')
+const { kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
 
 function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)

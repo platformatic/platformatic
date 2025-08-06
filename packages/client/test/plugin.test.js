@@ -10,7 +10,7 @@ const Fastify = require('fastify')
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { create } = require('@platformatic/db')
 const { safeRemove } = require('@platformatic/utils')
-const client = require('../lib/fastify-plugin.js')
+const client = require('../fastify-plugin.js')
 require('./helper')
 
 test('wrong type', async t => {
