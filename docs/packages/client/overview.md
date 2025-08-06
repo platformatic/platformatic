@@ -219,7 +219,7 @@ import fastify, { type FastifyRequest } from 'fastify'
 import pltClient from '@platformatic/client/fastify-plugin'
 
 const server = fastify()
-fastify.register(pltClient, { url: 'http://example.com' })
+server.register(pltClient, { url: 'http://example.com' })
 
 // Method A: extend the interface globally
 declare module 'fastify' {
