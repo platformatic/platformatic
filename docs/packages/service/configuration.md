@@ -265,17 +265,6 @@ _Example_
 }
 ```
 
-### `clients`
-
-An array of [Platformatic Client](../client/overview.md) configurations that will be loaded by Platformatic Service.
-
-- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
-- **`name`** (`string`) - The name of the client.
-- **`type`** (`string`) - The type of the client. Supported values are `graphql` and `openapi`.
-- **`schema`** (`string`) - Path to the generated client schema file.
-- **`path`** (`string`) - Path to the generated client folder.
-- **`url`** (`string`) - The URL of the service that the client will connect to.
-
 ## Environment variable placeholders
 
 The value for any configuration setting can be replaced with an environment variable

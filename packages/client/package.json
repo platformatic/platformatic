@@ -20,6 +20,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/multipart": "^9.0.1",
+    "@platformatic/db": "workspace:*",
+    "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "borp": "^0.20.0",
@@ -28,7 +30,6 @@
     "execa": "^9.0.0",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
-    "split2": "^4.2.0",
     "tsd": "^0.32.0",
     "typescript": "^5.4.2"
   },
@@ -37,7 +38,6 @@
     "@fastify/error": "^4.0.0",
     "ajv": "^8.12.0",
     "camelcase": "^6.3.0",
-    "jsonpointer": "^5.0.1",
     "undici": "^7.0.0"
   }
 }

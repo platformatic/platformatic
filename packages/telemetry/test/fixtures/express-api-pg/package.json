@@ -9,7 +9,7 @@
   "dependencies": {
     "@platformatic/node": "^2.18.0",
     "@platformatic/runtime": "^2.18.0",
-    "@opentelemetry/instrumentation-pg": "^0.50.0",
+    "@opentelemetry/instrumentation-pg": "^0.55.0",
     "wattpm": "^2.18.0"
   },
   "devDependencies": {

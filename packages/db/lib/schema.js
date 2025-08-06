@@ -8,7 +8,7 @@ import { resolve } from 'node:path'
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
-const { plugins, openApiBase, clients, $defs } = serviceSchemaComponents
+const { plugins, openApiBase, $defs } = serviceSchemaComponents
 
 export const db = {
   type: 'object',
@@ -470,7 +470,6 @@ export const schema = {
     types,
     plugins,
     telemetry: utilsSchemaComponents.telemetry,
-    clients,
     runtime: wrappedRuntime,
     watch: {
       anyOf: [

@@ -15,7 +15,7 @@
     "postinstall": "node ./scripts/postinstall.js",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
-    "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc",
+    "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
     "global-links": "cd packages/cli && pnpm link --global && cd ../wattpm && pnpm link --global && cd ../create-platformatic && pnpm link --global"
   },
   "packageManager": "pnpm@9.15.9",

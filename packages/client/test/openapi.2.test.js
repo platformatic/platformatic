@@ -6,7 +6,7 @@ const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp, readFile } = require('node:fs/promises')
-const { create } = require('../../service')
+const { create } = require('@platformatic/service')
 const { buildOpenAPIClient } = require('..')
 const Fastify = require('fastify')
 const { safeRemove } = require('@platformatic/utils')
@@ -36,7 +36,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     fullRequest: false,
-    fullResponse: false,
+    fullResponse: false
   })
 
   const result = await client.postHello({
@@ -78,7 +78,7 @@ test('build basic client from file (enpoint with no parameters)', async t => {
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     fullRequest: false,
-    fullResponse: false,
+    fullResponse: false
   })
 
   const bodyPayload = {
@@ -322,7 +322,7 @@ test('validate response', async t => {
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     validateResponse: true,
-    fullRequest: false,
+    fullRequest: false
   })
 
   // invalid response format
@@ -358,7 +358,7 @@ test('build client with common parameters', async t => {
     url: clientUrl,
     path: specPath,
     fullRequest: false,
-    fullResponse: false,
+    fullResponse: false
   })
 
   const output = await client.getPathWithFieldId({

@@ -1,5 +1,13 @@
 # Platformatic Errors 
 
+## @platformatic/basic 
+
+### PLT_BASIC_NON_ZERO_EXIT_CODE
+**Message:** Process exited with non zero exit code %d. 
+
+### PLT_BASIC_UNSUPPORTED_VERSION
+**Message:** %s version %s is not supported. Please use version %s. 
+
 ## @platformatic/client 
 
 ### PLT_CLIENT_OPTIONS_URL_REQUIRED
@@ -51,6 +59,59 @@
 ### PLT_COMPOSER_VALIDATION_ERRORS
 **Message:** Validation errors: %s 
 
+## @platformatic/control 
+
+### PLT_CTR_RUNTIME_NOT_FOUND
+**Message:** Runtime not found. 
+
+### PLT_CTR_SERVICE_NOT_FOUND
+**Message:** Service not found. 
+
+### PLT_CTR_MISSING_REQUEST_URL
+**Message:** Request URL is required. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_METADATA
+**Message:** Failed to get runtime metadata %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICES
+**Message:** Failed to get runtime services %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_ENV
+**Message:** Failed to get runtime environment variables %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI
+**Message:** Failed to get runtime OpenAPI schema %s. 
+
+### PLT_CTR_FAILED_TO_STREAM_RUNTIME_LOGS
+**Message:** Failed to stream runtime logs %s. 
+
+### PLT_CTR_FAILED_TO_STOP_RUNTIME
+**Message:** Failed to stop the runtime %s. 
+
+### PLT_CTR_FAILED_TO_RELOAD_RUNTIME
+**Message:** Failed to reload the runtime %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_CONFIG
+**Message:** Failed to get runtime config %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICE_ENV
+**Message:** Failed to get runtime service environment variables %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICE_CONFIG
+**Message:** Failed to get runtime service config %s. 
+
+### PLT_CTR_FAILED_TO_GET_HISTORY_LOGS
+**Message:** Failed to get history logs %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_ALL_LOGS
+**Message:** Failed to get runtime all logs %s. 
+
+### PLT_CTR_FAILED_TO_GET_HISTORY_LOGS_COUNT
+**Message:** Failed to get history logs count %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_METRICS
+**Message:** Failed to get runtime metrics %s. 
+
 ## @platformatic/db 
 
 ### PLT_DB_MIGRATE_ERROR
@@ -78,10 +139,6 @@
 
 ### PLT_DB_AUTH_NOT_NULLABLE_MISSING
 **Message:** missing not nullable field: "%s" in save rule for entity "%s" 
-
-## @platformatic/db-core 
-
-**No errors defined** 
 
 ## @platformatic/runtime 
 
@@ -190,9 +247,27 @@
 ### PLT_RUNTIME_MESSAGING_ERROR
 **Message:** Cannot send a message to service "%s": %s 
 
-## @platformatic/service 
+## @platformatic/sql-events 
 
-**No errors defined** 
+### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
+**Message:** The object that will be published is required under the data property 
+
+### PLT_SQL_EVENTS_PRIMARY_KEY_IS_NECESSARY_INSIDE_DATA
+**Message:** The primaryKey is necessary inside data 
+
+### PLT_SQL_EVENTS_NO_SUCH_ACTION
+**Message:** No such action %s 
+
+## @platformatic/sql-graphql 
+
+### PLT_SQL_GRAPHQL_UNABLE_GENERATE_GRAPHQL_ENUM_TYPE
+**Message:** Unable to generate GraphQLEnumType 
+
+### PLT_SQL_GRAPHQL_UNSUPPORTED_KIND
+**Message:** Unsupported kind: %s 
+
+### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
+**Message:** Error printing the GraphQL schema 
 
 ## @platformatic/sql-mapper 
 
@@ -269,36 +344,6 @@
 
 ### PLT_SQL_OPENAPI_PRIMARY_KEY_NOT_INCLUDED_IN_ORDER_BY_IN_CURSOR_PAGINATION
 **Message:** At least one primary key must be included in orderBy clause in case of cursor pagination 
-
-## @platformatic/sql-graphql 
-
-### PLT_SQL_GRAPHQL_UNABLE_GENERATE_GRAPHQL_ENUM_TYPE
-**Message:** Unable to generate GraphQLEnumType 
-
-### PLT_SQL_GRAPHQL_UNSUPPORTED_KIND
-**Message:** Unsupported kind: %s 
-
-### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
-**Message:** Error printing the GraphQL schema 
-
-## @platformatic/sql-events 
-
-### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
-**Message:** The object that will be published is required under the data property 
-
-### PLT_SQL_EVENTS_PRIMARY_KEY_IS_NECESSARY_INSIDE_DATA
-**Message:** The primaryKey is necessary inside data 
-
-### PLT_SQL_EVENTS_NO_SUCH_ACTION
-**Message:** No such action %s 
-
-## @platformatic/sql-json-schema-mapper 
-
-**No errors defined** 
-
-## @platformatic/telemetry 
-
-**No errors defined** 
 
 ## @platformatic/utils 
 

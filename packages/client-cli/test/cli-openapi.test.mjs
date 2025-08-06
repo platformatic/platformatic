@@ -10,7 +10,6 @@ import { equal, ok, rejects, deepEqual as same } from 'node:assert'
 import { after, test } from 'node:test'
 import { join } from 'path'
 import split from 'split2'
-import { isFileAccessible } from '../cli.mjs'
 import { moveToTmpdir, request, safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
@@ -38,7 +37,16 @@ test('openapi client generation (javascript)', async t => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), runtimeUrl, '--name', 'movies', '--type', 'openapi', '--full', 'false'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl,
+    '--name',
+    'movies',
+    '--type',
+    'openapi',
+    '--full',
+    'false'
+  ])
 
   const toWrite = `
 'use strict'
@@ -264,7 +272,14 @@ test('no such file', async t => {
 
   await moveToTmpdir(after)
   await rejects(
-    execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), `${runtimeUrl}/foo/bar`, '--name', 'movies', '--full', 'false'])
+    execa('node', [
+      join(import.meta.dirname, '..', 'cli.mjs'),
+      `${runtimeUrl}/foo/bar`,
+      '--name',
+      'movies',
+      '--full',
+      'false'
+    ])
   )
 })
 
@@ -482,20 +497,17 @@ test('dotenv & config support', async t => {
     'false'
   ])
 
-  const url = runtimeUrl + '/'
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
     same(envs, {
-      FOO: 'bar',
-      PLT_MOVIES_URL: url
+      FOO: 'bar'
     })
   }
 
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample'), 'utf-8'))
     same(envs, {
-      FOO: 'bar',
-      PLT_MOVIES_URL: url
+      FOO: 'bar'
     })
   }
 })
@@ -1058,8 +1070,6 @@ test('do not generate implementation file if in @platformatic/service', async t 
       'headerId',
       ...opt
     ])
-
-    equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')

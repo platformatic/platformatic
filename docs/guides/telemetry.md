@@ -149,29 +149,38 @@ Open the `web/main/platformatic.json` file and add the following telemetry confi
 We want this service to invoke the DB service, so we need to add a client for `test-db` to it:
 
 ```bash
+cd web/main
+npm install @platformatic/client
 npx --package @platformatic/client-cli plt-client http://127.0.0.1:5042 js --name movies
 ```
 
-Check `platformatic.service.json` to see that the client has been added (`PLT_MOVIES_URL` is defined in `.env`):
+Then add the url to `web/main.env`:
 
-```json
-    "clients": [
-    {
-      "schema": "movies/movies.openapi.json",
-      "name": "movies",
-      "type": "openapi",
-      "url": "{PLT_MOVIES_URL}"
-    }
-  ]
+```
+PLT_MOVIES_URL=http://127.0.0.1:5042/
 ```
 
-Now open `routes/root.js` and add the following:
+Now open `routes/root.js` and changes as follows:
 
 ```javascript
+/// <reference path="../global.d.ts" />
+
+'use strict'
+
+const { buildOpenAPIClient } = require('@platformatic/client')
+const { resolve } = require('node:path')
+
+module.exports = async function (fastify, opts) {
+  const client = await buildOpenAPIClient({
+    url: process.env.PLT_MOVIES_URL,
+    path: resolve(__dirname, "../movies/movies.openapi.json"),
+  });
+
   fastify.get('/movies-length', async (request, reply) => {
-    const movies = await request.movies.getMovies()
+    const movies = await client.getMovies()
     return { length: movies.length }
   })
+}
 ```
 
 This code calls `movies` to get all the movies and returns the length of the array.

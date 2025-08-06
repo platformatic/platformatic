@@ -785,17 +785,21 @@ To create the skeleton structure for our plugin, let's create a new file, `web/m
 ```javascript
 // web/media-service/plugin.js
 
-/// <reference path="./clients/people/people.d.ts" />
-
 'use strict'
+
+const { buildOpenAPIClient } = require("@platformatic/client");
+const { resolve } = require("node:path");
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function peopleDataPlugin (app) {
-
+  const client = await buildOpenAPIClient({
+    url: "http://people-service.plt.local",
+    path: resolve(__dirname, "clients/people/people.openapi.json"),
+  });
 }
 ```
 
-The code we've just added is the skeleton structure for our plugin. The `<reference path="..." />` statement pulls in the types from the People client, providing us with type hinting and type checking (if it's supported by our code editor).
+The code we've just added is the skeleton structure for our plugin. A `@platformatic/client` is instantiated out of the OpenAPI specification.
 
 To be able to modify the responses that are sent from one of our Media service's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
 
@@ -832,7 +836,7 @@ function buildOnComposerResponseCallback (peopleProps) {
       }
     }
 
-    const people = await request.people.getPeople({ "where.id.in": peopleIds.join(',') })
+    const people = await client.getPeople({ "where.id.in": peopleIds.join(',') })
 
     const getPersonNameById = (id) => {
       const person = people.find(person => person.id === id)

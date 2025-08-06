@@ -19,7 +19,6 @@ Configuration file settings are grouped as follows:
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
-- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings.
 
 Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
 

@@ -1,13 +1,11 @@
 #! /usr/bin/env node
 
-import { createDirectory, findConfigurationFileRecursive, getParser, getStringifier } from '@platformatic/utils'
-import camelcase from 'camelcase'
-import isMain from 'es-main'
+import { createDirectory, findConfigurationFileRecursive } from '@platformatic/utils'
 import { access, readFile, writeFile } from 'fs/promises'
 import graphql from 'graphql'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
-import { dirname, join, posix, relative, resolve } from 'path'
+import { join } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
 import { getGlobalDispatcher, interceptors, request, setGlobalDispatcher } from 'undici'
@@ -16,7 +14,6 @@ import errors from './lib/errors.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
 import { processGraphQL } from './lib/graphql-generator.mjs'
 import { processOpenAPI } from './lib/openapi-generator.mjs'
-import { appendToBothEnvs } from './lib/utils.mjs'
 
 function parseFile (content) {
   let parsed = false
@@ -148,7 +145,9 @@ async function downloadAndWriteOpenAPI (
     }
   }
 
-  const dispatcher = retryTimeoutMs ? getGlobalDispatcher().compose([interceptors.retry({ minTimeout: retryTimeoutMs })]) : undefined
+  const dispatcher = retryTimeoutMs
+    ? getGlobalDispatcher().compose([interceptors.retry({ minTimeout: retryTimeoutMs })])
+    : undefined
   const res = await request(url, { ...requestOptions, dispatcher })
   if (res.statusCode === 200) {
     // we are OpenAPI
@@ -263,7 +262,6 @@ async function downloadAndProcess (options) {
     name,
     folder,
     logger,
-    runtime,
     typesOnly,
     fullRequest,
     fullResponse,
@@ -276,26 +274,10 @@ async function downloadAndProcess (options) {
     typesComment,
     withCredentials,
     propsOptional,
-    skipConfigUpdate,
     retryTimeoutMs
   } = options
 
-  let generateImplementation = options.generateImplementation
-  let config = options.config
-
-  if (!config && !isFrontend) {
-    config = await findConfigurationFileRecursive(process.cwd(), null, [
-      '@platformatic/service',
-      '@platformatic/db',
-      '@platformatic/composer'
-    ])
-  }
-
-  if (config && !isFrontend) {
-    // if config file is found, no implementation is needed because from the 'clients' section
-    // of the config file, Platformatic will register automatically the client
-    generateImplementation = false
-  }
+  const generateImplementation = options.generateImplementation
 
   let found = false
   const toTry = []
@@ -433,57 +415,6 @@ async function downloadAndProcess (options) {
   /* c8 ignore next 3 */
   if (!found) {
     throw new Error(`Could not find a valid OpenAPI or GraphQL schema at ${url}`)
-  }
-
-  if (config && !skipConfigUpdate && !typesOnly && !isFrontend) {
-    const parse = getParser(config)
-    const stringify = getStringifier(config)
-    const data = parse(await readFile(config, 'utf8'))
-    data.clients = data.clients || []
-    if (runtime) {
-      data.clients = data.clients.filter(client => client.serviceId !== runtime)
-    } else {
-      data.clients = data.clients.filter(client => client.name !== name)
-    }
-    let schema
-    if (found === 'openapi') {
-      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.openapi.json`)
-    } else if (found === 'graphql') {
-      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
-    }
-
-    // Make sure only Unix paths are used in the config file
-    schema = schema.replace(/\\/g, '/')
-
-    const toPush = {
-      schema,
-      name: camelcase(name),
-      type: found
-    }
-    const availableCommandLineOptionsInClient = ['fullRequest', 'fullResponse', 'validateResponse']
-    availableCommandLineOptionsInClient.forEach(c => {
-      if (options[c]) {
-        toPush[c] = true
-      }
-    })
-    if (runtime) {
-      toPush.serviceId = runtime
-    } else {
-      toPush.url = `{PLT_${name.toUpperCase()}_URL}`
-    }
-    data.clients.push(toPush)
-    await writeFile(config, stringify(data))
-    if (!runtime) {
-      try {
-        const toSaveUrl = new URL(url)
-        if (found === 'openapi') {
-          toSaveUrl.pathname = ''
-        }
-        await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
-      } catch {
-        await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, '')
-      }
-    }
   }
 }
 
@@ -650,7 +581,7 @@ export async function command (argv) {
   }
 }
 
-if (isMain(import.meta)) {
+if (import.meta.main) {
   command(process.argv.slice(2))
 }
 

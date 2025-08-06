@@ -5,6 +5,7 @@ import { createMigrations } from '../../../lib/commands/migrations-create.js'
 import { printSchema } from '../../../lib/commands/print-schema.js'
 import { seed } from '../../../lib/commands/seed.js'
 import { generateTypes } from '../../../lib/commands/types.js'
+import pinoPretty from 'pino-pretty'
 
 let command
 switch (process.argv[2]) {
@@ -27,12 +28,8 @@ switch (process.argv[2]) {
 
 command(
   pino({
-    level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      sync: true
-    }
-  }),
+    level: 'info'
+  }, pinoPretty({ sync: true })),
   process.argv[3],
   process.argv.slice(4),
   {

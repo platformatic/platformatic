@@ -14,23 +14,27 @@ test('should create a client for a service inside a Watt runtime', async t => {
 
   await cp(join(import.meta.dirname, 'fixtures', 'watt'), dir, { recursive: true })
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first', '--skip-config-update', 'false', '--full', 'false'], {
-    cwd: secondDir
-  })
+  await execa(
+    'node',
+    [
+      join(import.meta.dirname, '..', 'cli.mjs'),
+      '--name',
+      'client-1',
+      '--runtime',
+      'first',
+      '--skip-config-update',
+      'false',
+      '--full',
+      'false'
+    ],
+    {
+      cwd: secondDir
+    }
+  )
 
   ok(existsSync(join(secondDir, 'client-1/client-1.openapi.json')))
   ok(existsSync(join(secondDir, 'client-1/client-1.d.ts')))
   ok(existsSync(join(secondDir, 'client-1/package.json')))
-
-  const secondJson = JSON.parse(await readFile(join(secondDir, 'watt.json'), 'utf-8'))
-  deepStrictEqual(secondJson.clients, [
-    {
-      name: 'client1',
-      schema: 'client-1/client-1.openapi.json',
-      serviceId: 'first',
-      type: 'openapi'
-    }
-  ])
 })
 
 test('should create a client for a service inside a Watt runtime and update the requested config file', async t => {
@@ -60,19 +64,6 @@ test('should create a client for a service inside a Watt runtime and update the 
   ok(existsSync(join(secondDir, 'client-1/client-1.openapi.json')))
   ok(existsSync(join(secondDir, 'client-1/client-1.d.ts')))
   ok(existsSync(join(secondDir, 'client-1/package.json')))
-
-  const secondJson = JSON.parse(await readFile(join(secondDir, 'watt.json'), 'utf-8'))
-  deepStrictEqual(secondJson.clients, undefined)
-
-  const whateverJson = JSON.parse(await readFile(join(secondDir, '../whatever.json'), 'utf-8'))
-  deepStrictEqual(whateverJson.clients, [
-    {
-      name: 'client1',
-      schema: 'second/client-1/client-1.openapi.json',
-      serviceId: 'first',
-      type: 'openapi'
-    }
-  ])
 })
 
 test('should create a standalone client for a service inside a Watt runtime from within the root folder', async t => {

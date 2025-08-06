@@ -33,10 +33,6 @@ If the Platformatic app supports both OpenAPI and GraphQL, the OpenAPI client wi
 $ npx --package @platformatic/client-cli plt-client http://example.com/to/schema/file --name myclient --type graphql
 ```
 
-## Usage with Platformatic Service or Platformatic DB
-
-Running the generator in a Platformatic application automatically extends it to load your client by editing the configuration file and adding a `clients` section.
-
 ### Example Usage in JavaScript (GraphQL)
 
 Use the client in your JavaScript application, by calling a GraphQL endpoint: 
@@ -73,66 +69,8 @@ export default async function (app: FastifyInstance) {
   })
 }
 ```
-### Client Configuration Example
-
-The client configuration in the `platformatic.json` would look like this:
-
-```json
-{
-  "clients": [{
-    "schema": "./myclient/myclient.openapi.json" // or ./myclient/myclient.schema.graphl
-    "name": "myclient",
-    "type": "openapi" // or graphql
-    "url": "{ PLT_MYCLIENT_URL }"
-  }]
-}
-```
 
 Note that the generator would also have updated the `.env` and `.env.sample` files if they exist.
-
-## Generating a client for a service running within Platformatic Runtime
-
-Platformatic Runtime allows you to create a network of services that are not exposed.
-To create a client to invoke one of those services from another, run:
-
-```bash
-$ npx --package @platformatic/client-cli plt-client --name <clientname> --runtime <serviceId>
-```
-
-Where `<clientname>` is the name of the client and `<serviceId>` is the id of the given service
-(which correspond in the basic case with the folder name of that service).
-The client generated is identical to the one in the previous section.
-
-Note that this command looks for a `platformatic.json` in a parent directory.
-
-### Example
-
-As an example, consider a network of three microservices:
-
-- `somber-chariot`, an instance of Platformatic DB;
-- `languid-noblemen`, an instance of Platformatic Service;
-- `pricey-paesant`, an instance of Platformatic Composer, which is also the runtime entrypoint.
-
-From within the `languid-noblemen` folder, we can run:
-
-```bash
-$ npx --package @platformatic/client-cli plt-client --name chariot --runtime somber-chariot
-```
-
-The client configuration in the `platformatic.json` would look like:
-
-```json
-{
-  "clients": [{
-    "path": "./chariot",
-    "serviceId": "somber-chariot"
-  }]
-}
-```
-
-Even if the client is generated from an HTTP endpoint, it is possible to add a `serviceId` property each client object shown above.
-This is not required, but if using the Platformatic Runtime, the `serviceId`
-property will be used to identify the service dependency.
 
 ## Types Generator
 
