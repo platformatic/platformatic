@@ -215,7 +215,11 @@ To add types information to your plugin, you can either extend the `FastifyReque
 
 ```ts
 import { type MoviesClient } from './movies/movies.ts'
-import { type FastifyRequest } from 'fastify'
+import fastify, { type FastifyRequest } from 'fastify'
+import pltClient from '@platformatic/client/fastify-plugin'
+
+const server = fastify()
+fastify.register(pltClient, { url: 'http://example.com' })
 
 // Method A: extend the interface globally
 declare module 'fastify' {
