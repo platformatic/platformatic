@@ -73,6 +73,70 @@ export default async function (app: FastifyInstance) {
 
 Note that the generator would also have updated the `.env` and `.env.sample` files if they exist.
 
+## Generating a client for a unexposed service running within Platformatic Runtime
+
+You can use the Platformatic Management API to extract the schema of a service which is not exposed.
+
+Let's say you have an application created via `wattpm create`:
+
+```bash
+$ npx wattpm create
+Hello User, welcome to Watt 3.0.0!
+? Where would you like to create your project? example
+? Which package manager do you want to use? pnpm
+? Which kind of service do you want to create? @platformatic/db
+? What is the name of the service? movies
+? What is the connection string? sqlite://./db.sqlite
+? Do you want to create default migrations? yes
+? Do you want to use TypeScript? no
+? Do you want to create another service? yes
+? Which kind of service do you want to create? @platformatic/service
+? What is the name of the service? main
+? Do you want to use TypeScript? no
+? Do you want to create another service? no
+? Which service should be exposed? main
+? What port do you want to use? 3042
+```
+
+As you can see, the `movies` service is not exposed so it is not possible to pass the URL to `plt-client`.
+
+To download the OpenAPI schema, you can use the `wattpm inject` command:
+
+```bash
+$ npx wattpm inject movies -p /documentation/json > openapi.json
+```
+
+Now you can generate a client
+
+```bash
+$ npx --package @platformatic/client-cli plt-client --name movies -f web/main/movies openapi.json
+````
+
+This will create the client in the `web/main/movies` folder.
+
+Now you can modify your `web/main/routes/root.js` file to add another route to use the new service:
+
+```js
+import myClient from './movies/movies.js'
+
+export default async function (fastify, opts) {
+  fastify.get('/example', async (request, reply) => {
+    return { hello: fastify.example }
+  })
+
+  fastify.get('/movies', async (request, reply) => {
+    const movies = await myClient.getMovies()
+    return movies
+  }
+}
+```
+
+Finally, test your application by doing:
+
+```bash
+curl http://127.0.0.1:3042/movies
+```
+
 ## Types Generator
 
 Types for the client are automatically generated for both OpenAPI and GraphQL schemas. You can generate only the types with the `--types-only` flag.

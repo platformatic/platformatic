@@ -9,13 +9,27 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./lib/errors')
 const camelCase = require('camelcase')
-const { abstractLogger } = require('@platformatic/foundation')
 const { kHeaders, kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
 
 const {
   FormData,
   errors: { UndiciError }
 } = require('undici')
+
+function noop () {}
+
+const abstractLogger = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop,
+  done: noop,
+  child () {
+    return abstractLogger
+  }
+}
 
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null

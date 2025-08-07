@@ -18,11 +18,6 @@ Instead of an URL, you can also use a local file:
 $ plt-client path/to/schema -n myclient
 ```
 
-To create a client for a service running in a Platformatic runime use the following command:
-```bash
-$ plt-client --runtime SERVICE_NAME -n myclient
-```
-
 All the above commands will create a Fastify plugin that exposes a client in the `request` object for the remote API in a folder `myclient` and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
@@ -42,7 +37,6 @@ module.exports = async function (app, opts) {
 ```
 
 or in Typescript, calling an OpenAPI endpoint:
-
 
 ```ts
 import { type FastifyInstance } from 'fastify'
@@ -69,7 +63,6 @@ Options:
 * `-n, --name <name>` - Name of the client.
 * `-f, --folder <name>` - Name of the plugin folder, defaults to --name value.
 * `-t, --typescript` - Generate the client plugin in TypeScript.
-* `-R, --runtime <serviceId>` - Generate the client for the `serviceId` running in the current runtime
 * `--frontend` - Generated a browser-compatible client that uses `fetch`
 * `--full-response` - Client will return full response object rather than just the body.
 * `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties. Ignored if `--frontend`

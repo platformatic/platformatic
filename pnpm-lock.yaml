@@ -231,9 +231,6 @@ importers:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      '@platformatic/foundation':
-        specifier: workspace:*
-        version: link:../foundation
       camelcase:
         specifier: ~6.3.0
         version: 6.3.0
@@ -271,6 +268,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
