@@ -31,7 +31,7 @@ export let fixturesDir
 
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
-export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/wattpm.js')
+export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))

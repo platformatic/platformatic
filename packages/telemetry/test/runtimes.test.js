@@ -220,7 +220,7 @@ test('configure telemetry correctly with a composer + next', async t => {
   const { runtime, root } = await prepareRuntime(t, 'composer-next-node-fastify', true, 'platformatic.json')
 
   // build next
-  const cliPath = join(__dirname, '../../wattpm', 'bin/wattpm.js')
+  const cliPath = join(__dirname, '../../wattpm', 'bin/cli.js')
   const { execa } = await import('execa')
   await execa('node', [cliPath, 'build'], {
     cwd: root

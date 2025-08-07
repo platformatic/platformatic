@@ -46,12 +46,12 @@ cd demo
 npm install
 ```
 
-### 2. Use `wattpm create`
+### 2. Use `pnpm create wattpm`
 
-Use `wattpm create` to wrap your application inside Watt.
+Use `pnpm create wattpm` to wrap your application inside Watt.
 
 ```bash
-$ pnpx wattpm create
+$ pnpm create wattpm
 Hello User, welcome to Watt 2.66.1!
 ? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
 ? What port do you want to use? 3042

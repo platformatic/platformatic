@@ -1,83 +1,40 @@
-import { getPackageManager } from '@platformatic/foundation'
-import { createApplication, getUsername, getVersion, say } from 'create-platformatic'
-import { resolve } from 'node:path'
-import { getExecutableName } from '../embedding.js'
-import { parseArgs } from '../utils.js'
-import { installDependencies } from './build.js'
+import { getExecutableName, getPackageManager, parseArgs } from '@platformatic/foundation'
+import { spawn } from 'node:child_process'
 
 export async function createCommand (logger, args) {
   let {
-    values: {
-      config,
-      marketplace,
-      'package-manager': packageManager,
-      'skip-dependencies': skipDependencies,
-      module: modules
-    }
+    values: { 'package-manager': packageManager }
   } = parseArgs(
     args,
     {
-      config: {
-        type: 'string',
-        short: 'c',
-        default: 'watt.json'
-      },
-      marketplace: {
-        type: 'string',
-        short: 'm',
-        default: 'https://marketplace.platformatic.dev'
-      },
       'package-manager': {
         type: 'string',
         short: 'P'
-      },
-      'skip-dependencies': {
-        type: 'boolean',
-        short: 's',
-        default: false
-      },
-      module: {
-        short: 'M',
-        type: 'string',
-        multiple: true,
-        default: []
       }
     },
+    false,
     false
   )
 
   if (!packageManager) {
-    packageManager = await getPackageManager(process.cwd(), null)
+    packageManager = await getPackageManager(process.cwd())
   }
 
-  const username = await getUsername()
-  const version = await getVersion()
+  let command = 'npx'
+  const commandArgs = ['wattpm-utils']
 
-  /* c8 ignore next 3 - Ignoring else branches */
-  const executableName = getExecutableName()
-  const greeting = username ? `Hello ${username},` : 'Hello,'
-  await say(`${greeting} welcome to ${version ? `${executableName} ${version}!` : `${executableName}!`}`)
+  if (packageManager === 'pnpm') {
+    command = 'pnpx'
+  } else {
+    commandArgs.unshift('-y')
+  }
 
-  await createApplication(
-    logger,
-    packageManager,
-    modules.map(m => m.split(/\s*,\s*/).map(m => m.trim())).flat(),
-    marketplace,
-    skipDependencies
-      ? false
-      : (root, configurationFile, packageManager) => {
-          return installDependencies(logger, root, resolve(root, configurationFile), false, packageManager)
-        },
-    {
-      runtimeConfig: config,
-      servicesFolder: 'web'
-    },
-    {
-      devCommand: 'wattpm dev',
-      buildCommand: 'wattpm build',
-      startCommand: 'wattpm start'
-    }
-  )
+  logger.info(`Running watt-utils create via ${command} ...`)
+  const proc = spawn(command, [...commandArgs, '--', 'create', ...args], { stdio: 'inherit' })
+
+  proc.on('exit', code => {
+    process.exit(code)
+  })
 }
 
 const createHelp = {
@@ -116,6 +73,10 @@ export const help = {
   },
   create: {
     usage: 'create',
+    ...createHelp
+  },
+  add: {
+    usage: 'add',
     ...createHelp
   }
 }
