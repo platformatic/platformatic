@@ -1,4 +1,4 @@
-# create-platformatic
+# create-wattpm
 
 Platformatic Creator
 

@@ -151,7 +151,7 @@ npx wattpm db:migrations:apply
 Inside `web` folder, let's create a new Platformatic Composer
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 This will output:

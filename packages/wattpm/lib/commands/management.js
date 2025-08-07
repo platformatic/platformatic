@@ -1,9 +1,8 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/foundation'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold, reset } from 'colorette'
 import { sep } from 'node:path'
 import { getBorderCharacters, table } from 'table'
-import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
 const ONE_DAY = 3600 * 24
 const ONE_HOUR = 3600

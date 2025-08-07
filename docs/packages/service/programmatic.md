@@ -96,7 +96,7 @@ await service.close()
 
 ## TypeScript Support
 
-To ensure this module works in a TypeScript setup (outside an application created with `wattpm create`), you need to
+To ensure this module works in a TypeScript setup (outside an application created with `npm create wattpm`), you need to
 import types from `@platformatic/service`.
 
 ### Type Declarations

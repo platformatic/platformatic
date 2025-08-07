@@ -1,7 +1,7 @@
+import { setExecutableId, setExecutableName } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { setExecutableParameters } from '../index.js'
 import { showGeneralHelp } from '../lib/commands/help.js'
 import { version } from '../lib/schema.js'
 import { wattpm } from './helper.js'
@@ -35,15 +35,15 @@ test('help - should support embedding and changing executable name', async t => 
   const mainProcess = await wattpm('help', { env })
   const mainViaArgProcess = await wattpm('--help', { env })
   const mainNoArgs = await wattpm('', { env })
-  const commandHelpProcess = await wattpm('help', 'resolve', { env })
-  const commandHelpShortArgProcess = await wattpm('resolve', '-h', { env })
-  const commandHelpLongArgProcess = await wattpm('resolve', '--help', { env })
+  const commandHelpProcess = await wattpm('help', 'inject', { env })
+  const commandHelpShortArgProcess = await wattpm('inject', '-h', { env })
+  const commandHelpLongArgProcess = await wattpm('inject', '--help', { env })
 
   ok(mainProcess.stdout.includes('\nUsage: test-cli [options] [command]'))
   ok(mainProcess.stdout.includes('Welcome to Test CLI'))
   ok(mainViaArgProcess.stdout.includes('\nUsage: test-cli [options] [command]'))
   ok(mainNoArgs.stdout.includes('\nUsage: test-cli [options] [command]'))
-  ok(commandHelpProcess.stdout.startsWith('\nUsage: test-cli resolve'))
+  ok(commandHelpProcess.stdout.startsWith('\nUsage: test-cli inject'))
   deepStrictEqual(commandHelpProcess.stdout, commandHelpShortArgProcess.stdout)
   deepStrictEqual(commandHelpProcess.stdout, commandHelpLongArgProcess.stdout)
 
@@ -57,20 +57,24 @@ test('help - should support embedding via API', async t => {
     logs.push(message)
   }
 
+  setExecutableId('wattpm')
+  setExecutableName('Watt')
   await showGeneralHelp(logger)
   const originalLogs = logs.splice(0, logs.length).join('\n')
 
   originalLogs.includes('Usage: wattpm [options] [command]')
   originalLogs.includes('Watt')
 
-  setExecutableParameters('test-cli', 'Test CLI')
+  setExecutableId('test-cli')
+  setExecutableName('Test CLI')
   await showGeneralHelp(logger)
   const embeddedLogs = logs.splice(0, logs.length).join('\n')
 
   embeddedLogs.includes('Usage: test-cli [options] [command]')
   embeddedLogs.includes('Test CLI')
 
-  setExecutableParameters('wattpm', 'Watt')
+  setExecutableId('wattpm')
+  setExecutableName('Watt')
   await showGeneralHelp(logger)
   const restoredLogs = logs.splice(0, logs.length).join('\n')
 

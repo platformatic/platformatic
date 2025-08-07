@@ -52,6 +52,38 @@ class WebSocketStream extends Readable {
 
 export * from './errors.js'
 
+export async function getMatchingRuntime (client, positionals) {
+  const runtimes = await client.getRuntimes()
+  const pidOrName = positionals[0]
+  let runtime
+
+  // We have an argument to match
+  if (pidOrName) {
+    if (pidOrName.match(/^\d+$/)) {
+      const pid = parseInt(pidOrName)
+      runtime = runtimes.find(runtime => runtime.pid === pid)
+    } else {
+      runtime = runtimes.find(runtime => runtime.packageName === pidOrName)
+    }
+
+    if (runtime) {
+      return [runtime, positionals.slice(1)]
+    }
+  }
+
+  // We found no match, find any runtime whose running directory is the current one
+  if (!runtime) {
+    runtime = runtimes.find(runtime => runtime.cwd === process.cwd())
+  }
+
+  if (!runtime) {
+    throw RuntimeNotFound()
+  }
+  /* c8 ignore next 2 */
+
+  return [runtime, positionals]
+}
+
 export class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()

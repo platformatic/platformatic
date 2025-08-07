@@ -17,16 +17,15 @@
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=1200000",
     "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=1200000",
-    "gen-packages": "node scripts/list-package.js > lib/packages.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-packages && pnpm run gen-schema && pnpm run gen-types",
+    "build": "pnpm run gen-schema && pnpm run gen-types",
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
   "bin": {
-    "watt": "./bin/wattpm.js",
-    "wattpm": "./bin/wattpm.js"
+    "watt": "./bin/cli.js",
+    "wattpm": "./bin/cli.js"
   },
   "files": [
     "bin",
@@ -39,21 +38,14 @@
     "@platformatic/runtime": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "colorette": "^2.0.20",
-    "commist": "^3.2.0",
-    "create-platformatic": "workspace:*",
-    "dotenv": "^16.4.5",
-    "execa": "^9.4.0",
-    "help-me": "^5.0.0",
-    "minimist": "^1.2.8",
-    "pino": "^9.4.0",
     "pino-pretty": "^13.0.0",
-    "semver": "^7.7.0",
     "split2": "^4.2.0",
     "table": "^6.8.2"
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",
     "borp": "^0.20.0",
+    "execa": "^9.4.0",
     "eslint": "9",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",

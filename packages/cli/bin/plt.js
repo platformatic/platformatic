@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { checkNodeVersionForServices } from '@platformatic/foundation'
-import { main, setExecutableParameters } from 'wattpm'
+import { checkNodeVersionForServices, setExecutableId, setExecutableName } from '@platformatic/foundation'
+import { main } from 'wattpm'
 
-setExecutableParameters('plt', 'Platformatic')
+setExecutableId('plt')
+setExecutableName('Platformatic')
 checkNodeVersionForServices()
 await main()
