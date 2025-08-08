@@ -252,7 +252,7 @@ test('getRoot - should resolve relative path from first positional argument', ()
 })
 
 test('getRoot - should handle absolute path in first positional argument', () => {
-  const absolutePath = '/absolute/path'
+  const absolutePath = resolve('/absolute/path') // Use resolve to have this test pass on Windows
   const positionals = [absolutePath]
   const result = getRoot(positionals)
   strictEqual(result, absolutePath)
