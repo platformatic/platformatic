@@ -1,37 +1,40 @@
 ---
-title: Build a Todo API
-label: Building a Todo API with Platformatic DB
+title: Build Your First Watt Application
+label: Build Your First Todo API with Watt
 ---
 
 import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
 import SetupWatt from '../../getting-started/setup-watt.md';
 
-# Build a Todo API with Platformatic Watt and DB
+# Build Your First Watt Application
+
+Learn how Watt transforms API development by providing a unified application server that orchestrates multiple services with shared configuration, logging, and deployment.
 
 ## What You'll Learn
 
-In this tutorial, you'll build a complete Todo API from scratch. By the end, you will:
+In this tutorial, you'll experience Watt's unified development workflow by building a Todo API. By the end, you will:
 
-- ✅ Set up a Platformatic Watt application server
-- ✅ Add a Platformatic DB service that auto-generates REST and GraphQL APIs
-- ✅ Create database migrations for Users and Todos tables
-- ✅ Test your API endpoints using the built-in OpenAPI documentation
-- ✅ Configure CORS for frontend integration
-- ✅ Understand how Platformatic accelerates API development
+- ✅ **Set up a Watt application server** with unified development environment
+- ✅ **Add a database service to Watt** that auto-generates REST and GraphQL APIs  
+- ✅ **Experience service orchestration** - how Watt manages multiple services seamlessly
+- ✅ **See unified logging and monitoring** across all services in your application
+- ✅ **Understand Watt's value proposition** - one server, multiple services, unified workflow
+- ✅ **Deploy a complete application** with a single command
 
 **Time to complete:** 30 minutes  
 **Skill level:** Beginner (basic SQL and JavaScript knowledge helpful)
 
-## Why Platformatic for APIs?
+## Why Watt for Modern Development?
 
-Traditional API development requires writing boilerplate code for database connections, CRUD operations, validation, and documentation. Platformatic DB eliminates this by:
+Traditional Node.js development requires managing separate servers, configurations, and deployments for each part of your application. Watt eliminates this complexity by:
 
-- **Auto-generating APIs** from your database schema (both REST and GraphQL)
-- **Providing built-in API documentation** with interactive testing
-- **Handling database migrations** automatically
-- **Including TypeScript types** generated from your schema
+- **Unified Application Server**: One server runs multiple services (database APIs, custom logic, frontends)
+- **Shared Configuration**: Environment variables, logging, and monitoring work consistently across all services
+- **Service Orchestration**: Services communicate seamlessly without complex networking setup
+- **Single Deployment**: Deploy your entire application stack with one command
+- **Built-in Observability**: Unified logging, metrics, and health checks out of the box
 
-This means you can focus on your business logic instead of infrastructure code.
+This means you can focus on building features instead of managing infrastructure.
 
 ## Prerequisites
 
@@ -44,25 +47,45 @@ Before starting, ensure you have:
 
 You'll install the Platformatic CLI during the tutorial.
 
-## Step 1: Set Up Your Watt Application
+## Step 1: Create Your Watt Application Server
 
-Let's start by creating a new Platformatic Watt application. Watt is the Node.js application server that will host our Todo API.
+Let's start by creating a new Watt application. Unlike traditional Node.js development where you might run separate servers for your API, database, and frontend, Watt provides a unified application server that orchestrates all your services.
 
-### Why Watt?
-Watt provides a production-ready environment for your Node.js applications with built-in logging, monitoring, and service management. Think of it as your application's foundation.
+### Understanding Watt's Architecture
+Watt acts as your **application server** that can host multiple **services**:
+- **Database services** for auto-generated APIs
+- **HTTP services** for custom business logic  
+- **Frontend services** for web applications
+- **Composer services** for API gateways
+
+All services share the same configuration, logging, and deployment - giving you a unified development experience.
 
 <SetupWatt />
 
 **✓ Success Check:** You should see a `web/` directory created with configuration files inside.
 
-## Step 2: Add a Database Service
+### Experience Watt's Unified Configuration
 
-Now we'll add a Platformatic DB service to our Watt application. This service will:
-- Connect to a SQLite database (by default)
-- Auto-generate REST and GraphQL APIs from our schema
-- Provide an admin UI for testing
+Take a moment to examine the files Watt created:
 
-Navigate to your web directory and run:
+1. **`watt.json`** - Your application server configuration
+2. **`.env`** - Environment variables shared across all services  
+3. **`web/`** - Directory where your services will live
+
+Notice how Watt uses **one configuration file** and **shared environment variables** for your entire application. This is different from managing separate configurations for each service.
+
+## Step 2: Add Your First Service to Watt
+
+Now we'll add our first service to the Watt application server - a database service that will automatically create REST and GraphQL APIs from our schema.
+
+### Why Add Services to Watt?
+Instead of running a separate database server, API server, and frontend server, Watt lets you run them all as **services within one application server**. This means:
+- **Shared configuration** - one `.env` file for all services
+- **Unified logging** - all service logs in one stream  
+- **Single deployment** - deploy everything together
+- **Service communication** - services can talk to each other seamlessly
+
+Navigate to your web directory and add a database service:
 
 <NewApiProjectInstructions />
 
@@ -81,9 +104,9 @@ Open your browser to `http://localhost:3042/` (or the port shown in your termina
 
 **✓ Success Check:** You should see the Platformatic welcome page with links to OpenAPI documentation.
 
-## Step 3: Create Your Database Schema
+## Step 4: Define Your Service's Data Schema
 
-Now we'll define our database structure using migrations. Migrations are SQL files that describe changes to your database schema.
+Now we'll define the database structure for our Todo API service using migrations. This demonstrates how Watt services manage their own data while staying integrated with the overall application.
 
 ### Why Migrations?
 Migrations provide version control for your database schema. They let you:
@@ -155,9 +178,9 @@ Platformatic automatically generates TypeScript types from your database schema.
 - IntelliSense in your editor
 - Compile-time error checking
 
-## Step 4: Explore Your Auto-Generated API
+## Step 5: Explore Your Service's Auto-Generated API
 
-Start your application:
+Start your Watt application with all services:
 
 ```bash
 npm run dev
@@ -169,7 +192,24 @@ Open `http://localhost:3042/` in your browser.
 
 **✓ Success Check:** You should see the Platformatic welcome page.
 
-### Discover Your API Endpoints
+## Step 6: Experience Watt's Unified Development Environment
+
+Before exploring the API endpoints, let's see how Watt provides a unified development experience. 
+
+### Unified Logging and Monitoring
+
+Open your terminal where Watt is running (`npm run dev`). Notice how **all services log to the same stream** with consistent formatting. You'll see logs from:
+- The main Watt server
+- Your database service 
+- Any requests between services
+
+This unified logging means you don't need to check multiple terminals or log files to debug issues across your services.
+
+### Service Discovery and Communication
+
+Watt automatically handles service discovery. Your database service is accessible at `/` and other services you add later can communicate with it using internal networking - no complex configuration needed.
+
+### Discover Your Auto-Generated API Endpoints
 
 Click on the **OpenAPI Documentation** link. This opens an interactive API explorer where you can:
 - See all auto-generated endpoints
@@ -209,12 +249,12 @@ Platformatic DB generated these REST endpoints for each table:
 
 The same pattern applies to `/todos`. You also get GraphQL endpoints at `/graphql`!
 
-## Step 5: Configure CORS for Frontend Integration
+## Step 7: Prepare for Multi-Service Architecture
 
-If you plan to build a frontend application, you'll need to configure CORS (Cross-Origin Resource Sharing) to allow browser-based requests.
+One of Watt's key benefits is supporting multiple services in one application. Let's configure CORS so you can easily add a frontend service later.
 
-### Why CORS?
-Browsers block requests between different origins (domains/ports) by default for security. Since your frontend will likely run on a different port than your API, we need to explicitly allow this.
+### Why Configure CORS in Watt?
+When you add a frontend service to your Watt application (like Next.js, React, or Vue), it needs to communicate with your database service. Watt makes this easy with unified configuration - set CORS once and it works across all your services.
 
 Open your `web/db/.env` file and add:
 
@@ -243,28 +283,45 @@ Restart your application with `npm run dev`.
 
 ## 🎉 Congratulations!
 
-You've successfully built a complete Todo API with Platformatic! Let's review what you accomplished:
+You've successfully built your first Watt application! Let's review what you accomplished and why this approach is transformative:
 
-### What You Built
-- ✅ A Watt application server hosting your API
-- ✅ Auto-generated REST and GraphQL APIs for Users and Todos
-- ✅ Interactive API documentation for testing
-- ✅ Database migrations for schema management
-- ✅ TypeScript types generated from your schema
-- ✅ CORS configuration for frontend integration
+### What You Built with Watt
+- ✅ **A unified application server** running multiple services seamlessly
+- ✅ **Service orchestration** - database service integrated into your application  
+- ✅ **Unified configuration** - single `.env` file and shared settings
+- ✅ **Integrated logging** - all services logging to one stream
+- ✅ **Auto-generated APIs** with zero boilerplate code
+- ✅ **Production-ready setup** with TypeScript types and documentation
+- ✅ **Multi-service foundation** ready for frontend and additional services
 
-### What Makes This Different
-Unlike traditional API development, you wrote **zero boilerplate code**. No route handlers, no database connection logic, no validation code, no API documentation generation - Platformatic handled it all based on your database schema.
+### What Makes Watt Different
+Unlike traditional Node.js development where you manage separate servers, configurations, and deployments:
+
+**Traditional Approach:**
+- Separate database server + API server + frontend server
+- Multiple configuration files and environment setups
+- Complex inter-service communication
+- Fragmented logging and monitoring
+- Multiple deployment processes
+
+**Watt Approach:**  
+- **One application server** hosts all services
+- **Unified configuration** across your entire application
+- **Automatic service discovery** and communication  
+- **Integrated observability** with unified logging
+- **Single deployment** for your complete application stack
 
 ## What's Next?
 
-Now that you have a working Todo API, you can:
+Now that you understand Watt's unified approach, you can expand your application:
 
-1. **Build a Frontend**: Create a React, Vue, or vanilla JavaScript app that consumes your API
-2. **Add Authentication**: Learn about [Platformatic DB Authorization](../../reference/db/authorization.md)
-3. **Custom Business Logic**: Add [custom routes and plugins](../../guides/add-custom-functionality/add-custom-functionality.md)
-4. **Deploy to Production**: Follow our [deployment guide](../../guides/deployment/deploy-to-the-cloud.md)
-5. **Add More Services**: Create additional services in your Watt application
+1. **Add a Frontend Service**: Add a Next.js, Astro, or React stackable to your Watt application
+2. **Add Custom HTTP Services**: Create additional services for business logic that work alongside your database service
+3. **Add a Composer Service**: Create an API gateway that aggregates multiple services
+4. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command
+5. **Add Authentication**: Implement authentication that works across all services in your Watt application
+
+### Explore Watt's Full Capabilities
 
 ### Related Tutorials
 - [Add Authentication to Your API](../intermediate/authentication.md)
