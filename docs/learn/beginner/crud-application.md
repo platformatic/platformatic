@@ -114,7 +114,38 @@ Migrations provide version control for your database schema. They let you:
 - Safely update production databases
 - Share schema changes with your team
 
-Platformatic DB uses SQLite by default (perfect for development). You can see the database configuration in your `.env` file.
+### Database Choice: SQLite for Easy Start, Enterprise Ready
+The **Platformatic DB service** (running within your Watt application server) uses **SQLite by default** to get you started quickly - no separate database server setup required! 
+
+However, the **Platformatic DB service is enterprise-ready** and supports:
+- **PostgreSQL** (recommended for production)
+- **MySQL/MariaDB** 
+- **SQLite** (great for development and prototyping)
+
+**Important distinction:**
+- **Watt** = Your application server that orchestrates multiple services
+- **Platformatic DB service** = One type of service that runs within Watt, handles database operations
+
+#### Switching to PostgreSQL (Enterprise Setup)
+
+If you prefer to use PostgreSQL from the start (recommended for enterprise development):
+
+1. **Start PostgreSQL** (using Docker for convenience):
+   ```bash
+   docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=todo_app -p 5432:5432 -d postgres:15
+   ```
+
+2. **Update your DB service configuration** in `web/db/.env`:
+   ```bash
+   # Replace the SQLite DATABASE_URL with PostgreSQL
+   DATABASE_URL=postgres://postgres:password@localhost:5432/todo_app
+   ```
+
+3. **Continue with the tutorial** - all migration commands work the same way!
+
+**For MySQL users:** Replace with `mysql://user:password@localhost:3306/todo_app`
+
+The beauty of this architecture is that **Watt** manages the service orchestration while each **service** (like Platformatic DB) handles its own concerns. Your application code remains identical regardless of which database the DB service connects to.
 
 ### Create the Users Table
 
@@ -173,10 +204,10 @@ npx platformatic db migrations apply
 - A `types/` folder contains detailed type definitions for your tables
 
 ### Why Auto-Generated Types?
-Platformatic automatically generates TypeScript types from your database schema. This gives you:
-- Type safety when writing custom plugins
+The **Platformatic DB service** automatically generates TypeScript types from your database schema. This gives you:
+- Type safety when writing custom plugins for any service in your Watt application
 - IntelliSense in your editor
-- Compile-time error checking
+- Compile-time error checking across all services
 
 ## Step 5: Explore Your Service's Auto-Generated API
 
@@ -240,7 +271,7 @@ Let's create your first todo item:
 
 ### Available Endpoints
 
-Platformatic DB generated these REST endpoints for each table:
+The **Platformatic DB service** generated these REST endpoints for each table:
 - `GET /users` - List all users
 - `POST /users` - Create a user
 - `GET /users/{id}` - Get a specific user
@@ -315,15 +346,17 @@ Unlike traditional Node.js development where you manage separate servers, config
 
 Now that you understand Watt's unified approach, you can expand your application:
 
-1. **Add a Frontend Service**: Add a Next.js, Astro, or React stackable to your Watt application
-2. **Add Custom HTTP Services**: Create additional services for business logic that work alongside your database service
-3. **Add a Composer Service**: Create an API gateway that aggregates multiple services
-4. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command
-5. **Add Authentication**: Implement authentication that works across all services in your Watt application
+1. **Connect to Your Enterprise Database**: Switch from SQLite to PostgreSQL, MySQL, or your production database
+2. **Add a Frontend Service**: Add a Next.js, Astro, or React stackable to your Watt application
+3. **Add Custom HTTP Services**: Create additional services for business logic that work alongside your database service
+4. **Add a Composer Service**: Create an API gateway that aggregates multiple services
+5. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command
+6. **Add Authentication**: Implement authentication that works across all services in your Watt application
 
 ### Explore Watt's Full Capabilities
 
 ### Related Tutorials
+- [Connect to PostgreSQL/MySQL](../../guides/databases/postgresql-setup.md) - Switch to your enterprise database
 - [Add Authentication to Your API](../intermediate/authentication.md)
 - [Build a Full-Stack App with Next.js](../examples/nextjs-integration.md)
 - [Deploy Your API to Production](../advanced/production-deployment.md)
