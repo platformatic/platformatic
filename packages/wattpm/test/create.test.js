@@ -286,7 +286,7 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
     },
     devDependencies: {},
     engines: {
-      node: '^18.8.0 || >=20.6.0'
+      node: '^22.14.0 || ^20.6.0'
     },
     name: basename(temporaryFolder),
     scripts: {
@@ -427,7 +427,7 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     whatever: 'else',
     engines: {
       next: '^15',
-      node: '^18.8.0 || >=20.6.0'
+      node: '^22.14.0 || ^20.6.0'
     }
   })
 
