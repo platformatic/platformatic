@@ -1,35 +1,29 @@
 ---
 title: Overview
-label: Platformatic DB
+label: Database Service
 ---
 
-# Platformatic DB
+# Database Service
 
-Platformatic DB is an HTTP server that provides a flexible set of tools for
-building robust APIs with Node.js.
+The Database Service is a core service type that runs within Watt (the Node.js Application Server). It automatically generates GraphQL and REST APIs from your database schema, eliminating the need to write boilerplate CRUD operations.
 
-For a high level overview of how Platformatic DB works, please reference the
-[Introduction](../../Overview.md) guide.
+The Database Service supports PostgreSQL, MySQL, MariaDB, and SQLite, automatically introspecting your database schema to create type-safe, fully-featured APIs with support for relationships, filtering, pagination, and real-time subscriptions.
+
+For a high level overview of how Watt and its services work, please reference the [Overview](../../Overview.md) guide.
 
 ## Features
 
-### Command Line Interface 
-- Easily manage your databases with the `platformatic db` [CLI](../platformatic/cli.md#db).
+### Automatic API Generation
+- **REST/OpenAPI**: Automatically generate a complete [REST API](../sql-openapi/overview.md) from your database schema
+- **GraphQL**: Create a [GraphQL API](../sql-graphql/overview.md) with full query, mutation, and subscription support
+- **Interactive Documentation**: Access API docs via [Scalar](https://docs.scalar.com/swagger-editor) and [GraphiQL IDE](https://github.com/graphql/graphiql)
+- **Apollo Federation**: Extend your API with [federation support](https://www.apollographql.com/docs/federation/)
 
-### Multiple Database Support 
-- Integration with [multiple database systems](#supported-databases)
-- Efficient [Database migrations](./migrations.md)
-  
-### REST/OpenAPI
-- Automatically generate a [REST API](../sql-openapi/overview.md) from your database schema.
-- Access interactive documentation via [Scalar](https://docs.scalar.com/swagger-editor).
-- Generate [OpenAPI 3.0](https://swagger.io/resources/open-api/) schema.
-
-### GraphQL
-
-- Create a [GraphQL API](../sql-graphql/overview.md) directly from your database schema.
-- Extend your API with [Apollo Federation](https://www.apollographql.com/docs/federation/).
-- Explore your API with the web-based [GraphiQL IDE](https://github.com/graphql/graphiql).
+### Database Support
+- **Multi-Database**: Works with PostgreSQL, MySQL, MariaDB, and SQLite
+- **Schema Introspection**: Automatically discovers tables, relationships, and constraints
+- **Migrations**: Efficient [database migrations](./migrations.md) with version control
+- **Type Safety**: Generated TypeScript definitions based on your schema
 
 ### Authentication and Authorization
 - Secure your APIs with advanced methods such as [JWT, Webhooks, and HTTP Headers](../db/authorization/strategies.md) (for development use).
@@ -44,9 +38,37 @@ For a high level overview of how Platformatic DB works, please reference the
 ### Usage
 - Integrate Platformatic DB [programmatically](../db/programmatic.md) into your tests or other applications for more dynamic usage.
 
-:::info
+## Quick Start
 
-Ready to start? Dive into our [Quick Start Guide](../../getting-started/quick-start-guide.md) and get your API up and running in just 2 minutes! ⚡
+The easiest way to create a Database Service is within a Watt application:
+
+```bash
+# Create a new Watt application
+wattpm create my-app
+
+# This will prompt you to add a Database Service
+cd my-app
+
+# Start in development mode  
+wattpm dev
+```
+
+Your Database Service will automatically generate REST and GraphQL APIs based on your database schema. Visit the interactive documentation at `http://localhost:3042/documentation` to explore your APIs.
+
+For service-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
+
+## When to Use Database Service
+
+Database Service is perfect when you need:
+
+- **Rapid API Development**: Get CRUD APIs instantly without writing boilerplate code
+- **Database-First Design**: Build APIs that directly reflect your database structure
+- **Multiple API Formats**: Support both REST and GraphQL clients from the same service
+- **Real-time Features**: Built-in GraphQL subscriptions for live data updates
+- **Enterprise Features**: Advanced authorization, migrations, and schema management
+
+:::info
+Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start-watt.md) to create your first Watt application with a Database Service! ⚡
 :::
 
 ## Supported databases

@@ -1,10 +1,26 @@
-# Dockerizing Watt Applications
+# How to Dockerize Your Watt Application
 
-This guide will walk you through dockerizing a JavaScript Platformatic Watt Application.
+## Problem
 
-## Preparation
+You need to containerize your Platformatic Watt application for production deployment or to ensure consistent environments across development, staging, and production.
 
-Before you start, make sure you have the following setting in your `watt.json` / `platformatic.json` root file:
+## Solution Overview
+
+This guide shows you how to create a multi-stage Docker build that optimizes your Watt application for production deployment. You'll create a Dockerfile that:
+- Efficiently handles workspace dependencies
+- Optimizes build caching
+- Produces a minimal production image
+- Properly configures networking for containers
+
+## Prerequisites
+
+- Docker installed on your system
+- A Platformatic Watt application ready to containerize
+- Basic understanding of Docker concepts
+
+## Step 1: Configure Your Application for Containers
+
+Ensure your `watt.json` or `platformatic.json` uses environment variables for hostname and port:
 
 ```json
 {
@@ -15,18 +31,18 @@ Before you start, make sure you have the following setting in your `watt.json` /
 }
 ```
 
-For local development, those values can be set in your `.env` file:
+In your development `.env` file:
 
 ```env
 HOSTNAME=127.0.0.1
 PORT=3042
 ```
 
-Those are already configured like so in values by the `wattpm init` command. You can change them to your liking.
+**Why this matters:** Containers need to bind to all network interfaces (`0.0.0.0`) to accept external connections, while development typically uses `127.0.0.1`.
 
-## Dockerfile for JavaScript/TypeScript Watt Application
+## Step 2: Create Your Dockerfile
 
-Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Watt application with a frontend, composer and DB service:
+Create a `Dockerfile` in your project root with this multi-stage build configuration:
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7-labs
@@ -80,14 +96,72 @@ EXPOSE ${PORT}
 CMD npm run start
 ```
 
-### Explanation
-- **WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
-- **COPY package.json .**: Copies the `package.json` file from the local directory to the `/app` directory in the container. It's important to do this for all files in each service. 
-- **RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
-- **--mount=type=cache,target=/root/.npm**: Caches the `node_modules` in the specified directory to speed up subsequent builds.
-- **COPY . .**: Copies all remaining files and folders into the `/app` directory in the container.
-- **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production. This is usually done with `npx wattpm build`.
-- **ENV HOSTNAME=0.0.0.0**: set the `HOSTNAME` variable so that it listens to all network interfaces.
-- **ENV PORT=3042**: Sets the `PORT` environment variable to 3042, which is the port the application will listen on.
-- **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
-- **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
+## Step 3: Build and Run Your Container
+
+Build your Docker image:
+
+```bash
+docker build -t my-watt-app .
+```
+
+Run the container:
+
+```bash
+docker run -p 3042:3042 --env-file .env my-watt-app
+```
+
+**Verification:** Open `http://localhost:3042` to confirm your application is running.
+
+## Understanding the Dockerfile
+
+### Multi-Stage Build Benefits
+
+**Build Stage:**
+- Installs all dependencies (including dev dependencies for building)
+- Runs build processes that may require dev tools
+- Creates optimized production assets
+
+**Production Stage:**
+- Copies only the built application files
+- Installs only production dependencies  
+- Results in a smaller, more secure final image
+
+### Key Configuration Points
+
+**Network Binding:**
+```dockerfile
+ENV HOSTNAME=0.0.0.0
+```
+Containers must bind to all interfaces (`0.0.0.0`) to accept external traffic, not just localhost.
+
+**Dependency Caching:**
+```dockerfile
+RUN --mount=type=cache,target=/root/.npm npm install
+```
+Caches npm downloads between builds, significantly speeding up subsequent builds.
+
+**Workspace Handling:**
+```dockerfile
+COPY --parents ./web/*/package.json ./
+```
+Preserves the workspace structure when copying package.json files from subdirectories.
+
+## Troubleshooting
+
+**Container exits immediately:**
+- Check that your `npm start` script exists in package.json
+- Verify your application doesn't try to connect to localhost services
+
+**Cannot reach application:**
+- Ensure you're using `HOSTNAME=0.0.0.0` in the container
+- Verify port mapping: `-p 3042:3042`
+
+**Build failures:**
+- Check that all necessary files are copied before running build
+- Verify workspace dependencies are properly handled
+
+## Next Steps
+
+- [Deploy to Kubernetes](./k8s-readiness-liveness.md)
+- [Set up monitoring in production](../monitoring.md)
+- [Configure logging for containers](../logging.md)

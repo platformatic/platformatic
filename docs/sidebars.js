@@ -79,6 +79,7 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
+            'guides/monitoring-and-observability',
             'guides/monitoring',
             'guides/telemetry',
             'guides/logging-to-elasticsearch'
@@ -101,12 +102,12 @@ const sidebars = {
           items: [
             'reference/watt/overview',
             'reference/watt/configuration',
-            'reference/watt/reference'
+            'reference/watt/cli-commands'
           ]
         },
         {
           type: 'category',
-          label: 'CLI Tools',
+          label: 'Legacy CLI Tools',
           collapsed: true,
           items: [
             'reference/platformatic/cli',
@@ -320,6 +321,7 @@ const sidebars = {
             }
           ]
         },
+        'reference/troubleshooting',
         'reference/errors'
       ]
     },
