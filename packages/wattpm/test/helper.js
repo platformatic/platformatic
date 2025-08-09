@@ -1,16 +1,15 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { on } from 'node:events'
-import { cp, mkdir, stat, writeFile } from 'node:fs/promises'
+import { cp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import split2 from 'split2'
 import { setFixturesDir, temporaryFolder } from '../../basic/test/helper.js'
-import { appendEnvVariable } from '../lib/commands/external.js'
 
 let tmpCount = 0
-export const cliPath = fileURLToPath(new URL('../bin/wattpm.js', import.meta.url))
+export const cliPath = fileURLToPath(new URL('../bin/cli.js', import.meta.url))
 export const fixturesDir = fileURLToPath(new URL('./fixtures', import.meta.url))
 setFixturesDir(fixturesDir)
 
@@ -23,6 +22,16 @@ export async function createTemporaryDirectory (t, prefix) {
 
   await mkdir(directory)
   return directory
+}
+
+export async function changeWorkingDirectory (t, directory) {
+  const originalDirectory = process.cwd()
+
+  t.after(() => {
+    process.chdir(originalDirectory)
+  })
+
+  process.chdir(directory)
 }
 
 export async function prepareGitRepository (t, root) {
@@ -53,15 +62,7 @@ export async function prepareGitRepository (t, root) {
   t.after(() => safeRemove(repo))
 
   const url = pathToFileURL(repo)
-  await appendEnvVariable(resolve(root, '.env'), 'PLT_GIT_REPO_URL', url)
-
   return url.toString()
-}
-
-export async function isDirectory (path) {
-  const statObject = await stat(path)
-
-  return statObject.isDirectory()
 }
 
 export async function waitForStart (startProcess) {

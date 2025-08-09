@@ -1,10 +1,16 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError, FileWatcher } from '@platformatic/foundation'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import {
+  ensureLoggableError,
+  FileWatcher,
+  findRuntimeConfigurationFile,
+  getRoot,
+  logFatalError,
+  parseArgs
+} from '@platformatic/foundation'
 import { create } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { on } from 'node:events'
-import { findRuntimeConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -28,6 +34,7 @@ export async function devCommand (logger, args) {
   if (!configurationFile) {
     return
   }
+  /* c8 ignore next 15 - covered */
 
   let runtime = await create(root, configurationFile, { start: true })
 
@@ -41,7 +48,6 @@ export async function devCommand (logger, args) {
     await runtime.close()
     runtime = await create(root, configurationFile, { start: true })
   }
-  /* c8 ignore next - Mistakenly reported as uncovered by C8 */
 }
 
 export async function startCommand (logger, args) {

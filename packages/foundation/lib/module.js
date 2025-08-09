@@ -63,6 +63,24 @@ export async function getPackageManager (root, defaultManager = defaultPackageMa
   return defaultManager
 }
 
+export function getInstallationCommand (packageManager, production) {
+  const args = ['install']
+  if (production) {
+    switch (packageManager) {
+      case 'pnpm':
+        args.push('--prod')
+        break
+      case 'yarn':
+        args.push('--production')
+        break
+      case 'npm':
+        args.push('--omit=dev')
+        break
+    }
+  }
+  return args
+}
+
 export async function getPlatformaticVersion () {
   if (!platformaticPackageVersion) {
     const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf-8'))

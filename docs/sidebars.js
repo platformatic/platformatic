@@ -19,7 +19,13 @@ const sidebars = {
       type: 'category',
       label: 'wattpm',
       collapsed: true,
-      items: ['packages/watt/overview', 'packages/watt/configuration', 'packages/watt/reference']
+      items: ['packages/wattpm/overview', 'packages/wattpm/configuration', 'packages/wattpm/reference']
+    },
+    {
+      type: 'category',
+      label: 'wattpm-utils',
+      collapsed: true,
+      items: ['packages/wattpm-utils/overview', 'packages/wattpm-utils/reference']
     },
     {
       type: 'category',

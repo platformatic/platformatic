@@ -34,7 +34,6 @@
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@platformatic/foundation": "workspace:*",
-    "commist": "^3.2.0",
     "help-me": "^5.0.0",
     "pino": "^9.0.0",
     "pino-pretty": "^13.0.0",

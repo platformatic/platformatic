@@ -388,9 +388,6 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
       console-table-printer:
         specifier: ^2.12.0
         version: 2.14.6
@@ -509,9 +506,6 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -564,21 +558,37 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      create-wattpm:
+        specifier: workspace:*
+        version: link:../create-wattpm
+    devDependencies:
+      borp:
+        specifier: ^0.20.0
+        version: 0.20.1
+      eslint:
+        specifier: '9'
+        version: 9.31.0
+      import-in-the-middle:
+        specifier: ^1.14.2
+        version: 1.14.2
+      neostandard:
+        specifier: ^0.12.0
+        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.9.2))(eslint@9.31.0)(typescript@5.9.2)
+
+  packages/create-wattpm:
+    dependencies:
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
       columnify:
         specifier: ^1.6.0
         version: 1.6.0
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
       execa:
         specifier: ^9.0.0
         version: 9.6.0
-      help-me:
-        specifier: ^5.0.0
-        version: 5.0.0
       inquirer:
         specifier: ^9.2.16
         version: 9.3.7
@@ -597,12 +607,6 @@ importers:
       resolve:
         specifier: ^1.22.8
         version: 1.22.10
-      semver:
-        specifier: ^7.6.0
-        version: 7.7.2
-      strip-ansi:
-        specifier: ^7.1.0
-        version: 7.1.0
       undici:
         specifier: ^7.0.0
         version: 7.11.0
@@ -625,9 +629,6 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.16.5
-      ajv:
-        specifier: ^8.12.0
-        version: 8.17.1
       borp:
         specifier: ^0.20.0
         version: 0.20.1
@@ -637,9 +638,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
       eslint:
         specifier: '9'
         version: 9.31.0
@@ -652,6 +650,9 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)
+      semver:
+        specifier: ^7.6.0
+        version: 7.7.2
       typescript:
         specifier: ~5.8.0
         version: 5.8.3
@@ -727,9 +728,6 @@ importers:
       code-block-writer:
         specifier: ^13.0.1
         version: 13.0.3
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
       console-table-printer:
         specifier: ^2.12.0
         version: 2.14.6
@@ -824,9 +822,6 @@ importers:
       split2:
         specifier: ^4.2.0
         version: 4.2.0
-      strip-ansi:
-        specifier: ^7.1.0
-        version: 7.1.0
       tsd:
         specifier: ^0.32.0
         version: 0.32.0
@@ -967,6 +962,9 @@ importers:
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
+      colorette:
+        specifier: ^2.0.19
+        version: 2.0.20
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -979,6 +977,12 @@ importers:
       leven:
         specifier: ~3.1.0
         version: 3.1.0
+      pino:
+        specifier: ^9.4.0
+        version: 9.7.0
+      pino-pretty:
+        specifier: ^13.0.0
+        version: 13.0.0
       semver:
         specifier: ^7.6.3
         version: 7.7.2
@@ -1004,9 +1008,6 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.9.2))(eslint@9.31.0)(typescript@5.9.2)
-      pino:
-        specifier: ^9.5.0
-        version: 9.7.0
       pino-test:
         specifier: ^1.0.1
         version: 1.1.0
@@ -1442,9 +1443,9 @@ importers:
       close-with-grace:
         specifier: ^2.0.0
         version: 2.2.0
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
+      colorette:
+        specifier: ^2.0.20
+        version: 2.0.20
       cron:
         specifier: ^4.1.0
         version: 4.3.3
@@ -1649,9 +1650,6 @@ importers:
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
       console-table-printer:
         specifier: ^2.12.0
         version: 2.14.6
@@ -1737,9 +1735,6 @@ importers:
       split2:
         specifier: ^4.2.0
         version: 4.2.0
-      strip-ansi:
-        specifier: ^7.1.0
-        version: 7.1.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2194,39 +2189,67 @@ importers:
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
-      create-platformatic:
-        specifier: workspace:*
-        version: link:../create-platformatic
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      execa:
-        specifier: ^9.4.0
-        version: 9.6.0
-      help-me:
-        specifier: ^5.0.0
-        version: 5.0.0
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
-      pino:
-        specifier: ^9.4.0
-        version: 9.7.0
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
-      semver:
-        specifier: ^7.7.0
-        version: 7.7.2
       split2:
         specifier: ^4.2.0
         version: 4.2.0
       table:
         specifier: ^6.8.2
         version: 6.9.0
+    devDependencies:
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
+      borp:
+        specifier: ^0.20.0
+        version: 0.20.1
+      eslint:
+        specifier: '9'
+        version: 9.31.0
+      execa:
+        specifier: ^9.4.0
+        version: 9.6.0
+      inspector-client:
+        specifier: ^0.2.0
+        version: 0.2.0
+      json-schema-to-typescript:
+        specifier: ^15.0.0
+        version: 15.0.4
+      neostandard:
+        specifier: ^0.12.0
+        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.8.3
+      undici:
+        specifier: ^7.0.0
+        version: 7.11.0
+
+  packages/wattpm-utils:
+    dependencies:
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      colorette:
+        specifier: ^2.0.20
+        version: 2.0.20
+      create-wattpm:
+        specifier: workspace:*
+        version: link:../create-wattpm
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+      execa:
+        specifier: ^9.4.0
+        version: 9.6.0
+      semver:
+        specifier: ^7.7.0
+        version: 7.7.2
     devDependencies:
       '@platformatic/node':
         specifier: workspace:*
@@ -2245,10 +2268,10 @@ importers:
         version: 15.0.4
       neostandard:
         specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)
+        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.9.2))(eslint@9.31.0)(typescript@5.9.2)
       typescript:
         specifier: ^5.5.4
-        version: 5.8.3
+        version: 5.9.2
       undici:
         specifier: ^7.0.0
         version: 7.11.0
@@ -3456,10 +3479,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@inquirer/figures@1.0.12':
-    resolution: {integrity: sha512-MJttijd8rMFcKJC8NYmprWr6hD3r9Gd9qUC0XwPNwoEPWSMVJwA2MlXxF+nhZZNMY+HXsWa+o7KY2emWYIn0jQ==}
-    engines: {node: '>=18'}
 
   '@inquirer/figures@1.0.13':
     resolution: {integrity: sha512-lGPVU3yO9ZNqA7vTYz26jny41lE7yoQansmqdMLBEfqaGsmdg7V3W9mK9Pvb5IL4EVZ9GnSDGMO/cJXud5dMaw==}
@@ -5432,9 +5451,6 @@ packages:
   comment-parser@1.4.1:
     resolution: {integrity: sha512-buhp5kePrmda3vhc5B9t7pUQXAb2Tnd0qgpkIhPhkHXxJpiPJ11H0ZEU0oBpJ2QztSbzG/ZxMj/CHsYJqRHmyg==}
     engines: {node: '>= 12.0.0'}
-
-  commist@3.2.0:
-    resolution: {integrity: sha512-4PIMoPniho+LqXmpS5d3NuGYncG6XWlkBSVGiWycL22dd42OYdUGil2CWuzklaJoNxyxUSpO4MKIBU94viWNAw==}
 
   common-ancestor-path@1.0.1:
     resolution: {integrity: sha512-L3sHRo1pXXEqX8VU28kfgUY+YGsk09hPqZiZmLacNib6XNTCM8ubYeT7ryXQw8asB1sKgcU5lkB7ONug08aB8w==}
@@ -11404,7 +11420,7 @@ snapshots:
   '@inquirer/checkbox@4.1.9(@types/node@24.0.15)':
     dependencies:
       '@inquirer/core': 10.1.14(@types/node@24.0.15)
-      '@inquirer/figures': 1.0.12
+      '@inquirer/figures': 1.0.13
       '@inquirer/type': 3.0.7(@types/node@24.0.15)
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
@@ -11420,7 +11436,7 @@ snapshots:
 
   '@inquirer/core@10.1.14(@types/node@24.0.15)':
     dependencies:
-      '@inquirer/figures': 1.0.12
+      '@inquirer/figures': 1.0.13
       '@inquirer/type': 3.0.7(@types/node@24.0.15)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
@@ -11446,8 +11462,6 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 24.0.15
-
-  '@inquirer/figures@1.0.12': {}
 
   '@inquirer/figures@1.0.13': {}
 
@@ -11514,7 +11528,7 @@ snapshots:
   '@inquirer/search@3.0.16(@types/node@24.0.15)':
     dependencies:
       '@inquirer/core': 10.1.14(@types/node@24.0.15)
-      '@inquirer/figures': 1.0.12
+      '@inquirer/figures': 1.0.13
       '@inquirer/type': 3.0.7(@types/node@24.0.15)
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
@@ -11523,7 +11537,7 @@ snapshots:
   '@inquirer/select@4.2.4(@types/node@24.0.15)':
     dependencies:
       '@inquirer/core': 10.1.14(@types/node@24.0.15)
-      '@inquirer/figures': 1.0.12
+      '@inquirer/figures': 1.0.13
       '@inquirer/type': 3.0.7(@types/node@24.0.15)
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
@@ -12728,6 +12742,7 @@ snapshots:
   '@types/node@24.0.15':
     dependencies:
       undici-types: 7.8.0
+    optional: true
 
   '@types/normalize-package-data@2.4.4': {}
 
@@ -12751,7 +12766,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 24.0.15
+      '@types/node': 22.16.5
 
   '@types/unist@2.0.11': {}
 
@@ -12759,7 +12774,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.0.15
+      '@types/node': 22.16.5
 
   '@typescript-eslint/eslint-plugin@8.38.0(@typescript-eslint/parser@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)':
     dependencies:
@@ -13896,8 +13911,6 @@ snapshots:
       repeat-string: 1.6.1
 
   comment-parser@1.4.1: {}
-
-  commist@3.2.0: {}
 
   common-ancestor-path@1.0.1: {}
 
@@ -19369,7 +19382,8 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici-types@7.8.0: {}
+  undici-types@7.8.0:
+    optional: true
 
   undici@5.29.0:
     dependencies:

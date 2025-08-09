@@ -1,13 +1,16 @@
 'use strict'
 
 const inspector = require('node:inspector')
-const { kMetadata } = require('@platformatic/foundation')
-const { resolve, validationOptions } = require('@platformatic/basic')
 const {
+  kMetadata,
+  loadConfigurationModule,
+  abstractLogger,
+  findRuntimeConfigurationFile,
   loadConfiguration: utilsLoadConfiguration,
   extractModuleFromSchemaUrl,
   ensureLoggableError
 } = require('@platformatic/foundation')
+const { resolve, validationOptions } = require('@platformatic/basic')
 const { NodeInspectorFlagsNotSupportedError } = require('./lib/errors')
 const { wrapInRuntimeConfig, transform } = require('./lib/config')
 const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator')
@@ -54,6 +57,53 @@ async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
     root,
     ...context
   })
+}
+
+async function loadServicesCommands () {
+  const services = {}
+  const commands = {}
+  const help = {}
+
+  let config
+  try {
+    const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!file) {
+      throw new Error('No runtime configuration file found.')
+    }
+
+    config = await loadConfiguration(file)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!config) {
+      throw new Error('No runtime configuration file found.')
+    }
+  } catch {
+    return { services, commands, help }
+  }
+
+  for (const service of config.services) {
+    try {
+      const serviceConfig = await utilsLoadConfiguration(service.config)
+      const pkg = await loadConfigurationModule(service.path, serviceConfig)
+
+      if (pkg.createCommands) {
+        const definition = await pkg.createCommands(service.id)
+        for (const command of Object.keys(definition.commands)) {
+          services[command] = service
+        }
+
+        Object.assign(commands, definition.commands)
+        Object.assign(help, definition.help)
+      }
+      /* c8 ignore next 3 - Hard to test */
+    } catch {
+      // No-op, ignore the service
+    }
+  }
+
+  return { services, commands, help }
 }
 
 async function create (configOrRoot, sourceOrConfig, context) {
@@ -110,3 +160,4 @@ module.exports.version = platformaticVersion
 module.exports.loadConfiguration = loadConfiguration
 module.exports.create = create
 module.exports.transform = transform
+module.exports.loadServicesCommands = loadServicesCommands

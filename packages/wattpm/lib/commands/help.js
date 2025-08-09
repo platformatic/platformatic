@@ -1,7 +1,6 @@
+import { getExecutableId, getExecutableName, logFatalError, logo } from '@platformatic/foundation'
+import { loadServicesCommands } from '@platformatic/runtime'
 import { bold } from 'colorette'
-import { getExecutableId, getExecutableName } from '../embedding.js'
-import { logo } from '../logo.js'
-import { loadServicesCommands, logFatalError } from '../utils.js'
 
 function sanitizeHelp (raw) {
   return (typeof raw === 'function' ? raw() : raw).trim()
@@ -10,18 +9,7 @@ function sanitizeHelp (raw) {
 async function loadCommands () {
   const commands = {}
 
-  for (const file of [
-    'create',
-    'build',
-    'execution',
-    'management',
-    'admin',
-    'logs',
-    'inject',
-    'external',
-    'patch-config',
-    'metrics'
-  ]) {
+  for (const file of ['build', 'create', 'execution', 'management', 'admin', 'logs', 'inject', 'metrics']) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
   }
