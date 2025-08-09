@@ -4,7 +4,9 @@ import Issues from '../../getting-started/issues.md';
 
 ## `create`, `init` or `add`
 
-Creates a new Watt project.
+Creates a new Watt project or add services to an existing project.
+
+This is executed via the [`create-wattpm`] module.
 
 Arguments:
 

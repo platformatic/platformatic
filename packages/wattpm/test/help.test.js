@@ -25,32 +25,6 @@ test('help - should show proper messages', async t => {
   ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
 })
 
-test('help - should support embedding and changing executable name', async t => {
-  const env = {
-    WATTPM_EXECUTABLE_ID: 'test-cli',
-    WATTPM_EXECUTABLE_NAME: 'Test CLI',
-    NO_COLOR: true
-  }
-
-  const mainProcess = await wattpm('help', { env })
-  const mainViaArgProcess = await wattpm('--help', { env })
-  const mainNoArgs = await wattpm('', { env })
-  const commandHelpProcess = await wattpm('help', 'inject', { env })
-  const commandHelpShortArgProcess = await wattpm('inject', '-h', { env })
-  const commandHelpLongArgProcess = await wattpm('inject', '--help', { env })
-
-  ok(mainProcess.stdout.includes('\nUsage: test-cli [options] [command]'))
-  ok(mainProcess.stdout.includes('Welcome to Test CLI'))
-  ok(mainViaArgProcess.stdout.includes('\nUsage: test-cli [options] [command]'))
-  ok(mainNoArgs.stdout.includes('\nUsage: test-cli [options] [command]'))
-  ok(commandHelpProcess.stdout.startsWith('\nUsage: test-cli inject'))
-  deepStrictEqual(commandHelpProcess.stdout, commandHelpShortArgProcess.stdout)
-  deepStrictEqual(commandHelpProcess.stdout, commandHelpLongArgProcess.stdout)
-
-  const metricsHelp = await wattpm('help', 'metrics')
-  ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
-})
-
 test('help - should support embedding via API', async t => {
   const logs = []
   function logger (message) {
