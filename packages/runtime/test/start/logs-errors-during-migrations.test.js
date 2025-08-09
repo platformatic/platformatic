@@ -11,7 +11,7 @@ const { Runtime } = require('../../index')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
-test.beforeEach(setLogFile)
+// test.beforeEach(setLogFile)
 
 test('logs errors during db migrations', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
