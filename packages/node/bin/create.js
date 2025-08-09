@@ -29,11 +29,11 @@ async function execute () {
       port: { type: 'string', default: '3042' },
       hostname: { type: 'string', default: '0.0.0.0' },
       main: { type: 'string', default: 'index.js' },
-      plugin: { type: 'string', default: 'true' },
-      tests: { type: 'string', default: 'true' },
+      plugin: { type: 'boolean', default: true },
+      tests: { type: 'boolean', default: true },
       typescript: { type: 'boolean', default: false },
       git: { type: 'boolean', default: false },
-      localSchema: { type: 'string', default: 'true' },
+      localSchema: { type: 'boolean', default: true },
       help: { type: 'boolean', default: false }
     }
   })
@@ -47,11 +47,11 @@ Options:
   --port <port>          Port number (default: 3042)
   --hostname <hostname>   Hostname (default: 0.0.0.0)
   --main <file>          Main entry file (default: index.js)
-  --plugin <true|false>   Enable plugin support (default: true)
-  --tests <true|false>    Generate tests (default: true)
+  --plugin               Enable plugin support (default: true)
+  --tests                Generate tests (default: true)
   --typescript           Enable TypeScript (default: false)
   --git                  Initialize git repository (default: false)
-  --localSchema <true|false>  Use local schema (default: true)
+  --localSchema          Use local schema (default: true)
   --help                 Show this help message
     `)
     return
@@ -65,11 +65,11 @@ Options:
     targetDirectory: args.values.dir,
     serviceName: basename(args.values.dir),
     main: args.values.main,
-    plugin: parseBoolean(args.values.plugin),
-    tests: parseBoolean(args.values.tests),
+    plugin: args.values.plugin,
+    tests: args.values.tests,
     typescript: args.values.typescript,
     initGitRepository: args.values.git,
-    localSchema: parseBoolean(args.values.localSchema)
+    localSchema: args.values.localSchema
   }
 
   console.log(config)
