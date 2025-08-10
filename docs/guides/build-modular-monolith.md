@@ -33,7 +33,7 @@ We're going to start by creating our Library app. This will be a Platformatic Ru
 First, let's run the Watt creator wizard in our terminal:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -219,7 +219,7 @@ We're now going to create a Books service. We'll follow a similar process to the
 In the root directory of our Runtime project (`library-app`), let's run this command to create the new service:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -380,7 +380,7 @@ We're now going to create our third and final Platformatic DB service: the Movie
 In the root directory of our Runtime project (`library-app`), let's create the new service:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -545,7 +545,7 @@ We're now going to use Platformatic Composer to create a Media service. This ser
 In the root directory of our Runtime project (`library-app`), let's create the Media service by running:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:

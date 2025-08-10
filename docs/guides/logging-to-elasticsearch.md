@@ -7,7 +7,7 @@ The logs will then be visualized via [Kibana](https://www.elastic.co/kibana).
 
 ## Create a Platformatic application
 
-Create a Platformatic application using `npx wattpm create`.
+Create a Platformatic application using `npm create wattpm`.
 
 ## Setup ElasticSearch and Kibana
 

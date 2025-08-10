@@ -1,10 +1,31 @@
 import { FastifyError } from '@fastify/error'
-import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
+import { Configuration, ConfigurationOptions, logFatalError, parseArgs } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
+import * as colorette from 'colorette'
+import { Logger } from 'pino'
 import { PlatformaticRuntimeConfig } from './config'
 
 export type RuntimeConfiguration = Promise<Configuration<PlatformaticRuntimeConfig>>
+
+export type ServiceCommandContext = {
+  colorette: typeof colorette
+  parseArgs: typeof parseArgs
+  logFatalError: typeof logFatalError
+}
+
+export type ServiceCommand = (
+  logger: Logger,
+  configuration: Configuration<unknown>,
+  args: string[],
+  context: ServiceCommandContext
+) => Promise<void>
+
+export interface ServicesCommands {
+  services: Record<string, Configuration<unknown>>
+  commands: Record<string, ServiceCommand>
+  help: Record<string, string | (() => string)>
+}
 
 export module errors {
   export const RuntimeExitedError: () => FastifyError
@@ -71,3 +92,5 @@ export function create (
 ): Promise<Runtime>
 
 export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration> | RuntimeConfiguration
+
+export declare function loadServicesCommands (): Promise<ServicesCommands>

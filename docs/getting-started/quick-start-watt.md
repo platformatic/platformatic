@@ -105,7 +105,7 @@ curl http://localhost:3042
 Inside `my-app`, let's create a new Platformatic Composer
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 This will output:

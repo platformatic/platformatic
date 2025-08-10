@@ -14,7 +14,7 @@ setGlobalDispatcher(
   })
 )
 
-export const cliPath = join(import.meta.dirname, '../../../wattpm/bin/wattpm.js')
+export const cliPath = join(import.meta.dirname, '../../../wattpm/bin/cli.js')
 export const startPath = join(import.meta.dirname, './start.mjs')
 
 export async function start (...args) {

@@ -24,12 +24,12 @@ Let's setup all these components:
 
 ### Platformatic DB Service
 
-Create a DB service using `npx wattpm create`:
+Create a DB service using `npm create wattpm`:
 
 ```bash
 mkdir test-db
 cd test-db
-npx wattpm create
+npm create wattpm
 ```
 
 To make it simple, use `sqlite` and create/apply the default migrations. This DB Service is exposed on port `5042`:
@@ -97,10 +97,10 @@ Create at the same level of `test-db` another folder for Service and cd into it:
 ```bash
 mkdir test-service
 cd test-service
-npx wattpm create
+npm create wattpm
 ```
 
-Then create a `service` on the `5043` port in the folder using `npx wattpm create`:
+Then create a `service` on the `5043` port in the folder using `npm create wattpm`:
 
 ```bash
 Hello User, welcome to Watt 2.64.0!
@@ -198,7 +198,7 @@ Create at the same level of `test-db` and `test-service` another folder for Comp
 ```bash
 mkdir test-composer
 cd test-composer
-npx wattpm create
+npm create wattpm
 ```
 
 ```bash

@@ -1,6 +1,5 @@
-import { getPackageManager } from '@platformatic/foundation'
+import { getPackageManager, parseArgs } from '@platformatic/foundation'
 import { spawn } from 'node:child_process'
-import { parseArgs } from '../utils.js'
 
 export async function adminCommand (logger, args) {
   let {

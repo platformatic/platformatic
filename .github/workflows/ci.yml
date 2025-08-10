@@ -53,6 +53,38 @@ jobs:
           retry_on: error
           command: pnpm fetch --ignore-scripts
 
+  ci-create-wattpm:
+    needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'create-wattpm' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        node-version: [22.18.0, 24]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: platformatic cli global link
+        run: cd packages/cli && pnpm link --global && cd ../..
+      - name: Setup local git user and email
+        run: |
+          git config --global user.name 'Platformatic Github Actions'
+          git config --global user.email 'info@platformatic.dev'
+      - name: Run test suite
+        run: cd packages/create-wattpm && pnpm test
+
   ci-create-platformatic:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
@@ -894,7 +926,7 @@ jobs:
           cat out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - name: Watt must load
-        run: cd packages/wattpm && node bin/wattpm.js
+        run: cd packages/wattpm && node bin/cli.js
       - name: Circular Dependency
         if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
         run: exit 1

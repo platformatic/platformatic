@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import {
   detectApplicationType,
+  getInstallationCommand,
   getLatestNpmVersion,
   getPackageManager,
   getPkgManager,
@@ -159,6 +160,46 @@ test('getPackageManager', async () => {
   equal(await getPackageManager(tmpDir), 'npm', 'no lock files, default to npmawait ')
 
   await rmdir(tmpDir)
+})
+
+test('getPackageManager - search functionality', async () => {
+  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
+  const subDir = join(tmpDir, 'subdir')
+  await mkdir(subDir)
+
+  // Create lock file in subdirectory
+  await writeFile(join(subDir, 'pnpm-lock.yaml'), '-')
+
+  // Search should find the lock file in subdirectory
+  equal(await getPackageManager(tmpDir, 'npm', true), 'pnpm', 'found pnpm-lock.yaml in subdirectory')
+
+  await unlink(join(subDir, 'pnpm-lock.yaml'))
+  await rmdir(subDir)
+  await rmdir(tmpDir)
+})
+
+test('getPackageManager - search functionality with no package manager found', async () => {
+  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
+  const subDir = join(tmpDir, 'subdir')
+  await mkdir(subDir)
+
+  // No lock files in subdirectory, should return default manager
+  equal(await getPackageManager(tmpDir, 'yarn', true), 'yarn', 'no lock files found, return default')
+
+  await rmdir(subDir)
+  await rmdir(tmpDir)
+})
+
+test('getInstallationCommand - default install command', () => {
+  equal(JSON.stringify(getInstallationCommand('npm', false)), JSON.stringify(['install']))
+  equal(JSON.stringify(getInstallationCommand('yarn', false)), JSON.stringify(['install']))
+  equal(JSON.stringify(getInstallationCommand('pnpm', false)), JSON.stringify(['install']))
+})
+
+test('getInstallationCommand - production install commands', () => {
+  equal(JSON.stringify(getInstallationCommand('npm', true)), JSON.stringify(['install', '--omit=dev']))
+  equal(JSON.stringify(getInstallationCommand('yarn', true)), JSON.stringify(['install', '--production']))
+  equal(JSON.stringify(getInstallationCommand('pnpm', true)), JSON.stringify(['install', '--prod']))
 })
 
 test('splitModuleFromVersion - should return empty object for falsy module', async t => {
