@@ -270,7 +270,8 @@ test('config - should list configuration for a service', async t => {
       absoluteUrl: false,
       main: 'index.js',
       dispatchViaHttp: false,
-      disablePlatformaticInBuild: false
+      disablePlatformaticInBuild: false,
+      hasServer: true
     },
     watch: {
       enabled: false
