@@ -432,5 +432,6 @@ export interface PlatformaticNodeJsConfig {
     absoluteUrl?: boolean;
     dispatchViaHttp?: boolean;
     disablePlatformaticInBuild?: boolean;
+    hasServer?: boolean;
   };
 }

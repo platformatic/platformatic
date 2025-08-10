@@ -14,207 +14,286 @@
 // /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   docs: [
-    'Overview',
+    // Overview - What Platformatic is and core concepts
     {
       type: 'category',
-      label: 'wattpm',
-      collapsed: true,
-      items: ['packages/wattpm/overview', 'packages/wattpm/configuration', 'packages/wattpm/reference']
+      label: 'Overview',
+      collapsed: false,
+      items: ['Overview']
     },
+
+    // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
     {
       type: 'category',
-      label: 'wattpm-utils',
-      collapsed: true,
-      items: ['packages/wattpm-utils/overview', 'packages/wattpm-utils/reference']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/composer',
-      collapsed: true,
+      label: 'Getting Started',
+      collapsed: false,
       items: [
-        'packages/composer/overview',
-        'packages/composer/configuration',
-        'packages/composer/programmatic',
-        'packages/composer/api-modification',
-        'packages/composer/plugin'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/db',
-      collapsed: true,
-      items: [
-        'packages/db/overview',
-        'packages/db/configuration',
-        'packages/db/migrations',
+        'getting-started/quick-start-watt',
+        'getting-started/quick-start-guide',
+        'getting-started/port-your-app',
         {
           type: 'category',
-          label: 'Authorization',
+          label: 'Tutorials',
+          collapsed: true,
+          items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
+        }
+      ]
+    },
+
+    // How-to Guides - Problem-solving for experienced users (Diátaxis: Problem-oriented)
+    {
+      type: 'category',
+      label: 'How-to Guides',
+      collapsed: true,
+      items: [
+        {
+          type: 'category',
+          label: 'Application Development',
           collapsed: true,
           items: [
-            'packages/db/authorization/overview',
-            'packages/db/authorization/strategies',
-            'packages/db/authorization/user-roles-metadata',
-            'packages/db/authorization/rules'
+            'guides/build-modular-monolith',
+            'guides/cache-with-platformatic-watt',
+            'guides/generate-frontend-code-to-consume-platformatic-rest-api',
+            'guides/using-watt-with-node-config',
+            'guides/use-watt-multiple-repository',
+            'guides/scheduler'
           ]
         },
-        'packages/db/plugin',
-        'packages/db/logging',
-        'packages/db/programmatic',
-        'packages/db/schema-support',
-        'packages/db/seed',
-        'packages/db/securing-platformatic-db',
-        'packages/db/jwt-auth0',
-        'packages/db/jwt-keycloak'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/runtime',
-      collapsed: true,
-      items: [
-        'packages/runtime/overview',
-        'packages/runtime/configuration',
-        'packages/runtime/multithread-architecture',
-        'packages/runtime/programmatic'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/service',
-      collapsed: true,
-      items: [
-        'packages/service/overview',
-        'packages/service/configuration',
-        'packages/service/plugin',
-        'packages/service/programmatic'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/client',
-      collapsed: true,
-      items: ['packages/client/overview', 'packages/client/programmatic', 'packages/client/frontend']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/node',
-      collapsed: true,
-      items: ['packages/node/overview', 'packages/node/configuration']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/astro',
-      collapsed: true,
-      items: ['packages/astro/overview', 'packages/astro/configuration', 'packages/astro/caching']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/next',
-      collapsed: true,
-      items: ['packages/next/overview', 'packages/next/configuration']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/remix',
-      collapsed: true,
-      items: ['packages/remix/overview', 'packages/remix/configuration']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/vite',
-      collapsed: true,
-      items: ['packages/vite/overview', 'packages/vite/configuration']
-    },
-    {
-      type: 'category',
-      label: '@platformatic/sql-openapi',
-      collapsed: true,
-      items: [
-        'packages/sql-openapi/overview',
-        'packages/sql-openapi/api',
-        'packages/sql-openapi/ignore',
-        'packages/sql-openapi/explicit-include'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/sql-graphql',
-      collapsed: true,
-      items: [
-        'packages/sql-graphql/overview',
-        'packages/sql-graphql/queries',
-        'packages/sql-graphql/mutations',
-        'packages/sql-graphql/many-to-many',
-        'packages/sql-graphql/ignore'
-      ]
-    },
-    {
-      type: 'category',
-      label: '@platformatic/sql-mapper',
-      collapsed: true,
-      items: [
-        'packages/sql-mapper/overview',
-        'packages/sql-mapper/fastify-plugin',
         {
           type: 'category',
-          label: 'Entities',
+          label: 'Deployment & Operations',
           collapsed: true,
           items: [
-            'packages/sql-mapper/entities/overview',
-            'packages/sql-mapper/entities/fields',
-            'packages/sql-mapper/entities/api',
-            'packages/sql-mapper/entities/example',
-            'packages/sql-mapper/entities/hooks',
-            'packages/sql-mapper/entities/relations',
-            'packages/sql-mapper/entities/transactions'
+            'guides/deployment/dockerize-a-watt-app',
+            'guides/deployment/compiling-typescript',
+            'guides/deployment/k8s-readiness-liveness'
+          ]
+        },
+        {
+          type: 'category',
+          label: 'Monitoring & Observability',
+          collapsed: true,
+          items: [
+            'guides/monitoring-and-observability',
+            'guides/monitoring',
+            'guides/telemetry',
+            'guides/logging-to-elasticsearch'
           ]
         }
       ]
     },
+
+    // Reference - Technical specifications organized by user mental model (Diátaxis: Information-oriented)
     {
       type: 'category',
-      label: '@platformatic/sql-events',
-      collapsed: true,
-      items: ['packages/sql-events/overview', 'packages/sql-events/fastify-plugin']
-    },
-    'FAQs'
-  ],
-  Learn: [
-    'learn/overview',
-    'getting-started/quick-start-watt',
-    'getting-started/quick-start-guide',
-    'getting-started/port-your-app',
-    {
-      type: 'category',
-      label: 'Beginner Tutorials',
-      collapsed: true,
-      items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
-    },
-    {
-      type: 'category',
-      label: 'Deployment',
-      collapsed: true,
-      items: ['guides/deployment/dockerize-a-watt-app', 'guides/deployment/k8s-readiness-liveness']
-    },
-    {
-      type: 'category',
-      label: 'Advanced Guides',
+      label: 'Reference',
       collapsed: true,
       items: [
-        'guides/cache-with-platformatic-watt',
-        'guides/monitoring',
-        'guides/generate-frontend-code-to-consume-platformatic-rest-api',
-        'guides/telemetry',
-        'guides/build-modular-monolith',
-        'guides/logging-to-elasticsearch',
-        'guides/using-watt-with-node-config',
-        'guides/use-watt-multiple-repository',
-        'guides/scheduler'
+        'reference-overview',
+        {
+          type: 'category',
+          label: 'Watt (Node.js Application Server)',
+          collapsed: true,
+          items: ['reference/wattpm/overview', 'reference/wattpm/configuration', 'reference/wattpm/cli-commands']
+        },
+        {
+          type: 'category',
+          label: 'Legacy CLI Tools',
+          collapsed: true,
+          items: ['reference/platformatic/cli', 'file-formats']
+        },
+        {
+          type: 'category',
+          label: 'Services & APIs',
+          collapsed: true,
+          items: [
+            {
+              type: 'category',
+              label: 'HTTP Service',
+              collapsed: true,
+              items: [
+                'reference/service/overview',
+                'reference/service/configuration',
+                'reference/service/plugin',
+                'reference/service/programmatic'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'API Gateway (Composer)',
+              collapsed: true,
+              items: [
+                'reference/composer/overview',
+                'reference/composer/configuration',
+                'reference/composer/api-modification',
+                'reference/composer/plugin',
+                'reference/composer/programmatic'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Client SDK',
+              collapsed: true,
+              items: ['reference/client/overview', 'reference/client/programmatic', 'reference/client/frontend']
+            },
+            {
+              type: 'category',
+              label: 'Database Service',
+              collapsed: true,
+              items: [
+                'reference/db/overview',
+                'reference/db/configuration',
+                'reference/db/migrations',
+                'reference/db/schema-support',
+                'reference/db/seed',
+                {
+                  type: 'category',
+                  label: 'Authorization',
+                  collapsed: true,
+                  items: [
+                    'reference/db/authorization/overview',
+                    'reference/db/authorization/strategies',
+                    'reference/db/authorization/user-roles-metadata',
+                    'reference/db/authorization/rules'
+                  ]
+                },
+                {
+                  type: 'category',
+                  label: 'Security',
+                  collapsed: true,
+                  items: [
+                    'reference/db/securing-platformatic-db',
+                    'reference/db/jwt-auth0',
+                    'reference/db/jwt-keycloak'
+                  ]
+                },
+                'reference/db/plugin',
+                'reference/db/logging',
+                'reference/db/programmatic'
+              ]
+            }
+          ]
+        },
+        {
+          type: 'category',
+          label: 'Framework Integrations (Stackables)',
+          collapsed: true,
+          items: [
+            {
+              type: 'category',
+              label: 'Node.js',
+              collapsed: true,
+              items: ['reference/node/overview', 'reference/node/configuration']
+            },
+            {
+              type: 'category',
+              label: 'Next.js',
+              collapsed: true,
+              items: ['reference/next/overview', 'reference/next/configuration']
+            },
+            {
+              type: 'category',
+              label: 'Nest.js',
+              collapsed: true,
+              items: ['reference/nest/overview', 'reference/nest/configuration']
+            },
+            {
+              type: 'category',
+              label: 'Astro',
+              collapsed: true,
+              items: ['reference/astro/overview', 'reference/astro/configuration', 'reference/astro/caching']
+            },
+            {
+              type: 'category',
+              label: 'Remix',
+              collapsed: true,
+              items: ['reference/remix/overview', 'reference/remix/configuration', 'reference/remix/caching']
+            },
+            {
+              type: 'category',
+              label: 'Vite',
+              collapsed: true,
+              items: ['reference/vite/overview', 'reference/vite/configuration']
+            }
+          ]
+        },
+        {
+          type: 'category',
+          label: 'Runtime & Orchestration',
+          collapsed: true,
+          items: [
+            'reference/runtime/overview',
+            'reference/runtime/configuration',
+            'reference/runtime/multithread-architecture',
+            'reference/runtime/programmatic'
+          ]
+        },
+        {
+          type: 'category',
+          label: 'SQL Data Layer',
+          collapsed: true,
+          items: [
+            'reference/sql-mapper/overview',
+            'reference/sql-mapper/fastify-plugin',
+            {
+              type: 'category',
+              label: 'SQL Mapper - Entities',
+              collapsed: true,
+              items: [
+                'reference/sql-mapper/entities/overview',
+                'reference/sql-mapper/entities/fields',
+                'reference/sql-mapper/entities/api',
+                'reference/sql-mapper/entities/example',
+                'reference/sql-mapper/entities/hooks',
+                'reference/sql-mapper/entities/relations',
+                'reference/sql-mapper/entities/transactions',
+                'reference/sql-mapper/entities/timestamps'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'GraphQL API Generation',
+              collapsed: true,
+              items: [
+                'reference/sql-graphql/overview',
+                'reference/sql-graphql/queries',
+                'reference/sql-graphql/mutations',
+                'reference/sql-graphql/many-to-many',
+                'reference/sql-graphql/subscriptions',
+                'reference/sql-graphql/ignore'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'REST API Generation',
+              collapsed: true,
+              items: [
+                'reference/sql-openapi/overview',
+                'reference/sql-openapi/api',
+                'reference/sql-openapi/ignore',
+                'reference/sql-openapi/explicit-include'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'SQL Events',
+              collapsed: true,
+              items: ['reference/sql-events/overview', 'reference/sql-events/fastify-plugin']
+            }
+          ]
+        },
+        'reference/troubleshooting',
+        'reference/errors'
       ]
     },
-    'learn/glossary',
-    'FAQs'
+
+    // Contributing - Community and development resources
+    {
+      type: 'category',
+      label: 'Contributing',
+      collapsed: true,
+      items: ['contributing/contributing', 'contributing/documentation-style-guide']
+    }
   ]
 }
 

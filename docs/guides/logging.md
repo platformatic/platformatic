@@ -1,125 +1,212 @@
-# Logger Configuration
+# How to Configure Logging in Your Watt Application
 
-Platformatic provides robust logging capabilities built on [Pino](https://getpino.io/), offering various configuration options to customize the logs for every kind of Platformatic service.
+## Problem
 
-The default logger configuration is `level: info` and `transport: pino-pretty` when running in a terminal or in development mode.
+You need to customize logging behavior in your Platformatic application for different environments (development, staging, production) or integrate with external logging systems.
 
-The typical usage is to set the `logger` options in the `watt.json` configuration file and have them consistent across all services, since the logger configuration is inherited from the parent configurations to the child services, but the settings can be overridden in the `platformatic.json` configuration file for specific services.
+## Solution Overview
 
-## Options
+Platformatic uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
+- Set consistent logging across all services via Watt configuration
+- Override logging for specific services
+- Integrate with external systems (Elasticsearch, files, etc.)
+- Redact sensitive information from logs
 
-The logger configuration supports the following properties:
+The default configuration uses `level: info` with pretty-printed output in development.
 
-- **`level`**: (default: `'info'`) The minimum level to log. Available values include:
-  - `'fatal'` - only fatal errors
-  - `'error'` - fatal and error messages
-  - `'warn'` - errors, warnings, and less severe issues
-  - `'info'` - general information, plus all above levels (default)
-  - `'debug'` - detailed information for debugging, plus all above levels
-  - `'trace'` - very detailed tracing information, plus all above levels
-  - `'silent'` - no logging at all
+## Quick Solutions by Use Case
 
-  See the [Pino documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#level-string) for more details.
+**Need to change log level?** → [Set Log Level](#set-log-level)  
+**Need to log to files?** → [File Logging](#file-logging)  
+**Need to hide sensitive data?** → [Redact Sensitive Information](#redact-sensitive-information)  
+**Need structured production logs?** → [Production Logging](#production-logging)
 
-- **`transport`**: The default transport will output logs to stdout and stderr; for specific need different transports can be set, usually to collect logs to a specific destination.
+## Set Log Level
 
-This can be configured in two ways:
-  
-  - Single transport:
-    ```json
-    {
-      "logger": {
-        "transport": {
-          "targets": [{
-            "target": "pino-elasticsearch",
-          "options": {
-              "node": "http://127.0.0.1:9200"
-            }
-          }
-        ]
-      }
-    }
-    ```
-    
-  - Multiple transports:
-    ```json
-    {
-      "logger": {
-        "transport": {
-          "targets": [
-            {
-            "target": "pino-pretty",
-            "level": "info",
-            "options": {
-              "colorize": true
-            }
-          },
-          {
-            "target": "pino/file",
-            "level": "error",
-            "options": {
-              "destination": "{LOG_DIR}/app.log",
-              "mkdir": true
-            }
-          }
-          ]
+**Problem:** You need different amounts of logging detail in different environments.
+
+**Solution:** Configure the `level` property in your `watt.json`:
+
+```json
+{
+  "logger": {
+    "level": "debug"
+  }
+}
+```
+
+**Available levels (most to least verbose):**
+- `trace` - Very detailed debugging information
+- `debug` - Debugging information  
+- `info` - General information (default)
+- `warn` - Warning messages
+- `error` - Error messages only
+- `fatal` - Fatal errors only
+- `silent` - No logging
+
+**Environment-specific example:**
+```json
+{
+  "logger": {
+    "level": "{LOG_LEVEL}"
+  }
+}
+```
+
+Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
+
+## File Logging
+
+**Problem:** You need to persist logs to files for auditing or analysis.
+
+**Solution:** Configure a file transport in your `watt.json`:
+
+```json
+{
+  "logger": {
+    "transport": {
+      "targets": [{
+        "target": "pino/file",
+        "options": {
+          "destination": "{LOG_DIR}/app.log",
+          "mkdir": true
         }
-      }
-    }
-    ```
-
-  See the [Pino transports documentation](https://github.com/pinojs/pino/blob/main/docs/transports.md) for more details.
-
-- **`formatters`**: Specify custom formatters for the logger, for `bindings` and `level`. Functions must be exported in a separate ESM file and referenced with the `path` property:
-
-  ```json
-  {
-    "logger": {
-      "formatters": {
-        "path": "formatters.js"
-      }
+      }]
     }
   }
-  ```
+}
+```
 
-  The `formatters.js` file must export two functions: `bindings` and `level`.
-
-  ```js
-  export function bindings (bindings) {
-    return { service: 'service-name' }
-  }
-
-  export function level (label) {
-    return { level: label.toUpperCase() }
-  }
-  ```
-
-  See the [Pino formatters documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#formatters-object) for more details.
-
-- **`timestamp`**: The timestamp format to use for the logs, one of:
-  - `isoTime` - ISO 8601-formatted time string
-  - `epochTime` - milliseconds since Unix epoch (default for Pino)
-  - `unixTime` - seconds since Unix epoch
-  - `nullTime` - no timestamp
-
-  See the [Pino time functions documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#pino-stdtimefunctions) for more details.
-
-- **`redact`**: Specify the `paths` and optionally the `censor` for redacting sensitive information:
-
-  ```json
-  {
-    "logger": {
-      "redact": {
-        "paths": ["req.headers.authorization", "password"],
-        "censor": "[redacted]"
-      }
+**Multiple destinations example:**
+```json
+{
+  "logger": {
+    "transport": {
+      "targets": [
+        {
+          "target": "pino-pretty",
+          "level": "info",
+          "options": {
+            "colorize": true
+          }
+        },
+        {
+          "target": "pino/file", 
+          "level": "error",
+          "options": {
+            "destination": "{LOG_DIR}/errors.log",
+            "mkdir": true
+          }
+        }
+      ]
     }
   }
-  ```
+}
+```
 
-  The `censor` property defaults to `"[redacted]"` if not specified.
+This logs all messages to console with pretty formatting, and errors to a file.
 
-  See the [Pino redaction documentation](https://github.com/pinojs/pino/blob/main/docs/redaction.md) for more details.
+## External System Integration
+
+**Problem:** You need to send logs to Elasticsearch, Splunk, or other logging systems.
+
+**Solution:** Use specialized transport targets:
+
+**Elasticsearch:**
+```json
+{
+  "logger": {
+    "transport": {
+      "targets": [{
+        "target": "pino-elasticsearch",
+        "options": {
+          "node": "http://127.0.0.1:9200",
+          "index": "my-app-logs"
+        }
+      }]
+    }
+  }
+}
+```
+
+Install the transport: `npm install pino-elasticsearch`
+
+## Redact Sensitive Information
+
+**Problem:** Your logs contain sensitive data (passwords, tokens, API keys) that shouldn't be stored.
+
+**Solution:** Use the `redact` configuration to automatically hide sensitive fields:
+
+```json
+{
+  "logger": {
+    "redact": {
+      "paths": [
+        "req.headers.authorization",
+        "password", 
+        "apiKey",
+        "req.body.creditCard"
+      ],
+      "censor": "[REDACTED]"
+    }
+  }
+}
+```
+
+**Before redaction:**
+```json
+{
+  "level": 30,
+  "msg": "User login",
+  "password": "secret123",
+  "req": {
+    "headers": {
+      "authorization": "Bearer token123"
+    }
+  }
+}
+```
+
+**After redaction:**
+```json
+{
+  "level": 30,
+  "msg": "User login", 
+  "password": "[REDACTED]",
+  "req": {
+    "headers": {
+      "authorization": "[REDACTED]"
+    }
+  }
+}
+```
+
+## Production Logging
+
+**Problem:** You need structured, machine-readable logs for production monitoring.
+
+**Solution:** Configure production-optimized logging:
+
+```json
+{
+  "logger": {
+    "level": "info",
+    "timestamp": "isoTime",
+    "base": {
+      "service": "my-app",
+      "version": "1.2.0"
+    },
+    "redact": {
+      "paths": ["req.headers.authorization", "password"]
+    }
+  }
+}
+```
+
+This provides:
+- ISO timestamp format for log aggregation
+- Service metadata for filtering
+- Automatic sensitive data redaction
 
 - **base**: The base object for the logs; it can be either be `null` to remove `pid` and `hostname` or a custom key/value object to add custom properties to the logs.
 

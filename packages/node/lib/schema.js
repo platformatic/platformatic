@@ -24,6 +24,10 @@ const node = {
     disablePlatformaticInBuild: {
       type: 'boolean',
       default: false
+    },
+    hasServer: {
+      type: 'boolean',
+      default: true
     }
   },
   default: {},

@@ -6,257 +6,257 @@
  */
 
 export type PlatformaticRuntimeConfig = {
-  [k: string]: unknown;
+  [k: string]: unknown
 } & {
-  $schema?: string;
-  preload?: string | string[];
-  entrypoint?: string;
-  basePath?: string;
+  $schema?: string
+  preload?: string | string[]
+  entrypoint?: string
+  basePath?: string
   autoload?: {
-    path: string;
-    exclude?: string[];
+    path: string
+    exclude?: string[]
     mappings?: {
       [k: string]: {
-        id: string;
-        config?: string;
-        useHttp?: boolean;
-        workers?: number | string;
+        id: string
+        config?: string
+        useHttp?: boolean
+        workers?: number | string
         health?: {
-          enabled?: boolean | string;
-          interval?: number | string;
-          gracePeriod?: number | string;
-          maxUnhealthyChecks?: number | string;
-          maxELU?: number | string;
-          maxHeapUsed?: number | string;
-          maxHeapTotal?: number | string;
-          maxYoungGeneration?: number | string;
-        };
-        preload?: string | string[];
-        arguments?: string[];
-        nodeOptions?: string;
-      };
-    };
-  };
+          enabled?: boolean | string
+          interval?: number | string
+          gracePeriod?: number | string
+          maxUnhealthyChecks?: number | string
+          maxELU?: number | string
+          maxHeapUsed?: number | string
+          maxHeapTotal?: number | string
+          maxYoungGeneration?: number | string
+        }
+        preload?: string | string[]
+        arguments?: string[]
+        nodeOptions?: string
+      }
+    }
+  }
   services?: {
-    [k: string]: unknown;
-  }[];
-  workers?: number | string;
+    [k: string]: unknown
+  }[]
+  workers?: number | string
   web?: {
-    [k: string]: unknown;
-  }[];
+    [k: string]: unknown
+  }[]
   logger?: {
     level: (
-      | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+      | ('fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent')
       | {
-          [k: string]: unknown;
+          [k: string]: unknown
         }
     ) &
-      string;
+      string
     transport?:
       | {
-          target?: string;
+          target?: string
           options?: {
-            [k: string]: unknown;
-          };
+            [k: string]: unknown
+          }
         }
       | {
           targets?: {
-            target?: string;
+            target?: string
             options?: {
-              [k: string]: unknown;
-            };
-            level?: string;
-          }[];
+              [k: string]: unknown
+            }
+            level?: string
+          }[]
           options?: {
-            [k: string]: unknown;
-          };
-        };
+            [k: string]: unknown
+          }
+        }
     pipeline?: {
-      target?: string;
+      target?: string
       options?: {
-        [k: string]: unknown;
-      };
-    };
+        [k: string]: unknown
+      }
+    }
     formatters?: {
-      path: string;
-    };
-    timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+      path: string
+    }
+    timestamp?: 'epochTime' | 'unixTime' | 'nullTime' | 'isoTime'
     redact?: {
-      paths: string[];
-      censor?: string;
-    };
+      paths: string[]
+      censor?: string
+    }
     base?: {
-      [k: string]: unknown;
-    } | null;
-    messageKey?: string;
+      [k: string]: unknown
+    } | null
+    messageKey?: string
     customLevels?: {
-      [k: string]: unknown;
-    };
-    captureStdio?: boolean;
-    [k: string]: unknown;
-  };
+      [k: string]: unknown
+    }
+    captureStdio?: boolean
+    [k: string]: unknown
+  }
   server?: {
-    hostname?: string;
-    port?: number | string;
-    http2?: boolean;
+    hostname?: string
+    port?: number | string
+    http2?: boolean
     https?: {
-      allowHTTP1?: boolean;
+      allowHTTP1?: boolean
       key:
         | string
         | {
-            path?: string;
+            path?: string
           }
         | (
             | string
             | {
-                path?: string;
+                path?: string
               }
-          )[];
+          )[]
       cert:
         | string
         | {
-            path?: string;
+            path?: string
           }
         | (
             | string
             | {
-                path?: string;
+                path?: string
               }
-          )[];
-      requestCert?: boolean;
-      rejectUnauthorized?: boolean;
-    };
-  };
-  startTimeout?: number;
-  restartOnError?: boolean | number;
+          )[]
+      requestCert?: boolean
+      rejectUnauthorized?: boolean
+    }
+  }
+  startTimeout?: number
+  restartOnError?: boolean | number
   gracefulShutdown?: {
-    runtime: number | string;
-    service: number | string;
-  };
+    runtime: number | string
+    service: number | string
+  }
   health?: {
-    enabled?: boolean | string;
-    interval?: number | string;
-    gracePeriod?: number | string;
-    maxUnhealthyChecks?: number | string;
-    maxELU?: number | string;
-    maxHeapUsed?: number | string;
-    maxHeapTotal?: number | string;
-    maxYoungGeneration?: number | string;
-  };
+    enabled?: boolean | string
+    interval?: number | string
+    gracePeriod?: number | string
+    maxUnhealthyChecks?: number | string
+    maxELU?: number | string
+    maxHeapUsed?: number | string
+    maxHeapTotal?: number | string
+    maxYoungGeneration?: number | string
+  }
   undici?: {
     agentOptions?: {
-      [k: string]: unknown;
-    };
+      [k: string]: unknown
+    }
     interceptors?:
       | {
-          module: string;
+          module: string
           options: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
+            [k: string]: unknown
+          }
+          [k: string]: unknown
         }[]
       | {
           Client?: {
-            module: string;
+            module: string
             options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
+              [k: string]: unknown
+            }
+            [k: string]: unknown
+          }[]
           Pool?: {
-            module: string;
+            module: string
             options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
+              [k: string]: unknown
+            }
+            [k: string]: unknown
+          }[]
           Agent?: {
-            module: string;
+            module: string
             options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
-          [k: string]: unknown;
-        };
-    [k: string]: unknown;
-  };
+              [k: string]: unknown
+            }
+            [k: string]: unknown
+          }[]
+          [k: string]: unknown
+        }
+    [k: string]: unknown
+  }
   httpCache?:
     | boolean
     | {
-        store?: string;
+        store?: string
         /**
          * @minItems 1
          */
-        methods?: [string, ...string[]];
-        cacheTagsHeader?: string;
-        maxSize?: number;
-        maxEntrySize?: number;
-        maxCount?: number;
-        [k: string]: unknown;
-      };
-  watch?: boolean | string;
+        methods?: [string, ...string[]]
+        cacheTagsHeader?: string
+        maxSize?: number
+        maxEntrySize?: number
+        maxCount?: number
+        [k: string]: unknown
+      }
+  watch?: boolean | string
   managementApi?:
     | boolean
     | string
     | {
         logs?: {
-          maxSize?: number;
-        };
-      };
+          maxSize?: number
+        }
+      }
   metrics?:
     | boolean
     | {
-        port?: number | string;
-        enabled?: boolean | string;
-        hostname?: string;
-        endpoint?: string;
+        port?: number | string
+        enabled?: boolean | string
+        hostname?: string
+        endpoint?: string
         auth?: {
-          username: string;
-          password: string;
-        };
+          username: string
+          password: string
+        }
         labels?: {
-          [k: string]: string;
-        };
+          [k: string]: string
+        }
         readiness?:
           | boolean
           | {
-              endpoint?: string;
+              endpoint?: string
               success?: {
-                statusCode?: number;
-                body?: string;
-              };
+                statusCode?: number
+                body?: string
+              }
               fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
+                statusCode?: number
+                body?: string
+              }
+            }
         liveness?:
           | boolean
           | {
-              endpoint?: string;
+              endpoint?: string
               success?: {
-                statusCode?: number;
-                body?: string;
-              };
+                statusCode?: number
+                body?: string
+              }
               fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      };
+                statusCode?: number
+                body?: string
+              }
+            }
+        additionalProperties?: never
+        [k: string]: unknown
+      }
   telemetry?: {
-    enabled?: boolean | string;
+    enabled?: boolean | string
     /**
      * The name of the service. Defaults to the folder name if not specified.
      */
-    serviceName: string;
+    serviceName: string
     /**
      * The version of the service (optional)
      */
-    version?: string;
+    version?: string
     /**
      * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
      */
@@ -264,16 +264,16 @@ export type PlatformaticRuntimeConfig = {
       /**
        * The path to skip. Can be a string or a regex.
        */
-      path?: string;
+      path?: string
       /**
        * HTTP method to skip
        */
-      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-      [k: string]: unknown;
-    }[];
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'
+      [k: string]: unknown
+    }[]
     exporter?:
       | {
-          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          type?: 'console' | 'otlp' | 'zipkin' | 'memory' | 'file'
           /**
            * Options for the exporter. These are passed directly to the exporter.
            */
@@ -281,24 +281,24 @@ export type PlatformaticRuntimeConfig = {
             /**
              * The URL to send the traces to. Not used for console or memory exporters.
              */
-            url?: string;
+            url?: string
             /**
              * Headers to send to the exporter. Not used for console or memory exporters.
              */
             headers?: {
-              [k: string]: unknown;
-            };
+              [k: string]: unknown
+            }
             /**
              * The path to write the traces to. Only for file exporter.
              */
-            path?: string;
-            [k: string]: unknown;
-          };
-          additionalProperties?: never;
-          [k: string]: unknown;
+            path?: string
+            [k: string]: unknown
+          }
+          additionalProperties?: never
+          [k: string]: unknown
         }[]
       | {
-          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          type?: 'console' | 'otlp' | 'zipkin' | 'memory' | 'file'
           /**
            * Options for the exporter. These are passed directly to the exporter.
            */
@@ -306,52 +306,52 @@ export type PlatformaticRuntimeConfig = {
             /**
              * The URL to send the traces to. Not used for console or memory exporters.
              */
-            url?: string;
+            url?: string
             /**
              * Headers to send to the exporter. Not used for console or memory exporters.
              */
             headers?: {
-              [k: string]: unknown;
-            };
+              [k: string]: unknown
+            }
             /**
              * The path to write the traces to. Only for file exporter.
              */
-            path?: string;
-            [k: string]: unknown;
-          };
-          additionalProperties?: never;
-          [k: string]: unknown;
-        };
-  };
+            path?: string
+            [k: string]: unknown
+          }
+          additionalProperties?: never
+          [k: string]: unknown
+        }
+  }
   inspectorOptions?: {
-    host?: string;
-    port?: number;
-    breakFirstLine?: boolean;
-    watchDisabled?: boolean;
-    [k: string]: unknown;
-  };
-  serviceTimeout?: number | string;
-  messagingTimeout?: number | string;
-  resolvedServicesBasePath?: string;
+    host?: string
+    port?: number
+    breakFirstLine?: boolean
+    watchDisabled?: boolean
+    [k: string]: unknown
+  }
+  serviceTimeout?: number | string
+  messagingTimeout?: number | string
+  resolvedServicesBasePath?: string
   env?: {
-    [k: string]: string;
-  };
-  sourceMaps?: boolean;
+    [k: string]: string
+  }
+  sourceMaps?: boolean
   scheduler?: {
-    enabled?: boolean | string;
-    name: string;
-    cron: string;
-    callbackUrl: string;
-    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    enabled?: boolean | string
+    name: string
+    cron: string
+    callbackUrl: string
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     headers?: {
-      [k: string]: string;
-    };
+      [k: string]: string
+    }
     body?:
       | string
       | {
-          [k: string]: unknown;
-        };
-    maxRetries?: number;
-    [k: string]: unknown;
-  }[];
-};
+          [k: string]: unknown
+        }
+    maxRetries?: number
+    [k: string]: unknown
+  }[]
+}

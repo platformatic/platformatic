@@ -1,7 +1,26 @@
-# Using Watt With Node Config
+# How to Use Watt with Node Config
 
-[Node-config](https://www.npmjs.com/package/config) is a popular configuration management package that helps organize settings across different deployment environments in your application. It creates a unified configuration system that works seamlessly with both [Watt](https://platformatic.dev/docs/watt/overview) and other `npm` modules.
-When building a Watt application with multiple services, each service can maintain its own independent configuration using `node-config`. This allows different services to use different environment configurations as needed.
+## Problem
+
+You need sophisticated configuration management for your Watt application that:
+- Organizes settings across multiple environments (dev, staging, production)
+- Supports complex configuration hierarchies and inheritance
+- Validates configuration values at startup
+- Allows per-service configuration in multi-service applications
+
+**When to use this solution:**
+- Applications with complex configuration requirements
+- Multi-environment deployments with different settings
+- Team environments where configuration consistency is critical
+- Applications requiring configuration validation and type safety
+
+## Solution Overview
+
+[Node-config](https://www.npmjs.com/package/config) provides hierarchical configuration management that works seamlessly with Watt. This guide shows you how to:
+1. Set up node-config in your Watt application
+2. Create environment-specific configurations
+3. Configure individual services with their own settings
+4. Validate and access configuration values safely
 
 
 
@@ -203,7 +222,97 @@ try {
 
 We recommend using schema validation libraries like [TypeBox](https://github.com/sinclairzx81/typebox), [Ajv](https://ajv.js.org/), or [Zod](https://zod.dev/) to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
 
+## Verification and Testing
+
+### Test Configuration Loading
+
+**1. Create a test script to verify configuration:**
+```js
+// test-config.js
+import config from 'config'
+
+console.log('Configuration loaded successfully:')
+console.log('Environment:', process.env.NODE_ENV || 'default')
+console.log('Server config:', config.get('server'))
+console.log('Database config:', config.get('database'))
+
+// Test configuration validation
+try {
+  const apiTimeout = config.get('api.timeout')
+  if (apiTimeout < 1000) {
+    console.warn('API timeout is very low:', apiTimeout)
+  }
+} catch (error) {
+  console.error('Configuration error:', error.message)
+}
+```
+
+**2. Test different environments:**
+```bash
+# Test default configuration
+node test-config.js
+
+# Test development environment
+NODE_ENV=development node test-config.js
+
+# Test production environment  
+NODE_ENV=production node test-config.js
+```
+
+### Verify Service-Specific Configuration
+
+**Test that each service loads its own configuration:**
+```bash
+# Start your Watt application
+npm run dev
+
+# Check service logs for configuration loading
+# Each service should show its specific config values
+```
+
+## Troubleshooting
+
+### Configuration Not Loading
+
+**Problem:** Config values are undefined or using defaults
+
+**Solutions:**
+- Verify `NODE_CONFIG_DIR` points to correct directory
+- Check configuration file naming (`default.json`, `development.json`, etc.)
+- Ensure JSON syntax is valid
+- Verify environment variable `NODE_ENV` is set correctly
+
+### Service Configuration Conflicts
+
+**Problem:** Services are using wrong configuration
+
+**Solutions:**
+- Check that each service has its own `NODE_CONFIG_DIR` environment variable
+- Verify service-specific configuration files exist
+- Ensure no configuration file naming conflicts
+- Review service startup logs for configuration loading messages
+
+### Environment Variable Issues
+
+**Problem:** Environment variables not being interpolated
+
+**Solutions:**
+- Verify environment variables are set before starting application
+- Check interpolation syntax: `${VARIABLE_NAME}`
+- Ensure variables exist in current shell environment
+- Test variable substitution with simple values first
+
+## Next Steps
+
+Now that you have sophisticated configuration management:
+
+- **[Set up monitoring](/docs/guides/monitoring)** - Monitor configuration across environments
+- **[Deploy with multiple environments](/docs/guides/deployment/)** - Production deployment patterns
+- **[Add configuration validation](/docs/guides/validation/)** - Ensure configuration correctness
+- **[Implement feature flags](/docs/guides/feature-flags/)** - Dynamic configuration management
+
 ## Additional Resources
 
-- For more details on setting up a Watt application, see our [Watt setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
-- Learn more about configuration patterns in the [node-config documentation](https://www.npmjs.com/package/config)
+- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Node-config Documentation](https://www.npmjs.com/package/config) - Complete configuration patterns and options
+- [Environment Variables Guide](/docs/learn/beginner/environment-variables) - Basic environment variable usage with Watt
