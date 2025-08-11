@@ -58,7 +58,7 @@ In your service endpoints, add appropriate cache headers:
 
 ```js
 // routes/products.js
-module.exports = async function (fastify) {
+export default async function (fastify) {
   fastify.get('/cached-counter', async (req, reply) => {
     // Set cache duration (10 minutes)
     reply.header('Cache-Control', 'public, s-maxage=600')
@@ -97,7 +97,7 @@ When you need to invalidate cache for a specific endpoint:
 
 ```js
 // routes/admin.js  
-module.exports = async function (fastify) {
+export default async function (fastify) {
   fastify.delete('/invalidate-counter-cache', async (req, reply) => {
     await globalThis.platformatic.invalidateHttpCache({
       keys: [
@@ -120,7 +120,7 @@ For more flexible invalidation across multiple related endpoints:
 
 ```js
 // routes/admin.js
-module.exports = async function (fastify) {
+export default async function (fastify) {
   fastify.delete('/invalidate-by-tags', {
     schema: {
       querystring: {
@@ -150,7 +150,7 @@ Invalidate cache automatically when data changes:
 
 ```js
 // routes/products.js
-module.exports = async function (fastify) {
+export default async function (fastify) {
   fastify.post('/products', async (req, reply) => {
     const newProduct = await createProduct(req.body)
     
@@ -220,7 +220,7 @@ Here's a complete working example that demonstrates all caching concepts:
 
 ```js
 // routes/cache-demo.js
-module.exports = async function (fastify) {
+export default async function (fastify) {
   let counter = 0
   
   // Cached endpoint
