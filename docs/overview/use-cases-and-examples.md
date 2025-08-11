@@ -477,7 +477,7 @@ Product Team A        Product Team B        Platform Team
 
 ### 1. E-commerce Store
 
-**Live Example:** [GitHub Repository](https://github.com/platformatic/examples/tree/main/applications/e-commerce-watt)
+**Conceptual Example:** Full-stack e-commerce application pattern
 
 **Features:**
 - Product catalog with search and filtering
@@ -485,7 +485,7 @@ Product Team A        Product Team B        Platform Team
 - Admin dashboard for inventory management
 - Customer authentication and profiles
 
-**Architecture:**
+**Architecture Pattern:**
 ```json
 {
   "services": [
@@ -500,7 +500,7 @@ Product Team A        Product Team B        Platform Team
 
 ### 2. Content Management System
 
-**Live Example:** [GitHub Repository](https://github.com/platformatic/examples/tree/main/applications/cms-watt)
+**Conceptual Example:** Multi-tenant content management pattern
 
 **Features:**
 - Content authoring with rich text editor
@@ -508,9 +508,9 @@ Product Team A        Product Team B        Platform Team
 - API-driven content delivery
 - User roles and permissions
 
-**Key Code:**
+**GraphQL Query Pattern:**
 ```javascript
-// Auto-generated GraphQL APIs
+// Auto-generated GraphQL APIs from database schema
 query GetPosts($siteId: ID!) {
   posts(where: { siteId: { eq: $siteId } }) {
     id
@@ -527,7 +527,7 @@ query GetPosts($siteId: ID!) {
 
 ### 3. Real-time Chat Application
 
-**Live Example:** [GitHub Repository](https://github.com/platformatic/examples/tree/main/applications/chat-watt)
+**Conceptual Example:** WebSocket-powered messaging system
 
 **Features:**
 - WebSocket-based real-time messaging
@@ -535,9 +535,9 @@ query GetPosts($siteId: ID!) {
 - Message history and search
 - File sharing capabilities
 
-**WebSocket Integration:**
+**Real-time Pattern:**
 ```javascript
-// Real-time service using GraphQL subscriptions
+// GraphQL subscriptions for real-time updates
 subscription MessageAdded($channelId: ID!) {
   messageAdded(channelId: $channelId) {
     id
@@ -552,7 +552,7 @@ subscription MessageAdded($channelId: ID!) {
 
 ### 4. Analytics Dashboard
 
-**Live Example:** [GitHub Repository](https://github.com/platformatic/examples/tree/main/applications/analytics-watt)
+**Conceptual Example:** Time-series data processing system
 
 **Features:**
 - Time-series data collection
@@ -560,9 +560,9 @@ subscription MessageAdded($channelId: ID!) {
 - Custom report generation
 - Data export capabilities
 
-**Time-Series Architecture:**
+**Database Schema Pattern:**
 ```javascript
-// Optimized for analytics queries
+// Database configuration optimized for analytics
 {
   "db": {
     "migrations": {
@@ -648,7 +648,7 @@ Choose your path based on your use case:
 
 **🚀 Start Building Immediately**
 - [Quick Start Guide](/docs/getting-started/quick-start-watt) - Get running in 5 minutes
-- [Example Applications](https://github.com/platformatic/examples) - Copy working code
+- [Example Applications](https://github.com/platformatic/examples) - Explore working Watt application patterns
 
 **🔍 Deep Dive into Architecture** 
 - [Architecture Overview](/docs/overview/architecture-overview) - Technical details
