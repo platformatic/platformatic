@@ -9,8 +9,14 @@ label: Getting Started
 
 Different developers learn best in different ways. Choose the path that matches your style and available time:
 
-### 🎯 Quick Start (5-10 minutes)
+**Difficulty Levels:**
+- **Beginner:** No prior Watt experience needed, basic Node.js knowledge helpful
+- **Intermediate:** Some experience with APIs, databases, and Node.js frameworks
+- **Advanced:** Deep understanding of Node.js architectures and deployment practices
+
+### 🎯 Quick Start (5-10 minutes) • **Beginner**
 **Best for:** Developers who want immediate results and learn by experimentation
+**Prerequisites:** Basic Node.js knowledge (5 minutes setup time)
 
 **What you'll accomplish:**
 - Get a full-stack app running locally in under 5 minutes
@@ -21,8 +27,9 @@ Different developers learn best in different ways. Choose the path that matches 
 
 ---
 
-### 📚 Guided Tutorial (30 minutes) 
+### 📚 Guided Tutorial (30 minutes) • **Beginner to Intermediate**
 **Best for:** Developers who prefer step-by-step learning with detailed explanations
+**Prerequisites:** Node.js and basic database concepts (10 minutes setup time)
 
 **What you'll build:**
 - Complete CRUD application with database, API, and frontend
@@ -33,8 +40,9 @@ Different developers learn best in different ways. Choose the path that matches 
 
 ---
 
-### 🔍 Example-Driven (15-20 minutes)
+### 🔍 Example-Driven (15-20 minutes) • **Intermediate**
 **Best for:** Developers who learn best from complete, working examples
+**Prerequisites:** Node.js, API, and database experience (5 minutes setup time)
 
 **What you'll explore:**
 - Multiple real-world application patterns
@@ -45,8 +53,9 @@ Different developers learn best in different ways. Choose the path that matches 
 
 ---
 
-### 🔄 Migration-Focused (45-60 minutes)
+### 🔄 Migration-Focused (45-60 minutes) • **Advanced**
 **Best for:** Teams with existing Node.js applications who want to evaluate Watt
+**Prerequisites:** Existing Node.js application and deployment experience (15 minutes setup time)
 
 **What you'll accomplish:**
 - Assessment framework for migration feasibility
@@ -69,9 +78,10 @@ Different developers learn best in different ways. Choose the path that matches 
 - **I want to see multiple complete examples** → Choose **Example-Driven**
 
 ### How much time do you have right now?
-- **5 minutes** → **Quick Start**
-- **15-20 minutes** → **Example-Driven** 
-- **30+ minutes** → **Guided Tutorial** or **Migration-Focused**
+- **10-15 minutes** (including setup) → **Quick Start**
+- **20-25 minutes** (including setup) → **Example-Driven** 
+- **40+ minutes** (including setup) → **Guided Tutorial**
+- **60+ minutes** (including setup) → **Migration-Focused**
 
 ---
 
@@ -83,7 +93,8 @@ Different developers learn best in different ways. Choose the path that matches 
 - You can create/read data through auto-generated APIs
 - You understand Watt's unified development experience
 
-**Estimated completion:** 5-10 minutes  
+**Estimated completion:** 5-10 minutes (+ 5 min setup)  
+**Difficulty:** Beginner - requires only basic command line usage  
 **Next step:** Try the Guided Tutorial for deeper understanding
 
 ### Guided Tutorial Success  
@@ -92,7 +103,8 @@ Different developers learn best in different ways. Choose the path that matches 
 - You understand how services communicate in Watt
 - You can configure different service types
 
-**Estimated completion:** 30 minutes  
+**Estimated completion:** 30 minutes (+ 10 min setup)  
+**Difficulty:** Beginner to Intermediate - requires understanding of databases and APIs  
 **Next step:** Explore Examples for different architecture patterns
 
 ### Example-Driven Success
@@ -101,7 +113,8 @@ Different developers learn best in different ways. Choose the path that matches 
 - You understand different ways to structure Watt applications
 - You have starting points for your own projects
 
-**Estimated completion:** 15-20 minutes  
+**Estimated completion:** 15-20 minutes (+ 5 min setup)  
+**Difficulty:** Intermediate - requires experience with Node.js architectures  
 **Next step:** Use Migration Guide to port existing apps, or start the Tutorial
 
 ### Migration-Focused Success
@@ -110,7 +123,8 @@ Different developers learn best in different ways. Choose the path that matches 
 - You've successfully migrated a sample application
 - You understand the benefits and trade-offs for your specific use case
 
-**Estimated completion:** 45-60 minutes  
+**Estimated completion:** 45-60 minutes (+ 15 min setup)  
+**Difficulty:** Advanced - requires deep understanding of existing application architecture  
 **Next step:** Begin migration planning for production applications
 
 ---
@@ -151,10 +165,11 @@ Different developers learn best in different ways. Choose the path that matches 
 - Bookmark the other paths for later exploration
 - Set expectations for time investment
 
-### 3. **Complete Your Chosen Path** (5-60 minutes depending on path)
+### 3. **Complete Your Chosen Path** (10-75 minutes depending on path)
 - Follow your selected path completely
 - Don't jump between paths initially - complete one fully first
 - Take note of concepts that resonate with your use case
+- Allow extra time if you're new to the prerequisite technologies
 
 ### 4. **Next Steps Planning** (5 minutes)
 - Review the "Next Step" recommendation for your completed path
