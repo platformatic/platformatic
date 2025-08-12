@@ -16,7 +16,7 @@ You need to improve your application's performance by caching HTTP responses, bu
 
 ## Solution Overview
 
-Watt provides built-in HTTP caching with tag-based invalidation. This guide shows you how to:
+Watt provides built-in HTTP caching with tag-based invalidation that works with any Node.js web framework including Express, Fastify, Koa, and others. This guide shows you how to:
 1. Enable HTTP caching in your Watt application
 2. Tag responses for intelligent cache invalidation
 3. Invalidate cache by specific routes or tags
@@ -40,10 +40,7 @@ Add HTTP caching configuration to your `watt.json` file:
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.17.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
-  },
-  "services": [
-    // your services here
-  ]
+  }
 }
 ```
 
