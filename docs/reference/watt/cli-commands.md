@@ -20,7 +20,7 @@ Or install as a project dependency:
 ```bash
 npm install wattpm
 # then run with npx
-npx wattpm --help
+npx wattpm@latest --help
 ```
 
 ## Core Watt Commands (`wattpm`)
@@ -32,8 +32,8 @@ These are the primary commands for working with Watt applications:
 Creates a new Watt application with interactive setup.
 
 ```bash
-wattpm create my-app
-wattpm init  # creates in current directory
+npx wattpm@latest create my-app
+npx wattpm@latest init  # creates in current directory
 ```
 
 **Options:**
@@ -45,8 +45,8 @@ wattpm init  # creates in current directory
 
 **Example:**
 ```bash
-wattpm create my-api --marketplace https://custom-marketplace.com
-wattpm init --skip-dependencies --package-manager pnpm
+npx wattpm@latest create my-api --marketplace https://custom-marketplace.com
+npx wattpm@latest init --skip-dependencies --package-manager pnpm
 ```
 
 ### `wattpm dev`
@@ -351,7 +351,7 @@ wattpm patch-config [directory] <patch-file>
 **Patch file format:**
 ```javascript
 // patch.js
-module.exports = function(runtime, services) {
+export default function(runtime, services) {
   return {
     runtime: [/* JSON Patch operations for runtime config */],
     services: [/* JSON Patch operations for service configs */]
@@ -451,7 +451,7 @@ For more details, see [Configuration File Formats](../../file-formats.md).
 
 ```bash
 # Create a new Watt app
-wattpm create my-app
+npx wattpm@latest create my-app
 cd my-app
 
 # Start in development mode
