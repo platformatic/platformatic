@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { createRuntime, LOGS_TIMEOUT, setFixturesDir } from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
 
@@ -15,7 +15,7 @@ test('should configure metrics correctly with both node and http metrics', async
   const { url } = await createRuntime(t, configuration)
 
   // This is needed for the diagnostics channel to start intercepting requests
-  await sleep(100)
+  await sleep(LOGS_TIMEOUT)
 
   {
     // Test request to add http metrics

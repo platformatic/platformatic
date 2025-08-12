@@ -5,16 +5,13 @@ const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 const { features } = require('@platformatic/foundation')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { prepareRuntime } = require('./helper')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('return workers information in the management API when starting in production mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -48,7 +45,7 @@ test('return workers information in the management API when starting in producti
 test('return no workers information in the management API when starting in development mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null)
+  const app = await createRuntime(configFile, null)
 
   t.after(async () => {
     await app.close()

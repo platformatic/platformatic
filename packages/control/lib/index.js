@@ -360,12 +360,12 @@ export class RuntimeApiClient {
     return webSocketStream
   }
 
-  getRuntimeLiveLogsStream (pid, startLogIndex) {
+  getRuntimeLiveLogsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const query = startLogIndex ? `?start=${startLogIndex}` : ''
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live' + query
+
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 

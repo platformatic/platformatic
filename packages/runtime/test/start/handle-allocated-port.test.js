@@ -4,13 +4,10 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { isCIOnWindows } = require('../helpers')
 const { once } = require('node:events')
 const http = require('http')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 async function getPort () {
   if (isCIOnWindows) {
@@ -22,7 +19,7 @@ async function getPort () {
 }
 
 async function setupAndStartRuntime (configFile) {
-  const runtime = await create(configFile, null, { start: true })
+  const runtime = await createRuntime(configFile, null, { start: true })
   const address = await runtime.getUrl()
 
   return { address, runtime }

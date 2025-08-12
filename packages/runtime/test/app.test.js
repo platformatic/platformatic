@@ -7,9 +7,6 @@ const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/worker/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const { setLogFile } = require('./helpers')
-
-test.beforeEach(setLogFile)
 
 test('errors when starting an already started application', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')

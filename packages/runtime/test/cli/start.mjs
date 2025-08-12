@@ -1,5 +1,8 @@
 import { parseArgs } from 'node:util'
 import { create } from '../../index.js'
+import { createRuntime } from '../helpers.js'
+
+const createFn = process.env.PLT_USE_PLAIN_CREATE ? create : createRuntime
 
 const { values } = parseArgs({
   args: process.argv.slice(3),
@@ -12,7 +15,7 @@ const { values } = parseArgs({
   strict: false
 })
 
-const runtime = await create(process.argv[2], null, {
+const runtime = await createFn(process.argv[2], null, {
   isProduction: values.production,
   inspect: values.inspect,
   inspectBreak: values['inspect-brk']

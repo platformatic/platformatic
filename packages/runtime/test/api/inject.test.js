@@ -3,15 +3,12 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { create } = require('../../index.js')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should inject request to service', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -36,7 +33,7 @@ test('should inject request to service', async t => {
 
 test('should fail inject request is service is not started', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   await app.init()
 
   t.after(async () => {

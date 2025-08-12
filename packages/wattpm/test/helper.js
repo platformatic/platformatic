@@ -99,7 +99,7 @@ export async function waitForStart (startProcess) {
 export function executeCommand (cmd, ...args) {
   const options = typeof args.at(-1) === 'object' ? args.pop() : {}
 
-  return execa(cmd, args, { env: { NO_COLOR: 'true', PLT_RUNTIME_LOGGER_STDOUT: '' }, ...options })
+  return execa(cmd, args, { env: { NO_COLOR: 'true' }, ...options })
 }
 
 export function wattpm (...args) {

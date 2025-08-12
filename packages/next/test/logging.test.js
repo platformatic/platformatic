@@ -6,9 +6,11 @@ import { request } from 'undici'
 import {
   commonFixturesRoot,
   ensureDependencies,
-  getLogs,
+  getLogsFromFile,
+  LOGS_TIMEOUT,
   prepareRuntime,
   setFixturesDir,
+  sleep,
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
@@ -16,7 +18,7 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the logs the output', async t => {
-  const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
+  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
     await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
       const json = JSON.parse(contents)
       json.workers = 3
@@ -40,7 +42,9 @@ test('can properly show the logs the output', async t => {
   }
 
   {
-    const logs = await getLogs(runtime)
+    // wait for logger flush
+    await sleep(LOGS_TIMEOUT)
+    const logs = await getLogsFromFile(root)
 
     // Each log has either the worker number, comes from the main thread or
     // it is the composer, which is the entrypoint and thus no worker

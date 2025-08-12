@@ -7,16 +7,13 @@ const { tmpdir } = require('node:os')
 const { readFile, rm } = require('node:fs/promises')
 const { request } = require('undici')
 
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { transform } = require('../../lib/config')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('can restart the runtime apps', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   let entryUrl = await app.start()
 
   t.after(async () => {
@@ -47,7 +44,7 @@ test('do not restart if service is not started', async t => {
 
   const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
 
-  const app = await create(configPath, null, {
+  const app = await createRuntime(configPath, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
 

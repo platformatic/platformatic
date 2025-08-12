@@ -7,9 +7,6 @@ const { createDirectory, safeRemove } = require('@platformatic/foundation')
 const fastify = require('fastify')
 const ws = require('ws')
 
-const errors = require('./errors')
-const { getRuntimeLogsDir } = require('./utils')
-
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
 async function managementApiPlugin (app, opts) {
@@ -152,54 +149,7 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/logs/live', { websocket: true }, async (socket, req) => {
-    const startLogId = req.query.start ? parseInt(req.query.start) : null
-
-    if (startLogId) {
-      const logIds = await runtime.getLogIds()
-      if (!logIds.includes(startLogId)) {
-        throw new errors.LogFileNotFound(startLogId)
-      }
-    }
-
-    const stream = ws.createWebSocketStream(socket)
-    runtime.pipeLogsStream(stream, req.log, startLogId)
-  })
-
-  app.get('/logs/indexes', async req => {
-    const returnAllIds = req.query.all === 'true'
-
-    if (returnAllIds) {
-      const runtimesLogsIds = await runtime.getAllLogIds()
-      return runtimesLogsIds
-    }
-
-    const runtimeLogsIds = await runtime.getLogIds()
-    return { indexes: runtimeLogsIds }
-  })
-
-  app.get('/logs/all', async (req, reply) => {
-    const runtimePID = parseInt(req.query.pid) || process.pid
-
-    const logsIds = await runtime.getLogIds(runtimePID)
-    const startLogId = logsIds.at(0)
-    const endLogId = logsIds.at(-1)
-
-    reply.hijack()
-
-    runtime.pipeLogsStream(reply.raw, req.log, startLogId, endLogId, runtimePID)
-  })
-
-  app.get('/logs/:id', async req => {
-    const logId = parseInt(req.params.id)
-    const runtimePID = parseInt(req.query.pid) || process.pid
-
-    const logIds = await runtime.getLogIds(runtimePID)
-    if (!logIds || !logIds.includes(logId)) {
-      throw new errors.LogFileNotFound(logId)
-    }
-
-    const logFileStream = await runtime.getLogFileStream(logId, runtimePID)
-    return logFileStream
+    runtime.addLoggerDestination(ws.createWebSocketStream(socket))
   })
 }
 
@@ -211,9 +161,6 @@ async function startManagementApi (runtime, root) {
     if (platform() !== 'win32') {
       await createDirectory(runtimePIDDir, true)
     }
-
-    const runtimeLogsDir = getRuntimeLogsDir(root, process.pid)
-    await createDirectory(runtimeLogsDir, true)
 
     let socketPath = null
     if (platform() === 'win32') {

@@ -6,15 +6,12 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 
-const { create } = require('../../index.js')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should stop accepting new request immediately under high load', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-log.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(() => {
     app.close()

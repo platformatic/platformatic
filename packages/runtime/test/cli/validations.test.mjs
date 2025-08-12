@@ -6,19 +6,19 @@ import { stripVTControlCharacters } from 'node:util'
 import { startPath } from './helper.mjs'
 
 test('missing config', async () => {
-  await assert.rejects(execa(process.execPath, [startPath]))
+  await assert.rejects(execa(process.execPath, [startPath], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
 })
 
 test('no services specified by config', async () => {
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-services.config.json')
 
-  await assert.rejects(execa(process.execPath, [startPath, config]))
+  await assert.rejects(execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
 })
 
 test('no services or autoload specified by config', async () => {
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-sources.config.json')
 
-  await assert.rejects(execa(process.execPath, [startPath, config]))
+  await assert.rejects(execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
 })
 
 test('print validation errors', async () => {
@@ -27,7 +27,7 @@ test('print validation errors', async () => {
   try {
     const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'missing-property.config.json')
 
-    await execa(process.execPath, [startPath, config])
+    await execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   } catch (err) {
     error = err
   }

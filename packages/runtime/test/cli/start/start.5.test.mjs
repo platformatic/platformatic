@@ -6,8 +6,19 @@ import { startPath } from '../helper.mjs'
 
 test('do not start if there are no services', async t => {
   const { execa } = await import('execa')
-  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'no-services-no-entrypoint.config.json')
-  const child = execa(process.execPath, [startPath, config], { encoding: 'utf8' })
+  const config = join(
+    import.meta.dirname,
+    '..',
+    '..',
+    '..',
+    'fixtures',
+    'configs',
+    'no-services-no-entrypoint.config.json'
+  )
+  const child = execa(process.execPath, [startPath, config], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
+  })
   let stdout = ''
   let found = false
 

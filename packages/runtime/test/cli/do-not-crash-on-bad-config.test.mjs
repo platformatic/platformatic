@@ -31,7 +31,7 @@ test('do not crash on bad config', async t => {
   configFile.watch = true
   await writeFile(configFileDst, JSON.stringify(configFile, null, 2))
 
-  const { child } = await start(configFileDst)
+  const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(() => child.kill('SIGKILL'))
 
   await writeFile(serviceConfigFilePath, 'INVALID')

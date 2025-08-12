@@ -6,11 +6,8 @@ const { readFile, writeFile } = require('node:fs/promises')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { safeRemove } = require('@platformatic/foundation')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const { setLogFile } = require('./helpers')
-
-test.beforeEach(setLogFile)
 
 async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   const configFile = join(fixturesDir, fixture, 'platformatic-with-entrypoint.json')
@@ -18,7 +15,7 @@ async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   config.entrypoint = entrypoint
   await writeFile(configFile, JSON.stringify(config, null, 2))
 
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await safeRemove(configFile)

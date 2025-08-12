@@ -3,15 +3,12 @@
 const { strict: assert, deepStrictEqual } = require('node:assert')
 const { test } = require('node:test')
 const path = require('node:path')
-const { create } = require('../..')
-const { setLogFile } = require('../helpers')
+const { createRuntime } = require('../helpers.js')
 const { waitForEvents } = require('./helper')
-
-test.beforeEach(setLogFile)
 
 async function prepareRuntime (t, servicesId, fixture) {
   const appPath = path.join(__dirname, '..', '..', 'fixtures', fixture)
-  const runtime = await create(path.join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
   t.after(async () => {
     await runtime.close(true)
   })
@@ -29,7 +26,7 @@ async function prepareRuntime (t, servicesId, fixture) {
 test('should throw error for invalid parameters of updateServicesResources', async t => {
   const serviceId = 'node'
   const appPath = path.join(__dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await create(path.join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
   t.after(async () => {
     await runtime.close()
   })

@@ -11,14 +11,13 @@ const {
   kMetadata
 } = require('@platformatic/foundation')
 const { once, EventEmitter } = require('node:events')
-const { createReadStream, watch, existsSync } = require('node:fs')
-const { readdir, readFile, stat, access } = require('node:fs/promises')
+const { existsSync } = require('node:fs')
+const { readFile } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
 const { pathToFileURL } = require('node:url')
 const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
-const ts = require('tail-file-stream')
 const { Agent, interceptors: undiciInterceptors, request } = require('undici')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 const SonicBoom = require('sonic-boom')
@@ -29,7 +28,7 @@ const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { startScheduler } = require('./scheduler')
 const { createSharedStore } = require('./shared-http-cache')
-const { getRuntimeTmpDir, getRuntimeLogsDir } = require('./utils')
+const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { RoundRobinMap } = require('./worker/round-robin-map.js')
 const {
@@ -71,7 +70,6 @@ class Runtime extends EventEmitter {
   #context
   #isProduction
   #runtimeTmpDir
-  #runtimeLogsDir
   #servicesIds
   #entrypointId
   #url
@@ -104,7 +102,6 @@ class Runtime extends EventEmitter {
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
     this.#runtimeTmpDir = getRuntimeTmpDir(this.#root)
-    this.#runtimeLogsDir = getRuntimeLogsDir(this.#root, process.pid)
     this.#workers = new RoundRobinMap()
     this.#servicesIds = []
     this.#url = undefined
@@ -161,7 +158,7 @@ class Runtime extends EventEmitter {
     }
 
     // Create the logger
-    const [logger, destination] = await createLogger(config, this.#runtimeLogsDir)
+    const [logger, destination] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
 
@@ -553,8 +550,7 @@ class Runtime extends EventEmitter {
         metrics = await this.getFormattedMetrics()
       } catch (error) {
         if (!(error instanceof errors.RuntimeExitedError)) {
-          // TODO(mcollina): use the logger
-          console.error('Error collecting metrics', error)
+          this.logger.error({ err: ensureLoggableError(error) }, 'Error collecting metrics')
         }
         return
       }
@@ -567,87 +563,32 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
-    endLogId = endLogId || Infinity
-    runtimePID = runtimePID ?? process.pid
+  // TODO@ShogunPanda: When https://github.com/pinojs/pino/pull/2257 is merged, update this
+  async addLoggerDestination (writableStream) {
+    // Add the stream - We output everything we get
+    this.#loggerDestination.add({ stream: writableStream, level: 1 })
 
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+    // Immediately get the counter of the last add stream (writableStream) so we can use it to later remove it
+    const id = this.#loggerDestination.streams.reduce(function (accu, current) {
+      return current.id > accu ? current.id : accu
+    }, 0)
 
-    if (runtimeLogFiles.length === 0) {
-      writableStream.end()
-      return
-    }
+    const onClose = () => {
+      writableStream.removeListener('close', onClose)
+      writableStream.removeListener('error', onClose)
+      this.removeListener('closed', onClose)
 
-    let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
-
-    let fileStream = null
-    let fileId = startLogId ?? latestFileId
-    let isClosed = false
-
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-
-    const watcher = watch(runtimeLogsDir, async (event, filename) => {
-      if (event === 'rename' && filename.startsWith('logs')) {
-        const logFileId = parseInt(filename.slice('logs.'.length))
-        if (logFileId > latestFileId) {
-          latestFileId = logFileId
-          fileStream.unwatch()
-        }
+      if (!writableStream.destroyed) {
+        writableStream.destroy()
       }
-    }).unref()
 
-    const streamLogFile = () => {
-      if (fileId > endLogId) {
-        writableStream.end()
+      const writableStreamIndex = this.#loggerDestination.streams.findIndex(s => s.id === id)
+
+      if (writableStreamIndex < 0) {
         return
       }
 
-      const fileName = 'logs.' + fileId
-      const filePath = join(runtimeLogsDir, fileName)
-
-      const prevFileStream = fileStream
-
-      fileStream = ts.createReadStream(filePath)
-      fileStream.pipe(writableStream, { end: false, persistent: false })
-
-      if (prevFileStream) {
-        prevFileStream.unpipe(writableStream)
-        prevFileStream.destroy()
-      }
-
-      fileStream.on('close', () => {
-        if (latestFileId > fileId && !isClosed) {
-          streamLogFile(++fileId)
-        }
-      })
-
-      fileStream.on('error', err => {
-        isClosed = true
-        logger.error(err, 'Error streaming log file')
-        fileStream.destroy()
-        watcher.close()
-        writableStream.end()
-      })
-
-      fileStream.on('eof', () => {
-        if (fileId >= endLogId) {
-          writableStream.end()
-          return
-        }
-        if (latestFileId > fileId) {
-          fileStream.unwatch()
-        }
-      })
-
-      return fileStream
-    }
-
-    streamLogFile(fileId)
-
-    const onClose = () => {
-      isClosed = true
-      watcher.close()
-      fileStream.destroy()
+      this.#loggerDestination.streams.splice(writableStreamIndex, 1)
     }
 
     writableStream.on('close', onClose)
@@ -1008,44 +949,6 @@ class Runtime extends EventEmitter {
     this.servicesConfigsPatches.delete(id)
   }
 
-  async getLogIds (runtimePID) {
-    runtimePID = runtimePID ?? process.pid
-
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-    const runtimeLogIds = []
-
-    for (const logFile of runtimeLogFiles) {
-      const logId = parseInt(logFile.slice('logs.'.length))
-      runtimeLogIds.push(logId)
-    }
-    return runtimeLogIds
-  }
-
-  async getAllLogIds () {
-    const runtimesLogFiles = await this.#getAllLogsFiles()
-    const runtimesLogsIds = []
-
-    for (const runtime of runtimesLogFiles) {
-      const runtimeLogIds = []
-      for (const logFile of runtime.runtimeLogFiles) {
-        const logId = parseInt(logFile.slice('logs.'.length))
-        runtimeLogIds.push(logId)
-      }
-      runtimesLogsIds.push({
-        pid: runtime.runtimePID,
-        indexes: runtimeLogIds
-      })
-    }
-
-    return runtimesLogsIds
-  }
-
-  async getLogFileStream (logFileId, runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
-    return createReadStream(filePath)
-  }
-
   #getHttpCacheValue ({ request }) {
     if (!this.#sharedHttpCache) {
       return
@@ -1257,8 +1160,7 @@ class Runtime extends EventEmitter {
           count: workersCount
         },
         inspectorOptions,
-        dirname: this.#root,
-        runtimeLogsDir: this.#runtimeLogsDir
+        dirname: this.#root
       },
       argv: serviceConfig.arguments,
       execArgv,
@@ -1900,49 +1802,6 @@ class Runtime extends EventEmitter {
     const packageJsonFile = await readFile(packageJsonPath, 'utf8')
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson
-  }
-
-  #getRuntimeLogsDir (runtimePID) {
-    return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
-  }
-
-  async #getRuntimeLogFiles (runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const runtimeLogsFiles = await readdir(runtimeLogsDir)
-    return runtimeLogsFiles
-      .filter(file => file.startsWith('logs'))
-      .sort((log1, log2) => {
-        const index1 = parseInt(log1.slice('logs.'.length))
-        const index2 = parseInt(log2.slice('logs.'.length))
-        return index1 - index2
-      })
-  }
-
-  async #getAllLogsFiles () {
-    try {
-      await access(this.#runtimeTmpDir)
-    } catch (err) {
-      this.logger.error({ err: ensureLoggableError(err) }, 'Cannot access temporary folder.')
-      return []
-    }
-
-    const runtimePIDs = await readdir(this.#runtimeTmpDir)
-    const runtimesLogFiles = []
-
-    for (const runtimePID of runtimePIDs) {
-      const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-      const runtimeLogsDirStat = await stat(runtimeLogsDir)
-      const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-      const lastModified = runtimeLogsDirStat.mtime
-
-      runtimesLogFiles.push({
-        runtimePID: parseInt(runtimePID),
-        runtimeLogFiles,
-        lastModified
-      })
-    }
-
-    return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
   #handleWorkerStandardStreams (worker, serviceId, workerId) {

@@ -3,12 +3,12 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('composer', async t => {
   const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   await app.init()
   const entryUrl = await app.start()
 

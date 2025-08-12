@@ -4,15 +4,12 @@ const assert = require('node:assert')
 const { request } = require('undici')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const { setLogFile } = require('./helpers')
-
-test.beforeEach(setLogFile)
 
 test('propagate the traceId correctly to runtime services', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -38,7 +35,7 @@ test('propagate the traceId correctly to runtime services', async t => {
 
 test('attach x-plt-telemetry-id header', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -61,7 +58,7 @@ test('attach x-plt-telemetry-id header', async t => {
 
 test('disabled telemetry', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()

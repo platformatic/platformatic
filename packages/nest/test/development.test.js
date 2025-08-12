@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import {
   createRuntime,
   isCIOnWindows,
+  LOGS_TIMEOUT,
   prepareRuntimeWithServices,
   setFixturesDir,
   sleep,
@@ -207,7 +208,7 @@ test('NestJS watch mode is correctly tracked in development', async t => {
     return contents.replace("production: process.env.NODE_ENV === 'production'", 'ok: true')
   })
 
-  await sleep(process.env.CI ? 5000 : 1000)
+  await sleep(LOGS_TIMEOUT)
 
   await verifyJSONViaHTTP(url, '/', 200, { ok: true })
 })

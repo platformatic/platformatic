@@ -18,7 +18,7 @@ try {
 test('do not hot reload dependencies', async t => {
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
-  const { child, url } = await start(config)
+  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(() => child.kill('SIGKILL'))
   t.after(() => delete process.env.PORT)
 

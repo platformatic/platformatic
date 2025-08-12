@@ -10,8 +10,9 @@ import { parse } from 'semver'
 import {
   commonFixturesRoot,
   fixturesDir,
-  getLogs,
+  getLogsFromFile,
   isCIOnWindows,
+  LOGS_TIMEOUT,
   prepareRuntime,
   setFixturesDir,
   sleep,
@@ -778,7 +779,7 @@ test('should not extend the TTL over the original intended one', { skip: isCIOnW
 })
 
 test('should handle read error', { skip: isCIOnWindows }, async t => {
-  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
@@ -796,7 +797,9 @@ test('should handle read error', { skip: isCIOnWindows }, async t => {
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
 
-  const logs = await getLogs(runtime)
+  // Wait for logs to be flushed
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   ok(
     logs.find(l => {
@@ -809,7 +812,7 @@ test('should handle read error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle deserialization error', { skip: isCIOnWindows }, async t => {
-  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration)
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration)
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
 
@@ -831,7 +834,9 @@ test('should handle deserialization error', { skip: isCIOnWindows }, async t => 
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
 
-  const logs = await getLogs(runtime)
+  // Wait for logs to be flushed
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   ok(
     logs.find(l => {
@@ -844,7 +849,7 @@ test('should handle deserialization error', { skip: isCIOnWindows }, async t => 
 })
 
 test('should handle refresh error', { skip: isCIOnWindows }, async t => {
-  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
       cache.maxTTL = 10
@@ -875,7 +880,9 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
     notDeepStrictEqual((await response.json()).time, 0)
   }
 
-  const logs = await getLogs(runtime)
+  // Wait for logs to be flushed
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   ok(
     logs.find(l => {
@@ -888,7 +895,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle write error', { skip: isCIOnWindows }, async t => {
-  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
@@ -906,7 +913,9 @@ test('should handle write error', { skip: isCIOnWindows }, async t => {
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
 
-  const logs = await getLogs(runtime)
+  // Wait for logs to be flushed
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   ok(
     logs.find(l => {
@@ -919,7 +928,7 @@ test('should handle write error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle refresh error', { skip: isCIOnWindows }, async t => {
-  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
       cache.maxTTL = 20
@@ -947,7 +956,9 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
 
   await fetch(url + '/revalidate')
 
-  const logs = await getLogs(runtime)
+  // Wait for logs to be flushed
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   ok(
     logs.find(l => {
@@ -999,7 +1010,7 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
   await handler.remove(key, true)
 
   // Wait for logs to be written
-  await sleep(3000)
+  await sleep(LOGS_TIMEOUT)
 
   const logs = (await readFile(logsPath, 'utf-8'))
     .trim()
@@ -1079,7 +1090,7 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   await handler.remove(key)
 
   // Wait for logs to be written
-  await sleep(3000)
+  await sleep(LOGS_TIMEOUT)
 
   const logs = (await readFile(logsPath, 'utf-8'))
     .trim()

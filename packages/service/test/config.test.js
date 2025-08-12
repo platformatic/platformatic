@@ -7,6 +7,8 @@ import { setTimeout as sleep } from 'timers/promises'
 import { request } from 'undici'
 import { createFromConfig } from './helper.js'
 
+const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
+
 test('config is adjusted to handle custom loggers', async t => {
   const options = {
     server: {
@@ -74,7 +76,7 @@ test('transport logger', async t => {
   await server.start({ listen: true })
   await server.stop()
 
-  await sleep(500)
+  await sleep(LOGS_TIMEOUT)
 
   const written = await fs.readFile(file, 'utf8')
   const parsed = JSON.parse(written)

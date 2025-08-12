@@ -6,7 +6,7 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000",
+    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
     "coverage": "c8 -r html -r text node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
     "lint": "eslint"
   },

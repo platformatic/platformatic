@@ -11,15 +11,13 @@ import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { Agent, Client, interceptors, request } from 'undici'
+import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
-const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
-const DEFAULT_PAUSE_TIMEOUT = 300000
 const htmlHelloMatcher = /Hello from (v(<!-- -->)?\d+)(\s*(t(<!-- -->)?\d+))?/
 
 let currentWorkingDirectory
@@ -27,8 +25,11 @@ let hmrTriggerFileRelative
 let additionalDependencies
 let temporaryDirectoryCount = 0
 
-export let fixturesDir
+export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
+export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
+export const DEFAULT_PAUSE_TIMEOUT = 300000
 
+export let fixturesDir
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
 export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
@@ -276,7 +277,6 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   currentWorkingDirectory = root
 
   await createDirectory(root)
-  setLogFile(t, root)
 
   // Copy the fixtures
   await cp(source, root, { recursive: true })
@@ -294,6 +294,12 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
       // Assign the port
       if (typeof port === 'number') {
         config.server = { port }
+      }
+
+      config.logger ??= {}
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: resolve(root, 'logs.txt') }
       }
 
       return config
@@ -369,71 +375,8 @@ export async function createProductionRuntime (
   return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile, additionalSetup)
 }
 
-export function setLogFile (t, root) {
-  const logFile = resolve(root, 'log.txt')
-  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = logFile
-
-  let tailProcess
-  let terminated = false
-
-  if (verbose && !isWindows) {
-    const waitTimeout = setTimeout(() => {
-      if (terminated) {
-        return
-      }
-
-      if (!existsSync(logFile)) {
-        waitTimeout.refresh()
-        return
-      }
-
-      tailProcess = execa('tail', ['-f', logFile], { stdio: 'inherit', reject: false })
-    }, 100)
-  }
-
-  t.after(() => {
-    terminated = true
-    tailProcess?.kill()
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-  })
-}
-
-export async function getLogs (app) {
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: app.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
-
-  // Wait for logs to be written
-  await sleep(3000)
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/v1/logs/all'
-  })
-
-  strictEqual(statusCode, 200)
-
-  const rawLogs = await body.text()
-
-  return rawLogs
-    .trim()
-    .split('\n')
-    .filter(l => l)
-    .map(m => JSON.parse(m))
-}
-
 export async function getLogsFromFile (root) {
-  return (await readFile(resolve(root, 'log.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
+  return (await readFile(resolve(root, 'logs.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
@@ -521,7 +464,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
-    await sleep(500)
+    await sleep(LOGS_TIMEOUT)
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
     if ((await Promise.race([reload.promise, timeout])) === kTimeout) {

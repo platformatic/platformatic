@@ -6,16 +6,13 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { getPlatformaticVersion } = require('@platformatic/foundation')
 
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should get service config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 

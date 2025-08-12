@@ -2,38 +2,15 @@
 
 const { ok, strictEqual, deepStrictEqual } = require('node:assert')
 const { join } = require('node:path')
-const { hostname: getHostname, tmpdir } = require('node:os')
+const { hostname: getHostname } = require('node:os')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { Client } = require('undici')
-
-const { safeRemove } = require('@platformatic/foundation')
-const { create } = require('../../index.js')
+const { createRuntime, readLogs } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
-
-function hideLogs (t) {
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-
-  if (!originalEnv) {
-    return
-  }
-
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = join(tmpdir(), `test-runtime-${process.pid}-${Date.now()}-stdout.log`)
-
-  t.after(async () => {
-    await safeRemove(process.env.PLT_RUNTIME_LOGGER_STDOUT)
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-  })
-}
 
 test('logs stdio from the service thread', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
-  const app = await create(configFile)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   const url = await app.start()
   const pid = process.pid
@@ -51,28 +28,7 @@ test('logs stdio from the service thread', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const text = await body.text()
+    const text = await readLogs(context.testRuntimeRoot, 3000, true)
     const messages = text
       .trim()
       .split('\n')
@@ -145,6 +101,15 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
+        msg: 'request completed',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: 'stdio',
         msg: 'This is a\n console.log',
         payload: undefined,
         stdout: undefined
@@ -182,15 +147,6 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: '<Buffer 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31 ... 50 more bytes>',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'request completed',
         payload: undefined,
         stdout: undefined
       }
@@ -247,10 +203,9 @@ test('logs stdio from the service thread', async t => {
 })
 
 test('logs with caller info', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const app = await create(configFile)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await app.close()
@@ -264,28 +219,8 @@ test('logs with caller info', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const messages = (await body.text())
+    const text = await readLogs(context.testRuntimeRoot, 3000, true)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
@@ -313,10 +248,9 @@ test('logs with caller info', async t => {
 })
 
 test('isoTime support', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
-  const app = await create(configFile)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await app.close()
@@ -330,28 +264,8 @@ test('isoTime support', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const messages = (await body.text())
+    const text = await readLogs(context.testRuntimeRoot, 3000, true)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {

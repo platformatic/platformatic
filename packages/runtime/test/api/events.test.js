@@ -3,15 +3,12 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { create } = require('../../index.js')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('emits an exhaustive list of events', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-events.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   await app.init()
 
   // Patch the runtime event method to being able to intercept ALL events

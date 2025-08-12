@@ -73,6 +73,14 @@ export declare function findConfigurationFileRecursive (
   schemas?: string | string[],
   suffixes?: string | string[]
 ): Promise<string | null>
+export declare function findRuntimeConfigurationFile (
+  logger: Logger,
+  root: string,
+  configurationFile: string,
+  fallback?: boolean,
+  throwOnError?: boolean,
+  verifyPackages?: boolean
+): Promise<string | null>
 export declare function loadConfigurationFile (configurationFile: string): Promise<RawConfiguration>
 export declare function saveConfigurationFile (configurationFile: string, config: RawConfiguration): Promise<void>
 export declare function createValidator (

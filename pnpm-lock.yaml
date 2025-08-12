@@ -1479,9 +1479,6 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
-      pino-roll:
-        specifier: ^2.0.0
-        version: 2.2.0
       prom-client:
         specifier: ^15.1.2
         version: 15.1.3
@@ -1491,9 +1488,6 @@ importers:
       sonic-boom:
         specifier: ^4.2.0
         version: 4.2.0
-      tail-file-stream:
-        specifier: ^0.2.0
-        version: 0.2.0
       undici:
         specifier: ^7.0.0
         version: 7.11.0
@@ -5592,9 +5586,6 @@ packages:
     resolution: {integrity: sha512-BS8PfmtDGnrgYdOonGZQdLZslWIeCGFP9tpan0hi1Co2Zr2NKADsvGYA8XxuG/4UWgJ6Cjtv+YJnB6MM69QGlQ==}
     engines: {node: '>= 0.4'}
 
-  date-fns@4.1.0:
-    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
-
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
 
@@ -8376,9 +8367,6 @@ packages:
     resolution: {integrity: sha512-cQBBIVG3YajgoUjo1FdKVRX6t9XPxwB9lcNJVD5GCnNM4Y6T12YYx8c6zEejxQsU0wrg9TwmDulcE9LR7qcJqA==}
     hasBin: true
 
-  pino-roll@2.2.0:
-    resolution: {integrity: sha512-PSigcOfIQHcPIRcQFuDFe5RVD37waq9T3No8lqPr4CdIaSa9pshUOPVCO1C1mmb3VQ1n5VXUGuKSNk6yDMUi6w==}
-
   pino-std-serializers@7.0.0:
     resolution: {integrity: sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA==}
 
@@ -9395,9 +9383,6 @@ packages:
   table@6.9.0:
     resolution: {integrity: sha512-9kY+CygyYM6j02t5YFHbNz2FN5QmYGv9zAjVp4lCDjlCw7amdckXlEt/bjMhUIfj4ThGRE4gCUH5+yGnNuPo5A==}
     engines: {node: '>=10.0.0'}
-
-  tail-file-stream@0.2.0:
-    resolution: {integrity: sha512-exGCDBk1fg+4qzRKXfxoWHVP9mvaFAt7g/RTyvcSDzeYDuVhVX7Z+HNSh3aLYjUDDadVZILIJ1cAfGVIqAp1Iw==}
 
   tapable@2.2.2:
     resolution: {integrity: sha512-Re10+NauLTMCudc7T5WLFLAwDhQ0JWdrMK+9B2M8zR5hRExKmsRDCBA7/aV/pNJFltmBFO5BAMlQFi/vq3nKOg==}
@@ -14054,8 +14039,6 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
-  date-fns@4.1.0: {}
-
   dateformat@4.6.3: {}
 
   debounce@2.2.0: {}
@@ -17784,11 +17767,6 @@ snapshots:
       sonic-boom: 4.2.0
       strip-json-comments: 3.1.1
 
-  pino-roll@2.2.0:
-    dependencies:
-      date-fns: 4.1.0
-      sonic-boom: 4.2.0
-
   pino-std-serializers@7.0.0: {}
 
   pino-test@1.1.0:
@@ -19062,8 +19040,6 @@ snapshots:
       slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
-
-  tail-file-stream@0.2.0: {}
 
   tapable@2.2.2: {}
 

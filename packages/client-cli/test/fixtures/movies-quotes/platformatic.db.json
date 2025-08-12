@@ -20,5 +20,10 @@
   "plugins": {
     "paths": ["./plugin.js"]
   },
-  "watch": false
+  "watch": false,
+  "runtime": {
+    "logger": {
+      "level": "fatal"
+    }
+  }
 }

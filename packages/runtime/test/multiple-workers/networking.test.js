@@ -4,17 +4,14 @@ const { deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { updateConfigFile } = require('../helpers')
 const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -55,7 +52,7 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
     })
   })
 
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
@@ -110,7 +107,7 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
     contents.node = { dispatchViaHttp: true }
   })
 
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
@@ -149,7 +146,7 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
 test('can inject on a worker', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

@@ -2,10 +2,10 @@ import { strict as assert } from 'node:assert'
 import path from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime, getLogs } from '../../basic/test/helper.js'
+import { createRuntime, getLogsFromFile, LOGS_TIMEOUT, sleep } from '../../basic/test/helper.js'
 
 test('logger options', async t => {
-  const { url, runtime } = await createRuntime({
+  const { url, root } = await createRuntime({
     t,
     root: path.resolve(import.meta.dirname, './fixtures/logger'),
     build: true,
@@ -14,7 +14,9 @@ test('logger options', async t => {
 
   await request(`${url}/`, { headers: { Authorization: 'token' } })
 
-  const logs = await getLogs(runtime)
+  // wait for logger flush
+  await sleep(LOGS_TIMEOUT)
+  const logs = await getLogsFromFile(root)
 
   assert.ok(
     logs.find(log => {

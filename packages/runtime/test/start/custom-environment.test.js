@@ -4,15 +4,12 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('can start with a custom environment', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile, null, { env: { A_CUSTOM_ENV_VAR: 'foobar' }, ignoreProcessEnv: true })
+  const app = await createRuntime(configFile, null, { env: { A_CUSTOM_ENV_VAR: 'foobar' }, ignoreProcessEnv: true })
 
   t.after(async () => {
     await app.close()
@@ -33,7 +30,7 @@ test('can start with a custom environment', async t => {
 
 test('should pass global .env data to workers', async t => {
   const configFile = join(fixturesDir, 'env', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()

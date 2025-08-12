@@ -1,15 +1,15 @@
 'use strict'
 
-const { cp, symlink, writeFile } = require('node:fs/promises')
+const { cp, symlink } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
-const { join, resolve, dirname } = require('node:path')
+const { join, resolve } = require('node:path')
 const { request } = require('undici')
 const { createDirectory, safeRemove, features } = require('@platformatic/foundation')
 
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const tmpDir = resolve(__dirname, '../../tmp')
 
-const WAIT_TIMEOUT = process.env.CI ? 20_000 : 5_000
+const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 
 async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
@@ -26,12 +26,6 @@ async function prepareRuntime (t, name, dependencies) {
     for (const dep of deps) {
       await symlink(resolve(root, '../../../', dep), resolve(depsRoot, dep))
     }
-  }
-
-  if (!process.env.PLT_TESTS_VERBOSE) {
-    process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
-    await createDirectory(dirname(process.env.PLT_RUNTIME_LOGGER_STDOUT))
-    await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
   }
 
   return root

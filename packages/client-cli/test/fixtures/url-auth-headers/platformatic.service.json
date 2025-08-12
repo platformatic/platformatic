@@ -17,5 +17,10 @@
         "encapsulate": false
       }
     ]
+  },
+  "runtime": {
+    "logger": {
+      "level": "fatal"
+    }
   }
 }

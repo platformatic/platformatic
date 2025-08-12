@@ -50,7 +50,7 @@ test('do not crash on syntax error', async t => {
   await writeFile(serviceConfigFilePath, JSON.stringify(original, null, 2))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
-  const { child } = await start(configFileDst)
+  const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   await waitForMessageAndWatch(child, 'RELOADED v0')
 

@@ -4,6 +4,7 @@ const { setGlobalDispatcher, Agent, request } = require('undici')
 const { join } = require('path')
 const { createDirectory, safeRemove } = require('@platformatic/foundation')
 const os = require('node:os')
+const { setTimeout: sleep } = require('node:timers/promises')
 
 setGlobalDispatcher(
   new Agent({
@@ -27,7 +28,10 @@ async function moveToTmpdir (teardown) {
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => safeRemove(tmp))
+    teardown(async () => {
+      await sleep(200)
+      await safeRemove(tmp)
+    })
   }
   return dir
 }

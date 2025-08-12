@@ -11,7 +11,8 @@ const {
   FileWatcher,
   listRecognizedConfigurationFiles,
   loadConfigurationModule,
-  loadConfiguration
+  loadConfiguration,
+  ensureLoggableError
 } = require('@platformatic/foundation')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
@@ -129,7 +130,11 @@ class PlatformaticApp extends EventEmitter {
       this.#updateDispatcher()
     } catch (err) {
       if (err.validationErrors) {
-        console.error('Validation errors:', err.validationErrors)
+        globalThis.platformatic.logger.error(
+          { err: ensureLoggableError(err.validationErrors) },
+          'The application threw a validation error.'
+        )
+
         process.exit(1)
       } else {
         this.#logAndExit(err)
@@ -264,7 +269,7 @@ class PlatformaticApp extends EventEmitter {
   }
 
   #logAndExit (err) {
-    console.error(err)
+    globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, 'The application threw an error.')
     process.exit(1)
   }
 

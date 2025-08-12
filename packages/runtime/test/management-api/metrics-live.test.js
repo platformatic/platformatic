@@ -6,16 +6,13 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const WebSocket = require('ws')
 
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should get runtime metrics via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -40,7 +37,8 @@ test('should get runtime metrics via management api', async t => {
     let count = 0
 
     webSocket.on('message', data => {
-      if (count++ > 5) {
+      if (++count > 5) {
+        webSocket.removeAllListeners('message')
         clearTimeout(timeout)
         webSocket.close()
         resolve()
@@ -71,7 +69,7 @@ test('should get runtime metrics via management api', async t => {
 test('should not throw if metrics are not enabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 

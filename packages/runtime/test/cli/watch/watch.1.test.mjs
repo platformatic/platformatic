@@ -24,7 +24,7 @@ test('watches CommonJS files', async t => {
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
-  const { child } = await start(configFileDst)
+  const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(() => child.kill('SIGKILL'))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))

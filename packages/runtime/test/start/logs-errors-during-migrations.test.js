@@ -1,29 +1,32 @@
 'use strict'
 
 const assert = require('node:assert')
-const { platform } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { loadConfiguration } = require('@platformatic/db')
-const { Client } = require('undici')
 const { wrapInRuntimeConfig, transform } = require('../../lib/config')
 const { Runtime } = require('../../index')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
+const { createTemporaryRoot, readLogs } = require('../helpers.js')
 
-test.beforeEach(setLogFile)
-
-const isWindows = platform() === 'win32'
-
-// Disabled on Windows as for some reason the process exits with 3221225477. Probably a GitHub Actions runner issue.
-test('logs errors during db migrations', { skip: isWindows }, async t => {
+test('logs errors during db migrations', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfiguration(configFile)
+  const root = await createTemporaryRoot()
+
   const runtimeConfig = await wrapInRuntimeConfig(config, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
+
       config.restartOnError = 1000
+      config.logger ??= {
+        level: 'debug'
+      }
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: join(root, 'logs.txt') }
+      }
+
       return config
     }
   })
@@ -36,20 +39,15 @@ test('logs errors during db migrations', { skip: isWindows }, async t => {
 
   await runtime.init()
 
-  const startPromise = assert.rejects(async () => {
-    await runtime.start()
-  }, /The service "mysimplename" exited prematurely with error code 1/)
+  await assert.rejects(
+    async () => {
+      await runtime.start()
+    },
+    { code: 'PLT_RUNTIME_SERVICE_EXIT', message: 'The service "mysimplename" exited prematurely with error code 1' }
+  )
 
-  const client = new Client({ hostname: 'localhost', protocol: 'http:' }, { socketPath: runtime.getManagementApiUrl() })
-
-  await sleep(3000)
-
-  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
-  assert.strictEqual(statusCode, 200)
-  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
-
+  const messages = await readLogs(root, 10000)
   assert.ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
-  assert.ok(messages.some(m => m.msg?.match(/near "fiddlesticks": syntax error/)))
-
-  await startPromise
+  assert.ok(messages.some(m => m.err?.message.match(/near "fiddlesticks": syntax error/)))
+  assert.ok(messages.some(m => m.msg?.match(/Failed to start service "mysimplename" after 5 attempts./)))
 })
