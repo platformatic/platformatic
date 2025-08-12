@@ -18,9 +18,9 @@ Choosing the right Node.js architecture is crucial for long-term success. This g
 | **Building new full-stack app** | **Watt** | Unified development, auto-generated APIs, built-in observability |
 | **Simple REST API only** | Express.js/Fastify | Simpler for single-purpose APIs |
 | **Complex frontend-focused app** | Next.js standalone | More frontend-specific optimizations |
-| **Large team, independent services** | Traditional microservices | Better organizational boundaries |
+| **Large team, independent services** | Traditional microservices/PM2 | Better organizational boundaries |
 | **Existing Express/Fastify app** | **Watt** (migration path) | Add modern tooling without rewrite |
-| **Serverless-first architecture** | Serverless platforms | Better cold start and scaling characteristics |
+| **Serverless-first architecture** | Serverless platforms | Note: Serverless has significant limitations but may suit event-driven workloads |
 
 ---
 
@@ -28,7 +28,7 @@ Choosing the right Node.js architecture is crucial for long-term success. This g
 
 ### Watt vs Express.js
 
-Express.js is the foundational web framework for Node.js, focusing on simplicity and flexibility.
+Express.js is the foundational web framework for Node.js, focusing on simplicity and flexibility. Note that Express, Next.js, and Fastify can all be run within Watt.
 
 #### Feature Comparison
 
@@ -54,7 +54,7 @@ Express.js is the foundational web framework for Node.js, focusing on simplicity
 **Example Express.js Use Case:**
 ```javascript
 // Simple API service with existing infrastructure
-const express = require('express')
+import express from 'express'
 const app = express()
 
 app.get('/api/users', (req, res) => {
@@ -90,7 +90,7 @@ app.listen(3000)
 **Step 1: Wrap existing Express app**
 ```bash
 # Add Watt configuration to existing Express app
-npx wattpm init
+npx wattpm@latest create my-app
 ```
 
 **Step 2: Add Watt features incrementally**
@@ -109,6 +109,7 @@ npx wattpm init
 // Gradually replace manual endpoints with auto-generated ones
 // Old Express route: GET /users
 // New auto-generated: GET /api/users (from database schema)
+// Express/Fastify/Next.js all integrate seamlessly with Watt
 ```
 
 ---
@@ -176,7 +177,7 @@ Latency: 2.4ms avg
 
 ### Watt vs Next.js
 
-Next.js is the leading React framework for production applications, focusing on frontend development with some backend capabilities.
+Next.js is the leading React framework for production applications, focusing on frontend development. Note that Next.js performs poorly as an API layer and should primarily be used for frontend concerns.
 
 #### Feature Comparison
 
@@ -184,7 +185,7 @@ Next.js is the leading React framework for production applications, focusing on 
 |---------|---------|------|
 | **Frontend Focus** | Excellent React integration | Multi-framework support |
 | **SSR/SSG** | Best-in-class | Supported via Next.js stackable |
-| **Backend APIs** | API routes (limited) | Full-featured backend services |
+| **Backend APIs** | API routes (not recommended for performance) | Full-featured backend services |
 | **Database Integration** | Manual setup | Auto-generated APIs |
 | **Multi-service Support** | Not applicable | Native orchestration |
 | **Deployment** | Vercel-optimized | Container/cloud-agnostic |
@@ -196,7 +197,7 @@ Next.js is the leading React framework for production applications, focusing on 
 - Building primarily frontend applications
 - Need maximum React/SSR optimizations
 - Using Vercel for deployment
-- Backend needs are simple (API routes sufficient)
+- Backend needs are very simple (note: API routes have performance limitations)
 - Team expertise is primarily frontend-focused
 
 **Example Next.js Use Case:**
@@ -238,9 +239,9 @@ export default function ProductList({ products }) {
 **Best of Both Worlds:**
 ```bash
 # Create Watt application with Next.js frontend
-npx wattpm init
+npx wattpm@latest create my-app
 wattpm create --type @platformatic/next --name frontend
-wattpm create --type @platformatic/db --name database
+wattpm create --type @platformatic/service --name backend
 ```
 
 This gives you:
@@ -312,31 +313,36 @@ export class UsersController {
 
 ---
 
-### Watt vs Traditional Microservices
+### Watt vs Traditional Microservices and PM2
 
-Traditional microservices architecture involves independent services, often containerized, with network communication.
+Traditional microservices architecture involves independent services, often containerized, with network communication. PM2 is a popular process manager for Node.js applications that provides clustering and process management.
 
 #### Architecture Comparison
 
-| Aspect | Traditional Microservices | Watt |
-|--------|--------------------------|------|
-| **Service Deployment** | Independent containers | Unified deployment with workers |
-| **Communication** | HTTP/gRPC over network | In-process + service mesh |
-| **Service Discovery** | External (K8s, Consul) | Built-in (.plt.local) |
-| **Latency** | Network latency present | Zero latency (in-process) |
-| **Operational Complexity** | High (K8s, networking) | Low (single deployment unit) |
-| **Independent Scaling** | Full independence | Worker-level scaling |
-| **Technology Diversity** | Any language/runtime | Node.js frameworks only |
-| **Fault Isolation** | Container-level | Worker thread-level |
+| Aspect | Traditional Microservices | PM2 | Watt |
+|--------|--------------------------|-----|------|
+| **Service Deployment** | Independent containers | Process clustering | Unified deployment with workers |
+| **Communication** | HTTP/gRPC over network | Inter-process | In-process + service mesh |
+| **Service Discovery** | External (K8s, Consul) | Manual configuration | Built-in (.plt.local) |
+| **Latency** | Network latency present | Low (local processes) | Zero latency (in-process) |
+| **Operational Complexity** | High (K8s, networking) | Medium (process management) | Low (single deployment unit) |
+| **Independent Scaling** | Full independence | Process-level scaling | Worker-level scaling |
+| **Technology Diversity** | Any language/runtime | Node.js only | Node.js, PHP supported, Python coming soon |
+| **Fault Isolation** | Container-level | Process-level | Worker thread-level |
 
 #### When to Choose Traditional Microservices
 
 **✅ Choose Traditional Microservices when:**
 - **Organizational boundaries**: Different teams own different services
-- **Technology diversity**: Need multiple programming languages
+- **Technology diversity**: Need multiple programming languages beyond Node.js/PHP/Python
 - **Independent scaling**: Services have vastly different resource needs
 - **True independence**: Services must be deployed and versioned separately
 - **Regulatory requirements**: Need complete service isolation
+
+**✅ Choose PM2 when:**
+- **Simple Node.js clustering**: Need basic process management
+- **Existing Node.js apps**: Want to add clustering without architectural changes
+- **Resource management**: Need memory/CPU monitoring for Node.js processes
 
 **Example Traditional Setup:**
 ```yaml
@@ -357,11 +363,11 @@ services:
 #### When to Choose Watt over Traditional Microservices
 
 **✅ Choose Watt when:**
-- **Single team**: One team owns multiple services
-- **Node.js focused**: All services can run on Node.js
+- **Single team or coordinated teams**: One Watt instance per team would solve scaling issues
+- **Node.js/PHP focused**: All services can run on supported platforms (Python coming soon)
 - **Unified deployment**: Services should be deployed together
 - **Development speed**: Want faster iteration cycles
-- **Simplified operations**: Prefer single deployment unit
+- **Simplified operations**: Prefer single deployment unit with built-in service mesh
 
 **Example Watt Setup:**
 ```json
@@ -385,6 +391,7 @@ services:
 **Step 2: Consolidate communication**
 ```javascript
 // Replace network calls with internal service mesh
+// This works with basic fetch() - no special integration needed
 // From: http://user-service:3000/users
 // To: http://user-service.plt.local/users
 ```
@@ -405,7 +412,7 @@ services:
 
 ### Watt vs Serverless Platforms
 
-Serverless platforms (AWS Lambda, Vercel Functions, Cloudflare Workers) focus on function-as-a-service deployments.
+Serverless platforms (AWS Lambda, Vercel Functions, Cloudflare Workers) focus on function-as-a-service deployments. Note that serverless platforms, specifically AWS Lambda, suffer from significant limitations including cold starts, timeouts, and statelessness constraints.
 
 #### Feature Comparison
 
@@ -422,11 +429,10 @@ Serverless platforms (AWS Lambda, Vercel Functions, Cloudflare Workers) focus on
 #### When to Choose Serverless
 
 **✅ Choose Serverless when:**
-- **Unpredictable traffic**: Extreme variability in load
 - **Event-driven architecture**: Processing events, not serving requests
-- **Cost optimization**: Want to pay only for actual usage
-- **Auto-scaling**: Need infinite scale without management
+- **Infrequent usage**: Applications with very sporadic traffic
 - **Simple functions**: Individual functions with minimal complexity
+- **Note**: Be aware of cold start penalties, timeout limitations, and vendor lock-in
 
 **Example Serverless Use Case:**
 ```javascript
@@ -691,11 +697,11 @@ Start: New Node.js Project?
 **Quick Start Path:**
 ```bash
 # Start with the basics
-npx wattpm init my-app
+npx wattpm@latest create my-app
 cd my-app
 
 # Add your first service
-wattpm create --type @platformatic/db --name api
+wattpm create --type @platformatic/service --name api
 wattpm create --type @platformatic/next --name web
 
 # Run and iterate
@@ -727,6 +733,7 @@ npm start
 - Architecture consultation
 - Migration planning and support
 - Training for development teams
+- [Intelligent Command Center](https://platformatichq.com/): Advanced platform management
 
 ---
 
