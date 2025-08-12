@@ -16,13 +16,13 @@ Watt transforms complex Node.js application development into a unified experienc
 ### ✅ **Perfect Fit for Watt**
 
 **API-First Applications**
-- Auto-generated REST/GraphQL APIs from database schemas
+- REST/GraphQL APIs built with Fastify services
 - Need rapid prototyping and iteration
 - Want OpenAPI documentation built-in
 
 **Full-Stack Web Applications**
 - Next.js, Astro, or Remix frontends with Node.js APIs
-- Database-driven applications with complex business logic
+- Service-driven applications with complex business logic
 - Need unified deployment of frontend and backend
 
 **Microservices as Modular Monoliths**
@@ -67,20 +67,20 @@ Watt transforms complex Node.js application development into a unified experienc
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
 │  │  Storefront │  │  Admin      │  │ Customer │ │
 │  │  (Next.js)  │  │ Dashboard   │  │   API    │ │
-│  │             │  │ (React)     │  │(Database)│ │
+│  │             │  │ (React)     │  │(Fastify) │ │
 │  └─────────────┘  └─────────────┘  └──────────┘ │
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
 │  │  Products   │  │   Orders    │  │ Payments │ │
 │  │    API      │  │     API     │  │Integration│ │
-│  │ (Database)  │  │ (Database)  │  │(Service) │ │
+│  │ (Fastify)   │  │ (Fastify)   │  │(Service) │ │
 │  └─────────────┘  └─────────────┘  └──────────┘ │
 └─────────────────────────────────────────────────┘
 ```
 
 **Why Watt Works:**
 - Unified deployment reduces complexity from 6+ containers to 1
-- Auto-generated APIs accelerate product catalog and order management
-- Built-in authorization handles multi-tenant data isolation
+- Fastify-based APIs accelerate product catalog and order management
+- Service-level authorization handles multi-tenant data isolation
 - Shared logging provides unified view of customer journey
 
 **Example Architecture:**
@@ -113,31 +113,28 @@ Watt transforms complex Node.js application development into a unified experienc
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
 │  │ Projects    │  │   Users     │  │ Billing  │ │
 │  │    API      │  │     API     │  │   API    │ │
-│  │ (Database)  │  │ (Database)  │  │(Service) │ │
+│  │ (Fastify)   │  │ (Fastify)   │  │(Service) │ │
 │  └─────────────┘  └─────────────┘  └──────────┘ │
 └─────────────────────────────────────────────────┘
 ```
 
 **Why Watt Works:**
 - GraphQL subscriptions enable real-time features
-- Row-level security provides workspace isolation
+- Service-level security provides workspace isolation
 - Built-in metrics track user engagement and system health
 - Single deployment simplifies compliance and monitoring
 
 **Example Configuration:**
 ```javascript
-// Database service with workspace isolation
-{
-  "db": {
-    "authorization": {
-      "rules": [{
-        "role": "user",
-        "entity": "projects", 
-        "find": ["workspace_id = $WORKSPACE_ID"],
-        "save": ["workspace_id = $WORKSPACE_ID"]
-      }]
-    }
-  }
+// Fastify service with workspace isolation
+export default async function (app) {
+  app.register(async function (app) {
+    app.get('/projects', async (request, reply) => {
+      const workspaceId = request.headers['workspace-id']
+      // Handle workspace-scoped project retrieval
+      return { projects: await getProjectsByWorkspace(workspaceId) }
+    })
+  })
 }
 ```
 
@@ -157,7 +154,7 @@ Watt transforms complex Node.js application development into a unified experienc
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
 │  │   Legacy    │  │ Workflows   │  │   Auth   │ │
 │  │    HR       │  │    API      │  │ Service  │ │
-│  │Integration  │  │ (Database)  │  │(LDAP/SSO)│ │
+│  │Integration  │  │ (Fastify)   │  │(LDAP/SSO)│ │
 │  └─────────────┘  └─────────────┘  └──────────┘ │
 └─────────────────────────────────────────────────┘
 ```
@@ -184,7 +181,7 @@ Watt transforms complex Node.js application development into a unified experienc
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
 │  │Transactions │  │   Accounts  │  │ Banking  │ │
 │  │    API      │  │     API     │  │Integration│ │
-│  │ (Database)  │  │ (Database)  │  │ (Plaid)  │ │
+│  │ (Fastify)   │  │ (Fastify)   │  │ (Plaid)  │ │
 │  └─────────────┘  └─────────────┘  └──────────┘ │
 └─────────────────────────────────────────────────┘
 ```
@@ -208,7 +205,7 @@ Watt transforms complex Node.js application development into a unified experienc
 ┌──────────────┐    ┌─────────────────────────────────────┐
 │   Client     │───▶│            Watt App                 │
 │ Applications │    │  ┌─────────────┐  ┌─────────────┐   │
-└──────────────┘    │  │  Database   │  │   Gateway   │   │
+└──────────────┘    │  │  Fastify    │  │   Gateway   │   │
                     │  │   Service   │  │  (Composer) │   │
 ┌──────────────┐    │  │             │  │             │   │
 │  Third-Party │───▶│  └─────────────┘  └─────────────┘   │
@@ -229,7 +226,7 @@ Watt transforms complex Node.js application development into a unified experienc
     {
       "path": "./web/users-api",
       "id": "users-api",
-      "$schema": "@platformatic/db"
+      "$schema": "@platformatic/service"
     },
     {
       "path": "./web/business-logic",
@@ -246,10 +243,10 @@ Watt transforms complex Node.js application development into a unified experienc
 ```
 
 **Key Benefits:**
-- Auto-generated OpenAPI documentation
+- OpenAPI documentation
 - Built-in rate limiting and authentication
 - Unified API versioning and deprecation
-- Automatic client SDK generation
+- Client SDK integration
 
 ### Pattern 2: Full-Stack Web Applications
 
@@ -266,7 +263,7 @@ Watt transforms complex Node.js application development into a unified experienc
                     │  │   Remix)    │  │             │   │
                     │  └─────────────┘  └─────────────┘   │
                     │  ┌─────────────┐  ┌─────────────┐   │
-                    │  │  Database   │  │   Assets    │   │
+                    │  │  Fastify    │  │   Assets    │   │
                     │  │   Service   │  │  (Static)   │   │
                     │  │             │  │             │   │
                     │  └─────────────┘  └─────────────┘   │
@@ -287,7 +284,7 @@ Watt transforms complex Node.js application development into a unified experienc
     {
       "path": "./web/api", 
       "id": "api",
-      "$schema": "@platformatic/db"
+      "$schema": "@platformatic/service"
     },
     {
       "path": "./web/assets",
@@ -320,7 +317,7 @@ Watt transforms complex Node.js application development into a unified experienc
 └──────────────┘    │  ┌─────────────┐  ┌─────────────┐   │
                     │  │   Event     │  │   State     │   │
                     │  │   Store     │  │  Manager    │   │
-                    │  │ (Database)  │  │ (Database)  │   │
+                    │  │ (Fastify)   │  │ (Fastify)   │   │
                     │  └─────────────┘  └─────────────┘   │
                     └─────────────────────────────────────┘
 ```
@@ -328,13 +325,14 @@ Watt transforms complex Node.js application development into a unified experienc
 **Example Implementation:**
 ```javascript
 // Event processor service
-module.exports = async function (app) {
+export default async function (app) {
   app.register(async function (app) {
     // Process events from queue
     app.addHook('onReady', async () => {
       app.eventQueue.on('user.created', async (event) => {
-        await app.platformatic.entities.auditLog.save({
-          input: { action: 'USER_CREATED', userId: event.userId }
+        await app.auditService.log({
+          action: 'USER_CREATED', 
+          userId: event.userId 
         })
       })
     })
@@ -358,7 +356,7 @@ module.exports = async function (app) {
                     │  ┌─────────────┐  ┌─────────────┐   │
                     │  │    New      │  │   Legacy    │   │
                     │  │    APIs     │  │ Database    │   │
-                    │  │ (Database)  │  │ (Wrapped)   │   │
+                    │  │ (Fastify)   │  │ (Wrapped)   │   │
                     │  └─────────────┘  └─────────────┘   │
                     └─────────────────────────────────────┘
 ```
@@ -378,98 +376,6 @@ export function build() {
   return app
 }
 ```
-
----
-
-## Success Stories by Company Size
-
-### Startups (1-10 developers)
-
-**Challenge:** Rapid prototyping, minimal DevOps overhead, fast time-to-market
-
-**Watt Solution:**
-```bash
-# From idea to production in minutes
-npx wattpm create my-startup-mvp
-cd my-startup-mvp
-
-# Add database and API
-wattpm create --type @platformatic/db --name backend-api
-
-# Add React frontend  
-wattpm create --type @platformatic/next --name user-dashboard
-
-# Deploy to production
-npm run build
-docker build -t my-startup-mvp .
-```
-
-**Results:**
-- 80% reduction in deployment complexity
-- Single developer can manage full-stack application
-- Built-in monitoring and logging eliminate third-party costs
-
-### Scale-ups (11-50 developers)
-
-**Challenge:** Team coordination, service boundaries, maintaining development velocity
-
-**Watt Solution:**
-- Teams own individual services within unified Watt applications
-- Shared tooling and standards across all services
-- Service composition without microservices complexity
-
-**Example Team Structure:**
-```ascii
-Product Team A        Product Team B        Platform Team
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   Feature   │      │   Feature   │      │    Auth     │
-│  Services   │      │  Services   │      │   Service   │
-└─────────────┘      └─────────────┘      └─────────────┘
-         └──────────────┬──────────────────────┘
-                        │
-                ┌───────▼────────┐
-                │  Watt Runtime  │
-                │  (Unified App) │
-                └────────────────┘
-```
-
-**Results:**
-- Teams maintain independence while sharing infrastructure
-- 60% reduction in deployment pipeline complexity
-- Unified observability across all team services
-
-### Enterprises (50+ developers)
-
-**Challenge:** Legacy integration, compliance requirements, organizational boundaries
-
-**Watt Solution:**
-- Gradual migration patterns for legacy applications
-- Enterprise-grade security and compliance features
-- Integration with existing enterprise systems
-
-**Example Enterprise Architecture:**
-```ascii
-┌─────────────────────────────────────────────────┐
-│                Enterprise                        │
-├─────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │
-│  │    Watt     │  │    Watt     │  │  Legacy  │ │
-│  │   App A     │  │   App B     │  │  Systems │ │
-│  │(Customer)   │  │(Internal)   │  │          │ │
-│  └─────────────┘  └─────────────┘  └──────────┘ │
-│                                                 │
-│         ┌─────────────────────────┐             │
-│         │   Enterprise Services  │             │
-│         │   (SSO, Monitoring,    │             │
-│         │   Compliance, Audit)   │             │
-│         └─────────────────────────┘             │
-└─────────────────────────────────────────────────┘
-```
-
-**Results:**
-- 40% reduction in compliance audit effort
-- Unified security policies across all applications  
-- Simplified deployment to enterprise Kubernetes clusters
 
 ---
 
@@ -510,7 +416,7 @@ Product Team A        Product Team B        Platform Team
 
 **GraphQL Query Pattern:**
 ```javascript
-// Auto-generated GraphQL APIs from database schema
+// GraphQL APIs
 query GetPosts($siteId: ID!) {
   posts(where: { siteId: { eq: $siteId } }) {
     id
@@ -560,24 +466,16 @@ subscription MessageAdded($channelId: ID!) {
 - Custom report generation
 - Data export capabilities
 
-**Database Schema Pattern:**
+**Service Pattern:**
 ```javascript
-// Database configuration optimized for analytics
-{
-  "db": {
-    "migrations": {
-      "dir": "./migrations"
-    },
-    "schemas": [
-      {
-        "name": "events",
-        "indexes": [
-          { "fields": ["timestamp", "event_type"] },
-          { "fields": ["user_id", "timestamp"] }
-        ]
-      }
-    ]
-  }
+// Fastify service for analytics data processing
+export default async function (app) {
+  app.register(async function (app) {
+    app.get('/events', async (request, reply) => {
+      // Handle time-series data retrieval
+      return { events: await getEvents(request.query) }
+    })
+  })
 }
 ```
 
@@ -595,40 +493,24 @@ subscription MessageAdded($channelId: ID!) {
 
 **2. Choose Your Starting Point**
 ```bash
-# API-First
-npx wattpm create --template api-first
+# Basic Watt application
+npx wattpm@latest create my-app
 
-# Full-Stack
-npx wattpm create --template full-stack --framework next
-
-# Event-Driven  
-npx wattpm create --template event-driven
-
-# Legacy Migration
-npx wattpm create --template migration
+# Choose appropriate services based on your needs
 ```
 
 **3. Add Services Based on Your Needs**
-```bash
-# Database service for data-driven features
-wattpm create --type @platformatic/db --name data-api
-
-# Frontend service for user interfaces
-wattpm create --type @platformatic/next --name user-interface  
-
-# Business logic service for custom functionality
-wattpm create --type @platformatic/service --name business-logic
-
-# Integration service for third-party APIs
-wattpm create --type @platformatic/service --name integrations
-```
+- Fastify services for APIs and business logic
+- Frontend services (Next.js, Astro, Remix) for user interfaces
+- Composer services for API aggregation
+- Custom services for third-party integrations
 
 ### Evaluation Checklist
 
 **✅ Watt is a Strong Fit When:**
 - [ ] Your team primarily uses Node.js and JavaScript/TypeScript
 - [ ] You want rapid development with built-in best practices
-- [ ] Database-driven APIs are a core part of your application
+- [ ] API-driven architecture is a core part of your application
 - [ ] You need unified deployment and monitoring
 - [ ] Your services should communicate with low latency
 - [ ] You want to reduce operational complexity
@@ -652,7 +534,7 @@ Choose your path based on your use case:
 
 **🔍 Deep Dive into Architecture** 
 - [Architecture Overview](/docs/overview/architecture-overview) - Technical details
-- [Service Types Reference](/docs/reference/) - Database, HTTP, Composer services
+- [Service Types Reference](/docs/reference/) - Fastify, HTTP, Composer services
 
 **🔄 Migrate Existing Applications**
 - [Migration Guide](/docs/getting-started/port-your-app) - Step-by-step porting
