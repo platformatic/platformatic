@@ -31,20 +31,70 @@ Kubernetes uses [probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-
 - **Liveness Probe**: Determines if the container should be restarted. Failed liveness triggers container restart by Kubernetes.
 - **Startup Probe**: Provides extra time for slow-starting containers. Disables readiness and liveness probes until startup succeeds.
 
+## Prerequisites
+
+Before implementing Kubernetes health checks, you need:
+
+- **Node.js 20.3+** installed on your development machine
+- **Docker** for containerization
+- **Kubernetes cluster** access (local or cloud)
+- **kubectl** configured to access your cluster
+
+## Installation
+
+**1. Install Watt CLI:**
+```bash
+npm install -g wattpm
+```
+
+**2. Create a new Watt application:**
+```bash
+npx wattpm@latest create my-health-app
+cd my-health-app
+```
+
+**3. Install dependencies:**
+```bash
+npm install
+```
+
 ## Platformatic Health Check APIs
 
-Platformatic provides a built-in API for implementing readiness and liveness through its metrics server. The metrics server is configured in your Watt configuration file and exposes health check endpoints:
+Platformatic Watt provides built-in health check endpoints through its metrics server. The metrics server exposes the following endpoints by default:
 
-- The `/ready` endpoint indicates if the service is running and ready to accept traffic
-- The `/status` endpoint indicates if all services in the stack are reachable
-- Custom health checks can be added using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object. The method receives a function that returns a boolean or an object with the following properties:
-  - `status`: a boolean indicating if the health check is successful
-  - `statusCode`: an optional HTTP status code to return
-  - `body`: an optional body to return
-- Custom readiness checks can be added using the `setCustomReadinessCheck` method available on the `globalThis.platformatic` object. The method receives a function that returns a boolean or an object with the following properties:
-  - `status`: a boolean indicating if the readiness check is successful
-  - `statusCode`: an optional HTTP status code to return
-  - `body`: an optional body to return
+- **`/ready`** (Readiness endpoint): Indicates if all services are started and ready to accept traffic
+- **`/status`** (Liveness endpoint): Indicates if all services are healthy and their custom health checks pass
+
+### Endpoint Customization
+
+You can customize the health check endpoints in your Watt configuration:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "readiness": {
+      "endpoint": "/health"
+    },
+    "liveness": {
+      "endpoint": "/live"
+    }
+  }
+}
+```
+
+### Custom Health Check Functions
+
+- **`setCustomHealthCheck`**: Sets a custom liveness check function that runs on the `/status` (or custom liveness) endpoint
+- **`setCustomReadinessCheck`**: Sets a custom readiness check function that runs on the `/ready` (or custom readiness) endpoint
+
+Both methods accept a function that returns:
+- A `boolean` value (`true` = healthy, `false` = unhealthy)
+- An object with:
+  - `status`: boolean indicating success/failure
+  - `statusCode`: optional HTTP status code (defaults to 200/500)
+  - `body`: optional response body
 
 ## Implementation
 
@@ -57,47 +107,102 @@ import fastify from 'fastify'
 
 export function create () {
   const app = fastify({ 
-    logger: true, 
-    hostname: process.env.PLT_SERVER_HOSTNAME 
+    logger: true
   })
 
-  // Register custom health check with Platformatic
+  // Register custom liveness check (for /status endpoint)
   globalThis.platformatic.setCustomHealthCheck(async () => {
     try {
-      // Add your health checks here
-      // For example:
-      // await Promise.all([
-      //   app.db?.query('SELECT 1'),
-      //   fetch('https://external-service/health')
-      // ])
+      // Example: Check database connectivity
+      if (app.hasDecorator('db')) {
+        await app.db.query('SELECT 1')
+      }
+      
+      // Example: Check external service health
+      const response = await fetch('https://api.external-service.com/health', {
+        timeout: 5000
+      })
+      
+      if (!response.ok) {
+        return {
+          status: false,
+          statusCode: 503,
+          body: 'External service unavailable'
+        }
+      }
+      
+      return { status: true }
+    } catch (err) {
+      app.log.error({ err }, 'Health check failed')
+      return {
+        status: false,
+        statusCode: 503,
+        body: `Health check failed: ${err.message}`
+      }
+    }
+  })
+
+  // Register custom readiness check (for /ready endpoint)
+  globalThis.platformatic.setCustomReadinessCheck(async () => {
+    try {
+      // Basic service readiness checks
+      // These should be fast and lightweight
+      
+      // Check if critical dependencies are initialized
+      if (app.hasDecorator('db') && !app.db.pool) {
+        return false
+      }
+      
       return true
     } catch (err) {
-      app.log.error(err)
+      app.log.error({ err }, 'Readiness check failed')
       return false
     }
   })
 
-  // Register custom readiness check with Platformatic
-  globalThis.platformatic.setCustomReadinessCheck(async () => {
-    try {
-      // Add your readiness checks here
-      // For example:
-      // await Promise.all([
-      //   app.db?.query('SELECT 1'),
-      //   fetch('https://external-service/health')
-      // ])
-      return true
-    } catch (err) {
-      app.log.error(err)
-      return false
-    }
+  // Add application routes
+  app.get('/', async () => {
+    return { message: 'Service is running' }
   })
 
   return app
 }
 ```
 
-### 2. Kubernetes Configuration
+### 2. Watt Configuration
+
+Configure the metrics server in your `watt.json` file:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "readiness": {
+      "success": {
+        "statusCode": 200,
+        "body": "Ready"
+      },
+      "fail": {
+        "statusCode": 503,
+        "body": "Not Ready"
+      }
+    },
+    "liveness": {
+      "success": {
+        "statusCode": 200,
+        "body": "Healthy"
+      },
+      "fail": {
+        "statusCode": 503,
+        "body": "Unhealthy"
+      }
+    }
+  }
+}
+```
+
+### 3. Kubernetes Configuration
 
 Create a Kubernetes deployment configuration that defines the probes:
 
@@ -105,84 +210,128 @@ Create a Kubernetes deployment configuration that defines the probes:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-readiness-liveness
+  name: watt-health-app
   labels:
-    app: demo-readiness-liveness
+    app: watt-health-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: demo-readiness-liveness
+      app: watt-health-app
   template:
     metadata:
       labels:
-        app: demo-readiness-liveness
+        app: watt-health-app
     spec:
       containers:
-      - name: demo-readiness-liveness
-        image: demo-readiness-liveness:latest
+      - name: watt-app
+        image: watt-health-app:latest
         ports:
-        - containerPort: 3001
+        - containerPort: 3042
           name: service
         - containerPort: 9090
           name: metrics
+        env:
+        - name: PLT_SERVER_HOSTNAME
+          value: "0.0.0.0"
         readinessProbe:
           httpGet:
             path: /ready
             port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /status
             port: 9090
           initialDelaySeconds: 30
           periodSeconds: 30
-          failureThreshold: 1
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 20  # Allow up to 100 seconds for startup
         resources:
           requests:
             memory: "256Mi"
-            cpu: "500m"
+            cpu: "250m"
           limits:
             memory: "512Mi"
-            cpu: "1000m"
+            cpu: "500m"
 ```
 
 Key configuration points:
 
-- **Readiness Probe**: Checks `/ready` endpoint every 30 seconds
-- **Liveness Probe**: Checks `/status` endpoint every 30 seconds
-- Both probes:
-  - `initialDelaySeconds: 30`: Wait 30 seconds before first probe
-  - `periodSeconds: 30`: Check every 30 seconds
-  - `failureThreshold: 1`: Fail after 1 unsuccessful attempt
+- **Startup Probe**: Allows up to 100 seconds for application initialization
+- **Readiness Probe**: Checks `/ready` endpoint every 10 seconds after startup
+- **Liveness Probe**: Checks `/status` endpoint every 30 seconds after startup
+- **Environment Variables**: `PLT_SERVER_HOSTNAME=0.0.0.0` ensures the app binds to all interfaces
 
-Please note these values are for demonstration purposes. In a production environment, you should set these values based on your application's characteristics and requirements.
+**Important Timing Considerations:**
+- Startup probe runs first and disables other probes until successful
+- Readiness probe has lower failure threshold for faster traffic removal
+- Liveness probe has higher failure threshold to avoid unnecessary restarts
+- Timeout values account for potential network latency
 
-### 3. Environment Configuration
+### 4. Docker Configuration
 
-Ensure your service binds to the correct network interface in Kubernetes:
+Create a `Dockerfile` for your Watt application:
 
-```yaml
-env:
-- name: PLT_SERVER_HOSTNAME
-  value: "0.0.0.0"
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy application code
+COPY . .
+
+# Expose ports
+EXPOSE 3042 9090
+
+# Set environment variables
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV NODE_ENV=production
+
+# Health check for Docker
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:9090/ready || exit 1
+
+# Start the application
+CMD ["npm", "start"]
 ```
 
 ## How It Works
 
-1. **Startup**: When the pod starts, Kubernetes waits `initialDelaySeconds` before beginning health checks.
+1. **Startup Phase**: 
+   - Kubernetes starts the container and waits for the startup probe to succeed
+   - The startup probe gives the application time to initialize (up to 100 seconds in our example)
+   - Readiness and liveness probes are disabled during this phase
 
-2. **Readiness Check**:
-   - Kubernetes calls the `/ready` endpoint every `periodSeconds`
-   - The `watt` server checks that all the services are up and running
-   - If successful, the pod is marked as ready to receive traffic; if it fails `failureThreshold` times, the pod is marked as not ready
+2. **Readiness Check** (`/ready` endpoint):
+   - Checks if all Watt services have started successfully
+   - Runs your custom readiness check functions
+   - If successful: pod receives traffic through Kubernetes services
+   - If failed: pod is removed from service endpoints (no restart)
 
-3. **Liveness Check**:
-   - Kubernetes calls the `/status` endpoint every `periodSeconds`
-   - The `watt` server checks that all the services are ready and perform the custom health check for each service
-   - If successful, the container is considered healthy; if it fails `failureThreshold` times, Kubernetes restarts the container
+3. **Liveness Check** (`/status` endpoint):
+   - First verifies readiness (all services started)
+   - Then runs your custom health check functions
+   - If successful: container continues running
+   - If failed: Kubernetes restarts the container
+
+**Important**: The liveness check depends on readiness. If readiness fails, liveness will also fail, potentially causing unnecessary restarts.
 
 ## Project Structure
 
@@ -190,35 +339,66 @@ You can see a full working example in [https://github.com/platformatic/k8s-readi
 
 The example project structure demonstrates a Watt application with health checks:
 
-```txt
-├── app
-│   ├── watt.json           # Main Watt configuration
-│   └── services
-│       ├── main            # Entry point service
-│       │   └── platformatic.json
-│       └── service-one     # Example service with custom health check
-│           ├── platformatic.json
-│           └── app.js
-├── k8s
-│   ├── deployment.yaml     # Kubernetes deployment with probes
-│   └── service.yaml        # Kubernetes service configuration
-└── Dockerfile              # Container image build
+```
+├── watt.json               # Main Watt configuration with metrics
+├── Dockerfile              # Container configuration
+├── package.json            # Dependencies and scripts
+├── services/
+│   ├── api/                # Main API service
+│   │   ├── platformatic.json
+│   │   └── index.js        # Service with custom health checks
+│   └── worker/             # Background worker service
+│       ├── platformatic.json
+│       └── index.js
+└── k8s/
+    ├── deployment.yaml     # Kubernetes deployment with probes
+    ├── service.yaml        # Kubernetes service configuration
+    └── ingress.yaml        # Optional ingress configuration
 ```
 
-The `watt.json` configuration exposes the metrics server on port 9090:
+The `watt.json` configuration enables the metrics server:
 
 ```json
 {
   "metrics": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": 9090
-  }
+    "port": 9090,
+    "readiness": true,
+    "liveness": true
+  },
+  "services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "worker", 
+      "path": "./services/worker",
+      "config": "platformatic.json"
+    }
+  ]
 }
 ```
 
-This configuration exposes health check endpoints available at `/ready` and `/status` on port `9090` and the service endpoints on port `3001`.
+This exposes:
+- Health endpoints on port `9090`: `/ready` (readiness) and `/status` (liveness)
+- Application services on port `3042` (default Watt port)
 
-You can follow the `README.md` in the [demo/k8s-readiness-liveness](https://github.com/platformatic/k8s-readiness-liveness/blob/main/README.md) to run the example.
+**To run the complete example:**
+
+1. Clone the example repository:
+   ```bash
+   git clone https://github.com/platformatic/k8s-readiness-liveness.git
+   cd k8s-readiness-liveness
+   ```
+
+2. Follow the setup instructions in the repository's `README.md`
+
+3. Deploy to your Kubernetes cluster:
+   ```bash
+   kubectl apply -f k8s/
+   ```
 
 ## Verification and Testing
 
@@ -226,18 +406,32 @@ You can follow the `README.md` in the [demo/k8s-readiness-liveness](https://gith
 
 **1. Start your Watt application:**
 ```bash
+npm start
+# or for development
 npm run dev
 ```
 
 **2. Test health endpoints:**
 ```bash
 # Test readiness endpoint
-curl http://localhost:9090/ready
+curl -v http://localhost:9090/ready
+# Expected: 200 OK "Ready" (or custom response)
 
 # Test liveness endpoint  
-curl http://localhost:9090/status
+curl -v http://localhost:9090/status
+# Expected: 200 OK "Healthy" (or custom response)
 
-# Expected responses should be 200 OK with health status
+# Check metrics endpoint
+curl http://localhost:9090/metrics
+# Expected: Prometheus metrics output
+```
+
+**3. Test with failing health checks:**
+```bash
+# If your app has test endpoints to simulate failures:
+curl -X POST http://localhost:3042/api/test/fail-health
+curl http://localhost:9090/status
+# Expected: 503 Service Unavailable
 ```
 
 ### Test in Kubernetes
@@ -262,11 +456,15 @@ kubectl get events --field-selector reason=Unhealthy
 
 **3. Test probe behavior:**
 ```bash
-# Force a health check failure (if your app supports it)
-kubectl exec <pod-name> -- curl -X POST http://localhost:9090/fail-health
+# Test health endpoints from within the pod
+kubectl exec <pod-name> -- curl -f http://localhost:9090/ready
+kubectl exec <pod-name> -- curl -f http://localhost:9090/status
 
-# Watch Kubernetes response
-kubectl get pods -w
+# Watch Kubernetes pod status in real-time
+kubectl get pods -l app=watt-health-app -w
+
+# Check pod events for probe failures
+kubectl get events --field-selector involvedObject.name=<pod-name>
 ```
 
 ### Verify Probe Configuration
@@ -390,21 +588,29 @@ kubectl exec <pod-name> -- curl http://localhost:9090/status
 
 **Solutions:**
 ```bash
-# Verify metrics server configuration
-kubectl exec <pod-name> -- netstat -ln | grep 9090
+# Verify metrics server is listening
+kubectl exec <pod-name> -- netstat -tlnp | grep :9090
 
 # Check Watt configuration
-kubectl exec <pod-name> -- cat watt.json | grep -A 5 metrics
+kubectl exec <pod-name> -- cat watt.json
 
-# Test endpoints manually
+# Test endpoints with verbose output
 kubectl exec <pod-name> -- curl -v http://localhost:9090/ready
+kubectl exec <pod-name> -- curl -v http://localhost:9090/status
 
-# Common fixes:
-# - Ensure metrics.hostname is set to "0.0.0.0" not "127.0.0.1"
-# - Verify metrics.port matches probe configuration
-# - Check that custom health check functions don't throw exceptions
-# - Ensure all services in Watt application are starting correctly
+# Check application logs for errors
+kubectl logs <pod-name> --tail=100
+
+# Verify container environment
+kubectl exec <pod-name> -- env | grep PLT_
 ```
+
+**Common fixes:**
+- Ensure `metrics.hostname` is `"0.0.0.0"` (not `"127.0.0.1"` or `"localhost"`)
+- Verify `metrics.port` matches probe port configuration  
+- Check that `PLT_SERVER_HOSTNAME=0.0.0.0` environment variable is set
+- Ensure custom health check functions handle errors gracefully
+- Verify all Watt services are starting without errors
 
 ### Slow Startup Times
 
@@ -412,21 +618,27 @@ kubectl exec <pod-name> -- curl -v http://localhost:9090/ready
 
 **Solutions:**
 ```bash
-# Analyze startup time
-kubectl logs <pod-name> --timestamps
+# Analyze startup time with timestamps
+kubectl logs <pod-name> --timestamps --since=5m
 
-# Check resource limits
-kubectl describe pod <pod-name> | grep -A 5 Limits
+# Check resource usage and limits
+kubectl describe pod <pod-name> | grep -A 10 -B 5 "Limits\|Requests"
+kubectl top pod <pod-name>
 
 # Profile health check performance
-kubectl exec <pod-name> -- time curl http://localhost:9090/ready
+kubectl exec <pod-name> -- time curl -f http://localhost:9090/ready
 
-# Common fixes:
-# - Use startup probes for applications with long initialization
-# - Optimize custom health check logic
-# - Increase CPU/memory resources if resource-constrained
-# - Remove expensive operations from readiness checks
+# Check Node.js startup time
+kubectl exec <pod-name> -- ps aux | grep node
 ```
+
+**Common fixes:**
+- **Use startup probes** for applications with slow initialization (database migrations, cache warming, etc.)
+- **Optimize custom health checks** - keep them lightweight and fast
+- **Increase resources** if CPU/memory constrained (check with `kubectl top`)
+- **Remove expensive operations** from readiness checks (use async background tasks instead)
+- **Pre-build dependencies** in Docker image rather than installing at runtime
+- **Use Node.js production optimizations** (`NODE_ENV=production`, `--max-old-space-size`)
 
 ## Advanced Patterns
 
@@ -435,74 +647,153 @@ kubectl exec <pod-name> -- time curl http://localhost:9090/ready
 For complex applications with service interdependencies:
 
 ```javascript
-// Implement cascading health checks
-globalThis.platformatic.setCustomHealthCheck(async () => {
-  try {
-    // Check primary service health
-    const serviceHealth = await checkServiceHealth()
+// services/api/index.js
+import fastify from 'fastify'
+
+export function create () {
+  const app = fastify({ logger: true })
+
+  // Critical dependency checker
+  async function checkCriticalDependencies() {
+    const checks = await Promise.allSettled([
+      // Database connection
+      app.hasDecorator('db') ? app.db.query('SELECT 1') : Promise.resolve(),
+      // Redis cache
+      app.hasDecorator('redis') ? app.redis.ping() : Promise.resolve(),
+      // Internal service dependency
+      fetch('http://worker-service:3042/health', { timeout: 2000 })
+    ])
     
-    // Check critical dependencies
-    const dbHealth = await checkDatabaseConnection()
-    const cacheHealth = await checkCacheConnection()
-    
-    // Check non-critical dependencies (don't fail health check)
-    const externalServiceHealth = await checkExternalServices().catch(() => false)
-    
-    if (serviceHealth && dbHealth && cacheHealth) {
-      return {
-        status: true,
-        body: {
-          service: 'healthy',
-          database: dbHealth,
-          cache: cacheHealth,
-          external: externalServiceHealth
+    return checks.every(result => result.status === 'fulfilled')
+  }
+
+  // Implement cascading health checks
+  globalThis.platformatic.setCustomHealthCheck(async () => {
+    try {
+      const criticalHealthy = await checkCriticalDependencies()
+      
+      // Check non-critical dependencies (don't fail on these)
+      const externalAPIs = await Promise.allSettled([
+        fetch('https://api.external-service.com/health', { timeout: 3000 })
+      ])
+      
+      const externalHealthy = externalAPIs.every(result => 
+        result.status === 'fulfilled' && result.value.ok
+      )
+      
+      if (criticalHealthy) {
+        return {
+          status: true,
+          body: JSON.stringify({
+            service: 'healthy',
+            dependencies: {
+              critical: 'healthy',
+              external: externalHealthy ? 'healthy' : 'degraded'
+            },
+            timestamp: new Date().toISOString()
+          })
         }
       }
+      
+      return { 
+        status: false,
+        statusCode: 503,
+        body: 'Critical dependencies unavailable'
+      }
+    } catch (error) {
+      app.log.error({ err: error }, 'Health check failed')
+      return { 
+        status: false, 
+        statusCode: 503,
+        body: `Health check error: ${error.message}`
+      }
     }
-    
-    return { status: false }
-  } catch (error) {
-    return { 
-      status: false, 
-      statusCode: 503,
-      body: { error: error.message }
-    }
-  }
-})
+  })
+
+  return app
+}
 ```
 
 ### Graceful Shutdown Handling
 
 ```javascript
-// Handle graceful shutdown for zero-downtime deployments
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM, starting graceful shutdown')
+// services/api/index.js
+import fastify from 'fastify'
+
+export function create () {
+  const app = fastify({ logger: true })
   
-  // Stop accepting new requests
-  globalThis.platformatic.setCustomReadinessCheck(() => false)
+  let isShuttingDown = false
   
-  // Allow existing requests to complete
-  await new Promise(resolve => setTimeout(resolve, 5000))
+  // Handle graceful shutdown for zero-downtime deployments
+  process.on('SIGTERM', async () => {
+    app.log.info('Received SIGTERM, starting graceful shutdown')
+    isShuttingDown = true
+    
+    // Immediately fail readiness checks to stop receiving new traffic
+    globalThis.platformatic.setCustomReadinessCheck(() => {
+      return {
+        status: false,
+        statusCode: 503,
+        body: 'Service is shutting down'
+      }
+    })
+    
+    try {
+      // Allow existing requests to complete (Kubernetes gives 30s by default)
+      await new Promise(resolve => setTimeout(resolve, 10000))
+      
+      // Clean up resources
+      if (app.hasDecorator('db')) {
+        await app.db.close()
+      }
+      if (app.hasDecorator('redis')) {
+        await app.redis.quit()
+      }
+      
+      app.log.info('Graceful shutdown completed')
+      process.exit(0)
+    } catch (error) {
+      app.log.error({ err: error }, 'Error during shutdown')
+      process.exit(1)
+    }
+  })
   
-  // Clean up resources
-  await cleanupConnections()
+  // Custom readiness check that accounts for shutdown state
+  globalThis.platformatic.setCustomReadinessCheck(async () => {
+    if (isShuttingDown) {
+      return false
+    }
+    
+    // Add your readiness logic here
+    return true
+  })
   
-  process.exit(0)
-})
+  return app
+}
 ```
 
 ## Next Steps
 
 Now that you have robust Kubernetes health checks:
 
-- **[Set up monitoring and alerting](/docs/guides/monitoring)** - Track health check metrics
-- **[Configure autoscaling](/docs/guides/autoscaling)** - Scale based on health and load
-- **[Implement circuit breakers](/docs/guides/resilience)** - Handle dependency failures gracefully  
-- **[Set up distributed tracing](/docs/guides/tracing)** - Debug complex health check failures
+- **[Configure monitoring and observability](/docs/guides/monitoring-and-observability)** - Track health check metrics with Prometheus
+- **[Set up logging](/docs/guides/logging)** - Centralize health check logs for debugging
+- **[Container deployment guide](/docs/guides/deployment/dockerize-a-watt-app)** - Optimize your Docker setup
+- **[TypeScript compilation](/docs/guides/deployment/compiling-typescript)** - Production builds and optimization
 
 ## References
 
+### Kubernetes Documentation
 - [Kubernetes Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)
 - [Configure Liveness, Readiness and Startup Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 - [Container Probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes)
-- [Example Application](https://github.com/platformatic/k8s-readiness-liveness) - Complete working example
+
+### Platformatic Resources  
+- [Watt Runtime Configuration](/docs/reference/runtime/configuration) - Complete metrics configuration reference
+- [Node.js Stackable Reference](/docs/reference/node) - Custom health check API documentation
+- [Example Application](https://github.com/platformatic/k8s-readiness-liveness) - Complete working example with Kubernetes manifests
+
+### Best Practices
+- [Kubernetes Health Check Best Practices](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#when-should-you-use-a-liveness-probe)
+- [Production Readiness Checklist](https://kubernetes.io/docs/concepts/cluster-administration/production-environment/)
