@@ -324,6 +324,160 @@ wattpm logs my-app api-service
 wattpm logs --level error
 ```
 
+## Observability Architecture Diagrams
+
+Understanding how observability works in Watt applications is crucial for effective debugging. Logs, telemetry tracing, and metrics have three completely different implementations and data flows.
+
+### Logging Flow
+
+Watt uses Pino for high-performance logging with centralized log streaming through the Runtime API:
+
+```mermaid
+graph TD
+    A[Watt Application] --> B[Service Worker 1]
+    A --> C[Service Worker 2]
+    A --> D[Service Worker N]
+    
+    B --> E[Pino Logger]
+    C --> F[Pino Logger]
+    D --> G[Pino Logger]
+    
+    E --> H[Runtime Process]
+    F --> H
+    G --> H
+    
+    H --> I[Log Files<br/>pino-roll]
+    H --> J[Management API<br/>getRuntimeLiveLogsStream]
+    
+    J --> K[wattpm logs<br/>command]
+    
+    L[External Log Aggregator<br/>ELK/Fluentd] --> I
+    
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style K fill:#e8f5e8
+    style L fill:#fff3e0
+```
+
+**Key Points:**
+- Each worker service uses its own Pino logger instance
+- All logs flow through the main Runtime process
+- Runtime API provides live log streaming for CLI commands
+- Logs are persisted to rotating files using pino-roll
+- External systems can consume log files directly
+
+### Telemetry Tracing Flow
+
+Watt implements distributed tracing using OpenTelemetry with automatic span propagation across services:
+
+```mermaid
+graph TD
+    A[Incoming Request] --> B[Watt Application]
+    B --> C[Fastify onRequest Hook]
+    C --> D[OpenTelemetry Plugin<br/>startHTTPSpan]
+    
+    D --> E[Service Worker 1]
+    D --> F[Service Worker 2]
+    
+    E --> G[Inter-service Call<br/>undici interceptor]
+    F --> H[Database Query<br/>auto-instrumentation]
+    
+    G --> I[Trace Context<br/>Propagation]
+    H --> I
+    
+    I --> J[OTLP Exporter]
+    I --> K[Jaeger Exporter]
+    I --> L[Zipkin Exporter]
+    
+    J --> M[OpenTelemetry Collector]
+    K --> N[Jaeger Backend]
+    L --> O[Zipkin Backend]
+    
+    M --> P[Observability Platform<br/>Jaeger/Grafana/etc]
+    N --> P
+    O --> P
+    
+    style A fill:#e1f5fe
+    style D fill:#f3e5f5
+    style I fill:#e8f5e8
+    style P fill:#fff3e0
+```
+
+**Key Points:**
+- Each service has its own OpenTelemetry plugin instance
+- Traces automatically span across service boundaries
+- Context propagation happens via HTTP headers
+- Multiple exporter types supported (OTLP, Jaeger, Zipkin)
+- Custom spans can be created using `app.openTelemetry.startSpan()`
+
+### Metrics Collection Flow
+
+Watt exposes Prometheus-compatible metrics through a dedicated metrics server:
+
+```mermaid
+graph TD
+    A[Watt Application] --> B[Service Worker 1]
+    A --> C[Service Worker 2]
+    A --> D[Service Worker N]
+    
+    B --> E[Fastify Metrics<br/>@fastify/metrics]
+    C --> F[Custom Metrics<br/>app.metrics.counter]
+    D --> G[System Metrics<br/>Node.js metrics]
+    
+    E --> H[Runtime Process<br/>Metrics Aggregation]
+    F --> H
+    G --> H
+    
+    H --> I[Prometheus Server<br/>:9090/metrics]
+    H --> J[Management API<br/>getRuntimeMetrics]
+    
+    I --> K[Prometheus Scraper]
+    J --> L[wattpm metrics<br/>command]
+    
+    K --> M[Prometheus Database]
+    M --> N[Grafana Dashboard]
+    M --> O[Alertmanager]
+    
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style I fill:#e8f5e8
+    style M fill:#fff3e0
+```
+
+**Key Points:**
+- Each worker collects its own metrics (HTTP, custom, system)
+- Runtime process aggregates metrics from all workers
+- Dedicated Prometheus server runs on separate port (default 9090)
+- Metrics available in both text and JSON formats
+- Built-in health check endpoints (/ready, /status)
+
+### Observability Integration Patterns
+
+For production deployments, these three systems work together:
+
+```mermaid
+graph LR
+    A[Watt Application] --> B[Logs]
+    A --> C[Traces]
+    A --> D[Metrics]
+    
+    B --> E[ELK Stack]
+    C --> F[Jaeger/Tempo]
+    D --> G[Prometheus]
+    
+    E --> H[Unified Dashboard<br/>Grafana]
+    F --> H
+    G --> H
+    
+    H --> I[Alerting<br/>PagerDuty/Slack]
+    H --> J[APM Analysis<br/>Error Correlation]
+    
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style I fill:#ffebee
+    style J fill:#e8f5e8
+```
+
 ## Getting Additional Help
 
 ### Community Resources
