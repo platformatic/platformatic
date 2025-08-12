@@ -831,6 +831,24 @@ const sidebars = {
 - Team adoption playbook validated (enterprise onboarding success)
 - Community content creation enabled (contributor guidelines and templates)
 
+### Guide Splitting Requirements (Per Review Feedback)
+
+**Split Monitoring and Observability Guide**: The current `docs/guides/monitoring-and-observability.md` needs to be split into two separate guides:
+
+1. **Basic Node.js Applications Guide** (`docs/guides/logging-basic-nodejs.md`)
+   - Focus on logging and monitoring for simple Node.js applications
+   - Cover environment-specific configurations
+   - Include basic health checks and metrics
+   - Target developers working with standalone Node.js services
+
+2. **Platformatic Service Guide** (`docs/guides/logging-platformatic-services.md`)
+   - Focus on Platformatic Service, Platformatic DB, and Platformatic Composer
+   - Cover unified logging across services
+   - Include advanced monitoring with service mesh patterns
+   - Target developers building comprehensive Watt applications
+
+This split addresses the need to distinguish between basic Node.js application monitoring and the comprehensive monitoring capabilities available when using Platformatic services within Watt.
+
 ## Implementation Recommendations
 
 ### Content Creation Guidelines

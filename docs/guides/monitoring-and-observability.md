@@ -14,15 +14,30 @@ Observability is crucial for production applications. Watt provides built-in sup
 
 ## Quick Setup
 
-The fastest way to enable monitoring is during Watt application creation:
+The fastest way to enable monitoring is during Watt application creation using the `@platformatic/node` stackable:
 
 ```bash
-wattpm create my-app
-# Select monitoring options during setup
+npx wattpm@latest create my-app
+# Select the @platformatic/node stackable during setup
+# Choose monitoring options during setup
 
 cd my-app
-wattpm dev
+npx wattpm dev
 ```
+
+### Setting up Fastify for Monitoring
+
+After creating your Watt application, you'll need to set up Fastify properly. The basic Watt quick start uses Node.js core `createServer`, but for comprehensive monitoring, you should use **Platformatic Service**, **Platformatic DB**, or **Platformatic Composer**.
+
+For a **Platformatic Service** with Fastify:
+
+```bash
+# Create a new service with the @platformatic/service stackable
+npx wattpm@latest create my-monitoring-app
+# Select "@platformatic/service" during setup
+```
+
+This creates a Fastify-based service with built-in monitoring capabilities.
 
 ## Logging Configuration
 
@@ -71,13 +86,13 @@ Available log levels (in order of verbosity):
 - `debug`: Debug information
 - `trace`: Very detailed debug information
 
-### Custom Logging in Services
+### Custom Logging in Platformatic Services
 
-Add logging to your service plugins:
+Add logging to your **Platformatic Service** plugins using ESM syntax:
 
 ```javascript
 // services/api/plugin.js
-module.exports = async function (app) {
+export default async function (app) {
   app.get('/api/users', async (request, reply) => {
     request.log.info({ userId: 123 }, 'User data requested')
     
@@ -90,6 +105,12 @@ module.exports = async function (app) {
       throw error
     }
   })
+}
+
+// For @platformatic/node applications
+export async function getUsers() {
+  // Your user fetching logic here
+  return []
 }
 ```
 
@@ -121,13 +142,13 @@ Watt automatically collects:
 - **Database Metrics**: Connection pool, query duration (if using Database Service)
 - **Custom Metrics**: Application-specific metrics you define
 
-### Custom Metrics
+### Custom Metrics in Platformatic Services
 
-Add custom metrics to your services:
+Add custom metrics to your **Platformatic Service**, **Platformatic DB**, or **Platformatic Composer** using ESM syntax:
 
 ```javascript
 // services/api/plugin.js
-module.exports = async function (app) {
+export default async function (app) {
   // Counter for API calls
   const apiCallsCounter = app.metrics.counter({
     name: 'api_calls_total',
@@ -197,13 +218,13 @@ Enable tracing for request correlation across services:
 }
 ```
 
-### Tracing in Services
+### Tracing in Platformatic Services
 
-Tracing is automatically enabled for HTTP requests, database queries, and inter-service calls. Add custom spans:
+Tracing is automatically enabled for HTTP requests, database queries, and inter-service calls in **Platformatic Service**, **Platformatic DB**, and **Platformatic Composer**. Add custom spans using ESM syntax:
 
 ```javascript
 // services/api/plugin.js
-module.exports = async function (app) {
+export default async function (app) {
   app.get('/api/complex-operation', async (request, reply) => {
     const tracer = app.openTelemetry.tracer
     
@@ -226,6 +247,11 @@ module.exports = async function (app) {
       }
     })
   })
+}
+
+async function processData() {
+  // Your data processing logic here
+  return { processed: true }
 }
 ```
 
@@ -282,12 +308,14 @@ This creates health endpoints:
 
 ### Service-Specific Health Checks
 
-Add custom health checks:
+Add custom health checks to your **Platformatic Service** using ESM syntax:
 
 ```javascript
 // services/api/plugin.js
-module.exports = async function (app) {
-  app.register(require('@fastify/under-pressure'), {
+import underPressure from '@fastify/under-pressure'
+
+export default async function (app) {
+  await app.register(underPressure, {
     healthCheck: async function () {
       // Custom health check logic
       const dbHealthy = await checkDatabaseConnection()
@@ -302,24 +330,38 @@ module.exports = async function (app) {
     healthCheckInterval: 10000
   })
 }
+
+async function checkDatabaseConnection() {
+  // Your database health check logic
+  return true
+}
+
+async function checkExternalAPI() {
+  // Your external service health check logic
+  return true
+}
 ```
 
 ### Database Health Checks
 
-For Database Services, health checks include:
+For **Platformatic DB** services, health checks include:
 
 ```javascript
-// Automatic database connection health check
-app.register(require('@fastify/under-pressure'), {
-  healthCheck: async function () {
-    try {
-      await app.platformatic.db.query('SELECT 1')
-      return { database: 'connected' }
-    } catch (error) {
-      throw new Error(`Database connection failed: ${error.message}`)
+// Automatic database connection health check using ESM
+import underPressure from '@fastify/under-pressure'
+
+export default async function (app) {
+  await app.register(underPressure, {
+    healthCheck: async function () {
+      try {
+        await app.platformatic.db.query('SELECT 1')
+        return { database: 'connected' }
+      } catch (error) {
+        throw new Error(`Database connection failed: ${error.message}`)
+      }
     }
-  }
-})
+  })
+}
 ```
 
 ## Log Aggregation
@@ -364,45 +406,54 @@ Configure structured logging for Fluentd:
 
 For more details on ELK integration, see the [Logging to Elasticsearch guide](./logging-to-elasticsearch.md).
 
-## Error Tracking
+## Environment-Specific Logging Configuration
 
-### Sentry Integration
+You need to customize logging behavior in your Watt application for different environments (development, staging, production):
 
-Add error tracking with Sentry:
+### Development Environment
 
-```bash
-npm install @sentry/node @sentry/integrations
+```json
+{
+  "server": {
+    "logger": {
+      "level": "debug",
+      "prettyPrint": true,
+      "colorize": true
+    }
+  }
+}
 ```
 
-```javascript
-// services/api/plugin.js
-const Sentry = require('@sentry/node')
+### Production Environment
 
-module.exports = async function (app) {
-  Sentry.init({
-    dsn: process.env.PLT_SENTRY_DSN,
-    environment: process.env.NODE_ENV,
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true })
-    ],
-    tracesSampleRate: 1.0
-  })
-
-  // Global error handler
-  app.setErrorHandler(async (error, request, reply) => {
-    Sentry.captureException(error, {
-      user: { id: request.user?.id },
-      extra: {
-        url: request.url,
-        method: request.method,
-        headers: request.headers
+```json
+{
+  "server": {
+    "logger": {
+      "level": "warn",
+      "prettyPrint": false,
+      "redact": ["password", "authorization", "cookie"],
+      "serializers": {
+        "req": "pino-std-serializers.req",
+        "res": "pino-std-serializers.res"
       }
-    })
-    
-    request.log.error({ error }, 'Unhandled error')
-    reply.status(500).send({ error: 'Internal Server Error' })
-  })
+    }
+  }
 }
+```
+
+### Using Environment Variables
+
+```json
+{
+  "server": {
+    "logger": {
+      "level": "{LOG_LEVEL}",
+      "prettyPrint": "{NODE_ENV !== 'production'}"
+    }
+  }
+}
+```
 ```
 
 ## Production Monitoring Setup
