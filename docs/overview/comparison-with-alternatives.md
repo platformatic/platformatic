@@ -257,7 +257,7 @@ NestJS is an enterprise-focused Node.js framework inspired by Angular, emphasizi
 #### Feature Comparison
 
 | Feature | NestJS | Watt |
-|---------|--------|------|
+|---------|---------|------|
 | **Architecture Style** | OOP/Decorator-based | Configuration-driven |
 | **TypeScript** | First-class, required | Excellent, optional |
 | **Enterprise Features** | Built-in (guards, interceptors) | Built-in (authorization, observability) |
