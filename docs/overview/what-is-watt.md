@@ -7,7 +7,7 @@ label: What is Watt?
 
 ## 30-Second Overview
 
-**Watt is a Node.js Application Server** that runs multiple Node.js applications, databases, and frontend frameworks as a single unified system. Instead of managing separate servers and complex deployments, Watt provides one runtime that handles everything - from APIs and databases to React/Next.js frontends - with built-in observability and zero-configuration deployment.
+**Watt is a Node.js Application Server** that integrates multiple Node.js applications and frontend frameworks as a single unified system. Instead of managing separate servers and complex deployments, Watt provides one runtime that handles everything - from APIs to React/Next.js frontends - with built-in observability and zero-configuration deployment. Watt allows you to integrate any existing app into your application server.
 
 **Think Docker Compose for Node.js applications** - but faster, simpler, and with production-ready monitoring built-in.
 
@@ -17,7 +17,7 @@ label: What is Watt?
 
 Modern Node.js development is fragmented and complex:
 
-- **Multiple servers to manage** - Database server, API server, frontend server, reverse proxy
+- **Multiple servers to manage** - API server, frontend server, reverse proxy
 - **Complex deployment pipelines** - Different containers, orchestration, networking
 - **Fragmented monitoring** - Logs scattered across services, no unified observability
 - **Inconsistent environments** - What works locally breaks in production
@@ -28,7 +28,6 @@ Watt provides a **unified application server** that runs everything in a single 
 
 ```bash
 # Before: Multiple servers and complex setup
-docker-compose up postgres  # Database server
 npm run api                 # API server  
 npm run frontend           # Frontend server
 nginx                      # Reverse proxy
@@ -40,18 +39,18 @@ npm start                  # Everything runs together
 ### Core Capabilities
 
 **🚀 Service Orchestration**
-- Run databases, APIs, and frontends in a single application server
+- Run APIs and frontends in a single application server
 - Automatic inter-service communication and load balancing
 - Hot reloading and development-to-production consistency
 
-**⚡ Built-in Database Layer**  
-- Auto-generated REST and GraphQL APIs from your database schema
+**⚡ Database Integration**  
+- Auto-generated REST and GraphQL APIs from your database schema via Platformatic DB
 - Support for PostgreSQL, MySQL, MariaDB, SQLite
 - Built-in migrations, authorization, and real-time subscriptions
 
 **🎨 Framework Integration**
 - Native support for Next.js, Astro, Remix, Vite applications
-- Works with Express, Fastify, or any Node.js framework
+- Integrates any existing Express, Fastify, or Node.js application
 - Unified routing and middleware across all services
 
 **📊 Production-Ready Observability**
@@ -68,9 +67,9 @@ npm start                  # Everything runs together
 - **Teams migrating** from fragmented Node.js toolchains
 
 **⚠️ Consider Alternatives When:**
-- You need polyglot services (non-Node.js languages)
-- Your architecture requires true service independence
+- Your architecture requires true service independence with completely isolated processes
 - You're heavily invested in existing container orchestration
+- You need languages not yet supported (Watt supports Node.js, PHP, with Python coming soon)
 
 ## 15-Minute Complete Understanding
 
@@ -83,7 +82,7 @@ Watt fundamentally reimagines Node.js application architecture by providing a **
 **Worker Thread Services** (Fast startup, low overhead):
 - **Next.js/Astro/Remix applications** - Frontend frameworks with SSR
 - **HTTP Services** - Custom APIs built on Fastify
-- **Database Services** - Auto-generated APIs from SQL schemas
+- **Database Services** - Auto-generated APIs from SQL schemas via Platformatic DB
 
 **Child Process Services** (For complex startup requirements):
 - **Node.js applications** - Existing apps with complex initialization
@@ -127,8 +126,6 @@ logger.info({
 ```yaml
 # docker-compose.yml - 100+ lines
 services:
-  postgres: ...
-  redis: ...  
   user-api: ...
   product-api: ...
   frontend: ...
@@ -261,20 +258,17 @@ wattpm import ./existing-nextjs-app
 wattpm create --type @platformatic/db
 ```
 
-### Performance Characteristics
+### Development Experience
 
-**Memory Usage:**
-- **Traditional microservices:** ~50-100MB per service
-- **Watt services:** ~10-20MB per service (shared Node.js runtime)
-
-**Startup Time:**
-- **Traditional:** 2-5 seconds per service (sequential startup)
-- **Watt:** 500ms total (parallel startup with worker threads)
-
-**Development Experience:**
+**Development Benefits:**
 - **Hot reload:** All services restart together
 - **Unified debugging:** Single debugger session for entire application
 - **Consistent environments:** Development matches production exactly
+
+**Unified Runtime:**
+- **Shared Node.js process:** Services run within the same runtime
+- **Worker threads:** Enables parallel execution for compatible services
+- **Resource management:** Intelligent allocation across services
 
 ### Understanding the Platformatic Ecosystem
 
