@@ -9,9 +9,19 @@ This document tracks ALL review feedback from PR #4184 "Docs/phase3 strategic co
 - **Copilot: 5 comments** with suggestions
 
 **Current Status:**
-- ❌ **46 comments NOT addressed** 
-- ✅ 4 comments verified as complete
-- 🚨 **Critical factual errors need immediate attention**
+- ❌ **46 mcollina comments NOT addressed** 
+- ✅ **5 Copilot comments COMPLETED**
+- 🚨 **Critical factual errors in mcollina comments still need immediate attention**
+
+## Recent Updates (Latest Session)
+**Copilot Comments - ALL 3 REMAINING COMPLETED:**
+- ✅ Added ROI calculation disclaimers to comparison-with-alternatives.md
+- ✅ Added Mermaid diagram support note to architecture-overview.md  
+- ✅ Added clear Watt vs Platformatic DB distinction table and diagram to what-is-watt.md
+
+**Additional fixes applied:**
+- ✅ Fixed Node.js version requirement from 18.0+ to 20.3+ in getting-started.md
+- ✅ Updated command to `npx wattpm@latest init` in what-is-watt.md
 
 ## mcollina's Comments (50 items) - NEED ATTENTION
 
@@ -105,9 +115,9 @@ This document tracks ALL review feedback from PR #4184 "Docs/phase3 strategic co
 
 49. ✅ **use-cases-and-examples.md** - Repository link verification (COMPLETED)
 50. ✅ **cli-commands.md** - Import path verification (COMPLETED)
-51. ❌ **comparison-with-alternatives.md** - "ROI calculations should include disclaimers"
-52. ❌ **architecture-overview.md** - "Ensure documentation platform supports Mermaid diagrams"
-53. ❌ **what-is-watt.md** - "Distinction between Watt and Platformatic DB could be clearer"
+51. ✅ **comparison-with-alternatives.md** - "ROI calculations should include disclaimers" (COMPLETED)
+52. ✅ **architecture-overview.md** - "Ensure documentation platform supports Mermaid diagrams" (COMPLETED)
+53. ✅ **what-is-watt.md** - "Distinction between Watt and Platformatic DB could be clearer" (COMPLETED)
 
 ## Priority Action Items
 

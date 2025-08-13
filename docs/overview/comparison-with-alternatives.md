@@ -599,6 +599,17 @@ Before choosing or migrating to Watt, evaluate these key areas:
 **Total Annual Savings: $115K**
 **ROI: 325% in first year**
 
+> **⚠️ ROI Calculation Disclaimers:**
+>
+> These ROI calculations are illustrative examples based on typical scenarios and should not be considered guarantees. Actual results will vary significantly based on:
+> - **Team Size & Expertise**: Larger teams may see different scaling benefits
+> - **Project Complexity**: Complex applications may require longer migration periods
+> - **Organizational Context**: Company processes, existing tooling, and infrastructure
+> - **Current Architecture**: Migration complexity varies greatly between setups
+> - **Timeline**: Benefits may be realized over different timeframes
+>
+> We recommend conducting your own analysis with your specific requirements, current costs, and organizational constraints before making architectural decisions.
+
 ---
 
 ## Honest Assessment: When NOT to Choose Watt

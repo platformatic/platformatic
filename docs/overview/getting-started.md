@@ -181,7 +181,7 @@ Different developers learn best in different ways. Choose the path that matches 
 ## System Requirements
 
 ### Required
-- **Node.js** 18.0+ or 20.0+ (LTS versions recommended)
+- **Node.js** 20.3+ (LTS versions recommended)
 - **npm** 9.0+ or **pnpm** 8.0+ (pnpm recommended for performance)
 - **Operating System:** Windows, macOS, or Linux
 

@@ -13,6 +13,11 @@ Watt delivers a complete application runtime that orchestrates multiple services
 
 ## Conceptual Architecture
 
+> **📋 Documentation Note:** This diagram uses Mermaid syntax for interactive visualization. If your documentation platform doesn't support Mermaid diagrams, you can:
+> - Use [Mermaid Live Editor](https://mermaid.live) to generate static images
+> - Replace with ASCII diagrams (examples provided throughout this document)
+> - Use alternative diagram formats supported by your platform
+
 ```mermaid
 graph TB
     Client[Client Applications] --> LB[Load Balancer]

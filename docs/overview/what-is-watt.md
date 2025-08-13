@@ -251,7 +251,7 @@ export function build() {
 echo '{"$schema": "https://schemas.platformatic.dev/@platformatic/next/2.0.0.json"}' > watt.json
 
 # 2. Create Watt project structure
-npx wattpm init
+npx wattpm@latest init
 wattpm import ./existing-nextjs-app
 
 # 3. Add database service
@@ -272,9 +272,50 @@ wattpm create --type @platformatic/db
 
 ### Understanding the Platformatic Ecosystem
 
-Watt is the **application server** that orchestrates different types of services:
+Watt is the **application server** that orchestrates different types of services. Understanding the distinction between Watt and its service types is crucial:
 
-**Service Types within Watt:**
+#### Watt vs Platformatic DB: Clear Distinction
+
+| Aspect | **Watt (Application Server)** | **Platformatic DB (Service Type)** |
+|--------|--------------------------------|-------------------------------------|
+| **Purpose** | Orchestrates multiple services in a single runtime | Generates APIs from database schemas |
+| **Scope** | Entire application architecture | Database-specific service layer |
+| **Role** | Container/runtime for services | One service running within Watt |
+| **Deployment** | Deploys as complete application | Deployed as part of Watt application |
+| **Communication** | Manages service mesh and routing | Exposes database APIs to other services |
+| **Database Operation** | **Does NOT run databases directly** | **Connects to existing databases** |
+| **Use Case** | Full-stack application development | Auto-generated CRUD APIs from SQL schema |
+
+#### Relationship Diagram
+
+```ascii
+┌─────────────────────────────────────────────────────────┐
+│                    Watt Application Server               │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │                Service Orchestration                │ │
+│  └─────────────────────────────────────────────────────┘ │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │
+│  │ Next.js     │  │ Fastify     │  │ Platformatic DB │   │
+│  │ Frontend    │  │ API Service │  │ (Auto-gen APIs) │   │
+│  │ (@plt/next) │  │ (@plt/svc)  │  │ (@plt/db)       │   │
+│  └─────────────┘  └─────────────┘  └─────────────────┘   │
+│                                            │             │
+└────────────────────────────────────────────┼─────────────┘
+                                             │
+                                    ┌────────▼────────┐
+                                    │   External      │
+                                    │   Database      │
+                                    │ (PostgreSQL,    │
+                                    │  MySQL, etc.)   │
+                                    └─────────────────┘
+```
+
+**Key Point**: Watt is the **runtime environment** that can include a Platformatic DB service, but Watt itself does not run databases. Platformatic DB connects to external database systems and auto-generates REST/GraphQL APIs from their schemas.
+
+#### Service Types within Watt
+
+**Core Services:**
 - **Database Service** (`@platformatic/db`) - Auto-generated APIs from SQL schemas
 - **HTTP Service** (`@platformatic/service`) - Custom application logic with Fastify
 - **Composer Service** (`@platformatic/composer`) - API gateway and service aggregation
