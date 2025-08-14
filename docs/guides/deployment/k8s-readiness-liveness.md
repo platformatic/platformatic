@@ -42,20 +42,10 @@ Before implementing Kubernetes health checks, you need:
 
 ## Installation
 
-**1. Install Watt CLI:**
-```bash
-npm install -g wattpm
-```
-
-**2. Create a new Watt application:**
+**1. Create a new Watt application:**
 ```bash
 npx wattpm@latest create my-health-app
 cd my-health-app
-```
-
-**3. Install dependencies:**
-```bash
-npm install
 ```
 
 ## Platformatic Health Check APIs
@@ -343,7 +333,7 @@ The example project structure demonstrates a Watt application with health checks
 ├── watt.json               # Main Watt configuration with metrics
 ├── Dockerfile              # Container configuration
 ├── package.json            # Dependencies and scripts
-├── services/
+├── web/
 │   ├── api/                # Main API service
 │   │   ├── platformatic.json
 │   │   └── index.js        # Service with custom health checks
@@ -369,12 +359,12 @@ The `watt.json` configuration enables the metrics server:
   "services": [
     {
       "id": "api",
-      "path": "./services/api",
+      "path": "./web/api",
       "config": "platformatic.json"
     },
     {
       "id": "worker", 
-      "path": "./services/worker",
+      "path": "./web/worker",
       "config": "platformatic.json"
     }
   ]
@@ -647,7 +637,7 @@ kubectl exec <pod-name> -- ps aux | grep node
 For complex applications with service interdependencies:
 
 ```javascript
-// services/api/index.js
+// web/api/index.js
 import fastify from 'fastify'
 
 export function create () {
@@ -717,7 +707,7 @@ export function create () {
 ### Graceful Shutdown Handling
 
 ```javascript
-// services/api/index.js
+// web/api/index.js
 import fastify from 'fastify'
 
 export function create () {
