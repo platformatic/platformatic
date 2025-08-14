@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "2.74.2",
+  "version": "2.74.3",
   "description": "",
   "main": "index.js",
   "scripts": {
