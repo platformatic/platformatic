@@ -9,7 +9,7 @@ You need to improve your application's performance by caching HTTP responses, bu
 - Built-in caching without external dependencies like Redis
 
 **When to use this solution:**
-- Your API serves data that doesn't change frequently
+- Your API serves data that doesn't change frequently (data that can tolerate being stale for up to 1 second is suitable for caching)
 - You want to reduce database load and improve response times  
 - You need cache invalidation when specific resources are updated
 - You're building high-traffic applications that need performance optimization
