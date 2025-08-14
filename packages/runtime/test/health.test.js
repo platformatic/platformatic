@@ -76,7 +76,7 @@ test('should not lose any connection when restarting the process', async t => {
 
   // Wait for messages
   await waitPromise
-  const messages = await readLogs(context.testRuntimeRoot)
+  const messages = await readLogs(context.logsPath)
 
   ok(messages.some(m => m.msg === 'The service "service" is unhealthy. Replacing it ...'))
   ok(!messages.some(m => m.msg === 'The service "service" unexpectedly exited with code 1.'))

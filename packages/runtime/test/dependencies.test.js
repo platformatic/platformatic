@@ -76,7 +76,7 @@ test('correct warns on reversed dependencies', async t => {
 
   await runtime.init()
 
-  const logs = await readLogs(context.testRuntimeRoot, 5000, true)
+  const logs = await readLogs(context.logsPath, 5000, true)
 
   assert.ok(
     logs.includes(

@@ -65,6 +65,11 @@ function patchLogging () {
 }
 
 function createLogger () {
+  // Do not propagate runtime transports to the worker
+  if (workerData.config.logger) {
+    delete workerData.config.logger.transport
+  }
+
   const pinoOptions = {
     level: 'trace',
     name: workerData.serviceConfig.id,

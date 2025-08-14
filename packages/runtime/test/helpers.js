@@ -81,7 +81,7 @@ async function createRuntime (configOrRoot, sourceOrConfig, context) {
       config.logger ??= {}
       config.logger.transport ??= {
         target: 'pino/file',
-        options: { destination: context.logsPath, sync: true }
+        options: { destination: context.logsPath }
       }
 
       return config

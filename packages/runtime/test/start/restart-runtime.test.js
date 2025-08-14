@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { readFile, rm } = require('node:fs/promises')
+const { readFile } = require('node:fs/promises')
 const { request } = require('undici')
 const { createRuntime, getTempDir } = require('../helpers.js')
 const { transform } = require('../../lib/config')
@@ -37,9 +37,7 @@ test('can restart the runtime apps', async t => {
 })
 
 test('do not restart if service is not started', async t => {
-  const logsPath = join(await getTempDir(), 'platformatic-crash-logs.txt')
-  await rm(logsPath, { force: true })
-
+  const logsPath = join(await getTempDir(), `log-${Date.now()}.txt`)
   const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
 
   const app = await createRuntime(configPath, null, {
