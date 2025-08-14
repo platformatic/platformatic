@@ -39,7 +39,7 @@ Before starting, ensure you have:
 ```bash
 mkdir my-microservices-app
 cd my-microservices-app
-npx wattpm@latest init
+npx wattpm@latest create
 ```
 
 **2. Configure service resolution in package.json:**
