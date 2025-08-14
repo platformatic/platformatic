@@ -29,6 +29,7 @@ npm install -g wattpm
 
 ## Getting started
 
-For more details, see the [reference](./reference.md).
+- For complete configuration and CLI details, see the [reference](./reference.md)
+- To integrate with frontend frameworks, see the [Framework Integration Guides](/docs/guides/frameworks)
 
 <Issues />
