@@ -79,7 +79,6 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
-            'guides/monitoring-and-observability',
             'guides/monitoring',
             'guides/telemetry',
             'guides/logging-to-elasticsearch'

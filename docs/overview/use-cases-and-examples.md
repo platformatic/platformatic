@@ -542,6 +542,6 @@ Choose your path based on your use case:
 
 **📊 Production Deployment**
 - [Deployment Guide](/docs/guides/deployment/) - Docker, Kubernetes, cloud platforms
-- [Monitoring Setup](/docs/guides/monitoring-and-observability/) - Metrics, logging, tracing
+- [Monitoring Setup](/docs/guides/monitoring/) - Metrics, logging, tracing
 
 **Questions about your specific use case?** Join our [Discord community](https://discord.gg/platformatic) where the Watt team and community discuss real-world applications and architectural patterns.
