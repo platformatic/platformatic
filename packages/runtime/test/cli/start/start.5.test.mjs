@@ -1,3 +1,4 @@
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { join } from 'node:path'
@@ -5,7 +6,6 @@ import { test } from 'node:test'
 import { startPath } from '../helper.mjs'
 
 test('do not start if there are no services', async t => {
-  const { execa } = await import('execa')
   const config = join(
     import.meta.dirname,
     '..',

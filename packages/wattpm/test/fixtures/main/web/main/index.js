@@ -1,4 +1,10 @@
-const fastify = require('fastify')
+import fastify from 'fastify'
+import { setTimeout as sleep } from 'node:timers/promises'
+
+// This is needed in some tests to allow another process to start tailing logs
+if (process.env.PLT_TESTS_DELAY_START) {
+  await sleep(1000)
+}
 
 const app = fastify({
   loggerInstance: globalThis.platformatic?.logger?.child({}, { level: 'trace' })

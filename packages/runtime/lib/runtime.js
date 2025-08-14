@@ -4,6 +4,7 @@ const { ITC } = require('@platformatic/itc')
 const {
   features,
   ensureLoggableError,
+  ensureError,
   executeWithTimeout,
   deepmerge,
   parseMemorySize,
@@ -380,12 +381,8 @@ class Runtime extends EventEmitter {
 
     await this.stop(silent)
 
-    if (this.#managementApi) {
-      // This allow a close request coming from the management API to correctly be handled
-      setImmediate(() => {
-        this.#managementApi.close()
-      })
-    }
+    // The management API autocloses by itself via event in management-api.js.
+    // This is needed to let management API stop endpoint to reply.
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
@@ -563,32 +560,18 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  // TODO@ShogunPanda: When https://github.com/pinojs/pino/pull/2257 is merged, update this
   async addLoggerDestination (writableStream) {
     // Add the stream - We output everything we get
     this.#loggerDestination.add({ stream: writableStream, level: 1 })
 
-    // Immediately get the counter of the last add stream (writableStream) so we can use it to later remove it
-    const id = this.#loggerDestination.streams.reduce(function (accu, current) {
-      return current.id > accu ? current.id : accu
-    }, 0)
+    // Immediately get the counter of the lastId so we can use it to later remove it
+    const id = this.#loggerDestination.lastId
 
     const onClose = () => {
       writableStream.removeListener('close', onClose)
       writableStream.removeListener('error', onClose)
       this.removeListener('closed', onClose)
-
-      if (!writableStream.destroyed) {
-        writableStream.destroy()
-      }
-
-      const writableStreamIndex = this.#loggerDestination.streams.findIndex(s => s.id === id)
-
-      if (writableStreamIndex < 0) {
-        return
-      }
-
-      this.#loggerDestination.streams.splice(writableStreamIndex, 1)
+      this.#loggerDestination.remove(id)
     }
 
     writableStream.on('close', onClose)
@@ -1482,7 +1465,9 @@ class Runtime extends EventEmitter {
           gracePeriod > 0 ? gracePeriod : 1
         )
       }
-    } catch (error) {
+    } catch (err) {
+      const error = ensureError(err)
+
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
 
@@ -1491,7 +1476,13 @@ class Runtime extends EventEmitter {
       if (worker[kWorkerStatus] !== 'exited') {
         // This prevent the exit handler to restart service
         worker[kWorkerStatus] = 'exited'
-        await worker.terminate()
+
+        // Wait for the worker to exit gracefully, otherwise we terminate it
+        const waitTimeout = await executeWithTimeout(once(worker, 'exit'), config.gracefulShutdown.service)
+
+        if (waitTimeout === kTimeout) {
+          await worker.terminate()
+        }
       }
 
       this.emit('service:worker:start:error', { ...eventPayload, error })

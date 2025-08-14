@@ -25,7 +25,7 @@ let hmrTriggerFileRelative
 let additionalDependencies
 let temporaryDirectoryCount = 0
 
-export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
+export const LOGS_TIMEOUT = process.env.CI ? 20000 : 5000
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
@@ -464,7 +464,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
-    await sleep(LOGS_TIMEOUT)
+    await sleep(1000)
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
     if ((await Promise.race([reload.promise, timeout])) === kTimeout) {

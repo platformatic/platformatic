@@ -10,11 +10,10 @@ import { buildConfig } from './helper.js'
 
 test('supports http2 options', async t => {
   const { certificate, privateKey } = selfCert({})
-  const localDir = tmpdir()
+  const localDir = process.env.RUNNER_TEMP ?? tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
   const privateKeyPath = join(tmpDir, 'plt.key')
   const certificatePath = join(tmpDir, 'plt.cert')
-  const certificateRelativePath = relative(process.cwd(), certificatePath)
 
   await writeFile(privateKeyPath, privateKey)
   await writeFile(certificatePath, certificate)
@@ -39,7 +38,7 @@ test('supports http2 options', async t => {
         http2: true,
         https: {
           key: privateKey,
-          cert: [{ path: certificateRelativePath }]
+          cert: [{ path: certificatePath }]
         }
       }
     })

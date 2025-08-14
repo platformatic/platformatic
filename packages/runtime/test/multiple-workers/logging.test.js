@@ -37,7 +37,7 @@ for (const env of ['development', 'production']) {
     await app.start()
     await app.stop()
 
-    const messages = await readLogs(root)
+    const messages = await readLogs(resolve(root, 'logs.txt'))
     ok(messages.find(m => m.name === 'composer'))
 
     for (let i = 0; i < 5; i++) {

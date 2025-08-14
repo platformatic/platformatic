@@ -6,10 +6,10 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const { transform, loadConfiguration, Runtime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { createTemporaryRoot } = require('../helpers.js')
+const { getTempDir } = require('../helpers.js')
 
 test('can start applications programmatically from object', async t => {
-  const root = await createTemporaryRoot()
+  const root = await getTempDir()
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfiguration(configFile, null, {
     async transform (config, ...args) {

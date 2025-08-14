@@ -128,6 +128,8 @@ async function create (configOrRoot, sourceOrConfig, context) {
           throw err
         }
 
+        await runtime.close()
+
         // Get the actual port from the error message if original port was 0
         if (!port) {
           const mo = err.message.match(/ address already in use (.+)/)

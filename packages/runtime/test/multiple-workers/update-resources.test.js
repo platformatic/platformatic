@@ -10,7 +10,7 @@ async function prepareRuntime (t, servicesId, fixture) {
   const appPath = path.join(__dirname, '..', '..', 'fixtures', fixture)
   const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
   t.after(async () => {
-    await runtime.close(true)
+    await runtime.close()
   })
 
   await runtime.start()

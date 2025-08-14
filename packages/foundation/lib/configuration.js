@@ -258,7 +258,7 @@ export function createValidator (schema, validationOptions, context = {}) {
     keyword: 'resolvePath',
     type: 'string',
     schemaType: 'boolean',
-    // TODO@PI: figure out how to implement this via the new `code` option in Ajv
+    // TODO@ShogunPanda: figure out how to implement this via the new `code` option in Ajv
     validate: (schema, path, parentSchema, data) => {
       if (typeof path !== 'string' || path.trim() === '') {
         return !!parentSchema.allowEmptyPaths
@@ -278,7 +278,7 @@ export function createValidator (schema, validationOptions, context = {}) {
     keyword: 'resolveModule',
     type: 'string',
     schemaType: 'boolean',
-    // TODO@PI: figure out how to implement this via the new `code` option in Ajv
+    // TODO@ShogunPanda: figure out how to implement this via the new `code` option in Ajv
     validate: (_schema, path, _parentSchema, data) => {
       if (typeof path !== 'string' || path.trim() === '') {
         return false

@@ -17,5 +17,5 @@ test('does not wait forever if worker exits during api operation', async t => {
 
   await assert.rejects(async () => {
     await app.start()
-  }, /The service "serviceThrowsOnStart" exited prematurely with error code 1/)
+  }, /boom/)
 })

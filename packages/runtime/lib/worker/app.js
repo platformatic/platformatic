@@ -16,7 +16,6 @@ const {
 } = require('@platformatic/foundation')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
-
 const errors = require('../errors')
 const { getServiceUrl } = require('../utils')
 
@@ -137,7 +136,7 @@ class PlatformaticApp extends EventEmitter {
 
         process.exit(1)
       } else {
-        this.#logAndExit(err)
+        this.#logAndThrow(err)
       }
     }
   }
@@ -152,7 +151,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       await this.stackable.init?.()
     } catch (err) {
-      this.#logAndExit(err)
+      this.#logAndThrow(err)
     }
 
     if (this.#watch) {
@@ -186,8 +185,8 @@ class PlatformaticApp extends EventEmitter {
     this.emit('start')
   }
 
-  async stop () {
-    if (!this.#started || this.#starting) {
+  async stop (force = false) {
+    if (!force && (!this.#started || this.#starting)) {
       throw new errors.ApplicationNotStartedError()
     }
 
@@ -268,9 +267,9 @@ class PlatformaticApp extends EventEmitter {
     }
   }
 
-  #logAndExit (err) {
+  #logAndThrow (err) {
     globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, 'The application threw an error.')
-    process.exit(1)
+    throw err
   }
 
   #updateDispatcher () {

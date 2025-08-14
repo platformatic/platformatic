@@ -179,6 +179,9 @@ async function startManagementApi (runtime, root) {
       }
     })
 
+    // When the runtime closes, close the management API as well
+    runtime.on('closed', managementApi.close.bind(managementApi))
+
     await managementApi.listen({ path: socketPath })
     return managementApi
     /* c8 ignore next 4 */

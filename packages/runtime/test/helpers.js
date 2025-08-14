@@ -2,19 +2,17 @@
 
 const { readFile, writeFile } = require('node:fs/promises')
 const { join, resolve } = require('node:path')
-const { tmpdir } = require('node:os')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { createDirectory, safeRemove } = require('@platformatic/foundation')
 const { transform, create } = require('../index.js')
 
 const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 let tempDirCounter = 0
+// RUNNER_TEMP is set in Github CI
+const tempPath = process.env.RUNNER_TEMP ?? resolve(__dirname, '../../../tmp/')
 
-async function getTempDir (baseDir) {
-  if (baseDir === undefined) {
-    baseDir = __dirname
-  }
-  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
+async function getTempDir () {
+  const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
@@ -41,7 +39,7 @@ async function updateConfigFile (path, update) {
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')
 }
 
-async function readLogs (root, delay = LOGS_TIMEOUT, raw = false) {
+async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
   if (typeof delay !== 'number') {
     delay = LOGS_TIMEOUT
   }
@@ -50,7 +48,7 @@ async function readLogs (root, delay = LOGS_TIMEOUT, raw = false) {
     await sleep(delay)
   }
 
-  const contents = await readFile(resolve(root, 'logs.txt'), 'utf-8')
+  const contents = await readFile(path, 'utf-8')
 
   if (raw) {
     return contents
@@ -68,18 +66,12 @@ async function readLogs (root, delay = LOGS_TIMEOUT, raw = false) {
     })
 }
 
-async function createTemporaryRoot (context) {
-  const root = join(tmpdir(), `test-runtime-${process.pid}-${Date.now()}`)
-  context ??= {}
-  context.testRuntimeRoot = root
-
-  await createDirectory(root)
-  return root
-}
-
 async function createRuntime (configOrRoot, sourceOrConfig, context) {
+  await createDirectory(tempPath)
+
   const originalTransform = context?.transform ?? transform
-  const root = await createTemporaryRoot(context)
+  context ??= {}
+  context.logsPath = resolve(tempPath, `log-${Date.now()}.txt`)
 
   return create(configOrRoot, sourceOrConfig, {
     ...context,
@@ -89,7 +81,7 @@ async function createRuntime (configOrRoot, sourceOrConfig, context) {
       config.logger ??= {}
       config.logger.transport ??= {
         target: 'pino/file',
-        options: { destination: join(root, 'logs.txt') }
+        options: { destination: context.logsPath, sync: true }
       }
 
       return config
@@ -103,6 +95,6 @@ module.exports = {
   updateFile,
   updateConfigFile,
   readLogs,
-  createTemporaryRoot,
+  getTempDir,
   createRuntime
 }

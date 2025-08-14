@@ -14,7 +14,7 @@ test('NestJS version is checked in development', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(logs.some(l => l.msg.includes('@nestjs/core version 1.0.0 is not supported')))
+  ok(logs.some(l => l.err?.message.includes('@nestjs/core version 1.0.0 is not supported')))
 })
 
 test('NestJS version is not checked in production', async t => {
@@ -25,5 +25,5 @@ test('NestJS version is not checked in production', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(!logs.some(l => l.msg.includes('@nestjs/core version 1.0.0 is not supported')))
+  ok(!logs.some(l => l.err?.message.includes('@nestjs/core version 1.0.0 is not supported')))
 })

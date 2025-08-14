@@ -14,7 +14,7 @@ test('Astro version is checked in development', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(logs.some(l => l.msg.includes('astro version 1.0.0 is not supported')))
+  ok(logs.some(l => l.err?.message.includes('astro version 1.0.0 is not supported')))
 })
 
 test('Astro version is not checked in production', async t => {
@@ -25,5 +25,5 @@ test('Astro version is not checked in production', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(!logs.some(l => l.msg.includes('astro version 1.0.0 is not supported')))
+  ok(!logs.some(l => l.err?.message.includes('astro version 1.0.0 is not supported')))
 })

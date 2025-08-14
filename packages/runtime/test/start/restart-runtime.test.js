@@ -3,11 +3,9 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { tmpdir } = require('node:os')
 const { readFile, rm } = require('node:fs/promises')
 const { request } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
+const { createRuntime, getTempDir } = require('../helpers.js')
 const { transform } = require('../../lib/config')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
@@ -39,7 +37,7 @@ test('can restart the runtime apps', async t => {
 })
 
 test('do not restart if service is not started', async t => {
-  const logsPath = join(tmpdir(), 'platformatic-crash-logs.txt')
+  const logsPath = join(await getTempDir(), 'platformatic-crash-logs.txt')
   await rm(logsPath, { force: true })
 
   const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
@@ -65,7 +63,7 @@ test('do not restart if service is not started', async t => {
     await app.start()
     assert.fail('expected an error')
   } catch (err) {
-    assert.strictEqual(err.message, 'The service "service-2" exited prematurely with error code 1')
+    assert.strictEqual(err.message, 'Crash!')
   }
 
   const logs = await readFile(logsPath, 'utf8')

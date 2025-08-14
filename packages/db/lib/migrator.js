@@ -1,6 +1,7 @@
 import { createConnectionPool } from '@platformatic/sql-mapper'
 import { readdir, stat } from 'node:fs/promises'
 import { basename } from 'node:path'
+import Postgrator from 'postgrator'
 import { MigrateMissingMigrationsDirError, MigrateMissingMigrationsError } from './errors.js'
 
 export class Migrator {
@@ -20,8 +21,6 @@ export class Migrator {
   }
 
   async setupPostgrator () {
-    const { default: Postgrator } = await import('postgrator')
-
     this.appliedMigrationsCount = 0
     if (this.postgrator instanceof Postgrator) return
 

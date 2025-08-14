@@ -1,3 +1,4 @@
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { join } from 'node:path'
@@ -5,7 +6,6 @@ import { test } from 'node:test'
 import { startPath } from '../helper.mjs'
 
 test('does not start if node inspector flags are provided', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', env: { PLT_USE_PLAIN_CREATE: 'true' } },

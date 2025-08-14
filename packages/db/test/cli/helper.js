@@ -1,4 +1,5 @@
 import { createConnectionPool } from '@platformatic/sql-mapper'
+import { execa } from 'execa'
 import { on } from 'node:events'
 import os from 'node:os'
 import { join, resolve } from 'node:path'
@@ -51,7 +52,6 @@ export function getFixturesConfigFileLocation (filename, subdirectories = []) {
 }
 
 export async function start (commandOpts, exacaOpts = {}) {
-  const { execa } = await import('execa')
   const child = execa('node', [startPath, ...commandOpts], exacaOpts)
   child.stderr.pipe(process.stdout)
   const output = child.stdout.pipe(
@@ -94,7 +94,6 @@ export function parseEnv (envFile) {
 }
 
 export async function safeKill (child, signal = 'SIGINT') {
-  const { execa } = await import('execa')
   child.catch(() => {})
   child.kill(signal)
   if (os.platform() === 'win32') {

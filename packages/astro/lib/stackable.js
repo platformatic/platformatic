@@ -10,7 +10,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/foundation'
+import { ensureLoggableError, features } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -266,7 +266,7 @@ export class AstroStackable extends BaseStackable {
         const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
         this.#basePath = buildInfo.basePath
       } catch (e) {
-        console.log(e)
+        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
       }
     }
 

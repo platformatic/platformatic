@@ -1,3 +1,4 @@
+import { LOGS_TIMEOUT } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
 import { test } from 'node:test'
@@ -9,8 +10,11 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
   let mainLogFound
   let serviceLogFound
   let traceFound
+  let acInstalled = false
+  const ac = new AbortController()
+  const messages = []
 
-  function shouldExit () {
+  function updateStatus () {
     if (requiresMainLog && !mainLogFound) {
       return false
     }
@@ -19,39 +23,48 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
       return false
     }
 
+    if (!acInstalled) {
+      acInstalled = true
+      setTimeout(() => {
+        ac.abort()
+      }, LOGS_TIMEOUT).unref()
+    }
+
     return true
   }
 
-  for await (const log of on(stream.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+  try {
+    for await (const log of on(stream.pipe(split2()), 'data', { signal: ac.signal })) {
+      const parsed = JSON.parse(log.toString())
 
-    if (process.env.PLT_TESTS_VERBOSE === 'true') {
-      process._rawDebug(parsed)
-    }
+      if (process.env.PLT_TESTS_VERBOSE === 'true') {
+        process._rawDebug(parsed)
+      }
 
-    if (parsed.msg === 'This is a trace') {
-      traceFound = true
-      continue
-    }
+      messages.push(parsed)
 
-    if (parsed.msg.startsWith('Platformatic is now listening')) {
-      mainLogFound = true
+      if (parsed.msg === 'This is a trace') {
+        traceFound = true
+        updateStatus()
+      }
 
-      if (shouldExit()) {
-        break
+      if (parsed.msg.startsWith('Platformatic is now listening')) {
+        mainLogFound = true
+        updateStatus()
+      }
+
+      if (parsed.msg.startsWith('Service listening') && parsed.name === 'main') {
+        serviceLogFound = true
+        updateStatus()
       }
     }
-
-    if (parsed.msg.startsWith('Service listening') && parsed.name === 'main') {
-      serviceLogFound = true
-
-      if (shouldExit()) {
-        break
-      }
+  } catch (e) {
+    if (e.code !== 'ABORT_ERR') {
+      throw e
     }
   }
 
-  return { mainLogFound, serviceLogFound, traceFound }
+  return { messages, mainLogFound, serviceLogFound, traceFound }
 }
 
 test('inject - should stream runtime logs', async t => {
@@ -64,23 +77,18 @@ test('inject - should stream runtime logs', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir)
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Platformatic is now listening')) {
+    if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
     }
   }
 
   const logsProcess = wattpm('logs', 'main')
   const logs = matchLogs(logsProcess.stdout)
-
-  // Restart services to trigger new logs
-  setTimeout(() => {
-    startProcess.kill('SIGUSR2')
-  }, 500)
 
   const { mainLogFound, serviceLogFound, traceFound } = await logs
   ok(serviceLogFound)
@@ -98,23 +106,18 @@ test('inject - should stream runtime logs filtering by service', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir)
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Platformatic is now listening')) {
+    if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
     }
   }
 
   const logsProcess = wattpm('logs', 'main', 'main')
   const logs = matchLogs(logsProcess.stdout, false)
-
-  // Restart services to trigger new logs
-  setTimeout(() => {
-    startProcess.kill('SIGUSR2')
-  }, 500)
 
   const { mainLogFound, serviceLogFound, traceFound } = await logs
 
@@ -133,23 +136,18 @@ test('inject - should stream runtime logs filtering by level', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir)
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Platformatic is now listening')) {
+    if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
     }
   }
 
   const logsProcess = wattpm('logs', '-l', 'trace', 'main')
   const logs = matchLogs(logsProcess.stdout, true, true)
-
-  // Restart services to trigger new logs
-  setTimeout(() => {
-    startProcess.kill('SIGUSR2')
-  }, 2000)
 
   const { mainLogFound, serviceLogFound, traceFound } = await logs
 

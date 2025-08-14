@@ -1,10 +1,9 @@
 import { abstractLogger } from '@platformatic/foundation'
 import zeroSixteen from '@platformatic/service/lib/versions/0.16.0.js'
 import { join } from 'node:path'
+import { loadMigrationsFromPath, semgrator } from 'semgrator'
 
 export async function upgrade (logger, config, version) {
-  const { semgrator, loadMigrationsFromPath } = await import('semgrator')
-
   const iterator = loadMigrationsFromPath(join(import.meta.dirname, 'versions'))
 
   const migrations = [zeroSixteen]

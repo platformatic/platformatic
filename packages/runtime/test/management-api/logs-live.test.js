@@ -1,14 +1,14 @@
 'use strict'
 
 const assert = require('node:assert')
-const { platform, tmpdir } = require('node:os')
+const { platform } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { readFile, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const WebSocket = require('ws')
 
-const { createRuntime } = require('../helpers.js')
+const { createRuntime, getTempDir } = require('../helpers.js')
 const { safeRemove } = require('@platformatic/foundation')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
@@ -59,7 +59,7 @@ test('should support custom use transport', async t => {
   const configFile = await readFile(configPath, 'utf8')
   const config = JSON.parse(configFile)
 
-  const logsPath = join(tmpdir(), 'platformatic-management-api-logs.txt')
+  const logsPath = join(await getTempDir(), 'platformatic-management-api-logs.txt')
   await safeRemove(logsPath)
 
   config.logger = {

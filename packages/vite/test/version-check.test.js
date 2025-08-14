@@ -14,7 +14,7 @@ test('Vite version is checked in development', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(logs.some(l => l.msg.includes('vite version 1.0.0 is not supported')))
+  ok(logs.some(l => l.err?.message.includes('vite version 1.0.0 is not supported')))
 })
 
 test('Vite version is not checked in production', async t => {
@@ -25,5 +25,5 @@ test('Vite version is not checked in production', async t => {
   await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
-  ok(!logs.some(l => l.msg.includes('vite version 1.0.0 is not supported')))
+  ok(!logs.some(l => l.err?.message.includes('vite version 1.0.0 is not supported')))
 })
