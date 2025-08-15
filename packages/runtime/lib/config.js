@@ -16,6 +16,38 @@ const { schema } = require('./schema')
 const upgrade = require('./upgrade')
 const { parseArgs } = require('node:util')
 
+function autoDetectPprofCapture (config) {
+  // Skip if explicitly disabled
+  if (process.env.PLT_DISABLE_FLAMEGRAPHS) {
+    return config
+  }
+
+  // Check if package is installed
+  try {
+    let pprofCapturePath
+    try {
+      pprofCapturePath = require.resolve('@platformatic/watt-pprof-capture')
+    } catch (err) {
+      pprofCapturePath = require.resolve('../../watt-pprof-capture/index.js')
+    }
+
+    // Add to preload if not already present
+    if (!config.preload) {
+      config.preload = []
+    } else if (typeof config.preload === 'string') {
+      config.preload = [config.preload]
+    }
+
+    if (!config.preload.includes(pprofCapturePath)) {
+      config.preload.push(pprofCapturePath)
+    }
+  } catch (err) {
+    // Package not installed, skip silently
+  }
+
+  return config
+}
+
 async function _transformConfig (configManager, args) {
   const config = configManager.current
 
@@ -226,6 +258,9 @@ async function _transformConfig (configManager, args) {
       configManager.current.restartOnError = 0
     }
   }
+
+  // Auto-detect and add pprof capture if available
+  autoDetectPprofCapture(configManager.current)
 }
 
 async function platformaticRuntime () {
@@ -358,5 +393,6 @@ function parseInspectorOptions (configManager) {
 module.exports = {
   parseInspectorOptions,
   platformaticRuntime,
-  wrapConfigInRuntimeConfig
+  wrapConfigInRuntimeConfig,
+  autoDetectPprofCapture
 }
