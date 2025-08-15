@@ -74,6 +74,17 @@ You can customize the health check endpoints in your Watt configuration:
 }
 ```
 
+### Service Discovery and Autoload
+
+By default, Watt automatically loads all services in the `web` or `services` folder via the autoload configuration. You don't need to manually specify each service in the configuration. Watt will:
+
+- Discover all valid Platformatic services in these directories
+- Automatically register them in the runtime
+- Include them in health check evaluations
+- Expose their metrics through the metrics server
+
+This autoload behavior simplifies deployment and ensures all your services are automatically included in the health monitoring system.
+
 ### Custom Health Check Functions
 
 - **`setCustomHealthCheck`**: Sets a custom liveness check function that runs on the `/status` (or custom liveness) endpoint
@@ -355,21 +366,11 @@ The `watt.json` configuration enables the metrics server:
     "port": 9090,
     "readiness": true,
     "liveness": true
-  },
-  "services": [
-    {
-      "id": "api",
-      "path": "./web/api",
-      "config": "platformatic.json"
-    },
-    {
-      "id": "worker", 
-      "path": "./web/worker",
-      "config": "platformatic.json"
-    }
-  ]
+  }
 }
 ```
+
+**Note**: You don't need to manually configure services in the `watt.json` file. Watt automatically discovers and loads all services from the `web` directory using its autoload feature. Any valid Platformatic service placed in the `web` folder will be automatically registered and included in health checks.
 
 This exposes:
 - Health endpoints on port `9090`: `/ready` (readiness) and `/status` (liveness)
@@ -658,6 +659,7 @@ export function create () {
   }
 
   // Implement cascading health checks
+  // Note: This requires the watt metrics server to be enabled in your configuration
   globalThis.platformatic.setCustomHealthCheck(async () => {
     try {
       const criticalHealthy = await checkCriticalDependencies()
