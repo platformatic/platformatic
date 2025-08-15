@@ -26,9 +26,9 @@ Choosing the right Node.js architecture is crucial for long-term success. This g
 
 ## Detailed Comparisons
 
-### Watt vs Express.js
+### Watt vs Express.js, PM2, and Microservices
 
-Express.js is the foundational web framework for Node.js, focusing on simplicity and flexibility. Note that Express, Next.js, and Fastify can all be run within Watt.
+Express.js is the foundational web framework for Node.js, focusing on simplicity and flexibility. Note that Express, Next.js, and Fastify can all be run within Watt. The comparison should be done with PM2 and microservices (in Kubernetes or Docker Compose) as well as serverless platforms, as these are the true architectural alternatives to Watt's orchestration approach.
 
 #### Feature Comparison
 
@@ -90,7 +90,7 @@ app.listen(3000)
 **Step 1: Wrap existing Express app**
 ```bash
 # Add Watt configuration to existing Express app
-npx wattpm@latest create my-app
+npx wattpm create my-app
 ```
 
 **Step 2: Add Watt features incrementally**
@@ -177,7 +177,7 @@ Latency: 2.4ms avg
 
 ### Watt vs Next.js
 
-Next.js is the leading React framework for production applications, focusing on frontend development. Note that Next.js performs poorly as an API layer and should primarily be used for frontend concerns.
+Next.js is the leading React framework for production applications, focusing on frontend development. Note that Next.js performs poorly as an API layer due to performance limitations in API routes and should primarily be used for frontend concerns.
 
 #### Feature Comparison
 
@@ -239,7 +239,7 @@ export default function ProductList({ products }) {
 **Best of Both Worlds:**
 ```bash
 # Create Watt application with Next.js frontend
-npx wattpm@latest create my-app
+npx wattpm create my-app
 wattpm create --type @platformatic/next --name frontend
 wattpm create --type @platformatic/service --name backend
 ```
@@ -412,7 +412,7 @@ services:
 
 ### Watt vs Serverless Platforms
 
-Serverless platforms (AWS Lambda, Vercel Functions, Cloudflare Workers) focus on function-as-a-service deployments. Note that serverless platforms, specifically AWS Lambda, suffer from significant limitations including cold starts, timeouts, and statelessness constraints.
+Serverless platforms (AWS Lambda, Vercel Functions, Cloudflare Workers) focus on function-as-a-service deployments. Note that serverless platforms, specifically AWS Lambda, suffer from significant limitations because they run only one request at a time (or a limited number of concurrent requests), along with cold starts, timeouts, and statelessness constraints.
 
 #### Feature Comparison
 
@@ -616,10 +616,11 @@ Before choosing or migrating to Watt, evaluate these key areas:
 
 ### Watt's Limitations
 
-**1. Node.js Constraint**
-- Cannot run services in other languages
-- Limited to Node.js ecosystem and patterns
-- May not fit existing polyglot architectures
+**1. Limited Language Support**
+- Node.js is the primary runtime (with built-in support)
+- PHP is also supported for web applications
+- Python support is on the roadmap and coming soon
+- May not fit existing polyglot architectures requiring other languages
 
 **2. Service Independence**
 - All services deploy together
@@ -656,6 +657,7 @@ Better choice: Serverless + CDN + specialized databases
 ```
 Your team: 50+ developers across 10+ independent teams
 Better choice: Independent microservices with clear boundaries
+Note: One Watt instance per team would solve coordination issues while maintaining team autonomy
 ```
 
 **Legacy Constraints**
@@ -708,12 +710,14 @@ Start: New Node.js Project?
 **Quick Start Path:**
 ```bash
 # Start with the basics
-npx wattpm@latest create my-app
+npx wattpm create my-app
 cd my-app
 
 # Add your first service
 wattpm create --type @platformatic/service --name api
 wattpm create --type @platformatic/next --name web
+
+# Note: Please verify this command syntax works correctly
 
 # Run and iterate
 npm start
@@ -744,7 +748,7 @@ npm start
 - Architecture consultation
 - Migration planning and support
 - Training for development teams
-- [Intelligent Command Center](https://platformatichq.com/): Advanced platform management
+- [Intelligent Command Center](https://platformatichq.com/): Advanced platform management and enterprise features
 
 ---
 
