@@ -32,17 +32,11 @@ npx wattpm --help
 **Solution:**
 1. Ensure you have a configuration file in the current directory:
    - `watt.json` (recommended for Watt applications)
-   - `platformatic.json`
-   - `platformatic.yml`
-   - `platformatic.toml`
 
 2. Check file format and syntax:
    ```bash
    # Validate JSON syntax
    cat watt.json | jq .
-   
-   # Or use the config validation
-   wattpm config validate
    ```
 
 3. Use the `--config` option to specify a custom path:
