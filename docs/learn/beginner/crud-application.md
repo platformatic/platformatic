@@ -147,6 +147,18 @@ If you prefer to use PostgreSQL from the start (recommended for enterprise devel
 
 The beauty of this architecture is that **Watt** manages the service orchestration while each **service** (like Platformatic DB) handles its own concerns. Your application code remains identical regardless of which database the DB service connects to.
 
+#### Architecture Overview: Watt vs Platformatic DB Service
+
+| Component | Role | Responsibilities | Configuration |
+|-----------|------|------------------|---------------|
+| **Watt** | Application Server | • Orchestrates multiple services<br/>• Manages unified configuration<br/>• Handles service discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.json` + shared `.env` |
+| **Platformatic DB Service** | Database Service | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation | `web/db/platformatic.json` + `web/db/.env` |
+
+**Key Distinction:**
+- **Watt** is the *container* that runs your application
+- **Platformatic DB** is one *service* running inside Watt
+- You can have multiple services (DB, HTTP, Frontend) all managed by one Watt instance
+
 ### Create the Users Table
 
 Navigate to `web/db/migrations/` and edit the `001.do.sql` file:
