@@ -20,7 +20,7 @@ Different developers learn best in different ways. Choose the path that matches 
 
 **What you'll accomplish:**
 - Get a full-stack app running locally in under 5 minutes
-- See auto-generated APIs from a database
+- See Watt orchestrating multiple services in a single application server
 - Experience Watt's unified development workflow
 
 [**Start the Quick Start →**](/docs/getting-started/quick-start-watt)
