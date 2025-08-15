@@ -148,12 +148,11 @@ function checkHttpLink(url) {
               let body = '';
               getRes.on('data', chunk => body += chunk);
               getRes.on('end', () => {
-                // Check for common 404 page indicators in Docusaurus
-                if (body.toLowerCase().includes('page not found') || 
-                    body.toLowerCase().includes('404') ||
-                    body.toLowerCase().includes('not found') ||
+                // Check for specific Docusaurus 404 page indicators
+                if (body.includes('<title>Page Not Found') ||
                     body.includes('This page could not be found') ||
-                    body.includes('We could not find what you were looking for')) {
+                    body.includes('We could not find what you were looking for') ||
+                    (body.includes('404') && body.includes('Page Not Found'))) {
                   resolve({ ok: false, status: 200, reason: 'Page shows "Not Found" content' });
                 } else {
                   resolve({ ok: true, status: res.statusCode });
