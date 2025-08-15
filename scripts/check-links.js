@@ -131,8 +131,14 @@ function checkHttpLink(url) {
       const req = client.request(url, options, (res) => {
         // Handle redirects
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          // Resolve relative redirect locations
+          let redirectUrl = res.headers.location;
+          if (redirectUrl.startsWith('/')) {
+            const baseUrl = new URL(url);
+            redirectUrl = `${baseUrl.protocol}//${baseUrl.host}${redirectUrl}`;
+          }
           // Check the redirect location
-          checkHttpLink(res.headers.location).then(resolve);
+          checkHttpLink(redirectUrl).then(resolve);
         } else if (res.statusCode === 404) {
           resolve({ ok: false, status: res.statusCode, reason: 'Not Found (404)' });
         } else if (res.statusCode >= 200 && res.statusCode < 400) {
