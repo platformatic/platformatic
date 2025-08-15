@@ -2,11 +2,11 @@
 
 ## Problem
 
-You need to customize logging behavior in your Platformatic application for different environments (development, staging, production) or integrate with external logging systems.
+You need to customize logging behavior in your Watt application for different environments (development, staging, production) or integrate with external logging systems
 
 ## Solution Overview
 
-Platformatic uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
+Watt uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
 - Set consistent logging across all services via Watt configuration
 - Override logging for specific services
 - Integrate with external systems (Elasticsearch, files, etc.)
