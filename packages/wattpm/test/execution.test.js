@@ -10,6 +10,9 @@ import { request } from 'undici'
 import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 

@@ -475,7 +475,19 @@ async function createComposerInRuntime (
   )
 
   await additionalSetup?.(runtimeConfigPath, composerConfigPath)
+
+  // Disable profiling to avoid conflicts in tests
+  const originalEnv = process.env.PLT_DISABLE_FLAMEGRAPHS
+  process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
   const runtime = await buildRuntime(runtimeConfigPath, { production })
+
+  // Restore original environment variable
+  if (originalEnv !== undefined) {
+    process.env.PLT_DISABLE_FLAMEGRAPHS = originalEnv
+  } else {
+    delete process.env.PLT_DISABLE_FLAMEGRAPHS
+  }
 
   t.after(async () => {
     await runtime.close()

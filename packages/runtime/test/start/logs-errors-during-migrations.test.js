@@ -17,7 +17,7 @@ test('logs errors during db migrations', async t => {
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   runtimeConfig.current.restartOnError = 1000
 
-  const runtime = await buildRuntime(runtimeConfig)
+  const runtime = await buildRuntime(runtimeConfig, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
   t.after(async () => {
     await runtime.close()
   })

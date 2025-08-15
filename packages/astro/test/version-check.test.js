@@ -8,6 +8,9 @@ import { buildServer } from '../../runtime/index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('Astro version is checked in development', async t => {
   const { root, config } = await prepareRuntime(t, 'standalone', false, null, async root => {
     await swapVersion(t, import.meta.dirname, 'astro', '../..')

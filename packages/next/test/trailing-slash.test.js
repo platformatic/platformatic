@@ -6,6 +6,9 @@ import { prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('when trailingSlash is false, request with a trailing slash are redirected', async t => {
   const { root, config } = await prepareRuntime(t, 'server-side-standalone', false)
   const { url } = await startRuntime(t, root, config)

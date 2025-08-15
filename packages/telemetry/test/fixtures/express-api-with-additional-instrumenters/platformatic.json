@@ -22,5 +22,8 @@
     "exporter": {
       "type": "file"
     }
+  },
+  "env": {
+    "PLT_DISABLE_FLAMEGRAPHS": "1"
   }
 }

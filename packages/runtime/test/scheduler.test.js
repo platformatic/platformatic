@@ -259,7 +259,7 @@ test('Works with the mesh network', async (t) => {
       method: 'POST',
     },
   ]
-  const app = await buildRuntime(config.configManager)
+  const app = await buildRuntime(config.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
   t.after(() => app.close())
 
   const entryUrl = await app.start()

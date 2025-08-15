@@ -7,6 +7,12 @@ import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('inject - should send a request to an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 

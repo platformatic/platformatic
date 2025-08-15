@@ -6,6 +6,9 @@ import { getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } fro
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('can properly show the headers in the output', async t => {
   const { root, config } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/src/app/page.js'), contents => {

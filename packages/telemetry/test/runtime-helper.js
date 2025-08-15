@@ -1,5 +1,8 @@
 'use strict'
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 const { loadConfig } = require('../../config/index.js')
 const { basename, resolve, dirname, join } = require('node:path')
 const { buildServer, platformaticRuntime } = require('../../runtime/index.js')

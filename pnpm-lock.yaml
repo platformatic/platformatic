@@ -2671,6 +2671,37 @@ importers:
         specifier: ^8.18.0
         version: 8.18.3
 
+  packages/watt-pprof-capture:
+    dependencies:
+      '@datadog/pprof':
+        specifier: ^5.3.0
+        version: 5.9.0
+      '@fastify/error':
+        specifier: ^4.0.0
+        version: 4.2.0
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      undici:
+        specifier: ^6.0.0
+        version: 6.21.3
+    devDependencies:
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      borp:
+        specifier: ^0.20.0
+        version: 0.20.1
+      eslint:
+        specifier: '9'
+        version: 9.32.0
+      neostandard:
+        specifier: ^0.12.0
+        version: 0.12.2(@typescript-eslint/utils@8.39.0(eslint@9.32.0)(typescript@5.8.3))(eslint@9.32.0)(typescript@5.8.3)
+
   packages/wattpm:
     dependencies:
       '@platformatic/config':
@@ -3030,6 +3061,10 @@ packages:
 
   '@databases/validate-unicode@1.0.0':
     resolution: {integrity: sha512-dLKqxGcymeVwEb/6c44KjOnzaAafFf0Wxa8xcfEjx/qOl3rdijsKYBAtIGhtVtOlpPf/PFKfgTuFurSPn/3B/g==}
+
+  '@datadog/pprof@5.9.0':
+    resolution: {integrity: sha512-7KretVkHUANWe31u9cGJpxmUkyrXsCD+fmlZQUz/zk9mtQNC4uBIKX53VUFfrVj/bxAhEEIPw5XTYiMc5RJLsw==}
+    engines: {node: '>=16'}
 
   '@emnapi/core@1.4.5':
     resolution: {integrity: sha512-XsLw1dEOpkSX/WucdqUhPWP7hDxSvZiY+fsUC14h+FtQ2Ifni4znbBt8punRX+Uj2JG/uDb8nEHVKvrVlvdZ5Q==}
@@ -6109,6 +6144,10 @@ packages:
   defu@6.1.4:
     resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
 
+  delay@5.0.0:
+    resolution: {integrity: sha512-ReEBKkIfe4ya47wlPYf/gu5ib6yUG0/Aez0JQZQz94kiWtRQvZIQbTiehsnwHvLSWJnQdhVeqYue7Id1dKr0qw==}
+    engines: {node: '>=10'}
+
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
@@ -8450,6 +8489,10 @@ packages:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
 
+  node-gyp-build@3.9.0:
+    resolution: {integrity: sha512-zLcTg6P4AbcHPq465ZMFNXx7XpKKJh+7kkN699NiQWisR2uWYOWNWqRHAmbnmKiL4e9aLSlmy5U7rEMUXV59+A==}
+    hasBin: true
+
   node-mock-http@1.0.2:
     resolution: {integrity: sha512-zWaamgDUdo9SSLw47we78+zYw/bDr5gH8pH7oRRs8V3KmBtu8GLgGIbV2p/gRPd3LWpEOpjQj7X1FOU3VFMJ8g==}
 
@@ -8959,6 +9002,9 @@ packages:
   postgres-interval@1.2.0:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
+
+  pprof-format@2.1.0:
+    resolution: {integrity: sha512-0+G5bHH0RNr8E5hoZo/zJYsL92MhkZjwrHp3O2IxmY8RJL9ooKeuZ8Tm0ZNBw5sGZ9TiM71sthTjWoR2Vf5/xw==}
 
   prebuild-install@7.1.3:
     resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
@@ -11169,6 +11215,14 @@ snapshots:
       better-sqlite3: 11.10.0
 
   '@databases/validate-unicode@1.0.0': {}
+
+  '@datadog/pprof@5.9.0':
+    dependencies:
+      delay: 5.0.0
+      node-gyp-build: 3.9.0
+      p-limit: 3.1.0
+      pprof-format: 2.1.0
+      source-map: 0.7.4
 
   '@emnapi/core@1.4.5':
     dependencies:
@@ -14462,6 +14516,8 @@ snapshots:
 
   defu@6.1.4: {}
 
+  delay@5.0.0: {}
+
   delayed-stream@1.0.0: {}
 
   delegates@1.0.0: {}
@@ -17665,6 +17721,8 @@ snapshots:
       detect-libc: 2.0.4
     optional: true
 
+  node-gyp-build@3.9.0: {}
+
   node-mock-http@1.0.2: {}
 
   node-releases@2.0.19: {}
@@ -18221,6 +18279,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  pprof-format@2.1.0: {}
 
   prebuild-install@7.1.3:
     dependencies:

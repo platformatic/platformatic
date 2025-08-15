@@ -7,6 +7,12 @@ import { test } from 'node:test'
 import { prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { fixturesDir, wattpm } from './helper.js'
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('patch-config - should patch requested runtime and services config', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const serviceDir = resolve(buildDir, 'web/main')

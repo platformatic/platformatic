@@ -12,7 +12,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 test('can start with a custom environment', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager, { A_CUSTOM_ENV_VAR: 'foobar' })
+  const app = await buildRuntime(config.configManager, { A_CUSTOM_ENV_VAR: 'foobar', PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await app.close()
@@ -25,7 +25,8 @@ test('can start with a custom environment', async (t) => {
   assert.deepStrictEqual(await res.body.json(), {
     A_CUSTOM_ENV_VAR: 'foobar',
     PLT_ENVIRONMENT: 'development',
-    PLT_DEV: 'true'
+    PLT_DEV: 'true',
+    PLT_DISABLE_FLAMEGRAPHS: '1'
   })
   process.exitCode = 0
 })
@@ -33,7 +34,7 @@ test('can start with a custom environment', async (t) => {
 test('should pass global .env data to workers', async t => {
   const configFile = join(fixturesDir, 'env', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await buildRuntime(config.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await app.close()

@@ -12,7 +12,7 @@ const fixturesDir = join(__dirname, '..', 'fixtures')
 test('propagate the traceId correctly to runtime services', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await buildRuntime(config.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await app.close()
@@ -39,7 +39,7 @@ test('propagate the traceId correctly to runtime services', async (t) => {
 test('attach x-plt-telemetry-id header', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await buildRuntime(config.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await app.close()
@@ -63,7 +63,7 @@ test('attach x-plt-telemetry-id header', async (t) => {
 test('disabled telemetry', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await buildRuntime(config.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await app.close()

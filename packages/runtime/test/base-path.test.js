@@ -18,7 +18,7 @@ async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   await writeFile(configFile, JSON.stringify(config, null, 2))
 
   const appConfig = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(appConfig.configManager)
+  const app = await buildRuntime(appConfig.configManager, { ...process.env, PLT_DISABLE_FLAMEGRAPHS: '1' })
 
   t.after(async () => {
     await safeRemove(configFile)

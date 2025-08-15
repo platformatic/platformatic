@@ -8,6 +8,12 @@ import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
 import { appendEnvVariable } from '../lib/commands/external.js'
 import { prepareGitRepository, wattpm } from './helper.js'
 
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
+// Disable profiling to avoid conflicts in tests
+process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
+
 test('resolve - should clone a URL when the environment variable is set to a folder inside the repo', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const repo = await prepareGitRepository(t, rootDir)
