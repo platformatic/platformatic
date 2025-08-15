@@ -48,7 +48,7 @@ Use the client in your JavaScript application, by calling a GraphQL endpoint:
 /// <reference path="./myclient" />
 
 /**  @type {import('fastify').FastifyPluginAsync<{} */
-module.exports = async function (app, opts) {
+export default async function (app, opts) {
   app.post('/', async (request, reply) => {
     const res = await request.myclient.graphql({
       query: 'query { movies { title } }'
@@ -194,7 +194,7 @@ declare namespace Client {
 }
 
 declare function client(...params: Parameters<ClientPlugin>): ReturnType<ClientPlugin>;
-export = client;
+export default client;
 ```
 
 ### GraphQL Types
@@ -274,7 +274,7 @@ declare namespace client {
 }
 
 declare function client(...params: Parameters<Clientplugin>): ReturnType<Clientplugin>;
-export = client;
+export default client;
 ```
 
 Given only you can know what GraphQL query you are producing, you are responsible for typing
@@ -286,8 +286,10 @@ If a Platformatic configuration file is not found, a complete Fastify plugin is 
 used in your Fastify application like this:
 
 ```js
-const fastify = require('fastify')()
-const client = require('./your-client-name')
+import Fastify from 'fastify'
+import client from './your-client-name'
+
+const fastify = Fastify()
 
 fastify.register(client, {
   url: 'http://example.com'
@@ -324,7 +326,7 @@ To add necessary headers for downstream services requiring authentication, confi
 /// <reference path="./myclient" />
 
 /**  @type {import('fastify').FastifyPluginAsync<{} */
-module.exports = async function (app, opts) {
+export default async function (app, opts) {
   app.configureMyclient({
     async getHeaders (req, reply) {
       return {
