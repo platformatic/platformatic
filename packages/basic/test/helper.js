@@ -25,7 +25,7 @@ let hmrTriggerFileRelative
 let additionalDependencies
 let temporaryDirectoryCount = 0
 
-export const LOGS_TIMEOUT = process.env.CI ? 20000 : 5000
+export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 

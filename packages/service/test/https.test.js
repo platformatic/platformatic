@@ -9,7 +9,7 @@ import { buildConfig, createFromConfig } from './helper.js'
 
 test('supports https options', async t => {
   const { certificate, privateKey } = selfCert({})
-  const localDir = process.env.RUNNER_TEMP ?? tmpdir()
+  const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
   const privateKeyPath = join(tmpDir, 'plt.key')
   const certificatePath = join(tmpDir, 'plt.cert')

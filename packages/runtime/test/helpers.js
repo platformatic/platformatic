@@ -8,8 +8,7 @@ const { transform, create } = require('../index.js')
 
 const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 let tempDirCounter = 0
-// RUNNER_TEMP is set in Github CI
-const tempPath = process.env.RUNNER_TEMP ?? resolve(__dirname, '../../../tmp/')
+const tempPath = resolve(__dirname, '../../../tmp/')
 
 async function getTempDir () {
   const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)

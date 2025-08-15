@@ -37,7 +37,7 @@ test('should get runtime metrics via management api', async t => {
     let count = 0
 
     webSocket.on('message', data => {
-      if (++count > 5) {
+      if (count++ > 5) {
         webSocket.removeAllListeners('message')
         clearTimeout(timeout)
         webSocket.close()
