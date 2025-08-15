@@ -16,8 +16,10 @@ You need to improve your application's performance by caching HTTP responses, bu
 
 ## Solution Overview
 
-Watt provides built-in HTTP caching with tag-based invalidation that works with any Node.js web framework including Express, Fastify, Koa, and others. This guide shows you how to:
-1. Enable HTTP caching in your Watt application
+Watt provides built-in HTTP caching with tag-based invalidation that works with any Node.js web framework including Express, Fastify, Koa, and others. The caching layer operates at the HTTP level, making it framework-agnostic - you can use the same caching APIs regardless of your underlying web framework choice.
+
+This guide shows you how to:
+1. Setup Fastify (if needed) and enable HTTP caching in your Watt application
 2. Tag responses for intelligent cache invalidation
 3. Invalidate cache by specific routes or tags
 4. Test your caching implementation
@@ -31,7 +33,57 @@ Before starting, ensure you have:
 - A Watt application ([setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt))
 - Basic understanding of HTTP caching headers 
 
-## Step 1: Enable HTTP Cache in Watt 
+## Step 1: Setup Fastify and Enable HTTP Cache
+
+### Setting up Fastify
+
+First, if you're starting with a basic Node.js core `createServer` setup, you'll need to set up Fastify. 
+
+Make sure your `package.json` includes `"type": "module"` for ESM support:
+
+```json
+{
+  "name": "your-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "fastify": "^4.0.0"
+  }
+}
+```
+
+Then create your main application file:
+
+```js
+// index.js
+import Fastify from 'fastify'
+
+const fastify = Fastify({
+  logger: true
+})
+
+// Register your routes
+fastify.register(import('./routes/products.js'))
+fastify.register(import('./routes/admin.js'))
+
+// Start the server
+const start = async () => {
+  try {
+    await fastify.listen({ port: 3000 })
+    console.log('Server listening on http://localhost:3000')
+  } catch (err) {
+    fastify.log.error(err)
+    process.exit(1)
+  }
+}
+start()
+```
+
+### Enable HTTP Cache in Watt
 
 Add HTTP caching configuration to your `watt.json` file:
 
@@ -55,6 +107,8 @@ In your service endpoints, add appropriate cache headers:
 
 ```js
 // routes/products.js
+import { getCounterFromDatabase } from '../lib/database.js'
+
 export default async function (fastify) {
   fastify.get('/cached-counter', async (req, reply) => {
     // Set cache duration (10 minutes)
@@ -91,6 +145,8 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 ### Method 1: Invalidate by Specific Route
 
 When you need to invalidate cache for a specific endpoint:
+
+**Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same `globalThis.platformatic.invalidateHttpCache()` method can be used with Express, Koa, or any other framework.
 
 ```js
 // routes/admin.js  
@@ -147,6 +203,8 @@ Invalidate cache automatically when data changes:
 
 ```js
 // routes/products.js
+import { createProduct, updateProduct } from '../lib/database.js'
+
 export default async function (fastify) {
   fastify.post('/products', async (req, reply) => {
     const newProduct = await createProduct(req.body)
