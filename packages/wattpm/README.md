@@ -32,7 +32,7 @@ guide to get up and running with Platformatic.
 
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
 - [Reference](https://docs.platformatic.dev/docs/reference/watt/overview)
-- [Guides](https://docs.platformatic.dev/docs/next/guides/build-modular-monolith)
+- [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
 Check out our full documentation at [platformatic.dev](https://platformatic.dev).
 

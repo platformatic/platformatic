@@ -26,7 +26,7 @@ guide to get up and running with Platformatic.
 
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
 - [CLI](https://docs.platformatic.dev/docs/reference/platformatic/cli)
-- [Guides](https://docs.platformatic.dev/docs/next/guides/build-modular-monolith)
+- [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
 Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
 

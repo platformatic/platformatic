@@ -63,7 +63,7 @@ Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 Get running in 5 minutes, then dive into advanced patterns and integrations.
 
 ### 🔄 Migrating Existing Apps?
-**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/next/guides/build-modular-monolith)  
+**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)  
 Add Watt to your existing Express, Fastify, or Next.js applications.
 
 ### 📚 Exploring Options?
@@ -97,7 +97,7 @@ Understand what Watt is, why it exists, and how it fits your needs
 ### 🎓 [Learning](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)  
 Tutorials, examples, and guided paths from beginner to advanced
 
-### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/next/guides/build-modular-monolith)
+### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 Solve specific problems with framework integration, deployment, and production setup
 
 ### 📋 [Reference](https://docs.platformatic.dev/docs/reference-overview)
