@@ -308,51 +308,194 @@ const cached = await fetch('https://api.slow-service.com/data')
 
 ## Observability Architecture
 
-### Telemetry Pipeline
+Watt provides comprehensive observability through three distinct subsystems, each with different implementations and use cases:
+
+### Logging Architecture
+
+Watt uses [Pino](https://getpino.io/) for high-performance structured logging across all services:
 
 ```ascii
 ┌─────────────────────────────────────────────────────────────┐
 │                    Watt Application                         │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────┐    │
 │  │Service 1│  │Service 2│  │Service 3│  │   Runtime   │    │
-│  └────┬────┘  └────┬────┘  └────┬────┘  │   Manager   │    │
+│  │  (Pino) │  │  (Pino) │  │  (Pino) │  │   Manager   │    │
+│  └────┬────┘  └────┬────┘  └────┬────┘  │   (Pino)    │    │
 │       │            │            │       └──────┬──────┘    │
+│       │            │            │              │           │
 │       └────────────┼────────────┼──────────────┘           │
 │                    │            │                          │
 │              ┌─────▼────────────▼─────┐                     │
-│              │   Telemetry Layer      │                     │
+│              │   Pino Logger System   │                     │
 │              │  ┌─────────────────┐   │                     │
-│              │  │   Pino Logger   │   │                     │
+│              │  │  Log Transport  │   │                     │
+│              │  │   (Configurable)│   │                     │
+│              │  │  - Console      │   │                     │
+│              │  │  - File         │   │                     │
+│              │  │  - Elasticsearch│   │                     │
+│              │  │  - Custom       │   │                     │
 │              │  └─────────────────┘   │                     │
 │              │  ┌─────────────────┐   │                     │
-│              │  │ OpenTelemetry   │   │                     │
-│              │  └─────────────────┘   │                     │
-│              │  ┌─────────────────┐   │                     │
-│              │  │   Prometheus    │   │                     │
+│              │  │ Log Processing  │   │                     │
+│              │  │ - Redaction     │   │                     │
+│              │  │ - Formatting    │   │                     │
+│              │  │ - Filtering     │   │                     │
 │              │  └─────────────────┘   │                     │
 │              └────────────────────────┘                     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
               ┌───────────▼────────────┐
-              │   External Systems     │
+              │    Log Destinations    │
               │ ┌─────────────────────┐│
-              │ │      Grafana        ││
+              │ │   Elasticsearch     ││
               │ └─────────────────────┘│
               │ ┌─────────────────────┐│
-              │ │      Jaeger         ││
+              │ │      Splunk         ││
               │ └─────────────────────┘│
               │ ┌─────────────────────┐│
-              │ │   Log Aggregator    ││
+              │ │    File System      ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │      Console        ││
               │ └─────────────────────┘│
               └────────────────────────┘
 ```
 
-### Monitoring Capabilities
+### Distributed Tracing Architecture
 
-- **Request Tracing**: End-to-end request tracking across all services
-- **Performance Metrics**: Response times, throughput, error rates per service
-- **Resource Monitoring**: CPU, memory, event loop utilization per worker
-- **Business Metrics**: Custom metrics and events from application logic
+Watt implements distributed tracing using [OpenTelemetry](https://opentelemetry.io/) with support for multiple trace exporters:
+
+```ascii
+┌─────────────────────────────────────────────────────────────┐
+│                    Watt Application                         │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────┐    │
+│  │Service 1│  │Service 2│  │Service 3│  │   Runtime   │    │
+│  │ (OTel)  │  │ (OTel)  │  │ (OTel)  │  │   Manager   │    │
+│  └────┬────┘  └────┬────┘  └────┬────┘  │             │    │
+│       │            │            │       └──────┬──────┘    │
+│       │    Span Context Propagation     │      │           │
+│       └────────────┼────────────┼──────────────┘           │
+│                    │            │                          │
+│         ┌──────────▼────────────▼──────────┐               │
+│         │    OpenTelemetry Tracer         │               │
+│         │  ┌─────────────────────────┐    │               │
+│         │  │  Span Processors        │    │               │
+│         │  │  - BatchSpanProcessor   │    │               │
+│         │  │  - SimpleSpanProcessor  │    │               │
+│         │  └─────────────────────────┘    │               │
+│         │  ┌─────────────────────────┐    │               │
+│         │  │  Context Propagation    │    │               │
+│         │  │  - W3C Trace Context    │    │               │
+│         │  │  - B3 Propagation       │    │               │
+│         │  └─────────────────────────┘    │               │
+│         │  ┌─────────────────────────┐    │               │
+│         │  │  Trace Exporters        │    │               │
+│         │  │  - OTLP                 │    │               │
+│         │  │  - Jaeger               │    │               │
+│         │  │  - Zipkin               │    │               │
+│         │  │  - Console/File         │    │               │
+│         │  └─────────────────────────┘    │               │
+│         └────────────────────────────────┘               │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+              ┌───────────▼────────────┐
+              │   Tracing Backends     │
+              │ ┌─────────────────────┐│
+              │ │       Jaeger        ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │       Zipkin        ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │   OTLP Collector    ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │   Custom Backend    ││
+              │ └─────────────────────┘│
+              └────────────────────────┘
+```
+
+### Metrics Collection Architecture
+
+Watt uses [Prometheus](https://prometheus.io/) client libraries for metrics collection with custom metric collectors:
+
+```ascii
+┌─────────────────────────────────────────────────────────────┐
+│                    Watt Application                         │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────┐    │
+│  │Service 1│  │Service 2│  │Service 3│  │   Runtime   │    │
+│  │(Metrics)│  │(Metrics)│  │(Metrics)│  │   Manager   │    │
+│  └────┬────┘  └────┬────┘  └────┬────┘  │   (Metrics) │    │
+│       │            │            │       └──────┬──────┘    │
+│       │            │            │              │           │
+│       └────────────┼────────────┼──────────────┘           │
+│                    │            │                          │
+│        ┌───────────▼────────────▼───────────┐              │
+│        │    Prometheus Registry             │              │
+│        │  ┌───────────────────────────┐    │              │
+│        │  │   Default Metrics         │    │              │
+│        │  │   - CPU Usage            │    │              │
+│        │  │   - Memory Usage         │    │              │
+│        │  │   - Event Loop Util      │    │              │
+│        │  │   - Process Stats        │    │              │
+│        │  └───────────────────────────┘    │              │
+│        │  ┌───────────────────────────┐    │              │
+│        │  │   HTTP Metrics            │    │              │
+│        │  │   - Request Duration      │    │              │
+│        │  │   - Request Count         │    │              │
+│        │  │   - Response Codes        │    │              │
+│        │  │   - Active Connections    │    │              │
+│        │  └───────────────────────────┘    │              │
+│        │  ┌───────────────────────────┐    │              │
+│        │  │   Custom Metrics          │    │              │
+│        │  │   - Business Logic        │    │              │
+│        │  │   - Thread CPU Usage      │    │              │
+│        │  │   - Cache Metrics         │    │              │
+│        │  └───────────────────────────┘    │              │
+│        └────────────────────────────────────┘              │
+│        ┌───────────────────────────────────┐               │
+│        │    Prometheus HTTP Server         │               │
+│        │    (Metrics Endpoint: /metrics)   │               │
+│        └───────────────────────────────────┘               │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+              ┌───────────▼────────────┐
+              │   Metrics Collection   │
+              │ ┌─────────────────────┐│
+              │ │     Prometheus      ││
+              │ │      Server         ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │      Grafana        ││
+              │ └─────────────────────┘│
+              │ ┌─────────────────────┐│
+              │ │   Custom Scrapers   ││
+              │ └─────────────────────┘│
+              └────────────────────────┘
+```
+
+### Observability Capabilities
+
+**Logging Features:**
+- **Structured Logging**: JSON-formatted logs with consistent schema across services
+- **Log Correlation**: Request IDs and context propagation for tracing logs across services
+- **Sensitive Data Redaction**: Automatic removal of secrets, tokens, and PII from logs
+- **Multiple Transports**: Console, file, Elasticsearch, custom destinations
+- **Environment-specific Configuration**: Different log levels and outputs per environment
+
+**Distributed Tracing Features:**
+- **Request Tracing**: End-to-end request tracking across all services with span correlation
+- **Context Propagation**: W3C Trace Context and B3 propagation standards support
+- **Multiple Exporters**: OTLP, Jaeger, Zipkin, and custom trace backend support
+- **Performance Analysis**: Request latency, service dependencies, and bottleneck identification
+- **Error Tracking**: Exception capturing and error span correlation
+
+**Metrics Collection Features:**
+- **System Metrics**: CPU usage, memory consumption, event loop utilization per worker
+- **HTTP Metrics**: Request duration, throughput, status code distribution, active connections
+- **Business Metrics**: Custom counters, gauges, histograms for application-specific monitoring
+- **Prometheus Integration**: Native Prometheus exposition format with configurable labels
+- **Real-time Collection**: Live metrics scraping with configurable collection intervals
 
 ## Key Architectural Benefits
 
