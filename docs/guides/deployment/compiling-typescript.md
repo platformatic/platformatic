@@ -1,5 +1,11 @@
 # How to Compile TypeScript for Production Deployment
 
+## Important Note
+
+**This guide focuses specifically on Platformatic services (Service, DB, and Composer) that run within Watt.** 
+
+If you're working with basic Node.js applications without Platformatic services, the TypeScript compilation workflow is different and involves standard TypeScript toolchain (tsc, webpack, etc.) rather than the Platformatic-specific commands shown in this guide.
+
 ## Problem
 
 Your Watt application uses TypeScript for development, but you need to optimize it for production:
@@ -9,25 +15,27 @@ Your Watt application uses TypeScript for development, but you need to optimize 
 - You need consistent compilation across development and production environments
 
 **When to use this solution:**
+- Watt applications using Platformatic Service, DB, or Composer services
 - Production deployments where startup time is critical
 - Containerized environments with limited resources  
-- Applications with large TypeScript codebases
-- CI/CD pipelines that can handle build steps
+- Applications with large TypeScript codebases across multiple Platformatic services
+- CI/CD pipelines that can handle build steps for Platformatic services
 
 ## Solution Overview
 
-This guide shows you how to pre-compile TypeScript before deployment while maintaining flexibility for development. You'll learn to:
-1. Configure TypeScript compilation settings
+This guide shows you how to pre-compile TypeScript for Platformatic services before deployment while maintaining flexibility for development. You'll learn to:
+1. Configure TypeScript compilation settings for Platformatic Service, DB, and Composer
 2. Use different compilation modes for development vs. production
 3. Optimize production builds by excluding source files
-4. Handle multi-service TypeScript compilation
+4. Handle multi-service TypeScript compilation across different Platformatic service types
 
 ## Step 1: Configure TypeScript Settings
 
 ### Basic TypeScript Configuration
 
-If you've generated your application using `npx wattpm create`, your config file will include TypeScript support:
+If you've generated your application using `npx wattpm create`, your config file will include TypeScript support. The exact configuration depends on which Platformatic service type you're using:
 
+**For Platformatic Service, DB, or Composer services:**
 ```json
 {
   "plugins": {
@@ -39,6 +47,8 @@ If you've generated your application using `npx wattpm create`, your config file
   }
 }
 ```
+
+**Note:** This guide focuses on Platformatic Service, Platformatic DB, and Platformatic Composer services that run within Watt. For basic Node.js applications without these Platformatic services, the TypeScript compilation approach differs significantly.
 
 ### Environment Variable Configuration
 
@@ -57,30 +67,37 @@ PLT_TYPESCRIPT=false
 ```
 
 **Why this approach works:**
-- Development gets automatic compilation for fast iteration
+- Development gets automatic compilation for fast iteration across all Platformatic services
 - Production uses pre-compiled code for optimal performance
-- Same configuration file works across environments
+- Same configuration file works across environments and service types (Service, DB, Composer)
+- Unified TypeScript handling across your entire Watt application
 
 ## Step 2: Compile for Production Deployment
 
 ### Single Service Compilation
 
-For individual Watt services:
+For individual Platformatic services (Service, DB, or Composer) within Watt:
 
 ```bash
 # Navigate to your service directory
 cd web/my-service
 
-# Compile TypeScript to JavaScript
+# For Platformatic Service
 npx platformatic service compile
+# Or: plt service compile
 
-# Or if you have Platformatic CLI globally installed
-plt service compile
+# For Platformatic DB
+npx platformatic db compile
+# Or: plt db compile
+
+# For Platformatic Composer
+npx platformatic composer compile
+# Or: plt composer compile
 ```
 
 ### Multi-Service (Runtime) Compilation
 
-For Watt applications with multiple services:
+For Watt applications with multiple Platformatic services (any combination of Service, DB, or Composer):
 
 ```bash
 # From your main application directory
@@ -91,10 +108,11 @@ plt runtime compile
 ```
 
 **What this does:**
-- Compiles all TypeScript files to JavaScript
-- Preserves directory structure
+- Compiles all TypeScript files to JavaScript across all Platformatic services
+- Preserves directory structure for each service type
 - Generates source maps for debugging
 - Validates TypeScript code before compilation
+- Handles service-specific compilation requirements
 
 ## Step 3: Optimize Production Builds
 

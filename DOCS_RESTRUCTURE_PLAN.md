@@ -847,7 +847,21 @@ const sidebars = {
    - Include advanced monitoring with service mesh patterns
    - Target developers building comprehensive Watt applications
 
-This split addresses the need to distinguish between basic Node.js application monitoring and the comprehensive monitoring capabilities available when using Platformatic services within Watt.
+**Split TypeScript Compilation Guide**: The current `docs/guides/deployment/compiling-typescript.md` needs to be split into two separate guides:
+
+1. **Basic Node.js Applications Guide** (`docs/guides/deployment/compiling-typescript-nodejs.md`)
+   - Focus on TypeScript compilation for basic Node.js applications without Platformatic services
+   - Cover standard TypeScript toolchain (tsc, webpack, etc.)
+   - Include basic build optimization and deployment patterns
+   - Target developers working with standalone Node.js applications
+
+2. **Platformatic Services Guide** (`docs/guides/deployment/compiling-typescript-platformatic.md`)
+   - Focus specifically on Platformatic Service, Platformatic DB, and Platformatic Composer
+   - Cover `plt service compile`, `plt db compile`, `plt composer compile` commands
+   - Include multi-service compilation with `plt runtime compile`
+   - Target developers building Watt applications with Platformatic services
+
+This split addresses the need to distinguish between basic Node.js TypeScript compilation and the specialized compilation workflow for Platformatic services within Watt.
 
 ## Implementation Recommendations
 
