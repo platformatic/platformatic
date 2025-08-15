@@ -366,12 +366,13 @@ export default async function (app) {
 // Wrap existing Express app
 // web/legacy-app/index.js
 import express from 'express'
+import legacyRoutes from './legacy-routes.js'
 
 export function build() {
   const app = express()
   
   // Import existing Express routes
-  app.use('/legacy-api', require('./legacy-routes'))
+  app.use('/legacy-api', legacyRoutes)
   
   return app
 }
