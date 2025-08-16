@@ -76,9 +76,9 @@ You can customize the health check endpoints in your Watt configuration:
 
 ### Service Discovery and Autoload
 
-By default, Watt automatically loads all services in the `web` or `services` folder via the autoload configuration. You don't need to manually specify each service in the configuration. Watt will:
+By default, Watt automatically loads all services in the `web` folder via the autoload configuration. You don't need to manually specify each service in the configuration. Watt will:
 
-- Discover all valid Platformatic services in these directories
+- Discover all valid Platformatic services in this directory
 - Automatically register them in the runtime
 - Include them in health check evaluations
 - Expose their metrics through the metrics server
