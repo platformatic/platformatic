@@ -313,6 +313,238 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 CMD ["npm", "start"]
 ```
 
+## Watt Internal Service Communication
+
+Watt provides a built-in service mesh that enables zero-configuration communication between services using the `.plt.local` domain. This is crucial for implementing proper health checks in multi-service applications.
+
+### Architecture Overview
+
+The following diagram illustrates how services communicate within a Watt application for health checks in Kubernetes:
+
+```mermaid
+graph TB
+    subgraph "Kubernetes Pod"
+        subgraph "Watt Runtime"
+            subgraph "Service Mesh"
+                Router[Internal Router]
+                Discovery["Service Discovery<br/>(.plt.local)"]
+            end
+            
+            subgraph "Services"
+                Gateway["Gateway Service<br/>(Composer)<br/>:3001"]
+                API["API Service<br/>(Backend)<br/>:3002"] 
+                Worker["Worker Service<br/>(Background)<br/>:3003"]
+            end
+            
+            subgraph "Health Monitoring"
+                Metrics["Metrics Server<br/>:9090"]
+                Health["/ready, /status"]
+            end
+        end
+    end
+    
+    subgraph "External"
+        K8s[Kubernetes Probes]
+        Client[External Clients]
+    end
+    
+    %% Health check flows
+    K8s --> |"GET /ready<br/>GET /status"| Metrics
+    Metrics --> |"Check service health"| Gateway
+    Metrics --> |"Check service health"| API  
+    Metrics --> |"Check service health"| Worker
+    
+    %% Internal service communication
+    Gateway --> |"fetch('http://api.plt.local/health')"| Router
+    Gateway --> |"fetch('http://worker.plt.local/health')"| Router
+    Router --> API
+    Router --> Worker
+    
+    %% External access
+    Client --> |"External requests"| Gateway
+    
+    %% Service discovery
+    Discovery -.-> |"Resolves .plt.local"| Router
+    
+    style Metrics fill:#e1f5fe
+    style Health fill:#e8f5e8
+    style Router fill:#fff3e0
+    style Discovery fill:#fff3e0
+```
+
+### Key Communication Patterns:
+
+1. **Kubernetes Health Probes** → Metrics server (`:9090/ready`, `:9090/status`)
+2. **Metrics Server** → Individual services for health verification
+3. **Inter-Service Health Checks** → Via `.plt.local` domain (e.g., `http://api.plt.local/health`)
+4. **External Traffic** → Gateway service (composer) for API aggregation
+
+### Internal Fetch with Automatic Service Discovery
+
+Services within a Watt application can communicate with each other using the automatic service discovery:
+
+```javascript
+// Health check for internal services using Watt's service mesh
+globalThis.platformatic.setCustomHealthCheck(async () => {
+  try {
+    const healthChecks = await Promise.allSettled([
+      // Database service health check
+      fetch('http://api.plt.local/health', { timeout: 2000 }),
+      
+      // Background worker service health check  
+      fetch('http://worker.plt.local/health', { timeout: 2000 }),
+      
+      // Composer gateway health check
+      fetch('http://gateway.plt.local/health', { timeout: 2000 })
+    ])
+    
+    const allHealthy = healthChecks.every(result => 
+      result.status === 'fulfilled' && result.value.ok
+    )
+    
+    return {
+      status: allHealthy,
+      body: JSON.stringify({
+        service: 'healthy',
+        dependencies: healthChecks.map((check, index) => ({
+          service: ['api', 'worker', 'gateway'][index],
+          status: check.status === 'fulfilled' && check.value.ok ? 'healthy' : 'unhealthy'
+        }))
+      })
+    }
+  } catch (error) {
+    return { 
+      status: false, 
+      statusCode: 503,
+      body: `Health check failed: ${error.message}`
+    }
+  }
+})
+```
+
+### Key Benefits of Watt's Internal Communication:
+
+- **Zero Configuration**: Services are automatically discoverable via `{service-id}.plt.local`
+- **No Network Latency**: Communication happens in-process via the service mesh
+- **Automatic Load Balancing**: Requests are distributed across service workers
+- **Built-in Service Discovery**: No need for external service registry
+
+## Composer Gateway Integration
+
+When using Platformatic Composer as an API gateway within your Watt application, you can implement health checks that verify both the gateway and backend services:
+
+### Composer Service Configuration
+
+Add a composer service to your Watt application structure:
+
+```
+├── watt.json               # Main Watt configuration with metrics
+├── web/
+│   ├── api/                # Backend API service
+│   │   ├── platformatic.json
+│   │   └── index.js
+│   ├── worker/             # Background worker service
+│   │   ├── platformatic.json
+│   │   └── index.js
+│   └── gateway/            # Composer API gateway
+│       ├── platformatic.json
+│       └── index.js
+```
+
+### Gateway Service Health Checks
+
+The composer gateway can implement health checks that verify all backend services:
+
+```javascript
+// web/gateway/index.js - Composer gateway with health checks
+import fastify from 'fastify'
+
+export function create () {
+  const app = fastify({ logger: true })
+
+  // Composer gateway health check - verifies all backend services
+  globalThis.platformatic.setCustomHealthCheck(async () => {
+    try {
+      // Check all services that the gateway proxies to
+      const serviceHealths = await Promise.allSettled([
+        fetch('http://api.plt.local/health', { timeout: 2000 }),
+        fetch('http://worker.plt.local/health', { timeout: 2000 })
+      ])
+      
+      const healthyServices = serviceHealths.filter(result => 
+        result.status === 'fulfilled' && result.value.ok
+      ).length
+      
+      if (healthyServices === serviceHealths.length) {
+        return {
+          status: true,
+          body: JSON.stringify({
+            gateway: 'healthy',
+            upstreamServices: serviceHealths.length,
+            healthyServices: healthyServices
+          })
+        }
+      }
+      
+      return {
+        status: false,
+        statusCode: 503,
+        body: JSON.stringify({
+          gateway: 'degraded',
+          upstreamServices: serviceHealths.length,
+          healthyServices: healthyServices
+        })
+      }
+    } catch (error) {
+      return { 
+        status: false, 
+        statusCode: 503,
+        body: `Gateway health check failed: ${error.message}`
+      }
+    }
+  })
+
+  return app
+}
+```
+
+### Composer Configuration for Health Checks
+
+Configure the composer service in `web/gateway/platformatic.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "api",
+        "origin": "http://api.plt.local",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      },
+      {
+        "id": "worker",
+        "origin": "http://worker.plt.local",
+        "proxy": {
+          "prefix": "/worker"
+        }
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  "plugins": {
+    "paths": ["./index.js"]
+  }
+}
+```
+
+This configuration creates an API gateway that:
+- Proxies requests to backend services using their internal `.plt.local` addresses
+- Automatically refreshes service configurations
+- Implements health checks for all upstream services
+
 ## How It Works
 
 1. **Startup Phase**: 
@@ -328,9 +560,14 @@ CMD ["npm", "start"]
 
 3. **Liveness Check** (`/status` endpoint):
    - First verifies readiness (all services started)
-   - Then runs your custom health check functions
+   - Then runs your custom health check functions, including internal service checks via `.plt.local`
    - If successful: container continues running
    - If failed: Kubernetes restarts the container
+
+4. **Internal Service Communication**:
+   - Services communicate via Watt's internal service mesh using `.plt.local` domains
+   - Health checks can verify dependent services without external network calls
+   - Composer gateway can aggregate health status from all backend services
 
 **Important**: The liveness check depends on readiness. If readiness fails, liveness will also fail, potentially causing unnecessary restarts.
 
@@ -338,19 +575,22 @@ CMD ["npm", "start"]
 
 You can see a full working example in [https://github.com/platformatic/k8s-readiness-liveness](https://github.com/platformatic/k8s-readiness-liveness).
 
-The example project structure demonstrates a Watt application with health checks:
+The example project structure demonstrates a Watt application with health checks and composer gateway:
 
 ```
 ├── watt.json               # Main Watt configuration with metrics
 ├── Dockerfile              # Container configuration
 ├── package.json            # Dependencies and scripts
 ├── web/
-│   ├── api/                # Main API service
+│   ├── api/                # Backend API service
 │   │   ├── platformatic.json
 │   │   └── index.js        # Service with custom health checks
-│   └── worker/             # Background worker service
-│       ├── platformatic.json
-│       └── index.js
+│   ├── worker/             # Background worker service
+│   │   ├── platformatic.json
+│   │   └── index.js        # Worker with health endpoint
+│   └── gateway/            # Composer API gateway
+│       ├── platformatic.json # Composer configuration
+│       └── index.js        # Gateway with upstream health checks
 └── k8s/
     ├── deployment.yaml     # Kubernetes deployment with probes
     ├── service.yaml        # Kubernetes service configuration
@@ -635,7 +875,7 @@ kubectl exec <pod-name> -- ps aux | grep node
 
 ### Multi-Service Health Dependencies
 
-For complex applications with service interdependencies:
+For complex applications with service interdependencies using Watt's internal service mesh:
 
 ```javascript
 // web/api/index.js
@@ -644,15 +884,16 @@ import fastify from 'fastify'
 export function create () {
   const app = fastify({ logger: true })
 
-  // Critical dependency checker
+  // Critical dependency checker using Watt's internal communication
   async function checkCriticalDependencies() {
     const checks = await Promise.allSettled([
       // Database connection
       app.hasDecorator('db') ? app.db.query('SELECT 1') : Promise.resolve(),
       // Redis cache
       app.hasDecorator('redis') ? app.redis.ping() : Promise.resolve(),
-      // Internal service dependency
-      fetch('http://worker-service:3042/health', { timeout: 2000 })
+      // Internal service dependencies using .plt.local domain
+      fetch('http://worker.plt.local/health', { timeout: 2000 }),
+      fetch('http://gateway.plt.local/health', { timeout: 2000 })
     ])
     
     return checks.every(result => result.status === 'fulfilled')
