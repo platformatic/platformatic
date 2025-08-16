@@ -1,6 +1,6 @@
 # @platformatic/sql-openapi
 
-Check out the full documentation on [our website](https://docs.platformatic.dev/docs/packages/sql-openapi/overview).
+Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/sql-openapi/overview).
 
 ## Install
 

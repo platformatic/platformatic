@@ -1,6 +1,6 @@
 # @platformatic/db
 
-Check out the full documentation for Platformatic DB on [our website](https://docs.platformatic.dev/docs/db/overview).
+Check out the full documentation for Platformatic DB on [our website](https://docs.platformatic.dev/docs/reference/db/overview).
 
 ## Install
 

@@ -1,4 +1,4 @@
-![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
+![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png)
 
 <p align="center">
   <br/>
@@ -25,8 +25,8 @@ guide to get up and running with Platformatic.
 ## Documentation
 
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
-- [CLI](https://docs.platformatic.dev/docs/cli)
-- [Guides](https://docs.platformatic.dev/docs/guides/movie-quotes-app-tutorial)
+- [CLI](https://docs.platformatic.dev/docs/reference/platformatic/cli)
+- [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
 Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
 
