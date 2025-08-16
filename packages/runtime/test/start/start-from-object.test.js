@@ -4,15 +4,26 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfiguration, Runtime } = require('../..')
+const { transform, loadConfiguration, Runtime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
+const { getTempDir } = require('../helpers.js')
 
 test('can start applications programmatically from object', async t => {
+  const root = await getTempDir()
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfiguration(configFile)
+  const config = await loadConfiguration(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      config.logger ??= {}
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: join(root, 'logs.txt') }
+      }
+
+      return config
+    }
+  })
   const app = new Runtime(config)
 
   const entryUrl = await app.start()

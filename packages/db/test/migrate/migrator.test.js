@@ -6,10 +6,10 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import Postgrator from 'postgrator'
 import { Migrator } from '../../lib/migrator.js'
 
 test('should not throw error if setup migrator twice', async t => {
-  const { default: Postgrator } = await import('postgrator')
   const cwd = await mkdtemp(join(tmpdir(), 'migrator-test-'))
   const migrationsDirPath = join(cwd, 'migrations')
   await createDirectory(migrationsDirPath)

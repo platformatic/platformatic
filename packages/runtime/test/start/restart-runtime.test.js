@@ -3,20 +3,15 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { tmpdir } = require('node:os')
-const { readFile, rm } = require('node:fs/promises')
+const { readFile } = require('node:fs/promises')
 const { request } = require('undici')
-
-const { create } = require('../..')
+const { createRuntime, getTempDir } = require('../helpers.js')
 const { transform } = require('../../lib/config')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('can restart the runtime apps', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   let entryUrl = await app.start()
 
   t.after(async () => {
@@ -42,12 +37,10 @@ test('can restart the runtime apps', async t => {
 })
 
 test('do not restart if service is not started', async t => {
-  const logsPath = join(tmpdir(), 'platformatic-crash-logs.txt')
-  await rm(logsPath, { force: true })
-
+  const logsPath = join(await getTempDir(), `log-${Date.now()}.txt`)
   const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
 
-  const app = await create(configPath, null, {
+  const app = await createRuntime(configPath, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
 
@@ -68,7 +61,7 @@ test('do not restart if service is not started', async t => {
     await app.start()
     assert.fail('expected an error')
   } catch (err) {
-    assert.strictEqual(err.message, 'The service "service-2" exited prematurely with error code 1')
+    assert.strictEqual(err.message, 'Crash!')
   }
 
   const logs = await readFile(logsPath, 'utf8')

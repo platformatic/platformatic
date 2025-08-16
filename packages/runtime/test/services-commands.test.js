@@ -4,11 +4,8 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { loadServicesCommands } = require('../index.js')
-const { setLogFile } = require('./helpers')
 const { createDirectory, safeRemove } = require('@platformatic/foundation')
 const { writeFile } = require('node:fs/promises')
-
-test.beforeEach(setLogFile)
 
 async function createTmpDir (t) {
   const originalCwd = process.cwd()

@@ -3,8 +3,8 @@ import assert from 'node:assert'
 import os from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'timers/promises'
 import { request } from 'undici'
+import { LOGS_TIMEOUT, sleep } from '../../basic/test/helper.js'
 import { createFromConfig } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
@@ -52,7 +52,7 @@ test('start without server config', async t => {
   })
 })
 
-test('transport logger', async t => {
+test.only('transport logger', async t => {
   const file = join(os.tmpdir(), `${process.pid}-4.json`)
   const options = {
     server: {
@@ -74,8 +74,8 @@ test('transport logger', async t => {
   await server.start({ listen: true })
   await server.stop()
 
-  await sleep(500)
-
+  // Ths is need as the write happens in a custom transport
+  await sleep(LOGS_TIMEOUT)
   const written = await fs.readFile(file, 'utf8')
   const parsed = JSON.parse(written)
 

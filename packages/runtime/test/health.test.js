@@ -5,17 +5,15 @@ const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const autocannon = require('autocannon')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { waitForEvents } = require('./multiple-workers/helper')
 const { request } = require('undici')
-const { setLogFile, readLogs } = require('./helpers')
-
-test.beforeEach(setLogFile)
+const { readLogs } = require('./helpers')
 
 test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
-  const server = await create(configFile)
+  const server = await createRuntime(configFile)
 
   await server.start()
 
@@ -30,7 +28,7 @@ test('should continously monitor workers health', async t => {
 
 test('should restart the process if it exceeded maximum threshold', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-unhealthy.json')
-  const server = await create(configFile)
+  const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
@@ -62,7 +60,9 @@ test('should restart the process if it exceeded maximum threshold', async t => {
 
 test('should not lose any connection when restarting the process', async t => {
   const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
-  const server = await create(configFile)
+  const context = {}
+
+  const server = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await server.close()
@@ -76,7 +76,7 @@ test('should not lose any connection when restarting the process', async t => {
 
   // Wait for messages
   await waitPromise
-  const messages = await readLogs()
+  const messages = await readLogs(context.logsPath)
 
   ok(messages.some(m => m.msg === 'The service "service" is unhealthy. Replacing it ...'))
   ok(!messages.some(m => m.msg === 'The service "service" unexpectedly exited with code 1.'))
@@ -88,7 +88,7 @@ test('should not lose any connection when restarting the process', async t => {
 
 test('set the spaces memory correctly', async t => {
   const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
-  const server = await create(configFile)
+  const server = await createRuntime(configFile)
 
   const url = await server.start()
 
@@ -107,7 +107,7 @@ test('set the spaces memory correctly', async t => {
 
 test('set the spaces memory correctly when maxHeapTotal is a string', async t => {
   const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
-  const server = await create(configFile)
+  const server = await createRuntime(configFile)
 
   const url = await server.start()
 

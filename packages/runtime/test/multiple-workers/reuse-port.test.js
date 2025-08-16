@@ -6,11 +6,9 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { features } = require('@platformatic/foundation')
 const { request } = require('undici')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { updateConfigFile } = require('../helpers')
-const { prepareRuntime, setLogFile, waitForEvents } = require('./helper')
-
-test.beforeEach(setLogFile)
+const { prepareRuntime, waitForEvents } = require('./helper')
 
 test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
@@ -26,7 +24,7 @@ test('services are started with multiple workers even for the entrypoint when No
     contents.autoload = undefined
   })
 
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

@@ -5,8 +5,7 @@ import { join, relative } from 'node:path'
 import { test } from 'node:test'
 import selfCert from 'self-cert'
 import { Agent, request } from 'undici'
-import { create } from '../index.js'
-import { buildConfig } from './helper.js'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test('supports http2 options', async t => {
   const { certificate, privateKey } = selfCert({})
@@ -29,8 +28,8 @@ test('supports http2 options', async t => {
     }
   })
 
-  const app = await create(
-    tmpDir,
+  const app = await createFromConfig(
+    t,
     buildConfig({
       server: {
         hostname: '127.0.0.1',
@@ -81,8 +80,8 @@ test('supports allowHTTP1 with HTTP/2', async t => {
     }
   })
 
-  const app = await create(
-    tmpDir,
+  const app = await createFromConfig(
+    t,
     buildConfig({
       server: {
         hostname: '127.0.0.1',

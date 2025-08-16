@@ -3,16 +3,13 @@
 const { rejects } = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
 const { waitForEvents } = require('../multiple-workers/helper')
-
-test.beforeEach(setLogFile)
 
 test('can start timeout when applications dont start', async t => {
   const configFile = join(fixturesDir, 'start-timeout/platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()

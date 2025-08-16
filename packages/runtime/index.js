@@ -18,7 +18,6 @@ const { Runtime } = require('./lib/runtime')
 const symbols = require('./lib/worker/symbols')
 const { schema } = require('./lib/schema')
 const { upgrade } = require('./lib/upgrade')
-const { getRuntimeLogsDir } = require('./lib/utils')
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all services ...')
@@ -129,6 +128,8 @@ async function create (configOrRoot, sourceOrConfig, context) {
           throw err
         }
 
+        await runtime.close()
+
         // Get the actual port from the error message if original port was 0
         if (!port) {
           const mo = err.message.match(/ address already in use (.+)/)
@@ -151,7 +152,6 @@ const platformaticVersion = require('./package.json').version
 module.exports.errors = require('./lib/errors')
 module.exports.Generator = RuntimeGenerator
 module.exports.WrappedGenerator = WrappedGenerator
-module.exports.getRuntimeLogsDir = getRuntimeLogsDir
 module.exports.schema = schema
 module.exports.symbols = symbols
 module.exports.Runtime = Runtime

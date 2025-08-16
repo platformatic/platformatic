@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const { transform } = require('../lib/config')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const Fastify = require('fastify')
@@ -11,10 +11,10 @@ const { once, EventEmitter } = require('events')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 
-async function createRuntime (t, scheduler) {
+async function createRuntimeWithScheduler (t, scheduler) {
   const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
 
-  const app = await create(configFile, null, {
+  const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.scheduler = scheduler
@@ -41,7 +41,7 @@ test('Should throw if cron is not valid', async t => {
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
   try {
-    await createRuntime(t, [
+    await createRuntimeWithScheduler(t, [
       {
         name: 'test',
         cron: 'BOOM!', // not valid
@@ -68,7 +68,7 @@ test('Start a job that hits a server with a GET', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
@@ -95,7 +95,7 @@ test('Should not start a job if disabled', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       enabled: false,
       name: 'test',
@@ -130,7 +130,7 @@ test('Should retry 3 times if fails ', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test2',
       cron: '*/1 * * * * *', // every second
@@ -159,7 +159,7 @@ test('Start a job that hits a server with a POST of a JSON', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
@@ -190,7 +190,7 @@ test('Start a job that hits a server with a POST of a TXT', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
@@ -223,7 +223,7 @@ test('Shoud stop retrying after 3 times ', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test2',
       cron: '*/1 * * * * *', // every second
@@ -243,7 +243,7 @@ test('Works with the mesh network', async t => {
   const port = 16667
   const callbackUrl = `http://service.plt.local:${port}/inc`
 
-  const app = await createRuntime(t, [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second

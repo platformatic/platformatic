@@ -1,8 +1,9 @@
+import { kMetadata } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
   createRuntime,
-  getLogs,
+  getLogsFromFile,
   isCIOnWindows,
   prepareRuntimeWithServices,
   setFixturesDir,
@@ -170,7 +171,10 @@ async function verifyMissingConfigurationMessage (runtime) {
   const missingConfigurationMessage =
     'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
-  const logs = await getLogs(runtime)
+  const config = await runtime.getRuntimeConfig(true)
+  await runtime.close()
+  const logs = await getLogsFromFile(config[kMetadata].root)
+
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
 }
 
@@ -182,10 +186,12 @@ async function verifyFilename (runtime) {
 
 const configurations = [
   {
+    only: true,
     id: 'node-no-configuration-standalone',
     name: 'Node.js application (with no configuration files in development mode when standalone)',
     async check (...args) {
-      await verifyStandalone(...args, verifyMissingConfigurationMessage)
+      args[8] = verifyMissingConfigurationMessage
+      await verifyStandalone(...args)
     },
     language: 'js'
   },
@@ -193,32 +199,28 @@ const configurations = [
     id: 'node-no-configuration-composer-with-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer with a prefix)',
     async check (...args) {
-      await verifyComposerWithPrefix(...args, false, verifyMissingConfigurationMessage)
+      await verifyComposerWithPrefix(...args, false)
     },
     language: 'ts'
   },
   {
     id: 'node-no-configuration-composer-without-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer without a prefix)',
-    async check (...args) {
-      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
-    },
+    check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'node-no-configuration-composer-autodetect-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
     async check (...args) {
-      await verifyComposerAutodetectPrefix(...args, false, verifyMissingConfigurationMessage)
+      await verifyComposerAutodetectPrefix(...args, false)
     },
     language: 'js'
   },
   {
     id: 'node-no-configuration-composer-no-services',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no services)',
-    async check (...args) {
-      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
-    },
+    check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {

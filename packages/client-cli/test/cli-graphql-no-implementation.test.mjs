@@ -25,7 +25,10 @@ test('graphql client generation (javascript)', async t => {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      logger: {
+        level: 'fatal'
+      }
     },
     plugins: {
       paths: ['./plugin.js']
@@ -103,7 +106,10 @@ test('graphql client generation (typescript)', async t => {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      logger: {
+        level: 'fatal'
+      }
     },
     plugins: {
       paths: ['./plugin.ts']
@@ -135,6 +141,7 @@ export default myPlugin
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
+  await fs.writeFile('./package.json', JSON.stringify({ type: 'module' }))
 
   const tsconfig = JSON.stringify(
     {

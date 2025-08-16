@@ -16,6 +16,17 @@ export function ensureLoggableError (error) {
   return error
 }
 
+// This is needed if an error is received via ensureLoggableError->postMessage
+export function ensureError (error) {
+  if (error instanceof Error) {
+    return error
+  }
+
+  const err = new Error(error.message)
+  Object.assign(err, error)
+  return err
+}
+
 export const PathOptionRequiredError = createError(`${ERROR_PREFIX}_PATH_OPTION_REQUIRED`, 'path option is required')
 export const NoConfigFileFoundError = createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found')
 export const InvalidConfigFileExtensionError = createError(

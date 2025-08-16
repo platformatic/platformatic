@@ -6,7 +6,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createRuntime,
-  getLogs,
+  getLogsFromFile,
   prepareRuntime,
   setFixturesDir,
   startRuntime,
@@ -16,7 +16,7 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject Platformatic code by default when building', async t => {
-  const { runtime } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -34,13 +34,14 @@ test('should inject Platformatic code by default when building', async t => {
 
   await runtime.init()
   await runtime.buildService('frontend')
+  await runtime.close()
 
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED true')
 })
 
 test('should not inject Platformatic code when building if asked to', async t => {
-  const { runtime } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -59,8 +60,9 @@ test('should not inject Platformatic code when building if asked to', async t =>
 
   await runtime.init()
   await runtime.buildService('frontend')
+  await runtime.close()
 
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED false')
 })
 

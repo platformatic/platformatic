@@ -11,11 +11,11 @@ const {
   FileWatcher,
   listRecognizedConfigurationFiles,
   loadConfigurationModule,
-  loadConfiguration
+  loadConfiguration,
+  ensureLoggableError
 } = require('@platformatic/foundation')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
-
 const errors = require('../errors')
 const { getServiceUrl } = require('../utils')
 
@@ -129,10 +129,14 @@ class PlatformaticApp extends EventEmitter {
       this.#updateDispatcher()
     } catch (err) {
       if (err.validationErrors) {
-        console.error('Validation errors:', err.validationErrors)
+        globalThis.platformatic.logger.error(
+          { err: ensureLoggableError(err.validationErrors) },
+          'The application threw a validation error.'
+        )
+
         process.exit(1)
       } else {
-        this.#logAndExit(err)
+        this.#logAndThrow(err)
       }
     }
   }
@@ -147,7 +151,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       await this.stackable.init?.()
     } catch (err) {
-      this.#logAndExit(err)
+      this.#logAndThrow(err)
     }
 
     if (this.#watch) {
@@ -181,8 +185,8 @@ class PlatformaticApp extends EventEmitter {
     this.emit('start')
   }
 
-  async stop () {
-    if (!this.#started || this.#starting) {
+  async stop (force = false) {
+    if (!force && (!this.#started || this.#starting)) {
       throw new errors.ApplicationNotStartedError()
     }
 
@@ -263,9 +267,9 @@ class PlatformaticApp extends EventEmitter {
     }
   }
 
-  #logAndExit (err) {
-    console.error(err)
-    process.exit(1)
+  #logAndThrow (err) {
+    globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, 'The application threw an error.')
+    throw err
   }
 
   #updateDispatcher () {

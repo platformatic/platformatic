@@ -4,16 +4,14 @@ const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { features } = require('@platformatic/foundation')
-const { create } = require('../..')
-const { updateFile, updateConfigFile, setLogFile } = require('../helpers')
+const { createRuntime } = require('../helpers.js')
+const { updateFile, updateConfigFile } = require('../helpers')
 const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
-
-test.beforeEach(setLogFile)
 
 test('services are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -42,7 +40,7 @@ test('services are started with a single workers when no workers information is 
     delete contents.services[0].workers
   })
 
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   const events = []
   app.on('service:worker:started', payload => {
@@ -73,7 +71,7 @@ test('can detect changes and restart all workers for a service', async t => {
     contents.watch = true
   })
 
-  const app = await create(configFile, null)
+  const app = await createRuntime(configFile, null)
 
   t.after(async () => {
     await app.close()
@@ -97,7 +95,7 @@ test('can detect changes and restart all workers for a service', async t => {
 test('can collect metrics with worker label', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile, null, { isProduction: true })
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

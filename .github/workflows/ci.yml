@@ -33,18 +33,23 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
-  setup-node_modules:
+  setup:
+    name: 'setup - ${{ matrix.label }}'
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - label: Linux
+            os: ubuntu-24.04
+          - label: Win
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.18.0
+          node: 22.18.0
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -53,53 +58,59 @@ jobs:
           retry_on: error
           command: pnpm fetch --ignore-scripts
 
-  ci-create-wattpm:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'create-wattpm' }}
+  dependency-check:
+    name: 'dependency-check - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: platformatic cli global link
-        run: cd packages/cli && pnpm link --global && cd ../..
-      - name: Setup local git user and email
+        id: install
         run: |
-          git config --global user.name 'Platformatic Github Actions'
-          git config --global user.email 'info@platformatic.dev'
-      - name: Run test suite
-        run: cd packages/create-wattpm && pnpm test
+          pnpm install --production --frozen-lockfile 2>&1 | tee out
+          echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
+          cat out >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Watt must load
+        run: cd packages/wattpm && node bin/cli.js
+      - name: Circular Dependency
+        if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
+        run: exit 1
 
-  ci-create-platformatic:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
-    runs-on: ${{ matrix.os }}
+  runtime-lint:
+    name: 'runtime-lint'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node: 22.18.0
           cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
@@ -108,144 +119,21 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: platformatic cli global link
-        run: cd packages/cli && pnpm link --global && cd ../..
-      - name: Setup local git user and email
-        run: |
-          git config --global user.name 'Platformatic Github Actions'
-          git config --global user.email 'info@platformatic.dev'
-      - name: Run test suite
-        run: cd packages/create-platformatic && pnpm test
+      - name: Run runtime package test suite
+        run: cd packages/runtime && pnpm run lint
 
-  ci-cli:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'cli' }}
-    runs-on: ${{ matrix.os }}
-    # Paolo: This job takes a lot due to build and start command tests.
+  db-lint:
+    name: 'db-lint'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'db-lint' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 1
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite
-        run: cd packages/cli && pnpm test
-      - name: License Check
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: cd packages/cli && pnpm run license
-
-  ci-composer:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'composer' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite with code coverage
-        run: cd packages/composer && pnpm run test
-
-  ci-db:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'db' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: ikalnytskyi/action-setup-postgres@v7
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: pnpm install -g typescript
-        run: pnpm install -g typescript
-      - name: Run test suite core
-        run: cd packages/db-core && pnpm test
-      - name: Run test suite Platformatic DB
-        run: cd packages/db && pnpm test
-
-  ci-db-authorization:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: Start docker containers for testing
-        run: docker compose up -d postgresql
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite
-        run: cd packages/db-authorization && pnpm test
-
-  ci-db-core-lint:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'db-core-lint' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+          node: 22
           cache: 'pnpm'
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -277,22 +165,499 @@ jobs:
           pnpm --filter="@platformatic/sql-events" run lint
           pnpm --filter="@platformatic/sql-events" run test:typescript
 
-  ci-db-core-test:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
-    runs-on: ${{matrix.os}}
+  cli:
+    name: 'cli - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'cli' }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 1
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run test suite
+        run: cd packages/cli && pnpm test
+      - name: License Check
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        run: cd packages/cli && pnpm run license
+
+  foundation:
+    name: 'foundation - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'utils' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run utils package test suite
+        run: cd packages/foundation && pnpm test
+
+  basic:
+    name: 'basic - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'basic' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run node package test suite
+        run: cd packages/basic && pnpm test
+
+  itc:
+    name: 'itc - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'itc' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run itc package test suite
+        run: cd packages/itc && pnpm test
+
+  globals:
+    name: 'globals - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'globals' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run globals package test suite
+        run: cd packages/globals && pnpm test
+
+  runtime:
+    name: 'runtime - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'runtime' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x - main
+            node: 22.18.0
+            os: ubuntu-24.04
+            suite: main
+          - label: Linux - 24.x - main
+            node: 24.5.0
+            os: ubuntu-24.04
+            suite: main
+          - label: Linux - 22.x - api
+            node: 22.18.0
+            os: ubuntu-24.04
+            suite: api
+          - label: Linux - 24.x - api
+            node: 24.5.0
+            os: ubuntu-24.04
+            suite: api
+          - label: Linux - 22.x - cli
+            node: 22.18.0
+            os: ubuntu-24.04
+            suite: cli
+          - label: Linux - 24.x - cli
+            node: 24.5.0
+            os: ubuntu-24.04
+            suite: cli
+          - label: Linux - 22.x - start
+            node: 22.18.0
+            os: ubuntu-24.04
+            suite: start
+          - label: Linux - 24.x - start
+            node: 24.5.0
+            os: ubuntu-24.04
+            suite: start
+          - label: Linux - 22.x - multiple-workers
+            node: 22.18.0
+            os: ubuntu-24.04
+            suite: multiple-workers
+          - label: Linux - 24.x - multiple-workers
+            node: 24.5.0
+            os: ubuntu-24.04
+            suite: multiple-workers
+          - label: Win - 22.x - main
+            node: 22.18.0
+            os: windows-2025
+            suite: main
+          - label: Win - 24.x - main
+            node: 24.5.0
+            os: windows-2025
+            suite: main
+          - label: Win - 22.x - api
+            node: 22.18.0
+            os: windows-2025
+            suite: api
+          - label: Win - 24.x - api
+            node: 24.5.0
+            os: windows-2025
+            suite: api
+          - label: Win - 22.x - cli
+            node: 22.18.0
+            os: windows-2025
+            suite: cli
+          - label: Win - 24.x - cli
+            node: 24.5.0
+            os: windows-2025
+            suite: cli
+          - label: Win - 22.x - start
+            node: 22.18.0
+            os: windows-2025
+            suite: start
+          - label: Win - 24.x - start
+            node: 24.5.0
+            os: windows-2025
+            suite: start
+          - label: Win - 22.x - multiple-workers
+            node: 22.18.0
+            os: windows-2025
+            suite: multiple-workers
+          - label: Win - 24.x - multiple-workers
+            node: 24.5.0
+            os: windows-2025
+            suite: multiple-workers
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run runtime package test suite
+        run: cd packages/runtime && pnpm run test:${{ matrix.suite }}
+
+  service:
+    name: 'service - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'service' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run test suite with code coverage
+        run: |
+          cd packages/service
+          pnpm run test
+
+  composer:
+    name: 'composer - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'composer' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run test suite with code coverage
+        run: cd packages/composer && pnpm run test
+
+  db:
+    name: 'db - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'db' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: ikalnytskyi/action-setup-postgres@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: pnpm install -g typescript
+        run: pnpm install -g typescript
+      - name: Run test suite core
+        run: cd packages/db-core && pnpm test
+      - name: Run test suite Platformatic DB
+        run: cd packages/db && pnpm test
+
+  db-authorization:
+    name: 'db-authorization - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: Start docker containers for testing
+        run: docker compose up -d postgresql
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run test suite
+        run: cd packages/db-authorization && pnpm test
+
+  db-core-test:
+    name: 'db-core-test - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: PostgreSQL - 22.x
+            db: postgresql
+            node: 22.18.0
+          - label: PostgreSQL - 24.x
+            db: postgresql
+            node: 24.5.0
+          - label: MariaDB - 22.x
+            db: mariadb
+            node: 22.18.0
+          - label: MariaDB - 24.x
+            db: mariadb
+            node: 24.5.0
+          - label: MySQL - 22.x
+            db: mysql
+            node: 22.18.0
+          - label: MySQL - 24.x
+            db: mysql
+            node: 24.5.0
+          - label: MySQL8 - 22.x
+            db: mysql8
+            node: 22.18.0
+          - label: MySQL8 - 24.x
+            db: mysql8
+            node: 24.5.0
+          - label: SQLite - 22.x
+            db: sqlite
+            node: 22.18.0
+          - label: SQLite - 24.x
+            db: sqlite
+            node: 24.5.0
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d ${{ matrix.db }}
@@ -316,22 +681,51 @@ jobs:
       - name: Run test suite sql-graphql
         run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }} && cd ..
 
-  ci-sql-events:
-    needs: setup-node_modules
+  sql-events:
+    name: 'sql-events - ${{ matrix.label }}'
+    needs: setup
     if: ${{ !inputs.job || inputs.job == 'sql-events' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
+        include:
+          - label: PostgreSQL - 22.x
+            db: postgresql
+            node: 22.18.0
+          - label: PostgreSQL - 24.x
+            db: postgresql
+            node: 24.5.0
+          - label: MariaDB - 22.x
+            db: mariadb
+            node: 22.18.0
+          - label: MariaDB - 24.x
+            db: mariadb
+            node: 24.5.0
+          - label: MySQL - 22.x
+            db: mysql
+            node: 22.18.0
+          - label: MySQL - 24.x
+            db: mysql
+            node: 24.5.0
+          - label: MySQL8 - 22.x
+            db: mysql8
+            node: 22.18.0
+          - label: MySQL8 - 24.x
+            db: mysql8
+            node: 24.5.0
+          - label: SQLite - 22.x
+            db: sqlite
+            node: 22.18.0
+          - label: SQLite - 24.x
+            db: sqlite
+            node: 24.5.0
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d ${{ matrix.db }}
@@ -351,21 +745,271 @@ jobs:
       - name: Run test suite sql-mapper
         run: cd packages/sql-events && pnpm run test:${{ matrix.db }}
 
-  ci-control:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'control' }}
+  wattpm:
+    name: 'wattpm - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'wattpm' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run wattpm package test suite
+        run: cd packages/wattpm && pnpm test
+
+  wattpm-utils:
+    name: 'wattpm-utils - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'wattpm-utils' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run wattpm package test suite
+        run: cd packages/wattpm-utils && pnpm test
+
+  client:
+    name: 'client - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'client' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run utils package test suite
+        run: cd packages/client && pnpm test
+
+  client-cli:
+    name: 'client-cli - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'client' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run client-cli package test suite
+        run: cd packages/client-cli && pnpm test
+
+  create-wattpm:
+    name: 'create-wattpm - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'create-wattpm' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: platformatic cli global link
+        run: cd packages/cli && pnpm link --global && cd ../..
+      - name: Setup local git user and email
+        run: |
+          git config --global user.name 'Platformatic Github Actions'
+          git config --global user.email 'info@platformatic.dev'
+      - name: Run test suite
+        run: cd packages/create-wattpm && pnpm test
+
+  create-platformatic:
+    name: 'create-platformatic - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux/22
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux/24
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win/22
+            node: 22.18.0
+            os: windows-2025
+          - label: Win/24
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: platformatic cli global link
+        run: cd packages/cli && pnpm link --global && cd ../..
+      - name: Setup local git user and email
+        run: |
+          git config --global user.name 'Platformatic Github Actions'
+          git config --global user.email 'info@platformatic.dev'
+      - name: Run test suite
+        run: cd packages/create-platformatic && pnpm test
+
+  control:
+    name: 'control - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'control' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
@@ -377,124 +1021,33 @@ jobs:
       - name: Run runtime package test suite
         run: cd packages/control && pnpm test
 
-  ci-runtime-lint:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run runtime package test suite
-        run: cd packages/runtime && pnpm run lint
-
-  ci-runtime:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'runtime' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-        suite: [main, api, cli, start, multiple-workers]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run runtime package test suite
-        run: cd packages/runtime && pnpm run test:${{ matrix.suite }}
-
-  ci-service:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'service' }}
+  metrics:
+    name: 'metrics - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'metrics' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite with code coverage
-        run: |
-          cd packages/service
-          pnpm run test
-
-  ci-foundation:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'utils' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run utils package test suite
-        run: cd packages/foundation && pnpm test
-
-  ci-client:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'client' }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -502,24 +1055,31 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: Run utils package test suite
-        run: cd packages/client && pnpm test
+      - name: Run test suite
+        run: cd packages/metrics && pnpm test
 
-  ci-client-cli:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'client' }}
-    runs-on: ${{ matrix.os }}
+  telemetry:
+    name: 'telemetry - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'telemetry' }}
+    runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
+      - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -527,24 +1087,296 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: Run client-cli package test suite
-        run: cd packages/client-cli && pnpm test
+      - name: Run test suite
+        run: cd packages/telemetry && pnpm test
 
-  ci-client-cli-e2e:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'client' }}
-    runs-on: ${{ matrix.os }}
+  generators:
+    name: 'generators - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'generators' }}
+    runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run generators package test suite
+        run: cd packages/generators && pnpm test
+
+  node:
+    name: 'node - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'node' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run node package test suite
+        run: cd packages/node && pnpm test
+
+  next:
+    name: 'next - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'next' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+    env:
+      VALKEY_HOST: localhost
+      VALKEY_PORT: 6379
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Start docker containers for testing
+        run: docker compose up -d valkey
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
+      - name: Run next package test suite
+        run: cd packages/next && pnpm test
+
+  vite:
+    name: 'vite - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'vite' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run vite package test suite
+        run: cd packages/vite && pnpm test
+
+  astro:
+    name: 'astro - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'astro' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run astro package test suite
+        run: cd packages/astro && pnpm test
+
+  remix:
+    name: 'remix - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'remix' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run remix package test suite
+        run: cd packages/remix && pnpm test
+
+  nest:
+    name: 'nest - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'nest' }}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+          - label: Win - 22.x
+            node: 22.18.0
+            os: windows-2025
+          - label: Win - 24.x
+            node: 24.5.0
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run next package test suite
+        run: cd packages/nest && pnpm test
+
+  client-cli-e2e:
+    name: 'client-cli-e2e - ${{ matrix.label }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'client' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - label: Linux - 22.x
+            node: 22.18.0
+            os: ubuntu-24.04
+          - label: Linux - 24.x
+            node: 24.5.0
+            os: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -558,375 +1390,3 @@ jobs:
         run: cd packages/client-cli && pnpm exec playwright install
       - name: Run client-cli package e2e test suite
         run: cd packages/client-cli && pnpm e2e:test
-
-  ci-metrics:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'metrics' }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - uses: 'nick-fields/retry@v3.0.2'
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite
-        run: cd packages/metrics && pnpm test
-
-  ci-telemetry:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'telemetry' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: ikalnytskyi/action-setup-postgres@v7
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - uses: 'nick-fields/retry@v3.0.2'
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite
-        run: cd packages/telemetry && pnpm test
-
-  ci-generators:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'generators' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run generators package test suite
-        run: cd packages/generators && pnpm test
-
-  ci-itc:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'itc' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run itc package test suite
-        run: cd packages/itc && pnpm test
-
-  ci-basic:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'basic' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run node package test suite
-        run: cd packages/basic && pnpm test
-
-  ci-node:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'node' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run node package test suite
-        run: cd packages/node && pnpm test
-
-  ci-next:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'next' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
-    env:
-      VALKEY_HOST: localhost
-      VALKEY_PORT: 6379
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Start docker containers for testing
-        run: docker compose up -d valkey
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-      - name: Run next package test suite
-        run: cd packages/next && pnpm test
-
-  ci-vite:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'vite' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run vite package test suite
-        run: cd packages/vite && pnpm test
-
-  ci-astro:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'astro' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run astro package test suite
-        run: cd packages/astro && pnpm test
-
-  ci-remix:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'remix' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run remix package test suite
-        run: cd packages/remix && pnpm test
-
-  ci-nest:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'nest' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run next package test suite
-        run: cd packages/nest && pnpm test
-
-  ci-wattpm:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'wattpm' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run wattpm package test suite
-        run: cd packages/wattpm && pnpm test
-
-  ci-globals:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'globals' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run globals package test suite
-        run: cd packages/globals && pnpm test
-
-  dependency-check:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        id: install
-        run: |
-          pnpm install --production --frozen-lockfile 2>&1 | tee out
-          echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
-          cat out >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Watt must load
-        run: cd packages/wattpm && node bin/cli.js
-      - name: Circular Dependency
-        if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
-        run: exit 1

@@ -39,7 +39,7 @@ async function waitForMessages (child, last) {
 test('restart in case of a crash with a delay in development', async () => {
   process.env.PORT = await getPort()
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start(config)
+  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   {
     const res = await request(url + '/crash', {
@@ -69,7 +69,7 @@ test('restart in case of a crash with a delay in development', async () => {
 test('restart in case of a crash without any delay in production', async () => {
   process.env.PORT = await getPort()
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start(config, '--production')
+  const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   {
     const res = await request(url + '/crash', {
@@ -106,7 +106,7 @@ test("do not restart in case of a crash in case it's so specified in development
     'do-not-restart-on-crash',
     'platformatic.runtime.json'
   )
-  const { child, url } = await start(config)
+  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   {
     const res = await request(url + '/crash', {
@@ -138,7 +138,7 @@ test('should restart in production even if restartOnError is false', async () =>
     'do-not-restart-on-crash',
     'platformatic.runtime.json'
   )
-  const { child, url } = await start(config, '--production')
+  const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   {
     const res = await request(url + '/crash', {

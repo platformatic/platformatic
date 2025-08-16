@@ -6,7 +6,7 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000",
+    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
     "coverage": "c8 -r html -r text node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
     "lint": "eslint"
   },
@@ -31,7 +31,7 @@
     "fast-json-patch": "^3.1.1",
     "json5": "^2.2.3",
     "leven": "~3.1.0",
-    "pino": "^9.4.0",
+    "pino": "^9.9.0",
     "pino-pretty": "^13.0.0",
     "semver": "^7.6.3",
     "undici": "7.11.0",
@@ -43,7 +43,7 @@
     "eslint": "9",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
-    "pino": "^9.5.0",
+    "pino": "^9.9.0",
     "pino-test": "^1.0.1",
     "typescript": "^5.5.4"
   },

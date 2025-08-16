@@ -2,7 +2,7 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogs, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const envs = {
@@ -17,13 +17,14 @@ const envs = {
 
 for (const env of Object.keys(envs)) {
   test(`logger options, ${env}`, async t => {
-    const { runtime } = await prepareRuntime(t, 'logger', envs[env].production, 'platformatic.json')
+    const { runtime, root } = await prepareRuntime(t, 'logger', envs[env].production, 'platformatic.json')
     const url = await startRuntime(t, runtime, null, envs[env].build)
 
     await request(url + '/next')
     await request(url + '/next')
+    await runtime.close()
 
-    const logs = await getLogs(runtime)
+    const logs = await getLogsFromFile(root)
 
     // logs from next app
     assert.ok(

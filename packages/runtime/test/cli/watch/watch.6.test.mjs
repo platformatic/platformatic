@@ -25,7 +25,7 @@ test('watches CommonJS files with watch on a single service', async t => {
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
 
-  const { child } = await start(join(appDst, 'platformatic.service.json'))
+  const { child } = await start(join(appDst, 'platformatic.service.json'), { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)

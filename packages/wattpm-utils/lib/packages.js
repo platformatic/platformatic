@@ -28,6 +28,7 @@ export const packages = [
   '@platformatic/sql-openapi',
   '@platformatic/telemetry',
   '@platformatic/vite',
+  'create-platformatic',
   'create-wattpm',
   'platformatic',
   'wattpm',

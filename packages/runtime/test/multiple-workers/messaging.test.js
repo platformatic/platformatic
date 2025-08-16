@@ -4,12 +4,10 @@ const { deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { kWorkersBroadcast } = require('../../lib/worker/symbols')
 const { prepareRuntime, waitForEvents } = require('./helper')
-const { updateFile, setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
+const { updateFile } = require('../helpers')
 
 function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = false) {
   const threads = {}
@@ -50,7 +48,7 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t)
 
   t.after(async () => {
@@ -109,7 +107,7 @@ test('should post updated workers list via broadcast channel', async t => {
 test('should post updated workers when something crashed', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
@@ -148,7 +146,7 @@ test('should post updated workers when something crashed', async t => {
 test('should post updated workers when the service is updated', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
@@ -182,7 +180,7 @@ test('should post updated workers when the service is updated', async t => {
 test('should get information from other workers via ITC using a round robin approach', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   const threads = {}
   const broadcast = new BroadcastChannel(kWorkersBroadcast)
@@ -250,7 +248,7 @@ test('should get information from other workers via ITC using a round robin appr
 test('should return an error if the target worker throws an error', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -274,7 +272,7 @@ test('should return an error if the target worker throws an error', async t => {
 test('should return an error if the target worker times out', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -304,7 +302,7 @@ test('should return an error if the target worker times out', async t => {
 test('should return an error if the target worker exits before returning a response', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -331,7 +329,7 @@ test('should return an error if the target worker exits before returning a respo
 test('should return an error if the target worker throws an error while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -364,7 +362,7 @@ test('should return an error if the target worker throws an error while saving t
 test('should return an error if the target worker times out while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -403,7 +401,7 @@ test('should return an error if the target worker times out while saving the cha
 test('should reuse channels when the worker are restarted', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.with-watch.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()

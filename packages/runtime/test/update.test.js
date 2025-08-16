@@ -1,17 +1,30 @@
 'use strict'
+
 const { test, after } = require('node:test')
 const assert = require('node:assert')
-const { join } = require('node:path')
+const { join, resolve } = require('node:path')
 const { moveToTmpdir } = require('./helpers')
-const { cp, readFile, writeFile, stat } = require('node:fs/promises')
+const { cp, readFile, writeFile, stat, symlink } = require('node:fs/promises')
 const { RuntimeGenerator } = require('../lib/generator')
 const { Generator: ServiceGenerator } = require('@platformatic/service/lib/generator')
+const { createDirectory } = require('@platformatic/foundation')
 const { DotEnvTool } = require('dotenv-tool')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 mockAgent.disableNetConnect()
+
+async function setupTemporaryDirectory (fixture) {
+  const dir = await moveToTmpdir(after)
+
+  await cp(fixture, dir, { recursive: true })
+  await createDirectory(resolve(dir, 'node_modules/@platformatic'))
+  await symlink(resolve(__dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
+  await symlink(resolve(__dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
+
+  return dir
+}
 
 function mockNpmJsRequestForPkgs (pkgs) {
   for (const pkg of pkgs) {
@@ -30,14 +43,10 @@ function mockNpmJsRequestForPkgs (pkgs) {
 }
 
 test('should remove a service', async t => {
-  const dir = await moveToTmpdir(after)
-
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 2)
   assert.equal(rg.services[0].name, 'foobar')
@@ -78,14 +87,11 @@ test('should remove a service', async t => {
 
 test('should add a new service with new env variables', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
   assert.equal(rg.services[0].name, 'rival')
@@ -156,14 +162,10 @@ test('should add a new service with new env variables', async t => {
 test("should update existing service's plugin options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2'])
 
-  const dir = await moveToTmpdir(after)
-
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
   // load previous service config file
@@ -240,14 +242,10 @@ test("should update existing service's plugin options", async t => {
 test("should add new service's plugin and options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport', '@fastify/oauth2'])
 
-  const dir = await moveToTmpdir(after)
-
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   // create a sample file that will be checked after
   const sampleRouteFilePath = join(dir, 'services', 'rival', 'routes', 'sample.js')
   const samplerouteFileContents = "console.log('hello world')"
@@ -362,14 +360,11 @@ test("should add new service's plugin and options", async t => {
 
 test('should remove a plugin from an existing service', async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport'])
-  const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
   // load previous service config file
@@ -423,14 +418,11 @@ test('should remove a plugin from an existing service', async t => {
 
 test('should remove a plugin from a service and add the same on the other', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
   assert.equal(rg.services[0].name, 'rival')
@@ -522,14 +514,11 @@ test('should remove a plugin from a service and add the same on the other', asyn
 
 test('should handle new fields on new service', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
   assert.equal(rg.services[0].name, 'rival')

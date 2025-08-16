@@ -16,7 +16,7 @@ async function waitForMessageAndWatch (child, expected, watchMessage = 'start wa
   let received = false
 
   for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
-    const msg = log.payload?.msg ?? log.msg
+    const msg = log.err?.message ?? log.payload?.msg ?? log.msg
     if (msg?.includes(expected)) {
       received = true
 
@@ -50,7 +50,7 @@ test('do not crash on syntax error', async t => {
   await writeFile(serviceConfigFilePath, JSON.stringify(original, null, 2))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
-  const { child } = await start(configFileDst)
+  const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   await waitForMessageAndWatch(child, 'RELOADED v0')
 

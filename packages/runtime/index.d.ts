@@ -66,8 +66,6 @@ export class Generator extends BaseGenerator.BaseGenerator {}
 
 export class WrappedGenerator extends BaseGenerator.BaseGenerator {}
 
-export declare function getRuntimeLogsDir (runtimeDir: string, runtimePID: number): string
-
 export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 
 export declare class Runtime {}

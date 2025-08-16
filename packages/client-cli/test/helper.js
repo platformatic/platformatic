@@ -27,7 +27,9 @@ async function moveToTmpdir (teardown) {
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => safeRemove(tmp))
+    teardown(async () => {
+      await safeRemove(tmp)
+    })
   }
   return dir
 }

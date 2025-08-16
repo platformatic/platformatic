@@ -304,6 +304,13 @@ export class BaseStackable extends EventEmitter {
       this.basePath = path
     })
 
+    // This is not really important for the URL but sometimes it also a sign
+    // that the process has been replaced and thus we need to update the client WebSocket
+    this.childManager.on('url', (url, clientWs) => {
+      this.url = url
+      this.clientWs = clientWs
+    })
+
     try {
       await this.childManager.inject()
       this.subprocess = await this.spawn(command)

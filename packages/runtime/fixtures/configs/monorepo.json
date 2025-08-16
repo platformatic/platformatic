@@ -22,8 +22,8 @@
     }
   },
   "gracefulShutdown": {
-    "runtime": 1000,
-    "service": 1000
+    "runtime": 2000,
+    "service": 2000
   },
   "restartOnError": 1000
 }

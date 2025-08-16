@@ -1,3 +1,4 @@
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -5,7 +6,6 @@ import { test } from 'node:test'
 import { schema } from '../lib/schema.js'
 
 test('schema output', async t => {
-  const { execa } = await import('execa')
   const { stdout } = await execa(process.execPath, [join(import.meta.dirname, '..', 'lib', 'schema.js')])
 
   assert.deepEqual(stdout, JSON.stringify(schema, null, 2))

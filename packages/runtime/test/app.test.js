@@ -7,9 +7,6 @@ const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/worker/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const { setLogFile } = require('./helpers')
-
-test.beforeEach(setLogFile)
 
 test('errors when starting an already started application', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
@@ -64,24 +61,18 @@ test('logs errors if an env variable is missing', async t => {
   }
   const app = new PlatformaticApp(config)
 
-  t.mock.method(process, 'exit', () => {
-    throw new Error('exited')
-  })
-
-  let data = ''
-  t.mock.method(process.stderr, 'write', chunk => {
-    data += chunk
+  let error = ''
+  t.mock.method(globalThis.platformatic.logger, 'error', obj => {
+    error = obj.err
   })
 
   await assert.rejects(async () => {
     await app.init()
     await app.start()
-  }, /exited/)
-  assert.strictEqual(process.exit.mock.calls.length, 1)
-  assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
+  }, /has/)
 
   assert.strictEqual(
-    data.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"),
+    error.message.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"),
     true
   )
 })
@@ -147,21 +138,15 @@ test('logs errors during startup', async t => {
   }
   const app = new PlatformaticApp(config)
 
-  t.mock.method(process, 'exit', () => {
-    throw new Error('exited')
-  })
-
   let data = ''
-  t.mock.method(process.stderr, 'write', chunk => {
+  t.mock.method(process.stdout, 'write', chunk => {
     data += chunk
   })
 
   await assert.rejects(async () => {
     await app.init()
     await app.start()
-  }, /exited/)
-  assert.strictEqual(process.exit.mock.calls.length, 1)
-  assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
+  }, /boom/)
 
   assert.strictEqual(data.includes('Error: boom'), true)
 })

@@ -5,15 +5,12 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
 
-const { create } = require('../../index.js')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should update shared context via runtime API', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
 
@@ -85,7 +82,7 @@ test('should update shared context via runtime API', async t => {
 
 test('should update shared context from one of the services', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
 

@@ -5,16 +5,13 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should stop service by service id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -57,7 +54,7 @@ test('should stop service by service id', async t => {
 test('should start stopped service by service id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -102,7 +99,7 @@ test('should start stopped service by service id', async t => {
 test('should proxy request to the service', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 

@@ -1,3 +1,4 @@
+import { execa } from 'execa'
 import { connect } from 'inspector-client'
 import assert from 'node:assert'
 import { on } from 'node:events'
@@ -8,7 +9,7 @@ import { start, startPath } from './helper.mjs'
 
 test('autostart', async () => {
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start(config)
+  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   const res = await request(url)
 
   assert.strictEqual(res.statusCode, 200)
@@ -17,9 +18,11 @@ test('autostart', async () => {
 })
 
 test('handles startup errors', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
-  const child = execa(process.execPath, [startPath, config], { encoding: 'utf8' })
+  const child = execa(process.execPath, [startPath, config], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
+  })
   let stdout = ''
   let found = false
 
@@ -48,10 +51,9 @@ test('handles startup errors', async t => {
 })
 
 test('does not start if node inspector flags are provided', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [startPath, config], {
-    env: { NODE_OPTIONS: '--inspect' },
+    env: { NODE_OPTIONS: '--inspect', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
   })
   let stderr = ''
@@ -82,10 +84,9 @@ test('does not start if node inspector flags are provided', async t => {
 })
 
 test('does start if node inspector flag is provided by VS Code', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [startPath, config], {
-    env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }' },
+    env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
   })
   let stdout = ''
@@ -115,10 +116,10 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 })
 
 test('starts the inspector', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [startPath, config, '--inspect'], {
-    encoding: 'utf8'
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
   })
   let stderr = ''
   let port = 0

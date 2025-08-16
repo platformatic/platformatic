@@ -1,15 +1,12 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { create } = require('../../index.js')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('should get meta for db services in runtime schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 

@@ -2,20 +2,21 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogs, prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should run the service with custom logger options on json', async t => {
-  const { runtime } = await prepareRuntime(t, 'logger-custom-options-json', false, null)
+  const { root, runtime } = await prepareRuntime(t, 'logger-custom-options-json', false, null)
 
   await runtime.init()
   await runtime.buildService('runtime')
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
+  await runtime.close()
 
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
 
   assert.ok(
     logs.find(log => {
@@ -32,15 +33,16 @@ test('should run the service with custom logger options on json', async t => {
 })
 
 test('should run the service with custom logger options on global this', async t => {
-  const { runtime } = await prepareRuntime(t, 'logger-custom-options-global-this', false, null)
+  const { root, runtime } = await prepareRuntime(t, 'logger-custom-options-global-this', false, null)
 
   await runtime.init()
   await runtime.buildService('runtime')
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
+  await runtime.close()
 
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
 
   // Check if it contains a log with the right message
   assert.ok(

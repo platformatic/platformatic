@@ -8,7 +8,7 @@ const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 const zlib = require('node:zlib')
-const { create } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const { transform } = require('../lib/config.js')
 
 const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
@@ -17,7 +17,7 @@ const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('should cache http requests', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -67,7 +67,7 @@ test('should cache http requests', async t => {
 
 test('should get response cached by another service', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -137,7 +137,7 @@ test('should use a custom cache storage', async t => {
   }
 
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile, null, {
+  const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.httpCache = {
@@ -183,7 +183,7 @@ test('should use a custom cache storage', async t => {
 
 test('should remove a url from an http cache', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -247,7 +247,7 @@ test('should remove a url from an http cache', async t => {
 
 test('should invalidate cache from another service', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -321,7 +321,7 @@ test('should invalidate cache from another service', async t => {
 
 test('should invalidate cache by cache tags', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile, null, {
+  const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.httpCache = {
@@ -413,7 +413,7 @@ test('should set an opentelemetry attribute', async t => {
   await rm(telemetryFilePath, { force: true }).catch(() => {})
 
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile, null, {
+  const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.telemetry = {
@@ -521,7 +521,7 @@ test('should set an opentelemetry attribute', async t => {
 
 test('should cache http requests gzipped', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())

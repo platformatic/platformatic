@@ -20,14 +20,8 @@ function getRuntimeTmpDir (runtimeDir) {
   return join(platformaticTmpDir, runtimeDirHash)
 }
 
-function getRuntimeLogsDir (runtimeDir, runtimePID) {
-  const runtimeTmpDir = getRuntimeTmpDir(runtimeDir)
-  return join(runtimeTmpDir, runtimePID.toString(), 'logs')
-}
-
 module.exports = {
   getArrayDifference,
-  getRuntimeLogsDir,
   getRuntimeTmpDir,
   getServiceUrl
 }

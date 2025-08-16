@@ -4,18 +4,16 @@ const assert = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
 const { parseInspectorOptions } = require('../lib/config')
-const { create, loadConfiguration, wrapInRuntimeConfig } = require('../index.js')
+const { loadConfiguration, wrapInRuntimeConfig } = require('../index.js')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { loadConfiguration: databaseLoadConfiguration } = require('@platformatic/db')
-const { setLogFile } = require('./helpers')
-
-test.beforeEach(setLogFile)
 
 test('throws if no entrypoint is found', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
 
   await assert.rejects(async () => {
-    await create(configFile)
+    await createRuntime(configFile)
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
@@ -23,13 +21,13 @@ test('throws if both web and services are provided', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-web-with-services.json')
 
   await assert.rejects(async () => {
-    await create(configFile)
+    await createRuntime(configFile)
   }, /The "services" property cannot be used when the "web" property is also defined/)
 })
 
 test('dependencies are not considered if services are specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -46,7 +44,7 @@ test('dependencies are not considered if services are specified manually', async
 
 test('dependencies are resolved if services are not specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   await runtime.init()
 
@@ -167,14 +165,14 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
   assert.strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'false'
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
   assert.strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
@@ -265,7 +263,7 @@ test('set type on services', async t => {
 
 test('supports configurable envfile location', async t => {
   const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -290,7 +288,7 @@ test('supports configurable envfile location', async t => {
 
 test('supports default envfile location', async t => {
   const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -315,7 +313,7 @@ test('supports default envfile location', async t => {
 
 test('supports configurable arguments', async t => {
   const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -350,7 +348,7 @@ test('supports configurable arguments', async t => {
 
 test('should manage service config patch', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const runtime = await create(configFile)
+  const runtime = await createRuntime(configFile)
 
   runtime.setServiceConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
   runtime.setServiceConfigPatch('serviceApp', [{ op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }])

@@ -1,17 +1,17 @@
 'use strict'
 
 const { readFile, writeFile } = require('node:fs/promises')
-const { join, resolve, dirname } = require('node:path')
+const { join, resolve } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { createDirectory, safeRemove } = require('@platformatic/foundation')
+const { transform, create } = require('../index.js')
 
+const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 let tempDirCounter = 0
+const tempPath = resolve(__dirname, '../../../tmp/')
 
-async function getTempDir (baseDir) {
-  if (baseDir === undefined) {
-    baseDir = __dirname
-  }
-  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
+async function getTempDir () {
+  const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
@@ -38,29 +38,20 @@ async function updateConfigFile (path, update) {
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')
 }
 
-async function setLogFile (t) {
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  const logFile = resolve(__dirname, `../../../tmp/log-${Date.now()}.txt`)
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = logFile
-
-  await createDirectory(dirname(logFile))
-
-  t.after(async () => {
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-    return safeRemove(logFile)
-  })
-}
-
-async function readLogs (delay) {
+async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
   if (typeof delay !== 'number') {
-    delay = process.env.CI ? 10000 : 5000
+    delay = LOGS_TIMEOUT
   }
 
   if (delay > 0) {
     await sleep(delay)
   }
 
-  const contents = await readFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, 'utf-8')
+  const contents = await readFile(path, 'utf-8')
+
+  if (raw) {
+    return contents
+  }
 
   return contents
     .split('\n')
@@ -74,10 +65,35 @@ async function readLogs (delay) {
     })
 }
 
+async function createRuntime (configOrRoot, sourceOrConfig, context) {
+  await createDirectory(tempPath)
+
+  const originalTransform = context?.transform ?? transform
+  context ??= {}
+  context.logsPath = resolve(tempPath, `log-${Date.now()}.txt`)
+
+  return create(configOrRoot, sourceOrConfig, {
+    ...context,
+    async transform (config, ...args) {
+      config = await originalTransform(config, ...args)
+
+      config.logger ??= {}
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: context.logsPath }
+      }
+
+      return config
+    }
+  })
+}
+
 module.exports = {
+  LOGS_TIMEOUT,
   moveToTmpdir,
   updateFile,
   updateConfigFile,
-  setLogFile,
-  readLogs
+  readLogs,
+  getTempDir,
+  createRuntime
 }

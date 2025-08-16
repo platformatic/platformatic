@@ -545,7 +545,8 @@ test('import - when launched without arguments from a service file, should not d
   deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json')), {
     dependencies: {
       '@platformatic/node': '^2.3.1'
-    }
+    },
+    type: 'module'
   })
 
   ok(!importProcess.stdout.includes('Detected stackable'))

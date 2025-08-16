@@ -18,7 +18,11 @@ export const cliPath = join(import.meta.dirname, '../../../wattpm/bin/cli.js')
 export const startPath = join(import.meta.dirname, './start.mjs')
 
 export async function start (...args) {
-  const child = execa(process.execPath, [startPath, ...args])
+  let execaOptions = {}
+  if (typeof args.at(-1) === 'object') {
+    execaOptions = args.pop()
+  }
+  const child = execa(process.execPath, [startPath, ...args], execaOptions)
   child.catch(() => {})
   child.stderr.pipe(process.stdout)
 

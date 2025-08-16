@@ -9,7 +9,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/foundation'
+import { ensureLoggableError, features } from '@platformatic/foundation'
 import { NodeStackable } from '@platformatic/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
@@ -245,7 +245,7 @@ export class ViteStackable extends BaseStackable {
         const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
         this.#basePath = buildInfo.basePath
       } catch (e) {
-        console.log(e)
+        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
       }
     }
 
@@ -310,7 +310,7 @@ export class ViteSSRStackable extends NodeStackable {
           const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
           this.#basePath = buildInfo.basePath
         } catch (e) {
-          console.log(e)
+          globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
         }
       }
     }

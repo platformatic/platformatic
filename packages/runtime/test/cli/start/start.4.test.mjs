@@ -1,3 +1,4 @@
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { join } from 'node:path'
@@ -5,9 +6,11 @@ import { test } from 'node:test'
 import { startPath } from '../helper.mjs'
 
 test('handles startup errors', async t => {
-  const { execa } = await import('execa')
   const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
-  const child = execa(process.execPath, [startPath, config], { encoding: 'utf8' })
+  const child = execa(process.execPath, [startPath, config], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
+  })
   let stdout = ''
   let found = false
 

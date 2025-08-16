@@ -4,15 +4,12 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { create } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setLogFile } = require('../helpers')
-
-test.beforeEach(setLogFile)
 
 test('composer', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -39,7 +36,7 @@ test('composer', async t => {
 
 test('composer-proxy', async t => {
   const configFile = join(fixturesDir, 'composer-proxy', 'platformatic.json')
-  const app = await create(configFile)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
