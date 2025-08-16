@@ -7,10 +7,8 @@ import { test } from 'node:test'
 import {
   createRuntime,
   getLogsFromFile,
-  LOGS_TIMEOUT,
   prepareRuntime,
   setFixturesDir,
-  sleep,
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
@@ -36,9 +34,8 @@ test('should inject Platformatic code by default when building', async t => {
 
   await runtime.init()
   await runtime.buildService('frontend')
+  await runtime.close()
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
   const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED true')
 })
@@ -63,9 +60,8 @@ test('should not inject Platformatic code when building if asked to', async t =>
 
   await runtime.init()
   await runtime.buildService('frontend')
+  await runtime.close()
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
   const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED false')
 })

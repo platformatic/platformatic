@@ -2,14 +2,7 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import {
-  LOGS_TIMEOUT,
-  getLogsFromFile,
-  prepareRuntime,
-  setFixturesDir,
-  sleep,
-  startRuntime
-} from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const envs = {
@@ -29,9 +22,8 @@ for (const env of Object.keys(envs)) {
 
     await request(url + '/next')
     await request(url + '/next')
+    await runtime.close()
 
-    // Wait for logs to be flushed
-    await sleep(LOGS_TIMEOUT)
     const logs = await getLogsFromFile(root)
 
     // logs from next app

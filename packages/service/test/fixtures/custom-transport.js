@@ -7,7 +7,7 @@ export default function (opts) {
   return build(function (source) {
     source.on('data', function (obj) {
       obj.fromTransport = true
-      appendFileSync(dest, JSON.stringify(obj) + '\n')
+      appendFileSync(dest, JSON.stringify(obj) + '\n', { flush: true })
     })
   })
 }

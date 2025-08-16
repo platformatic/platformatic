@@ -1,13 +1,12 @@
 import { ok } from 'node:assert/strict'
+import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createRuntime,
   isCIOnWindows,
-  LOGS_TIMEOUT,
   prepareRuntimeWithServices,
   setFixturesDir,
-  sleep,
   updateFile,
   verifyDevelopmentMode,
   verifyJSONViaHTTP,
@@ -199,7 +198,7 @@ const configurations = [
 verifyDevelopmentMode(configurations)
 
 test('NestJS watch mode is correctly tracked in development', async t => {
-  const { root, url } = await createRuntime(t, 'express-standalone')
+  const { root, url, runtime } = await createRuntime(t, 'express-standalone')
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
 
@@ -208,7 +207,7 @@ test('NestJS watch mode is correctly tracked in development', async t => {
     return contents.replace("production: process.env.NODE_ENV === 'production'", 'ok: true')
   })
 
-  await sleep(LOGS_TIMEOUT)
+  await once(runtime, 'service:worker:event:url')
 
   await verifyJSONViaHTTP(url, '/', 200, { ok: true })
 })

@@ -1,23 +1,19 @@
-import { loadConfiguration, safeRemove, saveConfigurationFile } from '@platformatic/foundation'
+import { loadConfiguration, saveConfigurationFile } from '@platformatic/foundation'
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { pino } from 'pino'
 import { parse } from 'semver'
 import {
   commonFixturesRoot,
   fixturesDir,
   getLogsFromFile,
   isCIOnWindows,
-  LOGS_TIMEOUT,
   prepareRuntime,
   setFixturesDir,
-  sleep,
-  startRuntime,
-  temporaryFolder
+  startRuntime
 } from '../../../basic/test/helper.js'
 import CacheHandler, { keyFor } from '../../lib/caching/valkey.js'
 
@@ -779,7 +775,7 @@ test('should not extend the TTL over the original intended one', { skip: isCIOnW
 })
 
 test('should handle read error', { skip: isCIOnWindows }, async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
@@ -797,8 +793,7 @@ test('should handle read error', { skip: isCIOnWindows }, async t => {
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
 
   ok(
@@ -812,7 +807,7 @@ test('should handle read error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle deserialization error', { skip: isCIOnWindows }, async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration)
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration)
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
 
@@ -834,8 +829,7 @@ test('should handle deserialization error', { skip: isCIOnWindows }, async t => 
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
 
   ok(
@@ -849,7 +843,7 @@ test('should handle deserialization error', { skip: isCIOnWindows }, async t => 
 })
 
 test('should handle refresh error', { skip: isCIOnWindows }, async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
       cache.maxTTL = 10
@@ -880,8 +874,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
     notDeepStrictEqual((await response.json()).time, 0)
   }
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
 
   ok(
@@ -895,7 +888,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle write error', { skip: isCIOnWindows }, async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
@@ -913,8 +906,7 @@ test('should handle write error', { skip: isCIOnWindows }, async t => {
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
 
   ok(
@@ -928,7 +920,7 @@ test('should handle write error', { skip: isCIOnWindows }, async t => {
 })
 
 test('should handle refresh error', { skip: isCIOnWindows }, async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
       cache.maxTTL = 20
@@ -956,8 +948,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
 
   await fetch(url + '/revalidate')
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
 
   ok(
@@ -971,7 +962,17 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
 })
 
 test('can be used without the runtime - per-method flag', { skip: isCIOnWindows }, async t => {
-  const logsPath = resolve(temporaryFolder, `logs-valkey-next-${Date.now()}.log`)
+  const logs = []
+  const logsPromise = Promise.withResolvers()
+  const logger = {
+    trace: (obj, msg) => {
+      logs.push({ msg, key: obj.key, value: obj.value })
+
+      if (msg === 'cache remove') {
+        logsPromise.resolve()
+      }
+    }
+  }
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -989,37 +990,19 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
     await monitor.disconnect()
     await valkey.disconnect()
     await monitorCollection.disconnect()
-    await safeRemove(logsPath)
   })
 
   const handler = new CacheHandler({
     store: valkey,
     prefix: valkeyPrefix,
-    logger: pino({
-      level: 'trace',
-      transport: {
-        target: 'pino/file',
-        options: { destination: logsPath }
-      }
-    })
+    logger
   })
 
   const key = `${valkeyPrefix}:key`
   await handler.set(key, 'value', { revalidate: 120, tags: ['first'] }, true)
   const cached = await handler.get(key, null, true)
   await handler.remove(key, true)
-
-  // Wait for logs to be written
-  await sleep(LOGS_TIMEOUT)
-
-  const logs = (await readFile(logsPath, 'utf-8'))
-    .trim()
-    .split('\n')
-    .map(l => {
-      const parsed = JSON.parse(l)
-
-      return { msg: parsed.msg, key: parsed.key, value: parsed.value }
-    })
+  await logsPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
     ['set', key, null, 'EX', '120'],
@@ -1050,7 +1033,17 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
 })
 
 test('can be used without the runtime - standalone mode', { skip: isCIOnWindows }, async t => {
-  const logsPath = resolve(temporaryFolder, `logs-valkey-next-${Date.now()}.log`)
+  const logs = []
+  const logsPromise = Promise.withResolvers()
+  const logger = {
+    trace: (obj, msg) => {
+      logs.push({ msg, key: obj.key, value: obj.value })
+
+      if (msg === 'cache remove') {
+        logsPromise.resolve()
+      }
+    }
+  }
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -1068,38 +1061,14 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
     await monitor.disconnect()
     await valkey.disconnect()
     await monitorCollection.disconnect()
-    await safeRemove(logsPath)
   })
 
-  const handler = new CacheHandler({
-    standalone: true,
-    store: valkey,
-    prefix: valkeyPrefix,
-    logger: pino({
-      level: 'trace',
-      transport: {
-        target: 'pino/file',
-        options: { destination: logsPath }
-      }
-    })
-  })
-
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
   const key = `${valkeyPrefix}:key`
   await handler.set(key, 'value', { revalidate: 120, tags: ['first'] })
   const cached = await handler.get(key)
   await handler.remove(key)
-
-  // Wait for logs to be written
-  await sleep(LOGS_TIMEOUT)
-
-  const logs = (await readFile(logsPath, 'utf-8'))
-    .trim()
-    .split('\n')
-    .map(l => {
-      const parsed = JSON.parse(l)
-
-      return { msg: parsed.msg, key: parsed.key, value: parsed.value }
-    })
+  await logsPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
     ['set', key, null, 'EX', '120'],

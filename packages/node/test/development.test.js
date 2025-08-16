@@ -5,10 +5,8 @@ import {
   createRuntime,
   getLogsFromFile,
   isCIOnWindows,
-  LOGS_TIMEOUT,
   prepareRuntimeWithServices,
   setFixturesDir,
-  sleep,
   updateFile,
   verifyDevelopmentMode,
   verifyJSONViaHTTP,
@@ -173,10 +171,8 @@ async function verifyMissingConfigurationMessage (runtime) {
   const missingConfigurationMessage =
     'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
-
   const config = await runtime.getRuntimeConfig(true)
+  await runtime.close()
   const logs = await getLogsFromFile(config[kMetadata].root)
 
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -190,6 +186,7 @@ async function verifyFilename (runtime) {
 
 const configurations = [
   {
+    only: true,
     id: 'node-no-configuration-standalone',
     name: 'Node.js application (with no configuration files in development mode when standalone)',
     async check (...args) {

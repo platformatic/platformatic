@@ -7,10 +7,8 @@ import {
   commonFixturesRoot,
   ensureDependencies,
   getLogsFromFile,
-  LOGS_TIMEOUT,
   prepareRuntime,
   setFixturesDir,
-  sleep,
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
@@ -42,8 +40,7 @@ test('can properly show the logs the output', async t => {
   }
 
   {
-    // wait for logger flush
-    await sleep(LOGS_TIMEOUT)
+    await runtime.close()
     const logs = await getLogsFromFile(root)
 
     // Each log has either the worker number, comes from the main thread or

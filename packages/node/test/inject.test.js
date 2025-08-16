@@ -4,10 +4,8 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   getLogsFromFile,
-  LOGS_TIMEOUT,
   prepareRuntimeWithServices,
   setFixturesDir,
-  sleep,
   updateFile,
   verifyJSONViaHTTP
 } from '../../basic/test/helper.js'
@@ -50,8 +48,7 @@ test('should inject request via IPC even if a server is started', async t => {
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: false })
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
+  await runtime.close()
   const logs = await getLogsFromFile(root)
   ok(logs.map(m => m.msg).includes('injecting via light-my-request'))
 })
@@ -98,15 +95,14 @@ test('should inject request via the HTTP port if asked to', async t => {
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: true })
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
-  const logs = await getLogsFromFile(root)
-  ok(!logs.map(m => m.msg).includes('injecting via light-my-request'))
-
   // To double verify it, close the HTTP server and verify we get a connection refused
   await runtime.sendCommandToService('frontend', 'closeServer')
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 500, content => {
     ok(content.message.includes('ECONNREFUSED'))
   })
+
+  await runtime.close()
+  const logs = await getLogsFromFile(root)
+  ok(!logs.map(m => m.msg).includes('injecting via light-my-request'))
 })

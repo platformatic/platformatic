@@ -25,7 +25,7 @@ let hmrTriggerFileRelative
 let additionalDependencies
 let temporaryDirectoryCount = 0
 
-export const LOGS_TIMEOUT = 1000
+export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
@@ -297,9 +297,12 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
       }
 
       config.logger ??= {}
-      config.logger.transport ??= {
-        target: 'pino/file',
-        options: { destination: resolve(root, 'logs.txt') }
+
+      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
+        config.logger.transport ??= {
+          target: 'pino/file',
+          options: { destination: resolve(root, 'logs.txt') }
+        }
       }
 
       return config

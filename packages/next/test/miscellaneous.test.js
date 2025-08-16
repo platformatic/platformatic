@@ -2,15 +2,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import {
-  getLogsFromFile,
-  LOGS_TIMEOUT,
-  prepareRuntime,
-  setFixturesDir,
-  sleep,
-  startRuntime,
-  updateFile
-} from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -38,8 +30,7 @@ test('can properly show the headers in the output', async t => {
   }
 
   {
-    // wait for logger flush
-    await sleep(LOGS_TIMEOUT)
+    await runtime.close()
     const logs = await getLogsFromFile(root)
     ok(logs.some(l => l.msg.includes('x-test')))
   }

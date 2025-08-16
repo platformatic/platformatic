@@ -2,7 +2,7 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogsFromFile, LOGS_TIMEOUT, prepareRuntime, setFixturesDir, sleep } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -14,9 +14,8 @@ test('should run the service with custom logger options on json', async t => {
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
+  await runtime.close()
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
   const logs = await getLogsFromFile(root)
 
   assert.ok(
@@ -41,9 +40,8 @@ test('should run the service with custom logger options on global this', async t
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
+  await runtime.close()
 
-  // Wait for logs to be flushed
-  await sleep(LOGS_TIMEOUT)
   const logs = await getLogsFromFile(root)
 
   // Check if it contains a log with the right message
