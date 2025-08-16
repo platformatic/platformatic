@@ -981,8 +981,13 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
   const monitor = await monitorCollection.monitor()
   const valkeyCalls = []
 
+  const monitorPromise = Promise.withResolvers()
   monitor.on('monitor', (_, args) => {
     valkeyCalls.push(args)
+
+    if (args[0] === 'srem') {
+      monitorPromise.resolve()
+    }
   })
 
   t.after(async () => {
@@ -1003,6 +1008,7 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
   const cached = await handler.get(key, null, true)
   await handler.remove(key, true)
   await logsPromise.promise
+  await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
     ['set', key, null, 'EX', '120'],
@@ -1052,8 +1058,13 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   const monitor = await monitorCollection.monitor()
   const valkeyCalls = []
 
+  const monitorPromise = Promise.withResolvers()
   monitor.on('monitor', (_, args) => {
     valkeyCalls.push(args)
+
+    if (args[0] === 'srem') {
+      monitorPromise.resolve()
+    }
   })
 
   t.after(async () => {
@@ -1069,6 +1080,7 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   const cached = await handler.get(key)
   await handler.remove(key)
   await logsPromise.promise
+  await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
     ['set', key, null, 'EX', '120'],

@@ -38,8 +38,8 @@ npm package name, Platformatic version, running time, URL, and working directory
 
 ```
 PID    NAME        Version Uptime  URL                  Directory
-38898  my-app-foo  1.23.0  1m 52s  http://0.0.0.0:3042  /Users/test-user/foo
-38899  my-app-bar  1.23.0  4m 53s  http://0.0.0.0:3043  /Users/test-user/bar
+38898  my-app-foo  3.0.0   1m 52s  http://0.0.0.0:3042  /Users/test-user/foo
+38899  my-app-bar  3.0.0   4m 53s  http://0.0.0.0:3043  /Users/test-user/bar
 ```
 
 ### Stopping a running application
