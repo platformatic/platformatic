@@ -41,7 +41,7 @@ Watt provides a comprehensive set of capabilities:
 - **Database APIs** - Auto-generated REST and GraphQL endpoints from SQL databases (Platformatic DB)
 - **HTTP Services** - Custom application logic and APIs built on Fastify
 - **API Gateways** - Aggregate multiple services into unified endpoints
-- **Framework Integration** - Next.js, Astro, Remix, Vite applications
+- **Framework Integration** - Next.js, Astro, Remix, Vite, NestJS applications
 - **Microservice Orchestration** - Multi-service applications as single deployments
 - **Built-in Authorization** - Role-based access control and JWT authentication
 - **Real-time Features** - WebSocket and GraphQL subscriptions

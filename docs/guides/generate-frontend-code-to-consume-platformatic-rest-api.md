@@ -40,7 +40,7 @@ Your Platformatic app should be at the `http://127.0.0.1:3042/` URL.
 Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) documentation to create a new front-end application, and call it "rest-api-frontend".
 
 :::info
-Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js and Vite frameworks.
+Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js, Vite, and NestJS frameworks.
 :::
 
 In the `web` directory of your application, run the command:

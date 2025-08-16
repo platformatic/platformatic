@@ -48,7 +48,7 @@ Your application will be running at `http://localhost:3042` with auto-generated 
 
 - **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box  
 - **🧱 Composable Architecture** - HTTP services, API composers, frontend frameworks, and data services
-- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, and plain Node.js
+- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js
 - **📦 Production Ready** - Docker deployment, environment configuration, and scaling built-in
 - **🚀 TypeScript First** - Full type safety with auto-generated types and SDK
 
@@ -81,7 +81,7 @@ Custom application logic built on Fastify with automatic API documentation, vali
 Combine multiple services into unified APIs with request/response transformation and intelligent caching.
 
 ### Frontend Integration
-Deploy Next.js, Astro, Remix, or Vite applications alongside your APIs with optimized builds and routing.
+Deploy Next.js, Astro, Remix, Vite, or NestJS applications alongside your APIs with optimized builds and routing.
 
 ### Client SDK
 Auto-generated TypeScript/JavaScript clients for your APIs with full type safety and IDE integration.

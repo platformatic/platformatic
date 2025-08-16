@@ -49,7 +49,7 @@ npm start                  # Everything runs together
 - Built-in migrations, authorization, and real-time subscriptions
 
 **🎨 Framework Integration**
-- Native support for Next.js, Astro, Remix, Vite applications
+- Native support for Next.js, Astro, Remix, Vite, NestJS applications
 - Integrates any existing Express, Fastify, or Node.js application
 - Unified routing and middleware across all services
 
@@ -326,6 +326,7 @@ Watt is the **application server** that orchestrates different types of services
 - **Astro** (`@platformatic/astro`) - Multi-framework static sites
 - **Remix** (`@platformatic/remix`) - Full-stack React framework
 - **Vite** (`@platformatic/vite`) - Modern build tool integration
+- **NestJS** (`@platformatic/nestjs`) - Progressive Node.js framework for scalable server-side applications
 - **Node.js** (`@platformatic/node`) - Generic Node.js application wrapper
 
 ### Advanced Use Cases

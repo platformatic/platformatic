@@ -187,7 +187,7 @@ Watt's "Stackables" provide first-class support for popular Node.js frameworks:
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────┘ │
 │                                                             │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────┐ │
-│  │   Express   │ │   Fastify   │ │    Node     │ │  Nest   │ │
+│  │   Express   │ │   Fastify   │ │    Node     │ │ NestJS  │ │
 │  │ Stackable   │ │ Stackable   │ │ Stackable   │ │Stackable│ │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────┘ │
 │                                                             │
