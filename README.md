@@ -66,10 +66,6 @@ Get running in 5 minutes, then dive into advanced patterns and integrations.
 **Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/frameworks)  
 Add Watt to your existing Express, Fastify, or Next.js applications.
 
-### 📚 Exploring Options?
-**Compare:** [Watt vs Alternatives](https://docs.platformatic.dev/docs/overview) → [Examples Gallery](https://docs.platformatic.dev/docs/learn/overview)  
-See how Watt compares to Express, Fastify, and other Node.js platforms.
-
 ---
 
 ## Core Capabilities

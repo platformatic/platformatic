@@ -51,6 +51,7 @@ const sidebars = {
           label: 'Application Development',
           collapsed: true,
           items: [
+            'guides/frameworks',
             'guides/build-modular-monolith',
             'guides/cache-with-platformatic-watt',
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',

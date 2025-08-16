@@ -381,10 +381,10 @@ Now that you understand Watt's unified approach, you can expand your application
 
 ### Related Tutorials
 
-- [Connect to PostgreSQL/MySQL](../../guides/databases/postgresql-setup.md) - Switch to your enterprise database
-- [Add Authentication to Your API](../intermediate/authentication.md)
-- [Build a Full-Stack App with Next.js](../examples/nextjs-integration.md)
-- [Deploy Your API to Production](../advanced/production-deployment.md)
+<!-- - [Connect to PostgreSQL/MySQL](../../guides/databases/postgresql-setup.md) - Switch to your enterprise database -->
+<!-- - [Add Authentication to Your API](../intermediate/authentication.md) -->
+<!-- - [Build a Full-Stack App with Next.js](../examples/nextjs-integration.md) -->
+<!-- - [Deploy Your API to Production](../advanced/production-deployment.md) -->
 
 ### Get Help
 

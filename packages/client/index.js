@@ -87,7 +87,8 @@ async function buildOpenAPIClient (options, openTelemetry) {
     options.getHeaders = undefined
   }
 
-  const { validateResponse, queryParser, dispatcher } = options
+  const { validateResponse, queryParser } = options
+
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
     throw new errors.OptionsUrlRequiredError()
@@ -105,7 +106,15 @@ async function buildOpenAPIClient (options, openTelemetry) {
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
 
-  let { fullRequest = true, fullResponse = true, throwOnError, bodyTimeout, headersTimeout } = options
+  let { fullRequest = true, fullResponse = true, bodyTimeout, headersTimeout, dispatcher } = options
+
+  if (options.throwOnError) {
+    if (!dispatcher) {
+      dispatcher = getGlobalDispatcher()
+    }
+    dispatcher = dispatcher.compose(interceptors.responseError())
+  }
+
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -138,7 +147,6 @@ async function buildOpenAPIClient (options, openTelemetry) {
         path,
         method,
         methodMeta,
-        throwOnError,
         openTelemetry,
         fullRequest,
         fullResponse,
@@ -176,7 +184,6 @@ async function buildCallFunction (
   path,
   method,
   methodMeta,
-  throwOnError,
   openTelemetry,
   fullRequest,
   fullResponse,
@@ -271,13 +278,6 @@ async function buildCallFunction (
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
-    }
-
-    if (throwOnError) {
-      if (!dispatcher) {
-        dispatcher = getGlobalDispatcher()
-      }
-      dispatcher = dispatcher.compose(interceptors.responseError())
     }
 
     let res
