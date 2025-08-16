@@ -4,6 +4,7 @@ const { once } = require('node:events')
 const { parentPort, workerData } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
+const { ensureLoggableError } = require('@platformatic/foundation')
 const { Unpromise } = require('@watchable/unpromise')
 
 const errors = require('../errors')
@@ -56,6 +57,12 @@ async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
+async function closeITC (dispatcher, itc, messaging) {
+  await dispatcher.interceptor.close()
+  itc.close()
+  messaging.close()
+}
+
 function setupITC (app, service, dispatcher, sharedContext) {
   const messaging = new MessagingITC(app.appConfig.id, workerData.config)
 
@@ -79,7 +86,14 @@ function setupITC (app, service, dispatcher, sharedContext) {
           // This gives a chance to a stackable to perform custom logic
           globalThis.platformatic.events.emit('start')
 
-          await app.start()
+          try {
+            await app.start()
+          } catch (e) {
+            await app.stop(true)
+            await closeITC(dispatcher, itc, messaging)
+
+            throw ensureLoggableError(e)
+          }
         }
 
         if (service.entrypoint) {
@@ -104,9 +118,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
           await app.stop()
         }
 
-        await dispatcher.interceptor.close()
-        itc.close()
-        messaging.close()
+        await closeITC(dispatcher, itc, messaging)
       },
 
       async build () {

@@ -4,15 +4,12 @@ const assert = require('node:assert')
 const { request } = require('undici')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { buildRuntime } = require('../lib/start')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('propagate the traceId correctly to runtime services', async (t) => {
+test('propagate the traceId correctly to runtime services', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -27,8 +24,8 @@ test('propagate the traceId correctly to runtime services', async (t) => {
     method: 'GET',
     path: '/',
     headers: {
-      traceparent,
-    },
+      traceparent
+    }
   })
 
   assert.strictEqual(res.statusCode, 200)
@@ -36,10 +33,9 @@ test('propagate the traceId correctly to runtime services', async (t) => {
   assert.strictEqual(response.traceId, traceId)
 })
 
-test('attach x-plt-telemetry-id header', async (t) => {
+test('attach x-plt-telemetry-id header', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -49,7 +45,7 @@ test('attach x-plt-telemetry-id header', async (t) => {
 
   const res = await request(entryUrl, {
     method: 'GET',
-    path: '/service-1/echo-headers',
+    path: '/service-1/echo-headers'
   })
 
   assert.strictEqual(res.statusCode, 200)
@@ -60,10 +56,9 @@ test('attach x-plt-telemetry-id header', async (t) => {
   assert.strictEqual(telemetryIdHeader, 'test-runtime-echo')
 })
 
-test('disabled telemetry', async (t) => {
+test('disabled telemetry', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -78,8 +73,8 @@ test('disabled telemetry', async (t) => {
     method: 'GET',
     path: '/',
     headers: {
-      traceparent,
-    },
+      traceparent
+    }
   })
 
   assert.strictEqual(res.statusCode, 200)

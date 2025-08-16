@@ -6,7 +6,7 @@ const { request } = require('undici')
 const { setTimeout } = require('timers/promises')
 const PLT_ROOT = 'PLT_ROOT'
 const { EOL } = require('node:os')
-const { createDirectory } = require('@platformatic/utils')
+const { createDirectory } = require('@platformatic/foundation')
 
 /**
  * Strip all extra characters from a simple semver version string

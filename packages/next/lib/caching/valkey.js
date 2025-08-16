@@ -1,4 +1,4 @@
-import { buildPinoFormatters, buildPinoTimestamp, ensureLoggableError } from '@platformatic/utils'
+import { buildPinoFormatters, buildPinoTimestamp, ensureLoggableError } from '@platformatic/foundation'
 import { Redis } from 'iovalkey'
 import { pack, unpack } from 'msgpackr'
 import { existsSync, readFileSync } from 'node:fs'

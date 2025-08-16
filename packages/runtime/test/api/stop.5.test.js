@@ -6,14 +6,12 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 test('should stop accepting new request immediately under high load', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-log.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   t.after(() => {
     app.close()

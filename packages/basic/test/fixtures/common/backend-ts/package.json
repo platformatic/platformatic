@@ -1,9 +1,7 @@
 {
   "name": "service",
   "scripts": {
-    "start": "platformatic start",
-    "clean": "rm -fr ./dist",
-    "build": "platformatic compile"
+    "start": "platformatic start"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

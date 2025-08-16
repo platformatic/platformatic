@@ -19,11 +19,9 @@ const sidebars = {
       type: 'category',
       label: 'Overview',
       collapsed: false,
-      items: [
-        'Overview'
-      ]
+      items: ['Overview']
     },
-    
+
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
     {
       type: 'category',
@@ -37,11 +35,8 @@ const sidebars = {
           type: 'category',
           label: 'Tutorials',
           collapsed: true,
-          items: [
-            'learn/beginner/crud-application',
-            'learn/beginner/environment-variables'
-          ]
-        },
+          items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
+        }
       ]
     },
 
@@ -100,20 +95,13 @@ const sidebars = {
           type: 'category',
           label: 'Watt (Node.js Application Server)',
           collapsed: true,
-          items: [
-            'reference/watt/overview',
-            'reference/watt/configuration',
-            'reference/watt/cli-commands'
-          ]
+          items: ['reference/wattpm/overview', 'reference/wattpm/configuration', 'reference/wattpm/cli-commands']
         },
         {
           type: 'category',
           label: 'Legacy CLI Tools',
           collapsed: true,
-          items: [
-            'reference/platformatic/cli',
-            'file-formats'
-          ]
+          items: ['reference/platformatic/cli', 'file-formats']
         },
         {
           type: 'category',
@@ -147,11 +135,7 @@ const sidebars = {
               type: 'category',
               label: 'Client SDK',
               collapsed: true,
-              items: [
-                'reference/client/overview',
-                'reference/client/programmatic',
-                'reference/client/frontend'
-              ]
+              items: ['reference/client/overview', 'reference/client/programmatic', 'reference/client/frontend']
             },
             {
               type: 'category',
@@ -200,57 +184,37 @@ const sidebars = {
               type: 'category',
               label: 'Node.js',
               collapsed: true,
-              items: [
-                'reference/node/overview',
-                'reference/node/configuration'
-              ]
+              items: ['reference/node/overview', 'reference/node/configuration']
             },
             {
               type: 'category',
               label: 'Next.js',
               collapsed: true,
-              items: [
-                'reference/next/overview', 
-                'reference/next/configuration'
-              ]
+              items: ['reference/next/overview', 'reference/next/configuration']
             },
             {
               type: 'category',
               label: 'Nest.js',
               collapsed: true,
-              items: [
-                'reference/nest/overview',
-                'reference/nest/configuration'
-              ]
+              items: ['reference/nest/overview', 'reference/nest/configuration']
             },
             {
               type: 'category',
               label: 'Astro',
               collapsed: true,
-              items: [
-                'reference/astro/overview',
-                'reference/astro/configuration',
-                'reference/astro/caching'
-              ]
+              items: ['reference/astro/overview', 'reference/astro/configuration', 'reference/astro/caching']
             },
             {
               type: 'category',
               label: 'Remix',
               collapsed: true,
-              items: [
-                'reference/remix/overview', 
-                'reference/remix/configuration',
-                'reference/remix/caching'
-              ]
+              items: ['reference/remix/overview', 'reference/remix/configuration', 'reference/remix/caching']
             },
             {
               type: 'category',
               label: 'Vite',
               collapsed: true,
-              items: [
-                'reference/vite/overview', 
-                'reference/vite/configuration'
-              ]
+              items: ['reference/vite/overview', 'reference/vite/configuration']
             }
           ]
         },
@@ -315,10 +279,7 @@ const sidebars = {
               type: 'category',
               label: 'SQL Events',
               collapsed: true,
-              items: [
-                'reference/sql-events/overview',
-                'reference/sql-events/fastify-plugin'
-              ]
+              items: ['reference/sql-events/overview', 'reference/sql-events/fastify-plugin']
             }
           ]
         },
@@ -332,10 +293,7 @@ const sidebars = {
       type: 'category',
       label: 'Contributing',
       collapsed: true,
-      items: [
-        'contributing/contributing',
-        'contributing/documentation-style-guide'
-      ]
+      items: ['contributing/contributing', 'contributing/documentation-style-guide']
     }
   ]
 }

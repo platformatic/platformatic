@@ -2,37 +2,15 @@
 
 const { ok, strictEqual, deepStrictEqual } = require('node:assert')
 const { join } = require('node:path')
-const { hostname: getHostname, tmpdir } = require('node:os')
+const { hostname: getHostname } = require('node:os')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { Client } = require('undici')
-
-const { loadConfig } = require('@platformatic/config')
-const { safeRemove } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
+const { createRuntime, readLogs } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-function hideLogs (t) {
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-
-  if (!originalEnv) {
-    return
-  }
-
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = join(tmpdir(), `test-runtime-${process.pid}-${Date.now()}-stdout.log`)
-
-  t.after(async () => {
-    await safeRemove(process.env.PLT_RUNTIME_LOGGER_STDOUT)
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-  })
-}
-
 test('logs stdio from the service thread', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   const url = await app.start()
   const pid = process.pid
@@ -50,51 +28,26 @@ test('logs stdio from the service thread', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const messages = (await body.text())
+    const text = await readLogs(context.logsPath, 3000, true)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
         const { level, pid, hostname, name, msg, payload, stdout } = JSON.parse(l)
         return { level, pid, hostname, name, msg, payload, stdout }
       })
+      .filter(m => m.msg !== 'Runtime event')
 
-    deepStrictEqual(messages, [
+    const serviceMessages = messages.filter(m => m.name === 'stdio')
+    const runtimeMessages = messages.filter(m => m.name === undefined)
+
+    deepStrictEqual(serviceMessages, [
       {
         level: 20,
         pid,
         hostname,
         name: 'stdio',
         msg: 'Loading envfile...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: 'Starting the service "stdio"...',
         payload: undefined,
         stdout: undefined
       },
@@ -138,24 +91,6 @@ test('logs stdio from the service thread', async t => {
         level: 30,
         pid,
         hostname,
-        name: undefined,
-        msg: 'Started the service "stdio"...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: `Platformatic is now listening at ${url}`,
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
         name: 'stdio',
         msg: 'incoming request',
         payload: undefined,
@@ -186,7 +121,7 @@ test('logs stdio from the service thread', async t => {
         name: 'stdio',
         msg: undefined,
         payload: undefined,
-        stdout: { ts: '123', foo: 'bar' },
+        stdout: { ts: '123', foo: 'bar' }
       },
       {
         level: 30,
@@ -207,6 +142,45 @@ test('logs stdio from the service thread', async t => {
         stdout: undefined
       },
       {
+        level: 30,
+        pid,
+        hostname,
+        name: 'stdio',
+        msg: 'request completed',
+        payload: undefined,
+        stdout: undefined
+      }
+    ])
+
+    deepStrictEqual(runtimeMessages, [
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: 'Starting the service "stdio"...',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: 'Started the service "stdio"...',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: `Platformatic is now listening at ${url}`,
+        payload: undefined,
+        stdout: undefined
+      },
+      {
         level: 10,
         pid,
         hostname,
@@ -223,26 +197,15 @@ test('logs stdio from the service thread', async t => {
         msg: 'This is a fatal with object',
         payload: { ts: '123', foo: 'bar' },
         stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'request completed',
-        payload: undefined,
-        stdout: undefined
       }
     ])
   }
 })
 
 test('logs with caller info', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await app.close()
@@ -256,28 +219,8 @@ test('logs with caller info', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const messages = (await body.text())
+    const text = await readLogs(context.logsPath, 3000, true)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
@@ -305,11 +248,9 @@ test('logs with caller info', async t => {
 })
 
 test('isoTime support', async t => {
-  hideLogs(t)
-
   const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const context = {}
+  const app = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await app.close()
@@ -323,28 +264,8 @@ test('isoTime support', async t => {
   }
 
   {
-    const client = new Client(
-      {
-        hostname: 'localhost',
-        protocol: 'http:'
-      },
-      {
-        socketPath: app.getManagementApiUrl(),
-        keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10
-      }
-    )
-
-    await sleep(3000)
-
-    const { statusCode, body } = await client.request({
-      method: 'GET',
-      path: '/api/v1/logs/all'
-    })
-
-    strictEqual(statusCode, 200)
-
-    const messages = (await body.text())
+    const text = await readLogs(context.logsPath, 3000, true)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
@@ -352,9 +273,7 @@ test('isoTime support', async t => {
         return { level, pid, hostname, name, msg, payload, stdout }
       })
 
-    const expected = [
-      { level: 30, name: 'hello', msg: 'Request received' }
-    ]
+    const expected = [{ level: 30, name: 'hello', msg: 'Request received' }]
 
     for (const e of expected) {
       ok(

@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('assert/strict')
-const { test } = require('node:test')
-const { serviceToSubgraphConfig } = require('../../lib/graphql-fetch')
+import assert from 'assert/strict'
+import { test } from 'node:test'
+import { serviceToSubgraphConfig } from '../../lib/graphql-fetch.js'
 
 test('serviceToSubgraphConfig unit test', t => {
   const cases = [
@@ -13,8 +11,8 @@ test('serviceToSubgraphConfig unit test', t => {
         origin: 'http://origin',
         graphql: {
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql',
-        },
+          graphqlEndpoint: '/graphql'
+        }
       },
       expected: {
         name: 'http://origin',
@@ -22,10 +20,10 @@ test('serviceToSubgraphConfig unit test', t => {
         server: {
           host: 'http://origin',
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql',
-        },
-      },
-    },
+          graphqlEndpoint: '/graphql'
+        }
+      }
+    }
   ]
 
   for (const c of cases) {

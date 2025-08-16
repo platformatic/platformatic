@@ -2,5 +2,6 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.69.0.json",
   "logger": {
     "level": "error"
-  }
+  },
+  "watch": true
 }

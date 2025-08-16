@@ -1,8 +1,7 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import pinoPretty from 'pino-pretty'
 import split2 from 'split2'
-import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
 export async function logsCommand (logger, args) {
   const { values, positionals: allPositionals } = parseArgs(

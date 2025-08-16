@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticStackable {
+export interface PlatformaticBasicConfig {
   $schema?: string;
   runtime?: {
     preload?: string | string[];

@@ -3,22 +3,13 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { Runtime } = require('../lib/runtime')
-const { getRuntimeLogsDir } = require('../lib/utils')
-const { Client } = require('undici')
+const { createRuntime, readLogs } = require('./helpers.js')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('parses composer and client dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -47,11 +38,7 @@ test('parses composer and client dependencies', async t => {
 
 test('correct throws on missing dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -65,11 +52,7 @@ test('correct throws on missing dependencies', async t => {
 
 test('correct throws on missing dependencies, showing all services', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies2.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -77,17 +60,15 @@ test('correct throws on missing dependencies, showing all services', async t => 
 
   await assert.rejects(() => runtime.init(), {
     name: 'FastifyError',
-    message: "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
+    message:
+      "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
   })
 })
 
 test('correct warns on reversed dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-reversed-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const context = {}
+  const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await runtime.close()
@@ -95,27 +76,8 @@ test('correct warns on reversed dependencies', async t => {
 
   await runtime.init()
 
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: runtime.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
+  const logs = await readLogs(context.logsPath, 5000, true)
 
-  await sleep(5000)
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/v1/logs/all'
-  })
-  assert.strictEqual(statusCode, 200)
-
-  const logs = await body.text()
   assert.ok(
     logs.includes(
       'Service \\"main\\" depends on service \\"service-1\\", but it is defined and it will be started before it. Please check your configuration file.'

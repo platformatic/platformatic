@@ -33,7 +33,7 @@ We're going to start by creating our Library app. This will be a Platformatic Ru
 First, let's run the Watt creator wizard in our terminal:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -133,7 +133,7 @@ cd web/people-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm people-service:migrations:apply
 ```
 
 ### Populate the People database
@@ -163,16 +163,10 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our People service:
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm people-service:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -225,7 +219,7 @@ We're now going to create a Books service. We'll follow a similar process to the
 In the root directory of our Runtime project (`library-app`), let's run this command to create the new service:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -278,7 +272,7 @@ cd web/books-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm books-service:migrations:apply
 ```
 
 ### Populate the Books database
@@ -317,16 +311,11 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our Books service:
+
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm books-service:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -391,7 +380,7 @@ We're now going to create our third and final Platformatic DB service: the Movie
 In the root directory of our Runtime project (`library-app`), let's create the new service:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -444,7 +433,7 @@ cd web/movies-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm movies-service:migrations:apply
 ```
 
 ### Populate the Movies database
@@ -486,16 +475,11 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our Movies service:
+
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm movies-service:seed seed.js
 ```
 
 We should see output like this from our script:
@@ -561,7 +545,7 @@ We're now going to use Platformatic Composer to create a Media service. This ser
 In the root directory of our Runtime project (`library-app`), let's create the Media service by running:
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 And then let's enter the following settings:
@@ -771,7 +755,7 @@ npm install @platformatic/client
 Now we can generate a client for the People service:
 
 ```bash
-npx platformatic client --name people --runtime people-service --folder clients/people/
+npx --package @platformatic/client-cli plt-client --name people --runtime people-service --folder clients/people/
 ```
 
 We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People service's OpenAPI schema and types that we can use when we integrate the client with our Media service. If we open up `platformatic.composer.json`, we'll also see that a `clients` block like this has been added:
@@ -801,17 +785,21 @@ To create the skeleton structure for our plugin, let's create a new file, `web/m
 ```javascript
 // web/media-service/plugin.js
 
-/// <reference path="./clients/people/people.d.ts" />
-
 'use strict'
+
+const { buildOpenAPIClient } = require("@platformatic/client");
+const { resolve } = require("node:path");
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function peopleDataPlugin (app) {
-
+  const client = await buildOpenAPIClient({
+    url: "http://people-service.plt.local",
+    path: resolve(__dirname, "clients/people/people.openapi.json"),
+  });
 }
 ```
 
-The code we've just added is the skeleton structure for our plugin. The `<reference path="..." />` statement pulls in the types from the People client, providing us with type hinting and type checking (if it's supported by our code editor).
+The code we've just added is the skeleton structure for our plugin. A `@platformatic/client` is instantiated out of the OpenAPI specification.
 
 To be able to modify the responses that are sent from one of our Media service's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
 
@@ -848,7 +836,7 @@ function buildOnComposerResponseCallback (peopleProps) {
       }
     }
 
-    const people = await request.people.getPeople({ "where.id.in": peopleIds.join(',') })
+    const people = await client.getPeople({ "where.id.in": peopleIds.join(',') })
 
     const getPersonNameById = (id) => {
       const person = people.find(person => person.id === id)

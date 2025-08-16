@@ -1,22 +1,30 @@
 'use strict'
 
 const { ITC } = require('@platformatic/itc')
-const { features, ensureLoggableError, executeWithTimeout, deepmerge, parseMemorySize, kTimeout } = require('@platformatic/utils')
+const {
+  features,
+  ensureLoggableError,
+  ensureError,
+  executeWithTimeout,
+  deepmerge,
+  parseMemorySize,
+  kTimeout,
+  kMetadata
+} = require('@platformatic/foundation')
 const { once, EventEmitter } = require('node:events')
-const { createReadStream, watch, existsSync } = require('node:fs')
-const { readdir, readFile, stat, access } = require('node:fs/promises')
+const { existsSync } = require('node:fs')
+const { readFile } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
-const ts = require('tail-file-stream')
 const { Agent, interceptors: undiciInterceptors, request } = require('undici')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 const SonicBoom = require('sonic-boom')
-
 const { checkDependencies, topologicalSort } = require('./dependencies')
 const errors = require('./errors')
-const { createLogger } = require('./logger')
+const { abstractLogger, createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { startScheduler } = require('./scheduler')
@@ -37,7 +45,6 @@ const {
   kLastELU,
   kWorkersBroadcast
 } = require('./worker/symbols')
-
 const fastify = require('fastify')
 
 const platformaticVersion = require('../package.json').version
@@ -58,11 +65,12 @@ const telemetryPath = require.resolve('@platformatic/telemetry')
 const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
 
 class Runtime extends EventEmitter {
-  #configManager
+  #root
+  #config
+  #env
+  #context
   #isProduction
   #runtimeTmpDir
-  #runtimeLogsDir
-  #env
   #servicesIds
   #entrypointId
   #url
@@ -85,27 +93,30 @@ class Runtime extends EventEmitter {
   #stdio
   #sharedContext
 
-  constructor (configManager, runtimeLogsDir, env) {
+  constructor (config, context) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
-    this.#configManager = configManager
-    this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
-    this.#runtimeLogsDir = runtimeLogsDir
-    this.#env = env
+    this.#config = config
+    this.#root = config[kMetadata].root
+    this.#env = config[kMetadata].env
+    this.#context = context ?? {}
+    this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
+    this.#runtimeTmpDir = getRuntimeTmpDir(this.#root)
     this.#workers = new RoundRobinMap()
     this.#servicesIds = []
     this.#url = undefined
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
-      timeout: this.#configManager.current.serviceTimeout
+      timeout: this.#config.serviceTimeout
     })
+    this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
     this.servicesConfigsPatches = new Map()
 
-    if (!this.#configManager.current.logger.captureStdio) {
+    if (!this.#config.logger.captureStdio) {
       this.#stdio = {
         stdout: new SonicBoom({ fd: process.stdout.fd }),
         stderr: new SonicBoom({ fd: process.stderr.fd })
@@ -129,14 +140,18 @@ class Runtime extends EventEmitter {
   }
 
   async init () {
-    const config = this.#configManager.current
+    if (typeof this.#status !== 'undefined') {
+      return
+    }
+
+    const config = this.#config
     const autoloadEnabled = config.autoload
 
     // This cannot be transferred to worker threads
     delete config.configManager
 
     if (config.managementApi) {
-      this.#managementApi = await startManagementApi(this, this.#configManager)
+      this.#managementApi = await startManagementApi(this, this.#root)
     }
 
     if (config.metrics) {
@@ -144,17 +159,16 @@ class Runtime extends EventEmitter {
     }
 
     // Create the logger
-    const [logger, destination] = await createLogger(config, this.#runtimeLogsDir)
+    const [logger, destination] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
 
-    this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
     this.#createWorkersBroadcastChannel()
 
     const workersConfig = []
     for (const service of config.services) {
-      const count = service.workers ?? this.#configManager.current.workers
+      const count = service.workers ?? this.#config.workers
       if (count > 1 && service.entrypoint && !features.node.reusePort) {
         this.logger.warn(
           `"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
@@ -181,7 +195,7 @@ class Runtime extends EventEmitter {
       if (!serviceConfig.path) {
         if (serviceConfig.url) {
           // Try to backfill the path for external services
-          serviceConfig.path = join(this.#configManager.dirname, config.resolvedServicesBasePath, serviceConfig.id)
+          serviceConfig.path = join(this.#root, config.resolvedServicesBasePath, serviceConfig.id)
 
           if (!existsSync(serviceConfig.path)) {
             const executable = globalThis.platformatic?.executable ?? 'platformatic'
@@ -244,7 +258,11 @@ class Runtime extends EventEmitter {
   }
 
   async start (silent = false) {
-    if (typeof this.#configManager.current.entrypoint === 'undefined') {
+    if (typeof this.#status === 'undefined') {
+      await this.init()
+    }
+
+    if (typeof this.#config.entrypoint === 'undefined') {
       throw new errors.MissingEntrypointError()
     }
     this.#updateStatus('starting')
@@ -256,16 +274,16 @@ class Runtime extends EventEmitter {
         await this.startService(service, silent)
       }
 
-      if (this.#configManager.current.inspectorOptions) {
-        const { port } = this.#configManager.current.inspectorOptions
+      if (this.#config.inspectorOptions) {
+        const { port } = this.#config.inspectorOptions
 
         const server = fastify({
           loggerInstance: this.logger.child({ name: 'inspector' }, { level: 'warn' })
         })
 
-        const version = await fetch(
-          `http://127.0.0.1:${this.#configManager.current.inspectorOptions.port + 1}/json/version`
-        ).then(res => res.json())
+        const version = await fetch(`http://127.0.0.1:${this.#config.inspectorOptions.port + 1}/json/version`).then(
+          res => res.json()
+        )
 
         const data = await Promise.all(
           Array.from(this.#workers.values()).map(async worker => {
@@ -363,21 +381,17 @@ class Runtime extends EventEmitter {
 
     await this.stop(silent)
 
-    if (this.#managementApi) {
-      // This allow a close request coming from the management API to correctly be handled
-      setImmediate(() => {
-        this.#managementApi.close()
-      })
-    }
+    // The management API autocloses by itself via event in management-api.js.
+    // This is needed to let management API stop endpoint to reply.
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
     }
 
     if (this.logger) {
-      this.#loggerDestination.end()
+      this.#loggerDestination?.end()
 
-      this.logger = null
+      this.logger = abstractLogger
       this.#loggerDestination = null
     }
 
@@ -406,7 +420,7 @@ class Runtime extends EventEmitter {
       throw new errors.ApplicationAlreadyStartedError()
     }
 
-    const config = this.#configManager.current
+    const config = this.#config
     const serviceConfig = config.services.find(s => s.id === id)
 
     if (!serviceConfig) {
@@ -425,7 +439,7 @@ class Runtime extends EventEmitter {
   }
 
   async stopService (id, silent = false) {
-    const config = this.#configManager.current
+    const config = this.#config
     const serviceConfig = config.services.find(s => s.id === id)
 
     if (!serviceConfig) {
@@ -506,7 +520,7 @@ class Runtime extends EventEmitter {
   }
 
   async updateUndiciInterceptors (undiciConfig) {
-    this.#configManager.current.undici = undiciConfig
+    this.#config.undici = undiciConfig
 
     const promises = []
     for (const worker of this.#workers.values()) {
@@ -533,8 +547,7 @@ class Runtime extends EventEmitter {
         metrics = await this.getFormattedMetrics()
       } catch (error) {
         if (!(error instanceof errors.RuntimeExitedError)) {
-          // TODO(mcollina): use the logger
-          console.error('Error collecting metrics', error)
+          this.logger.error({ err: ensureLoggableError(error) }, 'Error collecting metrics')
         }
         return
       }
@@ -547,92 +560,27 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
-    endLogId = endLogId || Infinity
-    runtimePID = runtimePID ?? process.pid
+  async addLoggerDestination (writableStream) {
+    // Add the stream - We output everything we get
+    this.#loggerDestination.add({ stream: writableStream, level: 1 })
 
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-
-    if (runtimeLogFiles.length === 0) {
-      writableStream.end()
-      return
-    }
-
-    let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
-
-    let fileStream = null
-    let fileId = startLogId ?? latestFileId
-    let isClosed = false
-
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-
-    const watcher = watch(runtimeLogsDir, async (event, filename) => {
-      if (event === 'rename' && filename.startsWith('logs')) {
-        const logFileId = parseInt(filename.slice('logs.'.length))
-        if (logFileId > latestFileId) {
-          latestFileId = logFileId
-          fileStream.unwatch()
-        }
-      }
-    }).unref()
-
-    const streamLogFile = () => {
-      if (fileId > endLogId) {
-        writableStream.end()
-        return
-      }
-
-      const fileName = 'logs.' + fileId
-      const filePath = join(runtimeLogsDir, fileName)
-
-      const prevFileStream = fileStream
-
-      fileStream = ts.createReadStream(filePath)
-      fileStream.pipe(writableStream, { end: false, persistent: false })
-
-      if (prevFileStream) {
-        prevFileStream.unpipe(writableStream)
-        prevFileStream.destroy()
-      }
-
-      fileStream.on('close', () => {
-        if (latestFileId > fileId && !isClosed) {
-          streamLogFile(++fileId)
-        }
-      })
-
-      fileStream.on('error', err => {
-        isClosed = true
-        logger.error(err, 'Error streaming log file')
-        fileStream.destroy()
-        watcher.close()
-        writableStream.end()
-      })
-
-      fileStream.on('eof', () => {
-        if (fileId >= endLogId) {
-          writableStream.end()
-          return
-        }
-        if (latestFileId > fileId) {
-          fileStream.unwatch()
-        }
-      })
-
-      return fileStream
-    }
-
-    streamLogFile(fileId)
+    // Immediately get the counter of the lastId so we can use it to later remove it
+    const id = this.#loggerDestination.lastId
 
     const onClose = () => {
-      isClosed = true
-      watcher.close()
-      fileStream.destroy()
+      writableStream.removeListener('close', onClose)
+      writableStream.removeListener('error', onClose)
+      this.removeListener('closed', onClose)
+      this.#loggerDestination.remove(id)
     }
 
     writableStream.on('close', onClose)
     writableStream.on('error', onClose)
     this.on('closed', onClose)
+  }
+
+  async getUrl () {
+    return this.#url
   }
 
   async getRuntimeMetadata () {
@@ -646,7 +594,7 @@ class Runtime extends EventEmitter {
       uptimeSeconds: Math.floor(process.uptime()),
       execPath: process.execPath,
       nodeVersion: process.version,
-      projectDir: this.#configManager.dirname,
+      projectDir: this.#root,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
@@ -655,11 +603,16 @@ class Runtime extends EventEmitter {
   }
 
   getRuntimeEnv () {
-    return this.#configManager.env
+    return this.#env
   }
 
-  getRuntimeConfig () {
-    return this.#configManager.current
+  getRuntimeConfig (includeMeta = false) {
+    if (includeMeta) {
+      return this.#config
+    }
+
+    const { [kMetadata]: _, ...config } = this.#config
+    return config
   }
 
   getInterceptor () {
@@ -979,44 +932,6 @@ class Runtime extends EventEmitter {
     this.servicesConfigsPatches.delete(id)
   }
 
-  async getLogIds (runtimePID) {
-    runtimePID = runtimePID ?? process.pid
-
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-    const runtimeLogIds = []
-
-    for (const logFile of runtimeLogFiles) {
-      const logId = parseInt(logFile.slice('logs.'.length))
-      runtimeLogIds.push(logId)
-    }
-    return runtimeLogIds
-  }
-
-  async getAllLogIds () {
-    const runtimesLogFiles = await this.#getAllLogsFiles()
-    const runtimesLogsIds = []
-
-    for (const runtime of runtimesLogFiles) {
-      const runtimeLogIds = []
-      for (const logFile of runtime.runtimeLogFiles) {
-        const logId = parseInt(logFile.slice('logs.'.length))
-        runtimeLogIds.push(logId)
-      }
-      runtimesLogsIds.push({
-        pid: runtime.runtimePID,
-        indexes: runtimeLogIds
-      })
-    }
-
-    return runtimesLogsIds
-  }
-
-  async getLogFileStream (logFileId, runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
-    return createReadStream(filePath)
-  }
-
   #getHttpCacheValue ({ request }) {
     if (!this.#sharedHttpCache) {
       return
@@ -1082,6 +997,7 @@ class Runtime extends EventEmitter {
       }
     }
 
+    this.logger.trace({ event, payload }, 'Runtime event')
     return super.emit(event, payload)
   }
 
@@ -1095,9 +1011,7 @@ class Runtime extends EventEmitter {
 
     const promises = []
     for (const worker of this.#workers.values()) {
-      promises.push(
-        sendViaITC(worker, 'setSharedContext', sharedContext)
-      )
+      promises.push(sendViaITC(worker, 'setSharedContext', sharedContext))
     }
 
     const results = await Promise.allSettled(promises)
@@ -1115,13 +1029,13 @@ class Runtime extends EventEmitter {
   }
 
   async #setDispatcher (undiciConfig) {
-    const config = this.#configManager.current
+    const config = this.#config
 
     const dispatcherOpts = { ...undiciConfig }
     const interceptors = [this.#meshInterceptor]
 
     if (config.httpCache) {
-      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
+      this.#sharedHttpCache = await createSharedStore(this.#root, config.httpCache)
       interceptors.push(
         undiciInterceptors.cache({
           store: this.#sharedHttpCache,
@@ -1144,7 +1058,7 @@ class Runtime extends EventEmitter {
   async #setupService (serviceConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
-    const config = this.#configManager.current
+    const config = this.#config
     const workersCount = await this.#workers.getCount(serviceConfig.id)
     const id = serviceConfig.id
 
@@ -1162,9 +1076,9 @@ class Runtime extends EventEmitter {
     // Handle inspector
     let inspectorOptions
 
-    if (this.#configManager.current.inspectorOptions) {
+    if (this.#config.inspectorOptions) {
       inspectorOptions = {
-        ...this.#configManager.current.inspectorOptions
+        ...this.#config.inspectorOptions
       }
 
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
@@ -1183,11 +1097,12 @@ class Runtime extends EventEmitter {
 
     const execArgv = []
 
-    if (!serviceConfig.isPLTService && config.telemetry && config.telemetry.enabled !== false) {
+    if (!serviceConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-      execArgv.push('--experimental-loader', '@opentelemetry/instrumentation/hook.mjs')
-      execArgv.push('--require', openTelemetrySetupPath)
+      execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
+      execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
     }
 
     if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {
@@ -1202,8 +1117,12 @@ class Runtime extends EventEmitter {
       workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
     }
 
-    const maxHeapTotal = typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
-    const maxYoungGeneration = typeof health.maxYoungGeneration === 'string' ? parseMemorySize(health.maxYoungGeneration) : health.maxYoungGeneration
+    const maxHeapTotal =
+      typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration =
+      typeof health.maxYoungGeneration === 'string'
+        ? parseMemorySize(health.maxYoungGeneration)
+        : health.maxYoungGeneration
 
     const maxOldGenerationSizeMb = Math.floor(
       (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
@@ -1224,8 +1143,7 @@ class Runtime extends EventEmitter {
           count: workersCount
         },
         inspectorOptions,
-        dirname: this.#configManager.dirname,
-        runtimeLogsDir: this.#runtimeLogsDir
+        dirname: this.#root
       },
       argv: serviceConfig.arguments,
       execArgv,
@@ -1300,7 +1218,7 @@ class Runtime extends EventEmitter {
       worker[kInspectorOptions] = {
         port: inspectorOptions.port,
         id: serviceId,
-        dirname: this.#configManager.dirname
+        dirname: this.#root
       }
     }
 
@@ -1317,10 +1235,15 @@ class Runtime extends EventEmitter {
     })
     worker[kITC].listen()
 
+    // Forward events from the worker
+    worker[kITC].on('event', ({ event, payload }) => {
+      this.emit(`service:worker:event:${event}`, { ...eventPayload, payload })
+    })
+
     // Only activate watch for the first instance
     if (index === 0) {
       // Handle services changes
-      // This is not purposely activated on when this.#configManager.current.watch === true
+      // This is not purposely activated on when this.#config.watch === true
       // so that services can eventually manually trigger a restart. This mechanism is current
       // used by the composer.
       worker[kITC].on('changed', async () => {
@@ -1334,13 +1257,14 @@ class Runtime extends EventEmitter {
             await this.startService(serviceId)
           }
 
-          this.logger?.info(`The service "${serviceId}" has been successfully reloaded ...`)
+          this.logger.info(`The service "${serviceId}" has been successfully reloaded ...`)
+          this.emit('service:worker:reloaded', eventPayload)
 
           if (serviceConfig.entrypoint) {
             this.#showUrl()
           }
         } catch (e) {
-          this.logger?.error(e)
+          this.logger.error(e)
         }
       })
     }
@@ -1379,9 +1303,7 @@ class Runtime extends EventEmitter {
     if (features.node.worker.getHeapStatistics) {
       const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
       const currentELU = worker.performance.eventLoopUtilization()
-      const elu = worker[kLastELU]
-        ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU])
-        : currentELU
+      const elu = worker[kLastELU] ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]) : currentELU
       worker[kLastELU] = currentELU
       return { elu: elu.utilization, heapUsed, heapTotal }
     }
@@ -1416,11 +1338,10 @@ class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      const serviceId = worker[kServiceId]
-      this.emit('health', {
+      this.emit('service:worker:health', {
         id: worker[kId],
-        service: serviceId,
-        worker: worker[kWorkerId],
+        service: id,
+        worker: index,
         currentHealth: health,
         unhealthy,
         healthConfig: worker[kConfig].health
@@ -1446,6 +1367,8 @@ class Runtime extends EventEmitter {
 
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
+          this.emit('service:worker:unhealthy', { service: id, worker: index })
+
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
@@ -1480,7 +1403,7 @@ class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Starting the ${label}...`)
+      this.logger.info(`Starting the ${label}...`)
     }
 
     if (!worker) {
@@ -1524,25 +1447,42 @@ class Runtime extends EventEmitter {
       this.#broadcastWorkers()
 
       if (!silent) {
-        this.logger?.info(`Started the ${label}...`)
+        this.logger.info(`Started the ${label}...`)
       }
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
-        this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label, gracePeriod > 0 ? gracePeriod : 1)
+        this.#setupHealthCheck(
+          config,
+          serviceConfig,
+          workersCount,
+          id,
+          index,
+          worker,
+          label,
+          gracePeriod > 0 ? gracePeriod : 1
+        )
       }
-    } catch (error) {
+    } catch (err) {
+      const error = ensureError(err)
+
       // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE') throw error
+      if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
 
       this.#cleanupWorker(worker)
 
       if (worker[kWorkerStatus] !== 'exited') {
         // This prevent the exit handler to restart service
         worker[kWorkerStatus] = 'exited'
-        await worker.terminate()
+
+        // Wait for the worker to exit gracefully, otherwise we terminate it
+        const waitTimeout = await executeWithTimeout(once(worker, 'exit'), config.gracefulShutdown.service)
+
+        if (waitTimeout === kTimeout) {
+          await worker.terminate()
+        }
       }
 
       this.emit('service:worker:start:error', { ...eventPayload, error })
@@ -1593,15 +1533,16 @@ class Runtime extends EventEmitter {
     const eventPayload = { service: id, worker: index, workersCount }
 
     worker[kWorkerStatus] = 'stopping'
+    worker[kITC].removeAllListeners('changed')
     this.emit('service:worker:stopping', eventPayload)
 
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Stopping the ${label}...`)
+      this.logger.info(`Stopping the ${label}...`)
     }
 
-    const exitTimeout = this.#configManager.current.gracefulShutdown.runtime
+    const exitTimeout = this.#config.gracefulShutdown.runtime
     const exitPromise = once(worker, 'exit')
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
@@ -1609,13 +1550,13 @@ class Runtime extends EventEmitter {
       await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
     } catch (error) {
       this.emit('service:worker:stop:timeout', eventPayload)
-      this.logger?.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].close()
     }
 
     if (!silent) {
-      this.logger?.info(`Stopped the ${label}...`)
+      this.logger.info(`Stopped the ${label}...`)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -1834,7 +1775,7 @@ class Runtime extends EventEmitter {
     // Send the first port to the target
     const response = await executeWithTimeout(
       sendViaITC(target, 'saveMessagingChannel', port1, [port1]),
-      this.#configManager.current.messagingTimeout
+      this.#config.messagingTimeout
     )
 
     if (response === kTimeout) {
@@ -1847,54 +1788,11 @@ class Runtime extends EventEmitter {
   }
 
   async #getRuntimePackageJson () {
-    const runtimeDir = this.#configManager.dirname
+    const runtimeDir = this.#root
     const packageJsonPath = join(runtimeDir, 'package.json')
     const packageJsonFile = await readFile(packageJsonPath, 'utf8')
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson
-  }
-
-  #getRuntimeLogsDir (runtimePID) {
-    return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
-  }
-
-  async #getRuntimeLogFiles (runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const runtimeLogsFiles = await readdir(runtimeLogsDir)
-    return runtimeLogsFiles
-      .filter(file => file.startsWith('logs'))
-      .sort((log1, log2) => {
-        const index1 = parseInt(log1.slice('logs.'.length))
-        const index2 = parseInt(log2.slice('logs.'.length))
-        return index1 - index2
-      })
-  }
-
-  async #getAllLogsFiles () {
-    try {
-      await access(this.#runtimeTmpDir)
-    } catch (err) {
-      this.logger.error({ err: ensureLoggableError(err) }, 'Cannot access temporary folder.')
-      return []
-    }
-
-    const runtimePIDs = await readdir(this.#runtimeTmpDir)
-    const runtimesLogFiles = []
-
-    for (const runtimePID of runtimePIDs) {
-      const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-      const runtimeLogsDirStat = await stat(runtimeLogsDir)
-      const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-      const lastModified = runtimeLogsDirStat.mtime
-
-      runtimesLogFiles.push({
-        runtimePID: parseInt(runtimePID),
-        runtimeLogFiles,
-        lastModified
-      })
-    }
-
-    return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
   #handleWorkerStandardStreams (worker, serviceId, workerId) {
@@ -1931,7 +1829,7 @@ class Runtime extends EventEmitter {
   // label is the key in the logger object, either 'stdout' or 'stderr'
   #forwardThreadLog (logger, { level, caller }, data, label) {
     // When captureStdio is false, write directly to the logger destination
-    if (!this.#configManager.current.logger.captureStdio) {
+    if (!this.#config.logger.captureStdio) {
       this.#stdio[label].write(data)
       return
     }
@@ -2007,7 +1905,7 @@ class Runtime extends EventEmitter {
   async #updateServiceConfigWorkers (serviceId, workers) {
     this.logger.info(`Updating service "${serviceId}" config workers to ${workers}`)
 
-    this.#configManager.current.services.find(s => s.id === serviceId).workers = workers
+    this.#config.services.find(s => s.id === serviceId).workers = workers
     const service = await this.#getServiceById(serviceId)
     this.#workers.setCount(serviceId, workers)
     service[kConfig].workers = workers
@@ -2032,7 +1930,7 @@ class Runtime extends EventEmitter {
     this.logger.info(`Updating service "${serviceId}" config health heap to ${JSON.stringify(health)}`)
     const { maxHeapTotal, maxYoungGeneration } = health
 
-    const service = this.#configManager.current.services.find(s => s.id === serviceId)
+    const service = this.#config.services.find(s => s.id === serviceId)
     if (maxHeapTotal) {
       service.health.maxHeapTotal = maxHeapTotal
     }
@@ -2093,21 +1991,36 @@ class Runtime extends EventEmitter {
     }
 
     const ups = await this.#validateUpdateServiceResources(updates)
-    const config = this.#configManager.current
+    const config = this.#config
 
     const report = []
     for (const update of ups) {
       const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        const r = await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+        const r = await this.#updateServiceWorkersAndHealth(
+          serviceId,
+          config,
+          serviceConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        )
         report.push({
           service: serviceId,
           workers: r.workers,
           health: r.health
         })
       } else if (health) {
-        const r = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
+        const r = await this.#updateServiceHealth(
+          serviceId,
+          config,
+          serviceConfig,
+          currentWorkers,
+          currentHealth,
+          health
+        )
         report.push({
           service: serviceId,
           health: r.health
@@ -2132,7 +2045,7 @@ class Runtime extends EventEmitter {
       throw new errors.InvalidArgumentError('updates', 'must have at least one element')
     }
 
-    const config = this.#configManager.current
+    const config = this.#config
     const validatedUpdates = []
     for (const update of updates) {
       const { service: serviceId } = update
@@ -2181,7 +2094,10 @@ class Runtime extends EventEmitter {
               throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
+            throw new errors.InvalidArgumentError(
+              'maxHeapTotal',
+              'must be a number or a string representing a memory size'
+            )
           }
 
           if (currentHealth.maxHeapTotal === maxHeapTotal) {
@@ -2203,7 +2119,10 @@ class Runtime extends EventEmitter {
               throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a number or a string representing a memory size')
+            throw new errors.InvalidArgumentError(
+              'maxYoungGeneration',
+              'must be a number or a string representing a memory size'
+            )
           }
 
           if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
@@ -2216,7 +2135,7 @@ class Runtime extends EventEmitter {
       if (workers || maxHeapTotal || maxYoungGeneration) {
         let health
         if (maxHeapTotal || maxYoungGeneration) {
-          health = { }
+          health = {}
           if (maxHeapTotal) {
             health.maxHeapTotal = maxHeapTotal
           }
@@ -2231,12 +2150,27 @@ class Runtime extends EventEmitter {
     return validatedUpdates
   }
 
-  async #updateServiceWorkersAndHealth (serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth) {
+  async #updateServiceWorkersAndHealth (
+    serviceId,
+    config,
+    serviceConfig,
+    workers,
+    health,
+    currentWorkers,
+    currentHealth
+  ) {
     if (currentWorkers > workers) {
       // stop workers
       const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
+      const reportHealth = await this.#updateServiceHealth(
+        serviceId,
+        config,
+        serviceConfig,
+        workers,
+        currentHealth,
+        health
+      )
 
       return { workers: reportWorkers, health: reportHealth }
     } else {
@@ -2245,13 +2179,29 @@ class Runtime extends EventEmitter {
       // start new workers with new heap
       const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
+      const reportHealth = await this.#updateServiceHealth(
+        serviceId,
+        config,
+        serviceConfig,
+        currentWorkers,
+        currentHealth,
+        health,
+        false
+      )
 
       return { workers: reportWorkers, health: reportHealth }
     }
   }
 
-  async #updateServiceHealth (serviceId, config, serviceConfig, currentWorkers, currentHealth, health, updateConfig = true) {
+  async #updateServiceHealth (
+    serviceId,
+    config,
+    serviceConfig,
+    currentWorkers,
+    currentHealth,
+    health,
+    updateConfig = true
+  ) {
     const report = {
       current: currentHealth,
       new: health,
@@ -2263,15 +2213,25 @@ class Runtime extends EventEmitter {
       }
 
       for (let i = 0; i < currentWorkers; i++) {
-        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarting service "${serviceId}" worker ${i} to update config health heap...`)
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarting service "${serviceId}" worker ${i} to update config health heap...`
+        )
 
         const worker = await this.#getWorkerById(serviceId, i)
-        if (health.maxHeapTotal) { worker[kConfig].health.maxHeapTotal = health.maxHeapTotal }
-        if (health.maxYoungGeneration) { worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration }
+        if (health.maxHeapTotal) {
+          worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
+        }
+        if (health.maxYoungGeneration) {
+          worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration
+        }
 
         await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
         report.updated.push(i)
-        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarted service "${serviceId}" worker ${i}`)
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarted service "${serviceId}" worker ${i}`
+        )
       }
       report.success = true
     } catch (err) {
@@ -2279,7 +2239,10 @@ class Runtime extends EventEmitter {
         this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
         await this.#updateServiceConfigHealth(serviceId, currentHealth)
       } else {
-        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`)
+        this.logger.error(
+          { err },
+          `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`
+        )
       }
       report.success = false
     }
@@ -2306,7 +2269,10 @@ class Runtime extends EventEmitter {
           this.logger.error({ err }, 'Cannot start service workers, no worker started')
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers)
         } else {
-          this.logger.error({ err }, `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`)
+          this.logger.error(
+            { err },
+            `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`
+          )
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers + report.started.length)
         }
         report.success = false
@@ -2327,7 +2293,10 @@ class Runtime extends EventEmitter {
         if (report.stopped.length < 1) {
           this.logger.error({ err }, 'Cannot stop service workers, no worker stopped')
         } else {
-          this.logger.error({ err }, `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`)
+          this.logger.error(
+            { err },
+            `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`
+          )
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers - report.stopped)
         }
         report.success = false

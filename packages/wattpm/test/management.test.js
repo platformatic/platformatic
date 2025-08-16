@@ -198,8 +198,7 @@ test('config - should list configuration for an application', async t => {
     services: [
       {
         id: 'alternative',
-        isPLTService: false,
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: alternativeServiceDir,
         config: resolve(alternativeServiceDir, 'watt.json'),
         useHttp: false,
@@ -211,8 +210,7 @@ test('config - should list configuration for an application', async t => {
       },
       {
         id: 'main',
-        isPLTService: false,
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: mainServiceDir,
         config: resolve(mainServiceDir, 'watt.json'),
         useHttp: false,
@@ -243,7 +241,7 @@ test('config - should list configuration for an application', async t => {
   })
 })
 
-test('config - should list configuration for an service', async t => {
+test('config - should list configuration for a service', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -274,7 +272,11 @@ test('config - should list configuration for an service', async t => {
       dispatchViaHttp: false,
       disablePlatformaticInBuild: false,
       hasServer: true
-    }
+    },
+    watch: {
+      enabled: false
+    },
+    telemetry: {}
   })
 })
 

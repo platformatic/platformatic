@@ -1,7 +1,7 @@
 'use strict'
 
 const fp = require('fastify-plugin')
-const { findNearestString } = require('@platformatic/utils')
+const { findNearestString } = require('@platformatic/foundation')
 const buildEntity = require('./lib/entity')
 const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')

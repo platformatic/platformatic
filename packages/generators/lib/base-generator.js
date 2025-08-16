@@ -1,6 +1,6 @@
 'use strict'
 
-const { generateDashedName } = require('@platformatic/utils')
+const { generateDashedName } = require('@platformatic/foundation')
 const { readFile } = require('node:fs/promises')
 const {
   convertServiceNameToPrefix,
@@ -12,7 +12,6 @@ const {
 } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
-const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
 const { getServiceTemplateFromSchemaUrl } = require('./utils')
@@ -28,6 +27,8 @@ const fakeLogger = {
 }
 /* c8 ignore start */
 
+const DEFAULT_SERVICES_PATH = 'services'
+
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
     super(opts)
@@ -40,10 +41,15 @@ class BaseGenerator extends FileGenerator {
     this.config = this.getDefaultConfig()
     this.packages = []
     this.module = opts.module
+    this.runtime = null
     this.runtimeConfig = opts.runtimeConfig ?? 'platformatic.json'
     if (!this.module) {
       throw ModuleNeeded()
     }
+  }
+
+  setRuntime (runtime) {
+    this.runtime = runtime
   }
 
   getDefaultConfig () {
@@ -213,24 +219,6 @@ class BaseGenerator extends FileGenerator {
 
         await this.generateEnv()
 
-        if (this.config.typescript) {
-          // create tsconfig.json
-          this.addFile({
-            path: '',
-            file: 'tsconfig.json',
-            contents: JSON.stringify(this.getTsConfig(), null, 2)
-          })
-        }
-
-        if (this.config.plugin) {
-          // create plugin
-          this.files.push(...generatePlugins(this.config.typescript))
-          if (this.config.tests) {
-            // create tests
-            this.files.push(...generateTests(this.config.typescript, this.module))
-          }
-        }
-
         this.files.push(generateGitignore())
 
         await this._afterPrepare()
@@ -272,30 +260,6 @@ class BaseGenerator extends FileGenerator {
     return true
   }
 
-  getTsConfig () {
-    return {
-      compilerOptions: {
-        module: 'commonjs',
-        esModuleInterop: true,
-        target: 'es2020',
-        sourceMap: true,
-        pretty: true,
-        noEmitOnError: true,
-        incremental: true,
-        strict: true,
-        outDir: 'dist',
-        skipLibCheck: true
-      },
-      watchOptions: {
-        watchFile: 'fixedPollingInterval',
-        watchDirectory: 'fixedPollingInterval',
-        fallbackPolling: 'dynamicPriority',
-        synchronousWatchDirectory: true,
-        excludeDirectories: ['**/node_modules', 'dist']
-      }
-    }
-  }
-
   async prepareQuestions () {
     if (!this.config.isRuntimeContext) {
       if (!this.config.targetDirectory) {
@@ -304,19 +268,6 @@ class BaseGenerator extends FileGenerator {
           type: 'input',
           name: 'targetDirectory',
           message: 'Where would you like to create your project?'
-        })
-      }
-
-      if (!this.config.skipTypescript) {
-        this.questions.push({
-          type: 'list',
-          name: 'typescript',
-          message: 'Do you want to use TypeScript?',
-          default: false,
-          choices: [
-            { name: 'yes', value: true },
-            { name: 'no', value: false }
-          ]
         })
       }
 
@@ -403,15 +354,13 @@ class BaseGenerator extends FileGenerator {
         ...this.config.dependencies
       },
       engines: {
-        node: '^22.14.0 || ^20.6.0'
+        node: '>=22.18.0'
       }
     }
 
     if (this.config.typescript) {
       const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
-      template.scripts.clean = 'rm -fr ./dist'
-      template.scripts.build = 'platformatic compile'
       template.devDependencies.typescript = typescriptVersion
     }
     return template
@@ -470,7 +419,7 @@ class BaseGenerator extends FileGenerator {
 
   async loadFromDir (serviceName, runtimeRootPath) {
     const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
-    const servicesPath = runtimePkgConfigFileData.autoload.path
+    const servicesPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
     const servicePkgJsonFileData = JSON.parse(
       await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8')
     )

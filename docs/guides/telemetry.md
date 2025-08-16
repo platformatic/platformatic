@@ -24,12 +24,12 @@ Let's setup all these components:
 
 ### Platformatic DB Service
 
-Create a DB service using `npx wattpm create`:
+Create a DB service using `npm create wattpm`:
 
 ```bash
 mkdir test-db
 cd test-db
-npx wattpm create
+npm create wattpm
 ```
 
 To make it simple, use `sqlite` and create/apply the default migrations. This DB Service is exposed on port `5042`:
@@ -62,7 +62,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:11:45.148] INFO (504): /work/web/main/migrations/001.undo.sql written!
 [12:11:45.148] INFO (504): /work/web/main/README.md written!
 [12:11:45.149] INFO (504): /work/web/main/test/routes/movies.test.js written!
-[12:11:45.149] INFO (504): /work/web/main/global.d.ts written!
+[12:11:45.149] INFO (504): /work/web/main/plt-env.d.ts written!
 ? Do you want to init the git repository? no
 [12:11:46.798] INFO (504): Installing dependencies for the application using npm ...
 [12:11:51.343] INFO (504): Installing dependencies for the service db using npm ...
@@ -97,10 +97,10 @@ Create at the same level of `test-db` another folder for Service and cd into it:
 ```bash
 mkdir test-service
 cd test-service
-npx wattpm create
+npm create wattpm
 ```
 
-Then create a `service` on the `5043` port in the folder using `npx wattpm create`:
+Then create a `service` on the `5043` port in the folder using `npm create wattpm`:
 
 ```bash
 Hello User, welcome to Watt 2.64.0!
@@ -124,7 +124,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/test/plugins/example.test.js written!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/test/routes/root.test.js written!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/.gitignore written!
-[12:14:16.568] INFO (1819): /work/test-service/web/main/global.d.ts written!
+[12:14:16.568] INFO (1819): /work/test-service/web/main/plt-env.d.ts written!
 [12:14:16.568] INFO (1819): /work/test-service/web/main/README.md written!
 ? Do you want to init the git repository? no
 [12:14:17.793] INFO (1819): Installing dependencies for the application using npm ...
@@ -149,29 +149,38 @@ Open the `web/main/platformatic.json` file and add the following telemetry confi
 We want this service to invoke the DB service, so we need to add a client for `test-db` to it:
 
 ```bash
-npx platformatic client http://127.0.0.1:5042 js --name movies
+cd web/main
+npm install @platformatic/client
+npx --package @platformatic/client-cli plt-client http://127.0.0.1:5042 js --name movies
 ```
 
-Check `platformatic.service.json` to see that the client has been added (`PLT_MOVIES_URL` is defined in `.env`):
+Then add the url to `web/main.env`:
 
-```json
-    "clients": [
-    {
-      "schema": "movies/movies.openapi.json",
-      "name": "movies",
-      "type": "openapi",
-      "url": "{PLT_MOVIES_URL}"
-    }
-  ]
+```
+PLT_MOVIES_URL=http://127.0.0.1:5042/
 ```
 
-Now open `routes/root.js` and add the following:
+Now open `routes/root.js` and changes as follows:
 
 ```javascript
+/// <reference path="../global.d.ts" />
+
+'use strict'
+
+const { buildOpenAPIClient } = require('@platformatic/client')
+const { resolve } = require('node:path')
+
+module.exports = async function (fastify, opts) {
+  const client = await buildOpenAPIClient({
+    url: process.env.PLT_MOVIES_URL,
+    path: resolve(__dirname, "../movies/movies.openapi.json"),
+  });
+
   fastify.get('/movies-length', async (request, reply) => {
-    const movies = await request.movies.getMovies()
+    const movies = await client.getMovies()
     return { length: movies.length }
   })
+}
 ```
 
 This code calls `movies` to get all the movies and returns the length of the array.
@@ -189,7 +198,7 @@ Create at the same level of `test-db` and `test-service` another folder for Comp
 ```bash
 mkdir test-composer
 cd test-composer
-npx wattpm create
+npm create wattpm
 ```
 
 ```bash
@@ -209,7 +218,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:19:25.794] INFO (3205): /work/test-composer/web/main/package.json written!
 [12:19:25.795] INFO (3205): /work/test-composer/web/main/platformatic.json written!
 [12:19:25.796] INFO (3205): /work/test-composer/web/main/.gitignore written!
-[12:19:25.797] INFO (3205): /work/test-composer/web/main/global.d.ts written!
+[12:19:25.797] INFO (3205): /work/test-composer/web/main/plt-env.d.ts written!
 [12:19:25.798] INFO (3205): /work/test-composer/web/main/README.md written!
 ? Do you want to init the git repository? no
 [12:19:26.820] INFO (3205): Installing dependencies for the application using npm ...

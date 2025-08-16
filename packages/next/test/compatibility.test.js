@@ -1,14 +1,14 @@
-import { deepStrictEqual } from 'node:assert'
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
-import { symlink, writeFile } from 'node:fs/promises'
+import { deepStrictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
+import { symlink, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { request } from 'undici'
 import {
+  createRuntime,
   setFixturesDir,
   temporaryFolder,
-  createRuntime,
   verifyBuildAndProductionMode,
   verifyDevelopmentFrontendWithPrefix,
   verifyDevelopmentMode,
@@ -92,7 +92,6 @@ async function installDependencies (nextVersion, reactVersion) {
   }
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-  console.log('installing dependencies', base)
   await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`], { cwd: base })
 }
 

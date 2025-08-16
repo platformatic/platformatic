@@ -22,7 +22,7 @@ export type CrudOperationAuth =
     }
   | boolean;
 
-export interface PlatformaticDB {
+export interface PlatformaticDatabaseConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -387,24 +387,6 @@ export interface PlatformaticDB {
      */
     currentSchema?: string;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   types?: {
     /**
      * Should types be auto generated.
@@ -418,6 +400,7 @@ export interface PlatformaticDB {
   plugins?: {
     [k: string]: unknown;
   };
+  application?: {};
   telemetry?: {
     enabled?: boolean | string;
     /**
@@ -494,17 +477,6 @@ export interface PlatformaticDB {
           [k: string]: unknown;
         };
   };
-  clients?: {
-    serviceId?: string;
-    name?: string;
-    type?: "openapi" | "graphql";
-    path?: string;
-    schema?: string;
-    url?: string;
-    fullResponse?: boolean;
-    fullRequest?: boolean;
-    validateResponse?: boolean;
-  }[];
   runtime?: {
     preload?: string | string[];
     basePath?: string;

@@ -49,4 +49,12 @@ Your Composer Service will automatically discover other services in your Watt ap
 
 For service-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
 
+## Command Line usage (CLI)
+
+When using [Watt](../watt/overview.md), `@platformatic/composer` services will make some additional commands available on the terminal.
+
+All the commands will be prefixed by the service id. For instance, if your service id is `main`, then you will have the following commands available:
+
+* `main:fetch-openapi-schemas`: Fetch OpenAPI schemas from remote services.
+
 <Issues />

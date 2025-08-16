@@ -2,12 +2,18 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the headers in the output', async t => {
-  const { root, config } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
+  const { root, runtime } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
+    await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
+      const parsed = JSON.parse(contents)
+      parsed.logger.level = 'info'
+      return JSON.stringify(parsed, null, 2)
+    })
+
     await updateFile(resolve(root, 'services/frontend/src/app/page.js'), contents => {
       return (
         "import { headers } from 'next/headers'\n\n" +
@@ -16,7 +22,7 @@ test('can properly show the headers in the output', async t => {
     })
   })
 
-  const { runtime, url } = await startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   {
     const { statusCode } = await request(url, { headers: { 'x-test': 'test' } })
@@ -24,14 +30,15 @@ test('can properly show the headers in the output', async t => {
   }
 
   {
-    const logs = await getLogs(runtime)
+    await runtime.close()
+    const logs = await getLogsFromFile(root)
     ok(logs.some(l => l.msg.includes('x-test')))
   }
 })
 
 test('can access Platformatic globals in production mode', async t => {
-  const { root, config } = await prepareRuntime(t, 'basepath-production', true, null)
-  const { url } = await startRuntime(t, root, config, null, ['frontend'])
+  const { runtime } = await prepareRuntime(t, 'basepath-production', true, null)
+  const url = await startRuntime(t, runtime, null, ['frontend'])
 
   {
     const { statusCode, body } = await request(url + '/frontend')

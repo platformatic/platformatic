@@ -1,15 +1,15 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const errors = require('../errors')
+const errors = require('../lib/errors')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp, readFile } = require('node:fs/promises')
-const { buildServer: buildService } = require('../../service')
+const { create } = require('@platformatic/service')
 const { buildOpenAPIClient } = require('..')
 const Fastify = require('fastify')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 const { openAsBlob } = require('node:fs')
 const { FormData } = require('undici')
 require('./helper')
@@ -24,7 +24,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -34,7 +34,9 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json')
+    path: join(tmpDir, 'openapi.json'),
+    fullRequest: false,
+    fullResponse: false
   })
 
   const result = await client.postHello({
@@ -64,7 +66,7 @@ test('build basic client from file (enpoint with no parameters)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -74,7 +76,9 @@ test('build basic client from file (enpoint with no parameters)', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json')
+    path: join(tmpDir, 'openapi.json'),
+    fullRequest: false,
+    fullResponse: false
   })
 
   const bodyPayload = {
@@ -109,7 +113,7 @@ test('build basic client from file (query array parameter)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -120,7 +124,7 @@ test('build basic client from file (query array parameter)', async t => {
   {
     // // with fullRequest
     const client = await buildOpenAPIClient({
-      fullRequest: true,
+      fullResponse: false,
       url: `${app.url}`,
       path: join(tmpDir, 'openapi.json')
     })
@@ -139,6 +143,7 @@ test('build basic client from file (query array parameter)', async t => {
     // without fullRequest
     const client = await buildOpenAPIClient({
       fullRequest: false,
+      fullResponse: false,
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
     })
@@ -163,7 +168,7 @@ test('build basic client from file (path parameter)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -174,7 +179,7 @@ test('build basic client from file (path parameter)', async t => {
   {
     // with fullRequest
     const client = await buildOpenAPIClient({
-      fullRequest: true,
+      fullResponse: false,
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
     })
@@ -211,6 +216,7 @@ test('build basic client from file (path parameter)', async t => {
     // without fullRequest
     const client = await buildOpenAPIClient({
       fullRequest: false,
+      fullResponse: false,
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
     })
@@ -226,6 +232,7 @@ test('build basic client from file (path parameter)', async t => {
     // with timeout options
     const client = await buildOpenAPIClient({
       fullRequest: false,
+      fullResponse: false,
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'path-params', 'openapi.json'),
       bodyTimeout: 900000,
@@ -250,7 +257,7 @@ test('validate response', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -259,6 +266,8 @@ test('validate response', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     validateResponse: true
@@ -313,7 +322,7 @@ test('validate response', async t => {
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     validateResponse: true,
-    fullResponse: true
+    fullRequest: false
   })
 
   // invalid response format
@@ -347,7 +356,9 @@ test('build client with common parameters', async t => {
   const specPath = join(__dirname, 'fixtures', 'common-parameters-openapi.json')
   const client = await buildOpenAPIClient({
     url: clientUrl,
-    path: specPath
+    path: specPath,
+    fullRequest: false,
+    fullResponse: false
   })
 
   const output = await client.getPathWithFieldId({
@@ -392,6 +403,8 @@ test('build client with header injection options (getHeaders)', async t => {
   }
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: clientUrl,
     path: specPath,
     getHeaders
@@ -414,6 +427,8 @@ test('build client with header injection options (getHeaders)', async t => {
 test('edge cases', async t => {
   const specPath = join(__dirname, 'fixtures', 'misc', 'openapi.json')
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: 'http://127.0.0.1:3000',
     path: specPath
   })
@@ -430,7 +445,7 @@ test('should not throw when params are not passed', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -439,7 +454,7 @@ test('should not throw when params are not passed', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
-    fullRequest: true,
+    fullResponse: false,
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json')
   })
@@ -460,7 +475,7 @@ test('do not set bodies for methods that should not have them', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -469,6 +484,8 @@ test('do not set bodies for methods that should not have them', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json')
   })
@@ -506,7 +523,7 @@ test('do not set bodies for methods that should not have them', async t => {
 
 test('multipart/form-data', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -514,6 +531,8 @@ test('multipart/form-data', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}/`,
     path: join(fixtureDirPath, 'openapi.json')
   })
@@ -531,7 +550,7 @@ test('multipart/form-data', async t => {
 
 test('multipart/form-data with files', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -539,6 +558,8 @@ test('multipart/form-data with files', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}/`,
     path: join(fixtureDirPath, 'openapi.json')
   })
@@ -553,7 +574,7 @@ test('multipart/form-data with files', async t => {
 
 test('multipart/form-data without FormData', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -561,6 +582,8 @@ test('multipart/form-data without FormData', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}/`,
     path: join(fixtureDirPath, 'openapi.json')
   })
@@ -575,7 +598,7 @@ test('multipart/form-data without FormData', async t => {
 
 test('multipart/form-data with files AND fields', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -583,6 +606,8 @@ test('multipart/form-data with files AND fields', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
+    fullRequest: false,
+    fullResponse: false,
     url: `${app.url}/`,
     path: join(fixtureDirPath, 'openapi.json')
   })

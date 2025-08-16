@@ -18,7 +18,7 @@ const {
 
 const FileSpanExporter = require('./file-span-exporter')
 
-const { Resource } = require('@opentelemetry/resources')
+const { resourceFromAttributes } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 
 const { name: moduleName, version: moduleVersion } = require('../package.json')
@@ -98,7 +98,7 @@ const initTelemetry = (opts, logger) => {
   )
 
   const provider = new PlatformaticTracerProvider({
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName,
       [ATTR_SERVICE_VERSION]: version,
     }),

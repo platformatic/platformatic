@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/nest",
-  "version": "2.74.3",
+  "version": "3.0.0-alpha.1",
   "description": "Platformatic Nest.js Stackable",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "pnpm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout 1200000",
+    "coverage": "pnpm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout 1200000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -25,9 +25,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "get-port": "^7.1.0",
     "light-my-request": "^6.0.0",
     "pino-http": "^10.2.0"
@@ -45,5 +44,8 @@
     "neostandard": "^0.12.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

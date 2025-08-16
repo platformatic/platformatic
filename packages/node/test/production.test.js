@@ -1,4 +1,4 @@
-import { ok } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
   internalServicesFiles,
@@ -40,6 +40,12 @@ async function verifyApplicationOnAutodetectedPrefix (t, url) {
   await verifyJSONViaHTTP(url, '/nested/base/dir', 200, { production: true })
   await verifyJSONViaHTTP(url, '/nested/base/dir/', 200, { production: true })
   await verifyJSONViaHTTP(url, '/nested/base/dir/time', 200, isTime)
+}
+
+async function verifyFilename (t, url) {
+  const response = await fetch(url + '/frontend/filename')
+  deepStrictEqual(response.status, 200)
+  ok((await response.text()).endsWith('index.ts'))
 }
 
 const configurations = [
@@ -97,6 +103,14 @@ const configurations = [
     files,
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'js',
+    prefix: '/frontend'
+  },
+  {
+    id: 'node-no-build-composer-with-prefix-ts',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix in TypeScript)',
+    files: ['services/frontend/index.ts'],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService, verifyFilename],
+    language: 'ts',
     prefix: '/frontend'
   },
   {

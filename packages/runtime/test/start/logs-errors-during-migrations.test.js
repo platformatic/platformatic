@@ -3,39 +3,49 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticDB } = require('@platformatic/db')
-const { Client } = require('undici')
-const { wrapConfigInRuntimeConfig } = require('../..')
-const { buildRuntime } = require('../../lib/start')
+const { loadConfiguration } = require('@platformatic/db')
+const { wrapInRuntimeConfig, transform } = require('../../lib/config')
+const { Runtime } = require('../../index')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { getTempDir, readLogs } = require('../helpers.js')
 
 test('logs errors during db migrations', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  runtimeConfig.current.restartOnError = 1000
+  const config = await loadConfiguration(configFile)
+  const root = await getTempDir()
 
-  const runtime = await buildRuntime(runtimeConfig)
+  const runtimeConfig = await wrapInRuntimeConfig(config, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      config.restartOnError = 1000
+
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: join(root, 'logs.txt') }
+      }
+
+      return config
+    }
+  })
+
+  const runtime = new Runtime(runtimeConfig)
+
   t.after(async () => {
     await runtime.close()
   })
 
-  const startPromise = assert.rejects(async () => {
-    await runtime.start()
-  }, /The service "mysimplename" exited prematurely with error code 1/)
+  await runtime.init()
 
-  const client = new Client({ hostname: 'localhost', protocol: 'http:' }, { socketPath: runtime.getManagementApiUrl() })
+  await assert.rejects(
+    async () => {
+      await runtime.start()
+    },
+    { code: 'SQLITE_ERROR' }
+  )
 
-  await sleep(3000)
-
-  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
-  assert.strictEqual(statusCode, 200)
-  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
-
+  const messages = await readLogs(join(root, 'logs.txt'), 10000)
   assert.ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
-  assert.ok(messages.some(m => m.msg?.match(/near "fiddlesticks": syntax error/)))
-
-  await startPromise
+  assert.ok(messages.some(m => m.err?.message?.match(/near "fiddlesticks": syntax error/)))
+  assert.ok(messages.some(m => m.msg?.match(/Failed to start service "mysimplename" after 5 attempts./)))
 })

@@ -2,7 +2,7 @@
 
 const { join } = require('node:path')
 const { MockAgent, setGlobalDispatcher } = require('undici')
-const { safeRemove, createDirectory } = require('@platformatic/utils')
+const { safeRemove, createDirectory } = require('@platformatic/foundation')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)

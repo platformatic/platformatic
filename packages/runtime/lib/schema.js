@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
-const { schemaComponents } = require('@platformatic/utils')
+const { schemaComponents } = require('@platformatic/foundation')
 
 const pkg = require('../package.json')
 
@@ -21,6 +21,7 @@ schemaComponents.runtimeProperties.logger = runtimeLogger
 const platformaticRuntimeSchema = {
   $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'Platformatic Runtime Config',
   type: 'object',
   properties: schemaComponents.runtimeProperties,
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],

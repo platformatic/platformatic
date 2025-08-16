@@ -9,7 +9,7 @@ const {
   sanitizeLimit,
 } = require('./utils')
 const { singularize } = require('inflected')
-const { findNearestString } = require('@platformatic/utils')
+const { findNearestString } = require('@platformatic/foundation')
 const errors = require('./errors')
 const { wrapDB } = require('./telemetry')
 const { buildCursorCondition } = require('./cursor')

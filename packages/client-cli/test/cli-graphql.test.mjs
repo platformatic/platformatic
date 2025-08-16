@@ -1,42 +1,41 @@
-import { request, moveToTmpdir, safeKill } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
-import { match } from '@platformatic/utils'
-import { buildServer } from '@platformatic/db'
-import { join } from 'path'
-import * as desm from 'desm'
+import { create } from '@platformatic/db'
+import { match } from '@platformatic/foundation'
 import { execa } from 'execa'
-import { promises as fs, existsSync } from 'fs'
-import split from 'split2'
-import graphql from 'graphql'
+import { existsSync, promises as fs } from 'fs'
 import { copy } from 'fs-extra'
+import graphql from 'graphql'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import split from 'split2'
+import { moveToTmpdir, request, safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
 function findTSCPath () {
-  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')
 
   // If the local npm installation should use global tsc in the root
   if (!existsSync(tscPath)) {
-    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+    tscPath = join(import.meta.dirname, '../../..', 'node_modules', '.bin', 'tsc')
   }
 
   return tscPath
 }
 
-test('graphql client generation (javascript)', async (t) => {
+test('graphql client generation (javascript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   {
@@ -46,15 +45,14 @@ test('graphql client generation (javascript)', async (t) => {
   }
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -65,11 +63,13 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -87,36 +87,38 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('graphql client generation (typescript)', async (t) => {
+test('graphql client generation (typescript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
-import Fastify from 'fastify';
-import movies from './movies';
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
+const app = Fastify({ logger: true })
 
 app.post('/', async (req) => {
-  const res = await req.movies.graphql({
+  const client = await movies({ url: '${app.url}' })
+
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -127,15 +129,19 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -149,11 +155,13 @@ app.listen({ port: 0 });
   server2.catch(() => {})
 
   t.after(() => server2.kill())
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -168,24 +176,27 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('graphql client generation with relations (typescript)', async (t) => {
+test('graphql client generation with relations (typescript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -193,17 +204,16 @@ import movies from './movies';
 import type { Movie, Quote } from './movies';
 
 const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
 
 app.post('/', async (req) => {
-  const res1 = await req.movies.graphql<Movie>({
+  const client = await movies({ url: '${app.url}' })
+
+  const res1 = await client.graphql<Movie>({
     query: \`mutation {
       saveMovie(input: { title: "foo" }) { id, title } }
     \`
   })
-  const res2 = await req.movies.graphql<Quote>({
+  const res2 = await client.graphql<Quote>({
     query: \`
       mutation saveQuote($movieId: ID!) {
         saveQuote(input: { movieId: $movieId, quote: "foo"}) {
@@ -228,15 +238,19 @@ app.listen({ port: 0});
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -248,11 +262,13 @@ app.listen({ port: 0});
 
   const server2 = execa('node', ['build/index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -267,38 +283,40 @@ app.listen({ port: 0});
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    quote: 'foo',
-    movie: {
-      title: 'foo'
-    }
-  }), true)
+  equal(
+    match(body, {
+      quote: 'foo',
+      movie: {
+        title: 'foo'
+      }
+    }),
+    true
+  )
 })
 
-test('graphql client generation (javascript) with slash at the end of the URL', async (t) => {
+test('graphql client generation (javascript) with slash at the end of the URL', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -309,11 +327,13 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -328,129 +348,44 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('configureClient (typescript)', async (t) => {
+test('graphql client generation (javascript) from a file', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  const toWrite = `
-import Fastify from 'fastify';
-import movies from './movies';
-
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${app.url}'
-});
-
-app.register(async function (app) {
-  app.configureMovies({
-    async getHeaders (req, reply) {
-      return { foo: 'bar' }
-    }
-  })
-});
-
-app.post('/', async (req) => {
-  const res = await req.movies.graphql({
-    query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
-  })
-  return res
-})
-
-app.listen({ port: 0 });
-`
-
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
-
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
-
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-
-  const tsc = findTSCPath()
-  await execa(tsc, [], { env })
-
-  // TODO how can we avoid this copy?
-  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
-
-  const server2 = execa('node', ['build/index.js'])
-  t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
-
-  const stream = server2.stdout.pipe(split(JSON.parse))
-
-  // this is unfortuate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  const res = await request(url, {
-    method: 'POST'
-  })
-  const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
-})
-
-test('graphql client generation (javascript) from a file', async (t) => {
-  try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
-
-  await app.start()
-
-  const dir = await moveToTmpdir(after)
-
-  const sdl = graphql.printSchema(app.graphql.schema)
+  const sdl = graphql.printSchema(app.getApplication().graphql.schema)
   const sdlFile = join(dir, 'movies.schema.graphql')
   await fs.writeFile(sdlFile, sdl)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), sdlFile, '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), sdlFile, '--name', 'movies'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   equal(sdl, readSDL)
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${app.url}' })
 
-app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.graphql({
+  const res = await client.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -461,11 +396,13 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -483,7 +420,10 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })

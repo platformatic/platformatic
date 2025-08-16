@@ -1,20 +1,19 @@
-'use strict'
+import { kMetadata } from '@platformatic/foundation'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../../index.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
-
-test('get service info via stackable api', async (t) => {
-  const projectRoot = join(__dirname, '..', '..', 'fixtures', 'sqlite')
+test('get service info via stackable api', async t => {
+  const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'sqlite-basic')
   const config = join(projectRoot, 'platformatic.db.json')
 
   process.env.DATABASE_URL = 'sqlite://:memory:'
-  const stackable = await buildStackable({ config })
+  const stackable = await create(projectRoot, config)
   t.after(async () => {
     await stackable.stop()
   })
-  await stackable.start()
+  await stackable.start({ listen: true })
 
-  assert.strictEqual(stackable.app.platformatic.configManager.dirname, projectRoot)
+  assert.strictEqual(stackable.getApplication().platformatic.config[kMetadata].root, projectRoot)
 })

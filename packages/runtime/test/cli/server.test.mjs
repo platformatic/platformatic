@@ -1,24 +1,15 @@
-import { join } from 'desm'
+import { execa } from 'execa'
 import { connect } from 'inspector-client'
 import assert from 'node:assert'
 import { on } from 'node:events'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { cliPath, start } from './helper.mjs'
+import { start, startPath } from './helper.mjs'
 
 test('autostart', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start('-c', config)
-  const res = await request(url)
-
-  assert.strictEqual(res.statusCode, 200)
-  assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGKILL')
-})
-
-test('start command', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start('start', '-c', config)
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   const res = await request(url)
 
   assert.strictEqual(res.statusCode, 200)
@@ -27,16 +18,16 @@ test('start command', async () => {
 })
 
 test('handles startup errors', async t => {
-  const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
+  const child = execa(process.execPath, [startPath, config], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
+  })
   let stdout = ''
   let found = false
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log('message', message.toString())
       stdout += message
 
       if (/boom/.test(stdout)) {
@@ -60,10 +51,9 @@ test('handles startup errors', async t => {
 })
 
 test('does not start if node inspector flags are provided', async t => {
-  const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
-    env: { NODE_OPTIONS: '--inspect' },
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const child = execa(process.execPath, [startPath, config], {
+    env: { NODE_OPTIONS: '--inspect', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
   })
   let stderr = ''
@@ -94,10 +84,9 @@ test('does not start if node inspector flags are provided', async t => {
 })
 
 test('does start if node inspector flag is provided by VS Code', async t => {
-  const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
-    env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }' },
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const child = execa(process.execPath, [startPath, config], {
+    env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
   })
   let stdout = ''
@@ -105,8 +94,6 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log('message', message.toString())
       stdout += message
 
       if (/Started the service/.test(stdout)) {
@@ -129,19 +116,28 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 })
 
 test('starts the inspector', async t => {
-  const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
-    encoding: 'utf8'
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const child = execa(process.execPath, [startPath, config, '--inspect'], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
   })
   let stderr = ''
   let port = 0
   let found = false
 
+  const startPromise = new Promise(resolve => {
+    function listener (line) {
+      if (line.toString().match(/Platformatic is now listening/)) {
+        child.stdout.off('data', listener)
+        resolve()
+      }
+    }
+
+    child.stdout.on('data', listener)
+  })
+
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log(message.toString())
       stderr += message
 
       if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {
@@ -157,6 +153,8 @@ test('starts the inspector', async t => {
       break
     }
   }
+
+  await startPromise
 
   assert(found)
 

@@ -4,16 +4,15 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
+const { getPlatformaticVersion } = require('@platformatic/foundation')
 
-const { buildServer } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
 
 test('should get service config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -41,6 +40,7 @@ test('should get service config', async t => {
   assert.strictEqual(statusCode, 200)
 
   const serviceConfig = await body.json()
+  const platformaticVersion = await getPlatformaticVersion()
 
   assert.deepStrictEqual(serviceConfig, {
     $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
@@ -52,22 +52,13 @@ test('should get service config', async t => {
         level: 'trace'
       }
     },
+    application: {},
     service: { openapi: true },
     plugins: {
       paths: [join(projectDir, 'services', 'service-1', 'plugin.js')]
     },
     watch: {
       enabled: true
-    },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: true
-      },
-      labels: {
-        serviceId: 'service-1',
-        custom_label: 'custom-value'
-      }
     }
   })
 })

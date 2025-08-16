@@ -1,29 +1,32 @@
-import { InjectOptions, LightMyRequestResponse } from 'fastify'
 import { FastifyError } from '@fastify/error'
-import { BaseLogger } from 'pino'
-import { RuntimeGenerator } from './lib/generator/runtime-generator'
-export type pltRuntimeBuildServer = {
-  address: string
-  port: number
-  restart: () => Promise<void>
-  stop: () => Promise<void>
-  inject: (opts: InjectOptions | string) => Promise<LightMyRequestResponse>
+import { Configuration, ConfigurationOptions, logFatalError, parseArgs } from '@platformatic/foundation'
+import { BaseGenerator } from '@platformatic/generators'
+import { JSONSchemaType } from 'ajv'
+import * as colorette from 'colorette'
+import { Logger } from 'pino'
+import { PlatformaticRuntimeConfig } from './config'
+
+export type RuntimeConfiguration = Promise<Configuration<PlatformaticRuntimeConfig>>
+
+export type ServiceCommandContext = {
+  colorette: typeof colorette
+  parseArgs: typeof parseArgs
+  logFatalError: typeof logFatalError
 }
 
-declare module '@platformatic/runtime' {
-  export function buildServer (opts: object): Promise<pltRuntimeBuildServer>
-  export function start (args: object): Promise<object>
-  export function startCommand (args: object): Promise<void>
-  export function loadConfig (minimistConfig: object, args: object, store: object, overrides: object, replaceEnv: boolean): void
-  export function compile (argv: string[], logger: BaseLogger): void
-  export function platformaticRuntime (): Promise<void>
-  export function wrapConfigInRuntimeConfig (args: object): object
-  export const Generator: RuntimeGenerator.RuntimeGenerator
+export type ServiceCommand = (
+  logger: Logger,
+  configuration: Configuration<unknown>,
+  args: string[],
+  context: ServiceCommandContext
+) => Promise<void>
+
+export interface ServicesCommands {
+  services: Record<string, Configuration<unknown>>
+  commands: Record<string, ServiceCommand>
+  help: Record<string, string | (() => string)>
 }
 
-/**
- * All the errors thrown by the plugin.
- */
 export module errors {
   export const RuntimeExitedError: () => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
@@ -43,3 +46,49 @@ export module errors {
   export const CannotMapSpecifierToAbsolutePathError: (specifier: string) => FastifyError
   export const NodeInspectorFlagsNotSupportedError: () => FastifyError
 }
+
+export module symbols {
+  export declare const kConfig: unique symbol
+  export declare const kId: unique symbol
+  export declare const kFullId: unique symbol
+  export declare const kServiceId: unique symbol
+  export declare const kWorkerId: unique symbol
+  export declare const kITC: unique symbol
+  export declare const kHealthCheckTimer: unique symbol
+  export declare const kLastELU: unique symbol
+  export declare const kWorkerStatus: unique symbol
+  export declare const kStderrMarker: string
+  export declare const kInterceptors: unique symbol
+  export declare const kWorkersBroadcast: unique symbol
+}
+
+export class Generator extends BaseGenerator.BaseGenerator {}
+
+export class WrappedGenerator extends BaseGenerator.BaseGenerator {}
+
+export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
+
+export declare class Runtime {}
+
+export function wrapInRuntimeConfig (
+  config: Configuration<unknown>,
+  context?: ConfigurationOptions
+): Promise<RuntimeConfiguration>
+
+export declare const version: string
+
+export declare function loadConfiguration (
+  root: string | PlatformaticRuntimeConfig,
+  source?: string | PlatformaticRuntimeConfig,
+  context?: ConfigurationOptions
+): Promise<RuntimeConfiguration>
+
+export function create (
+  root: string,
+  source?: string | PlatformaticRuntimeConfig,
+  context?: ConfigurationOptions
+): Promise<Runtime>
+
+export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration> | RuntimeConfiguration
+
+export declare function loadServicesCommands (): Promise<ServicesCommands>

@@ -11,13 +11,12 @@ const { ServerResponse } = require('node:http')
 
 const {
   disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
   executeWithTimeout,
   ensureLoggableError,
   getPrivateSymbol,
   buildPinoFormatters,
   buildPinoTimestamp
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const dotenv = require('dotenv')
 const pino = require('pino')
 const { fetch } = require('undici')
@@ -45,7 +44,6 @@ function handleUnhandled (app, type, err) {
 
 function patchLogging () {
   disablePinoDirectWrite()
-  ensureFlushedWorkerStdio()
 
   const kFormatForStderr = getPrivateSymbol(console, 'kFormatForStderr')
 
@@ -67,6 +65,11 @@ function patchLogging () {
 }
 
 function createLogger () {
+  // Do not propagate runtime transports to the worker
+  if (workerData.config.logger) {
+    delete workerData.config.logger.transport
+  }
+
   const pinoOptions = {
     level: 'trace',
     name: workerData.serviceConfig.id,

@@ -7,21 +7,21 @@ To start the Watt creator wizard, run the appropriate command for your package m
 <TabItem value="npm" label="npm">
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 </TabItem>
 <TabItem value="yarn" label="yarn">
 
 ```bash
-yarn create platformatic
+yarn create wattpm
 ```
 
 </TabItem>
 <TabItem value="pnpm" label="pnpm">
 
 ```bash
-pnpx wattpm create
+pnpm create wattpm
 ```
 
 </TabItem>
@@ -32,7 +32,7 @@ This interactive command-line tool will guide you through setting up a new Platf
 ```
 - Where would you like to create your project?  => .
 - Which package manager do you want to use?     => npm
-- Which kind of service do you want to create?  => @platformatic/db 
+- Which kind of service do you want to create?  => @platformatic/db
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
 - Do you want to create default migrations?     => Yes

@@ -1,13 +1,24 @@
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { on } from 'node:events'
+import { join } from 'node:path'
 import { test } from 'node:test'
-import { join } from 'desm'
-import { cliPath } from '../helper.mjs'
+import { startPath } from '../helper.mjs'
 
-test('do not start if there are no services', async (t) => {
-  const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'no-services-no-entrypoint.config.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
+test('do not start if there are no services', async t => {
+  const config = join(
+    import.meta.dirname,
+    '..',
+    '..',
+    '..',
+    'fixtures',
+    'configs',
+    'no-services-no-entrypoint.config.json'
+  )
+  const child = execa(process.execPath, [startPath, config], {
+    encoding: 'utf8',
+    env: { PLT_USE_PLAIN_CREATE: 'true' }
+  })
   let stdout = ''
   let found = false
 

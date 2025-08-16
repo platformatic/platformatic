@@ -4,14 +4,13 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should fail to get service config if service is not started', async (t) => {
+test('should fail to get service config if service is not started', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
+  await app.init()
 
   t.after(async () => {
     await app.close()
@@ -21,6 +20,6 @@ test('should fail to get service config if service is not started', async (t) =>
     await app.getServiceConfig('with-logger')
     assert.fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, 'Service with id \'with-logger\' is not started')
+    assert.strictEqual(err.message, "Service with id 'with-logger' is not started")
   }
 })

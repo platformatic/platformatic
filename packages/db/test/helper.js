@@ -1,13 +1,28 @@
-'use strict'
+import { safeRemove } from '@platformatic/foundation'
+import { createConnectionPool } from '@platformatic/sql-mapper'
+import { randomUUID } from 'node:crypto'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { Agent, setGlobalDispatcher } from 'undici'
+import why from 'why-is-node-running'
+import { createTemporaryDirectory } from '../../basic/test/helper.js'
+import { create } from '../index.js'
 
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { randomUUID } = require('node:crypto')
-const why = require('why-is-node-running')
-const { createConnectionPool } = require('@platformatic/sql-mapper')
-const { safeRemove } = require('@platformatic/utils')
-const { Agent, setGlobalDispatcher } = require('undici')
-const { platformaticDB, ConfigManager } = require('..')
+const expectedTelemetryPrefixes = {
+  postgresql: 'pg',
+  mariadb: 'mysql',
+  mysql: 'mysql',
+  mysql8: 'mysql',
+  sqlite: 'sqlite'
+}
+
+const expectedPorts = {
+  postgresql: 5432,
+  mariadb: 3307,
+  mysql: 3306,
+  mysql8: 3308,
+  sqlite: undefined
+}
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -20,8 +35,8 @@ const agent = new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 })
 setGlobalDispatcher(agent)
 
@@ -29,7 +44,7 @@ setGlobalDispatcher(agent)
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-async function getConnectionInfo (dbType) {
+export async function getConnectionInfo (dbType) {
   dbType = dbType || process.env.DB || 'postgresql'
 
   if (dbType === 'sqlite') {
@@ -38,11 +53,11 @@ async function getConnectionInfo (dbType) {
 
     return {
       connectionInfo: {
-        connectionString,
+        connectionString
       },
       async dropTestDB () {
         return safeRemove(pathToSqlite)
-      },
+      }
     }
   }
 
@@ -62,10 +77,10 @@ async function getConnectionInfo (dbType) {
       debug: () => {},
       info: () => {},
       trace: () => {},
-      error: () => {},
+      error: () => {}
     },
     connectionString: baseConnectionString,
-    poolSize: 1,
+    poolSize: 1
   })
 
   const connectionInfo = {}
@@ -80,14 +95,12 @@ async function getConnectionInfo (dbType) {
     async dropTestDB () {
       await db.query(sql`DROP DATABASE ${sql.ident(testDBName)};`)
       await db.dispose()
-    },
+    }
   }
 }
 
-module.exports.getConnectionInfo = getConnectionInfo
-
-async function createBasicPages (db, sql) {
-  if (module.exports.isSQLite) {
+export async function createBasicPages (db, sql) {
+  if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42)
@@ -99,49 +112,29 @@ async function createBasicPages (db, sql) {
     );`)
   }
 }
-module.exports.createBasicPages = createBasicPages
 
-async function buildConfigManager (source, dirname) {
-  const base = {
-    server: {},
-    db: {},
-  }
-  source = Object.assign(base, source)
+export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
+  const directory = await createTemporaryDirectory(t)
 
-  if (!dirname) {
-    dirname = join(__dirname, 'fixtures')
-  }
-
-  const configManager = new ConfigManager({
-    ...platformaticDB.configManagerConfig,
-    source,
-    dirname,
+  const database = await create(directory, options, {
+    applicationFactory,
+    isStandalone: true,
+    isEntrypoint: true,
+    isProduction: creationOptions.production
   })
+  t.after(() => database.stop())
 
-  await configManager.parseAndValidate()
-  return configManager
+  if (!creationOptions.skipInit) {
+    await database.init()
+  }
+
+  return database
 }
 
-module.exports.buildConfigManager = buildConfigManager
-
-if (!process.env.DB || process.env.DB === 'postgresql') {
-  module.exports.isPg = true
-  module.exports.expectedTelemetryPrefix = 'pg'
-  module.exports.expectedPort = 5432
-} else if (process.env.DB === 'mariadb') {
-  module.exports.isMysql = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = '3307'
-} else if (process.env.DB === 'mysql') {
-  module.exports.isMysql = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = 3306
-} else if (process.env.DB === 'mysql8') {
-  module.exports.isMysql = true
-  module.exports.isMysql8 = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = '3308'
-} else if (process.env.DB === 'sqlite') {
-  module.exports.isSQLite = true
-  module.exports.expectedTelemetryPrefix = 'sqlite'
-}
+export const isPg = !process.env.DB || process.env.DB === 'postgresql'
+export const isMariaDB = process.env.DB === 'mariadb'
+export const isMysql = process.env.DB === 'mariadb' || process.env.DB === 'mysql' || process.env.DB === 'mysql8'
+export const isMysql8 = process.env.DB === 'mysql8'
+export const isSQLite = process.env.DB === 'sqlite'
+export const expectedTelemetryPrefix = expectedTelemetryPrefixes[process.env.DB] || expectedTelemetryPrefixes.postgresql
+export const expectedPort = expectedPorts[process.env.DB] || expectedPorts.postgresql

@@ -4,16 +4,14 @@ const { ok, deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { features } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
+const { features } = require('@platformatic/foundation')
+const { createRuntime } = require('../helpers.js')
 const { prepareRuntime } = require('./helper')
 
 test('return workers information in the management API when starting in production mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -47,8 +45,7 @@ test('return workers information in the management API when starting in producti
 test('return no workers information in the management API when starting in development mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null)
 
   t.after(async () => {
     await app.close()

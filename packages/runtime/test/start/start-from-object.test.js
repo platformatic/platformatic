@@ -4,14 +4,28 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { transform, loadConfiguration, Runtime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { getTempDir } = require('../helpers.js')
 
-test('can start applications programmatically from object', async (t) => {
+test('can start applications programmatically from object', async t => {
+  const root = await getTempDir()
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const config = await loadConfiguration(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      config.logger ??= {}
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: join(root, 'logs.txt') }
+      }
+
+      return config
+    }
+  })
+  const app = new Runtime(config)
+
   const entryUrl = await app.start()
 
   t.after(async () => {

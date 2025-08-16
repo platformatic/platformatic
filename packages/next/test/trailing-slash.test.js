@@ -7,8 +7,8 @@ import { prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('when trailingSlash is false, request with a trailing slash are redirected', async t => {
-  const { root, config } = await prepareRuntime(t, 'server-side-standalone', false)
-  const { url } = await startRuntime(t, root, config)
+  const { runtime } = await prepareRuntime(t, 'server-side-standalone', false)
+  const url = await startRuntime(t, runtime)
 
   {
     const { statusCode } = await request(url)
@@ -32,7 +32,7 @@ test('when trailingSlash is false, request with a trailing slash are redirected'
 })
 
 test('when trailingSlash is true, request without a trailing slash are redirected', async t => {
-  const { root, config } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
+  const { runtime } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.next = { trailingSlash: true }
@@ -40,7 +40,7 @@ test('when trailingSlash is true, request without a trailing slash are redirecte
     })
   })
 
-  const { url } = await startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   {
     const { statusCode } = await request(url)

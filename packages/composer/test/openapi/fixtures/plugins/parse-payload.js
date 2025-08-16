@@ -1,15 +1,13 @@
-'use strict'
+import fp from 'fastify-plugin'
 
-const fp = require('fastify-plugin')
-
-module.exports = fp(async function (app) {
+export default fp(async function (app) {
   app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
     routeOptions.schema.response[200] = {
       type: 'object',
       properties: {
         user_id: { type: 'number' },
-        first_name: { type: 'string' },
-      },
+        first_name: { type: 'string' }
+      }
     }
 
     async function onComposerResponse (request, reply, body) {

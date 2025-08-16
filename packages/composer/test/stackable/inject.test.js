@@ -1,25 +1,27 @@
-'use strict'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig } from '../helper.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
-
-test('inject request into service stackable', async (t) => {
+test('inject request into service stackable', async t => {
   const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+
     composer: {
-      services: [],
+      services: []
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')],
-    },
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
+    }
   }
 
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+  const stackable = await createFromConfig(t, config)
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const { statusCode, body } = await stackable.inject('/custom')
   assert.strictEqual(statusCode, 200, 'status code')

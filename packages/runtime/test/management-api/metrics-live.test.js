@@ -6,13 +6,13 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const WebSocket = require('ws')
 
-const { buildServer } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get runtime metrics via management api', async (t) => {
+test('should get runtime metrics via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -30,14 +30,15 @@ test('should get runtime metrics via management api', async (t) => {
       reject(new Error('Timeout'))
     }, 10000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
     let count = 0
 
-    webSocket.on('message', (data) => {
+    webSocket.on('message', data => {
       if (count++ > 5) {
+        webSocket.removeAllListeners('message')
         clearTimeout(timeout)
         webSocket.close()
         resolve()
@@ -48,22 +49,13 @@ test('should get runtime metrics via management api', async (t) => {
         if (!record) continue
         const { services } = JSON.parse(record)
 
-        assert.deepStrictEqual(
-          Object.keys(services).sort(),
-          ['service-1', 'service-2', 'service-db'].sort()
-        )
+        assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
         for (const serviceMetrics of Object.values(services)) {
-          assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-            'cpu',
-            'elu',
-            'newSpaceSize',
-            'oldSpaceSize',
-            'rss',
-            'totalHeapSize',
-            'usedHeapSize',
-            'latency',
-          ].sort())
+          assert.deepStrictEqual(
+            Object.keys(serviceMetrics).sort(),
+            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+          )
 
           const latencyMetrics = serviceMetrics.latency
           const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
@@ -74,10 +66,10 @@ test('should get runtime metrics via management api', async (t) => {
   })
 })
 
-test('should not throw if metrics are not enabled', async (t) => {
+test('should not throw if metrics are not enabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -95,20 +87,21 @@ test('should not throw if metrics are not enabled', async (t) => {
       reject(new Error('Timeout'))
     }, 10000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
     let count = 0
 
-    webSocket.on('message', (data) => {
-      if (count++ > 5) {
+    webSocket.on('message', data => {
+      if (count++ > 3) {
         clearTimeout(timeout)
         webSocket.close()
         resolve()
       }
 
       const records = data.toString().split('\n')
+
       for (const record of records) {
         if (!record) continue
         const metrics = JSON.parse(record)

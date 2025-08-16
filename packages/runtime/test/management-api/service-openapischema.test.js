@@ -6,13 +6,13 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { isatty } = require('tty')
 
-const { buildServer } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 test('should get service openapi schema', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 

@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticNextJsStackable {
+export interface PlatformaticNextJsConfig {
   $schema?: string;
   logger?: {
     level: (

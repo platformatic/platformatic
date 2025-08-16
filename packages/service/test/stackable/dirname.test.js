@@ -1,19 +1,15 @@
-'use strict'
+import { kMetadata } from '@platformatic/foundation'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../../index.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
+test('get service info via stackable api', async t => {
+  const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'directories')
 
-test('get service info via stackable api', async (t) => {
-  const projectRoot = join(__dirname, '..', 'fixtures', 'directories')
-  const config = join(projectRoot, 'platformatic.service.json')
+  const stackable = await create(projectRoot)
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
-
-  assert.strictEqual(stackable.app.platformatic.configManager.dirname, projectRoot)
+  assert.strictEqual(stackable.getApplication().platformatic.config[kMetadata].root, projectRoot)
 })

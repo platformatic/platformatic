@@ -5,12 +5,12 @@ import Issues from '../../getting-started/issues.md';
 In many cases it's useful to start Platformatic Composer using an API instead of
 command line, e.g. in tests we want to start and stop our server.
 
-The `buildServer` function allows that:
+The `create` function allows that:
 
 ```js
-import { buildServer } from '@platformatic/composer'
+import { create } from '@platformatic/composer'
 
-const app = await buildServer('path/to/platformatic.composer.json')
+const app = await create('path/to/platformatic.composer.json')
 await app.start()
 
 const res = await fetch(app.url)
@@ -25,9 +25,9 @@ It is also possible to customize the configuration:
 
 
 ```js
-import { buildServer } from '@platformatic/composer'
+import { create } from '@platformatic/composer'
 
-const app = await buildServer({
+const app = await create('/path/to', {
   server: {
     hostname: '127.0.0.1',
     port: 0

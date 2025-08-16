@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual } from 'node:assert'
 import { chmod, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'

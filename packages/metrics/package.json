@@ -1,9 +1,9 @@
 {
   "name": "@platformatic/metrics",
-  "version": "2.74.3",
+  "version": "3.0.0-alpha.1",
   "description": "Platformatic Stackable Metrics",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "test": "npm run lint && borp",
     "lint": "eslint"
@@ -29,5 +29,8 @@
     "borp": "^0.20.0",
     "eslint": "9",
     "neostandard": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -3,8 +3,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
+const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const idp = require(join(fixturesDir, 'interceptors', 'idp'))
 const external = require(join(fixturesDir, 'interceptors', 'external'))
@@ -21,8 +20,7 @@ test('interceptors as undici options', async t => {
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'interceptors', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -49,8 +47,7 @@ test('composable interceptors', async t => {
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'interceptors-2', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -67,8 +64,7 @@ test('composable interceptors', async t => {
 
 test('mesh network works from external processes via ChildManager', async t => {
   const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -96,10 +92,7 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
 
     assert.deepStrictEqual(body.responses[2].statusCode, 502)
-    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
-      'message',
-      'stack'
-    ])
+    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
 
     assert.deepStrictEqual(body.responses[3], {
       body: `application/octet-stream:123:${'echo'.repeat(10)}`,
@@ -110,7 +103,7 @@ test('mesh network works from external processes via ChildManager', async t => {
 
 test('use client interceptors for internal requests', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -127,7 +120,7 @@ test('use client interceptors for internal requests', async t => {
 
 test('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -143,10 +136,12 @@ test('update undici interceptor config', async t => {
   }
 
   const newUndiciConfig = {
-    interceptors: [{
-      module: './interceptor.js',
-      options: { testInterceptedValue: 'updated' }
-    }]
+    interceptors: [
+      {
+        module: './interceptor.js',
+        options: { testInterceptedValue: 'updated' }
+      }
+    ]
   }
 
   // Update the undici interceptor config

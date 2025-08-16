@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { collectMetrics, client } = require('..')
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { client, collectMetrics } from '../index.js'
 
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 

@@ -4,17 +4,14 @@ const { deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const { updateConfigFile } = require('../helpers')
 const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
-const { openLogsWebsocket } = require('../helpers')
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -55,8 +52,7 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
     })
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
@@ -111,8 +107,7 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
     contents.node = { dispatchViaHttp: true }
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
@@ -151,13 +146,10 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
 test('can inject on a worker', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()

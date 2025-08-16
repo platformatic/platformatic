@@ -1,11 +1,28 @@
-import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, toJavaScriptName } from './utils.mjs'
+import CodeBlockWriter from 'code-block-writer'
 import { writeOperations } from './openapi-common.mjs'
+import { capitalize, toJavaScriptName } from './utils.mjs'
 
-export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment, propsOptional }) {
+export function processOpenAPI ({
+  schema,
+  name,
+  fullResponse,
+  fullRequest,
+  optionalHeaders,
+  validateResponse,
+  typesComment,
+  propsOptional
+}) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment, propsOptional }),
+    types: generateTypesFromOpenAPI({
+      schema,
+      name,
+      fullResponse,
+      fullRequest,
+      optionalHeaders,
+      typesComment,
+      propsOptional
+    }),
     implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse })
   }
 }
@@ -20,17 +37,17 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
   })
 
   // TODO support esm
-  writer.writeLine('\'use strict\'')
+  writer.writeLine("'use strict'")
   writer.blankLine()
 
-  writer.writeLine('const pltClient = require(\'@platformatic/client\')')
-  writer.writeLine('const { join } = require(\'path\')')
+  writer.writeLine("const { buildOpenAPIClient } = require('@platformatic/client')")
+  writer.writeLine("const { join } = require('path')")
   writer.blankLine()
 
-  const functionName = `generate${capitalize(camelcasedName)}ClientPlugin`
-  writer.write(`async function ${functionName} (app, opts)`).block(() => {
-    writer.write('app.register(pltClient, ').inlineBlock(() => {
-      writer.writeLine('type: \'openapi\',')
+  const functionName = `generate${capitalize(camelcasedName)}Client`
+  writer.write(`async function ${functionName} (opts)`).block(() => {
+    writer.write('return buildOpenAPIClient(').inlineBlock(() => {
+      writer.writeLine("type: 'openapi',")
       writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
       writer.writeLine('url: opts.url,')
@@ -44,20 +61,23 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
     writer.write(')')
   })
   writer.blankLine()
-  writer.write(`${functionName}[Symbol.for('plugin-meta')] = `).block(() => {
-    writer.writeLine(`name: '${name} OpenAPI Client'`)
-  })
-  writer.writeLine(`${functionName}[Symbol.for('skip-override')] = true`)
-  writer.blankLine()
   writer.writeLine(`module.exports = ${functionName}`)
   writer.writeLine(`module.exports.default = ${functionName}`)
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment, propsOptional }) {
+function generateTypesFromOpenAPI ({
+  schema,
+  name,
+  fullResponse,
+  fullRequest,
+  optionalHeaders,
+  typesComment,
+  propsOptional
+}) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
-  const { paths, info } = schema
+  const { paths } = schema
   const generatedOperationIds = []
 
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -101,80 +121,38 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     writer.writeLine(`// ${typesComment}`)
   }
 
-  writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
-  writer.writeLine('import { type GetHeadersOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from \'@platformatic/client\'')
-  writer.writeLine('import { type FormData } from \'undici\'')
+  writer.writeLine(
+    "import { type GetHeadersOptions, type PlatformaticClientOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from '@platformatic/client'"
+  )
+  writer.writeLine("import { type FormData } from 'undici'")
   writer.blankLine()
 
-  const pluginName = `${capitalizedName}Plugin`
-  const optionsName = `${capitalizedName}Options`
+  const functionName = `generate${capitalize(camelcasedName)}Client`
 
-  writer.write(`declare namespace ${camelcasedName}`).block(() => {
-    // Add always FullResponse interface because we don't know yet
+  // Add always FullResponse interface because we don't know yet
   // if we are going to use it
-    interfaces.write('export interface FullResponse<T, U extends number>').block(() => {
-      interfaces.writeLine('\'statusCode\': U;')
-      interfaces.writeLine('\'headers\': Record<string, string>;')
-      interfaces.writeLine('\'body\': T;')
-    })
-    interfaces.blankLine()
-    writer.write(`export type ${capitalizedName} =`).block(() => {
-      writeOperations(interfaces, writer, operations, {
-        fullRequest, fullResponse, optionalHeaders, schema, propsOptional
-      })
-    })
-
-    writer.write(`export interface ${optionsName}`).block(() => {
-      writer.writeLine('url: string')
-    })
-
-    writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
-    writer.writeLine(`export { ${camelcasedName} as default };`)
-
-    writer.write(interfaces.toString())
+  interfaces.write('export interface FullResponse<T, U extends number>').block(() => {
+    interfaces.writeLine("'statusCode': U;")
+    interfaces.writeLine("'headers': Record<string, string>;")
+    interfaces.writeLine("'body': T;")
   })
+  interfaces.blankLine()
 
-  writer.blankLine()
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
-
-  writer.blankLine()
-  writer.write('declare module \'fastify\'').block(() => {
-    writer.write(`interface Configure${capitalizedName}`).block(() => {
-      writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply, options: GetHeadersOptions): Promise<Record<string,string>>;')
-    })
-    writer.write('interface FastifyInstance').block(() => {
-      writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
-    })
-
-    writer.blankLine()
-
-    writer.write('interface FastifyRequest').block(() => {
-      if (info) {
-        writer.writeLine('/**')
-        writer.conditionalWriteLine(info.title, ` * ${info.title}`)
-        writer.conditionalWriteLine(info.title, ' *')
-        if (info.summary) {
-          for (const line of info.summary.split('\n')) {
-            writer.writeLine(` * ${line}`)
-          }
-          writer.writeLine(' *')
-        }
-        if (info.description) {
-          for (const line of info.description.split('\n')) {
-            writer.writeLine(` * ${line}`)
-          }
-        }
-        writer.writeLine(' */')
-      }
-      writer.quote(camelcasedName)
-      writer.write(`: ${camelcasedName}.${capitalizedName};`)
-      writer.newLine()
+  writer.write(`export type ${capitalizedName} =`).block(() => {
+    writeOperations(interfaces, writer, operations, {
+      fullRequest,
+      fullResponse,
+      optionalHeaders,
+      schema,
+      propsOptional
     })
   })
 
+  writer.write(interfaces.toString())
+
   writer.blankLine()
-  writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
-  writer.writeLine(`export = ${camelcasedName};`)
+  writer.writeLine(`export function ${functionName}(opts: PlatformaticClientOptions): Promise<${capitalizedName}>;`)
+  writer.writeLine(`export default ${functionName};`)
 
   return writer.toString()
 }

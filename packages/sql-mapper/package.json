@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "2.74.3",
+  "version": "3.0.0-alpha.1",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "types": "mapper.d.ts",
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/tspl": "^0.2.0",
-    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/api": "^1.9.0",
     "borp": "^0.20.0",
     "eslint": "9",
     "fastify": "^5.0.0",
@@ -43,7 +43,7 @@
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.6.0",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
@@ -51,5 +51,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

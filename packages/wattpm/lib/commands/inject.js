@@ -1,14 +1,13 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, isVerbose, logFatalError, parseArgs } from '@platformatic/foundation'
 import { createWriteStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { getMatchingRuntime, logFatalError, parseArgs, verbose } from '../utils.js'
 
 function appendOutput (logger, stream, fullOutput, line) {
-  if (verbose) {
+  if (isVerbose()) {
     logger.info(line)
   }
 
@@ -18,6 +17,7 @@ function appendOutput (logger, stream, fullOutput, line) {
 }
 
 export async function injectCommand (logger, args) {
+  const verbose = isVerbose()
   const {
     values: { method, path: url, header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
     positionals: allPositionals
@@ -114,6 +114,7 @@ export async function injectCommand (logger, args) {
     if (response.statusCode === 500) {
       const json = JSON.parse(responseBody)
 
+      /* c8 ignore next - else */
       if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || json?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
         const error = new Error('Cannot find a service.')
         error.code = 'PLT_CTR_SERVICE_NOT_FOUND'

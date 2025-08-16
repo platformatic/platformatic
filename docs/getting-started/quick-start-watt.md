@@ -104,7 +104,7 @@ curl http://localhost:3042
 Inside `my-app`, let's create a new Platformatic Composer
 
 ```bash
-npx wattpm create
+npm create wattpm
 ```
 
 This will output:
@@ -122,7 +122,7 @@ Using existing configuration ...
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/package.json written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/platformatic.json written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/global.d.ts written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/plt-env.d.ts written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
 [16:06:50] INFO: Installing dependencies for the service composer using npm ...

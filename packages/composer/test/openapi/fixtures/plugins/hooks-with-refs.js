@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = async function (app) {
+export default async function (app) {
   app.platformatic.addComposerOnRouteHook('/users', ['GET'], routeOptions => {
     const entitySchema = routeOptions.schema.response[200].items
     entitySchema.title += '_all'

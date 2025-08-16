@@ -1,25 +1,25 @@
 'use strict'
 
-import { test, after, mock } from 'node:test'
-import { equal, ok, match } from 'node:assert'
-import { buildServer } from '@platformatic/db'
-import { join } from 'path'
-import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
+import { create } from '@platformatic/db'
+import { execa } from 'execa'
 import fs, { readFile, writeFile } from 'fs/promises'
+import { equal, match, ok } from 'node:assert'
+import { after, mock, test } from 'node:test'
+import { join } from 'path'
 import { request } from 'undici'
 import * as url from 'url'
+import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
 import { cliPath, moveToTmpdir } from './helper.js'
-import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async (t) => {
+test('build basic client from url', async t => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app = await create(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -29,7 +29,14 @@ test('build basic client from url', async (t) => {
   const schema = await res.body.json()
   const warn = mock.fn()
   const logger = { warn }
-  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false, logger })
+  const { types, implementation } = processFrontendOpenAPI({
+    schema,
+    name: 'sample',
+    language: 'js',
+    fullResponse: false,
+    fullRequest: false,
+    logger
+  })
 
   // Warning log has been triggered
   ok(warn.mock.callCount() > 0)
@@ -134,22 +141,22 @@ export interface Sample {
   setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   getCustomSwagger(req: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   getRedirect(req: GetRedirectRequest): Promise<GetRedirectResponses>;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   getReturnUrl(req: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
@@ -169,13 +176,13 @@ export type PostFoobarResponses =
   }
 })
 
-test('generate correct file names', async (t) => {
+test('generate correct file names', async t => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app = await create(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -191,7 +198,7 @@ test('generate correct file names', async (t) => {
   ok(await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf-8'))
 
   await execa('node', [cliPath, app.url])
-  ok(await readFile(join(dir, 'client', 'client.cjs'), 'utf-8'))
+  ok(await readFile(join(dir, 'client', 'client.js'), 'utf-8'))
   ok(await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8'))
 
   // With --name will create foobar.ts and foobar-types.d.ts
@@ -210,7 +217,7 @@ test('generate correct file names', async (t) => {
   ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts'), 'utf-8'))
 })
 
-test('test factory and client', async (t) => {
+test('test factory and client', async t => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -218,8 +225,8 @@ test('test factory and client', async (t) => {
   }
 
   // start 2 services
-  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
-  const app2 = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app = await create(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app2 = await create(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
     await app2.close()
@@ -248,7 +255,7 @@ console.log(await getReturnUrl({}))
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
   let foundAppUrl = false
-  lines.forEach((line) => {
+  lines.forEach(line => {
     if (line.trim().startsWith('body')) {
       if (!foundAppUrl) {
         ok(line.trim().endsWith(`'{"url":"${app.url}"}'`))
@@ -260,7 +267,7 @@ console.log(await getReturnUrl({}))
   })
 })
 
-test('generate frontend client from path', async (t) => {
+test('generate frontend client from path', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
@@ -279,7 +286,7 @@ export interface Api {
   setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
@@ -290,14 +297,16 @@ export interface Api {
   equal(types.includes(typesTemplate), true)
 })
 
-test('generate frontend client from path (name with dashes)', async (t) => {
+test('generate frontend client from path (name with dashes)', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'a-custom-name'])
   const implementation = await readFile(join(dir, 'a-custom-name', 'a-custom-name.ts'), 'utf8')
   const types = await readFile(join(dir, 'a-custom-name', 'a-custom-name-types.d.ts'), 'utf8')
-  const typePlatformaticFrontendClient = types.split('\n').find((line) => line.startsWith('type PlatformaticFrontendClient = Omit<ACustomName, \'setBaseUrl\'>'))
+  const typePlatformaticFrontendClient = types
+    .split('\n')
+    .find(line => line.startsWith("type PlatformaticFrontendClient = Omit<ACustomName, 'setBaseUrl'>"))
 
   const importTemplate = `import type { ACustomName } from './a-custom-name-types'
 import type * as Types from './a-custom-name-types'
@@ -313,7 +322,7 @@ export interface ACustomName {
   setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
-   * @returns the API response body
+   * @returns the API response
    */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
@@ -326,11 +335,11 @@ export interface ACustomName {
   ok(typePlatformaticFrontendClient)
 })
 
-test('append query parameters to url in non-GET requests', async (t) => {
+test('append query parameters to url in non-GET requests', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'append-query-params-frontend-openapi.json')
-  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend', '--full', 'false'])
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
@@ -369,11 +378,11 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   equal(implementation.includes(tsImplementationTemplate), true)
 })
 
-test('handle headers parameters', async (t) => {
+test('handle headers parameters', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'headers-frontend-openapi.json')
-  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend', '--full', 'false'])
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
@@ -403,11 +412,11 @@ test('handle headers parameters', async (t) => {
   equal(implementation.includes(tsImplementationTemplate), true)
 })
 
-test('handle headers parameters in get request', async (t) => {
+test('handle headers parameters in get request', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'get-headers-frontend-openapi.json')
-  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend', '--full', 'false'])
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
@@ -433,11 +442,11 @@ const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Typ
   equal(implementation.includes(tsImplementationTemplate), true)
 })
 
-test('handle wildcard in path parameter', async (t) => {
+test('handle wildcard in path parameter', async t => {
   const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'wildcard-in-path-openapi.json')
-  await execa('node', [cliPath, fileName, '--frontend', '--name', 'fontend'])
+  await execa('node', [cliPath, fileName, '--frontend', '--name', 'fontend', '--full', 'false'])
   const implementation = await readFile(join(dir, 'fontend', 'fontend.mjs'), 'utf8')
 
   const tsImplementationTemplate = `
@@ -455,15 +464,24 @@ async function _getPkgScopeNameRange (url, request) {
   equal(implementation.includes(tsImplementationTemplate), true)
 })
 
-test('do not add headers to fetch if a get request', async (t) => {
+test('do not add headers to fetch if a get request', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'movies',
+    '--language',
+    'ts',
+    '--frontend'
+  ])
 
   const typeFile = join(dir, 'movies', 'movies.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   const response = await fetch(\`\${url}/auth/login\`, {
     headers,
     ...defaultFetchParams
@@ -482,20 +500,31 @@ test('do not add headers to fetch if a get request', async (t) => {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
     body: await response[responseType]()
-  }`), true)
+  }`),
+    true
+  )
 })
 
-test('support empty response', async (t) => {
+test('support empty response', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'movies',
+    '--language',
+    'ts',
+    '--frontend'
+  ])
 
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
 
   // Empty responses led to a full response returns
-  equal(implementation.includes(`
+  equal(
+    implementation.includes(`
   const response = await fetch(\`\${url}/auth/login\`, {
     headers,
     ...defaultFetchParams
@@ -515,22 +544,37 @@ test('support empty response', async (t) => {
     headers: headersToJSON(response.headers),
     body: await response[responseType]()
   }
-`), true)
+`),
+    true
+  )
 
   const typeFile = join(dir, 'movies', 'movies-types.d.ts')
   const type = await readFile(typeFile, 'utf-8')
-  equal(type.includes(`
+  equal(
+    type.includes(`
 export type GetAuthLoginResponseOK = unknown
 export type GetAuthLoginResponses =
   FullResponse<GetAuthLoginResponseOK, 200>
-`), true)
+`),
+    true
+  )
 })
 
-test('call response.json only for json responses', async (t) => {
+test('call response.json only for json responses', async t => {
   const dir = await moveToTmpdir(after)
   {
     const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
-    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    await execa('node', [
+      join(__dirname, '..', 'cli.mjs'),
+      openAPIfile,
+      '--name',
+      'movies',
+      '--language',
+      'ts',
+      '--frontend',
+      '--full',
+      'false'
+    ])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
@@ -558,7 +602,17 @@ test('call response.json only for json responses', async (t) => {
   }
   {
     const openAPIfile = join(__dirname, 'fixtures', 'frontend-openapi.json')
-    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    await execa('node', [
+      join(__dirname, '..', 'cli.mjs'),
+      openAPIfile,
+      '--name',
+      'movies',
+      '--language',
+      'ts',
+      '--frontend',
+      '--full',
+      'false'
+    ])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
@@ -576,21 +630,42 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test('should match expected implementation with typescript', async (t) => {
+test('should match expected implementation with typescript', async t => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'movies',
+    '--language',
+    'ts',
+    '--frontend',
+    '--full-response',
+    '--full',
+    'false'
+  ])
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
   equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
 })
 
-test('serialize correctly array query parameters', async (t) => {
+test('serialize correctly array query parameters', async t => {
   const dir = await moveToTmpdir(after)
   {
     const openAPIfile = join(__dirname, 'fixtures', 'array-query-parameters-openapi.json')
-    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    await execa('node', [
+      join(__dirname, '..', 'cli.mjs'),
+      openAPIfile,
+      '--name',
+      'movies',
+      '--language',
+      'ts',
+      '--frontend',
+      '--full',
+      'false'
+    ])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
@@ -613,7 +688,7 @@ test('serialize correctly array query parameters', async (t) => {
   }
 })
 
-test('integration test for FormData handling', async (t) => {
+test('integration test for FormData handling', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'form-data')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -621,17 +696,18 @@ test('integration test for FormData handling', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
 
-  await app.register(import('@fastify/multipart'))
+  await app.init()
+  await app.getApplication().register(import('@fastify/multipart'))
 
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'formdata', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'formdata', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -656,7 +732,7 @@ console.log('FormData response:', response)
   equal(line, "FormData response: { success: true, fileName: 'test.txt' }")
 })
 
-test('integration test for custom fetch parameters', async (t) => {
+test('integration test for custom fetch parameters', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'fetch-params')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -664,7 +740,7 @@ test('integration test for custom fetch parameters', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -672,7 +748,7 @@ test('integration test for custom fetch parameters', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'fetch-params', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'fetch-params', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -694,10 +770,10 @@ console.log(await client.getRequestInfo())
   const output = await execa('node', [join(dir, 'fetch-params', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
-  equal(lines[0], '{ method: \'GET\', cache: \'no-store\', mode: \'cors\' }')
+  equal(lines[0], "{ method: 'GET', cache: 'no-store', mode: 'cors' }")
 })
 
-test('integration test for allOf and anyOf schema types', async (t) => {
+test('integration test for allOf and anyOf schema types', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'allof-anyof-schema')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -705,7 +781,7 @@ test('integration test for allOf and anyOf schema types', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -713,7 +789,7 @@ test('integration test for allOf and anyOf schema types', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'combined-types', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'combined-types', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -752,7 +828,7 @@ console.log('Type B response:', await client.postTypeExample({
   equal(lines[7], "Type B response: { result: 'typeB', originalValue: 42 }")
 })
 
-test('integration test for optional headers', async (t) => {
+test('integration test for optional headers', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'optional-headers')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -760,7 +836,7 @@ test('integration test for optional headers', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -768,7 +844,7 @@ test('integration test for optional headers', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optheaders', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optheaders', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -798,7 +874,7 @@ console.log('Only required header:', await client.getHeadersInfo({
   equal(lines[4], "Only required header: { requiredHeader: 'must-be-present', optionalHeader: null }")
 })
 
-test('integration test for optional query parameters', async (t) => {
+test('integration test for optional query parameters', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'optional-query-params')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -806,7 +882,7 @@ test('integration test for optional query parameters', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -814,7 +890,7 @@ test('integration test for optional query parameters', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optparams', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optparams', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -839,11 +915,11 @@ console.log('Only required parameter:', await client.getOptionalParams({
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
 
-  equal(lines[0], 'With all parameters: { required: \'always-here\', optional: \'sometimes-here\' }')
-  equal(lines[1], 'Only required parameter: { required: \'always-here\', optional: null }')
+  equal(lines[0], "With all parameters: { required: 'always-here', optional: 'sometimes-here' }")
+  equal(lines[1], "Only required parameter: { required: 'always-here', optional: null }")
 })
 
-test('integration test for JSON and text response types', async (t) => {
+test('integration test for JSON and text response types', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'content-types')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -851,7 +927,7 @@ test('integration test for JSON and text response types', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -859,7 +935,7 @@ test('integration test for JSON and text response types', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'content-types', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'content-types', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -891,7 +967,7 @@ console.log('Text response value:', textResponse)
   equal(lines[3], 'Text response value: This is plain text data')
 })
 
-test('integration test for simple 200 response with --full option', async (t) => {
+test('integration test for simple 200 response with --full option', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'full-response-simple')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -899,7 +975,7 @@ test('integration test for simple 200 response with --full option', async (t) =>
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -940,7 +1016,7 @@ console.log('Response body:', JSON.stringify(response.body))
   equal(lines[5], 'Response body: {"name":"simple object","value":42,"active":true}')
 })
 
-test('integration test for 204 No Content responses', async (t) => {
+test('integration test for 204 No Content responses', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'no-content-response')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -948,7 +1024,7 @@ test('integration test for 204 No Content responses', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -956,7 +1032,7 @@ test('integration test for 204 No Content responses', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'nocontent', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'nocontent', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -974,7 +1050,7 @@ console.log('DELETE response:', await client.deleteResource({}))
   ok(line.includes('body: undefined'))
 })
 
-test('integration test for query parameters', async (t) => {
+test('integration test for query parameters', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'array-query-params')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -982,7 +1058,7 @@ test('integration test for query parameters', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -990,7 +1066,7 @@ test('integration test for query parameters', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -1005,10 +1081,10 @@ console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
   const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
-  equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
+  equal(lines[0], "{ message: 'ok', data: [ 'foo', 'bar' ] }")
 })
 
-test('integration test for custom headers', async (t) => {
+test('integration test for custom headers', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'custom-headers')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -1016,7 +1092,7 @@ test('integration test for custom headers', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -1024,7 +1100,7 @@ test('integration test for custom headers', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -1044,10 +1120,10 @@ console.log(await client.getReturnHeaders())
   const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
-  equal(lines[0], '{ message: \'ok\', data: { authorization: \'Bearer foobar\' } }')
+  equal(lines[0], "{ message: 'ok', data: { authorization: 'Bearer foobar' } }")
 })
 
-test('integration test for DELETE without body', async (t) => {
+test('integration test for DELETE without body', async t => {
   const fixturesDir = join(__dirname, 'fixtures', 'delete-no-body')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -1055,7 +1131,7 @@ test('integration test for DELETE without body', async (t) => {
     // noop
   }
 
-  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  const app = await create(join(fixturesDir, 'platformatic.db.json'))
   t.after(async () => {
     await app.close()
   })
@@ -1063,7 +1139,7 @@ test('integration test for DELETE without body', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'delete-api', '--frontend'])
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'delete-api', '--frontend', '--full', 'false'])
   const testFile = `
 'use strict'
 
@@ -1085,15 +1161,26 @@ console.log('DELETE with path parameter response:', deleteWithPathResponse)
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
 
-  equal(lines[0], 'DELETE response: { success: true, id: \'123\' }')
-  equal(lines[1], 'DELETE with path parameter response: { success: true, id: \'456\' }')
+  equal(lines[0], "DELETE response: { success: true, id: '123' }")
+  equal(lines[1], "DELETE with path parameter response: { success: true, id: '456' }")
 })
 
-test('add credentials: include in client implementation from file', async (t) => {
+test('add credentials: include in client implementation from file', async t => {
   const dir = await moveToTmpdir(after)
   {
     const openAPIfile = join(__dirname, 'fixtures', 'movies', 'openapi.json')
-    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+    await execa('node', [
+      join(__dirname, '..', 'cli.mjs'),
+      openAPIfile,
+      '--name',
+      'movies',
+      '--language',
+      'ts',
+      '--frontend',
+      '--with-credentials',
+      '--full',
+      'false'
+    ])
 
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
@@ -1116,20 +1203,29 @@ test('add credentials: include in client implementation from file', async (t) =>
   }
 })
 
-test('add credentials: include in client implementation from url', async (t) => {
+test('add credentials: include in client implementation from url', async t => {
   const dir = await moveToTmpdir(after)
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app = await create(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
   })
   await app.start()
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), app.url, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    app.url,
+    '--name',
+    'movies',
+    '--language',
+    'ts',
+    '--frontend',
+    '--with-credentials'
+  ])
 
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
@@ -1152,26 +1248,47 @@ test('add credentials: include in client implementation from url', async (t) => 
   equal(implementation.includes(expectedPostMethod), true)
 })
 
-test('frontend client with config', async (t) => {
+test('frontend client with config', async t => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'client-with-config', 'openapi.json')
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--language', 'ts', '--frontend', '--config', 'watt.json'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'client',
+    '--language',
+    'ts',
+    '--frontend',
+    '--config',
+    'watt.json',
+    '--full',
+    'false'
+  ])
 
   const implementation = await readFile(join(dir, 'client', 'client.ts'), 'utf-8')
-  ok(implementation.includes(`import type { Client } from './client-types'
-import type * as Types from './client-types'`))
-  ok(implementation.includes(`const _getHello = async (url: string, request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
+  ok(
+    implementation.includes(`import type { Client } from './client-types'
+import type * as Types from './client-types'`)
+  )
+  ok(
+    implementation.includes(`const _getHello = async (url: string, request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
   const headers: HeadersInit = {
     ...defaultHeaders
-  }`))
-  ok(implementation.includes(`export const getHello: Client['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
+  }`)
+  )
+  ok(
+    implementation.includes(`export const getHello: Client['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
   return await _getHello(baseUrl, request)
-}`))
+}`)
+  )
 
   const types = await readFile(join(dir, 'client', 'client-types.d.ts'), 'utf-8')
-  ok(types.includes(`export type GetHelloResponses =
-  GetHelloResponseOK`))
-  ok(types.includes(`export interface Client {
+  ok(
+    types.includes(`export type GetHelloResponses =
+  GetHelloResponseOK`)
+  )
+  ok(
+    types.includes(`export interface Client {
   setBaseUrl(newUrl: string): void;
   setDefaultHeaders(headers: object): void;
   setDefaultFetchParams(fetchParams: RequestInit): void;
@@ -1180,18 +1297,29 @@ import type * as Types from './client-types'`))
    * @returns the API response body
    */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
-}`))
+}`)
+  )
   ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))
   ok(types.includes('export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient'))
 })
 
-test('frontend client with full option', async (t) => {
+test('frontend client with full option', async t => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'full-req-res', 'openapi.json')
-  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'full-opt', '--language', 'ts', '--frontend', '--full'])
+  await execa('node', [
+    join(__dirname, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'full-opt',
+    '--language',
+    'ts',
+    '--frontend',
+    '--full'
+  ])
 
   const implementation = await readFile(join(dir, 'full-opt', 'full-opt.ts'), 'utf-8')
-  ok(implementation.includes(`const _postHello = async (url: string, request: Types.PostHelloRequest): Promise<Types.PostHelloResponses> => {
+  ok(
+    implementation.includes(`const _postHello = async (url: string, request: Types.PostHelloRequest): Promise<Types.PostHelloResponses> => {
   const queryParameters: (keyof NonNullable<Types.PostHelloRequest['query']>)[] = ['queryId']
   const searchParams = new URLSearchParams()
   if (request.query) {
@@ -1206,16 +1334,20 @@ test('frontend client with full option', async (t) => {
       }
       delete request.query?.[qp]
     })
-  }`))
+  }`)
+  )
 
-  ok(implementation.includes(`if (request.headers && request.headers['headerId'] !== undefined) {
+  ok(
+    implementation.includes(`if (request.headers && request.headers['headerId'] !== undefined) {
     headers['headerId'] = request.headers['headerId']
     delete request.headers['headerId']
-  }`))
+  }`)
+  )
   ok(implementation.includes('body: isFormData ? body : JSON.stringify(body),'))
 
   const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
-  ok(types.includes(`export type PostHelloRequest = {
+  ok(
+    types.includes(`export type PostHelloRequest = {
   body: {
     'bodyId': string;
   }
@@ -1225,5 +1357,6 @@ test('frontend client with full option', async (t) => {
   headers: {
     'headerId': string;
   }
-}`))
+}`)
+  )
 })

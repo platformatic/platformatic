@@ -1,38 +1,29 @@
-'use strict'
-
-const { ServiceStackable } = require('@platformatic/service')
+import { kMetadata, replaceEnv } from '@platformatic/foundation'
+import { ServiceStackable } from '@platformatic/service'
+import { ensureServices, platformaticComposer } from './application.js'
+import { notHostConstraints } from './not-host-constraints.js'
+import { packageJson } from './schema.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-async function ensureServices (composerId, config) {
-  if (config.composer?.services?.length) {
-    return
-  }
-
-  composerId ??= globalThis.platformatic?.serviceId
-  config.composer ??= {}
-  config.composer.services ??= []
-
-  // When no services are defined, all services are exposed in the composer
-  const services = await globalThis[kITC]?.send('listServices')
-
-  if (services) {
-    config.composer.services = services
-      .filter(id => id !== composerId) // Remove ourself
-      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
-  }
-}
-
-class ComposerStackable extends ServiceStackable {
+export class ComposerStackable extends ServiceStackable {
   #meta
   #dependencies
 
+  constructor (root, config, context) {
+    super(root, config, context)
+    this.type = 'composer'
+    this.version = packageJson.version
+
+    this.applicationFactory = this.context.applicationFactory ?? platformaticComposer
+    this.fastifyOptions ??= {}
+    this.fastifyOptions.constraints = { notHost: notHostConstraints }
+  }
+
   async getBootstrapDependencies () {
-    await ensureServices(this.serviceId, this.configManager.current)
+    await ensureServices(this.serviceId, this.config)
 
-    // We do not call init() on purpose, as we don't want to load the app just yet.
-
-    const composedServices = this.configManager.current.composer?.services
+    const composedServices = this.config.composer?.services
     const dependencies = []
 
     if (Array.isArray(composedServices)) {
@@ -64,20 +55,20 @@ class ComposerStackable extends ServiceStackable {
   }
 
   async isHealthy () {
-    // Still booting, assume healthy
-    if (!this.#dependencies) {
-      return true
-    }
+    // If no dependencies (still booting), assume healthy
+    if (this.#dependencies) {
+      const composedServices = this.#dependencies.map(dep => dep.id)
+      const workers = await globalThis[kITC].send('getWorkers')
 
-    const composedServices = this.#dependencies.map(dep => dep.id)
-    const workers = await globalThis[kITC].send('getWorkers')
-
-    for (const worker of Object.values(workers)) {
-      if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
-        return false
+      for (const worker of Object.values(workers)) {
+        if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
+          globalThis[kITC].notify('event', { event: 'unhealthy' })
+          return false
+        }
       }
     }
 
+    globalThis[kITC].notify('event', { event: 'healthy' })
     return true
   }
 
@@ -85,7 +76,7 @@ class ComposerStackable extends ServiceStackable {
     let url = `http://${id}.plt.local`
 
     if (urlString) {
-      const remoteUrl = await this.configManager.replaceEnv(urlString)
+      const remoteUrl = await replaceEnv(urlString, this.config[kMetadata].env)
 
       if (remoteUrl) {
         url = remoteUrl
@@ -95,4 +86,3 @@ class ComposerStackable extends ServiceStackable {
     return { id, url, local: url.endsWith('.plt.local') }
   }
 }
-module.exports = { ComposerStackable, ensureServices }

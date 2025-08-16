@@ -1,8 +1,10 @@
 'use strict'
 
-const { Resource } = require('@opentelemetry/resources')
-const { AlwaysOnSampler, merge, CompositePropagator, W3CTraceContextPropagator } = require('@opentelemetry/core')
-const { Tracer } = require('@opentelemetry/sdk-trace-base')
+const { emptyResource } = require('@opentelemetry/resources')
+const { merge, CompositePropagator, W3CTraceContextPropagator } = require('@opentelemetry/core')
+const { AlwaysOnSampler } = require('@opentelemetry/sdk-trace-base')
+// We need to import the Tracer to write our own TracerProvider that does NOT extend the OpenTelemetry one.
+const { Tracer } = require('@opentelemetry/sdk-trace-base/build/src/Tracer')
 const { MultiSpanProcessor } = require('./multispan-processor')
 
 class PlatformaticTracerProvider {
@@ -20,15 +22,15 @@ class PlatformaticTracerProvider {
       },
       config
     )
-    this.resource = mergedConfig.resource ?? Resource.empty()
+    this.resource = mergedConfig.resource ?? emptyResource
     this._config = Object.assign({}, mergedConfig, {
       resource: this.resource,
     })
   }
 
   // This is the only mandatory API: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#get-a-tracer
-  getTracer (name, version, options) {
-    return new Tracer({ name, version }, this._config, this)
+  getTracer (name, version) {
+    return new Tracer({ name, version }, this._config, this.resource, this.activeSpanProcessor)
   }
 
   addSpanProcessor (spanProcessor) {
@@ -56,7 +58,6 @@ class PlatformaticTracerProvider {
 
   forceFlush () {
     // Let's do a fire-and-forget of forceFlush on all the processor for the time being.
-    // TODO: manage errors
     this._registeredSpanProcessors.forEach(spanProcessor => spanProcessor.forceFlush())
   }
 

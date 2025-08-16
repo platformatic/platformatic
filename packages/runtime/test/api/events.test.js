@@ -3,15 +3,13 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 test('emits an exhaustive list of events', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-events.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
+  await app.init()
 
   // Patch the runtime event method to being able to intercept ALL events
   const events = []
@@ -27,7 +25,7 @@ test('emits an exhaustive list of events', async t => {
 
   await assert.rejects(async () => {
     await app.start()
-  }, /The service "serviceThrowsOnStart" exited prematurely with error code 1/)
+  }, /boom/)
 
   // Normalize errors
   for (const event of events) {
@@ -46,36 +44,30 @@ test('emits an exhaustive list of events', async t => {
     service: 'serviceThrowsOnStart',
     worker: 0,
     workersCount: 1,
-    error: 'The service "serviceThrowsOnStart" exited prematurely with error code 1'
+    error: 'boom'
   }
 
   assert.deepStrictEqual(events, [
     { event: 'starting', payload: undefined },
     { event: 'service:starting', payload: 'serviceThrowsOnStart' },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
     { event: 'service:worker:init', payload: basePayload },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
     { event: 'service:worker:init', payload: basePayload },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
     { event: 'service:worker:init', payload: basePayload },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
     { event: 'service:worker:init', payload: basePayload },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
     { event: 'service:worker:init', payload: basePayload },
     { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:exited', payload: basePayload },
     { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'errored', message: 'The service "serviceThrowsOnStart" exited prematurely with error code 1' },
+    { event: 'errored', message: 'boom' },
     { event: 'closing', payload: undefined },
     { event: 'stopping', payload: undefined },
     { event: 'service:stopping', payload: 'serviceThrowsOnStart' },

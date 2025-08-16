@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/remix",
-  "version": "2.74.3",
+  "version": "3.0.0-alpha.1",
   "description": "Platformatic Remix Stackable",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "npm run lint && borp --concurrency=1 --timeout 1200000",
+    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout 1200000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -25,8 +25,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "@remix-run/express": "^2.16.8",
     "express": "^4.19.2",
@@ -51,5 +50,8 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -1,4 +1,4 @@
 'use strict'
 
-const { schemaComponents } = require('@platformatic/utils')
+const { schemaComponents } = require('@platformatic/foundation')
 module.exports = schemaComponents.telemetry
