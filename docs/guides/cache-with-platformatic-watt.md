@@ -47,41 +47,35 @@ Make sure your `package.json` includes `"type": "module"` for ESM support:
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "fastify": "^4.0.0"
+    "fastify": "^5.0.0"
   }
 }
 ```
 
-Then create your main application file:
+Create your Watt application using the create command:
 
-```js
-// index.js
-import Fastify from 'fastify'
-
-const fastify = Fastify({
-  logger: true
-})
-
-// Register your routes
-fastify.register(import('./routes/products.js'))
-fastify.register(import('./routes/admin.js'))
-
-// Start the server
-const start = async () => {
-  try {
-    await fastify.listen({ port: 3000 })
-    console.log('Server listening on http://localhost:3000')
-  } catch (err) {
-    fastify.log.error(err)
-    process.exit(1)
-  }
-}
-start()
+```bash
+npx wattpm@latest create
 ```
+
+This will prompt you to create services. Choose `@platformatic/service` to create a Fastify-based service that will handle your cached endpoints.
+
+Your application structure will look like:
+```
+my-cache-app/
+├── watt.json                 # Watt configuration
+├── package.json
+└── web/
+    └── api/                  # Your service
+        ├── package.json
+        ├── platformatic.json # Service configuration
+        └── index.js          # Main service file
+```
+
+Watt automatically loads your services based on the `watt.json` configuration and handles the server lifecycle.
 
 ### Enable HTTP Cache in Watt
 
@@ -89,36 +83,158 @@ Add HTTP caching configuration to your `watt.json` file:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.17.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/watt/2.74.1.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
-  }
+  },
+  "services": [
+    {
+      "id": "api",
+      "path": "./web/api"
+    }
+  ],
+  "entrypoint": "api"
 }
 ```
+
+**Understanding the configuration:**
+- `httpCache`: Enables Watt's built-in HTTP caching layer  
+- `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
+- `services`: Array of services that Watt will load and manage
+- `entrypoint`: The service that handles external traffic (other services are internal only)
 
 **What this does:**
 - Enables Watt's built-in HTTP caching layer
 - Sets up cache tag header for intelligent invalidation
 - No external cache services needed (Redis, Memcached, etc.)
 
-## Step 2: Add Cache Headers to Your Responses
+## Step 2: Add Multiple Services for Demonstration
 
-In your service endpoints, add appropriate cache headers:
+Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a composer and a data service:
+
+```bash
+npx wattpm create
+```
+
+Choose `@platformatic/composer` to create an API gateway, and then create another service for your data backend. Your structure should look like:
+
+```
+my-cache-app/
+├── watt.json
+├── package.json
+└── web/
+    ├── composer/           # API gateway (entrypoint)
+    ├── api/                # Your main API service
+    └── data-service/       # Backend data service
+```
+
+Update your `watt.json` to include all services:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/watt/2.74.1.json",
+  "httpCache": {
+    "cacheTagsHeader": "X-Cache-Tags"
+  },
+  "services": [
+    {
+      "id": "composer",
+      "path": "./web/composer"
+    },
+    {
+      "id": "api",
+      "path": "./web/api"
+    },
+    {
+      "id": "data-service", 
+      "path": "./web/data-service"
+    }
+  ],
+  "entrypoint": "composer"
+}
+```
+
+**Key Watt Concepts:**
+- **Internal Service Mesh**: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
+- **Automatic Load Balancing**: Watt handles traffic distribution across service instances
+- **Zero Network Overhead**: Internal calls don't go through the network stack
+- **Unified Caching**: All services share the same HTTP cache layer
+
+## Step 3: Add Cache Headers to Your Responses
+
+First, let's create a backend data service that will be cached:
 
 ```js
-// routes/products.js
-import { getCounterFromDatabase } from '../lib/database.js'
-
+// web/data-service/routes/data.js
 export default async function (fastify) {
-  fastify.get('/cached-counter', async (req, reply) => {
-    // Set cache duration (10 minutes)
-    reply.header('Cache-Control', 'public, s-maxage=600')
+  let counter = 0
+  
+  fastify.get('/counter', async (req, reply) => {
+    counter++
     
-    // Tag this response for invalidation
+    // Set cache headers
+    reply.header('Cache-Control', 'public, s-maxage=600') // 10 minutes
     reply.header('X-Cache-Tags', 'counter-data')
     
-    const counter = await getCounterFromDatabase()
-    return { counter, timestamp: new Date().toISOString() }
+    console.log(`Data service: returning counter ${counter}`)
+    return { 
+      counter, 
+      timestamp: new Date().toISOString(),
+      source: 'data-service'
+    }
+  })
+  
+  fastify.get('/products/:id', async (req, reply) => {
+    const productId = req.params.id
+    
+    // Cache individual products for 5 minutes
+    reply.header('Cache-Control', 'public, s-maxage=300')
+    reply.header('X-Cache-Tags', `product-${productId},products`)
+    
+    return {
+      id: productId,
+      name: `Product ${productId}`,
+      price: Math.floor(Math.random() * 100),
+      timestamp: new Date().toISOString()
+    }
+  })
+}
+```
+
+Next, create an API service that calls the data service using Watt's internal mesh:
+
+```js
+// web/api/routes/api.js
+export default async function (fastify) {
+  fastify.get('/cached-counter', async (req, reply) => {
+    // Call the data service using internal mesh
+    const response = await fetch('http://data-service.plt.local/counter')
+    const data = await response.json()
+    
+    // The cache headers from data-service are automatically preserved
+    // Watt's caching layer will cache this entire request chain
+    
+    return {
+      ...data,
+      processedBy: 'api-service',
+      cachedResponse: true
+    }
+  })
+  
+  fastify.get('/products/:id', async (req, reply) => {
+    // Fetch product data from backend service
+    const response = await fetch(`http://data-service.plt.local/products/${req.params.id}`)
+    const product = await response.json()
+    
+    // Add computed fields while preserving cache behavior
+    return {
+      ...product,
+      computed: {
+        discountPrice: product.price * 0.9,
+        category: 'electronics'
+      },
+      processedBy: 'api-service'
+    }
   })
 }
 ```
@@ -140,7 +256,39 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 - Tag by both specific resource and category
 - Consider using UUIDs for guaranteed uniqueness
 
-## Step 3: Implement Cache Invalidation
+## Step 4: Configure Composer Gateway
+
+The composer acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
+
+```js
+// web/composer/platformatic.json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.74.1.json",
+  "composer": {
+    "services": [
+      {
+        "id": "api",
+        "origin": "http://api.plt.local",
+        "prefix": "/api"
+      },
+      {
+        "id": "data-service", 
+        "origin": "http://data-service.plt.local",
+        "prefix": "/data"
+      }
+    ]
+  }
+}
+```
+
+**How Composer + Caching Works:**
+- External requests go to composer (e.g., `GET /api/cached-counter`)
+- Composer forwards to internal service (`http://api.plt.local/cached-counter`)
+- API service calls data service (`http://data-service.plt.local/counter`)
+- Watt caches the entire response chain at the composer level
+- Subsequent requests return cached data without hitting any services
+
+## Step 5: Implement Cache Invalidation
 
 ### Method 1: Invalidate by Specific Route
 
@@ -149,20 +297,35 @@ When you need to invalidate cache for a specific endpoint:
 **Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same `globalThis.platformatic.invalidateHttpCache()` method can be used with Express, Koa, or any other framework.
 
 ```js
-// routes/admin.js  
+// web/api/routes/admin.js  
 export default async function (fastify) {
   fastify.delete('/invalidate-counter-cache', async (req, reply) => {
     await globalThis.platformatic.invalidateHttpCache({
       keys: [
         {
-          origin: 'http://internal.plt.local',
-          path: '/cached-counter',
+          origin: 'http://composer.plt.local',
+          path: '/api/cached-counter',
           method: 'GET'
         }
       ]
     })
     
     return { message: 'Cache invalidated for counter endpoint' }
+  })
+  
+  // Invalidate internal service cache as well
+  fastify.delete('/invalidate-data-cache', async (req, reply) => {
+    await globalThis.platformatic.invalidateHttpCache({
+      keys: [
+        {
+          origin: 'http://data-service.plt.local',
+          path: '/counter',
+          method: 'GET'
+        }
+      ]
+    })
+    
+    return { message: 'Data service cache invalidated' }
   })
 }
 ```
@@ -239,35 +402,53 @@ export default async function (fastify) {
 npm run dev
 ```
 
-**2. Test cached responses:**
-```bash
-# First request - cache miss (hits database)
-curl -i http://localhost:3042/cached-counter
+This starts all services (composer, api, data-service) with Watt handling the service mesh and caching.
 
-# Second request - cache hit (returns cached data)
-curl -i http://localhost:3042/cached-counter
+**2. Test cached responses through the composer gateway:**
+```bash
+# First request - cache miss (hits data-service)
+curl -i http://localhost:3042/api/cached-counter
+
+# Second request - cache hit (returns cached data, no service calls)
+curl -i http://localhost:3042/api/cached-counter
+
+# Test direct access to data service through composer
+curl -i http://localhost:3042/data/counter
 ```
 
 **What to verify:**
 - First response includes `X-Cache-Tags: counter-data`
 - Subsequent requests return identical data (counter doesn't increment)
 - Response includes proper `Cache-Control` headers
+- Console shows "Data service: returning counter X" only on cache misses
 
-**3. Test cache invalidation:**
+**3. Test internal service communication caching:**
 ```bash
-# Invalidate by specific route
-curl -X DELETE http://localhost:3042/invalidate-counter-cache
+# Test product caching across service boundaries
+curl -i http://localhost:3042/api/products/123
+curl -i http://localhost:3042/api/products/123  # Should be cached
+
+# Test direct data service access
+curl -i http://localhost:3042/data/products/123  # Should also be cached
+```
+
+**4. Test cache invalidation:**
+```bash
+# Invalidate specific routes
+curl -X DELETE http://localhost:3042/api/invalidate-counter-cache
+curl -X DELETE http://localhost:3042/api/invalidate-data-cache
 
 # Or invalidate by tags
-curl -X DELETE "http://localhost:3042/invalidate-by-tags?tags=counter-data"
+curl -X DELETE "http://localhost:3042/api/invalidate-by-tags?tags=counter-data"
 
 # Verify cache was invalidated
-curl -i http://localhost:3042/cached-counter
+curl -i http://localhost:3042/api/cached-counter
 ```
 
 **Expected behavior:**
 - After invalidation, counter value should increment on next request
 - Response should have fresh timestamp
+- Internal service calls resume after cache invalidation
 
 ### Complete Example Implementation
 
@@ -380,9 +561,37 @@ export default async function (fastify) {
 - Monitor cache size and implement eviction policies if needed
 - Consider external caching solutions for very large datasets
 
+## Watt-Specific Caching Advantages
+
+This guide demonstrated several unique advantages of Watt's HTTP caching approach:
+
+### 1. **Unified Cache Layer Across Service Boundaries**
+Traditional microservices require separate caching solutions for each service. Watt provides a single, shared cache layer that works across all your services automatically.
+
+### 2. **Zero-Network Internal Communication**
+Internal service calls using `.plt.local` domains don't hit the network stack - they're in-process calls with automatic caching applied.
+
+### 3. **Automatic Cache Header Propagation**
+When service A calls service B, cache headers from B are automatically preserved and applied to the entire request chain.
+
+### 4. **Service Mesh + Caching Integration**
+The composer automatically handles routing and caching for complex multi-service requests without additional configuration.
+
+### 5. **Framework Agnostic**
+The same caching APIs work whether you're using Fastify, Express, Koa, or any other Node.js framework within your Watt application.
+
+**Real-world Example:**
+```
+External Request → Composer → API Service → Data Service
+                     ↓
+                 Single Cache Entry
+```
+
+Instead of 3 separate cache layers, you get 1 unified cache that handles the entire request flow.
+
 ## Next Steps
 
-Now that you have HTTP caching working:
+Now that you have HTTP caching working with Watt's service mesh:
 
 - **[Monitor your cache](/docs/guides/monitoring)** - Track cache hit rates and performance
 - **[Deploy with caching](/docs/guides/deployment/)** - Production considerations for cached applications  
