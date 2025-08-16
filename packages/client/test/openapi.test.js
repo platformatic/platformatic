@@ -457,7 +457,7 @@ test('only add the throwOnError interceptor once', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const app = await create(join(tmpDir, 'platformatic-prefix.db.json'))
   const agent = getGlobalDispatcher()
 
   t.after(async () => {
@@ -476,17 +476,20 @@ test('only add the throwOnError interceptor once', async t => {
   const mockPool = mockAgent.get(app.url)
 
   // intercept the request
-  mockPool.intercept({
-    path: '/movies-api/movies/100',
-    method: 'GET'
-  }).reply(204, null)
+  mockPool
+    .intercept({
+      path: '/movies-api/movies/100',
+      method: 'GET'
+    })
+    .reply(204, null)
     .persist()
 
   const spy = t.mock.method(mockAgent, 'compose')
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
-    throwOnError: true
+    throwOnError: true,
+    fullRequest: false
   })
 
   // Previosly the client was composing the dispatcher with the throw on error
