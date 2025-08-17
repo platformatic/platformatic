@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/nest",
-  "version": "3.0.0-alpha.3",
+  "version": "3.0.0-alpha.4",
   "description": "Platformatic Nest.js Stackable",
   "main": "index.js",
   "type": "module",
