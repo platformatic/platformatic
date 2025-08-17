@@ -1,4 +1,4 @@
-![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
+![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png)
 
 # Watt, the Application Server for Node.js
 
@@ -7,7 +7,7 @@
 [![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
 [![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
-[Watt Utils](https://platformatic.dev/watt), utilities for the Platformatic's Node.js application server.
+Watt Utils, utilities for the Platformatic's Node.js application server.
 
 ## Usage
 
@@ -21,8 +21,8 @@ guide to get up and running with Platformatic.
 ## Documentation
 
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
-- [Reference](https://platformatic.dev/docs/watt/overview)
-- [Guides](https://platformatic.dev/docs/learn/overview)
+- [Reference](https://docs.platformatic.dev/docs/reference/watt/overview)
+- [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
 Check out our full documentation at [platformatic.dev](https://platformatic.dev).
 
