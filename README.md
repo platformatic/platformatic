@@ -55,16 +55,20 @@ Your application will be running at `http://localhost:3042` with auto-generated 
 ## Choose Your Learning Path
 
 ### 👋 New to Node.js?
-**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/Overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
 Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 
 ### ⚡ Experienced Developer?
-**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start-watt) → [Architecture Overview](https://docs.platformatic.dev/docs/overview)  
+**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start-watt) → [Architecture Overview](https://docs.platformatic.dev/docs/Overview)  
 Get running in 5 minutes, then dive into advanced patterns and integrations.
 
 ### 🔄 Migrating Existing Apps?
-**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/frameworks)  
+**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)  
 Add Watt to your existing Express, Fastify, or Next.js applications.
+
+### 📚 Exploring Options?
+**Compare:** [Watt vs Alternatives](https://docs.platformatic.dev/docs/Overview) → [Examples Gallery](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+See how Watt compares to Express, Fastify, and other Node.js platforms.
 
 ---
 
@@ -87,19 +91,19 @@ Auto-generated REST and GraphQL APIs from your database schema with built-in aut
 
 ## Documentation Structure
 
-### 📖 [Overview](https://docs.platformatic.dev/docs/overview)
+### 📖 [Overview](https://docs.platformatic.dev/docs/Overview)
 Understand what Watt is, why it exists, and how it fits your needs
 
-### 🎓 [Learning](https://docs.platformatic.dev/docs/learn)  
+### 🎓 [Learning](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)  
 Tutorials, examples, and guided paths from beginner to advanced
 
-### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides)
+### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 Solve specific problems with framework integration, deployment, and production setup
 
-### 📋 [Reference](https://docs.platformatic.dev/docs/reference)
+### 📋 [Reference](https://docs.platformatic.dev/docs/reference-overview)
 Complete technical specifications for CLI, configuration, and APIs
 
-### 🧠 [Concepts](https://docs.platformatic.dev/docs/concepts) 
+### 🧠 [Concepts](https://docs.platformatic.dev/docs/Overview) 
 Deep architectural understanding and design decisions
 
 ## Get Support

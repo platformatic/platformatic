@@ -1,6 +1,6 @@
 # @platformatic/sql-mapper
 
-Check out the full documentation on [our website](https://docs.platformatic.dev/docs/packages/sql-mapper/fastify-plugin/#sql-mapper-fastify-plugin).
+Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/sql-mapper/overview).
 
 ## Install
 
