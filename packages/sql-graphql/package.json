@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "3.0.0-alpha.4",
+  "version": "3.0.0-alpha.5",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "types": "index.d.ts",
