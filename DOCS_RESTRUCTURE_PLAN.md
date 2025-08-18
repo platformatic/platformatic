@@ -14,7 +14,7 @@ The current Platformatic documentation suffers from several critical issues that
 - **Missing user journeys**: No clear progression from beginner to advanced usage
 
 **Strategic Focus:**
-This plan repositions **Watt (wattpm) as the primary product** - the Node.js Application Server that powers everything else. All other components (DB, Service, Composer, Runtime, Stackables) become services/features that run within Watt.
+This plan repositions **Watt (wattpm) as the primary product** - the Node.js Application Server that powers everything else. All other components (DB, Service, Composer, Runtime, Capabilities) become services/features that run within Watt.
 
 ## User Journey Mapping
 
@@ -95,7 +95,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 - Advanced configuration reference
 - Performance optimization guides
 - Monitoring and observability setup
-- Custom stackable development
+- Custom capability development
 
 ## Getting Started Strategy
 
@@ -231,7 +231,7 @@ Explore advanced features
 - How it differs from alternatives
 
 **3. Core Concepts**
-- Services and stackables
+- Services and capabilities
 - Configuration-driven development
 - Built-in observability
 
@@ -326,7 +326,7 @@ docs/guides/
 │   ├── metrics-collection.md
 │   └── distributed-tracing.md
 └── advanced/
-    ├── custom-stackables.md
+    ├── custom-capabilities.md
     ├── microservices-architecture.md
     └── performance-optimization.md
 ```
@@ -343,7 +343,7 @@ docs/reference/
 │   ├── service/
 │   ├── composer/
 │   └── runtime/
-└── stackables/
+└── capabilities/
     ├── next/
     ├── astro/
     ├── node/
@@ -375,11 +375,11 @@ docs/concepts/
   - [x] Reorganize from package-centric to user journey-centric
   - [x] Create Overview → Learning → Guides → Reference → Concepts progression
   - [x] Keep Overview and Learning sections expanded by default
-  - [x] Group content by Services/Stackables rather than internal packages
+  - [x] Group content by Services/Capabilities rather than internal packages
 
 - [x] **Establish User-Centered Reference Architecture**
   - [x] Move from `docs/packages/` to `docs/reference/` organized by user mental model
-  - [x] Group by services (not internal packages): watt/, services/, stackables/
+  - [x] Group by services (not internal packages): watt/, services/, capabilities/
   - [x] Create consistent format addressing "How do I configure X?" questions
   - [x] Preserve all existing technical content, just reorganize structure
 
@@ -505,7 +505,7 @@ The planned structure will be implemented in future phases once the foundation i
   - [ ] Advanced tutorials for complex scenarios
 
 - [ ] **Create Advanced Implementation Guides**
-  - [ ] Custom stackable development
+  - [ ] Custom capability development
   - [ ] Complex microservices architecture patterns
   - [ ] Performance optimization and scaling
   - [ ] Security best practices and compliance
@@ -726,12 +726,12 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Stackables', // Framework integrations
+          label: 'Capabilities', // Framework integrations
           items: [
-            'reference/stackables/next',
-            'reference/stackables/astro', 
-            'reference/stackables/node',
-            'reference/stackables/creating-custom'
+            'reference/capabilities/next',
+            'reference/capabilities/astro', 
+            'reference/capabilities/node',
+            'reference/capabilities/creating-custom'
           ]
         }
       ]
@@ -759,7 +759,7 @@ const sidebars = {
 2. **Watt-First Positioning**: Watt prominently featured as primary product
 3. **Clear Content Separation**: Each section serves distinct user needs per Diátaxis framework
 4. **Collapsed State Strategy**: Keep Overview and Learning open; collapse advanced sections
-5. **Mental Model Organization**: Services/Stackables instead of internal package names
+5. **Mental Model Organization**: Services/Capabilities instead of internal package names
 6. **Multiple Entry Points**: Quick Start, Tutorials, Examples, Migrations all clearly accessible
 7. **Progressive Disclosure**: Basic → Intermediate → Advanced within each section
 

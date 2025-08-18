@@ -5,9 +5,9 @@ import {
   create as createService,
   platformaticService,
   ServerInstance,
-  type PlatformaticServiceConfig as ServiceConfig,
-  ServiceStackable,
-  transform as serviceTransform
+  ServiceCapability,
+  transform as serviceTransform,
+  type PlatformaticServiceConfig as ServiceConfig
 } from '../../../../../index.js'
 
 import { type AcmeBaseConfig } from './config.js'
@@ -26,19 +26,19 @@ async function isDirectory (path: string) {
 
 export default async function acmeBase (
   app: ServerInstance<ServiceConfig & AcmeBaseConfig>,
-  stackable: ServiceStackable
+  capability: ServiceCapability
 ) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }
 
-  await platformaticService(app, stackable)
+  await platformaticService(app, capability)
 }
 
 Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
 export async function transform (config: ServiceConfig & AcmeBaseConfig): ServiceConfig & AcmeBaseConfig {
-  // Call the transformConfig method from the base stackable
+  // Call the transformConfig method from the base capability
   config = await serviceTransform(config)
 
   // In this method you can alter the configuration before the application

@@ -360,7 +360,7 @@ test('import - should not modify existing watt.json files when exporting local f
 })
 
 for (const [name, dependency] of Object.entries(autodetect)) {
-  test(`import - should correctly autodetect a @platformatic/${name} stackable when importing local folders`, async t => {
+  test(`import - should correctly autodetect a @platformatic/${name} capability when importing local folders`, async t => {
     const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
     t.after(() => safeRemove(rootDir))
 
@@ -549,7 +549,7 @@ test('import - when launched without arguments from a service file, should not d
     type: 'module'
   })
 
-  ok(!importProcess.stdout.includes('Detected stackable'))
+  ok(!importProcess.stdout.includes('Detected capability'))
 })
 
 test('import - should find the nearest watt.json', async t => {

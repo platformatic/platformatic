@@ -3,7 +3,7 @@
 const { join, resolve: resolvePath, isAbsolute } = require('node:path')
 const { readdir } = require('node:fs/promises')
 const { createRequire } = require('node:module')
-const { importStackableAndConfig, validationOptions } = require('@platformatic/basic')
+const { importCapabilityAndConfig, validationOptions } = require('@platformatic/basic')
 const {
   kMetadata,
   omitProperties,
@@ -198,8 +198,8 @@ async function transform (config, _, context) {
         service.type = extractModuleFromSchemaUrl(config, true).module
         service.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
-        const { moduleName, stackable } = await importStackableAndConfig(service.path)
-        pkg = stackable
+        const { moduleName, capability } = await importCapabilityAndConfig(service.path)
+        pkg = capability
 
         service.type = moduleName
       }

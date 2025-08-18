@@ -15,18 +15,18 @@ async function isDirectory (path) {
   }
 }
 
-export default async function acmeBase (app, stackable) {
+export default async function acmeBase (app, capability) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }
 
-  await platformaticService(app, stackable)
+  await platformaticService(app, capability)
 }
 
 acmeBase[Symbol.for('skip-override')] = true
 
 export async function transform (config) {
-  // Call the transformConfig method from the base stackable
+  // Call the transformConfig method from the base capability
   config = await serviceTransform(config)
 
   // In this method you can alter the configuration before the application

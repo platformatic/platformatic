@@ -169,22 +169,22 @@ test('returns application statuses', async t => {
   app.start()
 
   assert.strictEqual(app.getStatus(), 'starting')
-  assert.notStrictEqual(app.stackable, null)
+  assert.notStrictEqual(app.capability, null)
 
   await once(app, 'start')
 
   assert.strictEqual(app.getStatus(), 'started')
-  assert.notStrictEqual(app.stackable, null)
+  assert.notStrictEqual(app.capability, null)
 
   app.stop()
 
   assert.strictEqual(app.getStatus(), 'started')
-  assert.notStrictEqual(app.stackable, null)
+  assert.notStrictEqual(app.capability, null)
 
   await once(app, 'stop')
 
   assert.strictEqual(app.getStatus(), 'stopped')
-  assert.notStrictEqual(app.stackable, null)
+  assert.notStrictEqual(app.capability, null)
 })
 
 test('supports configuration overrides', async t => {
@@ -211,7 +211,7 @@ test('supports configuration overrides', async t => {
     }
   })
 
-  const stackableConfig = await app.stackable.getConfig()
-  assert.strictEqual(stackableConfig.server.keepAliveTimeout, 1)
-  assert.strictEqual(stackableConfig.server.port, 2222)
+  const capabilityConfig = await app.capability.getConfig()
+  assert.strictEqual(capabilityConfig.server.keepAliveTimeout, 1)
+  assert.strictEqual(capabilityConfig.server.port, 2222)
 })

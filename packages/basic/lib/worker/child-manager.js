@@ -137,7 +137,7 @@ export class ChildManager extends ITC {
   async inject () {
     await this.listen()
 
-    // Serialize data into a JSON file for the stackable to use
+    // Serialize data into a JSON file for the capability to use
     this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
     await createDirectory(dirname(this.#dataPath))
 

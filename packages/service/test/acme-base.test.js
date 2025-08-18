@@ -3,12 +3,12 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-test('stackable example', async t => {
+test('capability example', async t => {
   const cwd = join(import.meta.dirname, './fixtures/acme-base')
   await execa('node', ['--test'], { cwd })
 })
 
-test('stackable in typescript', async t => {
+test('capability in typescript', async t => {
   const cwd = join(import.meta.dirname, './fixtures/acme-base-ts')
 
   let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')

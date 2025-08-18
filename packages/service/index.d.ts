@@ -1,4 +1,4 @@
-import { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
+import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
@@ -34,11 +34,11 @@ export declare function create (
   root: string | PlatformaticServiceConfig,
   source?: string | PlatformaticServiceConfig,
   context?: ConfigurationOptions
-): Promise<ServiceStackable>
+): Promise<ServiceCapability>
 
 export declare const skipTelemetryHooks: boolean
 
-export declare function platformaticService (app: FastifyInstance, stackable: ServiceStackable): Promise<void>
+export declare function platformaticService (app: FastifyInstance, capability: ServiceCapability): Promise<void>
 
 export declare class Generator extends BaseGenerator.BaseGenerator {}
 export declare function applyTestHelperCustomizations (
@@ -64,7 +64,7 @@ export declare const schemaComponents: {
 
 export declare const version: string
 
-export declare class ServiceStackable<Config = PlatformaticServiceConfig> extends BaseStackable<
+export declare class ServiceCapability<Config = PlatformaticServiceConfig> extends BaseCapability<
   Config,
   BaseOptions<ServiceContext>
 > {

@@ -24,7 +24,7 @@ Services that run within Watt to handle different aspects of your application:
 - **API Gateway (Composer)** - Aggregate multiple services into unified APIs
 - **Client SDK** - Generated clients for consuming APIs
 
-### 🎨 Framework Integrations (Stackables)
+### 🎨 Framework Integrations (Capabilities)
 Framework integrations that let you run frontend applications alongside your APIs:
 
 - **Next.js** - React applications with SSR/SSG

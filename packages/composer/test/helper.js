@@ -1,5 +1,5 @@
 import Swagger from '@fastify/swagger'
-import { create as createDatabaseStackable } from '@platformatic/db'
+import { create as createDatabaseCapability } from '@platformatic/db'
 import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/foundation'
 import fastify from 'fastify'
 import fs from 'fs'
@@ -142,7 +142,7 @@ export async function createPlatformaticDatabaseService (t, { name, jsonFile }) 
     fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
   } catch {}
 
-  const service = await createDatabaseStackable(path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile))
+  const service = await createDatabaseCapability(path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile))
   await service.init()
 
   service.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {

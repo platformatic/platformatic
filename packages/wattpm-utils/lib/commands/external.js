@@ -46,16 +46,16 @@ async function parseLocalFolder (path) {
     }
   }
 
-  // Check which stackable we should use
+  // Check which capability we should use
   const appType = await detectApplicationType(path, packageJson)
 
   if (!appType) {
     return
   }
 
-  const { name: stackable, label } = appType
+  const { name: capability, label } = appType
 
-  return { id: packageJson.name ?? basename(path), url, packageJson, stackable, label }
+  return { id: packageJson.name ?? basename(path), url, packageJson, capability, label }
 }
 
 export async function appendEnvVariable (envFile, key, value) {
@@ -121,11 +121,11 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
       return logFatalError(logger, `The path ${bold(path)} does not contain a supported application.`)
     }
 
-    const { id, packageJson, stackable, label } = appType
+    const { id, packageJson, capability, label } = appType
 
     if (!wattConfiguration) {
       const wattJson = {
-        $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
+        $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
       }
 
       await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
@@ -133,19 +133,19 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
 
     packageJson.dependencies ??= {}
 
-    if (!packageJson.dependencies[stackable]) {
-      packageJson.dependencies[stackable] = `^${version}`
+    if (!packageJson.dependencies[capability]) {
+      packageJson.dependencies[capability] = `^${version}`
       process._rawDebug(packageJson)
       packageJson.devDependencies ??= {}
-      packageJson.devDependencies[stackable] = undefined
+      packageJson.devDependencies[capability] = undefined
 
-      if (stackable === '@platformatic/node') {
+      if (capability === '@platformatic/node') {
         logger.info(
-          `Service ${bold(id)} is a ${bold('generic Node.js application')}. Adding ${bold(stackable)} to its package.json dependencies.`
+          `Service ${bold(id)} is a ${bold('generic Node.js application')}. Adding ${bold(capability)} to its package.json dependencies.`
         )
       } else {
         logger.info(
-          `Service ${bold(id)} is using ${bold(label)}. Adding ${bold(stackable)} to its package.json dependencies.`
+          `Service ${bold(id)} is using ${bold(label)}. Adding ${bold(capability)} to its package.json dependencies.`
         )
       }
 
@@ -267,7 +267,7 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
     return logFatalError(logger, `The path ${bold(path)} does not contain a supported application.`)
   }
 
-  const { id, url, packageJson, stackable } = appType
+  const { id, url, packageJson, capability } = appType
 
   if (!(await importService(logger, configurationFile, overridenId ?? id, path, url))) {
     return
@@ -285,16 +285,16 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
     )
   } else {
     const wattJson = {
-      $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
+      $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
     }
 
     await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
   }
 
   packageJson.dependencies ??= {}
-  packageJson.dependencies[stackable] = `^${version}`
+  packageJson.dependencies[capability] = `^${version}`
 
-  logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+  logger.info(`Detected capability ${bold(capability)} for service ${bold(id)}, adding to the service dependencies.`)
 
   await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
 }

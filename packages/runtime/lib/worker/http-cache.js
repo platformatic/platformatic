@@ -120,7 +120,7 @@ const httpCacheInterceptor = (interceptorOpts) => {
   const originalInterceptor = interceptors.cache(interceptorOpts)
 
   // AsyncLocalStorage that contains a client http request span
-  // Exists only when the nodejs stackable telemetry is enabled
+  // Exists only when the nodejs capability telemetry is enabled
   const clientSpansAls = globalThis.platformatic.clientSpansAls
 
   return (originalDispatch) => {

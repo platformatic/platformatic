@@ -27,7 +27,7 @@ export interface BaseOptions<Context = BaseContext> {
 
 export declare const schemaOptions: Partial<Record<string, unknown>>
 
-export class BaseStackable<Config = Record<string, any>, Options = BaseOptions> {
+export class BaseCapability<Config = Record<string, any>, Options = BaseOptions> {
   basePath: string
   constructor (
     type: string,

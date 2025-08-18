@@ -35,7 +35,7 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    assert.deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -46,7 +46,7 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    assert.deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -92,7 +92,7 @@ test('should strip the runtime base path for a composer as an entrypoint', async
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    assert.deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -103,7 +103,7 @@ test('should strip the runtime base path for a composer as an entrypoint', async
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    assert.deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -149,7 +149,7 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    assert.deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {
@@ -160,7 +160,7 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    assert.deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {
@@ -195,7 +195,7 @@ test('should strip the runtime base path for an express as an entrypoint', async
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'express' })
+    assert.deepStrictEqual(response, { capability: 'express' })
   }
 
   {
@@ -206,7 +206,7 @@ test('should strip the runtime base path for an express as an entrypoint', async
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'express' })
+    assert.deepStrictEqual(response, { capability: 'express' })
   }
 
   {
@@ -241,7 +241,7 @@ test('should strip the runtime base path for a nodejs in a child process as an e
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'node-child-process' })
+    assert.deepStrictEqual(response, { capability: 'node-child-process' })
   }
 
   {
@@ -252,7 +252,7 @@ test('should strip the runtime base path for a nodejs in a child process as an e
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'node-child-process' })
+    assert.deepStrictEqual(response, { capability: 'node-child-process' })
   }
 
   {
@@ -278,7 +278,7 @@ test('should strip the runtime base path for a nodejs in a child process as an e
   }
 })
 
-test('should not strip the runtime base path for a stackable that opted-out', async t => {
+test('should not strip the runtime base path for a capability that opted-out', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-no-strip')
 
   {
@@ -288,7 +288,7 @@ test('should not strip the runtime base path for a stackable that opted-out', as
     assert.strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    assert.deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {

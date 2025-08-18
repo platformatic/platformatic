@@ -8,8 +8,8 @@ import { request } from 'undici'
 import { platformaticService } from '../index.js'
 import { createFromConfig } from './helper.js'
 
-async function myApp (app, stackable) {
-  await platformaticService(app, stackable)
+async function myApp (app, capability) {
+  await platformaticService(app, capability)
   app.get('/', () => 'hello world')
 }
 

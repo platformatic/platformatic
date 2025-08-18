@@ -44,7 +44,7 @@ const buildableApplication = {
           default: 'npm ci --omit-dev'
         },
         // All the following options purposely don't have a default so
-        // that stackables can detect if the user explicitly set them.
+        // that capabilities can detect if the user explicitly set them.
         build: {
           type: 'string'
         },

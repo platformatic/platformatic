@@ -57,7 +57,7 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = false
     this.#started = false
     this.#listening = false
-    this.stackable = null
+    this.capability = null
     this.#fileWatcher = null
     this.#lastELU = eventLoopUtilization()
 
@@ -86,13 +86,13 @@ class PlatformaticApp extends EventEmitter {
 
   async updateContext (context) {
     this.#context = { ...this.#context, ...context }
-    if (this.stackable) {
-      await this.stackable.updateContext(context)
+    if (this.capability) {
+      await this.capability.updateContext(context)
     }
   }
 
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies?.() ?? []
+    return this.capability.getBootstrapDependencies?.() ?? []
   }
 
   async init () {
@@ -119,11 +119,11 @@ class PlatformaticApp extends EventEmitter {
           onMissingEnv: this.#context.fetchServiceUrl
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
-        this.stackable = await pkg.create(appConfig.path, appConfig.config, this.#context)
+        this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
         // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
         const pkg = await loadConfigurationModule(resolve(__dirname, '../..'), {}, '@platformatic/basic')
-        this.stackable = await pkg.create(appConfig.path, {}, this.#context)
+        this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
 
       this.#updateDispatcher()
@@ -149,18 +149,18 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init?.()
+      await this.capability.init?.()
     } catch (err) {
       this.#logAndThrow(err)
     }
 
     if (this.#watch) {
-      const watchConfig = await this.stackable.getWatchConfig()
+      const watchConfig = await this.capability.getWatchConfig()
 
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
-          this.stackable.log({ message: 'files changed', level: 'debug' })
+          this.capability.log({ message: 'files changed', level: 'debug' })
           this.emit('changed')
         }, 100) // debounce restart for 100ms
 
@@ -171,11 +171,11 @@ class PlatformaticApp extends EventEmitter {
     const listen = !!this.appConfig.useHttp
 
     try {
-      await this.stackable.start({ listen })
+      await this.capability.start({ listen })
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.stackable.log({ message: err.message, level: 'debug' })
+      this.capability.log({ message: err.message, level: 'debug' })
       this.#starting = false
       throw err
     }
@@ -191,7 +191,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     await this.#stopFileWatching()
-    await this.stackable.stop()
+    await this.capability.stop()
 
     this.#started = false
     this.#starting = false
@@ -205,7 +205,7 @@ class PlatformaticApp extends EventEmitter {
       return
     }
 
-    await this.stackable.start({ listen: true })
+    await this.capability.start({ listen: true })
   }
 
   async getMetrics ({ format }) {
@@ -221,7 +221,7 @@ class PlatformaticApp extends EventEmitter {
         globalThis.platformatic.onHttpStatsSize(url, size || 0)
       }
     }
-    return this.stackable.getMetrics({ format })
+    return this.capability.getMetrics({ format })
   }
 
   async getHealth () {
@@ -253,7 +253,7 @@ class PlatformaticApp extends EventEmitter {
     fileWatcher.on('update', this.#debouncedRestart)
 
     fileWatcher.startWatching()
-    this.stackable.log({ message: 'start watching files', level: 'debug' })
+    this.capability.log({ message: 'start watching files', level: 'debug' })
     this.#fileWatcher = fileWatcher
   }
 
@@ -261,7 +261,7 @@ class PlatformaticApp extends EventEmitter {
     const watcher = this.#fileWatcher
 
     if (watcher) {
-      this.stackable.log({ message: 'stop watching files', level: 'debug' })
+      this.capability.log({ message: 'stop watching files', level: 'debug' })
       await watcher.stopWatching()
       this.#fileWatcher = null
     }

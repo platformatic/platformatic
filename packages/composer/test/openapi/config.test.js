@@ -13,7 +13,7 @@ test('should throw an error if can not read openapi config file', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
 
   try {
-    const stackable = await createFromConfig(t, {
+    const capability = await createFromConfig(t, {
       server: {
         logger: {
           level: 'fatal'
@@ -33,7 +33,7 @@ test('should throw an error if can not read openapi config file', async t => {
       }
     })
 
-    await stackable.start({ listen: true })
+    await capability.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
     assert.equal(err.message, 'Could not read openapi config for "api1" service')
@@ -53,7 +53,7 @@ test('should throw an error if openapi config is not valid', async t => {
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
   try {
-    const stackable = await createFromConfig(t, {
+    const capability = await createFromConfig(t, {
       server: {
         logger: {
           level: 'fatal'
@@ -73,7 +73,7 @@ test('should throw an error if openapi config is not valid', async t => {
       }
     })
 
-    await stackable.start({ listen: true })
+    await capability.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
     assert.equal(err.message, 'Could not read openapi config for "api1" service')

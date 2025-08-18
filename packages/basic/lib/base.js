@@ -13,7 +13,7 @@ import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 const kITC = Symbol.for('plt.runtime.itc')
 
-export class BaseStackable extends EventEmitter {
+export class BaseCapability extends EventEmitter {
   childManager
   subprocess
   subprocessForceClose
@@ -90,11 +90,11 @@ export class BaseStackable extends EventEmitter {
   }
 
   start () {
-    throw new Error('BaseStackable.start must be overriden by the subclasses')
+    throw new Error('BaseCapability.start must be overriden by the subclasses')
   }
 
   stop () {
-    throw new Error('BaseStackable.stop must be overriden by the subclasses')
+    throw new Error('BaseCapability.stop must be overriden by the subclasses')
   }
 
   build () {
@@ -107,7 +107,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   inject () {
-    throw new Error('BaseStackable.inject must be overriden by the subclasses')
+    throw new Error('BaseCapability.inject must be overriden by the subclasses')
   }
 
   getUrl () {

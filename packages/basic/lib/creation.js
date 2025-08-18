@@ -1,9 +1,9 @@
 import { resolve } from './config.js'
-import { importStackableAndConfig } from './modules.js'
+import { importCapabilityAndConfig } from './modules.js'
 
 export async function create (fileOrDirectory, sourceOrConfig, context) {
   const { root, source } = await resolve(fileOrDirectory, sourceOrConfig)
-  const { stackable } = await importStackableAndConfig(root, source, context)
+  const { capability } = await importCapabilityAndConfig(root, source, context)
 
-  return stackable.create(root, source, context)
+  return capability.create(root, source, context)
 }

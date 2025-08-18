@@ -44,7 +44,7 @@ Options:
 
 ## `update`
 
-Updates all the Platformatic runtime and stackable packages in your `package.json` files to the latest available version.
+Updates all the Platformatic runtime and capability packages in your `package.json` files to the latest available version.
 
 It will only work on packages whose are defined with the `~` or `^` syntax.
 

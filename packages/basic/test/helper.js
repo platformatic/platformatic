@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
-import { BaseStackable } from '../lib/base.js'
+import { BaseCapability } from '../lib/base.js'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
@@ -77,7 +77,7 @@ export async function create (t, context = {}, config = {}, name = 'base', versi
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseStackable(name, version, base, config, context, {
+  return new BaseCapability(name, version, base, config, context, {
     stdout: new MockedWritable(),
     stderr: new MockedWritable()
   })

@@ -2,7 +2,7 @@ import { deepEqual } from 'node:assert'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { fetchStackables } from '../../lib/index.js'
+import { fetchCapabilities } from '../../lib/index.js'
 
 const mockAgent = new MockAgent({
   keepAliveTimeout: 10,
@@ -15,34 +15,34 @@ setGlobalDispatcher(mockAgent)
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 
 const mockPool = mockAgent.get(MARKETPLACE_HOST)
-const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
+const defaultCapabilities = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
-test('should fetch stackables from the marketplace', async () => {
-  const mockStackables = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
+test('should fetch capabilities from the marketplace', async () => {
+  const mockCapabilities = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
 
-  mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
+  mockPool.intercept({ path: '/templates' }).reply(200, mockCapabilities)
 
-  const stackables = await fetchStackables()
-  deepEqual(stackables, [...defaultStackables, ...mockStackables.map(s => s.name)])
+  const capabilities = await fetchCapabilities()
+  deepEqual(capabilities, [...defaultCapabilities, ...mockCapabilities.map(s => s.name)])
 })
 
-test('add custom stackables', async () => {
-  const mockStackables = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
+test('add custom capabilities', async () => {
+  const mockCapabilities = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
 
-  mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
+  mockPool.intercept({ path: '/templates' }).reply(200, mockCapabilities)
 
-  const stackables = await fetchStackables(undefined, ['foo'])
-  deepEqual(stackables, ['foo', ...defaultStackables, ...mockStackables.map(s => s.name)])
+  const capabilities = await fetchCapabilities(undefined, ['foo'])
+  deepEqual(capabilities, ['foo', ...defaultCapabilities, ...mockCapabilities.map(s => s.name)])
 })
 
-test('should return default stackables if fetching from the marketplace takes too long', async () => {
+test('should return default capabilities if fetching from the marketplace takes too long', async () => {
   mockPool.intercept({ path: '/templates' }).reply(200, async () => await setTimeout(6000, []))
-  const stackables = await fetchStackables()
-  deepEqual(stackables, defaultStackables)
+  const capabilities = await fetchCapabilities()
+  deepEqual(capabilities, defaultCapabilities)
 })
 
-test('should return default stackables if fetching from the marketplace errors', async () => {
+test('should return default capabilities if fetching from the marketplace errors', async () => {
   mockPool.intercept({ path: '/templates' }).replyWithError(new Error())
-  const stackables = await fetchStackables()
-  deepEqual(stackables, defaultStackables)
+  const capabilities = await fetchCapabilities()
+  deepEqual(capabilities, defaultCapabilities)
 })

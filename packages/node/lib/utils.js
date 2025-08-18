@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import path, { join } from 'node:path'
 
 export async function isServiceBuildable (serviceRoot, config) {
-  // skip vite as stackable as it has its own build command
+  // skip vite as capability as it has its own build command
   if (config?.vite) {
     return false
   }

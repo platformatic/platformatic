@@ -57,8 +57,8 @@ await app.close()
 import { create, schema as serviceSchema, transform as serviceTransform } from '@platformatic/service'
 import { readFileSync } from 'node:fs'
 
-async function myPlugin (app, stackable) {
-  await platformaticService(app, stackable)
+async function myPlugin (app, capability) {
+  await platformaticService(app, capability)
 
   await app.register(platformaticService, opts)
 }
@@ -130,7 +130,7 @@ export default async function myPlugin (app: ServerInstance<YourApp>) {
 }
 ```
 
-## Writing a Custom Stackable with TypeScript
+## Writing a Custom Capability with TypeScript
 
 Creating a reusable application with TypeScript requires a bit of setup. First, create a `schema.ts` file that generates the JSON Schema for your application.
 
@@ -188,7 +188,7 @@ import {
   platformaticService,
   ServerInstance,
   type PlatformaticServiceConfig as ServiceConfig,
-  ServiceStackable,
+  ServiceCapability,
   transform as serviceTransform
 } from '@platformatic/service'
 
@@ -208,19 +208,19 @@ async function isDirectory (path: string) {
 
 export default async function acmeBase (
   app: ServerInstance<ServiceConfig & AcmeBaseConfig>,
-  stackable: ServiceStackable
+  capability: ServiceCapability
 ) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }
 
-  await platformaticService(app, stackable)
+  await platformaticService(app, capability)
 }
 
 Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
 export async function transform (config: ServiceConfig & AcmeBaseConfig): ServiceConfig & AcmeBaseConfig {
-  // Call the transformConfig method from the base stackable
+  // Call the transformConfig method from the base capability
   config = await serviceTransform(config)
 
   // In this method you can alter the configuration before the application
@@ -276,9 +276,9 @@ export async function create (
 
 ## Implementing Auto-Upgrade of the Configuration
 
-Platformatic support auto-upgrading the configuration of your stackable to the latest version. This enables
+Platformatic support auto-upgrading the configuration of your capability to the latest version. This enables
 the use of compatibility options to turn on and off individual features. Imagine that you want to change the
-default behavior of your stackable: you can add a configuration option to set the _previous_ behavior.
+default behavior of your capability: you can add a configuration option to set the _previous_ behavior.
 Then during the upgrade logic, you only have to add this new configuration.
 
 The key to implement this logic is [semgrator](https://github.com/platformatic/semgrator).
@@ -298,7 +298,7 @@ export const migration = {
 }
 ```
 
-### Wiring it to the stackable
+### Wiring it to the capability
 
 Pass a `upgrade` function to your `create` method.
 
@@ -307,7 +307,7 @@ import { abstractLogger } from '@platformatic/foundation'
 import { resolve } from 'node:path'
 import { semgrator } from 'semgrator'
 
-async function acmeBase (app, stackable) {
+async function acmeBase (app, capability) {
   // ...
 }
 

@@ -1,7 +1,7 @@
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
-import { PlatformaticApplication, ServiceStackable } from '@platformatic/service'
+import { PlatformaticApplication, ServiceCapability } from '@platformatic/service'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 import { JSONSchemaType } from 'ajv'
@@ -16,7 +16,7 @@ export type PlatformaticDatabaseMixin<T extends Entities> = SQLMapperPluginInter
   SQLEventsPluginInterface &
   DBAuthorizationPluginInterface
 
-export type DatabaseStackable = ServiceStackable<PlatformaticDatabaseConfig>
+export type DatabaseCapability = ServiceCapability<PlatformaticDatabaseConfig>
 
 export type ServerInstance<T = {}> = FastifyInstance & {
   platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities> & T
@@ -38,11 +38,11 @@ export declare function create (
   root: string,
   source?: string | PlatformaticDatabaseConfig,
   context?: ConfigurationOptions
-): Promise<ServiceStackable>
+): Promise<ServiceCapability>
 
 export declare const skipTelemetryHooks: boolean
 
-export declare function platformaticDatabase (app: FastifyInstance, stackable: DatabaseStackable): Promise<void>
+export declare function platformaticDatabase (app: FastifyInstance, capability: DatabaseCapability): Promise<void>
 
 export declare class Generator extends BaseGenerator.BaseGenerator {}
 

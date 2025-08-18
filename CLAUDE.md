@@ -42,9 +42,9 @@ npm test               # Run tests for specific package
 - **composer**: API gateway for aggregating services
 - **runtime**: Microservice orchestration environment
 
-### Stackables (Frontend Framework Integration)
+### Capabilities (Frontend Framework Integration)
 - **next**, **astro**, **vite**, **remix**: Framework-specific integrations
-- **node**: Generic Node.js stackable
+- **node**: Generic Node.js capability
 
 ### SQL Components
 - **sql-mapper**: Data mapping layer
