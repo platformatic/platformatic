@@ -47,7 +47,24 @@ const vite = {
   additionalProperties: false
 }
 
-export const schemaComponents = { vite }
+const on404 = {
+  oneOf: [
+    {
+      type: 'object',
+      properties: {
+        enabled: { type: 'boolean' },
+        path: { type: 'string', default: 'index.html' }
+      },
+      required: ['path'],
+      additionalProperties: false
+    },
+    { type: 'string' },
+    { type: 'boolean' }
+  ],
+  default: false
+}
+
+export const schemaComponents = { vite, on404 }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
@@ -64,22 +81,7 @@ export const schema = {
     application: basicSchemaComponents.buildableApplication,
     runtime: utilsSchemaComponents.wrappedRuntime,
     vite,
-    on404: {
-      oneOf: [
-        {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean' },
-            path: { type: 'string', default: 'index.html' }
-          },
-          required: ['path'],
-          additionalProperties: false
-        },
-        { type: 'string' },
-        { type: 'boolean' }
-      ],
-      default: false
-    }
+    on404
   },
   additionalProperties: false
 }
