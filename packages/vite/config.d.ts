@@ -533,7 +533,7 @@ export interface PlatformaticViteConfig {
   on404?:
     | {
         enabled?: boolean;
-        path: string;
+        path?: string;
       }
     | string
     | boolean;
