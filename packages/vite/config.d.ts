@@ -440,8 +440,12 @@ export interface PlatformaticViteStackable {
   };
   on404?:
     | {
-        enabled?: boolean;
+        enabled: boolean;
         path?: string;
+      }
+    | {
+        enabled?: boolean;
+        path: string;
       }
     | string
     | boolean;
