@@ -529,5 +529,12 @@ export interface PlatformaticViteConfig {
           serverDirectory?: string;
         }
       | boolean;
+    on404?:
+      | {
+          enabled?: boolean;
+          path: string;
+        }
+      | string
+      | boolean;
   };
 }

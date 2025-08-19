@@ -41,6 +41,22 @@ const vite = {
         { type: 'boolean' }
       ],
       default: false
+    },
+    on404: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            path: { type: 'string', default: 'index.html' }
+          },
+          required: ['path'],
+          additionalProperties: false
+        },
+        { type: 'string' },
+        { type: 'boolean' }
+      ],
+      default: false
     }
   },
   default: {},
