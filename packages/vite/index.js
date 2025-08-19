@@ -257,6 +257,11 @@ export class ViteStackable extends BaseStackable {
       schemaHide: true
     })
 
+    const on404 = normalizeOn404(config.on404)
+    if (on404.enabled) {
+      this.#app.setNotFoundHandler((_, reply) => reply.code(200).type('text/html').sendFile(on404.path))
+    }
+
     await this.#app.ready()
   }
 }
@@ -403,6 +408,26 @@ export class ViteSSRStackable extends NodeStackable {
     const config = this.configManager.current.vite ?? {}
     return resolve(this.root, config.ssr.entrypoint)
   }
+}
+
+export function normalizeOn404 (on404, path = 'index.html') {
+  if (!on404) {
+    return { enabled: false, path }
+  }
+  if (on404 === true) {
+    return { enabled: true, path }
+  }
+  if (typeof on404 === 'string') {
+    return { enabled: !!on404, path: on404 ?? path }
+  }
+  if (typeof on404 === 'object') {
+    return {
+      enabled: on404.enabled ?? !!on404.path,
+      path: on404.path ?? path,
+    }
+  }
+  // schema says unreachable, but let's be safe
+  return { enabled: false, path }
 }
 
 /* c8 ignore next 9 */
