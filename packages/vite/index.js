@@ -259,7 +259,7 @@ export class ViteStackable extends BaseStackable {
 
     const on404 = normalizeOn404(config.on404)
     if (on404.enabled) {
-      this.#app.setNotFoundHandler((_, reply) => reply.code(200).type('text/html').sendFile(on404.path))
+      this.#app.setNotFoundHandler((_, reply) => reply.code(on404.code).type(on404.type).sendFile(on404.path))
     }
 
     await this.#app.ready()
@@ -410,24 +410,26 @@ export class ViteSSRStackable extends NodeStackable {
   }
 }
 
-export function normalizeOn404 (on404, path = 'index.html') {
+export function normalizeOn404 (on404, code = 200, type = 'text/html', path = 'index.html') {
   if (!on404) {
-    return { enabled: false, path }
+    return { enabled: false, code, type, path }
   }
   if (on404 === true) {
-    return { enabled: true, path }
+    return { enabled: true, code, type, path }
   }
   if (typeof on404 === 'string') {
-    return { enabled: !!on404, path: on404 ?? path }
+    return { enabled: !!on404, code, type, path: on404 ?? path }
   }
   if (typeof on404 === 'object') {
     return {
       enabled: on404.enabled ?? !!on404.path,
+      code: on404.code ?? code,
+      type: on404.type ?? type,
       path: on404.path ?? path,
     }
   }
   // schema says unreachable, but let's be safe
-  return { enabled: false, path }
+  return { enabled: false, code, type, path }
 }
 
 /* c8 ignore next 9 */
