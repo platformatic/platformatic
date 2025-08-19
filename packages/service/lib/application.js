@@ -5,8 +5,8 @@ import { setupHealthCheck } from './plugins/health-check.js'
 import { setupOpenAPI } from './plugins/openapi.js'
 import { loadPlugins } from './plugins/plugins.js'
 
-export async function platformaticService (app, stackable) {
-  const config = await stackable.getConfig()
+export async function platformaticService (app, capability) {
+  const config = await capability.getConfig()
 
   const serviceConfig = config.service || {}
 
@@ -20,7 +20,7 @@ export async function platformaticService (app, stackable) {
   }
 
   if (config.plugins) {
-    await app.register(loadPlugins, stackable.context)
+    await app.register(loadPlugins, capability.context)
   }
 
   if (isKeyEnabled('cors', config.server)) {

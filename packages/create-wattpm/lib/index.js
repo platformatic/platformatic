@@ -26,7 +26,7 @@ import { request } from 'undici'
 import { createGitRepository } from './git.js'
 import { findComposerConfigFile, getUsername, getVersion, say } from './utils.js'
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
-const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
+const defaultCapabilities = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
 export * from './git.js'
 export * from './utils.js'
@@ -82,8 +82,8 @@ async function importOrLocal ({ pkgManager, projectDir, pkg }) {
 
     let version = ''
 
-    if (defaultStackables.includes(pkg) || pkg === '@platformatic/runtime') {
-      // Let's find if we are using one of the default stackables
+    if (defaultCapabilities.includes(pkg) || pkg === '@platformatic/runtime') {
+      // Let's find if we are using one of the default capabilities
       // If we are, we have to use the "local" version of the package
 
       const meta = await JSON.parse(await readFile(join(import.meta.dirname, '..', 'package.json'), 'utf-8'))
@@ -123,37 +123,37 @@ async function findApplicationRoot (projectDir) {
   return null
 }
 
-export async function fetchStackables (marketplaceHost, modules = []) {
-  const stackables = new Set([...modules, ...defaultStackables])
+export async function fetchCapabilities (marketplaceHost, modules = []) {
+  const capabilities = new Set([...modules, ...defaultCapabilities])
 
   // Skip the remote network request if we are running tests
   if (process.env.PLT_MARKETPLACE_TEST) {
-    return Array.from(stackables)
+    return Array.from(capabilities)
   }
 
   let response
   try {
     response = await executeWithTimeout(request(new URL('/templates', marketplaceHost || MARKETPLACE_HOST)), 5000)
   } catch (err) {
-    // No-op: we just use the default stackables
+    // No-op: we just use the default capabilities
   }
 
   if (response && response.statusCode === 200) {
-    for (const stackable of await response.body.json()) {
-      stackables.add(stackable.name)
+    for (const capability of await response.body.json()) {
+      capabilities.add(capability.name)
     }
   }
 
-  return Array.from(stackables)
+  return Array.from(capabilities)
 }
 
-export async function chooseStackable (inquirer, stackables) {
+export async function chooseCapability (inquirer, capabilities) {
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
     message: 'Which kind of service do you want to create?',
-    default: stackables[0],
-    choices: stackables
+    default: capabilities[0],
+    choices: capabilities
   })
 
   return options.type
@@ -377,19 +377,19 @@ export async function createApplication (
     await say('Using existing configuration ...')
   }
 
-  const stackables = await fetchStackables(marketplaceHost, modules)
+  const capabilities = await fetchCapabilities(marketplaceHost, modules)
 
   const names = generator.existingServices ?? []
 
   while (true) {
-    const stackableName = await chooseStackable(inquirer, stackables)
-    // await say(`Creating a ${stackable} project in ${projectDir}...`)
+    const capabilityName = await chooseCapability(inquirer, capabilities)
+    // await say(`Creating a ${capability} project in ${projectDir}...`)
 
-    const stackable = await importOrLocal({
+    const capability = await importOrLocal({
       pkgManager: packageManager,
       name: projectName,
       projectDir,
-      pkg: stackableName
+      pkg: capabilityName
     })
 
     const { serviceName } = await inquirer.prompt({
@@ -416,8 +416,8 @@ export async function createApplication (
 
     names.push(serviceName)
 
-    const stackableGenerator = stackable.Generator
-      ? new stackable.Generator({
+    const capabilityGenerator = capability.Generator
+      ? new capability.Generator({
         logger,
         inquirer,
         serviceName,
@@ -428,21 +428,21 @@ export async function createApplication (
         logger,
         inquirer,
         serviceName,
-        module: stackableName,
-        version: await getPackageVersion(stackableName, projectDir),
+        module: capabilityName,
+        version: await getPackageVersion(capabilityName, projectDir),
         parent: generator,
         ...additionalGeneratorOptions
       })
 
-    stackableGenerator.setConfig({
-      ...stackableGenerator.config,
+    capabilityGenerator.setConfig({
+      ...capabilityGenerator.config,
       ...additionalGeneratorConfig,
       serviceName
     })
 
-    generator.addService(stackableGenerator, serviceName)
+    generator.addService(capabilityGenerator, serviceName)
 
-    await stackableGenerator.ask()
+    await capabilityGenerator.ask()
 
     const { shouldBreak } = await inquirer.prompt([
       {

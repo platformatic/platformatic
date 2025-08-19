@@ -37,11 +37,11 @@ test('should start composer with a graphql service', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const graphqlSchema = await stackable.getGraphqlSchema()
+  const graphqlSchema = await capability.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, 'type Query {\n  add(x: Int, y: Int): Int\n}')
 })
 
@@ -58,10 +58,10 @@ test('get null if server does not expose openapi', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getGraphqlSchema()
+  const openapiSchema = await capability.getGraphqlSchema()
   assert.strictEqual(openapiSchema, null)
 })

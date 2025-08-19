@@ -1,5 +1,5 @@
 import {
-  BaseStackable,
+  BaseCapability,
   ChildManager,
   cleanBasePath,
   createChildProcessListener,
@@ -19,7 +19,7 @@ import { version } from './schema.js'
 
 const supportedVersions = ['^14.0.0', '^15.0.0']
 
-export class NextStackable extends BaseStackable {
+export class NextCapability extends BaseCapability {
   #basePath
   #next
   #nextVersion

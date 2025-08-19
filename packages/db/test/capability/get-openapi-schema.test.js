@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service openapi schema via stackable api', async t => {
+test('get service openapi schema via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -23,12 +23,12 @@ test('get service openapi schema via stackable api', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema.openapi, '3.0.3')
   assert.deepStrictEqual(openapiSchema.info, {
     description: 'Exposing a SQL database as REST',
@@ -51,7 +51,7 @@ test('get null if server does not expose openapi', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -68,11 +68,11 @@ test('get null if server does not expose openapi', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema, null)
 })

@@ -1,7 +1,7 @@
 import middie from '@fastify/middie'
 import fastifyStatic from '@fastify/static'
 import {
-  BaseStackable,
+  BaseCapability,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -20,7 +20,7 @@ import { version } from './schema.js'
 
 const supportedVersions = '^4.0.0 || ^5.0.0'
 
-export class AstroStackable extends BaseStackable {
+export class AstroCapability extends BaseCapability {
   #astro
   #app
   #server

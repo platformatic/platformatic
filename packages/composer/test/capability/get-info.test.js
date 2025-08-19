@@ -1,9 +1,10 @@
 import assert from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { version as pltVersion } from '../../lib/schema.js'
 import { createFromConfig } from '../helper.js'
 
-test('inject request into service stackable', async t => {
+test('get service info via capability api', async t => {
   const config = {
     server: {
       logger: {
@@ -19,13 +20,13 @@ test('inject request into service stackable', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const { statusCode, body } = await stackable.inject('/custom')
-  assert.strictEqual(statusCode, 200, 'status code')
-
-  const data = JSON.parse(body)
-  assert.deepStrictEqual(data, { hello: 'world' })
+  const capabilityInfo = await capability.getInfo()
+  assert.deepStrictEqual(capabilityInfo, {
+    type: 'composer',
+    version: pltVersion
+  })
 })

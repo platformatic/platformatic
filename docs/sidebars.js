@@ -177,7 +177,7 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Framework Integrations (Stackables)',
+          label: 'Framework Integrations (Capabilities)',
           collapsed: true,
           items: [
             {

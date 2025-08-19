@@ -259,7 +259,7 @@ async function proxyPlugin (app, opts) {
     await app.register(httpProxy, options)
   }
 
-  opts.stackable?.registerMeta(meta)
+  opts.capability?.registerMeta(meta)
 }
 
 export const proxy = fp(proxyPlugin)

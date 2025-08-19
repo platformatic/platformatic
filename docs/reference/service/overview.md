@@ -62,7 +62,7 @@ HTTP Services work seamlessly with other service types in your Watt application:
 
 - **Database Services**: Access auto-generated database APIs
 - **Composer Services**: Expose your HTTP service through an API gateway
-- **Frontend Stackables**: Serve frontend applications alongside your APIs
+- **Frontend Capabilities**: Serve frontend applications alongside your APIs
 
 ## TypeScript Support
 

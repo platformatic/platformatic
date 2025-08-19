@@ -1,4 +1,4 @@
-import { BaseStackable, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import { BaseCapability, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
 import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/foundation'
 import { telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
@@ -11,7 +11,7 @@ import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
 import { sanitizeHTTPSArgument } from './utils.js'
 
-export class ServiceStackable extends BaseStackable {
+export class ServiceCapability extends BaseCapability {
   #app
   #basePath
 

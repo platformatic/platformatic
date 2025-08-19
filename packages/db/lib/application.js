@@ -19,8 +19,8 @@ async function healthCheck (app) {
   }
 }
 
-export async function platformaticDatabase (app, stackable) {
-  const config = await stackable.getConfig(true)
+export async function platformaticDatabase (app, capability) {
+  const config = await capability.getConfig(true)
 
   let createSchemaLock = false
   await loadSchemaLock()
@@ -66,7 +66,7 @@ export async function platformaticDatabase (app, stackable) {
     }
 
     serverConfig.healthCheck.fn = healthCheck
-    await stackable.updateContext({ serverConfig })
+    await capability.updateContext({ serverConfig })
   }
 
   if (createSchemaLock) {
@@ -85,7 +85,7 @@ export async function platformaticDatabase (app, stackable) {
     await app.register(auth, config.authorization)
   }
 
-  await platformaticService(app, stackable)
+  await platformaticService(app, capability)
 
   if (Object.keys(app.platformatic.entities).length === 0) {
     app.log.warn(

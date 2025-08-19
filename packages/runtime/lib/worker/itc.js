@@ -83,7 +83,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
         if (status === 'starting') {
           await once(app, 'start')
         } else {
-          // This gives a chance to a stackable to perform custom logic
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('start')
 
           try {
@@ -100,8 +100,8 @@ function setupITC (app, service, dispatcher, sharedContext) {
           await app.listen()
         }
 
-        dispatcher.replaceServer(await app.stackable.getDispatchTarget())
-        return service.entrypoint ? app.stackable.getUrl() : null
+        dispatcher.replaceServer(await app.capability.getDispatchTarget())
+        return service.entrypoint ? app.capability.getUrl() : null
       },
 
       async stop () {
@@ -112,7 +112,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
         }
 
         if (status.startsWith('start')) {
-          // This gives a chance to a stackable to perform custom logic
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('stop')
 
           await app.stop()
@@ -122,7 +122,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
       },
 
       async build () {
-        return app.stackable.build()
+        return app.capability.build()
       },
 
       async removeFromMesh () {
@@ -130,7 +130,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
       },
 
       inject (injectParams) {
-        return app.stackable.inject(injectParams)
+        return app.capability.inject(injectParams)
       },
 
       async updateUndiciInterceptors (undiciConfig) {
@@ -152,23 +152,23 @@ function setupITC (app, service, dispatcher, sharedContext) {
       },
 
       getServiceInfo () {
-        return app.stackable.getInfo()
+        return app.capability.getInfo()
       },
 
       async getServiceConfig () {
-        const current = await app.stackable.getConfig()
+        const current = await app.capability.getConfig()
         // Remove all undefined keys from the config
         return JSON.parse(JSON.stringify(current))
       },
 
       async getServiceEnv () {
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.stackable.getEnv()) }))
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.capability.getEnv()) }))
       },
 
       async getServiceOpenAPISchema () {
         try {
-          return await app.stackable.getOpenapiSchema()
+          return await app.capability.getOpenapiSchema()
         } catch (err) {
           throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
         }
@@ -176,7 +176,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
 
       async getServiceGraphQLSchema () {
         try {
-          return await app.stackable.getGraphqlSchema()
+          return await app.capability.getGraphqlSchema()
         } catch (err) {
           throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
         }
@@ -184,7 +184,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
 
       async getServiceMeta () {
         try {
-          return await app.stackable.getMeta()
+          return await app.capability.getMeta()
         } catch (err) {
           throw new errors.FailedToRetrieveMetaError(service.id, err.message)
         }
@@ -208,7 +208,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
 
       async getCustomHealthCheck () {
         try {
-          return await app.stackable.getCustomHealthCheck()
+          return await app.capability.getCustomHealthCheck()
         } catch (err) {
           throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
         }
@@ -216,7 +216,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
 
       async getCustomReadinessCheck () {
         try {
-          return await app.stackable.getCustomReadinessCheck()
+          return await app.capability.getCustomReadinessCheck()
         } catch (err) {
           throw new errors.FailedToPerformCustomReadinessCheckError(service.id, err.message)
         }

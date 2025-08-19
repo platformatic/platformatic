@@ -4,11 +4,11 @@ import { test } from 'node:test'
 import { version as pltVersion } from '../../lib/schema.js'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service info via stackable api', async t => {
+test('get service info via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -24,13 +24,13 @@ test('get service info via stackable api', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const stackableInfo = await stackable.getInfo()
-  assert.deepStrictEqual(stackableInfo, {
+  const capabilityInfo = await capability.getInfo()
+  assert.deepStrictEqual(capabilityInfo, {
     type: 'db',
     version: pltVersion
   })

@@ -228,7 +228,7 @@ test('create - should create a new project using a different package manager', a
   ok(createProcess.stdout.includes('You are all set! Run `fake-npm start` to start your project.'))
 })
 
-test('create - should support providing stackable via command line', async t => {
+test('create - should support providing capability via command line', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [

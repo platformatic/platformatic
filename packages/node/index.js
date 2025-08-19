@@ -1,7 +1,7 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { NodeCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
-import { NodeStackable } from './lib/stackable.js'
 
 export async function transform (config, _schema, options) {
   config = await basicTransform(config, schema, options)
@@ -24,9 +24,9 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
 export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
-  return new NodeStackable(config[kMetadata].root, config, context)
+  return new NodeCapability(config[kMetadata].root, config, context)
 }
 
+export * from './lib/capability.js'
 export { Generator } from './lib/generator.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
-export * from './lib/stackable.js'

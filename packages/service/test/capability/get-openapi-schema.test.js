@@ -4,8 +4,8 @@ import { test } from 'node:test'
 import { create } from '../../index.js'
 import { createFromConfig } from '../helper.js'
 
-test('get service openapi schema via stackable api', async t => {
-  const stackable = await createFromConfig(t, {
+test('get service openapi schema via capability api', async t => {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -22,10 +22,10 @@ test('get service openapi schema via stackable api', async t => {
     watch: false
   })
 
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema.openapi, '3.0.3')
   assert.deepStrictEqual(openapiSchema.info, {
     description: 'This is a service built on top of Platformatic',
@@ -44,10 +44,10 @@ test('get service openapi schema via stackable api', async t => {
 })
 
 test('get null if server does not expose openapi', async t => {
-  const stackable = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema, null)
 })

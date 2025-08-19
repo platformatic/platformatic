@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig } from '../helper.js'
 
-test('get service config via stackable api', async t => {
+test('get service config via capability api', async t => {
   const config = {
     server: {
       logger: {
@@ -18,12 +18,12 @@ test('get service config via stackable api', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const stackableConfig = await stackable.getConfig()
-  assert.deepStrictEqual(stackableConfig, {
+  const capabilityConfig = await capability.getConfig()
+  assert.deepStrictEqual(capabilityConfig, {
     application: {},
     composer: {
       services: [],

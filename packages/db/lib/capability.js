@@ -1,8 +1,8 @@
-import { ServiceStackable } from '@platformatic/service'
+import { ServiceCapability } from '@platformatic/service'
 import { platformaticDatabase } from './application.js'
 import { packageJson } from './schema.js'
 
-export class DatabaseStackable extends ServiceStackable {
+export class DatabaseCapability extends ServiceCapability {
   constructor (root, config, context) {
     super(root, config, context)
     this.type = 'db'

@@ -187,7 +187,7 @@ async function main () {
   await app.init()
 
   if (service.entrypoint && config.basePath) {
-    const meta = await app.stackable.getMeta()
+    const meta = await app.capability.getMeta()
     if (!meta.composer.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
     }

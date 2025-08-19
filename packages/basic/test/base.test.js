@@ -29,13 +29,13 @@ const expectedLogger = {
   }
 }
 
-test('BaseStackable - should properly initialize', async t => {
-  const stackable = await create(t, { serviceId: 'service' })
-  deepStrictEqual(stackable.logger.level, 'trace')
+test('BaseCapability - should properly initialize', async t => {
+  const capability = await create(t, { serviceId: 'service' })
+  deepStrictEqual(capability.logger.level, 'trace')
 })
 
-test('BaseStackable - should properly setup globals', async t => {
-  const stackable = await create(
+test('BaseCapability - should properly setup globals', async t => {
+  const capability = await create(
     t,
     { serverConfig: {} },
     {
@@ -51,14 +51,14 @@ test('BaseStackable - should properly setup globals', async t => {
   platformatic.setGraphqlSchema('graphql')
   platformatic.setBasePath('basePath')
 
-  deepStrictEqual(await stackable.getOpenapiSchema(), 'openapi')
-  deepStrictEqual(await stackable.getGraphqlSchema(), 'graphql')
-  deepStrictEqual(stackable.logger.level, 'info')
-  deepStrictEqual(stackable.basePath, 'basePath')
+  deepStrictEqual(await capability.getOpenapiSchema(), 'openapi')
+  deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
+  deepStrictEqual(capability.logger.level, 'info')
+  deepStrictEqual(capability.basePath, 'basePath')
 })
 
-test('BaseStackable - other getters', async t => {
-  const stackable = await create(
+test('BaseCapability - other getters', async t => {
+  const capability = await create(
     t,
     {},
     {
@@ -67,25 +67,25 @@ test('BaseStackable - other getters', async t => {
     }
   )
 
-  stackable.url = 'URL'
+  capability.url = 'URL'
 
-  deepStrictEqual(stackable.getUrl(), 'URL')
-  deepStrictEqual(await stackable.getConfig(), { key1: 'value1' })
-  deepStrictEqual(await stackable.getEnv(), { key2: 'value2' })
-  deepStrictEqual(await stackable.getInfo(), { type: 'base', version: '1.0.0' })
-  deepStrictEqual(await stackable.getDispatchFunc(), stackable)
+  deepStrictEqual(capability.getUrl(), 'URL')
+  deepStrictEqual(await capability.getConfig(), { key1: 'value1' })
+  deepStrictEqual(await capability.getEnv(), { key2: 'value2' })
+  deepStrictEqual(await capability.getInfo(), { type: 'base', version: '1.0.0' })
+  deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 
-test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = await create(t, {}, { watch: { enabled: false } })
+test('BaseCapability - getWatchConfig - disabled', async t => {
+  const capability = await create(t, {}, { watch: { enabled: false } })
 
-  deepStrictEqual(await stackable.getWatchConfig(), { enabled: false, path: temporaryFolder })
+  deepStrictEqual(await capability.getWatchConfig(), { enabled: false, path: temporaryFolder })
 })
 
-test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = await create(t, {}, { watch: { enabled: true, allow: ['first'], ignore: ['second'] } })
+test('BaseCapability - getWatchConfig - disabled', async t => {
+  const capability = await create(t, {}, { watch: { enabled: true, allow: ['first'], ignore: ['second'] } })
 
-  deepStrictEqual(await stackable.getWatchConfig(), {
+  deepStrictEqual(await capability.getWatchConfig(), {
     allow: ['first'],
     enabled: true,
     path: temporaryFolder,
@@ -93,132 +93,132 @@ test('BaseStackable - getWatchConfig - disabled', async t => {
   })
 })
 
-test('BaseStackable - log - should properly log', async t => {
-  const stackable = await create(t)
+test('BaseCapability - log - should properly log', async t => {
+  const capability = await create(t)
 
-  await stackable.log({ message: 'MESSAGE 1' })
-  await stackable.log({ message: 'MESSAGE 2', level: 'error' })
+  await capability.log({ message: 'MESSAGE 1' })
+  await capability.log({ message: 'MESSAGE 2', level: 'error' })
 
-  const messages = stackable.stdout.messages.map(JSON.parse)
+  const messages = capability.stdout.messages.map(JSON.parse)
   ok(messages[0].level === 30 && messages[0].msg === 'MESSAGE 1')
   ok(messages[1].level === 50 && messages[1].msg === 'MESSAGE 2')
 })
 
-test('BaseStackable - verifyOutputDirectory - throw an error', async t => {
-  const stackable = await create(t, { isProduction: true })
+test('BaseCapability - verifyOutputDirectory - throw an error', async t => {
+  const capability = await create(t, { isProduction: true })
 
   throws(
-    () => stackable.verifyOutputDirectory('/non/existent'),
+    () => capability.verifyOutputDirectory('/non/existent'),
     /Cannot access directory '\/non\/existent'. Please run the 'build' command before running in production mode./
   )
 })
 
-test('BaseStackable - verifyOutputDirectory - do not throw an error in development', async t => {
-  const stackable = await create(t)
+test('BaseCapability - verifyOutputDirectory - do not throw an error in development', async t => {
+  const capability = await create(t)
 
-  stackable.verifyOutputDirectory('/non/existent')
+  capability.verifyOutputDirectory('/non/existent')
 })
 
-test('BaseStackable - verifyOutputDirectory - do not throw on existing directories', async t => {
-  const stackable = await create(t, { isProduction: true })
+test('BaseCapability - verifyOutputDirectory - do not throw on existing directories', async t => {
+  const capability = await create(t, { isProduction: true })
 
-  stackable.verifyOutputDirectory(import.meta.dirname)
+  capability.verifyOutputDirectory(import.meta.dirname)
 })
 
-test('BaseStackable - buildWithCommand - should execute the requested command', async t => {
-  const stackable = await create(t, { isProduction: true })
+test('BaseCapability - buildWithCommand - should execute the requested command', async t => {
+  const capability = await create(t, { isProduction: true })
 
   const executablePath = fileURLToPath(new URL('./fixtures/print-cwd.js', import.meta.url))
-  await stackable.buildWithCommand(['node', executablePath], import.meta.dirname)
+  await capability.buildWithCommand(['node', executablePath], import.meta.dirname)
 
-  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
-  deepStrictEqual(stackable.stderr.messages[0], temporaryFolder)
+  ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(capability.stderr.messages[0], temporaryFolder)
 })
 
-test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
-  const stackable = await create(t, {})
+test('BaseCapability - buildWithCommand - should handle exceptions', async t => {
+  const capability = await create(t, {})
 
   const executablePath = fileURLToPath(new URL('./fixtures/invalid.js', import.meta.url))
   await rejects(
-    () => stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname),
+    () => capability.buildWithCommand(`node ${executablePath}`, import.meta.dirname),
     /PLT_BASIC_NON_ZERO_EXIT_CODE/
   )
 
-  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
-  ok(JSON.parse(stackable.stdout.messages[1]).err.message.startsWith(`Cannot find module '${executablePath}'`))
+  ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  ok(JSON.parse(capability.stdout.messages[1]).err.message.startsWith(`Cannot find module '${executablePath}'`))
 })
 
-test('BaseStackable - buildWithCommand - should not inject the Platformatic code if asked to', async t => {
-  const stackable = await create(t, {})
+test('BaseCapability - buildWithCommand - should not inject the Platformatic code if asked to', async t => {
+  const capability = await create(t, {})
 
   const executablePath = fileURLToPath(new URL('./fixtures/build-context.js', import.meta.url))
-  await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
-  await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname, { disableChildManager: true })
+  await capability.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
+  await capability.buildWithCommand(`node ${executablePath}`, import.meta.dirname, { disableChildManager: true })
 
-  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
-  deepStrictEqual(stackable.stdout.messages[1], 'INJECTED true')
-  ok(stackable.stdout.messages[2].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
-  deepStrictEqual(stackable.stdout.messages[3], 'INJECTED false')
+  ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(capability.stdout.messages[1], 'INJECTED true')
+  ok(capability.stdout.messages[2].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(capability.stdout.messages[3], 'INJECTED false')
 })
 
 test(
-  'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /usr/bin/env',
+  'BaseCapability - buildWithCommand - should properly intercept output from non Node.js executables - /usr/bin/env',
   { skip: isWindows },
   async t => {
-    const stackable = await create(t, {})
+    const capability = await create(t, {})
 
-    await stackable.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
+    await capability.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
 
-    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage('/usr/bin/env')))
-    ok(stackable.stdout.messages.slice(1).every(s => s.match(/[a-z0-9-_]=.+/i)))
+    ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage('/usr/bin/env')))
+    ok(capability.stdout.messages.slice(1).every(s => s.match(/[a-z0-9-_]=.+/i)))
   }
 )
 
 test(
-  'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /bin/bash',
+  'BaseCapability - buildWithCommand - should properly intercept output from non Node.js executables - /bin/bash',
   { skip: isWindows },
   async t => {
-    const stackable = await create(t, {})
+    const capability = await create(t, {})
 
     const executablePath = fileURLToPath(new URL('./fixtures/build-context.sh', import.meta.url))
-    await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
+    await capability.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
 
-    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
+    ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
     deepStrictEqual(
-      stackable.stdout.messages.slice(1).map(l => l.trim()),
+      capability.stdout.messages.slice(1).map(l => l.trim()),
       [`STDOUT=${temporaryFolder}`]
     )
     deepStrictEqual(
-      stackable.stderr.messages.map(l => l.trim()),
+      capability.stderr.messages.map(l => l.trim()),
       [`STDERR=${temporaryFolder}`]
     )
   }
 )
 
 test(
-  'BaseStackable - buildWithCommand - should properly change the working directory',
+  'BaseCapability - buildWithCommand - should properly change the working directory',
   { skip: isWindows },
   async t => {
-    const stackable = await create(t, {})
+    const capability = await create(t, {})
 
     const fixturesDir = fileURLToPath(new URL('./fixtures', import.meta.url))
     const executablePath = fileURLToPath(new URL('./fixtures/chdir-and-run.sh', import.meta.url))
-    await stackable.buildWithCommand(executablePath, import.meta.dirname)
+    await capability.buildWithCommand(executablePath, import.meta.dirname)
 
-    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
+    ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
     deepStrictEqual(
-      stackable.stdout.messages.slice(1).map(l => l.trim()),
+      capability.stdout.messages.slice(1).map(l => l.trim()),
       [`STDOUT=${fixturesDir}`]
     )
     deepStrictEqual(
-      stackable.stderr.messages.map(l => l.trim()),
+      capability.stderr.messages.map(l => l.trim()),
       [`STDERR=${fixturesDir}`]
     )
   }
 )
 
-test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
-  const stackable = await create(
+test('BaseCapability - startCommand and stopCommand - should execute the requested command', async t => {
+  const capability = await create(
     t,
     {
       isEntrypoint: true,
@@ -241,14 +241,14 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
   )
 
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await stackable.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath}`)
 
-  ok(stackable.url.startsWith('http://127.0.0.1:'))
-  ok(!stackable.url.endsWith(':10000'))
-  deepStrictEqual(stackable.subprocessConfig, { production: false })
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  ok(!capability.url.endsWith(':10000'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
-    const { statusCode, body: rawBody } = await request(stackable.url, {
+    const { statusCode, body: rawBody } = await request(capability.url, {
       method: 'GET',
       path: '/'
     })
@@ -279,11 +279,11 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     })
   }
 
-  await stackable.stopCommand()
+  await capability.stopCommand()
 })
 
-test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
-  const stackable = await create(
+test('BaseCapability - should import and setup open telemetry HTTP instrumentation', async t => {
+  const capability = await create(
     t,
     {
       serviceId: 'test-service-id',
@@ -315,14 +315,14 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
   )
 
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await stackable.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath}`)
 
-  ok(stackable.url.startsWith('http://127.0.0.1:'))
-  ok(!stackable.url.endsWith(':10000'))
-  deepStrictEqual(stackable.subprocessConfig, { production: false })
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  ok(!capability.url.endsWith(':10000'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
-    const { statusCode, body: rawBody } = await request(stackable.url, {
+    const { statusCode, body: rawBody } = await request(capability.url, {
       method: 'GET',
       path: '/'
     })
@@ -362,24 +362,24 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
     })
   }
 
-  await stackable.stopCommand()
+  await capability.stopCommand()
 })
 
 test(
-  'BaseStackable - startCommand - should reject for non existing commands',
+  'BaseCapability - startCommand - should reject for non existing commands',
   { skip: platform() === 'win32' },
   async t => {
-    const stackable = await create(t)
+    const capability = await create(t)
 
     await rejects(
-      () => stackable.startWithCommand('non-existing-command'),
+      () => capability.startWithCommand('non-existing-command'),
       /Cannot execute command "non-existing-command": executable not found/
     )
   }
 )
 
-test('BaseStackable - startCommand - should kill the process on non-zero exit code', async t => {
-  const stackable = await create(t)
+test('BaseCapability - startCommand - should kill the process on non-zero exit code', async t => {
+  const capability = await create(t)
 
   const { promise, resolve } = Promise.withResolvers()
   t.mock.method(process, 'exit', code => {
@@ -387,13 +387,13 @@ test('BaseStackable - startCommand - should kill the process on non-zero exit co
   })
 
   const executablePath = fileURLToPath(new URL('./fixtures/non-zero-exit.js', import.meta.url))
-  await stackable.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath}`)
 
   deepStrictEqual(await promise, 123)
 })
 
-test('BaseStackable - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
-  const stackable = await create(
+test('BaseCapability - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
+  const capability = await create(
     t,
     {
       isEntrypoint: true,
@@ -416,14 +416,14 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
   )
 
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await stackable.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath}`)
 
-  ok(stackable.url.startsWith('http://127.0.0.1:'))
-  ok(!stackable.url.endsWith(':10000'))
-  deepStrictEqual(stackable.subprocessConfig, { production: false })
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  ok(!capability.url.endsWith(':10000'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
-    const { statusCode, body: rawBody } = await request(stackable.url, {
+    const { statusCode, body: rawBody } = await request(capability.url, {
       method: 'GET',
       path: '/'
     })
@@ -456,11 +456,11 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
     })
   }
 
-  await stackable.stopCommand()
+  await capability.stopCommand()
 })
 
-test('BaseStackable - spawn - should handle chained commands', { skip: isWindows }, async t => {
-  const stackable = await create(t)
+test('BaseCapability - spawn - should handle chained commands', { skip: isWindows }, async t => {
+  const capability = await create(t)
 
   const fs = await import('node:fs/promises')
   const path = await import('node:path')
@@ -472,7 +472,7 @@ test('BaseStackable - spawn - should handle chained commands', { skip: isWindows
     await fs.unlink(testFile2).catch(() => {})
 
     const chainedCommand = `touch ${testFile1} && touch ${testFile2}`
-    await stackable.buildWithCommand(chainedCommand, temporaryFolder, { disableChildManager: true })
+    await capability.buildWithCommand(chainedCommand, temporaryFolder, { disableChildManager: true })
 
     const file1Exists = await fs
       .access(testFile1)
@@ -483,7 +483,7 @@ test('BaseStackable - spawn - should handle chained commands', { skip: isWindows
       .then(() => true)
       .catch(() => false)
 
-    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(chainedCommand)))
+    ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(chainedCommand)))
     ok(file1Exists, 'First command in chain did not execute')
     ok(file2Exists, 'Second command in chain did not execute')
 
@@ -491,7 +491,7 @@ test('BaseStackable - spawn - should handle chained commands', { skip: isWindows
     await fs.unlink(testFile2).catch(() => {})
 
     const semicolonCommand = `touch ${testFile1}; touch ${testFile2}`
-    await stackable.buildWithCommand(semicolonCommand, temporaryFolder, { disableChildManager: true })
+    await capability.buildWithCommand(semicolonCommand, temporaryFolder, { disableChildManager: true })
 
     const file1ExistsAgain = await fs
       .access(testFile1)
@@ -502,7 +502,7 @@ test('BaseStackable - spawn - should handle chained commands', { skip: isWindows
       .then(() => true)
       .catch(() => false)
 
-    ok(stackable.stdout.messages.some(msg => msg.includes(getExecutedCommandLogMessage(semicolonCommand))))
+    ok(capability.stdout.messages.some(msg => msg.includes(getExecutedCommandLogMessage(semicolonCommand))))
     ok(file1ExistsAgain, 'First command with semicolon did not execute')
     ok(file2ExistsAgain, 'Second command with semicolon did not execute')
   } finally {

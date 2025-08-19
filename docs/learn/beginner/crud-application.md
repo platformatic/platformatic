@@ -371,7 +371,7 @@ Unlike traditional Node.js development where you manage separate servers, config
 Now that you understand Watt's unified approach, you can expand your application:
 
 1. **Connect to Your Enterprise Database**: Switch from SQLite to PostgreSQL, MySQL, or your production database
-2. **Add a Frontend Service**: Add a Next.js, Astro, or React stackable to your Watt application
+2. **Add a Frontend Service**: Add a Next.js, Astro, or React capability to your Watt application
 3. **Add Custom HTTP Services**: Create additional services for business logic that work alongside your database service
 4. **Add a Composer Service**: Create an API gateway that aggregates multiple services
 5. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command

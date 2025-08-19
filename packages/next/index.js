@@ -1,7 +1,7 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { NextCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
-import { NextStackable } from './lib/stackable.js'
 
 /* c8 ignore next 9 */
 export async function transform (config, schema, options) {
@@ -29,9 +29,9 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
 export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
-  return new NextStackable(config[kMetadata].root, config, context)
+  return new NextCapability(config[kMetadata].root, config, context)
 }
 
 export * as cachingValkey from './lib/caching/valkey.js'
+export * from './lib/capability.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
-export * from './lib/stackable.js'

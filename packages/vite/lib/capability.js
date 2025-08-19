@@ -1,6 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import {
-  BaseStackable,
+  BaseCapability,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -10,7 +10,7 @@ import {
   resolvePackage
 } from '@platformatic/basic'
 import { ensureLoggableError, features } from '@platformatic/foundation'
-import { NodeStackable } from '@platformatic/node'
+import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -20,7 +20,7 @@ import { version } from './schema.js'
 
 const supportedVersions = '^5.0.0'
 
-export class ViteStackable extends BaseStackable {
+export class ViteCapability extends BaseCapability {
   #vite
   #app
   #server
@@ -260,7 +260,7 @@ export class ViteStackable extends BaseStackable {
   }
 }
 
-export class ViteSSRStackable extends NodeStackable {
+export class ViteSSRCapability extends NodeCapability {
   #basePath
 
   constructor (root, config, context) {

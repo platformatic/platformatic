@@ -3,12 +3,12 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { createBasicPages, createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get meta info via stackable api', async t => {
+test('get meta info via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const { dbname } = connectionInfo
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3245,
@@ -27,12 +27,12 @@ test('get meta info via stackable api', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const meta = await stackable.getMeta()
+  const meta = await capability.getMeta()
   const expected = {
     composer: {
       needsRootTrailingSlash: false,

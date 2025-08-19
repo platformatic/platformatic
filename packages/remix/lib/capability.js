@@ -7,7 +7,7 @@ import {
   resolvePackage
 } from '@platformatic/basic'
 import { features } from '@platformatic/foundation'
-import { ViteStackable } from '@platformatic/vite'
+import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
 import inject from 'light-my-request'
@@ -20,7 +20,7 @@ import { packageJson } from './schema.js'
 
 const supportedVersions = '^2.0.0'
 
-export class RemixStackable extends ViteStackable {
+export class RemixCapability extends ViteCapability {
   #app
   #server
   #remix

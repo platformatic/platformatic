@@ -35,7 +35,7 @@ Fast build tool with hot module replacement for modern web projects.
 ## Node.js Runtimes
 
 ### [Node.js](../reference/node/overview.md)
-Generic Node.js stackable for custom applications and existing codebases.
+Generic Node.js capability for custom applications and existing codebases.
 
 - **[Overview](../reference/node/overview.md)** - Getting started with Node.js integration
 - **[Configuration](../reference/node/configuration.md)** - Complete configuration reference
@@ -50,7 +50,7 @@ Progressive Node.js framework for building scalable server-side applications.
 
 To add a framework to your Watt application:
 
-1. **Add the stackable to your configuration:**
+1. **Add the application to your configuration:**
    ```json
    {
      "services": [

@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service graphql schema via stackable api', async t => {
+test('get service graphql schema via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -23,12 +23,12 @@ test('get service graphql schema via stackable api', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const graphqlSchema = await stackable.getGraphqlSchema()
+  const graphqlSchema = await capability.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
@@ -36,7 +36,7 @@ test('get null if server does not expose graphql', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -53,11 +53,11 @@ test('get null if server does not expose graphql', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const graphqlSchema = await stackable.getGraphqlSchema()
+  const graphqlSchema = await capability.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, null)
 })

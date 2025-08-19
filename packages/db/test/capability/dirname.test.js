@@ -4,16 +4,16 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { create } from '../../index.js'
 
-test('get service info via stackable api', async t => {
+test('get service info via capability api', async t => {
   const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'sqlite-basic')
   const config = join(projectRoot, 'platformatic.db.json')
 
   process.env.DATABASE_URL = 'sqlite://:memory:'
-  const stackable = await create(projectRoot, config)
+  const capability = await create(projectRoot, config)
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  assert.strictEqual(stackable.getApplication().platformatic.config[kMetadata].root, projectRoot)
+  assert.strictEqual(capability.getApplication().platformatic.config[kMetadata].root, projectRoot)
 })

@@ -59,7 +59,7 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
  * polling is disabled on refreshTimeout = 0
  * or there are no network openapi nor graphql remote services (the services are from file or they don't have a schema/graph to fetch)
  */
-async function watchServices (app, { config, stackable }) {
+async function watchServices (app, { config, capability }) {
   const { services, refreshTimeout } = config.composer
   if (refreshTimeout < 1) {
     return
@@ -75,7 +75,7 @@ async function watchServices (app, { config, stackable }) {
     return
   }
 
-  stackable.emit('watch:start')
+  capability.emit('watch:start')
   app.log.info({ services: watching }, 'start watching services')
 
   const timer = setInterval(async () => {
@@ -123,12 +123,12 @@ export async function ensureServices (composerId, config) {
   }
 }
 
-export async function platformaticComposer (app, stackable) {
-  const config = await stackable.getConfig()
+export async function platformaticComposer (app, capability) {
+  const config = await capability.getConfig()
   let hasGraphqlServices, hasOpenapiServices
 
   // When no services are specified, get the list from the runtime.
-  await ensureServices(stackable.serviceId, config)
+  await ensureServices(capability.serviceId, config)
 
   const { services } = config.composer
 
@@ -156,12 +156,12 @@ export async function platformaticComposer (app, stackable) {
       config.server.healthCheck = {}
     }
 
-    config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
+    config.server.healthCheck.fn = capability.isHealthy.bind(capability)
   }
 
-  await app.register(proxy, { ...config.composer, stackable, context: stackable.context })
+  await app.register(proxy, { ...config.composer, capability, context: capability.context })
 
-  await platformaticService(app, stackable)
+  await platformaticService(app, capability)
 
   if (generatedComposedOpenAPI) {
     await app.register(openApiComposer, { opts: config.composer, generated: generatedComposedOpenAPI })
@@ -178,8 +178,8 @@ export async function platformaticComposer (app, stackable) {
     await app.register(rootHandler.default, config)
   }
 
-  if (!stackable.context?.isProduction) {
-    await watchServices(app, { config, stackable, context: stackable.context })
+  if (!capability.context?.isProduction) {
+    await watchServices(app, { config, capability, context: capability.context })
   }
 }
 

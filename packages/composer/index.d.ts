@@ -1,10 +1,10 @@
-import { BaseStackable } from '@platformatic/basic'
+import { BaseCapability } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
 import {
   Configuration,
   ConfigurationOptions,
-  ServerInstance as ServiceInstance,
-  ServiceStackable
+  ServiceCapability,
+  ServerInstance as ServiceInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
@@ -13,7 +13,7 @@ import { PlatformaticComposerConfig } from './config'
 export { PlatformaticApplication } from '@platformatic/service'
 export { PlatformaticComposerConfig } from './config'
 
-export type ComposerStackable = ServiceStackable<PlatformaticComposerConfig>
+export type ComposerCapability = ServiceCapability<PlatformaticComposerConfig>
 
 export type ServerInstance = ServiceInstance<PlatformaticComposerConfig>
 
@@ -29,9 +29,9 @@ export function create (
   root: string,
   source?: string | PlatformaticComposerConfig,
   context?: ConfigurationOptions
-): Promise<ComposerStackable>
+): Promise<ComposerCapability>
 
-export declare function platformaticComposer (app: FastifyInstance, stackable: BaseStackable): Promise<void>
+export declare function platformaticComposer (app: FastifyInstance, capability: BaseCapability): Promise<void>
 
 export class Generator extends BaseGenerator.BaseGenerator {}
 

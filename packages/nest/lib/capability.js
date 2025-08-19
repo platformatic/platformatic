@@ -1,5 +1,5 @@
 import {
-  BaseStackable,
+  BaseCapability,
   cleanBasePath,
   ensureTrailingSlash,
   errors,
@@ -19,7 +19,7 @@ import { version } from './schema.js'
 const kITC = Symbol.for('plt.runtime.itc')
 const supportedVersions = '^11.0.0'
 
-export class NestStackable extends BaseStackable {
+export class NestCapability extends BaseCapability {
   #basePath
   #nestjsCore
   #nestjsCli

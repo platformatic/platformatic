@@ -295,7 +295,7 @@ export class ChildProcess extends ITC {
     disablePinoDirectWrite()
 
     // Since this is executed by user code, make sure we only override this in the main thread
-    // The rest will be intercepted by the BaseStackable.
+    // The rest will be intercepted by the BaseCapability.
     const loggerOptions = globalThis.platformatic?.config?.logger ?? {}
     const pinoOptions = {
       ...loggerOptions,

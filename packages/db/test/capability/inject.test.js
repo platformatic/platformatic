@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('inject request into service stackable', async t => {
+test('inject request into service capability', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -23,13 +23,13 @@ test('inject request into service stackable', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
   {
-    const { statusCode, body } = await stackable.inject('/')
+    const { statusCode, body } = await capability.inject('/')
     assert.strictEqual(statusCode, 200, 'status code')
 
     const data = JSON.parse(body)
@@ -37,7 +37,7 @@ test('inject request into service stackable', async t => {
   }
 
   {
-    const { statusCode, body } = await stackable.inject('/foo/bar')
+    const { statusCode, body } = await capability.inject('/foo/bar')
     assert.strictEqual(statusCode, 200, 'status code')
 
     const data = JSON.parse(body)
@@ -45,7 +45,7 @@ test('inject request into service stackable', async t => {
   }
 
   {
-    const { statusCode, body } = await stackable.inject('/foo/baz')
+    const { statusCode, body } = await capability.inject('/foo/baz')
     assert.strictEqual(statusCode, 200, 'status code')
 
     const data = JSON.parse(body)

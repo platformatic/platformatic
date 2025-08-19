@@ -3,15 +3,15 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { create } from '../../index.js'
 
-test('get service config via stackable api', async t => {
+test('get service config via capability api', async t => {
   const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'directories')
 
-  const stackable = await create(projectRoot)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await create(projectRoot)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const stackableConfig = await stackable.getConfig()
-  assert.deepStrictEqual(stackableConfig, {
+  const capabilityConfig = await capability.getConfig()
+  assert.deepStrictEqual(capabilityConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',

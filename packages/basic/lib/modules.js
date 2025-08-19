@@ -7,7 +7,7 @@ import pino from 'pino'
 import { packageJson } from './schema.js'
 import { importFile } from './utils.js'
 
-const importStackablePackageMarker = '__pltImportStackablePackage.js'
+const importCapabilityPackageMarker = '__pltImportCapabilityPackage.js'
 
 export function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
@@ -16,10 +16,10 @@ export function isImportFailedError (error, pkg) {
 
   const match = error.message.match(/Cannot find package '(.+)' imported from (.+)/)
 
-  return match?.[1] === pkg || error.requireStack?.[0].endsWith(importStackablePackageMarker)
+  return match?.[1] === pkg || error.requireStack?.[0].endsWith(importCapabilityPackageMarker)
 }
 
-export async function importStackablePackage (directory, pkg) {
+export async function importCapabilityPackage (directory, pkg) {
   let imported
   try {
     try {
@@ -31,7 +31,7 @@ export async function importStackablePackage (directory, pkg) {
       }
 
       // Scope to the service
-      const require = createRequire(resolve(directory, importStackablePackageMarker))
+      const require = createRequire(resolve(directory, importCapabilityPackageMarker))
       const toImport = require.resolve(pkg)
       imported = await importFile(toImport)
     }
@@ -49,7 +49,7 @@ export async function importStackablePackage (directory, pkg) {
   return imported.default ?? imported
 }
 
-export async function importStackableAndConfig (root, config, context) {
+export async function importCapabilityAndConfig (root, config, context) {
   let rootPackageJson
   try {
     rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
@@ -89,10 +89,10 @@ export async function importStackableAndConfig (root, config, context) {
     }
   }
 
-  const stackable = await importStackablePackage(root, moduleName)
+  const capability = await importCapabilityPackage(root, moduleName)
 
   return {
-    stackable,
+    capability,
     config,
     autodetectDescription:
       moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`,

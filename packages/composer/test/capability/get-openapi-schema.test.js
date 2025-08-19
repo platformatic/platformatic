@@ -2,7 +2,7 @@ import assert from 'node:assert'
 import { test } from 'node:test'
 import { createFromConfig, createOpenApiService } from '../helper.js'
 
-test('get service openapi schema via stackable api', async t => {
+test('get service openapi schema via capability api', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
@@ -25,11 +25,11 @@ test('get service openapi schema via stackable api', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema.openapi, '3.0.3')
   assert.deepStrictEqual(openapiSchema.info, {
     title: 'Platformatic Composer',
@@ -53,10 +53,10 @@ test('get null if server does not expose openapi', async t => {
     }
   }
 
-  const stackable = await createFromConfig(t, config)
-  t.after(() => stackable.stop())
-  await stackable.start({ listen: true })
+  const capability = await createFromConfig(t, config)
+  t.after(() => capability.stop())
+  await capability.start({ listen: true })
 
-  const openapiSchema = await stackable.getOpenapiSchema()
+  const openapiSchema = await capability.getOpenapiSchema()
   assert.strictEqual(openapiSchema, null)
 })

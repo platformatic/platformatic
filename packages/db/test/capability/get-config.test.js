@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service config via stackable api', async t => {
+test('get service config via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createFromConfig(t, {
+  const capability = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -25,13 +25,13 @@ test('get service config via stackable api', async t => {
   })
 
   t.after(async () => {
-    await stackable.stop()
+    await capability.stop()
     await dropTestDB()
   })
-  await stackable.start({ listen: true })
+  await capability.start({ listen: true })
 
-  const stackableConfig = await stackable.getConfig()
-  assert.deepStrictEqual(stackableConfig, {
+  const capabilityConfig = await capability.getConfig()
+  assert.deepStrictEqual(capabilityConfig, {
     application: {},
     db: {
       ...connectionInfo

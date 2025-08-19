@@ -1,5 +1,5 @@
 import {
-  BaseStackable,
+  BaseCapability,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -88,7 +88,7 @@ async function getEntrypointInformation (root) {
   return { entrypoint, hadEntrypointField }
 }
 
-export class NodeStackable extends BaseStackable {
+export class NodeCapability extends BaseCapability {
   #module
   #app
   #server
@@ -161,7 +161,7 @@ export class NodeStackable extends BaseStackable {
 
     if (config.node?.hasServer !== false && this.#module.hasServer !== false) {
       if (factory) {
-        // We have build function, this Stackable will not use HTTP unless it is the entrypoint
+        // We have build function, this Capability will not use HTTP unless it is the entrypoint
         serverPromise.cancel()
 
         this.#app = await this.#module[factory]()
