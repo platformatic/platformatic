@@ -534,10 +534,14 @@ export interface PlatformaticViteConfig {
     | {
         enabled: boolean;
         path?: string;
+        type?: string;
+        code?: number;
       }
     | {
         enabled?: boolean;
         path: string;
+        type?: string;
+        code?: number;
       }
     | string
     | boolean;

@@ -21,6 +21,28 @@ export async function transform (config, schema, options) {
   return config
 }
 
+export function normalizeOn404 (on404, code = 200, type = 'text/html', path = 'index.html') {
+  if (!on404) {
+    return { enabled: false, code, type, path }
+  }
+  if (on404 === true) {
+    return { enabled: true, code, type, path }
+  }
+  if (typeof on404 === 'string') {
+    return { enabled: !!on404, code, type, path: on404 ?? path }
+  }
+  if (typeof on404 === 'object') {
+    return {
+      enabled: on404.enabled ?? !!on404.path,
+      code: on404.code ?? code,
+      type: on404.type ?? type,
+      path: on404.path ?? path,
+    }
+  }
+  // schema says unreachable, but let's be safe
+  return { enabled: false, code, type, path }
+}
+
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
 

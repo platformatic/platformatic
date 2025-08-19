@@ -1958,6 +1958,14 @@
             "path": {
               "type": "string",
               "default": "index.html"
+            },
+            "type": {
+              "type": "string",
+              "default": "text/html"
+            },
+            "code": {
+              "type": "number",
+              "default": 200
             }
           },
           "required": [
@@ -1974,6 +1982,14 @@
             "path": {
               "type": "string",
               "default": "index.html"
+            },
+            "type": {
+              "type": "string",
+              "default": "text/html"
+            },
+            "code": {
+              "type": "number",
+              "default": 200
             }
           },
           "required": [
