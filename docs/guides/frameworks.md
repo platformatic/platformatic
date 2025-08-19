@@ -50,7 +50,7 @@ Progressive Node.js framework for building scalable server-side applications.
 
 To add a framework to your Watt application:
 
-1. **Add the capability to your configuration:**
+1. **Add the application to your configuration:**
    ```json
    {
      "services": [
