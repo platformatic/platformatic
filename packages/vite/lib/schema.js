@@ -53,7 +53,6 @@ const on404 = {
         enabled: { type: 'boolean' },
         path: { type: 'string', default: 'index.html' }
       },
-      required: ['path'],
       additionalProperties: false
     },
     { type: 'string' },

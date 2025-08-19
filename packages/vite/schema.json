@@ -1456,9 +1456,6 @@
               "default": "index.html"
             }
           },
-          "required": [
-            "path"
-          ],
           "additionalProperties": false
         },
         {

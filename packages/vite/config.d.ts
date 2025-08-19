@@ -441,7 +441,7 @@ export interface PlatformaticViteStackable {
   on404?:
     | {
         enabled?: boolean;
-        path: string;
+        path?: string;
       }
     | string
     | boolean;
