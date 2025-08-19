@@ -437,12 +437,12 @@ export interface PlatformaticViteStackable {
           serverDirectory?: string;
         }
       | boolean;
-    on404?:
-      | {
-          enabled?: boolean;
-          path: string;
-        }
-      | string
-      | boolean;
   };
+  on404?:
+    | {
+        enabled?: boolean;
+        path: string;
+      }
+    | string
+    | boolean;
 }
