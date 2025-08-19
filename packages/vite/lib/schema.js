@@ -41,22 +41,6 @@ const vite = {
         { type: 'boolean' }
       ],
       default: false
-    },
-    on404: {
-      oneOf: [
-        {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean' },
-            path: { type: 'string', default: 'index.html' }
-          },
-          required: ['path'],
-          additionalProperties: false
-        },
-        { type: 'string' },
-        { type: 'boolean' }
-      ],
-      default: false
     }
   },
   default: {},
@@ -79,7 +63,23 @@ export const schema = {
     watch: basicSchemaComponents.watch,
     application: basicSchemaComponents.buildableApplication,
     runtime: utilsSchemaComponents.wrappedRuntime,
-    vite
+    vite,
+    on404: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            path: { type: 'string', default: 'index.html' }
+          },
+          required: ['path'],
+          additionalProperties: false
+        },
+        { type: 'string' },
+        { type: 'boolean' }
+      ],
+      default: false
+    }
   },
   additionalProperties: false
 }
