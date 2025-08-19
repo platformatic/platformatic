@@ -437,6 +437,13 @@ export interface PlatformaticRemixStackable {
           serverDirectory?: string;
         }
       | boolean;
+    on404?:
+      | {
+          enabled?: boolean;
+          path: string;
+        }
+      | string
+      | boolean;
   };
   remix?: {
     outputDirectory?: string;
