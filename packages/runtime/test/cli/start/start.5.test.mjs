@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { startPath } from '../helper.mjs'
 
-test('do not start if there are no services', async t => {
+test('do not start if there are no applications', async t => {
   const config = join(
     import.meta.dirname,
     '..',

@@ -57,7 +57,7 @@ server.register(pltClient, {
   headers: { foo: 'bar' },
   name: 'Frassica',
   path: 'Fracchia',
-  serviceId: 'Fantozzi'
+  applicationId: 'Fantozzi'
 })
 
 const key = Symbol.for('plt.operationIdMap')

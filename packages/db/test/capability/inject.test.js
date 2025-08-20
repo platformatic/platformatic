@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('inject request into service capability', async t => {
+test('inject request into application capability', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 

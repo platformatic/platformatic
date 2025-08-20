@@ -226,7 +226,7 @@ export interface OpenTelemetry {
   /**
    * The name of the service. Defaults to the folder name if not specified.
    */
-  serviceName: string
+  applicationName: string
   /**
    * The version of the service (optional)
    */

@@ -79,7 +79,7 @@ test('should trace a request getting DB from the request and running the query m
   }
   const app = await setupDBAppWithTelemetry(
     {
-      serviceName: 'test-service',
+      applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
         type: 'memory'

@@ -47,5 +47,5 @@ test('logs errors during db migrations', async t => {
   const messages = await readLogs(join(root, 'logs.txt'), 10000)
   assert.ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
   assert.ok(messages.some(m => m.err?.message?.match(/near "fiddlesticks": syntax error/)))
-  assert.ok(messages.some(m => m.msg?.match(/Failed to start service "mysimplename" after 5 attempts./)))
+  assert.ok(messages.some(m => m.msg?.match(/Failed to start application "mysimplename" after 5 attempts./)))
 })

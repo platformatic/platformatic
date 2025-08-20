@@ -117,7 +117,7 @@ DATABASE_URL=postgresql://localhost:5432/myapp
 DB_POOL_SIZE=10
 ```
 
-### Service Configuration
+### Application Configuration
 ```json
 {
   "server": {

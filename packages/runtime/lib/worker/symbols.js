@@ -3,7 +3,7 @@
 const kConfig = Symbol.for('plt.runtime.config')
 const kId = Symbol.for('plt.runtime.id') // This is also used to detect if we are running in a Platformatic runtime thread
 const kFullId = Symbol.for('plt.runtime.fullId')
-const kServiceId = Symbol.for('plt.runtime.service.id')
+const kApplicationId = Symbol.for('plt.runtime.application.id')
 const kWorkerId = Symbol.for('plt.runtime.worker.id')
 const kITC = Symbol.for('plt.runtime.itc')
 const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
@@ -21,7 +21,7 @@ module.exports = {
   kConfig,
   kId,
   kFullId,
-  kServiceId,
+  kApplicationId,
   kWorkerId,
   kITC,
   kHealthCheckTimer,

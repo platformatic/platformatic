@@ -7,9 +7,9 @@ This guide covers how to implement comprehensive monitoring and observability fo
 Observability is crucial for production applications. Watt provides built-in support for:
 
 - **Structured Logging**: JSON-based logging with configurable levels
-- **Metrics Collection**: Prometheus-compatible metrics for performance monitoring  
+- **Metrics Collection**: Prometheus-compatible metrics for performance monitoring
 - **Distributed Tracing**: OpenTelemetry integration for request tracing
-- **Health Checks**: Application and service health endpoints
+- **Health Checks**: Application health endpoints
 - **Error Tracking**: Centralized error collection and alerting
 
 ## Quick Setup
@@ -64,23 +64,24 @@ For production, use structured JSON logging:
 ### Log Levels
 
 Available log levels (in order of verbosity):
+
 - `fatal`: Only fatal errors
-- `error`: Errors and fatal  
+- `error`: Errors and fatal
 - `warn`: Warnings, errors, and fatal
 - `info`: General information (recommended for production)
 - `debug`: Debug information
 - `trace`: Very detailed debug information
 
-### Custom Logging in Services
+### Custom Logging in Applications
 
-Add logging to your service plugins:
+Add logging to your application plugins:
 
 ```javascript
-// services/api/plugin.js
+// applications/api/plugin.js
 module.exports = async function (app) {
   app.get('/api/users', async (request, reply) => {
     request.log.info({ userId: 123 }, 'User data requested')
-    
+
     try {
       const users = await getUsers()
       request.log.debug({ count: users.length }, 'Users retrieved')
@@ -118,15 +119,15 @@ Watt automatically collects:
 
 - **HTTP Metrics**: Request count, duration, status codes
 - **System Metrics**: CPU, memory, event loop lag
-- **Database Metrics**: Connection pool, query duration (if using Database Service)
+- **Database Metrics**: Connection pool, query duration (if using Database Application)
 - **Custom Metrics**: Application-specific metrics you define
 
 ### Custom Metrics
 
-Add custom metrics to your services:
+Add custom metrics to your applications:
 
 ```javascript
-// services/api/plugin.js
+// applications/api/plugin.js
 module.exports = async function (app) {
   // Counter for API calls
   const apiCallsCounter = app.metrics.counter({
@@ -148,13 +149,13 @@ module.exports = async function (app) {
 
   app.addHook('onResponse', async (request, reply) => {
     const duration = (Date.now() - request.startTime) / 1000
-    
+
     apiCallsCounter.inc({
       method: request.method,
       endpoint: request.routerPath,
       status: reply.statusCode
     })
-    
+
     responseTimeHistogram.observe(duration)
   })
 }
@@ -185,7 +186,7 @@ Enable tracing for request correlation across services:
 ```json
 {
   "telemetry": {
-    "serviceName": "my-watt-app",
+    "applicationName": "my-watt-app",
     "version": "1.0.0",
     "exporter": {
       "type": "otlp",
@@ -202,18 +203,18 @@ Enable tracing for request correlation across services:
 Tracing is automatically enabled for HTTP requests, database queries, and inter-service calls. Add custom spans:
 
 ```javascript
-// services/api/plugin.js
+// applications/api/plugin.js
 module.exports = async function (app) {
   app.get('/api/complex-operation', async (request, reply) => {
     const tracer = app.openTelemetry.tracer
-    
-    return await tracer.startActiveSpan('complex-operation', async (span) => {
+
+    return await tracer.startActiveSpan('complex-operation', async span => {
       try {
         span.setAttributes({
           'operation.type': 'data-processing',
           'user.id': request.user.id
         })
-        
+
         const result = await processData()
         span.setStatus({ code: 1 }) // SUCCESS
         return result
@@ -246,7 +247,7 @@ docker run -d --name jaeger \
 ```json
 {
   "telemetry": {
-    "serviceName": "my-watt-app",
+    "applicationName": "my-watt-app",
     "exporter": {
       "type": "jaeger",
       "options": {
@@ -276,27 +277,28 @@ Configure health check endpoints:
 ```
 
 This creates health endpoints:
+
 - `GET /status` - Basic health status
 - `GET /status/live` - Kubernetes liveness probe
 - `GET /status/ready` - Kubernetes readiness probe
 
-### Service-Specific Health Checks
+### Application-Specific Health Checks
 
 Add custom health checks:
 
 ```javascript
-// services/api/plugin.js
+// applications/api/plugin.js
 module.exports = async function (app) {
   app.register(require('@fastify/under-pressure'), {
     healthCheck: async function () {
       // Custom health check logic
       const dbHealthy = await checkDatabaseConnection()
       const externalServiceHealthy = await checkExternalAPI()
-      
+
       if (!dbHealthy || !externalServiceHealthy) {
         throw new Error('Service dependencies unavailable')
       }
-      
+
       return { status: 'ok', timestamp: Date.now() }
     },
     healthCheckInterval: 10000
@@ -306,7 +308,7 @@ module.exports = async function (app) {
 
 ### Database Health Checks
 
-For Database Services, health checks include:
+For Database Applications, health checks include:
 
 ```javascript
 // Automatic database connection health check
@@ -375,16 +377,14 @@ npm install @sentry/node @sentry/integrations
 ```
 
 ```javascript
-// services/api/plugin.js
+// applications/api/plugin.js
 const Sentry = require('@sentry/node')
 
 module.exports = async function (app) {
   Sentry.init({
     dsn: process.env.PLT_SENTRY_DSN,
     environment: process.env.NODE_ENV,
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true })
-    ],
+    integrations: [new Sentry.Integrations.Http({ tracing: true })],
     tracesSampleRate: 1.0
   })
 
@@ -398,7 +398,7 @@ module.exports = async function (app) {
         headers: request.headers
       }
     })
-    
+
     request.log.error({ error }, 'Unhandled error')
     reply.status(500).send({ error: 'Internal Server Error' })
   })
@@ -429,7 +429,7 @@ data:
         "endpoint": "/metrics"
       },
       "telemetry": {
-        "serviceName": "watt-production",
+        "applicationName": "watt-production",
         "exporter": {
           "type": "otlp",
           "options": {
@@ -454,33 +454,33 @@ spec:
         app: watt-app
     spec:
       containers:
-      - name: app
-        image: my-watt-app:latest
-        ports:
-        - containerPort: 3042
-        env:
-        - name: NODE_ENV
-          value: "production"
-        livenessProbe:
-          httpGet:
-            path: /status/live
-            port: 3042
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /status/ready
-            port: 3042
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: config
-          mountPath: /app/watt.json
-          subPath: watt.json
+        - name: app
+          image: my-watt-app:latest
+          ports:
+            - containerPort: 3042
+          env:
+            - name: NODE_ENV
+              value: 'production'
+          livenessProbe:
+            httpGet:
+              path: /status/live
+              port: 3042
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /status/ready
+              port: 3042
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /app/watt.json
+              subPath: watt.json
       volumes:
-      - name: config
-        configMap:
-          name: watt-config
+        - name: config
+          configMap:
+            name: watt-config
 ```
 
 ### Docker Compose Monitoring Stack
@@ -494,7 +494,7 @@ services:
   app:
     build: .
     ports:
-      - "3042:3042"
+      - '3042:3042'
     environment:
       - NODE_ENV=production
     volumes:
@@ -503,7 +503,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
@@ -513,7 +513,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -522,8 +522,8 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"
-      - "14268:14268"
+      - '16686:16686'
+      - '14268:14268'
     environment:
       - COLLECTOR_OTLP_ENABLED=true
 
@@ -540,34 +540,34 @@ Set up alerts for critical metrics:
 ```yaml
 # alerts.yml
 groups:
-- name: watt-app-alerts
-  rules:
-  - alert: HighErrorRate
-    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-    for: 2m
-    labels:
-      severity: critical
-    annotations:
-      summary: "High error rate detected"
-      description: "Error rate is above 10% for 2 minutes"
+  - name: watt-app-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'High error rate detected'
+          description: 'Error rate is above 10% for 2 minutes'
 
-  - alert: HighResponseTime
-    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High response time"
-      description: "95th percentile response time is above 2 seconds"
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High response time'
+          description: '95th percentile response time is above 2 seconds'
 
-  - alert: ServiceDown
-    expr: up{job="watt-app"} == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Watt application is down"
-      description: "Watt application has been down for more than 1 minute"
+      - alert: ServiceDown
+        expr: up{job="watt-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Watt application is down'
+          description: 'Watt application has been down for more than 1 minute'
 ```
 
 ### Dashboard Examples
@@ -579,7 +579,7 @@ Key metrics to monitor:
 - **Response Time**: P50, P95, P99 response times
 - **System Metrics**: CPU usage, memory consumption
 - **Database Performance**: Connection pool, query duration
-- **Service Health**: Health check status across services
+- **Service Health**: Health check status across applications
 
 ### Log Analysis
 
@@ -589,7 +589,7 @@ Essential log queries:
 # Error analysis
 wattpm logs --level error | grep "database"
 
-# Performance analysis  
+# Performance analysis
 wattpm logs | grep "duration" | jq '.responseTime'
 
 # User behavior analysis

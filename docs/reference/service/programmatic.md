@@ -91,7 +91,7 @@ console.log(await res.json())
 
 // do something
 
-await service.close()
+await server.close()
 ```
 
 ## TypeScript Support

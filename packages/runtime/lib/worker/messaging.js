@@ -26,7 +26,7 @@ class MessagingITC extends ITC {
     this.#workers = new RoundRobinMap()
     this.#sources = new Set()
 
-    // Start listening on the BroadcastChannel for the list of services
+    // Start listening on the BroadcastChannel for the list of applications
     this.#broadcastChannel = new BroadcastChannel(kWorkersBroadcast)
     this.#broadcastChannel.onmessage = this.#updateWorkers.bind(this)
 
@@ -47,25 +47,25 @@ class MessagingITC extends ITC {
     }
   }
 
-  async send (service, name, message, options) {
-    // Get the next worker for the service
-    const worker = this.#workers.next(service)
+  async send (application, name, message, options) {
+    // Get the next worker for the application
+    const worker = this.#workers.next(application)
 
     if (!worker) {
-      throw new errors.MessagingError(service, 'No workers available')
+      throw new errors.MessagingError(application, 'No workers available')
     }
 
     if (!worker.channel) {
       // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
       // the request to the worker, using executeWithTimeout with the user set timeout value.
       const channel = await executeWithTimeout(
-        globalThis[kITC].send('getWorkerMessagingChannel', { service: worker.service, worker: worker.worker }),
+        globalThis[kITC].send('getWorkerMessagingChannel', { application: worker.application, worker: worker.worker }),
         this.#timeout * 2
       )
 
       /* c8 ignore next 3 - Hard to test */
       if (channel === kTimeout) {
-        throw new errors.MessagingError(service, 'Timeout while waiting for a communication channel.')
+        throw new errors.MessagingError(application, 'Timeout while waiting for a communication channel.')
       }
 
       worker.channel = channel
@@ -77,13 +77,13 @@ class MessagingITC extends ITC {
 
     const context = { ...options }
     context.channel = worker.channel
-    context.service = worker.service
+    context.application = worker.application
     context.trackResponse = true
 
     const response = await executeWithTimeout(super.send(name, message, context), this.#timeout)
 
     if (response === kTimeout) {
-      throw new errors.MessagingError(service, 'Timeout while waiting for a response.')
+      throw new errors.MessagingError(application, 'Timeout while waiting for a response.')
     }
 
     return response
@@ -104,8 +104,8 @@ class MessagingITC extends ITC {
     const { channel, transferList } = context
 
     if (context.trackResponse) {
-      const service = context.service
-      channel[kPendingResponses].set(request.reqId, { service, request })
+      const application = context.application
+      channel[kPendingResponses].set(request.reqId, { application, request })
     }
 
     channel.postMessage(sanitize(request, transferList), { transferList })
@@ -150,18 +150,18 @@ class MessagingITC extends ITC {
     this.#workers = new RoundRobinMap()
 
     const instances = []
-    for (const [service, workers] of event.data) {
+    for (const [application, workers] of event.data) {
       const count = workers.length
       const next = Math.floor(Math.random() * count)
 
-      instances.push({ id: service, next, workers: count })
+      instances.push({ id: application, next, workers: count })
 
       for (let i = 0; i < count; i++) {
         const worker = workers[i]
         const channel = existingChannels.get(worker.thread)
 
-        // Note i is not the worker index as in runtime, but the index in the list of current alive workers for the service
-        this.#workers.set(`${service}:${i}`, { ...worker, channel })
+        // Note i is not the worker index as in runtime, but the index in the list of current alive workers for the application
+        this.#workers.set(`${application}:${i}`, { ...worker, channel })
       }
     }
 
@@ -169,11 +169,11 @@ class MessagingITC extends ITC {
   }
 
   #handlePendingResponse (channel) {
-    for (const { service, request } of channel[kPendingResponses].values()) {
+    for (const { application, request } of channel[kPendingResponses].values()) {
       this._emitResponse(
         generateResponse(
           request,
-          new errors.MessagingError(service, 'The communication channel was closed before receiving a response.'),
+          new errors.MessagingError(application, 'The communication channel was closed before receiving a response.'),
           null
         )
       )

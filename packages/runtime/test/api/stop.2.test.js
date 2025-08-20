@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should fail to stop service with a wrong id', async t => {
+test('should fail to stop application with a wrong id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
   await app.init()
@@ -17,12 +17,12 @@ test('should fail to stop service with a wrong id', async t => {
   })
 
   try {
-    await app.stopService('wrong-service-id')
+    await app.stopApplication('wrong-service-id')
     assert.fail('should have thrown')
   } catch (err) {
     assert.strictEqual(
       err.message,
-      'Service wrong-service-id not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service'
+      'Application wrong-service-id not found. Available applications are: db-app, serviceApp, with-logger, multi-plugin-service'
     )
   }
 })

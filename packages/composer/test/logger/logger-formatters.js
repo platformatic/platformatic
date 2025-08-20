@@ -1,5 +1,5 @@
 export function bindings (bindings) {
-  return { name: 'service' }
+  return { name: 'application' }
 }
 
 export function level (label) {

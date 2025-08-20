@@ -1,5 +1,5 @@
 import { getExecutableId, getExecutableName, logFatalError, logo } from '@platformatic/foundation'
-import { loadServicesCommands } from '@platformatic/runtime'
+import { loadApplicationsCommands } from '@platformatic/runtime'
 import { bold } from 'colorette'
 
 function sanitizeHelp (raw) {
@@ -26,7 +26,7 @@ export async function showGeneralHelp (logger) {
 
   const executableId = getExecutableId()
   const commands = Object.values(await loadCommands())
-  const servicesCommands = Object.values((await loadServicesCommands()).help)
+  const applicationsCommands = Object.values((await loadApplicationsCommands()).help)
 
   const options = [
     { usage: '-V, --version', description: `Show ${executableId} version` },
@@ -42,7 +42,7 @@ export async function showGeneralHelp (logger) {
     Math.max(
       ...options.map(c => c.usage.length),
       ...commands.map(c => c.usage.length),
-      ...servicesCommands.map(c => c.usage.length)
+      ...applicationsCommands.map(c => c.usage.length)
     ) + 5
 
   // Print all options

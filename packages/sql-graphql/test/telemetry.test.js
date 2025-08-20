@@ -40,7 +40,7 @@ test('creates the spans for the graphql mutation', async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
-    serviceName: 'test-service',
+    applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -119,7 +119,7 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
-    serviceName: 'test-service',
+    applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -200,7 +200,7 @@ test('don\'t wrap the schema types starting with __', async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
-    serviceName: 'test-service',
+    applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
       type: 'memory',

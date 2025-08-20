@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createFromConfig, graphqlRequest, startDatabaseServices } from '../helper.js'
+import { createFromConfig, graphqlRequest, startDatabaseApplications } from '../helper.js'
 
-function toComposerConfig (services, entities = {}) {
+function toComposerConfig (applications, entities = {}) {
   return {
     server: {
       logger: {
@@ -11,7 +11,7 @@ function toComposerConfig (services, entities = {}) {
     },
     composer: {
       graphql: {},
-      services: services.map(s => {
+      applications: applications.map(s => {
         const config = {
           id: s.name,
           origin: s.host,
@@ -100,7 +100,7 @@ const entities = {
   }
 }
 
-test('should use queries and mutations on a single @platformatic/db service', async t => {
+test('should use queries and mutations on a single @platformatic/db application', async t => {
   const requests = [
     {
       query: '{ movies (limit:1) { title, year }}',
@@ -134,9 +134,9 @@ test('should use queries and mutations on a single @platformatic/db service', as
     }
   ]
 
-  const services = await startDatabaseServices(t, [{ name: 'movies', jsonFile: 'with-entities.json' }])
+  const applications = await startDatabaseApplications(t, [{ name: 'movies', jsonFile: 'with-entities.json' }])
 
-  const composerConfig = toComposerConfig(services)
+  const composerConfig = toComposerConfig(applications)
   composerConfig.composer.graphql.defaultArgsAdapter = defaultArgsAdapter
   composerConfig.composer.refreshTimeout = 0
 
@@ -146,18 +146,18 @@ test('should use queries and mutations on a single @platformatic/db service', as
   for (const request of requests) {
     let response
 
-    response = await graphqlRequest({ query: request.query, variables: request.variables, host: services[0].host })
+    response = await graphqlRequest({ query: request.query, variables: request.variables, host: applications[0].host })
     assert.deepEqual(
       response,
       request.expected,
-      'should get expected result from db service for query\n' + request.query + '\nresponse' + JSON.stringify(response)
+      'should get expected result from db application for query\n' + request.query + '\nresponse' + JSON.stringify(response)
     )
 
     response = await graphqlRequest({ query: request.query, variables: request.variables, host: composerHost })
     assert.deepEqual(
       response,
       request.expected,
-      'should get expected result from composer service for query\n' +
+      'should get expected result from composer application for query\n' +
         request.query +
         '\nresponse' +
         JSON.stringify(response)
@@ -165,9 +165,9 @@ test('should use queries and mutations on a single @platformatic/db service', as
   }
 })
 
-test('should use queries and mutations on multiple @platformatic/db services', async t => {
+test('should use queries and mutations on multiple @platformatic/db applications', async t => {
   const requests = [
-    // query multiple services
+    // query multiple applications
     {
       query:
         '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
@@ -294,13 +294,13 @@ test('should use queries and mutations on multiple @platformatic/db services', a
     }
   ]
 
-  const services = await startDatabaseServices(t, [
+  const applications = await startDatabaseApplications(t, [
     { name: 'movies', jsonFile: 'with-entities.json' },
     { name: 'songs', jsonFile: 'with-entities.json' },
     { name: 'artists', jsonFile: 'bare-db.json' }
   ])
 
-  const composerConfig = toComposerConfig(services, entities)
+  const composerConfig = toComposerConfig(applications, entities)
 
   composerConfig.composer.graphql.defaultArgsAdapter = defaultArgsAdapter
   composerConfig.composer.graphql.graphiql = true
@@ -315,7 +315,7 @@ test('should use queries and mutations on multiple @platformatic/db services', a
     assert.deepStrictEqual(
       response,
       request.expected,
-      'should get expected result from composer service for query\n' +
+      'should get expected result from composer application for query\n' +
         request.query +
         '\nresponse' +
         JSON.stringify(response)

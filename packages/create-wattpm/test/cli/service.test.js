@@ -7,22 +7,22 @@ import { isFileAccessible } from '../../lib/utils.js'
 import {
   createTemporaryDirectory,
   executeCreatePlatformatic,
-  getServices,
+  getApplications,
   setupUserInputHandler,
   startMarketplace
 } from './helper.js'
 
-test('Creates a Platformatic Service with no Typescript', async t => {
-  const root = await createTemporaryDirectory(t, 'service')
+test('Creates a Platformatic Application with no Typescript', async t => {
+  const root = await createTemporaryDirectory(t, 'application')
   const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -35,27 +35,27 @@ test('Creates a Platformatic Service with no Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
 
-  // Here check the generated service
-  const services = await getServices(join(baseProjectDir, 'services'))
-  deepStrictEqual(services, ['main'])
-  const baseServiceDir = join(baseProjectDir, 'services', services[0])
-  equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.js')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.js')), true)
+  // Here check the generated application
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
+  deepStrictEqual(applications, ['main'])
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
+  equal(await isFileAccessible(join(baseApplicationDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.js')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.js')), true)
 })
 
-test('Creates a Platformatic Service with Typescript', async t => {
-  const root = await createTemporaryDirectory(t, 'service')
+test('Creates a Platformatic Application with Typescript', async t => {
+  const root = await createTemporaryDirectory(t, 'application')
   const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -68,30 +68,30 @@ test('Creates a Platformatic Service with Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
 
-  // Here check the generated service
-  const services = await getServices(join(baseProjectDir, 'services'))
-  equal(services.length, 1)
-  const baseServiceDir = join(baseProjectDir, 'services', services[0])
-  equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'tsconfig.json')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.ts')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.ts')), true)
+  // Here check the generated application
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
+  equal(applications.length, 1)
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
+  equal(await isFileAccessible(join(baseApplicationDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'tsconfig.json')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.ts')), true)
+  equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.ts')), true)
 })
 
-test('Creates a Platformatic Service in a non empty directory', async t => {
-  const root = await createTemporaryDirectory(t, 'service')
+test('Creates a Platformatic Application in a non empty directory', async t => {
+  const root = await createTemporaryDirectory(t, 'application')
   const marketplaceHost = await startMarketplace(t)
 
-  const servicesDir = join(root, 'services')
-  const serviceDir = join(servicesDir, 'foo')
-  await createDirectory(servicesDir)
-  await createDirectory(join(serviceDir, 'plugins'))
-  await createDirectory(join(serviceDir, 'routes'))
+  const applicationsDir = join(root, 'applications')
+  const applicationDir = join(applicationsDir, 'foo')
+  await createDirectory(applicationsDir)
+  await createDirectory(join(applicationDir, 'plugins'))
+  await createDirectory(join(applicationDir, 'routes'))
   await writeFile(join(root, '.env'), 'SAMPLE_ENV=foobar\n')
   // creates 2 files. root.js will be overwritten
-  await writeFile(join(serviceDir, 'routes', 'root.js'), "console.log('hello world')")
-  await writeFile(join(serviceDir, 'routes', 'sample.js'), "console.log('hello world')")
+  await writeFile(join(applicationDir, 'routes', 'root.js'), "console.log('hello world')")
+  await writeFile(join(applicationDir, 'routes', 'sample.js'), "console.log('hello world')")
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -101,10 +101,10 @@ test('Creates a Platformatic Service in a non empty directory', async t => {
       reply: 'no'
     },
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'foo' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'foo' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])

@@ -6,7 +6,7 @@ You need sophisticated configuration management for your Watt application that:
 - Organizes settings across multiple environments (dev, staging, production)
 - Supports complex configuration hierarchies and inheritance
 - Validates configuration values at startup
-- Allows per-service configuration in multi-service applications
+- Allows per-application configuration in multi-application applications
 
 **When to use this solution:**
 - Applications with complex configuration requirements
@@ -19,7 +19,7 @@ You need sophisticated configuration management for your Watt application that:
 [Node-config](https://www.npmjs.com/package/config) provides hierarchical configuration management that works seamlessly with Watt. This guide shows you how to:
 1. Set up node-config in your Watt application
 2. Create environment-specific configurations
-3. Configure individual services with their own settings
+3. Configure individual applications with their own settings
 4. Validate and access configuration values safely
 
 
@@ -32,14 +32,14 @@ First, install `node-config` in the root of your Watt application:
 npm install config
 ```
 
-Create a `config` directory in your `service` folder and set up your default configuration for each service:
+Create a `config` directory in your `application` folder and set up your default configuration for each application:
 
 ```sh
 mkdir config
 touch config/default.json
 ```
 
-In `{service}/config/default.json`, add your base configuration:
+In `{application}/config/default.json`, add your base configuration:
 
 ```sh
 {
@@ -55,7 +55,7 @@ For development-specific settings, create a separate configuration file:
 touch config/dev.json
 ```
 
-In `{service}/config/dev.json`, override any default values:
+In `{application}/config/dev.json`, override any default values:
 
 ```sh
 {
@@ -88,26 +88,26 @@ Instead of using simple key-value pairs, consider organizing your configurations
 It's important to note that for a secure configuration, use your environment variables for your application  secrets and validate your configuration values when you run your application. 
 :::
 
-## Service-Specific Configuration 
+## Application-Specific Configuration 
 
-You can configure each [service](https://platformatic.dev/docs/service/overview) environment variables in your Watt configuration file:
+You can configure each [application](https://platformatic.dev/docs/service/overview) environment variables in your Watt configuration file:
 
 ```json
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
+      "id": "application-a",
+      "path": "./applications/application-a",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-a/config",
+        "NODE_CONFIG_DIR": "./applications/application-a/config",
         "NODE_ENV": "development"
       }
     },
     {
-      "id": "service-b",
-      "path": "./services/service-b",
+      "id": "application-b",
+      "path": "./applications/application-b",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-b/config",
+        "NODE_CONFIG_DIR": "./applications/application-b/config",
         "NODE_ENV": "production"
       }
     }
@@ -115,24 +115,24 @@ You can configure each [service](https://platformatic.dev/docs/service/overview)
 }
 ```
 
-Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `service-a` directory:
+Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `application-a` directory:
 
-1.  Set your service-specific environment variable: 
+1.  Set your application-specific environment variable: 
 
 ```sh
-SERVICE_A_NODE_ENV=development
+APPLICATION_A_NODE_ENV=development
 ```
 
 2.  Use interpolation syntax `${VARIABLE_NAME}` in your Watt configuration to reference it:
 
 ```json
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
+      "id": "application-a",
+      "path": "./applications/application-a",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-a/config",
+        "NODE_CONFIG_DIR": "./applications/application-a/config",
         "NODE_ENV": `${YOUR_SERVICE_NODE_ENV}`
       }
     }
@@ -143,18 +143,18 @@ SERVICE_A_NODE_ENV=development
 You can alsp use this pattern with `env` file:
 
 ```env
-SERVICE_A_NODE_ENV=development
+APPLICATION_A_NODE_ENV=development
 ```
 
-You can also specify environment files per Platformatic service:
+You can also specify environment files per Platformatic application:
 
 ```
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
-      "envfile": "./services/service-a/.env"
+      "id": "application-a",
+      "path": "./applications/application-a",
+      "envfile": "./applications/application-a/.env"
     }
   ]
 }
@@ -261,13 +261,13 @@ NODE_ENV=production node test-config.js
 
 ### Verify Service-Specific Configuration
 
-**Test that each service loads its own configuration:**
+**Test that each application loads its own configuration:**
 ```bash
 # Start your Watt application
 npm run dev
 
-# Check service logs for configuration loading
-# Each service should show its specific config values
+# Check application logs for configuration loading
+# Each application should show its specific config values
 ```
 
 ## Troubleshooting
@@ -287,10 +287,10 @@ npm run dev
 **Problem:** Services are using wrong configuration
 
 **Solutions:**
-- Check that each service has its own `NODE_CONFIG_DIR` environment variable
-- Verify service-specific configuration files exist
+- Check that each application has its own `NODE_CONFIG_DIR` environment variable
+- Verify application-specific configuration files exist
 - Ensure no configuration file naming conflicts
-- Review service startup logs for configuration loading messages
+- Review application startup logs for configuration loading messages
 
 ### Environment Variable Issues
 

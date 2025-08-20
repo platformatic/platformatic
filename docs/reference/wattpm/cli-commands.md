@@ -41,7 +41,7 @@ wattpm init  # creates in current directory
 - `-s, --skip-dependencies` - Don't install dependencies after creating files
 - `-m, --marketplace <url>` - Platformatic Marketplace host (default: https://marketplace.platformatic.dev)
 - `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
-- `-M, --module <name>` - Additional service generator modules (can be used multiple times)
+- `-M, --module <name>` - Additional application generator modules (can be used multiple times)
 
 **Example:**
 ```bash
@@ -86,7 +86,7 @@ wattpm start ./dist --inspect
 
 ### `wattpm build`
 
-Builds all services in your Watt application for production.
+Builds all applications in your Watt application for production.
 
 ```bash
 wattpm build [directory]
@@ -103,7 +103,7 @@ wattpm build ./src --config watt.production.json
 
 ### `wattpm install`
 
-Installs dependencies for the application and all its services.
+Installs dependencies for the application and all its applications.
 
 ```bash
 wattpm install [directory]
@@ -163,7 +163,7 @@ wattpm stop [id]
 
 ### `wattpm restart`
 
-Restarts all services in a running application (picks up service changes, not main config).
+Restarts all applications in a running application (picks up application changes, not main config).
 
 ```bash
 wattpm restart [id]
@@ -183,14 +183,14 @@ wattpm reload [id]
 **Arguments:**
 - `id` - Process ID or application name (optional if only one app is running)
 
-## Service Management Commands
+## Application Management Commands
 
-### `wattpm services`
+### `wattpm applications`
 
-Lists all services in a running application.
+Lists all applications in a running application.
 
 ```bash
-wattpm services [id]
+wattpm applications [id]
 ```
 
 **Arguments:**
@@ -198,7 +198,7 @@ wattpm services [id]
 
 ### `wattpm import`
 
-Imports an external service into your Watt application.
+Imports an external application into your Watt application.
 
 ```bash
 wattpm import [directory] [url]
@@ -211,22 +211,22 @@ wattpm import [directory] [url]
 **Options:**
 - `-c, --config <path>` - Configuration file path
 - `-i, --id <name>` - Service ID (default: repository basename)
-- `-p, --path <path>` - Local path for the service (default: service ID)
+- `-p, --path <path>` - Local path for the application (default: application ID)
 - `-H, --http` - Use HTTP instead of SSH for GitHub URLs
 - `-b, --branch <name>` - Branch to clone (default: `main`)
-- `-s, --skip-dependencies` - Don't install service dependencies
+- `-s, --skip-dependencies` - Don't install application dependencies
 - `-P, --package-manager <manager>` - Package manager to use
 
 **Examples:**
 ```bash
 wattpm import platformatic/hello-world
-wattpm import https://github.com/user/my-service.git --id my-service
+wattpm import https://github.com/user/my-application.git --id my-application
 wattpm import --http --branch develop user/repo
 ```
 
 ### `wattpm resolve`
 
-Downloads and resolves all external services defined in your configuration.
+Downloads and resolves all external applications defined in your configuration.
 
 ```bash
 wattpm resolve [directory]
@@ -236,7 +236,7 @@ wattpm resolve [directory]
 - `-c, --config <path>` - Configuration file path
 - `-u, --username <name>` - Username for private repositories
 - `-p, --password <token>` - Password/token for private repositories
-- `-s, --skip-dependencies` - Don't install service dependencies
+- `-s, --skip-dependencies` - Don't install application dependencies
 - `-P, --package-manager <manager>` - Package manager to use
 
 **Example:**
@@ -248,20 +248,20 @@ wattpm resolve --username myuser --password $GITHUB_TOKEN
 
 ### `wattpm logs`
 
-Streams logs from a running application or specific service.
+Streams logs from a running application or specific application.
 
 ```bash
-wattpm logs [id] [service]
+wattpm logs [id] [application]
 ```
 
 **Arguments:**
 - `id` - Process ID or application name (optional if only one app is running)
-- `service` - Specific service name (optional, streams from all services if omitted)
+- `application` - Specific application name (optional, streams from all applications if omitted)
 
 **Example:**
 ```bash
 wattpm logs
-wattpm logs my-app api-service
+wattpm logs my-app api-application
 ```
 
 ### `wattpm inject`
@@ -269,12 +269,12 @@ wattpm logs my-app api-service
 Injects HTTP requests into a running application for testing.
 
 ```bash
-wattpm inject [id] [service]
+wattpm inject [id] [application]
 ```
 
 **Arguments:**
 - `id` - Process ID or application name (optional if only one app is running)
-- `service` - Service name (optional, uses entrypoint if omitted)
+- `application` - Service name (optional, uses entrypoint if omitted)
 
 **Options:**
 - `-m, --method <verb>` - HTTP method (default: `GET`)
@@ -289,20 +289,20 @@ wattpm inject [id] [service]
 ```bash
 wattpm inject --path /api/health
 wattpm inject --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
-wattpm inject my-app api-service --path /users --output response.json
+wattpm inject my-app api-application --path /users --output response.json
 ```
 
 ### `wattpm env`
 
-Displays environment variables for a running application or service.
+Displays environment variables for a running application or application.
 
 ```bash
-wattpm env [id] [service]
+wattpm env [id] [application]
 ```
 
 **Arguments:**
 - `id` - Process ID or application name (optional if only one app is running)
-- `service` - Service name (optional, shows app-level env if omitted)
+- `application` - Service name (optional, shows app-level env if omitted)
 
 **Options:**
 - `-t, --table` - Display variables in table format
@@ -310,25 +310,25 @@ wattpm env [id] [service]
 **Example:**
 ```bash
 wattpm env --table
-wattpm env my-app database-service
+wattpm env my-app database-application
 ```
 
 ### `wattpm config`
 
-Displays configuration for a running application or service.
+Displays configuration for a running application or application.
 
 ```bash
-wattpm config [id] [service]
+wattpm config [id] [application]
 ```
 
 **Arguments:**
 - `id` - Process ID or application name (optional if only one app is running)
-- `service` - Service name (optional, shows app config if omitted)
+- `application` - Service name (optional, shows app config if omitted)
 
 **Example:**
 ```bash
 wattpm config
-wattpm config my-app api-service
+wattpm config my-app api-application
 ```
 
 ## Advanced Commands
@@ -351,10 +351,10 @@ wattpm patch-config [directory] <patch-file>
 **Patch file format:**
 ```javascript
 // patch.js
-module.exports = function(runtime, services) {
+module.exports = function(runtime, applications) {
   return {
     runtime: [/* JSON Patch operations for runtime config */],
-    services: [/* JSON Patch operations for service configs */]
+    applications: [/* JSON Patch operations for application configs */]
   }
 }
 ```
@@ -414,11 +414,11 @@ wattpm version
 
 For backwards compatibility, these commands are available via `platformatic` or `npx platformatic`:
 
-### Service-Specific Commands
+### Application-Specific Commands
 
-- `platformatic db <command>` - Database service commands (create, start, migrations, seed, etc.)
-- `platformatic service <command>` - HTTP service commands (create, start, compile, etc.)
-- `platformatic composer <command>` - API gateway commands (create, start, schema fetch, etc.)
+- `platformatic db <command>` - Database application commands (create, start, migrations, seed, etc.)
+- `platformatic node <command>` - HTTP application commands (create, start, compile, etc.)
+- `platformatic composer <command>` - API gateway application commands (create, start, schema fetch, etc.)
 - `platformatic runtime <command>` - Runtime commands (start, compile, etc.)
 
 ### Client Generation
@@ -464,10 +464,10 @@ wattpm inject --path /api/health
 ### Adding an External Service
 
 ```bash
-# Import a service from GitHub
-wattpm import platformatic/example-service
+# Import an application from GitHub
+wattpm import platformatic/example-application
 
-# Resolve all external services
+# Resolve all external applications
 wattpm resolve
 
 # Restart to pick up changes

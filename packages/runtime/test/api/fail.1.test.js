@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should fail to get service config if service is not started', async t => {
+test('should fail to get application config if application is not started', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
   await app.init()
@@ -17,9 +17,9 @@ test('should fail to get service config if service is not started', async t => {
   })
 
   try {
-    await app.getServiceConfig('with-logger')
+    await app.getApplicationConfig('with-logger')
     assert.fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, "Service with id 'with-logger' is not started")
+    assert.strictEqual(err.message, "Application with id 'with-logger' is not started")
   }
 })

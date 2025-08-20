@@ -10,7 +10,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const platformaticVersion = require('../../package.json').version
 
-test('should get services topology', async t => {
+test('should get applications topology', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -35,7 +35,7 @@ test('should get services topology', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services'
+    path: '/api/v1/applications'
   })
 
   assert.strictEqual(statusCode, 200)
@@ -46,7 +46,7 @@ test('should get services topology', async t => {
   assert.deepStrictEqual(topology, {
     entrypoint: 'service-1',
     production: false,
-    services: [
+    applications: [
       {
         id: 'service-1',
         type: 'service',

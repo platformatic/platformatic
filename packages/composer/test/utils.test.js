@@ -17,14 +17,14 @@ test('should add slash if needed', async t => {
 
 test('isFetchable unit test', t => {
   const cases = [
-    { label: 'empty service', params: {}, expected: false },
-    { label: 'openapi service from file', params: { openapi: { file: '/to/file' } }, expected: false },
+    { label: 'empty application', params: {}, expected: false },
+    { label: 'openapi application from file', params: { openapi: { file: '/to/file' } }, expected: false },
     {
-      label: 'openapi+graphql service, openapi has url',
-      params: { openapi: { url: 'http://service/opeanapi' }, graphql: true },
+      label: 'openapi+graphql application, openapi has url',
+      params: { openapi: { url: 'http://application/opeanapi' }, graphql: true },
       expected: true
     },
-    { label: 'openapi+graphql service with default', params: { graphql: true, openapi: true }, expected: true }
+    { label: 'openapi+graphql application with default', params: { graphql: true, openapi: true }, expected: true }
   ]
 
   for (const c of cases) {

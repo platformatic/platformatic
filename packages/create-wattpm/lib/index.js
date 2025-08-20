@@ -151,7 +151,7 @@ export async function chooseCapability (inquirer, capabilities) {
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
-    message: 'Which kind of service do you want to create?',
+    message: 'Which kind of application do you want to create?',
     default: capabilities[0],
     choices: capabilities
   })
@@ -266,17 +266,17 @@ export async function createApplication (
       const { name: module, label } = await detectApplicationType(projectDir)
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
-      // in the services folder
+      // in the applications folder
       const existingRuntime = await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')
 
       if (!existingRuntime) {
         // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
-        const existingService = await findComposerConfigFile(projectDir)
+        const existingApplication = await findComposerConfigFile(projectDir)
 
-        if (existingService) {
-          const serviceConfig = await loadConfigurationFile(existingService)
+        if (existingApplication) {
+          const applicationConfig = await loadConfigurationFile(existingApplication)
 
-          if (serviceConfig.runtime) {
+          if (applicationConfig.runtime) {
             await say(`The ${label} application has already been wrapped into Watt.`)
             return
           }
@@ -379,7 +379,7 @@ export async function createApplication (
 
   const capabilities = await fetchCapabilities(marketplaceHost, modules)
 
-  const names = generator.existingServices ?? []
+  const names = generator.existingApplications ?? []
 
   while (true) {
     const capabilityName = await chooseCapability(inquirer, capabilities)
@@ -392,10 +392,10 @@ export async function createApplication (
       pkg: capabilityName
     })
 
-    const { serviceName } = await inquirer.prompt({
+    const { applicationName } = await inquirer.prompt({
       type: 'input',
-      name: 'serviceName',
-      message: 'What is the name of the service?',
+      name: 'applicationName',
+      message: 'What is the name of the application?',
       default: generateDashedName(),
       validate: value => {
         if (value.length === 0) {
@@ -414,20 +414,20 @@ export async function createApplication (
       }
     })
 
-    names.push(serviceName)
+    names.push(applicationName)
 
     const capabilityGenerator = capability.Generator
       ? new capability.Generator({
         logger,
         inquirer,
-        serviceName,
+        applicationName,
         parent: generator,
         ...additionalGeneratorOptions
       })
       : new ImportGenerator({
         logger,
         inquirer,
-        serviceName,
+        applicationName,
         module: capabilityName,
         version: await getPackageVersion(capabilityName, projectDir),
         parent: generator,
@@ -437,10 +437,10 @@ export async function createApplication (
     capabilityGenerator.setConfig({
       ...capabilityGenerator.config,
       ...additionalGeneratorConfig,
-      serviceName
+      applicationName
     })
 
-    generator.addService(capabilityGenerator, serviceName)
+    generator.addApplication(capabilityGenerator, applicationName)
 
     await capabilityGenerator.ask()
 
@@ -448,7 +448,7 @@ export async function createApplication (
       {
         type: 'list',
         name: 'shouldBreak',
-        message: 'Do you want to create another service?',
+        message: 'Do you want to create another application?',
         default: false,
         choices: [
           { name: 'yes', value: false },
@@ -470,7 +470,7 @@ export async function createApplication (
       {
         type: 'list',
         name: 'entrypoint',
-        message: 'Which service should be exposed?',
+        message: 'Which application should be exposed?',
         choices: names.map(name => ({ name, value: name }))
       }
     ])
@@ -512,6 +512,7 @@ export async function createApplication (
     // add pnpm-workspace.yaml file if needed
     const content = `packages:
 # all packages in direct subdirs of packages/
+- 'services/*'
 - 'services/*'
 - 'web/*'`
     await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)

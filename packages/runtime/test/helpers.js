@@ -78,9 +78,14 @@ async function createRuntime (configOrRoot, sourceOrConfig, context) {
       config = await originalTransform(config, ...args)
 
       config.logger ??= {}
-      config.logger.transport ??= {
-        target: 'pino/file',
-        options: { destination: context.logsPath }
+
+      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
+        config.logger.transport ??= {
+          target: 'pino/file',
+          options: { destination: context.logsPath }
+        }
+      } else {
+        config.logger.level = 'trace'
       }
 
       return config

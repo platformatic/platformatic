@@ -17,19 +17,17 @@ const {
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 const errors = require('../errors')
-const { getServiceUrl } = require('../utils')
+const { getApplicationUrl } = require('../utils')
 
-function fetchServiceUrl (service, key) {
-  if (service.localServiceEnvVars.has(key)) {
-    return service.localServiceEnvVars.get(key)
-  } else if (!key.endsWith('_URL') || !service.id) {
+function fetchApplicationUrl (application, key) {
+  if (!key.endsWith('_URL') || !application.id) {
     return null
   }
 
-  return getServiceUrl(service.id)
+  return getApplicationUrl(application.id)
 }
 
-class PlatformaticApp extends EventEmitter {
+class Controller extends EventEmitter {
   #starting
   #started
   #listening
@@ -51,7 +49,7 @@ class PlatformaticApp extends EventEmitter {
   ) {
     super()
     this.appConfig = appConfig
-    this.serviceId = this.appConfig.id
+    this.applicationId = this.appConfig.id
     this.workerId = workerId
     this.#watch = watch
     this.#starting = false
@@ -62,7 +60,7 @@ class PlatformaticApp extends EventEmitter {
     this.#lastELU = eventLoopUtilization()
 
     this.#context = {
-      serviceId: this.serviceId,
+      applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
@@ -73,8 +71,7 @@ class PlatformaticApp extends EventEmitter {
       serverConfig,
       worker: workerData?.worker,
       hasManagementApi: !!hasManagementApi,
-      localServiceEnvVars: this.appConfig.localServiceEnvVars,
-      fetchServiceUrl: fetchServiceUrl.bind(null, appConfig)
+      fetchApplicationUrl: fetchApplicationUrl.bind(null, appConfig)
     }
   }
 
@@ -116,7 +113,7 @@ class PlatformaticApp extends EventEmitter {
       if (appConfig.config) {
         // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchServiceUrl
+          onMissingEnv: this.#context.fetchApplicationUrl
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
@@ -130,11 +127,11 @@ class PlatformaticApp extends EventEmitter {
     } catch (err) {
       if (err.validationErrors) {
         globalThis.platformatic.logger.error(
-          { err: ensureLoggableError(err.validationErrors) },
+          { err: ensureLoggableError(err) },
           'The application threw a validation error.'
         )
 
-        process.exit(1)
+        throw err
       } else {
         this.#logAndThrow(err)
       }
@@ -187,7 +184,7 @@ class PlatformaticApp extends EventEmitter {
 
   async stop (force = false) {
     if (!force && (!this.#started || this.#starting)) {
-      throw new errors.ApplicationNotStartedError()
+      throw new errors.RuntimeNotStartedError()
     }
 
     await this.#stopFileWatching()
@@ -274,7 +271,7 @@ class PlatformaticApp extends EventEmitter {
 
   #updateDispatcher () {
     const telemetryConfig = this.#context.telemetryConfig
-    const telemetryId = telemetryConfig?.serviceName
+    const telemetryId = telemetryConfig?.applicationName
 
     const interceptor = dispatch => {
       return function InterceptedDispatch (opts, handler) {
@@ -294,4 +291,4 @@ class PlatformaticApp extends EventEmitter {
   }
 }
 
-module.exports = { PlatformaticApp }
+module.exports = { Controller }

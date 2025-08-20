@@ -22,7 +22,7 @@ test('should continously monitor workers health', async t => {
   })
 
   for (let i = 0; i < 3; i++) {
-    await once(server, 'service:worker:health')
+    await once(server, 'application:worker:health')
   }
 })
 
@@ -35,20 +35,20 @@ test('should restart the process if it exceeded maximum threshold', async t => {
   })
 
   const events = []
-  server.on('service:worker:health', event => {
+  server.on('application:worker:health', event => {
     events.push(event)
   })
 
   const waitPromise = waitForEvents(
     server,
-    { event: 'service:worker:unhealthy', service: 'db-app', worker: 0 },
-    { event: 'service:worker:unhealthy', service: 'serviceApp', worker: 0 },
-    { event: 'service:worker:unhealthy', service: 'with-logger', worker: 0 },
-    { event: 'service:worker:unhealthy', service: 'multi-plugin-service', worker: 0 },
-    { event: 'service:worker:starting', service: 'db-app', worker: 0 },
-    { event: 'service:worker:starting', service: 'serviceApp', worker: 0 },
-    { event: 'service:worker:starting', service: 'with-logger', worker: 0 },
-    { event: 'service:worker:starting', service: 'multi-plugin-service', worker: 0 }
+    { event: 'application:worker:unhealthy', application: 'db-app', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'serviceApp', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'with-logger', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'multi-plugin-service', worker: 0 },
+    { event: 'application:worker:starting', application: 'db-app', worker: 0 },
+    { event: 'application:worker:starting', application: 'serviceApp', worker: 0 },
+    { event: 'application:worker:starting', application: 'with-logger', worker: 0 },
+    { event: 'application:worker:starting', application: 'multi-plugin-service', worker: 0 }
   )
 
   await server.start()
@@ -68,19 +68,23 @@ test('should not lose any connection when restarting the process', async t => {
     await server.close()
   })
 
-  const waitPromise = waitForEvents(server, { event: 'service:worker:unhealthy', service: 'service', worker: 0 })
+  const waitPromise = waitForEvents(server, {
+    event: 'application:worker:unhealthy',
+    application: 'service',
+    worker: 0
+  })
   const url = await server.start()
 
-  // Start hammering the service with autocannon
+  // Start hammering the application with autocannon
   const results = await autocannon({ url: `${url}/service/`, connections: 10, duration: 10 })
 
   // Wait for messages
   await waitPromise
   const messages = await readLogs(context.logsPath)
 
-  ok(messages.some(m => m.msg === 'The service "service" is unhealthy. Replacing it ...'))
-  ok(!messages.some(m => m.msg === 'The service "service" unexpectedly exited with code 1.'))
-  ok(!messages.some(m => m.error?.message.includes('No target found for service.plt.local')))
+  ok(messages.some(m => m.msg === 'The application "service" is unhealthy. Replacing it ...'))
+  ok(!messages.some(m => m.msg === 'The application "service" unexpectedly exited with code 1.'))
+  ok(!messages.some(m => m.error?.message.includes('No target found for application.plt.local')))
   ok(!messages.some(m => m.error?.code === 'FST_REPLY_FROM_INTERNAL_SERVER_ERROR'))
   deepStrictEqual(results.errors, 0)
   deepStrictEqual(results.non2xx, 0)

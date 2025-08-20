@@ -7,11 +7,11 @@ import {
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeOpenapi
 } from '../lib/errors.js'
-import { Metric, ReadableBody, Runtime, RuntimeApiClient, RuntimeServices } from '../lib/index.js'
+import { Metric, ReadableBody, Runtime, RuntimeApiClient, RuntimeApplications } from '../lib/index.js'
 
 // RuntimeApiClient
 let runtime = {} as Runtime
-let service = {} as RuntimeServices
+let application = {} as RuntimeApplications
 let metric = {} as Metric
 const api = new RuntimeApiClient()
 expectType<Promise<Runtime>>(api.getMatchingRuntime())
@@ -30,8 +30,8 @@ async function unused () {
   return result
 }
 
-const [service1] = service.services
-expectType<Promise<Record<string, unknown>>>(api.getRuntimeOpenapi(runtime.pid, service1.id))
+const [application1] = application.applications
+expectType<Promise<Record<string, unknown>>>(api.getRuntimeOpenapi(runtime.pid, application1.id))
 expectType<string[]>(runtime.argv)
 expectType<number>(runtime.uptimeSeconds)
 expectType<string | null>(runtime.packageVersion)
@@ -39,19 +39,19 @@ expectType<
   Promise<{
     entrypoint: string
     production: boolean
-    services: RuntimeServices['services']
+    applications: RuntimeApplications['applications']
   }>
->(api.getRuntimeServices(45))
-expectType<string>(service1.id)
-expectType<string>(service1.status)
+>(api.getRuntimeApplications(45))
+expectType<string>(application1.id)
+expectType<string>(application1.status)
 
-if ('url' in service1) {
-  expectType<string | undefined>(service1.url)
-  expectType<number | undefined>(service1.workers)
+if ('url' in application1) {
+  expectType<string | undefined>(application1.url)
+  expectType<number | undefined>(application1.workers)
 }
 
 expectType<string>(metric.aggregator)
-expectType<string>(metric.values[0].labels.serviceId)
+expectType<string>(metric.values[0].labels.applicationId)
 expectType<number | undefined>(metric.values[0].labels?.quantile)
 expectType<string | undefined>(metric.values[0].labels?.route)
 expectType<string | undefined>(metric.values[0].labels?.method)

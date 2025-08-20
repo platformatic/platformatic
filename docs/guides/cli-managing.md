@@ -87,16 +87,16 @@ wattpm logs [<PID> | <NAME>]
 
 You can display logs for a running application by specifying either its PID or its name.
 
-You can filter logs by specifying a log level or service name:
+You can filter logs by specifying a log level or application name:
 
-**Display logs for a specific service**
+**Display logs for a specific application**
 
 ```bash
-wattpm logs [<PID> | <NAME>] <SERVICE>
+wattpm logs [<PID> | <NAME>] <APPLICATION>
 ```
 
-To see the list of services in a running application, you can use the
-`wattpm services` subcommand.
+To see the list of applications in a running application, you can use the
+`wattpm applications` subcommand.
 
 **Display logs for a specific log level**
 
@@ -124,10 +124,10 @@ To print the application config file, run the following command:
 wattpm config [<PID> | <NAME>]
 ```
 
-To print the application service config file, run the following command:
+To print the application config file, run the following command:
 
 ```bash
-wattpm config [<PID> | <NAME>] <SERVICE>
+wattpm config [<PID> | <NAME>] <APPLICATION>
 ```
 
 You can print the application config file for a running application by specifying either its PID or its name.
@@ -137,16 +137,16 @@ You can print the application config file for a running application by specifyin
 To inject an HTTP request into a running application, run the following command:
 
 ```bash
-wattpm inject [<PID> | <NAME>] [<SERVICE>] -m <method> -p <URL> -H <header> -d <data>
+wattpm inject [<PID> | <NAME>] [<APPLICATION>] -m <method> -p <URL> -H <header> -d <data>
 ```
 
 With the inject command you can make requests not only to endpoints that are exposed by the application, but also to internal endpoints
-that are not exposed via the application entrypoint. To do so, you can append the service name before URL arguments.
+that are not exposed via the application entrypoint. To do so, you can append the application name before URL arguments.
 
 **Example:**
 
 ```bash
-wattpm inject my-app-foo my-service
+wattpm inject my-app-foo my-application
   -m POST
   -H "Content-Type: application/json"
   -d '{"foo": "bar"}'
@@ -155,15 +155,15 @@ wattpm inject my-app-foo my-service
 
 As you can see there is no need to specify a full URL, you can just specify the path of the endpoint you want to call.
 
-### Listing services in a running application
+### Listing applications in a running application
 
-To list all services in a running application, run the following command:
+To list all applications in a running application, run the following command:
 
 ```bash
-wattpm services [<PID> | <NAME>]
+wattpm applications [<PID> | <NAME>]
 ```
 
-The list command shows all services that are currently running in the application application.
+The list command shows all applications that are currently running in the application.
 
 ```
 NAME      Workers   Type      Entrypoint
@@ -172,4 +172,4 @@ payment   1         db        no
 gateway   1         composer  yes
 ```
 
-You can list all services in a running application by specifying either its PID or its name.
+You can list all applications in a running application by specifying either its PID or its name.

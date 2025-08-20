@@ -9,7 +9,7 @@ export interface Dependency {
 }
 
 export type BaseContext = Partial<{
-  serviceId: string
+  applicationId: string
   isEntrypoint: boolean
   isProduction: boolean
   isStandalone: boolean
@@ -18,7 +18,6 @@ export type BaseContext = Partial<{
   metricsConfig: object
   serverConfig: object
   hasManagementApi: boolean
-  localServiceEnvVars: Map<string, string>
 }>
 
 export interface BaseOptions<Context = BaseContext> {

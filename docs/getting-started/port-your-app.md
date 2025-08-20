@@ -11,10 +11,10 @@ This guide explains how to set up any Node.js project to run in [Watt](https://p
 Watt is a powerful environment manager for your Node.js applications that provides:
 
 - Simplified deployment
-- Built-in support for multiple services
+- Built-in support for multiple applications
 - Multi-threading
 - Standardized environment configuration
-- Service orchestration
+- Application orchestration
 - Gateway capabilities
 - Standardized logging
 - Standardized monitoring

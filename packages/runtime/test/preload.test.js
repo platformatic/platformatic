@@ -42,7 +42,7 @@ test('preload multiple', async t => {
   }
 })
 
-test('preload multiple on runtime and preload multiple on services', async t => {
+test('preload multiple on runtime and preload multiple on applications', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
   const app = await createRuntime(configFile)

@@ -1,9 +1,9 @@
 import assert from 'assert/strict'
 import { test } from 'node:test'
-import { createFromConfig, createGraphqlService, graphqlRequest } from '../helper.js'
+import { createFromConfig, createGraphqlApplication, graphqlRequest } from '../helper.js'
 
-test('should start composer with a graphql service', async t => {
-  const graphql1 = await createGraphqlService(t, {
+test('should start composer with a graphql application', async t => {
+  const graphql1 = await createGraphqlApplication(t, {
     schema: `
     type Query {
       add(x: Int, y: Int): Int
@@ -26,7 +26,7 @@ test('should start composer with a graphql service', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Host,
@@ -51,8 +51,8 @@ test('should start composer with a graphql service', async t => {
   }
 })
 
-test('should start composer with two graphql services', async t => {
-  const graphql1 = await createGraphqlService(t, {
+test('should start composer with two graphql applications', async t => {
+  const graphql1 = await createGraphqlApplication(t, {
     schema: `
     type Query {
       add(x: Int, y: Int): Int
@@ -66,7 +66,7 @@ test('should start composer with two graphql services', async t => {
     }
   })
 
-  const graphql2 = await createGraphqlService(t, {
+  const graphql2 = await createGraphqlApplication(t, {
     schema: `
     type Query {
       mul(x: Int, y: Int): Int
@@ -90,7 +90,7 @@ test('should start composer with two graphql services', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Host,

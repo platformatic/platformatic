@@ -22,8 +22,8 @@ function stripVersion (version) {
   return version
 }
 
-function convertServiceNameToPrefix (serviceName) {
-  return serviceName.replace(/-/g, '_').toUpperCase()
+function convertApplicationNameToPrefix (applicationName) {
+  return applicationName.replace(/-/g, '_').toUpperCase()
 }
 
 function addPrefixToString (input, prefix) {
@@ -68,7 +68,7 @@ function extractEnvVariablesFromText (text) {
   }
   return []
 }
-function getPackageConfigurationObject (config, serviceName = '') {
+function getPackageConfigurationObject (config, applicationName = '') {
   const output = {
     config: {},
     env: {}
@@ -100,7 +100,7 @@ function getPackageConfigurationObject (config, serviceName = '') {
         if (!param.name) {
           current[prop] = value
         } else {
-          const key = addPrefixToString(param.name, convertServiceNameToPrefix(serviceName))
+          const key = addPrefixToString(param.name, convertApplicationNameToPrefix(applicationName))
           // If it's a path, we need to add it to the env only the relative part of the path
           if (isPath) {
             current[prop] = `${join(`{${PLT_ROOT}}`, `{${key}}`)}`
@@ -170,7 +170,7 @@ function flattenObject (ob) {
   return result
 }
 
-function getServiceTemplateFromSchemaUrl (schemaUrl) {
+function getApplicationTemplateFromSchemaUrl (schemaUrl) {
   const splitted = schemaUrl.split('/')
 
   /* c8 ignore next 3 - Legacy interface */
@@ -182,13 +182,13 @@ function getServiceTemplateFromSchemaUrl (schemaUrl) {
 
 module.exports = {
   addPrefixToString,
-  convertServiceNameToPrefix,
+  convertApplicationNameToPrefix,
   getPackageConfigurationObject,
   envObjectToString,
   envStringToObject,
   extractEnvVariablesFromText,
   flattenObject,
-  getServiceTemplateFromSchemaUrl,
+  getApplicationTemplateFromSchemaUrl,
   createDirectory,
   stripVersion,
   PLT_ROOT,

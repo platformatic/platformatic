@@ -24,11 +24,11 @@ test('Support packages without generator via importing (new application)', async
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/vite' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -52,18 +52,18 @@ test('Support packages without generator via importing (new application)', async
   deepStrictEqual(packageJson.dependencies['@platformatic/vite'], `^${version}`)
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
-  // Verify that the runtime configuration has an explicit entry for the vite service
+  // Verify that the runtime configuration has an explicit entry for the vite application
   const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
-  deepStrictEqual(runtimeConfig.services, [
+  deepStrictEqual(runtimeConfig.applications, [
     {
       id: 'main',
-      path: '{PLT_SERVICE_MAIN_PATH}'
+      path: '{PLT_APPLICATION_MAIN_PATH}'
     }
   ])
 
   // Verify that the .env file was created with the correct path
   const envFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
-  ok(envFile.includes(`PLT_SERVICE_MAIN_PATH=${applicationPath}`))
+  ok(envFile.includes(`PLT_APPLICATION_MAIN_PATH=${applicationPath}`))
 })
 
 test('Support packages without generator via importing (existing applications)', async t => {
@@ -82,21 +82,21 @@ test('Support packages without generator via importing (existing applications)',
   // The actions must match IN ORDER
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/vite' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'main' }
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'list', question: 'Which application should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -127,7 +127,7 @@ test('Support packages without generator via importing (existing applications)',
   deepStrictEqual(packageJson.dependencies['@platformatic/vite'], `^${version}`)
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
-  // Verify that the runtime configuration has an explicit entry for the vite service but with other entries untouched
+  // Verify that the runtime configuration has an explicit entry for the vite application but with other entries untouched
   runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
 
   deepStrictEqual(runtimeConfig.web, [
@@ -137,18 +137,18 @@ test('Support packages without generator via importing (existing applications)',
     },
     {
       id: 'alternate',
-      path: '{PLT_SERVICE_ALTERNATE_PATH}',
+      path: '{PLT_APPLICATION_ALTERNATE_PATH}',
       url: 'git@github.com:hello/world.git'
     }
   ])
   deepStrictEqual(runtimeConfig.startTimeout, 12345)
 
-  ok(typeof runtimeConfig.services, 'undefined')
+  ok(typeof runtimeConfig.applications, 'undefined')
 
   // Verify that the .env file was updated
   const envFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
 
-  deepStrictEqual(envFile, `${originalEnvFile}\nPLT_SERVICE_ALTERNATE_PATH=${applicationPath}`)
+  deepStrictEqual(envFile, `${originalEnvFile}\nPLT_APPLICATION_ALTERNATE_PATH=${applicationPath}`)
 })
 
 test('Support packages without generator via copy (new application)', async t => {
@@ -164,11 +164,11 @@ test('Support packages without generator via copy (new application)', async t =>
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/vite' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -180,27 +180,27 @@ test('Support packages without generator via copy (new application)', async t =>
   })
 
   const baseProjectDir = join(root, 'platformatic')
-  const serviceDir = join(baseProjectDir, 'services', 'main')
+  const applicationDir = join(baseProjectDir, 'applications', 'main')
 
   // Verify that a platformatic.json file was created and not in the original path
   ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(serviceDir, 'platformatic.json'), 'utf8')), {
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
   // Verify that the package.json file was updated with the new dependency and that the original package.json was not modified
-  const packageJson = JSON.parse(await readFile(resolve(serviceDir, 'package.json'), 'utf8'))
+  const packageJson = JSON.parse(await readFile(resolve(applicationDir, 'package.json'), 'utf8'))
   deepStrictEqual(packageJson.dependencies['@platformatic/vite'], `^${version}`)
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
   deepStrictEqual(await readFile(resolve(sourcePath, 'package.json'), 'utf8'), originalPackageJson)
 
-  // Verify that the runtime configuration has no explicit entry as everything is in the services directory
+  // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
   const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
-  ok(typeof runtimeConfig.services, 'undefined')
+  ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 
   // Verify that the original node_modules directory was not copied
-  ok(!existsSync(resolve(serviceDir, 'node_modules/fake/fake.js')))
+  ok(!existsSync(resolve(applicationDir, 'node_modules/fake/fake.js')))
 })
 
 test('Support packages without generator via copy (existing applications)', async t => {
@@ -217,21 +217,21 @@ test('Support packages without generator via copy (existing applications)', asyn
   // The actions must match IN ORDER
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/vite' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'main' }
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'list', question: 'Which application should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -250,28 +250,28 @@ test('Support packages without generator via copy (existing applications)', asyn
     args: ['--module=@platformatic/vite']
   })
 
-  const serviceDir = join(baseProjectDir, 'services', 'alternate')
+  const applicationDir = join(baseProjectDir, 'applications', 'alternate')
 
   // Verify that a platformatic.json file was created and not in the original path
   ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(serviceDir, 'platformatic.json'), 'utf8')), {
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
   // Verify that the package.json file was updated with the new dependency and that the original package.json was not modified
-  const packageJson = JSON.parse(await readFile(resolve(serviceDir, 'package.json'), 'utf8'))
+  const packageJson = JSON.parse(await readFile(resolve(applicationDir, 'package.json'), 'utf8'))
   deepStrictEqual(packageJson.dependencies['@platformatic/vite'], `^${version}`)
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
   deepStrictEqual(await readFile(resolve(sourcePath, 'package.json'), 'utf8'), originalPackageJson)
 
   // Verify that a platformatic.json file was created and not in the original path
   ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(serviceDir, 'platformatic.json'), 'utf8')), {
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
-  // Verify that the runtime configuration has no explicit entry as everything is in the services directory
+  // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
   runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
-  ok(typeof runtimeConfig.services, 'undefined')
+  ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 })

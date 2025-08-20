@@ -11,44 +11,46 @@ const kProxyRoute = Symbol('plt.composer.proxy.route')
 
 const urlPattern = /^https?:\/\//
 
-async function resolveServiceProxyParameters (service) {
-  // Get meta information from the service, if any, to eventually hook up to a TCP port
-  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
+async function resolveApplicationProxyParameters (application) {
+  // Get meta information from the application, if any, to eventually hook up to a TCP port
+  const meta = (await globalThis[kITC]?.send('getApplicationMeta', application.id))?.composer ?? {
+    prefix: application.id
+  }
 
-  // If no prefix could be found, assume the service id
-  let prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
+  // If no prefix could be found, assume the application id
+  let prefix = (application.proxy?.prefix ?? meta.prefix ?? application.id).replace(/(\/$)/g, '')
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
 
   if (meta.wantsAbsoluteUrls) {
     const basePath = workerData.config.basePath
 
-    // Strip the runtime basepath from the prefix when it comes from the service meta
-    if (basePath && !service.proxy?.prefix && prefix.startsWith(basePath)) {
+    // Strip the runtime basepath from the prefix when it comes from the application meta
+    if (basePath && !application.proxy?.prefix && prefix.startsWith(basePath)) {
       prefix = prefix.substring(basePath.length)
     }
 
-    // The rewritePrefix purposely ignores service.proxy?.prefix to let
-    // the service always being able to configure their value
-    rewritePrefix = meta.prefix ?? service.id
+    // The rewritePrefix purposely ignores application.proxy?.prefix to let
+    // the application always being able to configure their value
+    rewritePrefix = meta.prefix ?? application.id
     internalRewriteLocationHeader = false
   }
 
-  if (service.proxy?.ws?.hooks) {
-    const hooks = await loadModule(createRequire(import.meta.filename), service.proxy.ws.hooks.path)
-    service.proxy.ws.hooks = hooks
+  if (application.proxy?.ws?.hooks) {
+    const hooks = await loadModule(createRequire(import.meta.filename), application.proxy.ws.hooks.path)
+    application.proxy.ws.hooks = hooks
   }
 
   return {
-    origin: service.origin,
+    origin: application.origin,
     url: meta.url,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
     needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
-    upstream: service.proxy?.upstream,
-    ws: service.proxy?.ws
+    upstream: application.proxy?.upstream,
+    ws: application.proxy?.ws
   }
 }
 
@@ -58,16 +60,16 @@ async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
   const hostnameLessProxies = []
 
-  for (const service of opts.services) {
-    if (!service.proxy) {
-      // When a service defines no expose config at all
+  for (const application of opts.applications) {
+    if (!application.proxy) {
+      // When a application defines no expose config at all
       // we assume a proxy exposed with a prefix equals to its id or meta.prefix
-      if (service.proxy === false || service.openapi || service.graphql) {
+      if (application.proxy === false || application.openapi || application.graphql) {
         continue
       }
     }
 
-    const parameters = await resolveServiceProxyParameters(service)
+    const parameters = await resolveApplicationProxyParameters(application)
     const {
       prefix,
       origin,
@@ -78,7 +80,7 @@ async function proxyPlugin (app, opts) {
       needsRefererBasedRedirect,
       ws
     } = parameters
-    meta.proxies[service.id] = parameters
+    meta.proxies[application.id] = parameters
 
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
     const dispatcher = getGlobalDispatcher()
@@ -103,7 +105,7 @@ async function proxyPlugin (app, opts) {
     */
     if (needsRefererBasedRedirect) {
       app.addHook('preHandler', function refererBasedRedirectPreHandler (req, reply, done) {
-        // If the URL is already targeted to the service, do nothing
+        // If the URL is already targeted to the application, do nothing
         if (req.url.startsWith(basePath)) {
           done()
           return
@@ -128,8 +130,8 @@ async function proxyPlugin (app, opts) {
       })
     }
 
-    // Do not show proxied services in Swagger
-    if (!service.openapi) {
+    // Do not show proxied applications in Swagger
+    if (!application.openapi) {
       app.addHook('onRoute', routeOptions => {
         if (routeOptions.config?.[kProxyRoute] && routeOptions.url.startsWith(basePath)) {
           routeOptions.schema ??= {}
@@ -154,7 +156,7 @@ async function proxyPlugin (app, opts) {
     const proxyOptions = {
       prefix,
       rewritePrefix,
-      upstream: service.proxy?.upstream ?? origin,
+      upstream: application.proxy?.upstream ?? origin,
       preRewrite,
 
       websocket: true,
@@ -208,7 +210,7 @@ async function proxyPlugin (app, opts) {
           // to correctly close it in the onResponse hook
           // Note that we have 2 spans:
           // - request.span: the span of the request to the proxy
-          // - request.proxedCallSpan: the span of the request to the proxied service
+          // - request.proxedCallSpan: the span of the request to the proxied application
           request.proxedCallSpan = span
 
           headers = {
@@ -231,7 +233,7 @@ async function proxyPlugin (app, opts) {
           reply.send(res.stream)
         },
         onError: (reply, { error }) => {
-          app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another service')
+          app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')
           return reply.send(error)
         }
       }
@@ -239,7 +241,7 @@ async function proxyPlugin (app, opts) {
 
     hostnameLessProxies.push(proxyOptions)
 
-    const host = service.proxy?.hostname
+    const host = application.proxy?.hostname
 
     if (host) {
       await app.register(httpProxy, {
@@ -250,7 +252,7 @@ async function proxyPlugin (app, opts) {
     }
   }
 
-  const hostnames = opts.services.map(s => s.proxy?.hostname).filter(Boolean)
+  const hostnames = opts.applications.map(s => s.proxy?.hostname).filter(Boolean)
   for (const options of hostnameLessProxies) {
     if (hostnames.length > 0) {
       options.constraints = { notHost: hostnames }

@@ -172,7 +172,7 @@ function createThreadInterceptor (runtimeConfig) {
     // with requests for a domain that's never going to exist.
     domain: '.plt.local',
     port: parentPort,
-    timeout: runtimeConfig.serviceTimeout,
+    timeout: runtimeConfig.applicationTimeout,
     ...telemetryHooks,
   })
   return threadDispatcher

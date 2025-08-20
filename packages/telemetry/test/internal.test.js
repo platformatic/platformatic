@@ -17,7 +17,7 @@ test('start and ends an internal span', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -59,7 +59,7 @@ test('start and ends an internal span with no parent context and no attributes',
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -94,7 +94,7 @@ test('start and ends an internal span with error', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',

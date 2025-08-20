@@ -17,11 +17,11 @@ export async function logsCommand (logger, args) {
   /* c8 ignore next */
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
-  let service
+  let application
   try {
     const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
-    service = positionals[0]
+    application = positionals[0]
 
     const logsStream = client.getRuntimeLiveLogsStream(runtime.pid)
 
@@ -36,7 +36,7 @@ export async function logsCommand (logger, args) {
     for await (const line of logsStream.pipe(split2())) {
       const parsed = JSON.parse(line)
 
-      if (parsed.level < minimumLevel || (service && parsed.name !== service)) {
+      if (parsed.level < minimumLevel || (application && parsed.name !== application)) {
         continue
       }
 
@@ -51,7 +51,7 @@ export async function logsCommand (logger, args) {
       return logFatalError(
         logger,
         { error: ensureLoggableError(error) },
-        `Cannot stream ${service ? 'service' : 'runtime'} logs: ${error.message}`
+        `Cannot stream ${application ? 'application' : 'runtime'} logs: ${error.message}`
       )
     }
   }
@@ -59,8 +59,8 @@ export async function logsCommand (logger, args) {
 
 export const help = {
   logs: {
-    usage: 'logs [id] [service]',
-    description: 'Streams logs from a running application or service',
+    usage: 'logs [id] [application]',
+    description: 'Streams logs from a running application or application',
     args: [
       {
         name: 'id',
@@ -68,10 +68,10 @@ export const help = {
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
-        name: 'service',
-        description: 'The service name'
+        name: 'application',
+        description: 'The application name'
       }
     ],
-    footer: 'If service is not specified, the command will stream logs from all services.'
+    footer: 'If application is not specified, the command will stream logs from all applications.'
   }
 }

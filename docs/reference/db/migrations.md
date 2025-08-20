@@ -33,7 +33,7 @@ Postgrator maintains a table in your database schema to store and track which mi
 
 ### Applying Migrations
 
-You can rollback or apply migrations to a specific version using the the Watt's `$db:migrations:apply` command (where `$db` is the id of your Platformatic DB service):
+You can rollback or apply migrations to a specific version using the the Watt's `$db:migrations:apply` command (where `$db` is the id of your Platformatic DB application):
 
 ```bash
 $ npx wattpm db:migrations:apply --to 002

@@ -6,46 +6,46 @@ import { test } from 'node:test'
 import { prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { fixturesDir, wattpmUtils } from './helper.js'
 
-test('patch-config - should patch requested runtime and services config', async t => {
+test('patch-config - should patch requested runtime and applications config', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const runtimeConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigOriginal = JSON.parse(
+  const mainApplicationConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigOriginal = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-1.js'))
 
   const runtimeConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigPatched = JSON.parse(
+  const mainApplicationConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigPatched = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true, entrypoint: 'alternate' })
-  deepStrictEqual(mainServiceConfigPatched, {
-    $schema: mainServiceConfigOriginal.$schema,
+  deepStrictEqual(mainApplicationConfigPatched, {
+    $schema: mainApplicationConfigOriginal.$schema,
     application: { basePath: '/' }
   })
-  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+  deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
 })
 
-test('patch-config - should work when executed from a service file', async t => {
+test('patch-config - should work when executed from an application file', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   await safeRemove(resolve(buildDir, 'watt.json'))
-  await saveConfigurationFile(resolve(serviceDir, 'watt.json'), {
+  await saveConfigurationFile(resolve(applicationDir, 'watt.json'), {
     $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
     runtime: {
       watch: false,
@@ -56,20 +56,20 @@ test('patch-config - should work when executed from a service file', async t => 
     }
   })
 
-  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigOriginal = JSON.parse(
+  const mainApplicationConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigOriginal = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
-  await wattpmUtils('patch-config', serviceDir, resolve(fixturesDir, 'patches/patch-1.js'))
+  await wattpmUtils('patch-config', applicationDir, resolve(fixturesDir, 'patches/patch-1.js'))
 
-  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigPatched = JSON.parse(
+  const mainApplicationConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigPatched = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
-  deepStrictEqual(mainServiceConfigPatched, {
-    $schema: mainServiceConfigOriginal.$schema,
+  deepStrictEqual(mainApplicationConfigPatched, {
+    $schema: mainApplicationConfigOriginal.$schema,
     application: { basePath: '/' },
     runtime: {
       watch: false,
@@ -80,7 +80,7 @@ test('patch-config - should work when executed from a service file', async t => 
       }
     }
   })
-  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+  deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
 })
 
 test('patch-config - should apply patch when the config is not set in the main configuration file', async t => {
@@ -88,99 +88,99 @@ test('patch-config - should apply patch when the config is not set in the main c
     await updateFile(resolve(root, 'watt.json'), content => {
       const config = JSON.parse(content)
       config.autoload = undefined
-      config.services = [{ id: 'main', path: 'web/main' }]
+      config.applications = [{ id: 'main', path: 'web/main' }]
       return JSON.stringify(config, null, 2)
     })
   })
 
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const runtimeConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigOriginal = JSON.parse(
+  const mainApplicationConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigOriginal = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-1.js'))
 
   const runtimeConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigPatched = JSON.parse(
+  const mainApplicationConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigPatched = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true, entrypoint: 'alternate' })
-  deepStrictEqual(mainServiceConfigPatched, {
-    $schema: mainServiceConfigOriginal.$schema,
+  deepStrictEqual(mainApplicationConfigPatched, {
+    $schema: mainApplicationConfigOriginal.$schema,
     application: { basePath: '/' }
   })
-  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+  deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
 })
 
 test('patch-config - should do nothing when the patch is empty', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const runtimeConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigOriginal = JSON.parse(
+  const mainApplicationConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigOriginal = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-2.js'))
 
   const runtimeConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigPatched = JSON.parse(
+  const mainApplicationConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigPatched = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   deepStrictEqual(runtimeConfigPatched, runtimeConfigOriginal)
-  deepStrictEqual(mainServiceConfigPatched, mainServiceConfigOriginal)
-  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+  deepStrictEqual(mainApplicationConfigPatched, mainApplicationConfigOriginal)
+  deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
 })
 
 test('patch-config - should do nothing when the patch contains invalid objects', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const runtimeConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigOriginal = JSON.parse(
+  const mainApplicationConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigOriginal = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-3.js'))
 
   const runtimeConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
-  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
-  const alternateServiceConfigPatched = JSON.parse(
+  const mainApplicationConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateApplicationConfigPatched = JSON.parse(
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
   deepStrictEqual(runtimeConfigPatched, runtimeConfigOriginal)
-  deepStrictEqual(mainServiceConfigPatched, mainServiceConfigOriginal)
-  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+  deepStrictEqual(mainApplicationConfigPatched, mainApplicationConfigOriginal)
+  deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
 })
 
 test('patch-config - should throw an error when the patch file does not export a function', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const patchProcess = await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-4.js'), {
@@ -193,10 +193,10 @@ test('patch-config - should throw an error when the patch file does not export a
 
 test('patch-config - should throw an error when the patch file is non existent', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   const patchProcess = await wattpmUtils('patch-config', buildDir, resolve(fixturesDir, 'patches/non-existent.js'), {

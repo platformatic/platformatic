@@ -33,7 +33,7 @@ test('should inject Platformatic code by default when building', async t => {
   })
 
   await runtime.init()
-  await runtime.buildService('frontend')
+  await runtime.buildApplication('frontend')
   await runtime.close()
 
   const logs = await getLogsFromFile(root)
@@ -59,14 +59,14 @@ test('should not inject Platformatic code when building if asked to', async t =>
   })
 
   await runtime.init()
-  await runtime.buildService('frontend')
+  await runtime.buildApplication('frontend')
   await runtime.close()
 
   const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED false')
 })
 
-test('should build the services on start in dev', async t => {
+test('should build the applications on start in dev', async t => {
   const runtime = await createRuntime({
     t,
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
@@ -77,23 +77,23 @@ test('should build the services on start in dev', async t => {
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
 })
 
-for (const service of ['app-no-config', 'app-with-config']) {
-  test(`should rebuild the services on reload in dev, service ${service}`, async t => {
+for (const application of ['app-no-config', 'app-with-config']) {
+  test(`should rebuild the applications on reload in dev, application ${application}`, async t => {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
     // write the file to trigger a reload
-    await writeFile(resolve(root, `services/${service}/reload.ts`), '// reload', 'utf-8')
+    await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
 
-    // reload the service
+    // reload the application
     {
-      const event = await once(runtime, 'service:worker:changed')
-      equal(event[0].service, service)
+      const event = await once(runtime, 'application:worker:changed')
+      equal(event[0].application, application)
     }
-    // restart the service
+    // restart the application
     {
-      const event = await once(runtime, 'service:worker:started')
-      equal(event[0].service, service)
+      const event = await once(runtime, 'application:worker:started')
+      equal(event[0].application, application)
     }
   })
 }

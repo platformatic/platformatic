@@ -26,7 +26,7 @@ test('inject - should send a request to an application', async t => {
 
   const entrypointProcess = await wattpm('inject', 'main')
 
-  const serviceProcess = await wattpm(
+  const applicationProcess = await wattpm(
     '-v',
     'inject',
     'main',
@@ -59,11 +59,11 @@ test('inject - should send a request to an application', async t => {
 
   ok(entrypointProcess.stdout, '{"production":true}')
 
-  ok(serviceProcess.stdout.includes('> POST / HTTP/1.1'))
-  ok(serviceProcess.stdout.includes('> Content-Type: text/plain'))
-  ok(serviceProcess.stdout.includes('< HTTP/1.1 200'))
-  ok(serviceProcess.stdout.includes('< content-type: application/json; charset=utf-8'))
-  ok(serviceProcess.stdout.includes('{"body":"AAAA"}'))
+  ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
+  ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
+  ok(applicationProcess.stdout.includes('< HTTP/1.1 200'))
+  ok(applicationProcess.stdout.includes('< content-type: application/json; charset=utf-8'))
+  ok(applicationProcess.stdout.includes('{"body":"AAAA"}'))
 
   const outputFile = await readFile(resolve(directory, 'output.txt'), 'utf-8')
   ok(outputFile.includes('> POST / HTTP/1.1'))
@@ -80,7 +80,7 @@ test('inject - should complain when a runtime is not found', async t => {
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
-test('inject - should complain when a service is not found', async t => {
+test('inject - should complain when an application is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -94,10 +94,10 @@ test('inject - should complain when a service is not found', async t => {
   const envProcess = await wattpm('inject', 'main', 'invalid', { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
-  ok(envProcess.stdout.includes('Cannot find a matching service.'))
+  ok(envProcess.stdout.includes('Cannot find a matching application.'))
 })
 
-test('inject - should properly autodetect the runtime and use the first argument as a service', async t => {
+test('inject - should properly autodetect the runtime and use the first argument as an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const directory = await createTemporaryDirectory(t, 'inject')
@@ -113,7 +113,7 @@ test('inject - should properly autodetect the runtime and use the first argument
 
   const entrypointProcess = await wattpm('inject', 'main')
 
-  const serviceProcess = await wattpm(
+  const applicationProcess = await wattpm(
     '-v',
     'inject',
     'alternative',
@@ -146,11 +146,11 @@ test('inject - should properly autodetect the runtime and use the first argument
 
   ok(entrypointProcess.stdout, '{"production":true}')
 
-  ok(serviceProcess.stdout.includes('> POST / HTTP/1.1'))
-  ok(serviceProcess.stdout.includes('> Content-Type: text/plain'))
-  ok(serviceProcess.stdout.includes('< HTTP/1.1 200'))
-  ok(serviceProcess.stdout.includes('< content-type: application/json; charset=utf-8'))
-  ok(serviceProcess.stdout.includes('{"body":"AAAA"}'))
+  ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
+  ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
+  ok(applicationProcess.stdout.includes('< HTTP/1.1 200'))
+  ok(applicationProcess.stdout.includes('< content-type: application/json; charset=utf-8'))
+  ok(applicationProcess.stdout.includes('{"body":"AAAA"}'))
 
   const outputFile = await readFile(resolve(directory, 'output.txt'), 'utf-8')
   ok(outputFile.includes('> POST / HTTP/1.1'))

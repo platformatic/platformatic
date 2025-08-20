@@ -241,7 +241,7 @@ export class NextCapability extends BaseCapability {
       loader: loaderUrl,
       context: {
         config: this.config,
-        serviceId: this.serviceId,
+        applicationId: this.applicationId,
         workerId: this.workerId,
         // Always use URL to avoid serialization problem in Windows
         root: pathToFileURL(this.root).toString(),

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { checkNodeVersionForServices, setExecutableId, setExecutableName } from '@platformatic/foundation'
+import { checkNodeVersionForApplications, setExecutableId, setExecutableName } from '@platformatic/foundation'
 
-checkNodeVersionForServices()
+checkNodeVersionForApplications()
 setExecutableId('wattpm')
 setExecutableName('Watt')
 

@@ -37,7 +37,7 @@ test('the mesh network works with the internal dispatcher', async t => {
   await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
 })
 
-test('the mesh network works with the HTTP services when using ITC', async t => {
+test('the mesh network works with the HTTP applications when using ITC', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -56,7 +56,7 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
-      const meta = await app.getServiceMeta(`service:${worker}`)
+      const meta = await app.getApplicationMeta(`service:${worker}`)
       return new URL(meta.composer.url).port
     })
   )
@@ -88,7 +88,7 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
   await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
 })
 
-test('the mesh network works with the HTTP services when using HTTP', async t => {
+test('the mesh network works with the HTTP applications when using HTTP', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -111,7 +111,7 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
-      const meta = await app.getServiceMeta(`service:${worker}`)
+      const meta = await app.getApplicationMeta(`service:${worker}`)
       return new URL(meta.composer.url).port
     })
   )
@@ -169,7 +169,7 @@ test('can inject on a worker', async t => {
   let nextWorker
 
   {
-    const res = await client.request({ method: 'GET', path: '/api/v1/services/node/proxy/hello' })
+    const res = await client.request({ method: 'GET', path: '/api/v1/applications/node/proxy/hello' })
     nextWorker = parseInt(res.headers['x-plt-worker-id']) + 1
   }
 

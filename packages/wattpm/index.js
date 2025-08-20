@@ -1,5 +1,5 @@
 import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
-import { loadServicesCommands } from '@platformatic/runtime'
+import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
 import { adminCommand } from './lib/commands/admin.js'
@@ -9,7 +9,7 @@ import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } 
 import { helpCommand } from './lib/commands/help.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
-import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
+import { applicationsCommand, configCommand, envCommand, psCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { version } from './lib/schema.js'
 
@@ -56,7 +56,7 @@ export async function main () {
 
   let command
   const requestedCommand = unparsed[0] || 'help'
-  let serviceCommandContext
+  let applicationCommandContext
   switch (requestedCommand) {
     case 'build':
       command = buildCommand
@@ -79,8 +79,8 @@ export async function main () {
     case 'ps':
       command = psCommand
       break
-    case 'services':
-      command = servicesCommand
+    case 'applications':
+      command = applicationsCommand
       break
     case 'config':
       command = configCommand
@@ -111,12 +111,12 @@ export async function main () {
       break
     default:
       if (requestedCommand) {
-        const servicesCommands = await loadServicesCommands()
-        const serviceCommand = servicesCommands.commands[requestedCommand]
+        const applicationsCommands = await loadApplicationsCommands()
+        const applicationCommand = applicationsCommands.commands[requestedCommand]
 
-        if (serviceCommand) {
-          serviceCommandContext = servicesCommands.services[requestedCommand]
-          command = serviceCommand
+        if (applicationCommand) {
+          applicationCommandContext = applicationsCommands.applications[requestedCommand]
+          command = applicationCommand
         }
       }
 
@@ -132,9 +132,9 @@ export async function main () {
     return
   }
 
-  if (serviceCommandContext) {
-    process.chdir(serviceCommandContext.path)
-    return command(logger, serviceCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
+  if (applicationCommandContext) {
+    process.chdir(applicationCommandContext.path)
+    return command(logger, applicationCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
   } else {
     await command(logger, unparsed.slice(1))
   }

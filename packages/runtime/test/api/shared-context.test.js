@@ -80,7 +80,7 @@ test('should update shared context via runtime API', async t => {
   }
 })
 
-test('should update shared context from one of the services', async t => {
+test('should update shared context from one of the applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
   const app = await createRuntime(configFile)
 

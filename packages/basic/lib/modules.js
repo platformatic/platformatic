@@ -30,7 +30,7 @@ export async function importCapabilityPackage (directory, pkg) {
         throw e
       }
 
-      // Scope to the service
+      // Scope to the application
       const require = createRequire(resolve(directory, importCapabilityPackageMarker))
       const toImport = require.resolve(pkg)
       imported = await importFile(toImport)
@@ -40,9 +40,9 @@ export async function importCapabilityPackage (directory, pkg) {
       throw e
     }
 
-    const serviceDirectory = workerData ? relative(workerData.dirname, directory) : directory
+    const applicationDirectory = workerData ? relative(workerData.dirname, directory) : directory
     throw new Error(
-      `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
+      `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${applicationDirectory}.`
     )
   }
 
@@ -72,19 +72,19 @@ export async function importCapabilityAndConfig (root, config, context) {
   const { label, name: moduleName } = appType
 
   if (context) {
-    const serviceRoot = relative(process.cwd(), root)
+    const applicationRoot = relative(process.cwd(), root)
 
-    if (!hadConfig && context.serviceId && !(await findConfigurationFile(root)) && context.worker?.index === 0) {
+    if (!hadConfig && context.applicationId && !(await findConfigurationFile(root)) && context.worker?.index === 0) {
       const autodetectDescription =
         moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
 
-      const logger = pino({ level: context.serverConfig?.logger?.level ?? 'warn', name: context.serviceId })
+      const logger = pino({ level: context.serverConfig?.logger?.level ?? 'warn', name: context.applicationId })
 
-      logger.warn(`We have auto-detected that service "${context.serviceId}" ${autodetectDescription}.`)
+      logger.warn(`We have auto-detected that application "${context.applicationId}" ${autodetectDescription}.`)
       logger.warn(
-        `We suggest you create a watt.json or a platformatic.json file in the folder ${serviceRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
+        `We suggest you create a watt.json or a platformatic.json file in the folder ${applicationRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
       )
-      logger.warn(`Also don't forget to add "${moduleName}" to the service dependencies.`)
+      logger.warn(`Also don't forget to add "${moduleName}" to the application dependencies.`)
       logger.warn('You can also run "wattpm import" to do this automatically.\n')
     }
   }

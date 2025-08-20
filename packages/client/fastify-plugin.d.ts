@@ -30,7 +30,7 @@ interface PlatformaticClientOptions {
 export type PlatformaticClientPluginOptions = PlatformaticClientOptions & {
   type: 'openapi' | 'graphql'
   name?: string
-  serviceId?: string
+  applicationId?: string
   getHeaders?: (request: FastifyRequest, reply: FastifyReply, options: GetHeadersOptions) => Promise<Headers>
 }
 

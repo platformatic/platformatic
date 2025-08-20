@@ -10,39 +10,39 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const platformaticVersion = require('../../package.json').version
 
-test('should get service details', async (t) => {
+test('should get application details', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-    ])
+    await Promise.all([client.close(), app.close()])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1',
+    path: '/api/v1/applications/service-1'
   })
 
   assert.strictEqual(statusCode, 200)
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const serviceDetails = await body.json()
-  assert.deepStrictEqual(serviceDetails, {
+  const applicationDetails = await body.json()
+  assert.deepStrictEqual(applicationDetails, {
     id: 'service-1',
     type: 'service',
     status: 'started',
@@ -50,6 +50,6 @@ test('should get service details', async (t) => {
     entrypoint: true,
     url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
-    dependencies: [],
+    dependencies: []
   })
 })

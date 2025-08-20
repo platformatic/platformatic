@@ -4,7 +4,7 @@ import Issues from '../../getting-started/issues.md';
 
 ## `create`, `init` or `add`
 
-Creates a new Watt project or add services to an existing project.
+Creates a new Watt project or add applications to an existing project.
 
 This is executed via the [`create-wattpm`] module.
 
@@ -14,11 +14,11 @@ Arguments:
 - `-s, --skip-dependencies`: Do not install dependencies after creating the files
 - `-m, --marketplace <url>`: Platformatic Marketplace host (the default is `https://marketplace.platformatic.dev`)
 - `-P, --package-manager <executable>`: Use an alternative package manager (the default is `npm`)
-- `-M, --module <name>`: An additional module (or a comma separated list of modules) to use as service generator (it can be used multiple times)
+- `-M, --module <name>`: An additional module (or a comma separated list of modules) to use as application generator (it can be used multiple times)
 
 ## `build`
 
-Builds all services of an application.
+Builds all applications of an application.
 
 Arguments:
 
@@ -30,7 +30,7 @@ Options:
 
 ## `install`
 
-Install all dependencies of an application and its services.
+Install all dependencies of an application and its applications.
 
 Arguments:
 
@@ -92,9 +92,9 @@ Arguments:
 
 ## `restart`
 
-Restarts all services of a running application.
+Restarts all applications of a running application.
 
-This command will pickup changes in the services (including configuration files) but not the main Watt configuration file.
+This command will pickup changes in the applications (including configuration files) but not the main Watt configuration file.
 
 Arguments:
 
@@ -114,9 +114,9 @@ Arguments:
 
 Lists all running applications.
 
-## `services`
+## `applications`
 
-Lists all services of a running application.
+Lists all applications of a running application.
 
 Arguments:
 
@@ -124,12 +124,12 @@ Arguments:
 
 ## `env`
 
-Show the environment variables of a running application or one of its services.
+Show the environment variables of a running application or one of its applications.
 
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)
-- `service`: The service name
+- `application`: The application name
 
 Options:
 
@@ -137,36 +137,36 @@ Options:
 
 ## `config`
 
-Show the configuration of a running application or one of its services.
+Show the configuration of a running application or one of its applications.
 
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)
-- `service`: The service name
+- `application`: The application name
 
 ## `logs`
 
-Streams logs from a running application or service.
+Streams logs from a running application or application.
 
-If service is not specified, the command will stream logs from all services.
+If application is not specified, the command will stream logs from all applications.
 
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)
-- `service`: The service name
+- `application`: The application name
 
 ## `inject`
 
 Injects a request to a running application.
 
-The command sends a request to the runtime service and prints the
-response to the standard output. If the service is not specified the
+The command sends a request to the runtime application and prints the
+response to the standard output. If the application is not specified the
 request is sent to the runtime entrypoint.
 
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)
-- `service`: The service name (the default is the entrypoint)
+- `application`: The application name (the default is the entrypoint)
 
 Options:
 
@@ -180,15 +180,15 @@ Options:
 
 ## `import`
 
-Imports an external resource as a service.
+Imports an external resource as an application.
 
-The command will insert a new service in the `watt.json`.
+The command will insert a new application in the `watt.json`.
 
 The external resource can be a local folder or a URL. If it is a local folder, then Watt will try to resolve Git remotes to also populate the URL.
 
 When using URL, the resource can be later downloaded using `wattpm resolve`.
 
-If it is invoked without arguments, the command will try to fix all missing Platformatic dependencies in all local services.
+If it is invoked without arguments, the command will try to fix all missing Platformatic dependencies in all local applications.
 
 Arguments:
 
@@ -198,18 +198,18 @@ Arguments:
 Options:
 
 - `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
-- `-i, --id <value>`: The id of the service (the default is the basename of the URL)
-- `-p, --path <value>`: The path where to import the service (the default is the service id)
+- `-i, --id <value>`: The id of the application (the default is the basename of the URL)
+- `-p, --path <value>`: The path where to import the application (the default is the application id)
 - `-H, --http`: Use HTTP URL when expanding GitHub repositories
 - `-b, --branch <branch>`: The branch to clone (the default is `main`)
-- `-s, --skip-dependencies`: Do not install services dependencies. This is only used when invoked without arguments.
+- `-s, --skip-dependencies`: Do not install applications dependencies. This is only used when invoked without arguments.
 - `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it). This is only used when invoked without arguments.
 
 ## `resolve`
 
-Resolves all external services. The command operates on all services which have the `url` fields defined and the path specified as environment variable.
+Resolves all external applications. The command operates on all applications which have the `url` fields defined and the path specified as environment variable.
 
-After cloning the service, the resolve command will set the relative path to the service in the `.env` file.
+After cloning the application, the resolve command will set the relative path to the application in the `.env` file.
 
 Arguments:
 
@@ -220,19 +220,19 @@ Options:
 - `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `-u, --username <value>`: The username to use for HTTP URLs
 - `-p, --password <value>`: The password to use for HTTP URLs
-- `-s, --skip-dependencies`: Do not install services dependencies
+- `-s, --skip-dependencies`: Do not install applications dependencies
 - `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it)
 
 ## `patch-config`
 
-Applies a patch file to the runtime and services configurations.
+Applies a patch file to the runtime and applications configurations.
 
 Arguments:
 
 - `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `root`: The directory containing the application (the default is the current directory)
-- `patch`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `services` arguments and returns an object containing
-  the `runtime` and `services` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
+- `patch`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `applications` arguments and returns an object containing
+  the `runtime` and `applications` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
 
 ## `help`
 

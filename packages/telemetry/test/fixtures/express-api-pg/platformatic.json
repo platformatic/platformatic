@@ -24,7 +24,7 @@
   ],
   "basePath": "/",
   "telemetry": {
-    "serviceName": "test-pg",
+    "applicationName": "test-pg",
     "version": "1.0.0",
     "exporter": {
       "type": "file"

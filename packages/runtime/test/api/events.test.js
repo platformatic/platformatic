@@ -39,9 +39,9 @@ test('emits an exhaustive list of events', async t => {
     }
   }
 
-  const basePayload = { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 }
+  const basePayload = { application: 'serviceThrowsOnStart', worker: 0, workersCount: 1 }
   const errorPayload = {
-    service: 'serviceThrowsOnStart',
+    application: 'serviceThrowsOnStart',
     worker: 0,
     workersCount: 1,
     error: 'boom'
@@ -49,30 +49,30 @@ test('emits an exhaustive list of events', async t => {
 
   assert.deepStrictEqual(events, [
     { event: 'starting', payload: undefined },
-    { event: 'service:starting', payload: 'serviceThrowsOnStart' },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'service:worker:init', payload: basePayload },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'service:worker:init', payload: basePayload },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'service:worker:init', payload: basePayload },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'service:worker:init', payload: basePayload },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
-    { event: 'service:worker:init', payload: basePayload },
-    { event: 'service:worker:starting', payload: basePayload },
-    { event: 'service:worker:start:error', payload: errorPayload },
+    { event: 'application:starting', payload: 'serviceThrowsOnStart' },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:init', payload: basePayload },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:init', payload: basePayload },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:init', payload: basePayload },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:init', payload: basePayload },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:init', payload: basePayload },
+    { event: 'application:worker:starting', payload: basePayload },
+    { event: 'application:worker:start:error', payload: errorPayload },
     { event: 'errored', message: 'boom' },
-    { event: 'closing', payload: undefined },
     { event: 'stopping', payload: undefined },
-    { event: 'service:stopping', payload: 'serviceThrowsOnStart' },
-    { event: 'service:stopped', payload: 'serviceThrowsOnStart' },
+    { event: 'application:stopping', payload: 'serviceThrowsOnStart' },
+    { event: 'application:stopped', payload: 'serviceThrowsOnStart' },
     { event: 'stopped', payload: undefined },
+    { event: 'closing', payload: undefined },
     { event: 'closed', payload: undefined }
   ])
 })

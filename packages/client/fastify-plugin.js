@@ -18,8 +18,8 @@ async function plugin (app, opts) {
     opts.getHeaders = undefined
   }
 
-  if (opts.serviceId && !opts.url) {
-    opts.url = `http://${opts.serviceId}.plt.local`
+  if (opts.applicationId && !opts.url) {
+    opts.url = `http://${opts.applicationId}.plt.local`
   }
 
   if (opts.type === 'openapi') {

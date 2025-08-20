@@ -9,7 +9,7 @@ import { getSocketPath } from './child-manager.js'
 
 /* c8 ignore next 5 */
 function logDirectError (message, error) {
-  process._rawDebug(`Logger thread for child process of service ${workerData.id} ${message}.`, {
+  process._rawDebug(`Logger thread for child process of application ${workerData.id} ${message}.`, {
     error: ensureLoggableError(error)
   })
 }

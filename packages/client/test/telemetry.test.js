@@ -26,7 +26,7 @@ const getSpansPerType = (spans, type = 'http') => {
   return spans.filter(span => span.attributes[attibuteToLookFor])
 }
 
-test('telemetry correctly propagates from a service client to a server for an OpenAPI endpoint', async t => {
+test('telemetry correctly propagates from an application client to a server for an OpenAPI endpoint', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -49,7 +49,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   // Client app
   const app = Fastify()
   app.register(telemetry, {
-    serviceName: 'test-client',
+    applicationName: 'test-client',
     exporter: {
       type: 'memory'
     }
@@ -105,7 +105,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   assert.equal(serverTraceId, clientTraceId)
 })
 
-test('telemetry correctly propagates from a generic client through a service client and then to another service, propagating the traceId', async t => {
+test('telemetry correctly propagates from a generic client through an application client and then to another application, propagating the traceId', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -127,7 +127,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   // Client app
   const app = Fastify()
   app.register(telemetry, {
-    serviceName: 'test-client',
+    applicationName: 'test-client',
     exporter: {
       type: 'memory'
     }
@@ -192,7 +192,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   assert.equal(serverTraceId, traceId)
 })
 
-test('telemetry correctly propagates from a service client to a server for a GraphQL endpoint', async t => {
+test('telemetry correctly propagates from an application client to a server for a GraphQL endpoint', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -214,7 +214,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   // Client app
   const app = Fastify()
   app.register(telemetry, {
-    serviceName: 'test-client',
+    applicationName: 'test-client',
     exporter: {
       type: 'memory'
     }

@@ -12,13 +12,13 @@ const pltCreatePath = fileURLToPath(new URL('../../bin/cli.js', import.meta.url)
 const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
 let tmpCount = 0
 
-export async function getServices (dir) {
+export async function getApplications (dir) {
   const files = await fs.readdir(dir)
-  const services = []
+  const applications = []
   for (const file of files) {
-    services.push(file)
+    applications.push(file)
   }
-  return services
+  return applications
 }
 
 export async function createTemporaryDirectory (t, prefix) {

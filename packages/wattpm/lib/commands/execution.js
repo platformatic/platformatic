@@ -167,7 +167,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [
@@ -183,7 +183,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [
@@ -193,7 +193,7 @@ export const help = {
       },
       {
         usage: '-i --inspect',
-        description: 'Enables the inspector for each service'
+        description: 'Enables the inspector for each application'
       }
     ]
   },
@@ -210,7 +210,7 @@ export const help = {
   },
   restart: {
     usage: 'restart [id]',
-    description: 'Restarts all services of a running application',
+    description: 'Restarts all applications',
     args: [
       {
         name: 'id',

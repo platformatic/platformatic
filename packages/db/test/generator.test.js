@@ -26,7 +26,7 @@ test('should have default config', async () => {
     dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
     devDependencies: {},
     isRuntimeContext: false,
-    serviceName: '',
+    applicationName: '',
     envPrefix: '',
     env: {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
@@ -332,7 +332,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-db',
+      applicationName: 'my-db',
       plugin: false
     })
     await svc.addPackage(packageDefinitions[0])
@@ -400,7 +400,7 @@ test('runtime context should have env prefix', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
-    serviceName: 'my-db',
+    applicationName: 'my-db',
     env: {
       FOO: 'bar',
       BAZ: 'baz'
@@ -421,7 +421,7 @@ test('runtime context should not have server.config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
-    serviceName: 'my-db',
+    applicationName: 'my-db',
     env: {
       FOO: 'bar',
       BAZ: 'baz'

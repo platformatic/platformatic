@@ -130,7 +130,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Starting the service "app"...'
+        log.msg === 'Starting the application "app"...'
     )
   )
   assert.ok(
@@ -139,7 +139,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Started the service "app"...'
+        log.msg === 'Started the application "app"...'
     )
   )
   assert.ok(
@@ -153,7 +153,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
   )
 })
 
-test('should inherit full logger options from runtime to a platformatic/service', async t => {
+test('should inherit full logger options from runtime to a platformatic/application', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false
@@ -185,7 +185,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Starting the service "app"...'
+        log.msg === 'Starting the application "app"...'
     )
   )
 
@@ -195,7 +195,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Started the service "app"...'
+        log.msg === 'Started the application "app"...'
     )
   )
 
@@ -229,7 +229,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
   )
 })
 
-test('should inherit full logger options from runtime to different services', async t => {
+test('should inherit full logger options from runtime to different applications', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
@@ -252,13 +252,13 @@ test('should inherit full logger options from runtime to different services', as
           log.level === 'INFO' &&
           log.time.length === 24 && // isotime
           log.name === 'service' &&
-          log.msg === `Started the service "${t}"...`
+          log.msg === `Started the application "${t}"...`
       )
     )
   }
 })
 
-test('should get json logs from thread services when they are not pino default config', async t => {
+test('should get json logs from thread applications when they are not pino default config', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
@@ -297,7 +297,7 @@ test('should get json logs from thread services when they are not pino default c
   )
 })
 
-test('should handle logs from thread services as they are with captureStdio: false', async t => {
+test('should handle logs from thread applications as they are with captureStdio: false', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
   let responses = 0
@@ -328,30 +328,30 @@ test('should handle logs from thread services as they are with captureStdio: fal
 
   assert.ok(
     logs.find(log => {
-      return log.serviceLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
+      return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "node"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "service"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "composer"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
     })
   )
 })
 
-test('should handle logs from thread services as they are with captureStdio: false and managementApi: false', async t => {
+test('should handle logs from thread applications as they are with captureStdio: false and managementApi: false', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
 
   let responses = 0
@@ -382,25 +382,25 @@ test('should handle logs from thread services as they are with captureStdio: fal
 
   assert.ok(
     logs.find(log => {
-      return log.serviceLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
+      return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "node"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "service"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
     })
   )
 
   assert.ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the service "composer"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
     })
   )
 })

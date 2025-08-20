@@ -1,10 +1,10 @@
 import assert from 'assert'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createBasicService, createFromConfig, createOpenApiService } from '../helper.js'
+import { createBasicApplication, createFromConfig, createOpenApiApplication } from '../helper.js'
 
 test('should proxy openapi requests with telemetry span', async t => {
-  const service1 = await createOpenApiService(t, ['users'])
+  const service1 = await createOpenApiApplication(t, ['users'])
 
   const origin1 = await service1.listen({ host: '127.0.0.1', port: 0 })
 
@@ -15,7 +15,7 @@ test('should proxy openapi requests with telemetry span', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'service1',
           origin: origin1,
@@ -27,7 +27,7 @@ test('should proxy openapi requests with telemetry span', async t => {
       refreshTimeout: 1000
     },
     telemetry: {
-      serviceName: 'test-composer',
+      applicationName: 'test-composer',
       version: '1.0.0',
       exporter: {
         type: 'memory'
@@ -65,7 +65,7 @@ test('should proxy openapi requests with telemetry span', async t => {
 })
 
 test('should proxy openapi requests with telemetry, managing errors', async t => {
-  const service1 = await createBasicService(t)
+  const service1 = await createBasicApplication(t)
   const origin1 = await service1.listen({ host: '127.0.0.1', port: 0 })
 
   const config = {
@@ -75,7 +75,7 @@ test('should proxy openapi requests with telemetry, managing errors', async t =>
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'service1',
           origin: origin1,
@@ -87,7 +87,7 @@ test('should proxy openapi requests with telemetry, managing errors', async t =>
       refreshTimeout: 1000
     },
     telemetry: {
-      serviceName: 'test-composer',
+      applicationName: 'test-composer',
       version: '1.0.0',
       exporter: {
         type: 'memory'

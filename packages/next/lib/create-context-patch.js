@@ -4,8 +4,8 @@ import { createRequire } from 'node:module'
 import { getGlobalDispatcher } from 'undici'
 
 // Next.js runs middlewares in it's own patched vm context. So the global dispatcher in
-// the middleware context is different from a service global dispatcher. This
-// method sets a service global dispatcher after next.js defines it's own version of
+// the middleware context is different from an application global dispatcher. This
+// method sets an application global dispatcher after next.js defines it's own version of
 // fetch function.
 export function patchVmCreateContext () {
   const _require = createRequire(process.cwd())

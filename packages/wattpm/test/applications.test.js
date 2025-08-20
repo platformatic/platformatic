@@ -3,19 +3,19 @@ import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
-test('should execute services commands', async t => {
+test('should execute applications commands', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
-  const serviceCommandProcess = await wattpm('main:fetch-openapi-schemas', { cwd: rootDir })
+  const applicationCommandProcess = await wattpm('main:fetch-openapi-schemas', { cwd: rootDir })
 
-  ok(serviceCommandProcess.stdout.includes('Fetching schemas for all services.'))
+  ok(applicationCommandProcess.stdout.includes('Fetching schemas for all services.'))
 })
 
-test('can show help for services commands', async t => {
+test('can show help for applications commands', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
   const mainHelpProcess = await wattpm('help', { cwd: rootDir })
-  const serviceHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
+  const applicationHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 
-  ok(mainHelpProcess.stdout.includes('\nServices Commands:'))
+  ok(mainHelpProcess.stdout.includes('\nApplications Commands:'))
   ok(
     mainHelpProcess.stdout
       .replaceAll(/ {2,}/g, '@')
@@ -23,7 +23,7 @@ test('can show help for services commands', async t => {
   )
 
   ok(
-    serviceHelpProcess.stdout.match(
+    applicationHelpProcess.stdout.match(
       '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from remote services'
     )
   )

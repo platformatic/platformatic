@@ -20,16 +20,16 @@ export class DatabaseCapability extends ServiceCapability {
   }
 
   async getMeta () {
-    const serviceMeta = await super.getMeta()
+    const applicationMeta = await super.getMeta()
     const connectionString = this.config.db?.connectionString
 
     if (connectionString) {
       return {
-        ...serviceMeta,
+        ...applicationMeta,
         connectionStrings: [connectionString]
       }
     }
 
-    return serviceMeta
+    return applicationMeta
   }
 }

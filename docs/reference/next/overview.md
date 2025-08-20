@@ -7,11 +7,11 @@ import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Next
 
-The Platformatic Next allows to run a [Next](https://nextjs.org/) application as a Platformatic Runtime service with no modifications.
+The Platformatic Next allows to run a [Next](https://nextjs.org/) application as a Platformatic Runtime application with no modifications.
 
 ## Getting Started
 
-Create or copy an Next application inside the `web` or `services` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new service.
+Create or copy an Next application inside the `applications`, `services` or `web` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new application.
 
 You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
 
@@ -23,7 +23,7 @@ npm install @platformatic/next
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your service with the following contents:
+Create a `watt.json` in the root folder of your application with the following contents:
 
 ```json
 {

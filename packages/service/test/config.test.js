@@ -52,7 +52,7 @@ test('start without server config', async t => {
   })
 })
 
-test.only('transport logger', async t => {
+test('transport logger', async t => {
   const file = join(os.tmpdir(), `${process.pid}-4.json`)
   const options = {
     server: {

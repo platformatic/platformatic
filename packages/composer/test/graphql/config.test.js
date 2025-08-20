@@ -1,10 +1,10 @@
 import assert from 'assert/strict'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createFromConfig, createGraphqlService } from '../helper.js'
+import { createFromConfig, createGraphqlApplication } from '../helper.js'
 
-function createSampleGraphqlService (t) {
-  return createGraphqlService(t, {
+function createSampleGraphqlApplication (t) {
+  return createGraphqlApplication(t, {
     schema: `
     type Query {
       add(x: Int, y: Int): Int
@@ -19,9 +19,9 @@ function createSampleGraphqlService (t) {
   })
 }
 
-test('should get a warning using graphql services', async t => {
+test('should get a warning using graphql applications', async t => {
   const messages = []
-  const graphql1 = await createSampleGraphqlService(t)
+  const graphql1 = await createSampleGraphqlApplication(t)
   const logger = {
     warn: msg => {
       messages.push(msg)
@@ -41,7 +41,7 @@ test('should get a warning using graphql services', async t => {
       loggerInstance: logger
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Host,
@@ -56,7 +56,7 @@ test('should get a warning using graphql services', async t => {
 })
 
 test('should enable graphiql on composer', async t => {
-  const graphql1 = await createSampleGraphqlService(t)
+  const graphql1 = await createSampleGraphqlApplication(t)
   const graphql1Host = await graphql1.listen()
 
   const composer = await createFromConfig(t, {
@@ -66,7 +66,7 @@ test('should enable graphiql on composer', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           graphql: {
@@ -85,7 +85,7 @@ test('should enable graphiql on composer', async t => {
 })
 
 test('graphiql should be disabled on composer by default', async t => {
-  const graphql1 = await createSampleGraphqlService(t)
+  const graphql1 = await createSampleGraphqlApplication(t)
   const graphql1Host = await graphql1.listen()
 
   const composer = await createFromConfig(t, {
@@ -95,7 +95,7 @@ test('graphiql should be disabled on composer by default', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           graphql: {

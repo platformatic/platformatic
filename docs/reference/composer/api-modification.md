@@ -13,7 +13,7 @@ If you want to modify automatically generated API, you can use composer custom `
 
 ### `onComposerResponse`
 
-`onComposerResponse` hook is called after the response is received from a composed service.
+`onComposerResponse` hook is called after the response is received from a composed application.
 It might be useful if you want to modify the response before it is sent to the client.
 If you want to use it you need to add `onComposerResponse` property to the `config` object of the route options.
 

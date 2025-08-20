@@ -6,11 +6,11 @@ import { getLogsFromFile, prepareRuntime, setFixturesDir } from '../../basic/tes
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('should run the service with custom logger options on json', async t => {
+test('should run the application with custom logger options on json', async t => {
   const { root, runtime } = await prepareRuntime(t, 'logger-custom-options-json', false, null)
 
   await runtime.init()
-  await runtime.buildService('runtime')
+  await runtime.buildApplication('runtime')
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
@@ -32,11 +32,11 @@ test('should run the service with custom logger options on json', async t => {
   )
 })
 
-test('should run the service with custom logger options on global this', async t => {
+test('should run the application with custom logger options on global this', async t => {
   const { root, runtime } = await prepareRuntime(t, 'logger-custom-options-global-this', false, null)
 
   await runtime.init()
-  await runtime.buildService('runtime')
+  await runtime.buildApplication('runtime')
   const url = await runtime.start()
 
   await request(url + '/', { method: 'GET' })

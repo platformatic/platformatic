@@ -9,7 +9,7 @@ const { isatty } = require('tty')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get service openapi schema', async (t) => {
+test('should get application openapi schema', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -34,7 +34,7 @@ test('should get service openapi schema', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/openapi-schema',
+    path: '/api/v1/applications/service-1/openapi-schema',
   })
 
   assert.strictEqual(statusCode, 200)

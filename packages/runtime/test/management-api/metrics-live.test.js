@@ -47,17 +47,17 @@ test('should get runtime metrics via management api', async t => {
       const records = data.toString().split('\n')
       for (const record of records) {
         if (!record) continue
-        const { services } = JSON.parse(record)
+        const { applications } = JSON.parse(record)
 
-        assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
+        assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-        for (const serviceMetrics of Object.values(services)) {
+        for (const applicationMetrics of Object.values(applications)) {
           assert.deepStrictEqual(
-            Object.keys(serviceMetrics).sort(),
+            Object.keys(applicationMetrics).sort(),
             ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
           )
 
-          const latencyMetrics = serviceMetrics.latency
+          const latencyMetrics = applicationMetrics.latency
           const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
           assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
         }

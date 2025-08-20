@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
 const { parseInspectorOptions } = require('../lib/config')
-const { loadConfiguration, wrapInRuntimeConfig } = require('../index.js')
+const { wrapInRuntimeConfig } = require('../index.js')
 const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { loadConfiguration: databaseLoadConfiguration } = require('@platformatic/db')
@@ -17,15 +17,7 @@ test('throws if no entrypoint is found', async t => {
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
-test('throws if both web and services are provided', async t => {
-  const configFile = join(fixturesDir, 'configs', 'invalid-web-with-services.json')
-
-  await assert.rejects(async () => {
-    await createRuntime(configFile)
-  }, /The "services" property cannot be used when the "web" property is also defined/)
-})
-
-test('dependencies are not considered if services are specified manually', async t => {
+test('dependencies are not considered if applications are specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
   const runtime = await createRuntime(configFile)
 
@@ -34,15 +26,15 @@ test('dependencies are not considered if services are specified manually', async
   })
 
   await runtime.init()
-  const { services } = await runtime.getServices()
+  const { applications } = await runtime.getApplications()
 
   assert.deepStrictEqual(
-    services.map(service => service.id),
+    applications.map(application => application.id),
     ['with-logger', 'db-app', 'composerApp', 'multi-plugin-service', 'serviceApp']
   )
 })
 
-test('dependencies are resolved if services are not specified manually', async t => {
+test('dependencies are resolved if applications are not specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
   const runtime = await createRuntime(configFile)
 
@@ -52,10 +44,10 @@ test('dependencies are resolved if services are not specified manually', async t
     await runtime.close()
   })
 
-  const { services } = await runtime.getServices()
+  const { applications } = await runtime.getApplications()
 
   assert.deepStrictEqual(
-    services.map(service => service.id),
+    applications.map(application => application.id),
     ['dbApp', 'serviceApp', 'with-logger', 'multi-plugin-service', 'composerApp']
   )
 })
@@ -176,13 +168,13 @@ test('correctly loads the watch value from a string', async () => {
   assert.strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
-test('defaults the service name to `main` if there is no package.json', async t => {
+test('defaults the application name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.services.length, 1)
-  assert.strictEqual(runtimeConfig.services[0].id, 'main')
+  assert.strictEqual(runtimeConfig.applications.length, 1)
+  assert.strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
 test('uses the name in package.json', async t => {
@@ -190,16 +182,16 @@ test('uses the name in package.json', async t => {
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.services.length, 1)
-  assert.strictEqual(runtimeConfig.services[0].id, 'mysimplename')
+  assert.strictEqual(runtimeConfig.applications.length, 1)
+  assert.strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
 })
 
 test('uses the name in package.json, removing the scope', async t => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
-  assert.strictEqual(runtimeConfig.services.length, 1)
-  assert.strictEqual(runtimeConfig.services[0].id, 'myname')
+  assert.strictEqual(runtimeConfig.applications.length, 1)
+  assert.strictEqual(runtimeConfig.applications[0].id, 'myname')
 })
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
@@ -207,12 +199,10 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.services.length, 1)
-  assert.strictEqual(runtimeConfig.services[0].id, 'main')
+  assert.strictEqual(runtimeConfig.applications.length, 1)
+  assert.strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
-// Note, the file's runtime property purposely has invalid properties to make sure
-// API usage excludes them despite of JSON schema validation
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
@@ -223,7 +213,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   assert.ok(typeof runtimeConfig.autoload, 'undefined')
   assert.ok(runtimeConfig.watch === false)
   assert.deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
-  assert.deepStrictEqual(runtimeConfig.services, [
+  assert.deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
@@ -231,34 +221,26 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       gitBranch: 'main',
       health: {},
       id: 'main',
-      localServiceEnvVars: new Map(),
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
       sourceMaps: false,
       type: '@platformatic/db',
       watch: false,
       skipTelemetryHooks: true
+    },
+    {
+      dependencies: [],
+      entrypoint: false,
+      gitBranch: 'main',
+      health: {},
+      id: 'another',
+      localUrl: 'http://another.plt.local',
+      path: resolve(dirname(configFile), 'another'),
+      sourceMaps: false,
+      type: 'unknown',
+      watch: false
     }
   ])
-})
-
-test('set type on services', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfiguration(configFile)
-
-  const dbApp = config.serviceMap.get('db-app')
-  const serviceApp = config.serviceMap.get('serviceApp')
-  const nodeApp = config.serviceMap.get('node')
-
-  assert.strictEqual(dbApp.type, '@platformatic/db')
-  assert.strictEqual(serviceApp.type, '@platformatic/service')
-  assert.strictEqual(nodeApp.type, '@platformatic/node')
 })
 
 test('supports configurable envfile location', async t => {
@@ -346,12 +328,14 @@ test('supports configurable arguments', async t => {
   }
 })
 
-test('should manage service config patch', async t => {
+test('should manage application config patch', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
   const runtime = await createRuntime(configFile)
 
-  runtime.setServiceConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
-  runtime.setServiceConfigPatch('serviceApp', [{ op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }])
+  runtime.setApplicationConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
+  runtime.setApplicationConfigPatch('serviceApp', [
+    { op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }
+  ])
 
   t.after(async () => {
     await runtime.close()

@@ -213,24 +213,24 @@ test('should support custom metrics', async t => {
 
   assert.ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
   assert.ok(metrics.includes('# TYPE custom_service_1 counter'))
-  assert.ok(metrics.includes('custom_service_1{serviceId="service"} 123'))
+  assert.ok(metrics.includes('custom_service_1{applicationId="service"} 123'))
   assert.ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
   assert.ok(metrics.includes('# TYPE custom_service_2 gauge'))
-  assert.ok(metrics.includes('custom_service_2{serviceId="service"} 456'))
+  assert.ok(metrics.includes('custom_service_2{applicationId="service"} 456'))
 
   assert.ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
   assert.ok(metrics.includes('# TYPE custom_internal_1 counter'))
-  assert.ok(metrics.includes('custom_internal_1{serviceId="internal"} 123'))
+  assert.ok(metrics.includes('custom_internal_1{applicationId="internal"} 123'))
   assert.ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
   assert.ok(metrics.includes('# TYPE custom_internal_2 gauge'))
-  assert.ok(metrics.includes('custom_internal_2{serviceId="internal"} 456'))
+  assert.ok(metrics.includes('custom_internal_2{applicationId="internal"} 456'))
 
   assert.ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
   assert.ok(metrics.includes('# TYPE custom_external_1 counter'))
-  assert.ok(metrics.includes('custom_external_1{serviceId="external"} 123'))
+  assert.ok(metrics.includes('custom_external_1{applicationId="external"} 123'))
   assert.ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
   assert.ok(metrics.includes('# TYPE custom_external_2 gauge'))
-  assert.ok(metrics.includes('custom_external_2{serviceId="external"} 456'))
+  assert.ok(metrics.includes('custom_external_2{applicationId="external"} 456'))
 })
 
 test('should track http cache hits/misses', async t => {
@@ -274,14 +274,14 @@ test('should track http cache hits/misses', async t => {
 
   const metrics = await body.text()
 
-  assert.ok(metrics.match(/http_cache_hit_count\{serviceId="main"\} \d+/))
-  assert.ok(metrics.match(/http_cache_miss_count\{serviceId="main"\} \d+/))
+  assert.ok(metrics.match(/http_cache_hit_count\{applicationId="main"\} \d+/))
+  assert.ok(metrics.match(/http_cache_miss_count\{applicationId="main"\} \d+/))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-1"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-1"} 0'))
+  assert.ok(metrics.includes('http_cache_hit_count{applicationId="service-1"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{applicationId="service-1"} 0'))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2"} 1'))
+  assert.ok(metrics.includes('http_cache_hit_count{applicationId="service-2"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{applicationId="service-2"} 1'))
 })
 
 test('metrics can be disabled', async t => {
@@ -327,7 +327,7 @@ test('readiness - should get 404 if readiness is not enabled', async t => {
   assert.strictEqual(statusCode, 404)
 })
 
-test('readiness - should expose readiness by default and get a success response when all services are started, with default settings', async t => {
+test('readiness - should expose readiness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -349,7 +349,7 @@ test('readiness - should expose readiness by default and get a success response 
   assert.strictEqual(await body.text(), 'OK')
 })
 
-test('readiness - should expose readiness and get a fail response when not all services are started, with default settings', async t => {
+test('readiness - should expose readiness and get a fail response when not all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -360,8 +360,8 @@ test('readiness - should expose readiness and get a fail response when not all s
     await app.close()
   })
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
@@ -394,8 +394,8 @@ test('readiness - should expose readiness and get a fail and success responses w
     assert.strictEqual(await body.text(), 'All right')
   }
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {
@@ -428,7 +428,7 @@ test('liveness - should get 404 if liveness is not enabled', async t => {
   assert.strictEqual(statusCode, 404)
 })
 
-test('liveness - should expose liveness by default and get a success response when all services are started, with default settings', async t => {
+test('liveness - should expose liveness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -450,7 +450,7 @@ test('liveness - should expose liveness by default and get a success response wh
   assert.strictEqual(await body.text(), 'OK')
 })
 
-test('liveness - should expose liveness and get a fail response when not all services are ready, with default settings', async t => {
+test('liveness - should expose liveness and get a fail response when not all applications are ready, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -461,8 +461,8 @@ test('liveness - should expose liveness and get a fail response when not all ser
     await app.close()
   })
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
@@ -472,7 +472,7 @@ test('liveness - should expose liveness and get a fail response when not all ser
   assert.strictEqual(await body.text(), 'ERR')
 })
 
-test('liveness - should expose liveness and get a fail response when not all services are healthy, with default settings', async t => {
+test('liveness - should expose liveness and get a fail response when not all applications are healthy, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)

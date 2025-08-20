@@ -153,12 +153,12 @@ export function collectEluMetric (registry) {
   registry.registerMetric(cpuMetric)
 }
 
-export async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry = undefined) {
+export async function collectMetrics (applicationId, workerId, metricsConfig = {}, registry = undefined) {
   if (!registry) {
     registry = new Registry()
   }
 
-  const labels = { ...metricsConfig.labels, serviceId }
+  const labels = { ...metricsConfig.labels, applicationId }
   if (workerId >= 0) {
     labels.workerId = workerId
   }

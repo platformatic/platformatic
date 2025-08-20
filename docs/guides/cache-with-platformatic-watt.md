@@ -41,8 +41,8 @@ Add HTTP caching configuration to your `watt.json` file:
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
   },
-  "services": [
-    // your services here
+  "applications": [
+    // your applications here
   ]
 }
 ```
@@ -54,7 +54,7 @@ Add HTTP caching configuration to your `watt.json` file:
 
 ## Step 2: Add Cache Headers to Your Responses
 
-In your service endpoints, add appropriate cache headers:
+In your application endpoints, add appropriate cache headers:
 
 ```js
 // routes/products.js

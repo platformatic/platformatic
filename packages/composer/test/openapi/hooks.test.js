@@ -2,10 +2,10 @@ import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createBasicService, createFromConfig, createOpenApiService } from '../helper.js'
+import { createBasicApplication, createFromConfig, createOpenApiApplication } from '../helper.js'
 
 test('should add onSend route hook', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -15,7 +15,7 @@ test('should add onSend route hook', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -37,7 +37,7 @@ test('should add onSend route hook', async t => {
 })
 
 test('should add multiple onRoute hooks for one route', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -47,7 +47,7 @@ test('should add multiple onRoute hooks for one route', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -72,7 +72,7 @@ test('should add multiple onRoute hooks for one route', async t => {
 })
 
 test('should parse json response payload', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -82,7 +82,7 @@ test('should parse json response payload', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -112,7 +112,7 @@ test('should parse json response payload', async t => {
 })
 
 test('should parse text response payload', async t => {
-  const api = await createBasicService(t)
+  const api = await createBasicApplication(t)
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -122,7 +122,7 @@ test('should parse text response payload', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -152,7 +152,7 @@ test('should parse text response payload', async t => {
 })
 
 test('should throw an error if addComposerOnRouteHook called when app is ready', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -162,7 +162,7 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -185,7 +185,7 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
 })
 
 test('should send two different schema objects into different composer hooks', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -195,7 +195,7 @@ test('should send two different schema objects into different composer hooks', a
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

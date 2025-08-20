@@ -32,9 +32,9 @@ const {
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
-  const { serviceName, instrumentations = [] } = opts
-  const additionalInstrumentations = await getInstrumentations(instrumentations, serviceDir)
+const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+  const { applicationName, instrumentations = [] } = opts
+  const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -46,7 +46,7 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
   for (const exporter of exporters) {
     // Exporter config:
     // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, serviceName }
+    const exporterOptions = { ...exporter.options, applicationName }
 
     let exporterObj
     if (exporter.type === 'console') {
@@ -100,7 +100,7 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
       ...additionalInstrumentations
     ],
     resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: serviceName
+      [ATTR_SERVICE_NAME]: applicationName
     })
   })
   sdk.start()
@@ -132,11 +132,11 @@ const main = async () => {
 
   if (data) {
     debuglog('Setting up telemetry %o', data)
-    const serviceDir = data.serviceConfig?.path
-    const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
+    const applicationDir = data.applicationConfig?.path
+    const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      setupNodeHTTPTelemetry(telemetryConfig, serviceDir)
+      setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
     }
   }
 }

@@ -1,4 +1,5 @@
 # Platformatic Documentation Restructuring Plan
+
 ## Following the Diátaxis Framework
 
 ### Executive Summary
@@ -6,6 +7,7 @@
 The current Platformatic documentation suffers from several critical issues that hinder user onboarding and product adoption:
 
 **Current Problems:**
+
 - **Fragmented positioning**: No clear focus on Watt as the core Node.js Application Server
 - **Poor information architecture**: Documentation types are mixed together without clear purpose distinction
 - **Inconsistent entry points**: Multiple competing "getting started" paths create confusion
@@ -21,6 +23,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### User Types and Entry Points
 
 **1. New Node.js Developers**
+
 - **Background**: Limited Node.js experience, learning web development
 - **Entry Point**: Landing page → "What is Watt?" → Quick Start Tutorial
 - **Primary Needs**: Guided learning, working examples, conceptual understanding
@@ -28,6 +31,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 - **Journey Progression**: Overview → Tutorial → How-to Guides → Reference
 
 **2. Experienced Node.js Developers**
+
 - **Background**: Familiar with Express/Fastify, evaluating new tools
 - **Entry Point**: README → Architecture Overview → Migration Guide
 - **Primary Needs**: Performance comparisons, migration paths, advanced features
@@ -35,6 +39,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 - **Journey Progression**: Overview → Comparison → How-to Guides → Reference → Concepts
 
 **3. Teams Migrating from Other Platforms**
+
 - **Background**: Using Spring Boot, Rails, Django, or similar platforms
 - **Entry Point**: Landing page → "Why Watt?" → Architecture Comparison
 - **Primary Needs**: Platform comparison, team onboarding, deployment strategies
@@ -42,6 +47,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 - **Journey Progression**: Overview → Concepts → Migration Guides → Advanced How-tos
 
 **4. Platform/DevOps Engineers**
+
 - **Background**: Focus on deployment, monitoring, scalability
 - **Entry Point**: Documentation → Deployment Guides → Monitoring Setup
 - **Primary Needs**: Production configuration, scaling patterns, observability
@@ -51,21 +57,25 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### Critical Decision Points and Information Needs
 
 **Decision Point 1: "Should I use Watt?"** (Discovery Stage)
+
 - **Information Need**: Value proposition, use cases, alternatives comparison
 - **Content Required**: Overview section, "Why Watt?" explanation, comparison matrix
 - **User Context**: Evaluating against Express, Fastify, Next.js, other frameworks
 
-**Decision Point 2: "How do I get started?"** (Evaluation Stage)  
+**Decision Point 2: "How do I get started?"** (Evaluation Stage)
+
 - **Information Need**: Quick success, learning path, time investment
 - **Content Required**: Multiple getting started options, clear time estimates
 - **User Context**: Wanting to see results quickly while learning properly
 
 **Decision Point 3: "Can this work for my project?"** (Implementation Stage)
+
 - **Information Need**: Framework integration, database support, deployment options
 - **Content Required**: Integration guides, compatibility matrices, real examples
 - **User Context**: Specific technical requirements and constraints
 
 **Decision Point 4: "How do I use this in production?"** (Adoption Stage)
+
 - **Information Need**: Best practices, monitoring, scaling, security
 - **Content Required**: Production guides, advanced configuration, troubleshooting
 - **User Context**: Moving from prototype to production deployment
@@ -73,6 +83,7 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### Content-to-Journey Stage Mapping
 
 **Discovery/Awareness Content:**
+
 - Landing page value proposition
 - "What is Watt?" overview
 - Architecture diagrams
@@ -80,18 +91,21 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 - Comparison with alternatives
 
 **Evaluation/Learning Content:**
+
 - Quick start tutorial (15 minutes)
 - Core feature demonstrations
 - Integration examples
 - Migration guides from common platforms
 
 **Implementation/Building Content:**
+
 - Step-by-step tutorials
 - Framework-specific how-to guides
 - Database integration guides
 - Deployment tutorials
 
 **Ongoing Usage/Mastery Content:**
+
 - Advanced configuration reference
 - Performance optimization guides
 - Monitoring and observability setup
@@ -102,24 +116,28 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### Multi-Path Entry Strategy
 
 **Path 1: Quick Start (5-10 minutes)**
+
 - Target: Developers who want immediate results
 - Entry: `npx wattpm create demo && npm start`
 - Outcome: Running application with API endpoints
 - Next Steps: Point to full tutorial or specific integration guides
 
 **Path 2: Guided Tutorial (30 minutes)**
+
 - Target: Developers who prefer step-by-step learning
 - Entry: "Your First Watt App" tutorial
 - Outcome: Understanding of core concepts plus working application
 - Next Steps: Advanced tutorials or how-to guides for specific needs
 
 **Path 3: Example-Driven Learning (15-20 minutes)**
+
 - Target: Developers who learn best from complete examples
 - Entry: Gallery of example applications with source code
 - Outcome: Working reference implementation for specific use case
 - Next Steps: Customization guides and advanced patterns
 
 **Path 4: Migration-Focused (45-60 minutes)**
+
 - Target: Teams with existing applications
 - Entry: Migration guides from common platforms (Express, Fastify, etc.)
 - Outcome: Existing application running on Watt
@@ -128,24 +146,28 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### Success Criteria for Each Path
 
 **Quick Start Success:**
+
 - Application starts within 2 minutes of running command
 - API endpoints respond correctly
 - Basic functionality demonstrated
 - Clear next steps provided
 
 **Guided Tutorial Success:**
+
 - Each step works without modification
 - User understands what each step accomplishes
 - Final application demonstrates key Watt features
 - User can explain basic Watt concepts
 
 **Example-Driven Success:**
+
 - Example applications run without setup issues
 - Source code is well-commented and explains key decisions
 - Examples cover common real-world scenarios
 - User can identify which example matches their needs
 
 **Migration Success:**
+
 - Existing application functionality preserved
 - Migration path is clearly documented
 - Performance improvements or feature benefits are demonstrated
@@ -154,12 +176,14 @@ This plan repositions **Watt (wattpm) as the primary product** - the Node.js App
 ### First-Time User Experience Flow
 
 **Landing Experience:**
+
 1. Clear headline: "Watt - The Node.js Application Server"
 2. Value proposition in 10 seconds: "Build, deploy, and scale Node.js applications with unified tooling"
 3. Three entry paths clearly presented
 4. Success stories/social proof
 
 **Quick Start Flow:**
+
 ```
 npm install -g wattpm
 ↓
@@ -173,6 +197,7 @@ Open browser → See running app
 ```
 
 **Tutorial Flow:**
+
 ```
 Choose tutorial based on background
 ↓
@@ -193,6 +218,7 @@ Explore advanced features
 "Watt transforms Node.js development by providing a unified application server that handles the complex infrastructure so you can focus on building features."
 
 **Key Benefits to Highlight:**
+
 - Unified development experience across multiple services
 - Built-in observability and monitoring
 - Framework-agnostic (works with React, Vue, Express, Fastify, etc.)
@@ -202,17 +228,20 @@ Explore advanced features
 ### Architecture Overview Levels
 
 **Level 1: Conceptual (30-second explanation)**
+
 - Watt as application server that runs multiple services
 - Visual diagram showing Watt containing various services
 - Simple analogy: "Like Docker Compose for Node.js applications"
 
 **Level 2: Technical Overview (5-minute read)**
+
 - Service mesh architecture
 - Inter-service communication patterns
 - Configuration management approach
 - Deployment and scaling concepts
 
 **Level 3: Detailed Architecture (15-minute deep dive)**
+
 - Internal component architecture
 - Plugin system and extensibility
 - Performance characteristics
@@ -221,21 +250,25 @@ Explore advanced features
 ### "What is Watt?" Explanatory Content Structure
 
 **1. Problem Statement**
+
 - Challenges of modern Node.js development
 - Microservices complexity
 - Deployment and monitoring overhead
 
 **2. Solution Overview**
+
 - Watt as unified application server
 - Key capabilities and features
 - How it differs from alternatives
 
 **3. Core Concepts**
+
 - Services and capabilities
 - Configuration-driven development
 - Built-in observability
 
 **4. When to Use Watt**
+
 - Ideal use cases and scenarios
 - When not to use Watt
 - Migration considerations
@@ -243,6 +276,7 @@ Explore advanced features
 ### Watt in Platformatic Ecosystem Context
 
 **Positioning Strategy:**
+
 - Watt as the **primary product** - the application server
 - Other components as **services that run within Watt**:
   - DB Service: Database APIs
@@ -251,6 +285,7 @@ Explore advanced features
   - Runtime: Development environment
 
 **Ecosystem Benefits:**
+
 - Consistent tooling across all services
 - Unified configuration and deployment
 - Shared monitoring and logging
@@ -259,6 +294,7 @@ Explore advanced features
 ## Proposed New Structure (Diátaxis Framework)
 
 ### Root Level Navigation
+
 ```
 docs/
 ├── overview/                           # NEW: Landing and orientation content
@@ -267,12 +303,13 @@ docs/
 │   ├── architecture-overview.md       # Technical architecture
 │   └── use-cases-and-examples.md      # When and how to use Watt
 ├── learn/                             # Learning-oriented content
-├── guides/                            # Problem-oriented content  
+├── guides/                            # Problem-oriented content
 ├── reference/                         # Information-oriented content
 └── concepts/                          # Understanding-oriented content
 ```
 
 ### 1. Overview Content (Discovery & Orientation)
+
 ```
 docs/overview/
 ├── what-is-watt.md                    # Core product explanation (30 sec → 5 min → 15 min)
@@ -283,6 +320,7 @@ docs/overview/
 ```
 
 ### 2. Learning-Oriented Content (Tutorials)
+
 ```
 docs/learn/
 ├── quick-start/                       # 5-10 minute immediate results
@@ -291,12 +329,12 @@ docs/learn/
 │   └── 03-whats-next.md              # Clear progression options
 ├── tutorials/
 │   ├── your-first-watt-app/           # 30-minute guided learning
-│   ├── todo-api-with-database/        # Add DB service to Watt  
+│   ├── todo-api-with-database/        # Add DB service to Watt
 │   ├── full-stack-movie-quotes/       # Complete app with frontend
 │   └── deploy-to-production/          # End-to-end deployment
 ├── examples/                          # Example-driven learning
 │   ├── ecommerce-api/                # Real-world API example
-│   ├── blog-with-cms/                # Content management example  
+│   ├── blog-with-cms/                # Content management example
 │   ├── microservices-suite/          # Multi-service example
 │   └── nextjs-integration/           # Frontend framework example
 └── migrations/                        # Migration-focused learning
@@ -305,7 +343,8 @@ docs/learn/
     └── from-nodejs-monolith/         # Breaking up monoliths
 ```
 
-### 3. Problem-Oriented Content (How-to Guides)  
+### 3. Problem-Oriented Content (How-to Guides)
+
 ```
 docs/guides/
 ├── frameworks/
@@ -332,6 +371,7 @@ docs/guides/
 ```
 
 ### 4. Information-Oriented Content (Reference)
+
 ```
 docs/reference/
 ├── watt/                              # Core product reference
@@ -351,6 +391,7 @@ docs/reference/
 ```
 
 ### 5. Understanding-Oriented Content (Explanation)
+
 ```
 docs/concepts/
 ├── watt-architecture.md               # Why Watt exists, how it works
@@ -363,6 +404,7 @@ docs/concepts/
 ## Migration Strategy
 
 ### Phase 1: Foundation - Restructure Existing Content ✅ COMPLETED
+
 **Priority: Critical - Focus on Information Architecture & User Journey**
 
 - [x] **Update Root README.md with User Journey Focus**
@@ -403,18 +445,20 @@ docs/concepts/
 ### **Current vs. Planned Structure**
 
 **Current Implementation (Intermediate):**
+
 ```
 Overview/
 └── Overview (single comprehensive page promoting Watt)
 
 Getting Started/
 ├── quick-start-watt
-├── quick-start-guide  
+├── quick-start-guide
 ├── port-your-app
 └── Tutorials/
 ```
 
 **Planned Final Structure (Still the Goal):**
+
 ```
 Overview/
 ├── what-is-watt.md
@@ -435,6 +479,7 @@ The planned structure will be implemented in future phases once the foundation i
 ---
 
 ### Phase 2: Content Enhancement - Improve Existing Materials ✅ COMPLETED
+
 **Priority: High - Make Current Content User Journey Compliant**
 
 **Completed December 2024**
@@ -465,7 +510,7 @@ The planned structure will be implemented in future phases once the foundation i
 
 - [x] **Organized Existing Reference Materials** (User Mental Model Structure)
   - [x] **Consolidated CLI Documentation**: Created `docs/reference/watt/cli-commands.md` - unified wattpm and platformatic commands
-  - [x] **Standardized Configuration Format**: Updated all service overviews with consistent "When to Use" sections  
+  - [x] **Standardized Configuration Format**: Updated all service overviews with consistent "When to Use" sections
   - [x] **Updated API Documentation**: Ensured accuracy across Database Service, HTTP Service, and Composer Service overviews
   - [x] **Created Comprehensive Troubleshooting**: New `docs/reference/troubleshooting.md` with error codes and solutions
   - [x] **Updated Sidebar Structure**: `docs/sidebars.js` organized by user mental model vs internal packages
@@ -473,7 +518,7 @@ The planned structure will be implemented in future phases once the foundation i
 - [x] **Audited and Updated Explanatory Content** (Watt-First Positioning)
   - [x] **Service Documentation Updates**:
     - `docs/reference/db/overview.md` - Repositioned as "Database Service within Watt"
-    - `docs/reference/service/overview.md` - Repositioned as "HTTP Service within Watt"  
+    - `docs/reference/service/overview.md` - Repositioned as "HTTP Service within Watt"
     - `docs/reference/composer/overview.md` - Repositioned as "API Gateway within Watt"
   - [x] **Consistent Watt-First Language**: Updated all references to position Watt as primary Node.js Application Server
   - [x] **Added Integration Context**: Showed how services work together within Watt ecosystem
@@ -482,6 +527,7 @@ The planned structure will be implemented in future phases once the foundation i
   - [x] **New Comprehensive Guide**: `docs/guides/monitoring-and-observability.md` covering logging, metrics, tracing, health checks with production setup examples
 
 **Key Achievements:**
+
 - **13 files restructured** following Diátaxis framework
 - **Enterprise developer focus** with production-ready guidance and PostgreSQL/MySQL setup
 - **Architectural clarity** distinguishing Watt (application server) from services (components within Watt)
@@ -489,6 +535,7 @@ The planned structure will be implemented in future phases once the foundation i
 - **Consolidated information architecture** organized by user mental model
 
 ### Phase 3: Strategic New Content - Create Planned Structure ❌ NOT STARTED
+
 **Priority: Medium - Implement the Final Planned Structure**
 
 - [ ] **Create Missing Overview Content (Core Goal)**
@@ -521,8 +568,8 @@ The planned structure will be implemented in future phases once the foundation i
 ### **Structural Improvements (Foundation for Future Content)**
 
 - [x] **Sidebar Organization** - Fixed Framework Integrations, reordered Services & APIs, reorganized SQL Data Layer
-- [x] **Navigation Enhancement** - Added top navigation links, Reference overview page, fixed versioning issues  
-- [x] **Watt Positioning** - Rewrote Overview.md to position Watt as primary Node.js Application Server
+- [x] **Navigation Enhancement** - Added top navigation links, Reference overview page, fixed versioning issues
+- [x] **Watt Positioning** - Rewrote overview.md to position Watt as primary Node.js Application Server
 - [x] **Clean Architecture** - Removed duplication, established clear content separation by type
 
 These improvements create the foundation needed to implement the full planned structure in subsequent phases.
@@ -530,22 +577,26 @@ These improvements create the foundation needed to implement the full planned st
 ## Specific Content Updates Required
 
 ### README.md Updates
+
 ```markdown
 # Watt - The Node.js Application Server
 
 Build and run multiple Node.js applications with unified logging, monitoring, and deployment.
 
 ## Quick Start (2 minutes)
+
 npm install -g wattpm
 npx wattpm create my-app
 cd my-app && npm start
 
 ## Choose Your Learning Path
+
 - **New to Node.js?** → [What is Watt?](docs/overview/what-is-watt.md) → [Guided Tutorial](docs/learn/tutorials/your-first-watt-app/)
 - **Experienced Developer?** → [Quick Start](docs/learn/quick-start/) → [Migration Guide](docs/learn/migrations/)
 - **Evaluating Platforms?** → [Architecture Overview](docs/overview/architecture-overview.md) → [Comparisons](docs/overview/comparison-with-alternatives.md)
 
 ## Documentation
+
 - [Overview](docs/overview/) - Understand what Watt is and why to use it
 - [Learning](docs/learn/) - Tutorials, examples, and guided paths
 - [How-to Guides](docs/guides/) - Solve specific problems
@@ -558,6 +609,7 @@ cd my-app && npm start
 The current sidebar reflects internal package structure rather than user mental models. Here's the proposed user journey-focused restructure:
 
 **Current Problems:**
+
 - Package-centric organization (`@platformatic/db`, `@platformatic/service`, etc.)
 - Watt buried as one package among many
 - No clear learning progression
@@ -565,6 +617,7 @@ The current sidebar reflects internal package structure rather than user mental 
 - Multiple competing "getting started" paths
 
 **New User Journey-Focused Sidebar:**
+
 ```javascript
 const sidebars = {
   docs: [
@@ -572,10 +625,10 @@ const sidebars = {
     {
       type: 'category',
       label: 'Overview',
-      collapsed: false,  // Always open - primary entry point
+      collapsed: false, // Always open - primary entry point
       items: [
         'overview/what-is-watt',
-        'overview/getting-started',  
+        'overview/getting-started',
         'overview/architecture-overview',
         'overview/use-cases-and-examples',
         'overview/comparison-with-alternatives'
@@ -584,16 +637,16 @@ const sidebars = {
 
     // LEARNING (Evaluation & Initial Implementation)
     {
-      type: 'category', 
+      type: 'category',
       label: 'Learning',
-      collapsed: false,  // Keep open for easy access
+      collapsed: false, // Keep open for easy access
       items: [
         {
           type: 'category',
           label: 'Quick Start (5-10 min)',
           items: [
             'learn/quick-start/install-and-init',
-            'learn/quick-start/your-first-endpoint', 
+            'learn/quick-start/your-first-endpoint',
             'learn/quick-start/whats-next'
           ]
         },
@@ -618,7 +671,7 @@ const sidebars = {
           ]
         },
         {
-          type: 'category', 
+          type: 'category',
           label: 'Migration Guides',
           items: [
             'learn/migrations/from-express',
@@ -632,7 +685,7 @@ const sidebars = {
     // HOW-TO GUIDES (Implementation Stage)
     {
       type: 'category',
-      label: 'How-to Guides', 
+      label: 'How-to Guides',
       collapsed: true,
       items: [
         {
@@ -659,7 +712,7 @@ const sidebars = {
           label: 'Deployment',
           items: [
             'guides/deployment/docker-containers',
-            'guides/deployment/kubernetes-deployment', 
+            'guides/deployment/kubernetes-deployment',
             'guides/deployment/environment-configuration'
           ]
         },
@@ -682,13 +735,9 @@ const sidebars = {
       collapsed: true,
       items: [
         {
-          type: 'category', 
-          label: 'Watt Application Server',  // Primary product first
-          items: [
-            'reference/watt/cli-commands',
-            'reference/watt/configuration', 
-            'reference/watt/api-reference'
-          ]
+          type: 'category',
+          label: 'Watt Application Server', // Primary product first
+          items: ['reference/watt/cli-commands', 'reference/watt/configuration', 'reference/watt/api-reference']
         },
         {
           type: 'category',
@@ -705,17 +754,17 @@ const sidebars = {
               ]
             },
             {
-              type: 'category', 
+              type: 'category',
               label: 'HTTP Service',
               items: [
                 'reference/services/service/overview',
-                'reference/services/service/configuration', 
+                'reference/services/service/configuration',
                 'reference/services/service/plugins'
               ]
             },
             {
               type: 'category',
-              label: 'Composer Service', 
+              label: 'Composer Service',
               items: [
                 'reference/services/composer/overview',
                 'reference/services/composer/configuration',
@@ -729,7 +778,7 @@ const sidebars = {
           label: 'Capabilities', // Framework integrations
           items: [
             'reference/capabilities/next',
-            'reference/capabilities/astro', 
+            'reference/capabilities/astro',
             'reference/capabilities/node',
             'reference/capabilities/creating-custom'
           ]
@@ -745,7 +794,7 @@ const sidebars = {
       items: [
         'concepts/watt-architecture',
         'concepts/service-mesh',
-        'concepts/application-lifecycle', 
+        'concepts/application-lifecycle',
         'concepts/microservices-vs-monolith'
       ]
     }
@@ -785,24 +834,28 @@ const sidebars = {
 ### User Journey Success Metrics
 
 **Discovery Stage Metrics:**
+
 - Landing page conversion rate (visits → getting started)
 - Time to first "aha moment" (< 30 seconds on overview pages)
 - User type identification accuracy (can users pick the right entry path?)
 - Bounce rate on overview pages (< 30%)
 
 **Evaluation Stage Metrics:**
+
 - Quick Start completion rate (> 80% complete the 5-10 minute path)
 - Tutorial completion rate (> 60% complete 30-minute tutorials)
 - Example application success rate (> 90% run without issues)
 - Migration guide effectiveness (can teams migrate existing apps?)
 
 **Implementation Stage Metrics:**
+
 - How-to guide problem resolution rate (users find solutions to specific issues)
 - Integration guide success rate (framework integrations work as documented)
 - Production deployment success rate (tutorials lead to working deployments)
 - Support ticket reduction (fewer questions about covered topics)
 
 **Mastery Stage Metrics:**
+
 - Reference documentation usage patterns (high return visits to specific sections)
 - Advanced feature adoption (users progressing beyond basic usage)
 - Community contribution rate (users creating content/PRs)
@@ -811,6 +864,7 @@ const sidebars = {
 ### Content Quality Metrics
 
 **Immediate (Foundation Phase)**
+
 - Single clear entry point established (README restructured)
 - Watt positioned as primary product (overview content created)
 - Multi-path getting started works (Quick Start + Tutorial + Examples)
@@ -818,6 +872,7 @@ const sidebars = {
 - Sidebar reflects user mental model (not package structure)
 
 **Short-term (Content Creation Phase)**
+
 - Complete beginner journey (Discovery → Evaluation → Implementation)
 - Essential problem-solving guides available (top 10 user questions covered)
 - Reference documentation organized by user needs
@@ -825,6 +880,7 @@ const sidebars = {
 - Analytics tracking implemented (user journey progression data)
 
 **Long-term (Optimization Phase)**
+
 - All content follows Diátaxis framework (content type clarity)
 - User feedback loop established (continuous improvement process)
 - Documentation analytics show improved engagement (time on page, completion rates)
@@ -834,18 +890,21 @@ const sidebars = {
 ## Implementation Recommendations
 
 ### Content Creation Guidelines
+
 1. **Tutorials must work reliably** - Test every step
 2. **How-to guides solve real problems** - Based on user questions
 3. **Reference is accurate and current** - Auto-generated where possible
 4. **Explanations provide context** - Why not just what
 
 ### Team Structure Suggestions
+
 1. **Tutorial Specialist** - Focus on learning-oriented content
 2. **Technical Writer** - Handle reference documentation
 3. **Developer Advocate** - Create how-to guides based on user feedback
 4. **Information Architect** - Ensure structural consistency
 
 ### Tools and Processes
+
 1. **Content templates** for each Diátaxis type
 2. **Review checklist** for content type compliance
 3. **User testing protocol** for tutorials
@@ -861,4 +920,4 @@ const sidebars = {
 
 ---
 
-*This plan repositions Platformatic around Watt as the core Node.js Application Server, following the proven Diátaxis documentation framework to create clear, purposeful content that serves users' actual needs.*
+_This plan repositions Platformatic around Watt as the core Node.js Application Server, following the proven Diátaxis documentation framework to create clear, purposeful content that serves users' actual needs._

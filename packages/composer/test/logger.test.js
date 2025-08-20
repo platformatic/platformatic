@@ -8,10 +8,10 @@ import { create } from '../index.js'
 
 test('should use logger options - formatters, timestamp, redact', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(import.meta.dirname, 'logger')
+  const file = path.join(process.env.LOG_DIR, 'application.log')
+  const applicationRoot = path.join(import.meta.dirname, 'logger')
 
-  const app = await create(serviceRoot, path.resolve(serviceRoot, 'platformatic.json'))
+  const app = await create(applicationRoot, path.resolve(applicationRoot, 'platformatic.json'))
   t.after(async () => {
     await app.stop()
   })
@@ -31,7 +31,7 @@ test('should use logger options - formatters, timestamp, redact', async t => {
       log =>
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
-        log.name === 'service' &&
+        log.name === 'application' &&
         log.msg.startsWith('Server listening at http://127.0.0.1')
     )
   )

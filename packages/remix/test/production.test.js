@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   setAdditionalDependencies,
   setFixturesDir,
@@ -35,7 +35,7 @@ const configurations = [
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
-    files: [...files, ...internalServicesFiles],
+    files: [...files, ...internalApplicationsFiles],
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'

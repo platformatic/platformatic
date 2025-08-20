@@ -44,7 +44,7 @@ export default function root (app) {
             }
           }
 
-          app.platformatic.config.composer.services.forEach(s => {
+          app.platformatic.config.composer.applications.forEach(s => {
             if (s.openapi) {
               hasOpenAPIServices = true
               serviceTypes.openapi.services.push(s)

@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import { createFromConfig, createOpenApiService } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
 const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should ignore static routes', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -32,7 +32,7 @@ test('should ignore static routes', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -68,7 +68,7 @@ test('should ignore static routes', async t => {
 })
 
 test('should ignore parametric routes', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -90,7 +90,7 @@ test('should ignore parametric routes', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -125,11 +125,11 @@ test('should ignore parametric routes', async t => {
   }
 })
 
-test('should ignore routes for only for one service', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
+test('should ignore routes for only for one application', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
   await api1.listen({ port: 0 })
 
-  const api2 = await createOpenApiService(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['users'])
   await api2.listen({ port: 0 })
 
   const openapiConfig1 = {
@@ -163,7 +163,7 @@ test('should ignore routes for only for one service', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -207,7 +207,7 @@ test('should ignore routes for only for one service', async t => {
 })
 
 test('should ignore only specified methods', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -233,7 +233,7 @@ test('should ignore only specified methods', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -266,7 +266,7 @@ test('should ignore only specified methods', async t => {
 })
 
 test('should ignore all routes if methods array is not specified', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -286,7 +286,7 @@ test('should ignore all routes if methods array is not specified', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -322,7 +322,7 @@ test('should ignore all routes if methods array is not specified', async t => {
 })
 
 test('should skip route if all routes are ignored', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -346,7 +346,7 @@ test('should skip route if all routes are ignored', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

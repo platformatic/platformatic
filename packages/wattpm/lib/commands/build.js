@@ -44,24 +44,24 @@ export async function buildCommand (logger, args) {
       return
     }
 
-    // Gather informations for all services before starting
-    const { services } = await runtime.getServices()
+    // Gather informations for all applications before starting
+    const { applications } = await runtime.getApplications()
 
-    for (const { id } of services) {
+    for (const { id } of applications) {
       const currentLogger = logger.child({ name: id })
-      currentLogger.debug(`Building service ${bold(id)} ...`)
+      currentLogger.debug(`Building application ${bold(id)} ...`)
 
       try {
-        await runtime.buildService(id)
+        await runtime.buildApplication(id)
       } catch (error) {
         if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
-          logFatalError(currentLogger, `Building service "${id}" has failed with exit code ${error.exitCode}.`)
+          logFatalError(currentLogger, `Building application "${id}" has failed with exit code ${error.exitCode}.`)
           /* c8 ignore next 6 */
         } else {
           logFatalError(
             currentLogger,
             { err: ensureLoggableError(error) },
-            `Building service "${id}" has throw an exception: ${error.message}`
+            `Building application "${id}" has throw an exception: ${error.message}`
           )
           /* c8 ignore next 3 - Mistakenly reported as uncovered by C8 */
         }
@@ -70,7 +70,7 @@ export async function buildCommand (logger, args) {
       }
     }
 
-    logger.done('All services have been built.')
+    logger.done('All applications have been built.')
   } finally {
     await runtime?.close?.(true)
   }
@@ -79,11 +79,11 @@ export async function buildCommand (logger, args) {
 export const help = {
   build: {
     usage: 'build [root]',
-    description: 'Builds all services of an application',
+    description: 'Builds all applications of the project',
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [

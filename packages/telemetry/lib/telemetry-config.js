@@ -84,7 +84,7 @@ const formatSpanAttributes = {
 }
 
 const initTelemetry = (opts, logger) => {
-  const { serviceName, version } = opts
+  const { applicationName, version } = opts
   let exporter = opts.exporter
   if (!exporter) {
     logger.warn('No exporter configured, defaulting to console.')
@@ -94,12 +94,12 @@ const initTelemetry = (opts, logger) => {
   const exporters = Array.isArray(exporter) ? exporter : [exporter]
 
   logger.debug(
-    `Setting up platformatic telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
+    `Setting up platformatic telemetry for application: ${applicationName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
   )
 
   const provider = new PlatformaticTracerProvider({
     resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: serviceName,
+      [ATTR_SERVICE_NAME]: applicationName,
       [ATTR_SERVICE_VERSION]: version,
     }),
   })
@@ -109,7 +109,7 @@ const initTelemetry = (opts, logger) => {
   for (const exporter of exporters) {
     // Exporter config:
     // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, serviceName }
+    const exporterOptions = { ...exporter.options, applicationName }
 
     let exporterObj
     if (exporter.type === 'console') {

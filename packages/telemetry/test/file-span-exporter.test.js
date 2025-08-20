@@ -49,7 +49,7 @@ test('should trace a request with file exporter', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'file',

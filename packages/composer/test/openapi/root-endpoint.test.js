@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createFromConfig, createGraphqlService, createOpenApiService } from '../helper.js'
+import { createFromConfig, createGraphqlApplication, createOpenApiApplication } from '../helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const composer = await createFromConfig(t, {
@@ -48,13 +48,13 @@ test('should respond 200 on root endpoint', async t => {
     })
     assert.equal(statusCode, 200)
     assert.equal(headers['content-type']?.toLowerCase(), 'text/html; charset=UTF-8'.toLowerCase())
-    // Does not have links to OpenAPI/GraphQL docs as it has no services
+    // Does not have links to OpenAPI/GraphQL docs as it has no applications
     assert.ok(!body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
   }
 })
 
 test('should not expose a default root endpoint if it is composed', async t => {
-  const api = await createOpenApiService(t)
+  const api = await createOpenApiApplication(t)
 
   api.get('/', async (req, reply) => {
     return { message: 'Hello World!' }
@@ -69,7 +69,7 @@ test('should not expose a default root endpoint if it is composed', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -108,11 +108,11 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
   assert.deepEqual(body, expected)
 })
 
-test('should have links to composed services', async t => {
-  const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
-  const service2 = await createOpenApiService(t, ['posts'])
-  const service3 = await createOpenApiService(t, ['comments'])
-  const service4 = await createGraphqlService(t, {
+test('should have links to composed applications', async t => {
+  const application1 = await createOpenApiApplication(t, ['users'], { addHeadersSchema: true })
+  const application2 = await createOpenApiApplication(t, ['posts'])
+  const application3 = await createOpenApiApplication(t, ['comments'])
+  const application4 = await createGraphqlApplication(t, {
     schema: `
     type Query {
       mul(x: Int, y: Int): Int
@@ -126,10 +126,10 @@ test('should have links to composed services', async t => {
     }
   })
 
-  const origin1 = await service1.listen({ port: 0 })
-  const origin2 = await service2.listen({ port: 0 })
-  const origin3 = await service3.listen({ port: 0 })
-  const origin4 = await service4.listen({ port: 0 })
+  const origin1 = await application1.listen({ port: 0 })
+  const origin2 = await application2.listen({ port: 0 })
+  const origin3 = await application3.listen({ port: 0 })
+  const origin4 = await application4.listen({ port: 0 })
 
   const config = {
     server: {
@@ -138,7 +138,7 @@ test('should have links to composed services', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'service1',
           origin: origin1,

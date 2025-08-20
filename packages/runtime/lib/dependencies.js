@@ -6,26 +6,26 @@ const { closest } = require('fastest-levenshtein')
 const errors = require('./errors')
 const { RoundRobinMap } = require('./worker/round-robin-map')
 
-function missingDependencyErrorMessage (clientName, service, services) {
-  const allNames = services.map(s => s.id).filter(id => id !== service.id).sort()
+function missingDependencyErrorMessage (clientName, application, applications) {
+  const allNames = applications.map(s => s.id).filter(id => id !== application.id).sort()
   const closestName = closest(clientName, allNames)
-  let errorMsg = `service '${service.id}' has unknown dependency: '${clientName}'.`
+  let errorMsg = `application '${application.id}' has unknown dependency: '${clientName}'.`
   if (closestName) {
     errorMsg += ` Did you mean '${closestName}'?`
   }
   if (allNames.length) {
-    errorMsg += ` Known services are: ${allNames.join(', ')}.`
+    errorMsg += ` Known applications are: ${allNames.join(', ')}.`
   }
   return errorMsg
 }
 
-function checkDependencies (services) {
-  const allServices = new Set(services.map(s => s.id))
+function checkDependencies (applications) {
+  const allApplications = new Set(applications.map(s => s.id))
 
-  for (const service of services) {
-    for (const dependency of service.dependencies) {
-      if (dependency.local && !allServices.has(dependency.id)) {
-        throw new errors.MissingDependencyError(missingDependencyErrorMessage(dependency.id, service, services))
+  for (const application of applications) {
+    for (const dependency of application.dependencies) {
+      if (dependency.local && !allApplications.has(dependency.id)) {
+        throw new errors.MissingDependencyError(missingDependencyErrorMessage(dependency.id, application, applications))
       }
     }
   }
@@ -34,19 +34,19 @@ function checkDependencies (services) {
 function topologicalSort (workers, config) {
   const topo = new Topo.Sorter()
 
-  for (const service of config.services) {
-    const localDependencyIds = Array.from(service.dependencies)
+  for (const application of config.applications) {
+    const localDependencyIds = Array.from(application.dependencies)
       .filter(dep => dep.local)
       .map(dep => dep.id)
 
-    topo.add(service, {
-      group: service.id,
+    topo.add(application, {
+      group: application.id,
       after: localDependencyIds,
       manual: true
     })
   }
 
-  config.services = topo.sort()
+  config.applications = topo.sort()
 
   return new RoundRobinMap(
     Array.from(workers.entries()).sort((a, b) => {
@@ -54,8 +54,8 @@ function topologicalSort (workers, config) {
         return 0
       }
 
-      const aIndex = config.services.findIndex(s => s.id === a[0])
-      const bIndex = config.services.findIndex(s => s.id === b[0])
+      const aIndex = config.applications.findIndex(s => s.id === a[0])
+      const bIndex = config.applications.findIndex(s => s.id === b[0])
       return aIndex - bIndex
     }),
     workers.configuration

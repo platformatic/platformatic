@@ -10,7 +10,7 @@ const { createRuntime } = require('../helpers.js')
 const { updateConfigFile } = require('../helpers')
 const { prepareRuntime, waitForEvents } = require('./helper')
 
-test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
+test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
@@ -34,21 +34,21 @@ test('services are started with multiple workers even for the entrypoint when No
     ? [
         5,
         [
-          { event: 'service:worker:started', service: 'node', worker: 0 },
-          { event: 'service:worker:started', service: 'node', worker: 1 },
-          { event: 'service:worker:started', service: 'node', worker: 2 },
-          { event: 'service:worker:started', service: 'node', worker: 3 },
-          { event: 'service:worker:started', service: 'node', worker: 4 }
+          { event: 'application:worker:started', application: 'node', worker: 0 },
+          { event: 'application:worker:started', application: 'node', worker: 1 },
+          { event: 'application:worker:started', application: 'node', worker: 2 },
+          { event: 'application:worker:started', application: 'node', worker: 3 },
+          { event: 'application:worker:started', application: 'node', worker: 4 }
         ],
         [
-          { event: 'service:worker:stopped', service: 'node', worker: 0 },
-          { event: 'service:worker:stopped', service: 'node', worker: 1 },
-          { event: 'service:worker:stopped', service: 'node', worker: 2 },
-          { event: 'service:worker:stopped', service: 'node', worker: 3 },
-          { event: 'service:worker:stopped', service: 'node', worker: 4 }
+          { event: 'application:worker:stopped', application: 'node', worker: 0 },
+          { event: 'application:worker:stopped', application: 'node', worker: 1 },
+          { event: 'application:worker:stopped', application: 'node', worker: 2 },
+          { event: 'application:worker:stopped', application: 'node', worker: 3 },
+          { event: 'application:worker:stopped', application: 'node', worker: 4 }
         ]
       ]
-    : [1, [{ event: 'service:started', service: 'node' }], [{ event: 'service:stopped', service: 'node' }]]
+    : [1, [{ event: 'application:started', application: 'node' }], [{ event: 'application:stopped', application: 'node' }]]
 
   const startMessagesPromise = waitForEvents(app, startMessages)
 

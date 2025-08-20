@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
-import { createFromConfig, createGraphqlService } from '../helper.js'
+import { createFromConfig, createGraphqlApplication } from '../helper.js'
 
-test('should start composer with a graphql service', async t => {
-  const graphql1 = await createGraphqlService(t, {
+test('should start composer with a graphql application', async t => {
+  const graphql1 = await createGraphqlApplication(t, {
     schema: `
     type Query {
       add(x: Int, y: Int): Int
@@ -27,7 +27,7 @@ test('should start composer with a graphql service', async t => {
     },
 
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Host,
@@ -54,7 +54,7 @@ test('get null if server does not expose openapi', async t => {
     },
 
     composer: {
-      services: []
+      applications: []
     }
   }
 

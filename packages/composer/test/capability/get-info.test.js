@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { version as pltVersion } from '../../lib/schema.js'
 import { createFromConfig } from '../helper.js'
 
-test('get service info via capability api', async t => {
+test('get application info via capability api', async t => {
   const config = {
     server: {
       logger: {
@@ -13,7 +13,7 @@ test('get service info via capability api', async t => {
     },
 
     composer: {
-      services: []
+      applications: []
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]

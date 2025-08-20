@@ -6,7 +6,7 @@ import SetupWatt from './setup-watt.md';
 
 # Fullstack Guide
 
-Welcome to your next steps with Platformatic services such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../reference/client/overview.md) and the [Platformatic Composer](../reference/composer/overview.md). 
+Welcome to your next steps with Platformatic applications such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../reference/client/overview.md) and the [Platformatic Composer](../reference/composer/overview.md).
 
 In this tutorial, you will build a movie quotes application, where users can add, like and delete quotes from popular movies. This guide will help you setup and run your first full-stack Platformatic application.
 
@@ -19,15 +19,16 @@ While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also su
 ## Prerequisites
 
 Before starting, ensure you have the following installed:
+
 - [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
 - [npm](https://docs.npmjs.com/cli/) (v7 or higher)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 
-## Create a Platformatic Watt Application 
+## Create a Platformatic Watt Application
 
 <SetupWatt />
 
-## Add Platformatic DB service 
+## Add Platformatic DB application
 
 <NewApiProjectInstructions />
 
@@ -60,15 +61,14 @@ pnpm run dev
 </TabItem>
 </Tabs>
 
-
 Your API server is now live! 🌟 It will automatically serve REST and GraphQL interfaces for your SQL database.
 
 ### Create a Database Schema
 
-Navigate to the `migrations` directory within the `services` folder of your project directory. This folder contains your database migration files: 
+Navigate to the `migrations` directory within the `applications` folder of your project directory. This folder contains your database migration files:
 
 - `001.do.sql`: contains the SQL statements for creating database objects.
-- `001.undo.sql`: contains the SQL statements to remove database objects. 
+- `001.undo.sql`: contains the SQL statements to remove database objects.
 
 For the movie quote application, you will need a schema configuration for the movie table and likes. Add the schema configuration below in the `001.do.sql` file to do this:
 
@@ -94,7 +94,7 @@ CREATE TABLE movies (
 ALTER TABLE quotes ADD COLUMN movie_id INTEGER DEFAULT 0 REFERENCES movies(id);
 ```
 
-This schema stores the movie `IDs` and the movie `names`, adds a new column that links each movie quote to a specific `movie` in the movies table. 
+This schema stores the movie `IDs` and the movie `names`, adds a new column that links each movie quote to a specific `movie` in the movies table.
 
 Now create a `003.do.sql` and add the schema configuration below:
 
@@ -102,41 +102,41 @@ Now create a `003.do.sql` and add the schema configuration below:
 ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
 ```
 
-### Create a Like Quotes Plugin 
+### Create a Like Quotes Plugin
 
-You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB service. 
+You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB applications.
 
 ```js
 'use strict'
 
-const S = require("fluent-json-schema");
+const S = require('fluent-json-schema')
 
 /** @param {import('fastify').FastifyInstance} app */
-module.exports = async function plugin(app) {
-  async function incrementQuoteLikes(id) {
-    const { db, sql } = app.platformatic;
+module.exports = async function plugin (app) {
+  async function incrementQuoteLikes (id) {
+    const { db, sql } = app.platformatic
     const result = await db.query(sql`
       UPDATE quotes SET likes = likes + 1 WHERE id=${id} RETURNING *
-    `);
-    return result;
+    `)
+    return result
   }
 
   const schema = {
-    params: S.object().prop("id", app.getSchema("Quote").properties.id),
-  };
+    params: S.object().prop('id', app.getSchema('Quote').properties.id)
+  }
 
   // Check if the route already exists
   if (!app.hasRoute({ method: 'POST', url: '/quotes/:id/like' })) {
-    app.post("/quotes/:id/like", { schema }, async function (request, reply) {
-      return { likes: await incrementQuoteLikes(request.params.id) };
-    });
+    app.post('/quotes/:id/like', { schema }, async function (request, reply) {
+      return { likes: await incrementQuoteLikes(request.params.id) }
+    })
   }
-};
+}
 ```
 
-Here, you've created a API endpoint that lets users like a quote in the database. `incrementQuoteLikes` function updates the database by adding 1 to the `quote`'s `likes` count. The `fluent-json-schema` checks that the quote `ID` is valid. 
+Here, you've created a API endpoint that lets users like a quote in the database. `incrementQuoteLikes` function updates the database by adding 1 to the `quote`'s `likes` count. The `fluent-json-schema` checks that the quote `ID` is valid.
 
-### Apply Schema Migrations 
+### Apply Schema Migrations
 
 Run the command below for database migrations
 
@@ -144,9 +144,9 @@ Run the command below for database migrations
 npx wattpm db:migrations:apply
 ```
 
-## Add a Composer service 
+## Add a Composer application
 
-[Platformatic Composer](../reference/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB service, and your frontend application. 
+[Platformatic Composer](../reference/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB application, and your frontend application.
 
 Inside `web` folder, let's create a new Platformatic Composer
 
@@ -159,10 +159,10 @@ This will output:
 ```
 Hello Fortune Ikechi, welcome to Platformatic 2.64.0
 Using existing configuration ...
-? Which kind of service do you want to create? @platformatic/composer
-? What is the name of the service? composer
-? Do you want to create another service? no
-? Which service should be exposed? composer
+? Which kind of application do you want to create? @platformatic/composer
+? What is the name of the application? composer
+? Do you want to create another application? no
+? Which application should be exposed? composer
 ? Do you want to use TypeScript? no
 [16:06:50] INFO: /Users/tmp/my-app/.env written!
 [16:06:50] INFO: /Users/tmp/my-app/.env.sample written!
@@ -172,20 +172,20 @@ Using existing configuration ...
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/plt-env.d.ts written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the service composer using npm ...
+[16:06:50] INFO: Installing dependencies for the application composer using npm ...
 [16:06:52] INFO: Project created successfully, executing post-install actions...
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
 
-### Add services to composer 
+### Add applications to composer
 
-In your `web/composer` directory, select the `platformatic.json` file and add the DB service to your composer:
+In your `web/composer` directory, select the `platformatic.json` file and add the DB application to your composer:
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
   "composer": {
-    "services": [
+    "applications": [
       {
         "id": "db",
         "openapi": {
@@ -195,7 +195,6 @@ In your `web/composer` directory, select the `platformatic.json` file and add th
     ],
     "refreshTimeout": 1000
   },
-  
 
   "watch": true
 }
@@ -233,9 +232,9 @@ To kickstart the project, in your `web/frontend/src` directory, run the command 
 npx --package @platformatic/client-cli plt-client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
 ```
 
-This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer service.
+This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer application.
 
-### Installed Required Packages 
+### Installed Required Packages
 
 To style the application, install the following CSS packages:
 
@@ -255,10 +254,10 @@ Ensure your `tailwind.config.js` points to the correct paths for your components
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
   theme: {
-    extend: {},
+    extend: {}
   },
-  plugins: [],
-};
+  plugins: []
+}
 ```
 
 ### Building the `QuoteList` Component
@@ -274,83 +273,85 @@ The core of your frontend lies in the `src/components/QuoteList.jsx` file. Here'
 Here’s the complete `QuoteList` component:
 
 ```js
-import { useState, useEffect } from 'react';
-import { setBaseUrl, dbGetQuotes, dbCreateQuote, dbDeleteQuotes, postQuotesIdLike } from '../frontend-client/frontend-client.mjs';
+import { useState, useEffect } from 'react'
+import {
+  setBaseUrl,
+  dbGetQuotes,
+  dbCreateQuote,
+  dbDeleteQuotes,
+  postQuotesIdLike
+} from '../frontend-client/frontend-client.mjs'
 
 // Set the base URL for the API client
-setBaseUrl(window.location.origin); // Or your specific API base URL
+setBaseUrl(window.location.origin) // Or your specific API base URL
 
 const QuoteList = () => {
-  const [quotes, setQuotes] = useState([]);
-  const [error, setError] = useState(null);
-  const [newQuote, setNewQuote] = useState({ quote: '', saidBy: '' });
-  const [isLoading, setIsLoading] = useState(true);
+  const [quotes, setQuotes] = useState([])
+  const [error, setError] = useState(null)
+  const [newQuote, setNewQuote] = useState({ quote: '', saidBy: '' })
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getQuotes();
-  }, []);
+    getQuotes()
+  }, [])
 
   const getQuotes = async () => {
     try {
-      setIsLoading(true);
-      const fetchedQuotes = await dbGetQuotes({});
-      setQuotes(fetchedQuotes);
-      setError(null);
+      setIsLoading(true)
+      const fetchedQuotes = await dbGetQuotes({})
+      setQuotes(fetchedQuotes)
+      setError(null)
     } catch (error) {
-      console.error('Error fetching quotes:', error);
-      setError('Failed to fetch quotes');
+      console.error('Error fetching quotes:', error)
+      setError('Failed to fetch quotes')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleLike = async (id) => {
+  const handleLike = async id => {
     try {
-      await postQuotesIdLike({ id });
-      getQuotes();
+      await postQuotesIdLike({ id })
+      getQuotes()
     } catch (error) {
-      console.error('Error liking quote:', error);
-      setError('Failed to like quote');
+      console.error('Error liking quote:', error)
+      setError('Failed to like quote')
     }
-  };
+  }
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
+  const handleCreate = async e => {
+    e.preventDefault()
     if (!newQuote.quote || !newQuote.saidBy) {
-      setError('Please fill in both quote and author');
-      return;
+      setError('Please fill in both quote and author')
+      return
     }
     try {
-      await dbCreateQuote(newQuote);
-      setNewQuote({ quote: '', saidBy: '' });
-      setError(null);
-      getQuotes();
+      await dbCreateQuote(newQuote)
+      setNewQuote({ quote: '', saidBy: '' })
+      setError(null)
+      getQuotes()
     } catch (error) {
-      console.error('Error creating quote:', error);
-      setError('Failed to create quote');
+      console.error('Error creating quote:', error)
+      setError('Failed to create quote')
     }
-  };
+  }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     try {
-      await dbDeleteQuotes({ id });
-      getQuotes();
+      await dbDeleteQuotes({ id })
+      getQuotes()
     } catch (error) {
-      console.error('Error deleting quote:', error);
-      setError('Failed to delete quote');
+      console.error('Error deleting quote:', error)
+      setError('Failed to delete quote')
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-8">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-lg w-full">
         <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">Movie Quotes</h1>
-        
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
+
+        {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">{error}</div>}
 
         <form onSubmit={handleCreate} className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -358,14 +359,14 @@ const QuoteList = () => {
               type="text"
               placeholder="Enter Quote"
               value={newQuote.quote}
-              onChange={(e) => setNewQuote({ ...newQuote, quote: e.target.value })}
+              onChange={e => setNewQuote({ ...newQuote, quote: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
               type="text"
               placeholder="Said By"
               value={newQuote.saidBy}
-              onChange={(e) => setNewQuote({ ...newQuote, saidBy: e.target.value })}
+              onChange={e => setNewQuote({ ...newQuote, saidBy: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -383,11 +384,8 @@ const QuoteList = () => {
           <p className="text-center text-gray-500 text-lg">No quotes available</p>
         ) : (
           <div className="space-y-4">
-            {quotes.map((quote) => (
-              <div
-                key={quote.id}
-                className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200"
-              >
+            {quotes.map(quote => (
+              <div key={quote.id} className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
                 <p className="text-xl font-semibold text-gray-800 mb-1">"{quote.quote}"</p>
                 <p className="text-md text-gray-600 mb-3">- {quote.saidBy}</p>
                 <div className="flex justify-between items-center">
@@ -395,7 +393,7 @@ const QuoteList = () => {
                     onClick={() => handleLike(quote.id)}
                     className="flex items-center space-x-2 text-blue-500 hover:text-blue-600"
                   >
-                    <span className="text-2xl">❤️</span> 
+                    <span className="text-2xl">❤️</span>
                     <span className="text-xl">{quote.likes || 0}</span>
                   </button>
                   <button
@@ -411,28 +409,28 @@ const QuoteList = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default QuoteList;
+export default QuoteList
 ```
 
-###  Integrating the `QuoteList` Component
+### Integrating the `QuoteList` Component
 
 Update your main app file `src/App.jsx` to include the QuoteList component:
 
-```js 
-import QuoteList from './components/QuoteList';
+```js
+import QuoteList from './components/QuoteList'
 
-function App() {
+function App () {
   return (
     <div className="App">
       <QuoteList />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
 ```
 
 #### Add frontend to Composer
@@ -443,7 +441,7 @@ In your `web/composer` directory, add the frontend `id` to your composer `platfo
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
   "composer": {
-    "services": [
+    "applications": [
       {
         "id": "db",
         "openapi": {
@@ -456,7 +454,6 @@ In your `web/composer` directory, add the frontend `id` to your composer `platfo
     ],
     "refreshTimeout": 1000
   },
-  
 
   "watch": true
 }
@@ -467,12 +464,12 @@ In your `web/composer` directory, add the frontend `id` to your composer `platfo
 In your project directory, use the Platformatic CLI to start your API server:
 
 ```bash
-npm run dev 
+npm run dev
 ```
 
-
 This will:
-- Automatically map your SQL database and React frontend to REST using the composer 
+
+- Automatically map your SQL database and React frontend to REST using the composer
 - Start the Platformatic Watt server.
 
 Your Platformatic application is now up and running! 🌟

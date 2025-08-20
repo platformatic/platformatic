@@ -9,6 +9,11 @@ export default {
       delete config.clients
     }
 
+    if (typeof config.composer?.services !== 'undefined') {
+      config.composer.applications = config.composer.services
+      delete config.composer.services
+    }
+
     return config
   }
 }

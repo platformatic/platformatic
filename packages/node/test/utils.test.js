@@ -5,13 +5,13 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { ignoreDirs, isServiceBuildable } from '../lib/utils.js'
+import { ignoreDirs, isApplicationBuildable } from '../lib/utils.js'
 
 const tempDir = resolve(tmpdir(), 'packages-node-utils')
 
 // Test with config having build command
-test('isServiceBuildable - should return true for config with application.commands.build', async () => {
-  const serviceDir = '/some/path' // Path doesn't matter for this test
+test('isApplicationBuildable - should return true for config with application.commands.build', async () => {
+  const applicationDir = '/some/path' // Path doesn't matter for this test
   const config = {
     application: {
       commands: {
@@ -20,30 +20,30 @@ test('isServiceBuildable - should return true for config with application.comman
     }
   }
 
-  const result = await isServiceBuildable(serviceDir, config)
+  const result = await isApplicationBuildable(applicationDir, config)
   assert.equal(result, true)
 })
 
 // Test for app-no-config which has package.json with build script
-test('isServiceBuildable - should return true for service with build script in package.json', async () => {
+test('isApplicationBuildable - should return true for application with build script in package.json', async () => {
   const fixturesDir = resolve(import.meta.dirname, 'fixtures/dev-ts-build')
-  const serviceDir = join(fixturesDir, 'services/app-no-config')
+  const applicationDir = join(fixturesDir, 'services/app-no-config')
 
-  const result = await isServiceBuildable(serviceDir)
+  const result = await isApplicationBuildable(applicationDir)
   assert.equal(result, true)
 })
 
 // Test for app-with-config which also has package.json with build script
-test('isServiceBuildable - should return true for service with platformatic.json and build script', async () => {
+test('isApplicationBuildable - should return true for application with platformatic.json and build script', async () => {
   const fixturesDir = resolve(import.meta.dirname, 'fixtures/dev-ts-build')
-  const serviceDir = join(fixturesDir, 'services/app-with-config')
+  const applicationDir = join(fixturesDir, 'services/app-with-config')
 
-  const result = await isServiceBuildable(serviceDir)
+  const result = await isApplicationBuildable(applicationDir)
   assert.equal(result, true)
 })
 
 // Test with package.json but no build script
-test('isServiceBuildable - should return false for package.json without build script', async () => {
+test('isApplicationBuildable - should return false for package.json without build script', async () => {
   const dir = await mkdtemp(tempDir)
   try {
     // Create package.json without build script
@@ -57,7 +57,7 @@ test('isServiceBuildable - should return false for package.json without build sc
       })
     )
 
-    const result = await isServiceBuildable(dir)
+    const result = await isApplicationBuildable(dir)
     assert.equal(result, false)
   } finally {
     await rm(dir, { recursive: true, force: true })
@@ -65,13 +65,13 @@ test('isServiceBuildable - should return false for package.json without build sc
 })
 
 // Test with invalid package.json
-test('isServiceBuildable - should return false if package.json is invalid', async () => {
+test('isApplicationBuildable - should return false if package.json is invalid', async () => {
   const dir = await mkdtemp(tempDir)
   try {
     // Create invalid JSON in package.json
     await writeFile(join(dir, 'package.json'), '{ invalid json')
 
-    const result = await isServiceBuildable(dir)
+    const result = await isApplicationBuildable(dir)
     assert.equal(result, false)
   } finally {
     await rm(dir, { recursive: true, force: true })
@@ -79,14 +79,14 @@ test('isServiceBuildable - should return false if package.json is invalid', asyn
 })
 
 // Test with no valid files
-test('isServiceBuildable - should return false for directory with no package.json', async () => {
+test('isApplicationBuildable - should return false for directory with no package.json', async () => {
   const dir = await mkdtemp(tempDir)
 
   try {
     // Create an empty directory
     await mkdir(join(dir, 'empty-dir'))
 
-    const result = await isServiceBuildable(join(dir, 'empty-dir'))
+    const result = await isApplicationBuildable(join(dir, 'empty-dir'))
     assert.equal(result, false)
   } finally {
     await rm(dir, { recursive: true, force: true })
@@ -94,8 +94,8 @@ test('isServiceBuildable - should return false for directory with no package.jso
 })
 
 // Test with non-existent directory
-test('isServiceBuildable - should return false for non-existent directory', async () => {
-  const result = await isServiceBuildable('/path/does/not/exist')
+test('isApplicationBuildable - should return false for non-existent directory', async () => {
+  const result = await isApplicationBuildable('/path/does/not/exist')
   assert.equal(result, false)
 })
 

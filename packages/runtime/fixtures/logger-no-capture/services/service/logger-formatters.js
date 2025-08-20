@@ -1,3 +1,3 @@
 export function level (label) {
-  return { serviceLevel: label.toLowerCase() }
+  return { applicationLevel: label.toLowerCase() }
 }

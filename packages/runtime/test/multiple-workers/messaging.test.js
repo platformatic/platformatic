@@ -62,25 +62,25 @@ test('should post updated workers list via broadcast channel', async t => {
 
   // Verify that the broadcast happened in the right order
 
-  const expected = { first: [{ id: 'first:0', service: 'first', thread: threads['first:0'], worker: 0 }] }
+  const expected = { first: [{ id: 'first:0', application: 'first', thread: threads['first:0'], worker: 0 }] }
   deepStrictEqual(events[0], new Map(Object.entries(expected)))
 
-  expected.first.push({ id: 'first:1', service: 'first', thread: threads['first:1'], worker: 1 })
+  expected.first.push({ id: 'first:1', application: 'first', thread: threads['first:1'], worker: 1 })
   deepStrictEqual(events[1], new Map(Object.entries(expected)))
 
-  expected.first.push({ id: 'first:2', service: 'first', thread: threads['first:2'], worker: 2 })
+  expected.first.push({ id: 'first:2', application: 'first', thread: threads['first:2'], worker: 2 })
   deepStrictEqual(events[2], new Map(Object.entries(expected)))
 
-  expected.second = [{ id: 'second:0', service: 'second', thread: threads['second:0'], worker: 0 }]
+  expected.second = [{ id: 'second:0', application: 'second', thread: threads['second:0'], worker: 0 }]
   deepStrictEqual(events[3], new Map(Object.entries(expected)))
 
-  expected.second.push({ id: 'second:1', service: 'second', thread: threads['second:1'], worker: 1 })
+  expected.second.push({ id: 'second:1', application: 'second', thread: threads['second:1'], worker: 1 })
   deepStrictEqual(events[4], new Map(Object.entries(expected)))
 
-  expected.second.push({ id: 'second:2', service: 'second', thread: threads['second:2'], worker: 2 })
+  expected.second.push({ id: 'second:2', application: 'second', thread: threads['second:2'], worker: 2 })
   deepStrictEqual(events[5], new Map(Object.entries(expected)))
 
-  expected.composer = [{ id: 'composer', service: 'composer', thread: threads['composer'], worker: undefined }]
+  expected.composer = [{ id: 'composer', application: 'composer', thread: threads['composer'], worker: undefined }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
   delete expected.composer
@@ -118,8 +118,8 @@ test('should post updated workers when something crashed', async t => {
 
   const waitPromise = waitForEvents(
     app,
-    { event: 'service:worker:error', service: 'first', worker: 0 },
-    { event: 'service:worker:started', service: 'first', worker: 0 }
+    { event: 'application:worker:error', application: 'first', worker: 0 },
+    { event: 'application:worker:started', application: 'first', worker: 0 }
   )
 
   // Fetch the entrypoint to induce the crash
@@ -136,14 +136,14 @@ test('should post updated workers when something crashed', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
     new Map()
   ])
 })
 
-test('should post updated workers when the service is updated', async t => {
+test('should post updated workers when the application is updated', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
   const app = await createRuntime(configFile)
@@ -155,7 +155,7 @@ test('should post updated workers when the service is updated', async t => {
 
   await app.start()
 
-  const waitPromise = waitForEvents(app, { event: 'service:worker:reloaded', service: 'first', worker: 0 })
+  const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'first', worker: 0 })
 
   await updateFile(resolve(root, './first/index.mjs'), contents => {
     contents = contents.replace('function create', 'function main').replace('return app', 'app.listen({ port: 0 })')
@@ -170,9 +170,9 @@ test('should post updated workers when the service is updated', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
     new Map()
   ])
 })
@@ -295,7 +295,7 @@ test('should return an error if the target worker times out', async t => {
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
-    deepStrictEqual(error.message, 'Cannot send a message to service "second": Timeout while waiting for a response.')
+    deepStrictEqual(error.message, 'Cannot send a message to application "second": Timeout while waiting for a response.')
   }
 })
 
@@ -321,7 +321,7 @@ test('should return an error if the target worker exits before returning a respo
 
     deepStrictEqual(
       error.message,
-      'Cannot send a message to service "second": The communication channel was closed before receiving a response.'
+      'Cannot send a message to application "second": The communication channel was closed before receiving a response.'
     )
   }
 })
@@ -393,7 +393,7 @@ test('should return an error if the target worker times out while saving the cha
 
     deepStrictEqual(
       error.message,
-      'Handler failed with error: Cannot send a message to service "second": Timeout while establishing a communication channel.'
+      'Handler failed with error: Cannot send a message to application "second": Timeout while establishing a communication channel.'
     )
   }
 })
@@ -408,7 +408,7 @@ test('should reuse channels when the worker are restarted', async t => {
   })
 
   let createdChannels = 0
-  app.on('service:worker:messagingChannel', () => createdChannels++)
+  app.on('application:worker:messagingChannel', () => createdChannels++)
 
   const url = await app.start()
 
@@ -421,9 +421,9 @@ test('should reuse channels when the worker are restarted', async t => {
   deepStrictEqual(createdChannels, 3)
 
   // Get all the logs so far
-  const waitPromise = waitForEvents(app, { event: 'service:worker:reloaded', service: 'third', worker: 0 })
+  const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'third', worker: 0 })
 
-  // Now restart the third service, it should result in workers configuration being broadcasted
+  // Now restart the third application, it should result in workers configuration being broadcasted
   await updateFile(resolve(root, './third/index.mjs'), contents => {
     return contents.replace("{ hello: 'world' }", "{ from: 'third' }")
   })

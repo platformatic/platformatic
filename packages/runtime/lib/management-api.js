@@ -32,62 +32,62 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.post('/stop', async () => {
-    app.log.debug('stop services')
+    app.log.debug('stop applications')
     await runtime.close()
   })
 
   app.post('/restart', async () => {
-    app.log.debug('restart services')
+    app.log.debug('restart applications')
     await runtime.restart()
   })
 
-  app.get('/services', async () => {
-    return runtime.getServices()
+  app.get('/applications', async () => {
+    return runtime.getApplications()
   })
 
-  app.get('/services/:id', async request => {
+  app.get('/applications/:id', async request => {
     const { id } = request.params
-    app.log.debug('get service details', { id })
-    return runtime.getServiceDetails(id)
+    app.log.debug('get application details', { id })
+    return runtime.getApplicationDetails(id)
   })
 
-  app.get('/services/:id/config', async request => {
+  app.get('/applications/:id/config', async request => {
     const { id } = request.params
-    app.log.debug('get service config', { id })
-    return runtime.getServiceConfig(id)
+    app.log.debug('get application config', { id })
+    return runtime.getApplicationConfig(id)
   })
 
-  app.get('/services/:id/env', async request => {
+  app.get('/applications/:id/env', async request => {
     const { id } = request.params
-    app.log.debug('get service config', { id })
-    return runtime.getServiceEnv(id)
+    app.log.debug('get application config', { id })
+    return runtime.getApplicationEnv(id)
   })
 
-  app.get('/services/:id/openapi-schema', async request => {
+  app.get('/applications/:id/openapi-schema', async request => {
     const { id } = request.params
     app.log.debug('get openapi-schema', { id })
-    return runtime.getServiceOpenapiSchema(id)
+    return runtime.getApplicationOpenapiSchema(id)
   })
 
-  app.get('/services/:id/graphql-schema', async request => {
+  app.get('/applications/:id/graphql-schema', async request => {
     const { id } = request.params
     app.log.debug('get graphql-schema', { id })
-    return runtime.getServiceGraphqlSchema(id)
+    return runtime.getApplicationGraphqlSchema(id)
   })
 
-  app.post('/services/:id/start', async request => {
+  app.post('/applications/:id/start', async request => {
     const { id } = request.params
-    app.log.debug('start service', { id })
-    await runtime.startService(id)
+    app.log.debug('start application', { id })
+    await runtime.startApplication(id)
   })
 
-  app.post('/services/:id/stop', async request => {
+  app.post('/applications/:id/stop', async request => {
     const { id } = request.params
-    app.log.debug('stop service', { id })
-    await runtime.stopService(id)
+    app.log.debug('stop application', { id })
+    await runtime.stopApplication(id)
   })
 
-  app.all('/services/:id/proxy/*', async (request, reply) => {
+  app.all('/applications/:id/proxy/*', async (request, reply) => {
     const { id, '*': requestUrl } = request.params
     app.log.debug('proxy request', { id, requestUrl })
 

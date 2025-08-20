@@ -11,7 +11,7 @@ module.exports = async function (app) {
   app.log.fatal('logs finished')
 
   app.get('/hello', async () => {
-    return { runtime: 'runtime-1', service: 'service-1' }
+    return { runtime: 'runtime-1', application: 'application-1' }
   })
 
   app.post('/mirror', async (req, reply) => {

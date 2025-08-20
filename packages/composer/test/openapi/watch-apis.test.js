@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import { createComposerInRuntime, createOpenApiService, testEntityRoutes, waitForRestart } from '../helper.js'
+import { createComposerInRuntime, createOpenApiApplication, testEntityRoutes, waitForRestart } from '../helper.js'
 
 const REFRESH_TIMEOUT = 1000
 
@@ -12,8 +12,8 @@ const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should restart composer if api has been changed', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -25,7 +25,7 @@ test('should restart composer if api has been changed', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -87,8 +87,8 @@ test('should restart composer if api has been changed', async t => {
 })
 
 test('should watch api only if it has a url', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -100,7 +100,7 @@ test('should watch api only if it has a url', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -161,9 +161,9 @@ test('should watch api only if it has a url', async t => {
   }
 })
 
-test('should compose schema after service restart', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+test('should compose schema after application restart', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -178,7 +178,7 @@ test('should compose schema after service restart', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1Port,
@@ -238,7 +238,7 @@ test('should compose schema after service restart', async t => {
     assert.equal(statusCode2, 404)
   }
 
-  const newApi1 = await createOpenApiService(t, ['users'])
+  const newApi1 = await createOpenApiApplication(t, ['users'])
   await newApi1.listen({ port: api1Port })
 
   composerOrigin = await waitForRestart(runtime, composerOrigin)
@@ -258,8 +258,8 @@ test('should compose schema after service restart', async t => {
 })
 
 test('should not watch an api if refreshTimeout equals 0', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -271,7 +271,7 @@ test('should not watch an api if refreshTimeout equals 0', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -302,7 +302,7 @@ test('should not watch an api if refreshTimeout equals 0', async t => {
 })
 
 test('should not restart composer if schema has been changed', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -324,7 +324,7 @@ test('should not restart composer if schema has been changed', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

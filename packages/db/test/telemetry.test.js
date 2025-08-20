@@ -68,7 +68,7 @@ test('should setup telemetry if configured', async t => {
       }
     },
     telemetry: {
-      serviceName: 'test-service',
+      applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
         type: 'memory'
@@ -208,7 +208,7 @@ async function onDatabaseLoad (db, sql) {
 
 test('should trace a request in a platformatic DB app', async t => {
   const app = await setupDBAppWithTelemetry(t, {
-    serviceName: 'test-service',
+    applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
       type: 'memory'
@@ -281,7 +281,7 @@ test('should trace a request getting DB from the request and running the query m
   const app = await setupDBAppWithTelemetry(
     t,
     {
-      serviceName: 'test-service',
+      applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
         type: 'memory'

@@ -137,7 +137,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
     domain: '.plt.local' // The prefix for all local domains
   })
 
-  interceptor.route('service', tcpWirer)
+  interceptor.route('application', tcpWirer)
   setGlobalDispatcher(new Agent().compose(interceptor))
 
   const capability = await create(t, {
@@ -168,7 +168,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
       '200 { ok: true }',
       '200 { ok: true }',
       '200 { ok: true }',
-      '502 No target found for service2.plt.local in thread 0.'
+      '502 No target found for application2.plt.local in thread 0.'
     ]
   )
 })

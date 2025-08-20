@@ -107,17 +107,17 @@ test('should get runtime live metrics', async t => {
       split(record => {
         if (count++ > 10) resolve()
 
-        const { services } = JSON.parse(record)
+        const { applications } = JSON.parse(record)
 
-        assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2'].sort())
+        assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2'].sort())
 
-        for (const serviceMetrics of Object.values(services)) {
+        for (const applicationMetrics of Object.values(applications)) {
           assert.deepStrictEqual(
-            Object.keys(serviceMetrics).sort(),
+            Object.keys(applicationMetrics).sort(),
             ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
           )
 
-          const latencyMetrics = serviceMetrics.latency
+          const latencyMetrics = applicationMetrics.latency
           const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
           assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
         }
@@ -182,7 +182,7 @@ test('should get runtime OpenAPI definition', async t => {
       servers: [{ url: '/' }]
     },
     openapi,
-    'valid service name is passed'
+    'valid application name is passed'
   )
 
   let error
@@ -191,5 +191,5 @@ test('should get runtime OpenAPI definition', async t => {
   } catch (err) {
     error = err
   }
-  assert.strictEqual(error.code, 'PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI', 'invalid runtime service name passed')
+  assert.strictEqual(error.code, 'PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI', 'invalid runtime application name passed')
 })

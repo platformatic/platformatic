@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { version as pltVersion } from '../../lib/schema.js'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service info via capability api', async t => {
+test('get application info via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 

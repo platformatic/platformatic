@@ -41,11 +41,13 @@ test('supports http2 options', async t => {
           cert: [{ path: certificateRelativePath }]
         }
       }
-    })
+    }),
+    undefined,
+    { skipCleanup: true }
   )
 
   t.after(async () => {
-    agent.destroy()
+    await agent.destroy()
     await app.stop()
   })
 
@@ -94,11 +96,13 @@ test('supports allowHTTP1 with HTTP/2', async t => {
           cert: [{ path: certificateRelativePath }]
         }
       }
-    })
+    }),
+    undefined,
+    { skipCleanup: true }
   )
 
   t.after(async () => {
-    agent.destroy()
+    await agent.destroy()
     await app.stop()
   })
 

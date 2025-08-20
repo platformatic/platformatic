@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   isWindows,
   setFixturesDir,
@@ -61,7 +61,7 @@ const configurations = [
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
-    files: [...files, ...internalServicesFiles],
+    files: [...files, ...internalApplicationsFiles],
     checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'

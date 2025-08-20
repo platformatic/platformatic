@@ -85,30 +85,30 @@ test('should get runtime metrics in a json format', async t => {
     'http_client_stats_size'
   ]
 
-  const services = ['service-1', 'service-2', 'service-db']
+  const applications = ['service-1', 'service-2', 'service-db']
 
   for (const metricName of expectedMetricNames) {
     const foundMetrics = metrics.filter(m => m.name === metricName)
     assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
-    assert.strictEqual(foundMetrics.length, services.length)
+    assert.strictEqual(foundMetrics.length, applications.length)
 
     const hasValues = foundMetrics.every(m => m.values.length > 0)
     if (!hasValues) continue
 
-    for (const serviceId of services) {
-      const foundMetric = foundMetrics.find(m => m.values[0].labels.serviceId === serviceId)
-      assert.ok(foundMetric, `Missing metric for service "${serviceId}"`)
+    for (const applicationId of applications) {
+      const foundMetric = foundMetrics.find(m => m.values[0].labels.applicationId === applicationId)
+      assert.ok(foundMetric, `Missing metric for application "${applicationId}"`)
 
       for (const { labels } of foundMetric.values) {
         if (labels.route === '/__empty_metrics') {
           continue
         }
 
-        assert.strictEqual(labels.serviceId, serviceId)
+        assert.strictEqual(labels.applicationId, applicationId)
         assert.strictEqual(labels.custom_label, 'custom-value')
 
         if (metricName.startsWith('http_request')) {
-          assert.strictEqual(labels.telemetry_id, `${serviceId}-client`)
+          assert.strictEqual(labels.telemetry_id, `${applicationId}-client`)
         }
       }
     }
@@ -177,24 +177,24 @@ test('should get runtime metrics in a text format', async t => {
     assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
   }
 
-  // Check that the serviceId labels are present in the metrics
+  // Check that the applicationId labels are present in the metrics
   const httpRequestsSummary = findPrometheusLinesForMetric('http_request_all_summary_seconds', metrics.metrics)
   const httpRequestsSummaryLabels = httpRequestsSummary.map(line => line.split('{')[1].split('}')[0].split(','))
-  const services = httpRequestsSummaryLabels
+  const applications = httpRequestsSummaryLabels
     .flat()
-    .filter(label => label.startsWith('serviceId='))
+    .filter(label => label.startsWith('applicationId='))
     .reduce((acc, label) => {
-      const service = label.split('"')[1]
-      if (service) {
-        acc.push(service)
+      const application = label.split('"')[1]
+      if (application) {
+        acc.push(application)
       }
       return acc
     }, [])
 
-  const serviceIds = [...new Set(services)].sort()
+  const applicationIds = [...new Set(applications)].sort()
 
   // We call service-1 and service-2, so we expect metrcis for these
-  assert.deepEqual(serviceIds, ['service-1', 'service-2'])
+  assert.deepEqual(applicationIds, ['service-1', 'service-2'])
 })
 
 function getMetricsLines (metrics) {
@@ -264,17 +264,17 @@ test('should get formatted runtime metrics', async t => {
     await app.close()
   })
 
-  const { services } = await app.getFormattedMetrics()
+  const { applications } = await app.getFormattedMetrics()
 
-  assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
+  assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-  for (const serviceMetrics of Object.values(services)) {
+  for (const applicationMetrics of Object.values(applications)) {
     assert.deepStrictEqual(
-      Object.keys(serviceMetrics).sort(),
+      Object.keys(applicationMetrics).sort(),
       ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
     )
 
-    const latencyMetrics = serviceMetrics.latency
+    const latencyMetrics = applicationMetrics.latency
     const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
     assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
   }
@@ -301,23 +301,23 @@ test('should get cached formatted runtime metrics', async t => {
 
   const metricsHistory = await app.getCachedMetrics()
 
-  for (const { services } of metricsHistory) {
-    assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
+  for (const { applications } of metricsHistory) {
+    assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-    for (const serviceMetrics of Object.values(services)) {
+    for (const applicationMetrics of Object.values(applications)) {
       assert.deepStrictEqual(
-        Object.keys(serviceMetrics).sort(),
+        Object.keys(applicationMetrics).sort(),
         ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
       )
 
-      const latencyMetrics = serviceMetrics.latency
+      const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
       assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
 
-test('should get metrics after reloading one of the services', async t => {
+test('should get metrics after reloading one of the applications', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -328,32 +328,32 @@ test('should get metrics after reloading one of the services', async t => {
     await app.close()
   })
 
-  await app.stopService('service-2')
-  await app.startService('service-2')
+  await app.stopApplication('service-2')
+  await app.startApplication('service-2')
 
   await sleep(5000)
 
   const metricsHistory = await app.getCachedMetrics()
 
-  for (const { services } of metricsHistory) {
-    const servicesNames = Object.keys(services)
-    assert.ok(servicesNames.includes('service-1'))
-    assert.ok(servicesNames.includes('service-db'))
+  for (const { applications } of metricsHistory) {
+    const applicationsNames = Object.keys(applications)
+    assert.ok(applicationsNames.includes('service-1'))
+    assert.ok(applicationsNames.includes('service-db'))
 
-    for (const serviceMetrics of Object.values(services)) {
+    for (const applicationMetrics of Object.values(applications)) {
       assert.deepStrictEqual(
-        Object.keys(serviceMetrics).sort(),
+        Object.keys(applicationMetrics).sort(),
         ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
       )
 
-      const latencyMetrics = serviceMetrics.latency
+      const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
       assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
 
-test('should get runtime metrics in a json format without a service call', async t => {
+test('should get runtime metrics in a json format without a application call', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)

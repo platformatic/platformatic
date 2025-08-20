@@ -40,7 +40,7 @@ export namespace BaseGenerator {
     initGitRepository?: boolean
     env?: KeyValue,
     isRuntimeContext?: boolean,
-    serviceName?: string,
+    applicationName?: string,
     envPrefix?: string
   }
 

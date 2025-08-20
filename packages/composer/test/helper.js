@@ -37,7 +37,7 @@ const tmpBaseDir = resolve(import.meta.dirname, '../tmp')
 
 export const REFRESH_TIMEOUT = 1_000
 
-export async function createBasicService (t, options = {}) {
+export async function createBasicApplication (t, options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -134,7 +134,7 @@ export async function createBasicService (t, options = {}) {
   return app
 }
 
-export async function createPlatformaticDatabaseService (t, { name, jsonFile }) {
+export async function createPlatformaticDatabaseApplication (t, { name, jsonFile }) {
   try {
     fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
   } catch {}
@@ -142,24 +142,26 @@ export async function createPlatformaticDatabaseService (t, { name, jsonFile }) 
     fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
   } catch {}
 
-  const service = await createDatabaseCapability(path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile))
-  await service.init()
+  const application = await createDatabaseCapability(
+    path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile)
+  )
+  await application.init()
 
-  service.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
+  application.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
     const res = await reply.graphql(getIntrospectionQuery())
     return res
   })
 
   t.after(async () => {
     try {
-      await service.stop()
+      await application.stop()
     } catch {}
   })
 
-  return service
+  return application
 }
 
-export async function createOpenApiService (t, entitiesNames = [], options = {}) {
+export async function createOpenApiApplication (t, entitiesNames = [], options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -344,7 +346,7 @@ export async function createOpenApiService (t, entitiesNames = [], options = {})
   return app
 }
 
-export async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
+export async function createGraphqlApplication (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
   const app = fastify({ logger: false, port: 0 })
   t.after(async () => {
     await app.close()
@@ -384,21 +386,22 @@ export async function createGraphqlService (t, { schema, resolvers, extend, file
   return app
 }
 
-export async function createWebsocketService (t, wsServerOptions = {}, port) {
-  const service = createServer()
-  const wsServer = new WebSocket.Server({ server: service, ...wsServerOptions })
-  await promisify(service.listen.bind(service))({ port, host: '127.0.0.1' })
+export async function createWebsocketApplication (t, wsServerOptions = {}, port) {
+  const application = createServer()
+  const wsServer = new WebSocket.Server({ server: application, ...wsServerOptions })
+  await promisify(application.listen.bind(application))({ port, host: '127.0.0.1' })
 
   t.after(() => {
     wsServer.close()
-    service.close()
+    application.close()
   })
 
-  return { service, wsServer }
+  return { application, wsServer }
 }
 
 export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const defaultConfig = {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -408,7 +411,7 @@ export async function createFromConfig (t, options, applicationFactory, creation
         level: 'info'
       }
     },
-    composer: { services: [] },
+    composer: { applications: [] },
     plugins: {
       paths: []
     },
@@ -436,7 +439,7 @@ export async function createComposerInRuntime (
   t,
   prefix,
   composerConfig,
-  services,
+  applications,
   autoload,
   additionalRuntimeConfig,
   production = false,
@@ -456,7 +459,7 @@ export async function createComposerInRuntime (
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
       entrypoint: 'composer',
       watch: false,
-      services: (services ?? []).concat([
+      services: (applications ?? []).concat([
         {
           id: 'composer',
           path: resolve(tmpDir, 'composer'),
@@ -469,7 +472,7 @@ export async function createComposerInRuntime (
       },
       gracefulShutdown: {
         runtime: 1000,
-        service: 1000
+        application: 1000
       },
       ...additionalRuntimeConfig
     }),
@@ -517,20 +520,20 @@ export async function createComposerInRuntime (
   return runtime
 }
 
-export async function startDatabaseServices (t, names) {
+export async function startDatabaseApplications (t, names) {
   return Promise.all(
     names.map(async ({ name, jsonFile }) => {
-      const service = await createPlatformaticDatabaseService(t, { name, jsonFile })
-      return { name, host: await service.start() }
+      const application = await createPlatformaticDatabaseApplication(t, { name, jsonFile })
+      return { name, host: await application.start() }
     })
   )
 }
 
 export async function waitForRestart (runtime) {
-  const result = await executeWithTimeout(once(runtime, 'service:worker:reloaded'), REFRESH_TIMEOUT * 3)
+  const result = await executeWithTimeout(once(runtime, 'application:worker:reloaded'), REFRESH_TIMEOUT * 3)
 
   if (result === kTimeout) {
-    return Promise.reject(new Error('Timeout while waiting for service to restart'))
+    return Promise.reject(new Error('Timeout while waiting for application to restart'))
   }
 
   const entrypoint = await runtime.getEntrypointDetails()
@@ -538,7 +541,7 @@ export async function waitForRestart (runtime) {
 }
 
 export async function checkSchema (runtime, schema) {
-  const composer = await runtime.getService('composer')
+  const composer = await runtime.getApplication('composer')
   const sdl = await composer[symbols.kITC].send('getSchema')
   return sdl === schema
 }

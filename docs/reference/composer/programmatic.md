@@ -33,7 +33,7 @@ const app = await create('/path/to', {
     port: 0
   },
   composer: {
-    services: [
+    applications: [
       {
         id: 'auth-service',
         origin: 'https://auth-service.com',

@@ -10,9 +10,9 @@ Configuration settings containing sensitive data should be set using
 [environment variable placeholders](#environment-variable-placeholders).
 
 :::info
-The `autoload` and `services` settings can be used together, but at least one
+The `autoload` and `applications` settings can be used together, but at least one
 of them must be provided. When the configuration file is parsed, `autoload`
-configuration is translated into `services` configuration.
+configuration is translated into `applications` configuration.
 :::
 
 ### `autoload`
@@ -34,14 +34,14 @@ The `autoload` configuration is intended to be used with monorepo applications.
     microservice ID.
   - \*\*`config` (`string`) - The overridden configuration file.
     name. This is the file that will be used when starting the microservice.
-  - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-    on `127.0.0.1`, and exposed to the other services via that port and on default,
+  - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
+    on `127.0.0.1`, and exposed to the other applications via that port and on default,
     it is set to `false`.
-  - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
-  - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
-  - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the service code.
-  - **`arguments`** (`array` of `string`s) - The arguments to pass to the service. They will be available in `process.argv`.
-  - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the service. These options are appended to any existing option.
+  - **`workers`** (`number`) - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
+  - **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
+  - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
+  - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
+  - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
 
 ### `preload`
 
@@ -50,44 +50,44 @@ Application Performance Monitoring (APM) agents. `preload` should contain
 a path or a list of paths pointing to a CommonJS or ES module that is loaded at the start of
 the app worker thread.
 
-### `services`
+### `applications`
 
-`services` is an array of objects that defines the microservices managed by the
-runtime. Each service object supports the following settings:
+`applications` is an array of objects that defines the microservices managed by the
+runtime. Each application object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the microservice.
   When working with the Platformatic Composer, this value corresponds to the `id`
-  property of each object in the `services` section of the config file. When
-  working with client objects, this corresponds to the optional `serviceId`
+  property of each object in the `applications` section of the config file. When
+  working with client objects, this corresponds to the optional `applicationId`
   property or the `name` field in the client's `package.json` file if a
-  `serviceId` is not explicitly provided.
+  `applicationId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the microservice. It can be omitted if `url` is provided.
-- **`url`** (**required**, `string`) - The URL of the service remote GIT repository, if it is a remote service. It can be omitted if `path` is provided.
-- **`gitBranch`** (string) - The branch of the service to resolve.
+- **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided.
+- **`gitBranch`** (string) - The branch of the application to resolve.
 - **`config`** (`string`) - The configuration file used to start
   the microservice.
-- **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-- **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
-- **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
-- **`arguments`** (`array` of `string`s) - The arguments to pass to the service. They will be available in `process.argv`.
-- **`envfile`** (`string`) - The path to an `.env` file to load for the service. By default, the `.env` file is loaded from the service directory.
-- **`env`** (`object`) - An object containing environment variables to set for the service. Values set here takes precedence over values set in the `envfile`.
-- **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the service. Default: `false`.
+- **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
+  on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`workers`** (`number`) - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
+- **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
+- **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
+- **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
+- **`env`** (`object`) - An object containing environment variables to set for the application. Values set here takes precedence over values set in the `envfile`.
+- **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the application. Default: `false`.
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `plt` or `wattpm`. Default is to autodetect it, unless it is specified via command line.
-- **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the service code.
-- **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the service. These options are appended to any existing option.
+- **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
+- **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
 
-If this property is present, then the services will not be reordered according to the
+If this property is present, then the applications will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
 
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
-  intrumentations per service, e.g.:
+  intrumentations per application, e.g.:
 
 ```json
-"services": [
+"applications": [
     {
       "id": "api",
       "path": "./services/api",
@@ -101,7 +101,7 @@ the configuration file.
 It's possible to specify the name of the export of the instrumentation and/or the options:
 
 ```json
-"services": [
+"applications": [
     {
       "id": "api",
       "path": "./services/api",
@@ -116,12 +116,12 @@ It's possible to specify the name of the export of the instrumentation and/or th
   ]
 ```
 
-An alias for `services`. If both are present, their content will be merged.
+An alias for `applications`. If both are present, their content will be merged.
 
 It's also possible to disable the instrumentation by setting the `enabled` value property to `false` (env variables are also supported):
 
 ```json
-"services": [
+"applications": [
     {
       "id": "api",
       "path": "./services/api",
@@ -137,38 +137,38 @@ It's also possible to disable the instrumentation by setting the `enabled` value
 
 ### `env`
 
-An object containing environment variables to set for all services in the
+An object containing environment variables to set for all applications in the
 runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
-service, with service-level environment variables taking precedence.
+application, with application-level environment variables taking precedence.
 
 ### `sourceMaps`
 
-If `true`, source maps are enabled for all services. Default: `false`. This setting can be overridden at the service level.
+If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.
 
 ### `resolvedServicesBasePath`
 
-The base path, relative to the configuration file to store resolved services. Each service will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
+The base path, relative to the configuration file to store resolved applications. Each application will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
 
 ### `entrypoint`
 
 The Platformatic Runtime's entrypoint is a microservice that is exposed
-publicly. This value must be the `ID` of a service defined via the `autoload` or
-`services` configuration.
+publicly. This value must be the `ID` of an application defined via the `autoload` or
+`applications` configuration.
 
 ### `workers`
 
-The default number of workers to start per each service. It can be overriden at service level.
+The default number of workers to start per each application. It can be overriden at application level.
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
 ### `gracefulShutdown`
 
-Configures the amount of milliseconds to wait before forcefully killing a service or the runtime.
+Configures the amount of milliseconds to wait before forcefully killing an application or the runtime.
 
 The object supports the following settings:
 
-- **`service`** (`number`) - The graceful shutdown timeout for a service.
+- **`application`** (`number`) - The graceful shutdown timeout for an application.
 - **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime.
 
 For both the settings the default is `10000` (ten seconds).
@@ -181,7 +181,7 @@ hot reloading for any microservices managed by the runtime. If this value is
 `true`, then hot reloading for individual microservices is managed by the
 configuration of that microservice.
 
-Note that `watch` should be enabled for each individual service in the runtime.
+Note that `watch` should be enabled for each individual application in the runtime.
 
 :::warning
 While hot reloading is useful for development, it is not recommended for use in production.
@@ -189,17 +189,17 @@ While hot reloading is useful for development, it is not recommended for use in 
 
 ### `startTimeout`
 
-The number of milliseconds to wait before considering a service as failed to start. Default: `30000`.
+The number of milliseconds to wait before considering an application as failed to start. Default: `30000`.
 
 ### `restartOnError`
 
-The number of milliseconds to wait before attempting to restart a service that unexpectedly exit.
+The number of milliseconds to wait before attempting to restart an application that unexpectedly exit.
 
 If not specified or set to `true`, the default value is `5000`, set to `0` or `false` to disable.
 
-Any value smaller than `10` will cause immediate restart of the service.
+Any value smaller than `10` will cause immediate restart of the application.
 
-This setting is ignored in production, where services are always restarted immediately.
+This setting is ignored in production, where applications are always restarted immediately.
 
 ### `health`
 
@@ -209,7 +209,7 @@ The object supports the following settings:
 
 - `enabled` (`boolean`): If to enable the health check. Default: `true`.
 - `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
-- `gracePeriod` (`number`): How long after the service started before starting to perform health checks. Default: `30000`.
+- `gracePeriod` (`number`): How long after the application started before starting to perform health checks. Default: `30000`.
 - `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
 - `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
@@ -220,7 +220,7 @@ The object supports the following settings:
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
-- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry. In the `runtime` case, the name of the services as reported in traces is `${serviceName}-${serviceId}`, where `serviceId` is the id of the service in the runtime.
+- **`applicationName`** (**required**, `string`) — Name of the application as will be reported in open telemetry. In the `runtime` case, the name of the applications as reported in traces is `${applicationName}-${applicationId}`, where `applicationId` is the id of the application in the runtime.
 - **`version`** (`string`) — Optional version (free form)
 - **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
@@ -243,7 +243,7 @@ OTLP traces can be consumed by different solutions, like [Jaeger](https://www.ja
 ```json title="Example JSON object"
 {
   "telemetry": {
-    "serviceName": "test-service",
+    "applicationName": "test-application",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -270,7 +270,7 @@ It can be a boolean or an object with the following settings:
 
 This configures the Platformatic Runtime entrypoint `server`.
 
-If the entrypoint has also a `server` configured, then the runtime settings override the service settings.
+If the entrypoint has also a `server` configured, then the runtime settings override the application settings.
 
 An object with the following settings:
 
@@ -305,7 +305,7 @@ An object with the following settings:
 - **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
   - **`paths`** (**required**) — An array of strings specifying paths to redact.
   - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
-- **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main service. Default: `false`.
+- **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
@@ -338,17 +338,17 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
 
 It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
-### `serviceTimeout`
+### `applicationTimeout`
 
-The number of milliseconds to wait when invoking another service using the its `plt.local` before considering the request timed out. Default: `300000` (5 minutes).
+The number of milliseconds to wait when invoking another application using the its `plt.local` before considering the request timed out. Default: `300000` (5 minutes).
 
 ### `messagingTimeout`
 
-The number of milliseconds to wait when invoking another service using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
+The number of milliseconds to wait when invoking another application using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
 
 ### `metrics`
 
-This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.
+This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime applications.
 
 - **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
@@ -425,18 +425,18 @@ If an `.env` file exists it will automatically be loaded by Platformatic using
 [`dotenv`](https://github.com/motdotla/dotenv). For example:
 
 ```plaintext title=".env"
-PLT_ENTRYPOINT=service
+PLT_ENTRYPOINT=application
 ```
 
 The `.env` file must be located in the same folder as the Platformatic
-configuration file or in the current working directory. Each service would
+configuration file or in the current working directory. Each application would
 also see their respective `.env` file loaded if they are located in a subdirectory.
-This can be configured by the `envfile` property in the service configuration.
+This can be configured by the `envfile` property in the application configuration.
 
 Environment variables can also be set directly on the command line, for example:
 
 ```bash
-PLT_ENTRYPOINT=service npx platformatic runtime
+PLT_ENTRYPOINT=application npx platformatic runtime
 ```
 
 :::note

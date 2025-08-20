@@ -14,9 +14,9 @@ import { fileURLToPath } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
-import { BaseCapability } from '../lib/base.js'
+import { BaseCapability } from '../lib/capability.js'
 
-export { setTimeout as sleep } from 'node:timers/promises'
+export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
 
 const htmlHelloMatcher = /Hello from (v(<!-- -->)?\d+)(\s*(t(<!-- -->)?\d+))?/
 
@@ -57,10 +57,10 @@ class MockedWritable extends Writable {
   }
 }
 
-// These come from @platformatic/service, where they are not listed explicitly inside services
+// These come from @platformatic/service, where they are not listed explicitly inside applications
 export const defaultDependencies = ['fastify', 'typescript']
 
-export const internalServicesFiles = [
+export const internalApplicationsFiles = [
   'services/composer/plugins/example.ts',
   'services/composer/routes/root.ts',
   'services/backend/plugins/example.ts',
@@ -133,7 +133,7 @@ export async function updateFile (path, update) {
 export async function ensureDependencies (configOrPaths) {
   const paths = Array.isArray(configOrPaths)
     ? configOrPaths
-    : [configOrPaths[kMetadata].root, ...configOrPaths.services.map(s => s.path)]
+    : [configOrPaths[kMetadata].root, ...configOrPaths.applications.map(s => s.path)]
   const require = createRequire(import.meta.url)
 
   // Make sure dependencies are symlinked
@@ -303,6 +303,8 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
           target: 'pino/file',
           options: { destination: resolve(root, 'logs.txt') }
         }
+      } else {
+        config.logger.level = 'trace'
       }
 
       return config
@@ -330,12 +332,12 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   return { runtime, root, config }
 }
 
-export async function startRuntime (t, runtime, pauseAfterCreation = false, servicesToBuild = false) {
-  if (Array.isArray(servicesToBuild)) {
+export async function startRuntime (t, runtime, pauseAfterCreation = false, applicationsToBuild = false) {
+  if (Array.isArray(applicationsToBuild)) {
     await runtime.init()
 
-    for (const service of servicesToBuild) {
-      await runtime.buildService(service)
+    for (const application of applicationsToBuild) {
+      await runtime.buildApplication(application)
     }
   }
 
@@ -394,8 +396,8 @@ export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedCo
   deepStrictEqual(await body.json(), expectedContent)
 }
 
-export async function verifyJSONViaInject (app, serviceId, method, url, expectedCode, expectedContent) {
-  const { statusCode, body } = await app.inject(serviceId, { method, url })
+export async function verifyJSONViaInject (app, applicationId, method, url, expectedCode, expectedContent) {
+  const { statusCode, body } = await app.inject(applicationId, { method, url })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -422,11 +424,11 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   }
 }
 
-export async function verifyHTMLViaInject (app, serviceId, url, contents) {
-  const { statusCode, headers, body: html } = await app.inject(serviceId, { method: 'GET', url })
+export async function verifyHTMLViaInject (app, applicationId, url, contents) {
+  const { statusCode, headers, body: html } = await app.inject(applicationId, { method: 'GET', url })
 
   if (statusCode === 308) {
-    return app.inject(serviceId, { method: 'GET', url: headers.location })
+    return app.inject(applicationId, { method: 'GET', url: headers.location })
   }
 
   deepStrictEqual(statusCode, 200)
@@ -565,7 +567,7 @@ export function filterConfigurations (configurations) {
   return skipped.find(c => c.only) ? skipped.filter(c => c.only) : skipped
 }
 
-export async function prepareRuntimeWithServices (
+export async function prepareRuntimeWithApplications (
   t,
   configuration,
   production,
@@ -632,7 +634,7 @@ export async function verifyDevelopmentFrontendWithPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -666,7 +668,7 @@ export async function verifyDevelopmentFrontendWithoutPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -700,7 +702,7 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -770,7 +772,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           if (id.endsWith('without-prefix')) {
             await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
               const json = JSON.parse(contents)
-              json.composer.services[1].proxy = { prefix: '' }
+              json.composer.applications[1].proxy = { prefix: '' }
               return JSON.stringify(json, null, 2)
             })
           }
@@ -824,7 +826,7 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
   // Create the runtime
   const { runtime, root } = await prepareRuntime(t, configuration, true, null, (_, config) => {
     config.server = { port }
-    config.services[0].workers = 5
+    config.applications[0].workers = 5
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
   })
 

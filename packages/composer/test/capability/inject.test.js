@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig } from '../helper.js'
 
-test('inject request into service capability', async t => {
+test('inject request into application capability', async t => {
   const config = {
     server: {
       logger: {
@@ -12,7 +12,7 @@ test('inject request into service capability', async t => {
     },
 
     composer: {
-      services: []
+      applications: []
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]

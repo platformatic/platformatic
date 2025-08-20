@@ -5,7 +5,7 @@ import {
   createRuntime,
   getLogsFromFile,
   isCIOnWindows,
-  prepareRuntimeWithServices,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyDevelopmentMode,
@@ -53,7 +53,7 @@ async function verifyComposerWithPrefix (
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -96,13 +96,21 @@ async function verifyComposerWithoutPrefix (
   pauseTimeout,
   additionalCheck
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '', pauseTimeout, async root => {
-    await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-      const json = JSON.parse(contents)
-      json.composer.services[1].proxy = { prefix: '' }
-      return JSON.stringify(json, null, 2)
-    })
-  })
+  const { runtime, url } = await prepareRuntimeWithApplications(
+    t,
+    id,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    async root => {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.composer.applications[1].proxy = { prefix: '' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
+  )
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -134,7 +142,7 @@ async function verifyComposerAutodetectPrefix (
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -169,7 +177,7 @@ async function verifyComposerAutodetectPrefix (
 
 async function verifyMissingConfigurationMessage (runtime) {
   const missingConfigurationMessage =
-    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The application "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const config = await runtime.getRuntimeConfig(true)
   await runtime.close()
@@ -186,7 +194,6 @@ async function verifyFilename (runtime) {
 
 const configurations = [
   {
-    only: true,
     id: 'node-no-configuration-standalone',
     name: 'Node.js application (with no configuration files in development mode when standalone)',
     async check (...args) {

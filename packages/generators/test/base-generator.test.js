@@ -7,7 +7,7 @@ const { join } = require('node:path')
 
 const { fakeLogger, getTempDir, moveToTmpdir, mockNpmJsRequestForPkgs, mockAgent } = require('./helpers')
 const { BaseGenerator } = require('../lib/base-generator')
-const { convertServiceNameToPrefix } = require('../lib/utils')
+const { convertApplicationNameToPrefix } = require('../lib/utils')
 const { safeRemove } = require('@platformatic/foundation')
 
 afterEach(async () => {
@@ -27,7 +27,7 @@ test('should write file and dirs', async t => {
 
   gen.setConfig({
     targetDirectory: dir,
-    serviceName: 'test-service'
+    applicationName: 'test-application'
   })
 
   await gen.run()
@@ -38,7 +38,7 @@ test('should write file and dirs', async t => {
   assert.equal(packageJson.dependencies.platformatic, undefined)
   assert.ok(packageJson.engines)
 
-  assert.equal(packageJson.name, 'test-service')
+  assert.equal(packageJson.name, 'test-application')
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
   assert.deepEqual(configFile, {})
@@ -48,7 +48,7 @@ test('should write file and dirs', async t => {
 })
 
 test('extended class should generate config', async t => {
-  class ServiceClass extends BaseGenerator {
+  class ApplicationClass extends BaseGenerator {
     constructor (opts) {
       super({
         ...opts,
@@ -64,7 +64,7 @@ test('extended class should generate config', async t => {
     }
   }
 
-  const svc = new ServiceClass({
+  const svc = new ApplicationClass({
     logger: fakeLogger
   })
 
@@ -99,7 +99,7 @@ test('setConfig', async t => {
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
-    serviceName: '',
+    applicationName: '',
     envPrefix: '',
     tests: false,
     isUpdating: false
@@ -126,7 +126,7 @@ test('setConfig', async t => {
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
-    serviceName: '',
+    applicationName: '',
     envPrefix: '',
     tests: false,
     isUpdating: false
@@ -145,7 +145,7 @@ test('setConfig', async t => {
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
-    serviceName: '',
+    applicationName: '',
     envPrefix: '',
     tests: false,
     isUpdating: false
@@ -172,7 +172,7 @@ test('setConfig', async t => {
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
-    serviceName: '',
+    applicationName: '',
     envPrefix: '',
     tests: false,
     isUpdating: false
@@ -288,7 +288,7 @@ test('should prepare the questions in runtime context', async t => {
   assert.deepStrictEqual(bg.questions, [])
 })
 
-test('should return service metadata', async t => {
+test('should return application metadata', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service'
   })
@@ -402,7 +402,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -416,13 +416,13 @@ test('support packages', async t => {
           name: '@fastify/compress',
           options: {
             threshold: 1,
-            foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
+            foobar: '{PLT_MY_APPLICATION_FST_PLUGIN_STATIC_FOOBAR}'
           }
         }
       ]
     })
 
-    assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
+    assert.equal(svc.config.env.PLT_MY_APPLICATION_FST_PLUGIN_STATIC_FOOBAR, 123)
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
@@ -514,7 +514,7 @@ test('support packages', async t => {
     svc.setConfig({
       isRuntimeContext: true,
       plugin: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     const packageDefinitions = [
       {
@@ -540,7 +540,7 @@ test('support packages', async t => {
         {
           name: '@fastify/static',
           options: {
-            root: join('{PLT_ROOT}', '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}')
+            root: join('{PLT_ROOT}', '{PLT_MY_APPLICATION_FST_PLUGIN_STATIC_ROOT}')
           }
         }
       ]
@@ -573,7 +573,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -606,7 +606,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -643,7 +643,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -676,7 +676,7 @@ test('support packages', async t => {
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      applicationName: 'my-application'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -826,14 +826,14 @@ describe('runtime context', () => {
 
     bg.setConfig({
       isRuntimeContext: true,
-      serviceName: 'sample-service'
+      applicationName: 'sample-application'
     })
 
-    assert.equal(bg.config.envPrefix, 'SAMPLE_SERVICE')
+    assert.equal(bg.config.envPrefix, 'SAMPLE_APPLICATION')
 
     bg.setConfig({
       isRuntimeContext: true,
-      serviceName: 'sample-service',
+      applicationName: 'sample-application',
       envPrefix: 'ANOTHER_PREFIX',
       env: {
         FOO: 'bar',
@@ -855,7 +855,7 @@ describe('runtime context', () => {
 
     bg.setConfig({
       isRuntimeContext: true,
-      serviceName: 'sample-service',
+      applicationName: 'sample-application',
       envPrefix: 'ANOTHER_PREFIX',
       env: {
         FOO: 'bar',
@@ -871,7 +871,7 @@ describe('runtime context', () => {
     })
   })
 
-  test('should return service metadata', async t => {
+  test('should return application metadata', async t => {
     const bg = new BaseGenerator({
       module: '@platformatic/service'
     })
@@ -879,7 +879,7 @@ describe('runtime context', () => {
     bg.setConfig({
       targetDirectory: '/foo/bar',
       isRuntimeContext: true,
-      serviceName: 'my-service',
+      applicationName: 'my-application',
       env: {
         FOO: 'bar'
       }
@@ -889,12 +889,12 @@ describe('runtime context', () => {
     assert.deepEqual(metadata, {
       targetDirectory: '/foo/bar',
       env: {
-        PLT_MY_SERVICE_FOO: 'bar'
+        PLT_MY_APPLICATION_FOO: 'bar'
       }
     })
   })
 
-  test('should generate service name if not provided', async () => {
+  test('should generate application name if not provided', async () => {
     const bg = new BaseGenerator({
       module: '@platformatic/service'
     })
@@ -908,7 +908,7 @@ describe('runtime context', () => {
 
     const metadata = await bg.prepare()
 
-    assert.equal(bg.config.envPrefix, convertServiceNameToPrefix(bg.config.serviceName))
+    assert.equal(bg.config.envPrefix, convertApplicationNameToPrefix(bg.config.applicationName))
     const envPrefix = bg.config.envPrefix
     assert.deepEqual(metadata, {
       targetDirectory: '/foo/bar',

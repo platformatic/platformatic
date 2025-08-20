@@ -35,8 +35,8 @@ Kubernetes uses [probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-
 
 Platformatic provides a built-in API for implementing readiness and liveness through its metrics server. The metrics server is configured in your Watt configuration file and exposes health check endpoints:
 
-- The `/ready` endpoint indicates if the service is running and ready to accept traffic
-- The `/status` endpoint indicates if all services in the stack are reachable
+- The `/ready` endpoint indicates if the application is running and ready to accept traffic
+- The `/status` endpoint indicates if all applications in the stack are reachable
 - Custom health checks can be added using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object. The method receives a function that returns a boolean or an object with the following properties:
   - `status`: a boolean indicating if the health check is successful
   - `statusCode`: an optional HTTP status code to return
@@ -50,7 +50,7 @@ Platformatic provides a built-in API for implementing readiness and liveness thr
 
 ### 1. Service Implementation with Custom Health Checks
 
-Create a Platformatic service that implements comprehensive health checks:
+Create a Platformatic application that implements comprehensive health checks:
 
 ```javascript
 import fastify from 'fastify'
@@ -176,12 +176,12 @@ env:
 
 2. **Readiness Check**:
    - Kubernetes calls the `/ready` endpoint every `periodSeconds`
-   - The `watt` server checks that all the services are up and running
+   - The `watt` server checks that all the applications are up and running
    - If successful, the pod is marked as ready to receive traffic; if it fails `failureThreshold` times, the pod is marked as not ready
 
 3. **Liveness Check**:
    - Kubernetes calls the `/status` endpoint every `periodSeconds`
-   - The `watt` server checks that all the services are ready and perform the custom health check for each service
+   - The `watt` server checks that all the applications are ready and perform the custom health check for each application
    - If successful, the container is considered healthy; if it fails `failureThreshold` times, Kubernetes restarts the container
 
 ## Project Structure
@@ -193,10 +193,10 @@ The example project structure demonstrates a Watt application with health checks
 ```txt
 ├── app
 │   ├── watt.json           # Main Watt configuration
-│   └── services
-│       ├── main            # Entry point service
+│   └── applications
+│       ├── main            # Entry point application
 │       │   └── platformatic.json
-│       └── service-one     # Example service with custom health check
+│       └── application-one     # Example application with custom health check
 │           ├── platformatic.json
 │           └── app.js
 ├── k8s
@@ -216,7 +216,7 @@ The `watt.json` configuration exposes the metrics server on port 9090:
 }
 ```
 
-This configuration exposes health check endpoints available at `/ready` and `/status` on port `9090` and the service endpoints on port `3001`.
+This configuration exposes health check endpoints available at `/ready` and `/status` on port `9090` and the application endpoints on port `3001`.
 
 You can follow the `README.md` in the [demo/k8s-readiness-liveness](https://github.com/platformatic/k8s-readiness-liveness/blob/main/README.md) to run the example.
 
@@ -403,7 +403,7 @@ kubectl exec <pod-name> -- curl -v http://localhost:9090/ready
 # - Ensure metrics.hostname is set to "0.0.0.0" not "127.0.0.1"
 # - Verify metrics.port matches probe configuration
 # - Check that custom health check functions don't throw exceptions
-# - Ensure all services in Watt application are starting correctly
+# - Ensure all applications in Watt application are starting correctly
 ```
 
 ### Slow Startup Times

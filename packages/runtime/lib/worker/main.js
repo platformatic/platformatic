@@ -21,7 +21,7 @@ const dotenv = require('dotenv')
 const pino = require('pino')
 const { fetch } = require('undici')
 
-const { PlatformaticApp } = require('./app')
+const { Controller } = require('./controller')
 const { SharedContext } = require('./shared-context')
 const { setupITC } = require('./itc')
 const { setDispatcher } = require('./interceptors')
@@ -30,8 +30,8 @@ const { kId, kITC, kStderrMarker } = require('./symbols')
 function handleUnhandled (app, type, err) {
   const label =
     workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the service "${workerData.serviceConfig.id}"`
-      : `service "${workerData.serviceConfig.id}"`
+      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
+      : `application "${workerData.applicationConfig.id}"`
 
   globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
 
@@ -72,7 +72,7 @@ function createLogger () {
 
   const pinoOptions = {
     level: 'trace',
-    name: workerData.serviceConfig.id,
+    name: workerData.applicationConfig.id,
     ...workerData.config.logger
   }
 
@@ -112,16 +112,16 @@ async function main () {
 
   const config = workerData.config
 
-  await performPreloading(config, workerData.serviceConfig)
+  await performPreloading(config, workerData.applicationConfig)
 
-  const service = workerData.serviceConfig
+  const application = workerData.applicationConfig
 
-  // Load env file and mixin env vars from service config
+  // Load env file and mixin env vars from application config
   let envfile
-  if (service.envfile) {
-    envfile = resolve(workerData.dirname, service.envfile)
+  if (application.envfile) {
+    envfile = resolve(workerData.dirname, application.envfile)
   } else {
-    envfile = resolve(workerData.serviceConfig.path, '.env')
+    envfile = resolve(workerData.applicationConfig.path, '.env')
   }
 
   globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
@@ -133,17 +133,17 @@ async function main () {
   if (config.env) {
     Object.assign(process.env, config.env)
   }
-  if (service.env) {
-    Object.assign(process.env, service.env)
+  if (application.env) {
+    Object.assign(process.env, application.env)
   }
 
   const { threadDispatcher } = await setDispatcher(config)
 
-  // If the service is an entrypoint and runtime server config is defined, use it.
+  // If the application is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
-  if (config.server && service.entrypoint) {
+  if (config.server && application.entrypoint) {
     serverConfig = config.server
-  } else if (service.useHttp) {
+  } else if (application.useHttp) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
@@ -166,14 +166,14 @@ async function main () {
     const res = await fetch(url)
     const [{ devtoolsFrontendUrl }] = await res.json()
 
-    console.log(`For ${service.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
+    console.log(`For ${application.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
   }
 
   // Create the application
-  const app = new PlatformaticApp(
-    service,
+  const app = new Controller(
+    application,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
-    service.telemetry,
+    application.telemetry,
     config.logger,
     serverConfig,
     config.metrics,
@@ -186,7 +186,7 @@ async function main () {
 
   await app.init()
 
-  if (service.entrypoint && config.basePath) {
+  if (application.entrypoint && config.basePath) {
     const meta = await app.capability.getMeta()
     if (!meta.composer.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
@@ -201,7 +201,7 @@ async function main () {
   }
 
   // Setup interaction with parent port
-  const itc = setupITC(app, service, threadDispatcher, sharedContext)
+  const itc = setupITC(app, application, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
 
   // Get the dependencies

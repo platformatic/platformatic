@@ -13,13 +13,13 @@ import { isFetchable } from './utils.js'
 const kITC = Symbol.for('plt.runtime.itc')
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
-async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
+async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
   let changed
 
-  const graphqlServices = []
-  // assumes services here are fetchable
-  for (const service of services) {
-    const { id, origin, openapi, graphql } = service
+  const graphqlApplications = []
+  // assumes applications here are fetchable
+  for (const application of applications) {
+    const { id, origin, openapi, graphql } = application
 
     if (openapi) {
       const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.originSchema || null
@@ -28,7 +28,7 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
       try {
         fetchedSchema = await fetchOpenApiSchema({ origin, openapi })
       } catch (err) {
-        app.log.error({ err }, 'failed to fetch schema (watch) for service ' + id)
+        app.log.error({ err }, 'failed to fetch schema (watch) for application ' + id)
       }
 
       if (!changed && !deepEqual(fetchedSchema, currentSchema)) {
@@ -39,12 +39,12 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
     }
 
     if (graphql) {
-      graphqlServices.push(service)
+      graphqlApplications.push(application)
     }
   }
 
-  if (!changed && graphqlServices.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions, app)
+  if (!changed && graphqlApplications.length > 0) {
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlComposerOptions, app)
     if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
       changed = true
       app.graphqlSupergraph = graphqlSupergraph
@@ -55,34 +55,34 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
 }
 
 /**
- * poll services to detect changes, every `opts.composer.refreshTimeout`
+ * poll applications to detect changes, every `opts.composer.refreshTimeout`
  * polling is disabled on refreshTimeout = 0
- * or there are no network openapi nor graphql remote services (the services are from file or they don't have a schema/graph to fetch)
+ * or there are no network openapi nor graphql remote applications (the applications are from file or they don't have a schema/graph to fetch)
  */
-async function watchServices (app, { config, capability }) {
-  const { services, refreshTimeout } = config.composer
+async function watchApplications (app, { config, capability }) {
+  const { applications, refreshTimeout } = config.composer
   if (refreshTimeout < 1) {
     return
   }
 
-  const watching = services.filter(isFetchable)
+  const watching = applications.filter(isFetchable)
   if (watching.length < 1) {
     return
   }
 
   if (!globalThis[Symbol.for('plt.runtime.id')]) {
-    app.log.warn('Watching services is only supported when running within a Platformatic Runtime.')
+    app.log.warn('Watching applications is only supported when running within a Platformatic Runtime.')
     return
   }
 
   capability.emit('watch:start')
-  app.log.info({ services: watching }, 'start watching services')
+  app.log.info({ applications: watching }, 'start watching applications')
 
   const timer = setInterval(async () => {
     try {
-      if (await detectServicesUpdate({ app, services: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs })) {
+      if (await detectApplicationsUpdate({ app, applications: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs })) {
         clearInterval(timer)
-        app.log.info('detected services changes, restarting ...')
+        app.log.info('detected applications changes, restarting ...')
 
         globalThis[Symbol.for('plt.runtime.itc')].notify('changed')
       }
@@ -94,7 +94,7 @@ async function watchServices (app, { config, capability }) {
             stack: error.stack
           }
         },
-        'failed to get services info'
+        'failed to get applications info'
       )
     }
   }, refreshTimeout).unref()
@@ -104,20 +104,20 @@ async function watchServices (app, { config, capability }) {
   })
 }
 
-export async function ensureServices (composerId, config) {
-  if (config.composer?.services?.length) {
+export async function ensureApplications (composerId, config) {
+  if (config.composer?.applications?.length) {
     return
   }
 
-  composerId ??= globalThis.platformatic?.serviceId
+  composerId ??= globalThis.platformatic?.applicationId
   config.composer ??= {}
-  config.composer.services ??= []
+  config.composer.applications ??= []
 
-  // When no services are defined, all services are exposed in the composer
-  const services = await globalThis[kITC]?.send('listServices')
+  // When no applications are defined, all applications are exposed in the composer
+  const applications = await globalThis[kITC]?.send('listApplications')
 
-  if (services) {
-    config.composer.services = services
+  if (applications) {
+    config.composer.applications = applications
       .filter(id => id !== composerId) // Remove ourself
       .map(id => ({ id, proxy: { prefix: `/${id}` } }))
   }
@@ -125,29 +125,29 @@ export async function ensureServices (composerId, config) {
 
 export async function platformaticComposer (app, capability) {
   const config = await capability.getConfig()
-  let hasGraphqlServices, hasOpenapiServices
+  let hasGraphqlApplications, hasOpenapiApplications
 
-  // When no services are specified, get the list from the runtime.
-  await ensureServices(capability.serviceId, config)
+  // When no applications are specified, get the list from the runtime.
+  await ensureApplications(capability.applicationId, config)
 
-  const { services } = config.composer
+  const { applications } = config.composer
 
-  for (const service of services) {
-    if (!service.origin) {
-      service.origin = `http://${service.id}.plt.local`
+  for (const application of applications) {
+    if (!application.origin) {
+      application.origin = `http://${application.id}.plt.local`
     }
-    if (service.openapi && !hasOpenapiServices) {
-      hasOpenapiServices = true
+    if (application.openapi && !hasOpenapiApplications) {
+      hasOpenapiApplications = true
     }
-    if (service.graphql && !hasGraphqlServices) {
-      hasGraphqlServices = true
+    if (application.graphql && !hasGraphqlApplications) {
+      hasGraphqlApplications = true
     }
   }
 
   await app.register(composerHook)
 
   let generatedComposedOpenAPI = null
-  if (hasOpenapiServices) {
+  if (hasOpenapiApplications) {
     generatedComposedOpenAPI = await openApiGenerator(app, config.composer)
   }
 
@@ -167,7 +167,7 @@ export async function platformaticComposer (app, capability) {
     await app.register(openApiComposer, { opts: config.composer, generated: generatedComposedOpenAPI })
   }
 
-  if (hasGraphqlServices) {
+  if (hasGraphqlApplications) {
     app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
     app.register(graphql, config.composer)
     await app.register(graphqlGenerator, config.composer)
@@ -179,7 +179,7 @@ export async function platformaticComposer (app, capability) {
   }
 
   if (!capability.context?.isProduction) {
-    await watchServices(app, { config, capability, context: capability.context })
+    await watchApplications(app, { config, capability, context: capability.context })
   }
 }
 

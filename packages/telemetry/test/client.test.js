@@ -31,7 +31,7 @@ test('should add the propagation headers correctly, new propagation started', as
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     exporter: {
       type: 'memory',
     },
@@ -59,7 +59,7 @@ test('should add the propagation headers correctly, with propagation already sta
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -96,7 +96,7 @@ test('should trace a client request', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -156,7 +156,7 @@ test('should trace a client request failing', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -206,7 +206,7 @@ test('should trace a client request failing (no HTTP error)', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     version: '1.0.0',
     exporter: {
       type: 'memory',
@@ -245,7 +245,7 @@ test('should not add the query in span name', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     exporter: {
       type: 'memory',
     },
@@ -264,7 +264,7 @@ test('should ignore the skipped operations', async () => {
   }
 
   const app = await setupApp({
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     skip: [
       {
         path: '/skipme',

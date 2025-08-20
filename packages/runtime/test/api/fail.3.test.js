@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should fail to start running service', async t => {
+test('should fail to start running application', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -18,7 +18,7 @@ test('should fail to start running service', async t => {
   })
 
   try {
-    await app.startService('with-logger')
+    await app.startApplication('with-logger')
     assert.fail('should have thrown')
   } catch (err) {
     assert.strictEqual(err.message, 'Application is already started')

@@ -3,7 +3,7 @@ import { lt, satisfies } from 'semver'
 
 const currentPlatform = platform()
 
-export function checkNodeVersionForServices () {
+export function checkNodeVersionForApplications () {
   const currentVersion = process.version
   const minimumVersion = '22.18.0'
 

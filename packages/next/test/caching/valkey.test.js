@@ -30,7 +30,7 @@ async function prepareRuntimeWithBackend (
   configuration,
   production = false,
   pauseAfterCreation = false,
-  servicesToBuild = false,
+  applicationsToBuild = false,
   additionalSetup = null
 ) {
   const { runtime, root } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
@@ -41,7 +41,7 @@ async function prepareRuntimeWithBackend (
     await additionalSetup?.(root, config, args)
   })
 
-  const url = await startRuntime(t, runtime, pauseAfterCreation, servicesToBuild)
+  const url = await startRuntime(t, runtime, pauseAfterCreation, applicationsToBuild)
 
   return { runtime, url, root }
 }
@@ -170,7 +170,7 @@ test(
       tags,
       revalidate: revalidatePlt,
       maxTTL,
-      serviceId
+      applicationId
     } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
@@ -181,7 +181,7 @@ test(
     deepStrictEqual(revalidateNext, 120)
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
-    deepStrictEqual(serviceId, 'frontend')
+    deepStrictEqual(applicationId, 'frontend')
   }
 )
 
@@ -289,7 +289,7 @@ test(
         tags,
         revalidate: revalidatePlt,
         maxTTL,
-        serviceId
+        applicationId
       } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
@@ -300,7 +300,7 @@ test(
       deepStrictEqual(revalidateNext, 120)
       deepStrictEqual(revalidatePlt, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
-      deepStrictEqual(serviceId, 'frontend')
+      deepStrictEqual(applicationId, 'frontend')
     }
 
     {
@@ -308,7 +308,7 @@ test(
         value: { kind, html, headers },
         revalidate,
         maxTTL,
-        serviceId
+        applicationId
       } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       switch (nextMajor) {
@@ -326,7 +326,7 @@ test(
 
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
-      deepStrictEqual(serviceId, 'frontend')
+      deepStrictEqual(applicationId, 'frontend')
     }
   }
 )
@@ -399,7 +399,7 @@ test(
       tags,
       revalidate: revalidatePlt,
       maxTTL,
-      serviceId
+      applicationId
     } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
@@ -410,7 +410,7 @@ test(
     deepStrictEqual(revalidateNext, 120)
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
-    deepStrictEqual(serviceId, 'frontend')
+    deepStrictEqual(applicationId, 'frontend')
   }
 )
 
@@ -494,7 +494,7 @@ test(
         tags,
         revalidate: revalidatePlt,
         maxTTL,
-        serviceId
+        applicationId
       } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
@@ -505,7 +505,7 @@ test(
       deepStrictEqual(revalidateNext, 120)
       deepStrictEqual(revalidatePlt, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
-      deepStrictEqual(serviceId, 'frontend')
+      deepStrictEqual(applicationId, 'frontend')
     }
 
     {
@@ -513,7 +513,7 @@ test(
         value: { kind, body, headers },
         revalidate,
         maxTTL,
-        serviceId
+        applicationId
       } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       switch (nextMajor) {
@@ -533,7 +533,7 @@ test(
       deepStrictEqual({ ...JSON.parse(body), delay: 0 }, { delay: 0, version, time })
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
-      deepStrictEqual(serviceId, 'frontend')
+      deepStrictEqual(applicationId, 'frontend')
     }
   }
 )

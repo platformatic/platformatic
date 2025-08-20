@@ -18,13 +18,13 @@ test('should handle a lot of runtime api requests', async t => {
 
   const promises = []
   for (let i = 0; i < 100; i++) {
-    promises.push(app.getServiceDetails('with-logger'))
+    promises.push(app.getApplicationDetails('with-logger'))
   }
 
   await Promise.all(promises)
 })
 
-test('should handle service mesh timeouts', async t => {
+test('should handle application mesh timeouts', async t => {
   const configFile = join(fixturesDir, 'network-timeout', 'platformatic.json')
   const app = await createRuntime(configFile)
 

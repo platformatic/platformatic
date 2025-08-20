@@ -67,7 +67,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const entrypointRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="api"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('applicationId="api"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }
@@ -76,7 +76,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const internalRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="internal"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('applicationId="internal"'))
   if (!internalRequestCountMetric) {
     assert.fail('Expected internal request count metric not found')
   }
@@ -90,19 +90,19 @@ test('should configure metrics correctly with both node and http metrics', async
     if (!line || line.startsWith('#')) continue
     labels.push(line.split('{')[1].split('}')[0].split(','))
   }
-  const services = labels
+  const applications = labels
     .flat()
-    .filter(label => label.startsWith('serviceId='))
+    .filter(label => label.startsWith('applicationId='))
     .reduce((acc, label) => {
-      const service = label.split('"')[1]
-      if (service) {
-        acc.push(service)
+      const application = label.split('"')[1]
+      if (application) {
+        acc.push(application)
       }
       return acc
     }, [])
 
-  const serviceIds = [...new Set(services)].sort()
+  const applicationIds = [...new Set(applications)].sort()
 
-  // We expect to find both entrypoint and internal services in metrics
-  assert.deepEqual(serviceIds, ['api', 'internal'])
+  // We expect to find both entrypoint and internal applications in metrics
+  assert.deepEqual(applicationIds, ['api', 'internal'])
 })

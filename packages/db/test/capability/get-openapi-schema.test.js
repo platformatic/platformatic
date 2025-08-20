@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-test('get service openapi schema via capability api', async t => {
+test('get application openapi schema via capability api', async t => {
   const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 

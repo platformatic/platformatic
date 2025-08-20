@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { executeCommand, wattpmUtils, wattUtilsCliPath } from './helper.js'
 
-test('install - should install dependencies of autoloaded services', async t => {
+test('install - should install dependencies of autoloaded applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -25,11 +25,11 @@ test('install - should install dependencies of autoloaded services', async t => 
   const installProcess = await wattpmUtils('install', rootDir)
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service alternative using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application alternative using npm ...'))
 })
 
-test('install - should install dependencies when loaded via service file', async t => {
+test('install - should install dependencies when loaded vian application file', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -43,11 +43,11 @@ test('install - should install dependencies when loaded via service file', async
   const installProcess = await wattpmUtils('install', resolve(rootDir, 'web/main'))
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
-  ok(!installProcess.stdout.includes('Installing dependencies for the service alternative using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
+  ok(!installProcess.stdout.includes('Installing dependencies for the application alternative using npm ...'))
 })
 
-test('install - should install dependencies of application and its services using npm by default', async t => {
+test('install - should install dependencies of application and its applications using npm by default', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -56,10 +56,10 @@ test('install - should install dependencies of application and its services usin
   const installProcess = await wattpmUtils('install', rootDir)
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
 })
 
-test('install - should install dependencies of application and its services using npm by default', async t => {
+test('install - should install dependencies of application and its applications using npm by default', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -68,10 +68,10 @@ test('install - should install dependencies of application and its services usin
   const installProcess = await wattpmUtils('install', rootDir, '-p')
 
   ok(installProcess.stdout.includes('Installing production dependencies for the application using npm ...'))
-  ok(installProcess.stdout.includes('Installing production dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the application main using npm ...'))
 })
 
-test('install - should install dependencies of application and its services using a specific package manager', async t => {
+test('install - should install dependencies of application and its applications using a specific package manager', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -80,10 +80,10 @@ test('install - should install dependencies of application and its services usin
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'pnpm')
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application main using pnpm ...'))
 })
 
-test('install - should respect the service package manager, if any', async t => {
+test('install - should respect the application package manager, if any', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
@@ -91,7 +91,7 @@ test('install - should respect the service package manager, if any', async t => 
 
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
-  originalFileContents.services = [
+  originalFileContents.applications = [
     {
       id: 'main',
       path: 'web/main',
@@ -103,7 +103,7 @@ test('install - should respect the service package manager, if any', async t => 
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'pnpm')
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
 })
 
 test('install - should install production dependencies only', async t => {
@@ -115,7 +115,7 @@ test('install - should install production dependencies only', async t => {
   const installProcess = await wattpmUtils('install', rootDir, '-p', '-P', 'pnpm')
 
   ok(installProcess.stdout.includes('Installing production dependencies for the application using pnpm ...'))
-  ok(installProcess.stdout.includes('Installing production dependencies for the service main using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the application main using pnpm ...'))
 })
 
 test('update - should update version in package.json files', async t => {
@@ -162,19 +162,19 @@ test('update - should update version in package.json files', async t => {
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the service main from ^2.41.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^2.41.0 to ^2.41.0 ...'
     )
   )
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
-test('update - should work when executed inside a service folder', async t => {
+test('update - should work when executed inside an application folder', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
@@ -213,13 +213,13 @@ test('update - should work when executed inside a service folder', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
-test('update - should work when loaded from a service file', async t => {
+test('update - should work when loaded from an application file', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
@@ -253,7 +253,7 @@ test('update - should work when loaded from a service file', async t => {
     '@platformatic/telemetry': '^2.41.0'
   })
 
-  // The another service is not updated, because it is not considered as part of the project.
+  // The another application is not updated, because it is not considered as part of the project.
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^2.0.0',
     '@platformatic/db': '^1.0.0',
@@ -263,13 +263,13 @@ test('update - should work when loaded from a service file', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the service main from ^2.41.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^2.41.0 to ^2.41.0 ...'
     )
   )
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -312,7 +312,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Dependency @platformatic/vite of the service main requires a non-updatable range >1. Try again with -f/--force to update to the latest version.'
+      'Dependency @platformatic/vite of the application main requires a non-updatable range >1. Try again with -f/--force to update to the latest version.'
     )
   )
 })

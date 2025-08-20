@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should restart all services with a management api', async t => {
+test('should restart all applications with a management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -40,12 +40,12 @@ test('should restart all services with a management api', async t => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-1')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 
   {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-2')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 })

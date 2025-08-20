@@ -14,84 +14,80 @@ const RuntimeExitedError = createError(
 )
 const RuntimeAbortedError = createError(`${ERROR_PREFIX}_RUNTIME_ABORT`, 'The runtime aborted the operation')
 // The following two use the same code as we only need to differentiate the label
-const ServiceExitedError = createError(
-  `${ERROR_PREFIX}_SERVICE_EXIT`,
-  'The service "%s" exited prematurely with error code %d'
+const ApplicationExitedError = createError(
+  `${ERROR_PREFIX}_APPLICATION_EXIT`,
+  'The application "%s" exited prematurely with error code %d'
 )
 const WorkerExitedError = createError(
-  `${ERROR_PREFIX}_SERVICE_EXIT`,
-  'The worker %s of the service "%s" exited prematurely with error code %d'
+  `${ERROR_PREFIX}_APPLICATION_WORKER_EXIT`,
+  'The worker %s of the application "%s" exited prematurely with error code %d'
 )
 const UnknownRuntimeAPICommandError = createError(
   `${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`,
   'Unknown Runtime API command "%s"'
 )
-const ServiceNotFoundError = createError(
-  `${ERROR_PREFIX}_SERVICE_NOT_FOUND`,
-  'Service %s not found. Available services are: %s'
+const ApplicationNotFoundError = createError(
+  `${ERROR_PREFIX}_APPLICATION_NOT_FOUND`,
+  'Application %s not found. Available applications are: %s'
 )
 const WorkerNotFoundError = createError(
   `${ERROR_PREFIX}_WORKER_NOT_FOUND`,
-  'Worker %s of service %s not found. Available services are: %s'
+  'Worker %s of application %s not found. Available applications are: %s'
 )
-const ServiceNotStartedError = createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started")
-const ServiceStartTimeoutError = createError(
-  `${ERROR_PREFIX}_SERVICE_START_TIMEOUT`,
-  "Service with id '%s' failed to start in %dms."
+const ApplicationNotStartedError = createError(
+  `${ERROR_PREFIX}_APPLICATION_NOT_STARTED`,
+  "Application with id '%s' is not started"
+)
+const ApplicationStartTimeoutError = createError(
+  `${ERROR_PREFIX}_APPLICATION_START_TIMEOUT`,
+  "Application with id '%s' failed to start in %dms."
 )
 const FailedToRetrieveOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`,
-  'Failed to retrieve OpenAPI schema for service with id "%s": %s'
+  'Failed to retrieve OpenAPI schema for application with id "%s": %s'
 )
 const FailedToRetrieveGraphQLSchemaError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`,
-  'Failed to retrieve GraphQL schema for service with id "%s": %s'
+  'Failed to retrieve GraphQL schema for application with id "%s": %s'
 )
 const FailedToRetrieveMetaError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_META`,
-  'Failed to retrieve metadata for service with id "%s": %s'
+  'Failed to retrieve metadata for application with id "%s": %s'
 )
 const FailedToRetrieveMetricsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_METRICS`,
-  'Failed to retrieve metrics for service with id "%s": %s'
+  'Failed to retrieve metrics for application with id "%s": %s'
 )
 const FailedToRetrieveHealthError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_HEALTH`,
-  'Failed to retrieve health for service with id "%s": %s'
+  'Failed to retrieve health for application with id "%s": %s'
 )
 const FailedToPerformCustomHealthCheckError = createError(
   `${ERROR_PREFIX}_FAILED_TO_PERFORM_CUSTOM_HEALTH_CHECK`,
-  'Failed to perform custom healthcheck for service with id "%s": %s'
+  'Failed to perform custom healthcheck for application with id "%s": %s'
 )
 const FailedToPerformCustomReadinessCheckError = createError(
   `${ERROR_PREFIX}_FAILED_TO_PERFORM_CUSTOM_READINESS_CHECK`,
-  'Failed to perform custom readiness check for service with id "%s": %s'
+  'Failed to perform custom readiness check for application with id "%s": %s'
 )
 const ApplicationAlreadyStartedError = createError(
   `${ERROR_PREFIX}_APPLICATION_ALREADY_STARTED`,
   'Application is already started'
 )
-const ApplicationNotStartedError = createError(
-  `${ERROR_PREFIX}_APPLICATION_NOT_STARTED`,
-  'Application has not been started'
-)
+const RuntimeNotStartedError = createError(`${ERROR_PREFIX}_NOT_STARTED`, 'Application has not been started')
 const ConfigPathMustBeStringError = createError(
   `${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`,
   'Config path must be a string'
 )
 const NoConfigFileFoundError = createError(
   `${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`,
-  "No config file found for service '%s'"
+  "No config file found for application '%s'"
 )
 const InvalidEntrypointError = createError(
   `${ERROR_PREFIX}_INVALID_ENTRYPOINT`,
   "Invalid entrypoint: '%s' does not exist"
 )
 const MissingEntrypointError = createError(`${ERROR_PREFIX}_MISSING_ENTRYPOINT`, 'Missing application entrypoint.')
-const InvalidServicesWithWebError = createError(
-  `${ERROR_PREFIX}_INVALID_SERVICES_WITH_WEB`,
-  'The "services" property cannot be used when the "web" property is also defined'
-)
 const MissingDependencyError = createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"')
 const InspectAndInspectBrkError = createError(
   `${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`,
@@ -117,19 +113,19 @@ const FailedToUnlinkManagementApiSocket = createError(
 const LogFileNotFound = createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404)
 const WorkerIsRequired = createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required')
 const InvalidArgumentError = createError(`${ERROR_PREFIX}_INVALID_ARGUMENT`, 'Invalid argument: "%s"')
-const MessagingError = createError(`${ERROR_PREFIX}_MESSAGING_ERROR`, 'Cannot send a message to service "%s": %s')
+const MessagingError = createError(`${ERROR_PREFIX}_MESSAGING_ERROR`, 'Cannot send a message to application "%s": %s')
 
 module.exports = {
   AddressInUseError,
   RuntimeExitedError,
   RuntimeAbortedError,
-  ServiceExitedError,
+  ApplicationExitedError,
   WorkerExitedError,
   UnknownRuntimeAPICommandError,
-  ServiceNotFoundError,
+  ApplicationNotFoundError,
   WorkerNotFoundError,
-  ServiceNotStartedError,
-  ServiceStartTimeoutError,
+  ApplicationNotStartedError,
+  ApplicationStartTimeoutError,
   FailedToRetrieveOpenAPISchemaError,
   FailedToRetrieveGraphQLSchemaError,
   FailedToRetrieveMetaError,
@@ -138,12 +134,11 @@ module.exports = {
   FailedToPerformCustomHealthCheckError,
   FailedToPerformCustomReadinessCheckError,
   ApplicationAlreadyStartedError,
-  ApplicationNotStartedError,
+  RuntimeNotStartedError,
   ConfigPathMustBeStringError,
   NoConfigFileFoundError,
   InvalidEntrypointError,
   MissingEntrypointError,
-  InvalidServicesWithWebError,
   MissingDependencyError,
   InspectAndInspectBrkError,
   InspectorPortError,

@@ -26,7 +26,7 @@ async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   return app.start()
 }
 
-test('should strip the runtime base path for a service as an entrypoint', async t => {
+test('should strip the runtime base path for an application as an entrypoint', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'service')
 
   {
