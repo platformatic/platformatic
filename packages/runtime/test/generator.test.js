@@ -54,7 +54,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_FIRST_APPLICATION_FOO: 'foo',
+      PLT_FIRST_SERVICE_FOO: 'foo',
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_SERVER_LOGGER_LEVEL: 'debug',
       PLT_MANAGEMENT_API: true,
@@ -183,8 +183,8 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_FIRST_APPLICATION_APPLICATION_1: 'foo',
-      PLT_SECOND_APPLICATION_APPLICATION_2: 'foo',
+      PLT_FIRST_SERVICE_APPLICATION_1: 'foo',
+      PLT_SECOND_SERVICE_APPLICATION_2: 'foo',
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_MANAGEMENT_API: true,
       PLT_SERVER_LOGGER_LEVEL: 'info',

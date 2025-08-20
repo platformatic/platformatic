@@ -95,7 +95,7 @@ test('mesh network works from external processes via ChildManager', async t => {
     assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
 
     assert.deepStrictEqual(body.responses[3], {
-      body: `service/octet-stream:123:${'echo'.repeat(10)}`,
+      body: `application/octet-stream:123:${'echo'.repeat(10)}`,
       statusCode: 200
     })
   }

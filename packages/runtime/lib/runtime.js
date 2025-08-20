@@ -508,8 +508,10 @@ class Runtime extends EventEmitter {
 
     this.emit('application:stopping', id)
 
-    for (let i = 0; i < workersCount; i++) {
-      await this.#stopWorker(workersCount, id, i, silent)
+    if (typeof workersCount === 'number') {
+      for (let i = 0; i < workersCount; i++) {
+        await this.#stopWorker(workersCount, id, i, silent)
+      }
     }
 
     this.emit('application:stopped', id)

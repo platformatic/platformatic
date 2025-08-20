@@ -3,7 +3,7 @@
 class RoundRobinMap extends Map {
   #instances
 
-  constructor (iterable, instances) {
+  constructor (iterable, instances = {}) {
     super(iterable)
     this.#instances = instances
   }
@@ -21,16 +21,24 @@ class RoundRobinMap extends Map {
   }
 
   getCount (application) {
+    if (!this.#instances[application]) {
+      return null
+    }
+
     return this.#instances[application].count
   }
 
   setCount (application, count) {
+    if (!this.#instances[application]) {
+      throw new Error(`Application ${application} is not configured.`)
+    }
+
     this.#instances[application].count = count
   }
 
   next (application) {
     if (!this.#instances[application]) {
-      return undefined
+      return null
     }
 
     let worker

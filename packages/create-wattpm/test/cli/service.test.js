@@ -115,11 +115,11 @@ test('Creates a Platformatic Application in a non empty directory', async t => {
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
   equal(await isFileAccessible(join(root, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(root, 'services/foo/routes/root.js')), true)
-  equal(await isFileAccessible(join(root, 'services/foo/routes/sample.js')), true)
-  equal(await isFileAccessible(join(root, 'services/foo/plugins/example.js')), true)
+  equal(await isFileAccessible(join(root, 'applications/foo/routes/root.js')), true)
+  equal(await isFileAccessible(join(root, 'applications/foo/routes/sample.js')), true)
+  equal(await isFileAccessible(join(root, 'applications/foo/plugins/example.js')), true)
 
   // check file contents
-  notEqual(await readFile(join(root, 'services/foo/routes/root.js'), 'utf8'), "console.log('hello world')")
-  equal(await readFile(join(root, 'services/foo/routes/sample.js'), 'utf8'), "console.log('hello world')")
+  notEqual(await readFile(join(root, 'applications/foo/routes/root.js'), 'utf8'), "console.log('hello world')")
+  equal(await readFile(join(root, 'applications/foo/routes/sample.js'), 'utf8'), "console.log('hello world')")
 })
