@@ -260,7 +260,7 @@ for (const heap of heapCases) {
   const newYoungGeneration = heap.maxYoungGeneration
 
   test(`should update applications ${testLabel(newHeapTotal, newYoungGeneration)}`, async t => {
-    const applicationsId = ['node', 'application']
+    const applicationsId = ['node', 'service']
     const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-heap')
 
     const expectedEvents = []
