@@ -5,13 +5,7 @@ import { installDependencies } from './dependencies.js'
 
 export async function createCommand (logger, args) {
   let {
-    values: {
-      config,
-      marketplace,
-      'package-manager': packageManager,
-      'skip-dependencies': skipDependencies,
-      module: modules
-    }
+    values: { config, 'package-manager': packageManager, 'skip-dependencies': skipDependencies, module: modules }
   } = parseArgs(
     args,
     {
@@ -19,11 +13,6 @@ export async function createCommand (logger, args) {
         type: 'string',
         short: 'c',
         default: 'watt.json'
-      },
-      marketplace: {
-        type: 'string',
-        short: 'm',
-        default: 'https://marketplace.platformatic.dev'
       },
       'package-manager': {
         type: 'string',
@@ -60,7 +49,6 @@ export async function createCommand (logger, args) {
     logger,
     packageManager,
     modules.map(m => m.split(/\s*,\s*/).map(m => m.trim())).flat(),
-    marketplace,
     skipDependencies
       ? false
       : (root, configurationFile, packageManager) => {
@@ -86,10 +74,6 @@ const createHelp = {
     {
       usage: '-c, --config <config>',
       description: 'Name of the configuration file to use (the default is watt.json)'
-    },
-    {
-      usage: '-m, --marketplace <url>',
-      description: 'Platformatic Marketplace host (the default is https://marketplace.platformatic.dev)'
     },
     {
       usage: '-s, --skip-dependencies',

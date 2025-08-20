@@ -6,13 +6,11 @@ import {
   createTemporaryDirectory,
   executeCreatePlatformatic,
   getApplications,
-  setupUserInputHandler,
-  startMarketplace
+  setupUserInputHandler
 } from './helper.js'
 
 test('Creates a Platformatic Composer', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -25,7 +23,7 @@ test('Creates a Platformatic Composer', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler })
 
   const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
@@ -45,7 +43,6 @@ test('Creates a Platformatic Composer', async t => {
 
 test('Creates a Platformatic Composer (TypeScript)', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -58,7 +55,7 @@ test('Creates a Platformatic Composer (TypeScript)', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler })
 
   const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)

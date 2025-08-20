@@ -47,10 +47,6 @@ const createHelp = {
       description: 'Name of the configuration file to use (the default is watt.json)'
     },
     {
-      usage: '-m, --marketplace <url>',
-      description: 'Platformatic Marketplace host (the default is https://marketplace.platformatic.dev)'
-    },
-    {
       usage: '-s, --skip-dependencies',
       description: 'Do not install dependencies after creating the files'
     },

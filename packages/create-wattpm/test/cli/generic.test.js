@@ -4,12 +4,7 @@ import { existsSync } from 'node:fs'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import {
-  createTemporaryDirectory,
-  executeCreatePlatformatic,
-  setupUserInputHandler,
-  startMarketplace
-} from './helper.js'
+import { createTemporaryDirectory, executeCreatePlatformatic, setupUserInputHandler } from './helper.js'
 
 const version = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version
 
@@ -19,7 +14,6 @@ test('Support packages without generator via importing (new application)', async
   await cp(new URL('../fixtures/existing-application', import.meta.url), applicationPath, { recursive: true })
 
   const root = await createTemporaryDirectory(t, 'other')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -34,7 +28,6 @@ test('Support packages without generator via importing (new application)', async
   ])
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler,
     args: ['--module=@platformatic/vite']
   })
@@ -76,7 +69,6 @@ test('Support packages without generator via importing (existing applications)',
   await execa('git', ['remote', 'add', 'origin', 'git@github.com:hello/world.git'], { cwd: applicationPath })
 
   const root = await createTemporaryDirectory(t, 'other')
-  const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
 
   // The actions must match IN ORDER
@@ -100,7 +92,6 @@ test('Support packages without generator via importing (existing applications)',
   ])
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler: userInputHandler1
   })
 
@@ -111,7 +102,6 @@ test('Support packages without generator via importing (existing applications)',
   await writeFile(resolve(join(baseProjectDir, 'platformatic.json')), JSON.stringify(runtimeConfig, null, 2))
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler: userInputHandler2,
     args: ['--module=@platformatic/vite']
   })
@@ -159,7 +149,6 @@ test('Support packages without generator via copy (new application)', async t =>
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
   const root = await createTemporaryDirectory(t, 'other')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -174,7 +163,6 @@ test('Support packages without generator via copy (new application)', async t =>
   ])
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler,
     args: ['--module=@platformatic/vite']
   })
@@ -211,7 +199,6 @@ test('Support packages without generator via copy (existing applications)', asyn
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
   const root = await createTemporaryDirectory(t, 'other')
-  const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
 
   // The actions must match IN ORDER
@@ -235,7 +222,6 @@ test('Support packages without generator via copy (existing applications)', asyn
   ])
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler: userInputHandler1
   })
 
@@ -245,7 +231,6 @@ test('Support packages without generator via copy (existing applications)', asyn
   await writeFile(resolve(join(baseProjectDir, 'platformatic.json')), JSON.stringify(runtimeConfig, null, 2))
 
   await executeCreatePlatformatic(root, {
-    marketplaceHost,
     userInputHandler: userInputHandler2,
     args: ['--module=@platformatic/vite']
   })

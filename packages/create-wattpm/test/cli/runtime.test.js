@@ -7,13 +7,11 @@ import {
   executeCreatePlatformatic,
   getApplications,
   linkDependencies,
-  setupUserInputHandler,
-  startMarketplace
+  setupUserInputHandler
 } from './helper.js'
 
 test('Creates a Platformatic Runtime with two Applications', async t => {
   const root = await createTemporaryDirectory(t, 'runtime')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -32,7 +30,7 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   ])
 
   // The actions must match IN ORDER
-  await executeCreatePlatformatic(root, { pkgManager: 'pnpm', marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { pkgManager: 'pnpm', userInputHandler })
 
   equal(await isFileAccessible(join(root, '.gitignore')), true)
   equal(await isFileAccessible(join(root, '.env')), true)
@@ -63,7 +61,6 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
 test('Add another application to an existing application', async t => {
   const tmpDir = await createTemporaryDirectory(t, 'runtime')
   const root = join(tmpDir, 'platformatic')
-  const marketplaceHost = await startMarketplace(t)
 
   {
     const userInputHandler = await setupUserInputHandler(t, [
@@ -76,7 +73,7 @@ test('Add another application to an existing application', async t => {
       { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
     ])
 
-    await executeCreatePlatformatic(tmpDir, { pkgManager: 'pnpm', marketplaceHost, userInputHandler })
+    await executeCreatePlatformatic(tmpDir, { pkgManager: 'pnpm', userInputHandler })
 
     equal(await isFileAccessible(join(root, '.gitignore')), true)
     equal(await isFileAccessible(join(root, '.env')), true)
@@ -110,7 +107,7 @@ test('Add another application to an existing application', async t => {
     ])
 
     // The actions must match IN ORDER
-    await executeCreatePlatformatic(root, { pkgManager: 'pnpm', marketplaceHost, userInputHandler })
+    await executeCreatePlatformatic(root, { pkgManager: 'pnpm', userInputHandler })
 
     // Here check the generated applications
     const applications = await getApplications(join(root, 'applications'))

@@ -12,7 +12,6 @@ Arguments:
 
 - `-c, --config <config>`: Name of the configuration file to use (the default is `watt.json`)
 - `-s, --skip-dependencies`: Do not install dependencies after creating the files
-- `-m, --marketplace <url>`: Platformatic Marketplace host (the default is `https://marketplace.platformatic.dev`)
 - `-P, --package-manager <executable>`: Use an alternative package manager (the default is `npm`)
 - `-M, --module <name>`: An additional module (or a comma separated list of modules) to use as application generator (it can be used multiple times)
 
