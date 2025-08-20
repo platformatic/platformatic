@@ -381,7 +381,7 @@ If the `metrics` object is not provided, the Prometheus server will not be start
 > **Warning:** Experimental. The feature is not subject to semantic versioning rules. Non-backward compatible changes or removal may occur in any future release. Use of the feature is not recommended in production environments.
 
 An optional object that configures the Platformatic Management Api. If this object
-is not provided, the Platformatic Management Api will not be started. If enabled,
+is not provided, the Platformatic Management Api will be started by default. If enabled,
 it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>`
 inside the OS temporary folder.
 
