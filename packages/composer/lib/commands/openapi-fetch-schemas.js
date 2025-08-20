@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { FailedToFetchOpenAPISchemaError } from '../errors.js'
 import { schema } from '../schema.js'
+import { upgrade } from '../upgrade.js'
 import { prefixWithSlash } from '../utils.js'
 
 export async function fetchOpenApiSchema (application) {
@@ -25,7 +26,7 @@ export async function fetchOpenApiSchema (application) {
 
 export async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
   const { bold } = colorette
-  const config = await loadConfiguration(configFile, schema)
+  const config = await loadConfiguration(configFile, schema, { upgrade })
   const { applications } = config.composer
 
   const applicationsWithValidOpenApi = applications.filter(({ openapi }) => openapi && openapi.url && openapi.file)
