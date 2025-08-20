@@ -52,6 +52,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'guides/frameworks',
+            'guides/create-wattpm',
             'guides/build-modular-monolith',
             'guides/cache-with-platformatic-watt',
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',
