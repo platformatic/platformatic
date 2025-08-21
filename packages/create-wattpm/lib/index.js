@@ -25,19 +25,20 @@ import { createGitRepository } from './git.js'
 import { findComposerConfigFile, getUsername, getVersion, say } from './utils.js'
 
 const defaultCapabilities = [
-  '@platformatic/service',
   '@platformatic/node',
   '@platformatic/composer',
-  '@platformatic/db',
   '@platformatic/next',
   '@platformatic/vite',
   '@platformatic/astro',
   '@platformatic/remix',
   '@platformatic/nest',
+  '@platformatic/service',
+  '@platformatic/db',
   '@platformatic/php',
   '@platformatic/ai-warp',
   '@platformatic/pg-hooks',
-  '@platformatic/rabbitmq-hooks'
+  '@platformatic/rabbitmq-hooks',
+  '@platformatic/kafka-hooks'
 ]
 
 export * from './git.js'
