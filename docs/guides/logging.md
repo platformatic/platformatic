@@ -390,7 +390,7 @@ You can use environment variables in your logger configuration:
 
 ### Full options configuration
 
-A `platformatic.json` configuration file contains the following logger options will look like this:
+A `watt.json` configuration file contains the following logger options will look like this:
 
 ```json
 {
@@ -451,7 +451,7 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ## Setting up a Platformatic application with logging configuration
 
-Let's see an example of a Platformatic application with `watt`, `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` services, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Watt configuration with `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` services, the application is available in the `docs/guides/logger` directory.
 
 The main `watt` service has a shared logger configuration that is used by all the services, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` service ensures that the logs will be consistent across all the services.
 
@@ -476,7 +476,7 @@ The main `watt` service has a shared logger configuration that is used by all th
 
 The other services have their own logger configuration, for example the `backend` service has a redaction configuration
 
-`backend/platformatic.json`
+`backend/watt.json`
 
 ```json
 {
@@ -508,7 +508,7 @@ const app = fastify({
 
 The `next` service has a custom formatter that adds the `service` property to the logs, note the service level is different in the services.
 
-`next/platformatic.json`
+`next/watt.json`
 
 ```json
 {
