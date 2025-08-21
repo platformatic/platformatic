@@ -1,6 +1,6 @@
 'use strict'
 
-const { strictEqual, rejects } = require('node:assert')
+const { strictEqual } = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
