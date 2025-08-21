@@ -45,31 +45,7 @@ test('should disable the management API if requested to', async t => {
 
   await app.start()
 
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: app.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
+  strictEqual(app.getManagementApiUrl(), null)
 
-  t.after(async () => {
-    await Promise.all([client.close(), app.close()])
-  })
-
-  await rejects(
-    async () => {
-      const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/config' })
-      strictEqual(statusCode, 200)
-
-      const runtimeConfig = await body.json()
-
-      process._rawDebug(statusCode, runtimeConfig)
-    },
-    { code: /ECONNREFUSED/ }
-  )
+  t.after(() => app.close())
 })
