@@ -2,7 +2,7 @@
 
 ## Important Note
 
-**This guide focuses specifically on Platformatic services (Service, DB, and Composer) that run within Watt.** 
+**This guide focuses specifically on Platformatic API services (Service, DB, and Composer) that run within Watt.** 
 
 If you're working with basic Node.js applications without Platformatic services, the TypeScript compilation workflow is different and involves standard TypeScript toolchain (tsc, webpack, etc.) rather than the Platformatic-specific commands shown in this guide.
 
@@ -33,7 +33,7 @@ This guide shows you how to pre-compile TypeScript for Platformatic services bef
 
 ### Basic TypeScript Configuration
 
-If you've generated your application using `npx wattpm create`, your config file will include TypeScript support. The exact configuration depends on which Platformatic service type you're using:
+If you've generated your application using `npx wattpm create@latest`, your config file will include TypeScript support. The exact configuration depends on which Platformatic service type you're using:
 
 **For Platformatic Service, DB, or Composer services:**
 ```json
