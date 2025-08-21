@@ -1,14 +1,12 @@
-'use strict'
-
-const { buildOpenAPIClient, buildGraphQLClient } = require('./index.js')
-const errors = require('./lib/errors.js')
-const { kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
+import { buildGraphQLClient, buildOpenAPIClient } from './index.js'
+import { WrongOptsTypeError } from './lib/errors.js'
+import { kGetHeaders, kTelemetryContext } from './lib/symbols.js'
 
 function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-async function plugin (app, opts) {
+export async function plugin (app, opts) {
   let client = null
   let getHeaders = null
 
@@ -30,7 +28,7 @@ async function plugin (app, opts) {
     }
     client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
   } else {
-    throw new errors.WrongOptsTypeError()
+    throw new WrongOptsTypeError()
   }
 
   let name = opts.name
@@ -62,5 +60,4 @@ plugin[Symbol.for('plugin-meta')] = {
   name: '@platformatic/client'
 }
 
-module.exports = plugin
-module.exports.default = plugin
+export default plugin

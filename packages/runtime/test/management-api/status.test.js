@@ -1,12 +1,10 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get the runtime status', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -36,9 +34,9 @@ test('should get the runtime status', async t => {
       path: '/api/v1/status'
     })
 
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
     const { status } = await body.json()
-    assert.strictEqual(status, 'init')
+    strictEqual(status, 'init')
   }
 
   const startPromise = app.start()
@@ -49,9 +47,9 @@ test('should get the runtime status', async t => {
       path: '/api/v1/status'
     })
 
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
     const { status } = await body.json()
-    assert.strictEqual(status, 'starting')
+    strictEqual(status, 'starting')
   }
 
   await startPromise
@@ -62,8 +60,8 @@ test('should get the runtime status', async t => {
       path: '/api/v1/status'
     })
 
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
     const { status } = await body.json()
-    assert.strictEqual(status, 'started')
+    strictEqual(status, 'started')
   }
 })

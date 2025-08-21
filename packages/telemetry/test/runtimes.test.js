@@ -1,17 +1,14 @@
-'use strict'
-
-const { equal, deepEqual, ok } = require('node:assert')
-const { resolve, join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { parseNDJson } = require('./helper.js')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { SpanKind } = require('@opentelemetry/api')
-const { findParentSpan, findSpanWithParentWithId } = require('./helper')
-const { setFixturesDir, createRuntime, prepareRuntime, startRuntime } = require('../../basic/test/helper.js')
+import { SpanKind } from '@opentelemetry/api'
+import { deepEqual, equal, ok } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
+import { findParentSpan, findSpanWithParentWithId, parseNDJson } from './helper.js'
 
 process.setMaxListeners(100)
-setFixturesDir(resolve(__dirname, './fixtures'))
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 async function getSpans (spanPaths) {
   const spans = await parseNDJson(spanPaths)
@@ -222,7 +219,7 @@ test('configure telemetry correctly with a composer + next', async t => {
   const { runtime, root } = await prepareRuntime(t, 'composer-next-node-fastify', true, 'platformatic.json')
 
   // build next
-  const cliPath = join(__dirname, '../../wattpm', 'bin/cli.js')
+  const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
   const { execa } = await import('execa')
   await execa('node', [cliPath, 'build'], {
     cwd: root

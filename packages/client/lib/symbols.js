@@ -1,9 +1,3 @@
-const kHeaders = Symbol('headers')
-const kGetHeaders = Symbol('getHeaders')
-const kTelemetryContext = Symbol('telemetry-context')
-
-module.exports = {
-  kHeaders,
-  kGetHeaders,
-  kTelemetryContext
-}
+export const kHeaders = Symbol('headers')
+export const kGetHeaders = Symbol('getHeaders')
+export const kTelemetryContext = Symbol('telemetry-context')

@@ -1,15 +1,12 @@
-'use strict'
-
-const { test, after } = require('node:test')
-const assert = require('node:assert')
-const { join, resolve } = require('node:path')
-const { moveToTmpdir } = require('./helpers')
-const { cp, readFile, writeFile, stat, symlink } = require('node:fs/promises')
-const { RuntimeGenerator } = require('../lib/generator')
-const { Generator: ServiceGenerator } = require('@platformatic/service/lib/generator')
-const { createDirectory } = require('@platformatic/foundation')
-const { DotEnvTool } = require('dotenv-tool')
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import { createDirectory } from '@platformatic/foundation'
+import { Generator as ServiceGenerator } from '@platformatic/service'
+import assert from 'node:assert'
+import { cp, readFile, stat, symlink, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import test, { after } from 'node:test'
+import { MockAgent, setGlobalDispatcher } from 'undici'
+import { RuntimeGenerator, createDotenvTool } from '../lib/generator.js'
+import { moveToTmpdir } from './helpers.js'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -20,8 +17,8 @@ async function setupTemporaryDirectory (fixture) {
 
   await cp(fixture, dir, { recursive: true })
   await createDirectory(resolve(dir, 'node_modules/@platformatic'))
-  await symlink(resolve(__dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
-  await symlink(resolve(__dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
 
   return dir
 }
@@ -43,7 +40,7 @@ function mockNpmJsRequestForPkgs (pkgs) {
 }
 
 test('should remove an application', async t => {
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -61,7 +58,7 @@ test('should remove an application', async t => {
     applications: [updatedFoobar] // the original application was removed
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -88,7 +85,7 @@ test('should remove an application', async t => {
 test('should add a new application with new env variables', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -141,7 +138,7 @@ test('should add a new application with new env variables', async t => {
     }
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -164,7 +161,7 @@ test('should add a new application with new env variables', async t => {
 test("should update existing application's plugin options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -226,7 +223,7 @@ test("should update existing application's plugin options", async t => {
   assert.deepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -248,7 +245,7 @@ test("should update existing application's plugin options", async t => {
 test("should add new application's plugin and options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport', '@fastify/oauth2'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -351,7 +348,7 @@ test("should add new application's plugin and options", async t => {
     option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}'
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -371,7 +368,7 @@ test("should add new application's plugin and options", async t => {
 test('should remove a plugin from an existing application', async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -409,7 +406,7 @@ test('should remove a plugin from an existing application', async t => {
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -433,7 +430,7 @@ test('should remove a plugin from an existing application', async t => {
 test('should remove a plugin from an application and add the same on the other', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -512,7 +509,7 @@ test('should remove a plugin from an application and add the same on the other',
   })
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 
@@ -531,7 +528,7 @@ test('should remove a plugin from an application and add the same on the other',
 test('should handle new fields on new application', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
   const dir = await setupTemporaryDirectory(fixture)
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
@@ -585,7 +582,7 @@ test('should handle new fields on new application', async t => {
   assert.equal(applicationConfigFile.plugins.packages, undefined)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
+  const runtimeDotEnv = createDotenvTool({
     path: join(dir, '.env')
   })
 

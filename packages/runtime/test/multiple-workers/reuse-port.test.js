@@ -1,14 +1,11 @@
-'use strict'
-
-const { deepStrictEqual, ok } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { features } = require('@platformatic/foundation')
-const { request } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const { updateConfigFile } = require('../helpers')
-const { prepareRuntime, waitForEvents } = require('./helper')
+import { features } from '@platformatic/foundation'
+import { deepStrictEqual, ok } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime, updateConfigFile } from '../helpers.js'
+import { prepareRuntime, waitForEvents } from './helper.js'
 
 test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
@@ -48,7 +45,11 @@ test('applications are started with multiple workers even for the entrypoint whe
           { event: 'application:worker:stopped', application: 'node', worker: 4 }
         ]
       ]
-    : [1, [{ event: 'application:started', application: 'node' }], [{ event: 'application:stopped', application: 'node' }]]
+    : [
+        1,
+        [{ event: 'application:started', application: 'node' }],
+        [{ event: 'application:stopped', application: 'node' }]
+      ]
 
   const startMessagesPromise = waitForEvents(app, startMessages)
 

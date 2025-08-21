@@ -1,11 +1,9 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
 test('should properly setup the enum types', { skip: isSQLite }, async t => {
   const app = fastify()

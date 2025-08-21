@@ -1,11 +1,9 @@
-'use strict'
-
-const { clear, connInfo, isSQLite } = require('./helper')
-const { equal, ok: pass } = require('node:assert/strict')
-const { test } = require('node:test')
-const fastify = require('fastify')
-const sqlOpenAPI = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -29,7 +27,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('path schema override', async (t) => {
+test('path schema override', async t => {
   const customSummary1 = 'Custom summary 1'
   const customDescription1 = 'Custom description 1'
   const customSummary2 = 'Custom summary 2'
@@ -43,11 +41,11 @@ test('path schema override', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     ignore: {
-      category: true,
+      category: true
     },
     paths: {
       '/pages': {
@@ -55,10 +53,10 @@ test('path schema override', async (t) => {
         description: customDescription1,
         put: {
           summary: customSummary2,
-          description: customDescription2,
-        },
-      },
-    },
+          description: customDescription2
+        }
+      }
+    }
   })
   t.after(() => app.close())
 
@@ -67,7 +65,7 @@ test('path schema override', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
 
     equal(res.statusCode, 200, 'GET /documentation/json status code')

@@ -1,11 +1,10 @@
-'use strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { hostname as getHostname } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, readLogs } from '../helpers.js'
 
-const { ok, strictEqual, deepStrictEqual } = require('node:assert')
-const { join } = require('node:path')
-const { hostname: getHostname } = require('node:os')
-const { test } = require('node:test')
-const { createRuntime, readLogs } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('logs stdio from the application thread', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')

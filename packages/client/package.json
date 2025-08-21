@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.5",
   "description": "A client for all platformatic backends",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "lint": "eslint",
     "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",

@@ -1,23 +1,19 @@
-'use strict'
-
-const inspector = require('node:inspector')
-const {
+import { resolve, validationOptions } from '@platformatic/basic'
+import {
+  abstractLogger,
+  ensureLoggableError,
+  extractModuleFromSchemaUrl,
+  findRuntimeConfigurationFile,
   kMetadata,
   loadConfigurationModule,
-  abstractLogger,
-  findRuntimeConfigurationFile,
-  loadConfiguration: utilsLoadConfiguration,
-  extractModuleFromSchemaUrl,
-  ensureLoggableError
-} = require('@platformatic/foundation')
-const { resolve, validationOptions } = require('@platformatic/basic')
-const { NodeInspectorFlagsNotSupportedError } = require('./lib/errors')
-const { wrapInRuntimeConfig, transform } = require('./lib/config')
-const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator')
-const { Runtime } = require('./lib/runtime')
-const symbols = require('./lib/worker/symbols')
-const { schema } = require('./lib/schema')
-const { upgrade } = require('./lib/upgrade')
+  loadConfiguration as utilsLoadConfiguration
+} from '@platformatic/foundation'
+import inspector from 'node:inspector'
+import { transform, wrapInRuntimeConfig } from './lib/config.js'
+import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
+import { Runtime } from './lib/runtime.js'
+import { schema } from './lib/schema.js'
+import { upgrade } from './lib/upgrade.js'
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all applications ...')
@@ -38,7 +34,7 @@ function handleSignal (runtime) {
   })
 }
 
-async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
 
   // First of all, load the configuration without any validation
@@ -58,7 +54,7 @@ async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   })
 }
 
-async function loadApplicationsCommands () {
+export async function loadApplicationsCommands () {
   const applications = {}
   const commands = {}
   const help = {}
@@ -105,7 +101,7 @@ async function loadApplicationsCommands () {
   return { applications, commands, help }
 }
 
-async function create (configOrRoot, sourceOrConfig, context) {
+export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
 
   if (inspector.url() && !config[kMetadata].env.VSCODE_INSPECTOR_OPTIONS) {
@@ -147,17 +143,10 @@ async function create (configOrRoot, sourceOrConfig, context) {
   return runtime
 }
 
-const platformaticVersion = require('./package.json').version
-
-module.exports.errors = require('./lib/errors')
-module.exports.Generator = RuntimeGenerator
-module.exports.WrappedGenerator = WrappedGenerator
-module.exports.schema = schema
-module.exports.symbols = symbols
-module.exports.Runtime = Runtime
-module.exports.wrapInRuntimeConfig = wrapInRuntimeConfig
-module.exports.version = platformaticVersion
-module.exports.loadConfiguration = loadConfiguration
-module.exports.create = create
-module.exports.transform = transform
-module.exports.loadApplicationsCommands = loadApplicationsCommands
+export { transform, wrapInRuntimeConfig } from './lib/config.js'
+export * as errors from './lib/errors.js'
+export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
+export { Runtime } from './lib/runtime.js'
+export { schema } from './lib/schema.js'
+export { version as platformaticVersion } from './lib/version.js'
+export * as symbols from './lib/worker/symbols.js'

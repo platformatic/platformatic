@@ -1,10 +1,9 @@
-'use strict'
+import { equal } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('all applications have trustProxy = true in server config (except entrypoint)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
@@ -15,9 +14,9 @@ test('all applications have trustProxy = true in server config (except entrypoin
   for (const s of applications.applications) {
     const config = await app.getApplicationConfig(s.id)
     if (s.entrypoint) {
-      assert.equal(config.server.trustProxy, undefined)
+      equal(config.server.trustProxy, undefined)
     } else {
-      assert.equal(config.server.trustProxy, true)
+      equal(config.server.trustProxy, true)
     }
   }
   t.after(async () => {

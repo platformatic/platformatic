@@ -1,11 +1,9 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get a application openapi schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -18,7 +16,7 @@ test('should get a application openapi schema', async t => {
   })
 
   const openapiSchema = await app.getApplicationOpenapiSchema('with-logger')
-  assert.deepStrictEqual(openapiSchema, {
+  deepStrictEqual(openapiSchema, {
     openapi: '3.0.3',
     info: {
       title: 'Platformatic',
@@ -52,5 +50,5 @@ test('should fail to get a application openapi schema if application does not ex
   })
 
   const openapiSchema = await app.getApplicationOpenapiSchema('without-openapi')
-  assert.strictEqual(openapiSchema, null)
+  strictEqual(openapiSchema, null)
 })

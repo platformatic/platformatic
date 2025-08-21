@@ -1,11 +1,9 @@
-'use strict'
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should kill the thread even if stop fails', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -17,7 +15,7 @@ test('should kill the thread even if stop fails', async t => {
     method: 'GET',
     url: '/crash-on-close'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   // Should not fail and hang
   const start = process.hrtime.bigint()
@@ -26,5 +24,5 @@ test('should kill the thread even if stop fails', async t => {
 
   // We are satisfied if killing took less that twice of the allowed timeout
   const config = await app.getRuntimeConfig()
-  assert.ok(elapsed < config.gracefulShutdown.runtime * 2)
+  ok(elapsed < config.gracefulShutdown.runtime * 2)
 })

@@ -1,15 +1,14 @@
-'use strict'
+import { EventEmitter, once } from 'events'
+import Fastify from 'fastify'
+import { deepStrictEqual, equal, fail, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { transform } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createRuntime } = require('./helpers.js')
-const { transform } = require('../lib/config')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const Fastify = require('fastify')
-const { once, EventEmitter } = require('events')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function createRuntimeWithScheduler (t, scheduler) {
   const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
@@ -50,9 +49,9 @@ test('Should throw if cron is not valid', async t => {
       }
     ])
 
-    assert.fail('Should throw')
+    fail('Should throw')
   } catch (e) {
-    assert.strictEqual(e.message, 'Invalid cron expression "BOOM!" for scheduler "test"')
+    strictEqual(e.message, 'Invalid cron expression "BOOM!" for scheduler "test"')
   }
 })
 
@@ -107,7 +106,7 @@ test('Should not start a job if disabled', async t => {
 
   t.after(() => app.close())
   await new Promise(resolve => setTimeout(resolve, 3000))
-  assert.equal(calls.length, 0, 'Should not have been called')
+  equal(calls.length, 0, 'Should not have been called')
 })
 
 test('Should retry 3 times if fails ', async t => {
@@ -141,7 +140,7 @@ test('Should retry 3 times if fails ', async t => {
   t.after(() => app.close())
   // 3 attempts, the third one should succeed
   await once(ee, 'success')
-  assert.deepStrictEqual(calls.slice(0, 3), ['failure', 'failure', 'success'])
+  deepStrictEqual(calls.slice(0, 3), ['failure', 'failure', 'success'])
 })
 
 test('Start a job that hits a server with a POST of a JSON', async t => {
@@ -172,7 +171,7 @@ test('Start a job that hits a server with a POST of a JSON', async t => {
   t.after(() => app.close())
   // should be called multiple times (one time per second)
   await once(ee, 'target called')
-  assert.deepStrictEqual(bodyCall, { test: 'test' })
+  deepStrictEqual(bodyCall, { test: 'test' })
 })
 
 test('Start a job that hits a server with a POST of a TXT', async t => {
@@ -203,7 +202,7 @@ test('Start a job that hits a server with a POST of a TXT', async t => {
   t.after(async () => app.close())
   // should be called multiple times (one time per second)
   await once(ee, 'target called')
-  assert.deepStrictEqual(bodyCall, 'test')
+  deepStrictEqual(bodyCall, 'test')
 })
 
 test('Shoud stop retrying after 3 times ', async t => {
@@ -236,7 +235,7 @@ test('Shoud stop retrying after 3 times ', async t => {
   await once(ee, 'success')
 
   // 3 attempts, then should be reset
-  assert.deepStrictEqual(attempts, [1, 2, 3, 1])
+  deepStrictEqual(attempts, [1, 2, 3, 1])
 })
 
 test('Works with the mesh network', async t => {
@@ -262,5 +261,5 @@ test('Works with the mesh network', async t => {
 
   const body = await res.body.json()
   const { counter } = body
-  assert.ok(counter > 0)
+  ok(counter > 0)
 })

@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = {
+export default {
   version: '2.99.0',
   up (config) {
     if (typeof config.gracefulShutdown?.service === 'number') {

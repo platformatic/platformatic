@@ -1,52 +1,48 @@
-'use strict'
+import { findNearestString } from '@platformatic/foundation'
+import camelcase from 'camelcase'
+import {
+  GraphQLEnumType,
+  GraphQLID,
+  GraphQLInputObjectType,
+  GraphQLInt,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLScalarType
+} from 'graphql'
+import { UnableToGenerateGraphQLEnumTypeError } from './errors.js'
+import { fromSelectionSet, sqlTypeToGraphQL } from './utils.js'
 
-const graphql = require('graphql')
-const camelcase = require('camelcase')
-const { findNearestString } = require('@platformatic/foundation')
-const {
-  sqlTypeToGraphQL,
-  fromSelectionSet,
-} = require('./utils')
-const errors = require('./errors')
-
-const ascDesc = new graphql.GraphQLEnumType({
+const ascDesc = new GraphQLEnumType({
   name: 'OrderByDirection',
   values: {
     ASC: { value: 'ASC' },
-    DESC: { value: 'DESC' },
-  },
+    DESC: { value: 'DESC' }
+  }
 })
 
-const limitType = new graphql.GraphQLScalarType({
+const limitType = new GraphQLScalarType({
   name: 'LimitInt',
-  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown',
+  description:
+    'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
 })
 
-function constructGraph (app, entity, opts, ignore) {
-  const primaryKeys = Array.from(entity.primaryKeys).map((key) => camelcase(key))
-  const relationalFields = entity.relations
-    .map((relation) => relation.column_name)
+export function constructGraph (app, entity, opts, ignore) {
+  const primaryKeys = Array.from(entity.primaryKeys).map(key => camelcase(key))
+  const relationalFields = entity.relations.map(relation => relation.column_name)
   const entityName = entity.name
   const singular = entity.singularName
   const plural = entity.pluralName
-  const {
-    queryTopFields,
-    mutationTopFields,
-    resolvers,
-    federationReplacements,
-    federationMetadata,
-    loaders,
-  } = opts
+  const { queryTopFields, mutationTopFields, resolvers, federationReplacements, federationMetadata, loaders } = opts
 
-  const entityFieldsNames = Object.values(entity.fields)
-    .map(field => field.camelcase)
+  const entityFieldsNames = Object.values(entity.fields).map(field => field.camelcase)
 
   for (const ignoredField of Object.keys(ignore)) {
     if (!entityFieldsNames.includes(ignoredField)) {
       const nearestField = findNearestString(entityFieldsNames, ignoredField)
       app.log.warn(
-      `Ignored graphql field "${ignoredField}" not found in entity "${entity.singularName}".` +
-      ` Did you mean "${nearestField}"?`
+        `Ignored graphql field "${ignoredField}" not found in entity "${entity.singularName}".` +
+          ` Did you mean "${nearestField}"?`
       )
     }
   }
@@ -66,7 +62,7 @@ function constructGraph (app, entity, opts, ignore) {
     /* istanbul ignore next */
     if (field.isArray) {
       const listType = sqlTypeToGraphQL(field.sqlType)
-      meta.type = new graphql.GraphQLList(listType)
+      meta.type = new GraphQLList(listType)
     } else if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue, index) => {
         let key = enumValue.replace(/[^\w]/g, '_')
@@ -85,38 +81,46 @@ function constructGraph (app, entity, opts, ignore) {
       }, {})
       try {
         const name = camelcase([entityName, key])
-        meta.type = new graphql.GraphQLEnumType({ name, values: enumValues })
+        meta.type = new GraphQLEnumType({ name, values: enumValues })
       } catch (error) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
-        throw new errors.UnableToGenerateGraphQLEnumTypeError()
+        throw new UnableToGenerateGraphQLEnumTypeError()
       }
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)
     }
     if (field.primaryKey) {
       meta.primaryKeyType = field.type
-      meta.type = graphql.GraphQLID
+      meta.type = GraphQLID
     } else if (field.foreignKey) {
-      meta.type = graphql.GraphQLID
+      meta.type = GraphQLID
     }
     fields[field.camelcase] = meta
   }
 
-  const type = new graphql.GraphQLObjectType({
+  const type = new GraphQLObjectType({
     name: entityName,
-    fields,
+    fields
   })
 
   resolvers.Query = resolvers.Query || {}
   resolvers.Mutation = resolvers.Mutation || {}
   loaders.Query = loaders.Query || {}
 
-  const getBy = camelcase(['get', singular, ...(primaryKeys.map((key, i) => {
-    if (i === 0) {
-      return ['by', key]
-    }
-    return ['and', key]
-  }).flat())].join('_'))
+  const getBy = camelcase(
+    [
+      'get',
+      singular,
+      ...primaryKeys
+        .map((key, i) => {
+          if (i === 0) {
+            return ['by', key]
+          }
+          return ['and', key]
+        })
+        .flat()
+    ].join('_')
+  )
 
   const whereFields = Object.keys(fields).reduce((acc, field) => {
     let graphqlFields
@@ -130,50 +134,52 @@ function constructGraph (app, entity, opts, ignore) {
         lt: { type: fields[field].type },
         lte: { type: fields[field].type },
         like: { type: fields[field].type },
-        in: { type: new graphql.GraphQLList(fields[field].type) },
-        nin: { type: new graphql.GraphQLList(fields[field].type) },
+        in: { type: new GraphQLList(fields[field].type) },
+        nin: { type: new GraphQLList(fields[field].type) }
       }
     } else {
       graphqlFields = {
         any: { type: fields[field].type.ofType },
         all: { type: fields[field].type.ofType },
-        contains: { type: new graphql.GraphQLList(fields[field].type) },
-        contained: { type: new graphql.GraphQLList(fields[field].type) },
-        overlaps: { type: new graphql.GraphQLList(fields[field].type) },
+        contains: { type: new GraphQLList(fields[field].type) },
+        contained: { type: new GraphQLList(fields[field].type) },
+        overlaps: { type: new GraphQLList(fields[field].type) }
       }
     }
     acc[field] = {
-      type: new graphql.GraphQLInputObjectType({
+      type: new GraphQLInputObjectType({
         name: `${entityName}WhereArguments${field}`,
-        fields: graphqlFields,
-      }),
+        fields: graphqlFields
+      })
     }
     return acc
   }, {})
 
-  const whereArgType = new graphql.GraphQLInputObjectType({
+  const whereArgType = new GraphQLInputObjectType({
     name: `${entityName}WhereArguments`,
     fields: {
       ...whereFields,
       or: {
-        type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({
-          name: `${entityName}WhereArgumentsOr`,
-          fields: {
-            ...whereFields,
-          },
-        })),
-      },
-    },
+        type: new GraphQLList(
+          new GraphQLInputObjectType({
+            name: `${entityName}WhereArgumentsOr`,
+            fields: {
+              ...whereFields
+            }
+          })
+        )
+      }
+    }
   })
 
   queryTopFields[getBy] = {
     type,
     args: {
-      ...(primaryKeys.reduce((acc, primaryKey) => {
-        acc[primaryKey] = { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
+      ...primaryKeys.reduce((acc, primaryKey) => {
+        acc[primaryKey] = { type: new GraphQLNonNull(fields[primaryKey].type) }
         return acc
-      }, {})),
-    },
+      }, {})
+    }
   }
   loaders.Query[getBy] = {
     loader (queries, ctx) {
@@ -188,49 +194,51 @@ function constructGraph (app, entity, opts, ignore) {
       return loadMany(keys, queries, ctx)
     },
     opts: {
-      cache: false,
-    },
+      cache: false
+    }
   }
 
-  const orderByFields = new graphql.GraphQLEnumType({
+  const orderByFields = new GraphQLEnumType({
     name: `${entityName}OrderByField`,
     values: Object.keys(fields).reduce((acc, field) => {
       /* istanbul ignore else */
       if (!fields[field].isArray) {
         acc[field] = {
-          value: field,
+          value: field
         }
       }
       return acc
-    }, {}),
+    }, {})
   })
   queryTopFields[plural] = {
-    type: new graphql.GraphQLList(type),
+    type: new GraphQLList(type),
     args: {
       limit: { type: limitType },
-      offset: { type: graphql.GraphQLInt },
+      offset: { type: GraphQLInt },
       orderBy: {
-        type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({
-          name: `${entityName}OrderByArguments`,
-          fields: {
-            field: { type: orderByFields },
-            direction: { type: new graphql.GraphQLNonNull(ascDesc) },
-          },
-        })),
+        type: new GraphQLList(
+          new GraphQLInputObjectType({
+            name: `${entityName}OrderByArguments`,
+            fields: {
+              field: { type: orderByFields },
+              direction: { type: new GraphQLNonNull(ascDesc) }
+            }
+          })
+        )
       },
-      where: { type: whereArgType },
-    },
+      where: { type: whereArgType }
+    }
   }
 
   resolvers.Query[plural] = (_, query, ctx, info) => {
-    const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
+    const requestedFields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
     for (const primaryKey of primaryKeys) {
       requestedFields.push(primaryKey)
     }
     return entity.find({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
   }
 
-  const inputType = new graphql.GraphQLInputObjectType({
+  const inputType = new GraphQLInputObjectType({
     name: `${entityName}Input`,
     fields: Object.keys(fields).reduce((acc, field) => {
       const meta = fields[field]
@@ -239,27 +247,27 @@ function constructGraph (app, entity, opts, ignore) {
         acc[field] = meta
       }
       return acc
-    }, {}),
+    }, {})
   })
 
   const count = camelcase(['count', plural])
 
-  const countType = new graphql.GraphQLObjectType({
+  const countType = new GraphQLObjectType({
     name: `${plural}Count`,
     fields: {
-      total: { type: graphql.GraphQLInt },
-    },
+      total: { type: GraphQLInt }
+    }
   })
 
   queryTopFields[count] = {
     type: countType,
     args: {
-      where: { type: whereArgType },
-    },
+      where: { type: whereArgType }
+    }
   }
 
   resolvers.Query[count] = async (_, query, ctx, info) => {
-    const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
+    const requestedFields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
     for (const primaryKey of primaryKeys) {
       requestedFields.push(primaryKey)
     }
@@ -272,8 +280,8 @@ function constructGraph (app, entity, opts, ignore) {
   mutationTopFields[save] = {
     type,
     args: {
-      input: { type: new graphql.GraphQLNonNull(inputType) },
-    },
+      input: { type: new GraphQLNonNull(inputType) }
+    }
   }
 
   resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
@@ -284,10 +292,10 @@ function constructGraph (app, entity, opts, ignore) {
   const insert = camelcase(['insert', plural])
 
   mutationTopFields[insert] = {
-    type: new graphql.GraphQLList(type),
+    type: new GraphQLList(type),
     args: {
-      inputs: { type: new graphql.GraphQLNonNull(new graphql.GraphQLList(inputType)) },
-    },
+      inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
+    }
   }
 
   resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
@@ -297,20 +305,20 @@ function constructGraph (app, entity, opts, ignore) {
 
   const deleteKey = camelcase(['delete', plural])
   mutationTopFields[deleteKey] = {
-    type: new graphql.GraphQLList(type),
+    type: new GraphQLList(type),
     args: {
-      where: { type: whereArgType },
-    },
+      where: { type: whereArgType }
+    }
   }
 
   resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
-    const fields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
+    const fields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
     return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
   }
 
   federationReplacements.push({
     find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKeys}")`,
+    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
   })
 
   if (federationMetadata) {
@@ -328,8 +336,8 @@ function constructGraph (app, entity, opts, ignore) {
         return loadMany(keys, queries, ctx)
       },
       opts: {
-        cache: false,
-      },
+        cache: false
+      }
     }
   }
 
@@ -339,7 +347,7 @@ function constructGraph (app, entity, opts, ignore) {
     loadMany,
     getFields,
     relationalFields,
-    fields,
+    fields
   }
 
   async function loadMany (keys, queries, ctx) {
@@ -357,7 +365,7 @@ function constructGraph (app, entity, opts, ignore) {
           acc[key].in.push(value)
         } else {
           acc[key] = {
-            in: [value],
+            in: [value]
           }
         }
         return acc
@@ -369,16 +377,14 @@ function constructGraph (app, entity, opts, ignore) {
       where,
       fields,
       limit,
-      ctx,
+      ctx
     })
 
     const matchedRaws = []
     // TODO this is extremely inefficient
     // we need a better data structure
     for (const pair of keys) {
-      const matchedRaw = rows.find((raw) =>
-        pair.every(({ key, value }) => raw[key] === value)
-      ) || null
+      const matchedRaw = rows.find(raw => pair.every(({ key, value }) => raw[key] === value)) || null
       matchedRaws.push(matchedRaw)
     }
 
@@ -397,5 +403,3 @@ function constructGraph (app, entity, opts, ignore) {
     return [...fields]
   }
 }
-
-module.exports = constructGraph

@@ -4,7 +4,7 @@ import helpMe from 'help-me'
 import parseArgs from 'minimist'
 import { join } from 'node:path'
 import { request } from 'undici'
-import { processOpenAPI } from './lib/gen-openapi.mjs'
+import { processOpenAPI } from './lib/gen-openapi.js'
 
 async function frontendTemplate ({ source, language, name, fullResponse }) {
   const help = helpMe({

@@ -1,9 +1,8 @@
-const { test } = require('node:test')
-const { equal, ok, deepEqual, throws, ifError } = require('node:assert')
-const { connect } = require('..')
-const { match } = require('@platformatic/foundation')
-
-const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear } = require('./helper')
+import { match } from '@platformatic/foundation'
+import { deepEqual, equal, ifError, ok, throws } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},

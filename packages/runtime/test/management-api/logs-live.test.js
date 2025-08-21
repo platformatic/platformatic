@@ -1,16 +1,14 @@
-'use strict'
+import { safeRemove } from '@platformatic/foundation'
+import { ok } from 'node:assert'
+import { readFile, writeFile } from 'node:fs/promises'
+import { platform } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import WebSocket from 'ws'
+import { createRuntime, getTempDir } from '../helpers.js'
 
-const assert = require('node:assert')
-const { platform } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { readFile, writeFile } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
-const WebSocket = require('ws')
-
-const { createRuntime, getTempDir } = require('../helpers.js')
-const { safeRemove } = require('@platformatic/foundation')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get runtime logs via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -112,5 +110,5 @@ test('should support custom use transport', async t => {
   await sleep(1_000)
 
   const logs = await readFile(logsPath, 'utf8')
-  assert.ok(logs.includes('Platformatic is now listening at'))
+  ok(logs.includes('Platformatic is now listening at'))
 })

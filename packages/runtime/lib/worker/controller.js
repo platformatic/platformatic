@@ -1,23 +1,18 @@
-'use strict'
-
-const { existsSync } = require('node:fs')
-const { EventEmitter } = require('node:events')
-const { resolve } = require('node:path')
-const {
-  performance: { eventLoopUtilization }
-} = require('node:perf_hooks')
-const { workerData } = require('node:worker_threads')
-const {
+import {
+  ensureLoggableError,
   FileWatcher,
   listRecognizedConfigurationFiles,
-  loadConfigurationModule,
   loadConfiguration,
-  ensureLoggableError
-} = require('@platformatic/foundation')
-const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
-const debounce = require('debounce')
-const errors = require('../errors')
-const { getApplicationUrl } = require('../utils')
+  loadConfigurationModule
+} from '@platformatic/foundation'
+import debounce from 'debounce'
+import { EventEmitter } from 'node:events'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { workerData } from 'node:worker_threads'
+import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
+import { getApplicationUrl } from '../utils.js'
 
 function fetchApplicationUrl (application, key) {
   if (!key.endsWith('_URL') || !application.id) {
@@ -27,7 +22,7 @@ function fetchApplicationUrl (application, key) {
   return getApplicationUrl(application.id)
 }
 
-class Controller extends EventEmitter {
+export class Controller extends EventEmitter {
   #starting
   #started
   #listening
@@ -57,7 +52,7 @@ class Controller extends EventEmitter {
     this.#listening = false
     this.capability = null
     this.#fileWatcher = null
-    this.#lastELU = eventLoopUtilization()
+    this.#lastELU = performance.eventLoopUtilization()
 
     this.#context = {
       applicationId: this.applicationId,
@@ -119,7 +114,7 @@ class Controller extends EventEmitter {
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
         // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
-        const pkg = await loadConfigurationModule(resolve(__dirname, '../..'), {}, '@platformatic/basic')
+        const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
 
@@ -140,7 +135,7 @@ class Controller extends EventEmitter {
 
   async start () {
     if (this.#starting || this.#started) {
-      throw new errors.ApplicationAlreadyStartedError()
+      throw new ApplicationAlreadyStartedError()
     }
 
     this.#starting = true
@@ -184,7 +179,7 @@ class Controller extends EventEmitter {
 
   async stop (force = false) {
     if (!force && (!this.#started || this.#starting)) {
-      throw new errors.RuntimeNotStartedError()
+      throw new RuntimeNotStartedError()
     }
 
     await this.#stopFileWatching()
@@ -222,8 +217,8 @@ class Controller extends EventEmitter {
   }
 
   async getHealth () {
-    const currentELU = eventLoopUtilization()
-    const elu = eventLoopUtilization(currentELU, this.#lastELU).utilization
+    const currentELU = performance.eventLoopUtilization()
+    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
     this.#lastELU = currentELU
 
     const { heapUsed, heapTotal } = process.memoryUsage()
@@ -290,5 +285,3 @@ class Controller extends EventEmitter {
     setGlobalDispatcher(dispatcher)
   }
 }
-
-module.exports = { Controller }

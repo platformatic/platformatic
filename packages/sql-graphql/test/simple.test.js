@@ -1,12 +1,9 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isMysql, isMariaDB, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMariaDB, isMysql, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -22,7 +19,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('simple db simple graphql schema', async (t) => {
+test('simple db simple graphql schema', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -31,7 +28,7 @@ test('simple db simple graphql schema', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -50,18 +47,22 @@ test('simple db simple graphql schema', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -76,18 +77,22 @@ test('simple db simple graphql schema', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -102,18 +107,22 @@ test('simple db simple graphql schema', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -128,22 +137,26 @@ test('simple db simple graphql schema', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })
 
-test('with federationMetadata', async (t) => {
+test('with federationMetadata', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -153,7 +166,7 @@ test('with federationMetadata', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -172,18 +185,22 @@ test('with federationMetadata', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -198,18 +215,22 @@ test('with federationMetadata', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -224,22 +245,26 @@ test('with federationMetadata', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })
 
-test('add resolver', async (t) => {
+test('add resolver', async t => {
   const app = fastify()
 
   const schema = `
@@ -255,8 +280,8 @@ test('add resolver', async (t) => {
         const res = await db.query(sql`SELECT * FROM pages WHERE title LIKE ${'%' + args.title + '%'}`)
 
         return res
-      },
-    },
+      }
+    }
   }
 
   app.register(sqlMapper, {
@@ -266,11 +291,11 @@ test('add resolver', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL, {
     schema,
-    resolvers,
+    resolvers
   })
   t.after(() => app.close())
 
@@ -288,18 +313,22 @@ test('add resolver', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -314,18 +343,22 @@ test('add resolver', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 2,
-          title: 'ABC',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 2,
+            title: 'ABC'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -340,31 +373,35 @@ test('add resolver', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        search: [{
-          id: 1,
-          title: 'Hello World',
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          search: [
+            {
+              id: 1,
+              title: 'Hello World'
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })
 
-test('override resolver', async (t) => {
-  const { ok: pass, deepEqual: same, equal } = tspl(t, { plan: 3 })
-
+test('override resolver', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL, {
     resolvers: {
@@ -387,7 +424,7 @@ test('override resolver', async (t) => {
             const id = res2[0]['last_insert_rowid()']
             return {
               ...args.input,
-              id,
+              id
             }
           } else if (isMysql && !db.isMariaDB) {
             const insert = sql`
@@ -404,7 +441,7 @@ test('override resolver', async (t) => {
             const id = res2[0]['last_insert_id()']
             return {
               ...args.input,
-              id,
+              id
             }
           } else {
             const insert = sql`
@@ -415,9 +452,9 @@ test('override resolver', async (t) => {
             const res = await db.query(insert)
             return res[0]
           }
-        },
-      },
-    },
+        }
+      }
+    }
   })
   t.after(() => app.close())
 
@@ -432,30 +469,32 @@ test('override resolver', async (t) => {
               title
             }
           }
-        `,
-    },
+        `
+    }
   })
   equal(res.statusCode, 200, 'savePage status code')
-  same(res.json(), {
-    data: {
-      savePage: {
-        id: 1,
-        title: 'Hello',
-      },
+  same(
+    res.json(),
+    {
+      data: {
+        savePage: {
+          id: 1,
+          title: 'Hello'
+        }
+      }
     },
-  }, 'savePage response')
+    'savePage response'
+  )
 })
 
-test('add totally new type and resolver', async (t) => {
-  const { ok: pass, deepEqual: same, equal } = tspl(t, { plan: 4 })
-
+test('add totally new type and resolver', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL, {
     schema: `
@@ -475,17 +514,17 @@ test('add totally new type and resolver', async (t) => {
           pass('getCategory resolver called')
           return {
             id: 1,
-            name: 'Hello',
+            name: 'Hello'
           }
-        },
+        }
       },
       Category: {
         upper (root, args, context, info) {
           pass('name resolver called')
           return root.name.toUpperCase()
-        },
-      },
-    },
+        }
+      }
+    }
   })
   t.after(() => app.close())
 
@@ -501,22 +540,26 @@ test('add totally new type and resolver', async (t) => {
               upper
             }
           }
-        `,
-    },
+        `
+    }
   })
   equal(res.statusCode, 200, 'getCategory status code')
-  same(res.json(), {
-    data: {
-      getCategory: {
-        id: 1,
-        name: 'Hello',
-        upper: 'HELLO',
-      },
+  same(
+    res.json(),
+    {
+      data: {
+        getCategory: {
+          id: 1,
+          name: 'Hello',
+          upper: 'HELLO'
+        }
+      }
     },
-  }, 'getCategory response')
+    'getCategory response'
+  )
 })
 
-test('list', async (t) => {
+test('list', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -538,26 +581,31 @@ test('list', async (t) => {
           long_text TEXT
         );`)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const posts = [{
-    title: 'Post 1',
-    longText: 'This is a long text 1',
-  }, {
-    title: 'Post 2',
-    longText: 'This is a long text 2',
-  }, {
-    title: 'Post 3',
-    longText: 'This is a long text 3',
-  }, {
-    title: 'Post 4',
-    longText: 'This is a long text 4',
-  }]
+  const posts = [
+    {
+      title: 'Post 1',
+      longText: 'This is a long text 1'
+    },
+    {
+      title: 'Post 2',
+      longText: 'This is a long text 2'
+    },
+    {
+      title: 'Post 3',
+      longText: 'This is a long text 3'
+    },
+    {
+      title: 'Post 4',
+      longText: 'This is a long text 4'
+    }
+  ]
 
   for (const post of posts) {
     await app.inject({
@@ -572,8 +620,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `,
-      },
+        `
+      }
     })
   }
 
@@ -590,17 +638,21 @@ test('list', async (t) => {
               longText
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'posts status code')
-    same(res.json(), {
-      data: {
-        posts: posts.map((p, i) => {
-          return { ...p, id: i + 1 + '' }
-        }),
+    same(
+      res.json(),
+      {
+        data: {
+          posts: posts.map((p, i) => {
+            return { ...p, id: i + 1 + '' }
+          })
+        }
       },
-    }, 'posts response')
+      'posts response'
+    )
   }
 
   {
@@ -616,21 +668,27 @@ test('list', async (t) => {
               longText
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'posts status code')
-    same(res.json(), {
-      data: {
-        posts: posts.map((p, i) => {
-          return { ...p, id: i + 1 + '' }
-        }).slice(1, 3),
+    same(
+      res.json(),
+      {
+        data: {
+          posts: posts
+            .map((p, i) => {
+              return { ...p, id: i + 1 + '' }
+            })
+            .slice(1, 3)
+        }
       },
-    }, 'posts response')
+      'posts response'
+    )
   }
 })
 
-test('not found', async (t) => {
+test('not found', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -640,7 +698,7 @@ test('not found', async (t) => {
       await clear(db, sql)
 
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -659,19 +717,23 @@ test('not found', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getPageById status code')
-    same(res.json(), {
-      data: {
-        getPageById: null,
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: null
+        }
       },
-    }, 'getPageById response')
+      'getPageById response'
+    )
   }
 })
 
-test('graphiql is enabled by default', async (t) => {
+test('graphiql is enabled by default', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -680,7 +742,7 @@ test('graphiql is enabled by default', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -689,7 +751,7 @@ test('graphiql is enabled by default', async (t) => {
   equal(res.statusCode, 200)
 })
 
-test('graphiql can be disabled', async (t) => {
+test('graphiql can be disabled', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -698,10 +760,10 @@ test('graphiql can be disabled', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL, {
-    graphiql: false,
+    graphiql: false
   })
   t.after(() => app.close())
 
@@ -709,14 +771,14 @@ test('graphiql can be disabled', async (t) => {
   equal(res.statusCode, 404)
 })
 
-test('default query hello should be created when no entities are found', async (t) => {
+test('default query hello should be created when no entities are found', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
       await clear(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -725,18 +787,18 @@ test('default query hello should be created when no entities are found', async (
     method: 'POST',
     url: '/graphql',
     body: {
-      query: 'query { hello }',
-    },
+      query: 'query { hello }'
+    }
   })
   equal(res.statusCode, 200)
   same(res.json(), {
     data: {
-      hello: 'Hello Platformatic!',
-    },
+      hello: 'Hello Platformatic!'
+    }
   })
 })
 
-test('default query hello should not be created when entities are found', async (t) => {
+test('default query hello should not be created when entities are found', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -744,7 +806,7 @@ test('default query hello should not be created when entities are found', async 
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -753,8 +815,8 @@ test('default query hello should not be created when entities are found', async 
     method: 'POST',
     url: '/graphql',
     body: {
-      query: 'query { hello }',
-    },
+      query: 'query { hello }'
+    }
   })
   equal(res.statusCode, 400)
   const json = res.json()
@@ -762,7 +824,7 @@ test('default query hello should not be created when entities are found', async 
   same(json.errors[0].message, 'Cannot query field "hello" on type "Query".')
 })
 
-test('primary key snake_case', async (t) => {
+test('primary key snake_case', async t => {
   async function createBasicPagesWithSnakeCasePK (db, sql) {
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -785,10 +847,10 @@ test('primary key snake_case', async (t) => {
 
       await clear(db, sql)
       await createBasicPagesWithSnakeCasePK(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL, {
-    graphiql: false,
+    graphiql: false
   })
   t.after(() => app.close())
 
@@ -807,18 +869,22 @@ test('primary key snake_case', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          pageId: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            pageId: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -833,30 +899,34 @@ test('primary key snake_case', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageByPageId: {
-          pageId: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageByPageId: {
+            pageId: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })
 
-test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
+test('deserialize JSON columns', { skip: isSQLite }, async t => {
   const app = fastify()
   const jsonData = {
     foo: 'bar',
     baz: 42,
     items: ['foo', 'bar'],
     nested: {
-      hello: 'world',
-    },
+      hello: 'world'
+    }
   }
   app.register(sqlMapper, {
     ...connInfo,
@@ -871,11 +941,13 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
         metadata JSON NOT NULL
       );`)
 
-      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
-    },
+      await db.query(
+        sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`
+      )
+    }
   })
   app.register(sqlGraphQL, {
-    graphiql: false,
+    graphiql: false
   })
   t.after(() => app.close())
 
@@ -892,8 +964,8 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
             metadata
           }
         }
-      `,
-    },
+      `
+    }
   })
   const json = res.json()
   if (isMariaDB) {
@@ -903,15 +975,15 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
   }
 })
 
-test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
+test('deserialize JSONB columns', { skip: !isPg }, async t => {
   const app = fastify()
   const jsonData = {
     foo: 'bar',
     baz: 42,
     items: ['foo', 'bar'],
     nested: {
-      hello: 'world',
-    },
+      hello: 'world'
+    }
   }
   app.register(sqlMapper, {
     ...connInfo,
@@ -926,11 +998,13 @@ test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
         metadata JSONB NOT NULL
       );`)
 
-      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
-    },
+      await db.query(
+        sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`
+      )
+    }
   })
   app.register(sqlGraphQL, {
-    graphiql: false,
+    graphiql: false
   })
   t.after(() => app.close())
 
@@ -947,8 +1021,8 @@ test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
             metadata
           }
         }
-      `,
-    },
+      `
+    }
   })
   const json = res.json()
   if (isMariaDB) {

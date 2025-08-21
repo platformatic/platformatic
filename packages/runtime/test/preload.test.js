@@ -1,10 +1,10 @@
-'use strict'
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('preload', async t => {
   process.env.PORT = 0
@@ -19,8 +19,8 @@ test('preload', async t => {
   {
     const res = await request(entryUrl + '/hello')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { value: 42 })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { value: 42 })
   }
 })
 
@@ -37,8 +37,8 @@ test('preload multiple', async t => {
   {
     const res = await request(entryUrl + '/preload')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { value: '12' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { value: '12' })
   }
 })
 
@@ -55,14 +55,14 @@ test('preload multiple on runtime and preload multiple on applications', async t
   {
     const res = await request(entryUrl + '/a/preload')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { value: '1234' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { value: '1234' })
   }
 
   {
     const res = await request(entryUrl + '/b/preload')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { value: '125' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { value: '125' })
   }
 })

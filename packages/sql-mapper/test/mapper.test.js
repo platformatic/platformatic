@@ -1,28 +1,26 @@
-'use strict'
-
-const { test } = require('node:test')
-const { ok, equal, rejects, deepEqual } = require('node:assert')
-const { connect, plugin } = require('..')
-const { clear, connInfo, isPg, isMysql, isSQLite } = require('./helper')
-const fastify = require('fastify')
+import fastify from 'fastify'
+import { deepEqual, equal, ok, rejects } from 'node:assert'
+import { test } from 'node:test'
+import { connect, plugin } from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {},
+  warn: () => {}
 }
 
 test('should throw if no connection string is provided', async () => {
   try {
     await connect({
-      connectionString: false,
+      connectionString: false
     })
   } catch (err) {
     equal(err.message, 'connectionString is required')
   }
 })
 
-test('[PG] return entities', { skip: !isPg }, async (t) => {
+test('[PG] return entities', { skip: !isPg }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -41,7 +39,7 @@ test('[PG] return entities', { skip: !isPg }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -50,7 +48,7 @@ test('[PG] return entities', { skip: !isPg }, async (t) => {
   ok(true)
 })
 
-test('[mysql] return entities', { skip: !isMysql }, async (t) => {
+test('[mysql] return entities', { skip: !isMysql }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -69,7 +67,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -78,7 +76,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   ok(true)
 })
 
-test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
+test('[sqlite] return entities', { skip: !isSQLite }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -97,7 +95,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -106,7 +104,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   ok(true)
 })
 
-test('ignore tables', async (t) => {
+test('ignore tables', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -130,12 +128,12 @@ test('ignore tables', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: { users: true },
-    hooks: {},
+    hooks: {}
   })
   equal(mapper.entities.users, undefined)
 })
 
-test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
+test('[PG] return entities with Fastify', { skip: !isPg }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -149,7 +147,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -159,7 +157,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
   ok(true)
 })
 
-test('[mysql] return entities', { skip: !isMysql }, async (t) => {
+test('[mysql] return entities', { skip: !isMysql }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -172,7 +170,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -182,7 +180,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   ok(true)
 })
 
-test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
+test('[sqlite] return entities', { skip: !isSQLite }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -195,7 +193,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -212,7 +210,7 @@ test('missing connectionString', async () => {
   await rejects(app.ready(), /connectionString/)
 })
 
-test('platformaticContext', async (t) => {
+test('platformaticContext', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -225,7 +223,7 @@ test('platformaticContext', async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
 
   app.get('/', function (req, reply) {
@@ -240,14 +238,13 @@ test('platformaticContext', async (t) => {
 })
 
 test('platformatic decorator already present', async () => {
-  async function onDatabaseLoad (db, sql) {
-  }
+  async function onDatabaseLoad (db, sql) {}
   const app = fastify()
   app.decorate('platformatic', {})
   test.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   await app.ready()
 })
@@ -269,7 +266,7 @@ test('clean up all tables', async () => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
 
   const res = await mapper.entities.page.save({ input: { title: 'hello' } })
@@ -326,7 +323,7 @@ test('clean up all tables with foreign keys', async () => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
 
   {

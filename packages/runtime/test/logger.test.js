@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert')
-const path = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { execa } = require('execa')
-const { startPath } = require('./cli/helper.mjs')
+import { execa } from 'execa'
+import { ok } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { startPath } from './cli/helper.js'
 
 function stdioOutputToLogs (data) {
   const logs = data
@@ -109,7 +107,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
 }
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -124,7 +122,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -133,7 +131,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.msg === 'Starting the application "app"...'
     )
   )
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -142,7 +140,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.msg === 'Started the application "app"...'
     )
   )
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -154,7 +152,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
 })
 
 test('should inherit full logger options from runtime to a platformatic/application', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -169,7 +167,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.stdout.level === 'DEBUG' &&
@@ -179,7 +177,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
     )
   )
 
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -189,7 +187,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
     )
   )
 
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -199,7 +197,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
     )
   )
 
-  assert.ok(
+  ok(
     logs.find(
       log =>
         log.level === 'INFO' &&
@@ -209,7 +207,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
     )
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       if (
         log.level === 'INFO' &&
@@ -230,7 +228,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
 })
 
 test('should inherit full logger options from runtime to different applications', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -246,7 +244,7 @@ test('should inherit full logger options from runtime to different applications'
   const logs = stdioOutputToLogs(stdout)
 
   for (const t of ['composer', 'service', 'node']) {
-    assert.ok(
+    ok(
       logs.find(
         log =>
           log.level === 'INFO' &&
@@ -259,7 +257,7 @@ test('should inherit full logger options from runtime to different applications'
 })
 
 test('should get json logs from thread applications when they are not pino default config', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -274,7 +272,7 @@ test('should get json logs from thread applications when they are not pino defau
   })
   const logs = stdioOutputToLogs(stdout).filter(log => log.caller === 'STDOUT')
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return (
         log.stdout.level === 'INFO' &&
@@ -285,7 +283,7 @@ test('should get json logs from thread applications when they are not pino defau
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return (
         log.stdout.level === 'INFO' &&
@@ -298,7 +296,7 @@ test('should get json logs from thread applications when they are not pino defau
 })
 
 test('should handle logs from thread applications as they are with captureStdio: false', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -320,31 +318,31 @@ test('should handle logs from thread applications as they are with captureStdio:
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
     })
@@ -352,7 +350,7 @@ test('should handle logs from thread applications as they are with captureStdio:
 })
 
 test('should handle logs from thread applications as they are with captureStdio: false and managementApi: false', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -374,31 +372,31 @@ test('should handle logs from thread applications as they are with captureStdio:
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
     })
   )
 
-  assert.ok(
+  ok(
     logs.find(log => {
       return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
     })
@@ -406,7 +404,7 @@ test('should handle logs from thread applications as they are with captureStdio:
 })
 
 test('should use base and messageKey options', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -428,7 +426,7 @@ test('should use base and messageKey options', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.every(log => {
       return (
         log.customBaseName === 'a' &&
@@ -441,7 +439,7 @@ test('should use base and messageKey options', async t => {
 })
 
 test('should use null base in options', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -463,7 +461,7 @@ test('should use null base in options', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.every(log => {
       const keys = Object.keys(log)
       return !keys.includes('pid') && !keys.includes('hostname')
@@ -472,7 +470,7 @@ test('should use null base in options', async t => {
 })
 
 test('should use custom config', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -492,7 +490,7 @@ test('should use custom config', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(
+  ok(
     logs.every(log => {
       const keys = Object.keys(log)
       return log.severity === 'INFO' && log.message.length > 0 && !keys.includes('pid') && !keys.includes('hostname')

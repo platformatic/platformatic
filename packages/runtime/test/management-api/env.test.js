@@ -1,12 +1,10 @@
-'use strict'
+import { deepEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get the runtime process env', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -36,11 +34,11 @@ test('should get the runtime process env', async t => {
     path: '/api/v1/env'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const runtimeEnv = await body.json()
 
-  assert.deepEqual(runtimeEnv, {
+  deepEqual(runtimeEnv, {
     ...process.env,
     PLT_ROOT: projectDir,
     PLT_DEV: 'true',

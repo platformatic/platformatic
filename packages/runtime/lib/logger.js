@@ -1,9 +1,9 @@
-'use strict'
+import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
+import { isatty } from 'node:tty'
+import pino from 'pino'
+import pretty from 'pino-pretty'
 
-const { isatty } = require('node:tty')
-const pino = require('pino')
-const pretty = require('pino-pretty')
-const { abstractLogger, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/foundation')
+export { abstractLogger } from '@platformatic/foundation'
 
 const customPrettifiers = {
   name (name, _, obj) {
@@ -17,7 +17,7 @@ const customPrettifiers = {
 }
 
 // Create the runtime logger
-async function createLogger (config) {
+export async function createLogger (config) {
   const loggerConfig = { ...config.logger, transport: undefined }
   if (config.logger.base === null) {
     loggerConfig.base = undefined
@@ -55,5 +55,3 @@ async function createLogger (config) {
 
   return [pino(loggerConfig, multiStream), multiStream]
 }
-
-module.exports = { abstractLogger, createLogger }

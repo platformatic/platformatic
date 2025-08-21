@@ -1,22 +1,21 @@
-'use strict'
-
-const { generateDashedName } = require('@platformatic/foundation')
-const { readFile } = require('node:fs/promises')
-const {
+import { generateDashedName } from '@platformatic/foundation'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { generateGitignore } from './create-gitignore.js'
+import { MissingEnvVariable, ModuleNeeded, PrepareError } from './errors.js'
+import { FileGenerator } from './file-generator.js'
+import {
   convertApplicationNameToPrefix,
+  envStringToObject,
   extractEnvVariablesFromText,
+  flattenObject,
+  getApplicationTemplateFromSchemaUrl,
+  getLatestNpmVersion,
   getPackageConfigurationObject,
   PLT_ROOT,
-  getLatestNpmVersion,
   stripVersion
-} = require('./utils')
-const { join } = require('node:path')
-const { FileGenerator } = require('./file-generator')
-const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
-const { generateGitignore } = require('./create-gitignore')
-const { getApplicationTemplateFromSchemaUrl } = require('./utils')
-const { flattenObject } = require('./utils')
-const { envStringToObject } = require('./utils')
+} from './utils.js'
+
 /* c8 ignore start */
 const fakeLogger = {
   info: () => {},
@@ -291,7 +290,10 @@ class BaseGenerator extends FileGenerator {
         contents.plugins = {}
       }
       contents.plugins.packages = this.packages.map(packageDefinition => {
-        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.applicationName)
+        const packageConfigOutput = getPackageConfigurationObject(
+          packageDefinition.options,
+          this.config.applicationName
+        )
         if (Object.keys(packageConfigOutput.env).length > 0) {
           const envForPackages = {}
           Object.entries(packageConfigOutput.env).forEach(kv => {
@@ -323,7 +325,7 @@ class BaseGenerator extends FileGenerator {
     if (this.pkgData) {
       return this.pkgData
     }
-    const currentPackageJsonPath = join(__dirname, '..', 'package.json')
+    const currentPackageJsonPath = join(import.meta.dirname, '..', 'package.json')
     this.pkgData = JSON.parse(await readFile(currentPackageJsonPath, 'utf8'))
     return this.pkgData
   }
@@ -359,7 +361,7 @@ class BaseGenerator extends FileGenerator {
     }
 
     if (this.config.typescript) {
-      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
+      const typescriptVersion = JSON.parse(await readFile(join(import.meta.dirname, '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
       template.devDependencies.typescript = typescriptVersion
     }
@@ -480,5 +482,6 @@ function serializeEnvVars (envVars) {
   return envVarsString
 }
 
-module.exports = BaseGenerator
-module.exports.BaseGenerator = BaseGenerator
+export default BaseGenerator
+const _BaseGenerator = BaseGenerator
+export { _BaseGenerator as BaseGenerator }

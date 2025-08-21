@@ -1,10 +1,10 @@
-'use strict'
-const { deepStrictEqual, notStrictEqual, ok, strictEqual } = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('node-options on worker threads', async t => {
   process.env.PORT = 0

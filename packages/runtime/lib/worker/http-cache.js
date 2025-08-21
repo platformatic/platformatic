@@ -1,16 +1,14 @@
-'use strict'
-
-const { randomUUID } = require('node:crypto')
-const { Readable, Writable } = require('node:stream')
-const { interceptors } = require('undici')
-const { kITC } = require('./symbols')
+import { randomUUID } from 'node:crypto'
+import { Readable, Writable } from 'node:stream'
+import { interceptors } from 'undici'
+import { kITC } from './symbols.js'
 
 const kCacheIdHeader = Symbol('cacheIdHeader')
 const CACHE_ID_HEADER = 'x-plt-http-cache-id'
 
 const noop = () => {}
 
-class RemoteCacheStore {
+export class RemoteCacheStore {
   #onRequest
   #onCacheHit
   #onCacheMiss
@@ -89,9 +87,10 @@ class RemoteCacheStore {
         } else {
           payload = Buffer.concat(acc)
         }
-        itc.send('setHttpCacheValue', { request: key, response: value, payload })
+        itc
+          .send('setHttpCacheValue', { request: key, response: value, payload })
           .then(() => callback())
-          .catch((err) => callback(err))
+          .catch(err => callback(err))
       }
     })
   }
@@ -116,14 +115,14 @@ class RemoteCacheStore {
   }
 }
 
-const httpCacheInterceptor = (interceptorOpts) => {
+export function httpCacheInterceptor (interceptorOpts) {
   const originalInterceptor = interceptors.cache(interceptorOpts)
 
   // AsyncLocalStorage that contains a client http request span
   // Exists only when the nodejs capability telemetry is enabled
   const clientSpansAls = globalThis.platformatic.clientSpansAls
 
-  return (originalDispatch) => {
+  return originalDispatch => {
     const dispatch = (opts, handler) => {
       const originOnResponseStart = handler.onResponseStart.bind(handler)
       handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
@@ -170,5 +169,3 @@ const httpCacheInterceptor = (interceptorOpts) => {
     }
   }
 }
-
-module.exports = { RemoteCacheStore, httpCacheInterceptor }

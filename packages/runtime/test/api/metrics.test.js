@@ -1,12 +1,11 @@
-'use strict'
+import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 function findPrometheusLinesForMetric (metric, output) {
   const ret = []
@@ -89,26 +88,26 @@ test('should get runtime metrics in a json format', async t => {
 
   for (const metricName of expectedMetricNames) {
     const foundMetrics = metrics.filter(m => m.name === metricName)
-    assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
-    assert.strictEqual(foundMetrics.length, applications.length)
+    ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
+    strictEqual(foundMetrics.length, applications.length)
 
     const hasValues = foundMetrics.every(m => m.values.length > 0)
     if (!hasValues) continue
 
     for (const applicationId of applications) {
       const foundMetric = foundMetrics.find(m => m.values[0].labels.applicationId === applicationId)
-      assert.ok(foundMetric, `Missing metric for application "${applicationId}"`)
+      ok(foundMetric, `Missing metric for application "${applicationId}"`)
 
       for (const { labels } of foundMetric.values) {
         if (labels.route === '/__empty_metrics') {
           continue
         }
 
-        assert.strictEqual(labels.applicationId, applicationId)
-        assert.strictEqual(labels.custom_label, 'custom-value')
+        strictEqual(labels.applicationId, applicationId)
+        strictEqual(labels.custom_label, 'custom-value')
 
         if (metricName.startsWith('http_request')) {
-          assert.strictEqual(labels.telemetry_id, `${applicationId}-client`)
+          strictEqual(labels.telemetry_id, `${applicationId}-client`)
         }
       }
     }
@@ -174,7 +173,7 @@ test('should get runtime metrics in a text format', async t => {
     'http_client_stats_size'
   ]
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
+    ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
   }
 
   // Check that the applicationId labels are present in the metrics
@@ -194,7 +193,7 @@ test('should get runtime metrics in a text format', async t => {
   const applicationIds = [...new Set(applications)].sort()
 
   // We call service-1 and service-2, so we expect metrcis for these
-  assert.deepEqual(applicationIds, ['service-1', 'service-2'])
+  deepEqual(applicationIds, ['service-1', 'service-2'])
 })
 
 function getMetricsLines (metrics) {
@@ -229,7 +228,7 @@ test('should get runtime metrics in a text format with custom labels', async t =
 
   // Ensure that the custom labels are present in the metrics
   for (const lineLabel of labels) {
-    assert.ok(lineLabel.foo === 'bar')
+    ok(lineLabel.foo === 'bar')
   }
 })
 
@@ -248,7 +247,7 @@ test('should get json runtime metrics with custom labels', async t => {
 
   for (const metric of metrics) {
     for (const value of metric.values) {
-      assert.ok(value.labels.foo === 'bar')
+      ok(value.labels.foo === 'bar')
     }
   }
 })
@@ -266,17 +265,17 @@ test('should get formatted runtime metrics', async t => {
 
   const { applications } = await app.getFormattedMetrics()
 
-  assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
+  deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
   for (const applicationMetrics of Object.values(applications)) {
-    assert.deepStrictEqual(
+    deepStrictEqual(
       Object.keys(applicationMetrics).sort(),
       ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
     )
 
     const latencyMetrics = applicationMetrics.latency
     const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
   }
 })
 
@@ -293,7 +292,7 @@ test('should get cached formatted runtime metrics', async t => {
 
   for (let i = 0; i < 10; i++) {
     const { statusCode } = await request(appUrl + '/hello')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
   }
 
   // wait for the metrics to be cached
@@ -302,17 +301,17 @@ test('should get cached formatted runtime metrics', async t => {
   const metricsHistory = await app.getCachedMetrics()
 
   for (const { applications } of metricsHistory) {
-    assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
+    deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
     for (const applicationMetrics of Object.values(applications)) {
-      assert.deepStrictEqual(
+      deepStrictEqual(
         Object.keys(applicationMetrics).sort(),
         ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
       )
 
       const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
@@ -337,18 +336,18 @@ test('should get metrics after reloading one of the applications', async t => {
 
   for (const { applications } of metricsHistory) {
     const applicationsNames = Object.keys(applications)
-    assert.ok(applicationsNames.includes('service-1'))
-    assert.ok(applicationsNames.includes('service-db'))
+    ok(applicationsNames.includes('service-1'))
+    ok(applicationsNames.includes('service-db'))
 
     for (const applicationMetrics of Object.values(applications)) {
-      assert.deepStrictEqual(
+      deepStrictEqual(
         Object.keys(applicationMetrics).sort(),
         ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
       )
 
       const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
@@ -377,7 +376,7 @@ test('should get runtime metrics in a json format without a application call', a
     const histogramCount = histogramValues.find(
       ({ metricName }) => metricName === 'http_request_all_duration_seconds_count'
     )
-    assert.strictEqual(histogramCount.value, 2)
+    strictEqual(histogramCount.value, 2)
   }
 
   {
@@ -385,61 +384,61 @@ test('should get runtime metrics in a json format without a application call', a
       ({ metricName }) => metricName === 'http_request_all_duration_seconds_sum'
     )
     const value = histogramSum.value
-    assert.ok(value < 0.1)
+    ok(value < 0.1)
   }
 
   for (const { metricName, labels } of histogramValues) {
-    assert.strictEqual(labels.method, 'GET')
-    assert.strictEqual(labels.status_code, 200)
+    strictEqual(labels.method, 'GET')
+    strictEqual(labels.status_code, 200)
 
     if (metricName !== 'http_request_all_duration_seconds_bucket') continue
   }
 
   const summaryMetric = metrics.find(metric => metric.name === 'http_request_all_summary_seconds')
-  assert.strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
-  assert.strictEqual(summaryMetric.type, 'summary')
-  assert.strictEqual(summaryMetric.aggregator, 'sum')
+  strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
+  strictEqual(summaryMetric.type, 'summary')
+  strictEqual(summaryMetric.aggregator, 'sum')
 
   const freeMetric = metrics.find(({ name }) => name === 'http_client_stats_free')
-  assert.strictEqual(freeMetric.name, 'http_client_stats_free')
-  assert.strictEqual(freeMetric.type, 'gauge')
-  assert.strictEqual(freeMetric.aggregator, 'sum')
+  strictEqual(freeMetric.name, 'http_client_stats_free')
+  strictEqual(freeMetric.type, 'gauge')
+  strictEqual(freeMetric.aggregator, 'sum')
 
   const connectedMetric = metrics.find(({ name }) => name === 'http_client_stats_connected')
-  assert.strictEqual(connectedMetric.name, 'http_client_stats_connected')
-  assert.strictEqual(connectedMetric.type, 'gauge')
-  assert.strictEqual(connectedMetric.aggregator, 'sum')
+  strictEqual(connectedMetric.name, 'http_client_stats_connected')
+  strictEqual(connectedMetric.type, 'gauge')
+  strictEqual(connectedMetric.aggregator, 'sum')
 
   const pendingMetric = metrics.find(({ name }) => name === 'http_client_stats_pending')
-  assert.strictEqual(pendingMetric.name, 'http_client_stats_pending')
-  assert.strictEqual(pendingMetric.type, 'gauge')
-  assert.strictEqual(pendingMetric.aggregator, 'sum')
+  strictEqual(pendingMetric.name, 'http_client_stats_pending')
+  strictEqual(pendingMetric.type, 'gauge')
+  strictEqual(pendingMetric.aggregator, 'sum')
 
   const queuedMetric = metrics.find(({ name }) => name === 'http_client_stats_queued')
-  assert.strictEqual(queuedMetric.name, 'http_client_stats_queued')
-  assert.strictEqual(queuedMetric.type, 'gauge')
-  assert.strictEqual(queuedMetric.aggregator, 'sum')
+  strictEqual(queuedMetric.name, 'http_client_stats_queued')
+  strictEqual(queuedMetric.type, 'gauge')
+  strictEqual(queuedMetric.aggregator, 'sum')
 
   const runningMetric = metrics.find(({ name }) => name === 'http_client_stats_running')
-  assert.strictEqual(runningMetric.name, 'http_client_stats_running')
-  assert.strictEqual(runningMetric.type, 'gauge')
-  assert.strictEqual(runningMetric.aggregator, 'sum')
+  strictEqual(runningMetric.name, 'http_client_stats_running')
+  strictEqual(runningMetric.type, 'gauge')
+  strictEqual(runningMetric.aggregator, 'sum')
 
   const sizeMetric = metrics.find(({ name }) => name === 'http_client_stats_size')
-  assert.strictEqual(sizeMetric.name, 'http_client_stats_size')
-  assert.strictEqual(sizeMetric.type, 'gauge')
-  assert.strictEqual(sizeMetric.aggregator, 'sum')
+  strictEqual(sizeMetric.name, 'http_client_stats_size')
+  strictEqual(sizeMetric.type, 'gauge')
+  strictEqual(sizeMetric.aggregator, 'sum')
 
   const summaryValues = summaryMetric.values
 
   {
     const summaryCount = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_count')
-    assert.strictEqual(summaryCount.value, 2)
+    strictEqual(summaryCount.value, 2)
   }
 
   {
     const summarySum = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_sum')
     const value = summarySum.value
-    assert.ok(value < 0.1)
+    ok(value < 0.1)
   }
 })

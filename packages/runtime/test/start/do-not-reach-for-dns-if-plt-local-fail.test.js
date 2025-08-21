@@ -1,11 +1,10 @@
-'use strict'
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('do not reach for dns if plt.local fail to resolve', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -20,8 +19,8 @@ test('do not reach for dns if plt.local fail to resolve', async t => {
     // Basic URL on the entrypoint.
     const res = await request(entryUrl + '/unknown')
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
     const body = await res.body.json()
-    assert.ok(body.msg.match(/No target found for unknown.plt.local in thread \d./), [body.msg])
+    ok(body.msg.match(/No target found for unknown.plt.local in thread \d./), [body.msg])
   }
 })

@@ -1,12 +1,9 @@
-'use strict'
-
-const { deepStrictEqual } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const { updateConfigFile } = require('../helpers')
-const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
+import { deepStrictEqual } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime, updateConfigFile } from '../helpers.js'
+import { prepareRuntime, verifyInject, verifyResponse } from './helper.js'
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

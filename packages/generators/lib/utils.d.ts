@@ -11,6 +11,7 @@ export type PackageConfiguration = {
 export namespace GeneratorUtils {
   export function stripVersion (version: string): string
   export function convertApplicationNameToPrefix (applicationName: string): string
+  export function addPrefixToServiceName (applicationName: string, prefix: string): string
   export function envObjectToString (env: Env): string
   export function envStringToObject (env: string): Env
   export function extractEnvVariablesFromText (text: string): string[]

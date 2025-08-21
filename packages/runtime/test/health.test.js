@@ -1,15 +1,13 @@
-'use strict'
+import autocannon from 'autocannon'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { once } from 'node:events'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime, readLogs } from './helpers.js'
+import { waitForEvents } from './multiple-workers/helper.js'
 
-const { ok, deepStrictEqual, strictEqual } = require('node:assert')
-const { once } = require('node:events')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const autocannon = require('autocannon')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const { waitForEvents } = require('./multiple-workers/helper')
-const { request } = require('undici')
-const { readLogs } = require('./helpers')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')

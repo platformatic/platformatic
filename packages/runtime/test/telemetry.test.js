@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert')
-const { request } = require('undici')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('propagate the traceId correctly to runtime applications', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
@@ -28,9 +26,9 @@ test('propagate the traceId correctly to runtime applications', async t => {
     }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
   const response = await res.body.json()
-  assert.strictEqual(response.traceId, traceId)
+  strictEqual(response.traceId, traceId)
 })
 
 test('attach x-plt-telemetry-id header', async t => {
@@ -48,12 +46,12 @@ test('attach x-plt-telemetry-id header', async t => {
     path: '/service-1/echo-headers'
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
   const response = await res.body.json()
 
   const echoReqHeaders = response.headers
   const telemetryIdHeader = echoReqHeaders['x-plt-telemetry-id']
-  assert.strictEqual(telemetryIdHeader, 'test-runtime-echo')
+  strictEqual(telemetryIdHeader, 'test-runtime-echo')
 })
 
 test('disabled telemetry', async t => {
@@ -77,7 +75,7 @@ test('disabled telemetry', async t => {
     }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
   const response = await res.body.json()
-  assert.strictEqual(response.traceId, undefined)
+  strictEqual(response.traceId, undefined)
 })

@@ -1,11 +1,9 @@
-'use strict'
+import { deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application config', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
@@ -21,7 +19,7 @@ test('should get application config', async t => {
 
   delete applicationConfig.$schema
 
-  assert.deepStrictEqual(applicationConfig, {
+  deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
@@ -52,7 +50,7 @@ test('do not force enable metrics without the management api', async t => {
 
   delete applicationConfig.$schema
 
-  assert.deepStrictEqual(applicationConfig, {
+  deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
@@ -83,7 +81,7 @@ test('do not force enable metrics if they are set to false', async t => {
 
   delete applicationConfig.$schema
 
-  assert.deepStrictEqual(applicationConfig, {
+  deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
@@ -127,7 +125,7 @@ test('set applicationId in metrics as label in all applications', async t => {
 
   delete applicationConfig.$schema
 
-  assert.deepStrictEqual(applicationConfig, {
+  deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',

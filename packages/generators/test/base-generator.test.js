@@ -1,18 +1,15 @@
-'use strict'
-
-const { readFile, cp } = require('node:fs/promises')
-const { test, after, afterEach, describe } = require('node:test')
-const assert = require('node:assert')
-const { join } = require('node:path')
-
-const { fakeLogger, getTempDir, moveToTmpdir, mockNpmJsRequestForPkgs, mockAgent } = require('./helpers')
-const { BaseGenerator } = require('../lib/base-generator')
-const { convertApplicationNameToPrefix } = require('../lib/utils')
-const { safeRemove } = require('@platformatic/foundation')
+import { safeRemove } from '@platformatic/foundation'
+import { deepEqual, deepStrictEqual, equal, fail, notStrictEqual, ok } from 'node:assert'
+import { cp, readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { after, afterEach, describe, test } from 'node:test'
+import { BaseGenerator } from '../lib/base-generator.js'
+import { convertApplicationNameToPrefix } from '../lib/utils.js'
+import { fakeLogger, getTempDir, mockAgent, mockNpmJsRequestForPkgs, moveToTmpdir } from './helpers.js'
 
 afterEach(async () => {
   try {
-    await safeRemove(join(__dirname, 'tmp'))
+    await safeRemove(join(import.meta.dirname, 'tmp'))
   } catch (err) {
     // do nothing
   }
@@ -33,18 +30,18 @@ test('should write file and dirs', async t => {
   await gen.run()
   // check files are created
   const packageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-  assert.ok(packageJson.scripts)
-  assert.ok(packageJson.dependencies)
-  assert.equal(packageJson.dependencies.platformatic, undefined)
-  assert.ok(packageJson.engines)
+  ok(packageJson.scripts)
+  ok(packageJson.dependencies)
+  equal(packageJson.dependencies.platformatic, undefined)
+  ok(packageJson.engines)
 
-  assert.equal(packageJson.name, 'test-application')
+  equal(packageJson.name, 'test-application')
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
-  assert.deepEqual(configFile, {})
+  deepEqual(configFile, {})
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
-  assert.ok(gitignore.length > 0) // file is created and not empty
+  ok(gitignore.length > 0) // file is created and not empty
 })
 
 test('extended class should generate config', async t => {
@@ -71,7 +68,7 @@ test('extended class should generate config', async t => {
   await svc.prepare()
 
   const configFile = svc.files[1]
-  assert.deepEqual(configFile, {
+  deepEqual(configFile, {
     path: '',
     file: 'platformatic.json',
     contents: JSON.stringify({ foo: 'bar' }, null, 2),
@@ -88,7 +85,7 @@ test('setConfig', async t => {
   // should init the default config
   await bg.prepare()
 
-  assert.deepEqual(bg.config, {
+  deepEqual(bg.config, {
     port: 3042,
     hostname: '0.0.0.0',
     plugin: false,
@@ -107,7 +104,7 @@ test('setConfig', async t => {
 
   // should not have undefined properties
   Object.entries(bg.config).forEach(kv => {
-    assert.notStrictEqual(undefined, kv[1])
+    notStrictEqual(undefined, kv[1])
   })
 
   // partial config with defaults
@@ -115,7 +112,7 @@ test('setConfig', async t => {
     port: 3084
   })
 
-  assert.deepEqual(bg.config, {
+  deepEqual(bg.config, {
     port: 3084, // this is the only custom value
     hostname: '0.0.0.0',
     plugin: false,
@@ -134,7 +131,7 @@ test('setConfig', async t => {
 
   // reset config to defaults
   bg.setConfig()
-  assert.deepEqual(bg.config, {
+  deepEqual(bg.config, {
     port: 3042,
     hostname: '0.0.0.0',
     plugin: false,
@@ -161,7 +158,7 @@ test('setConfig', async t => {
     port: 1234
   })
 
-  assert.deepEqual(bg.config, {
+  deepEqual(bg.config, {
     port: 1234,
     hostname: '123.123.123.123',
     plugin: false,
@@ -192,10 +189,10 @@ test('should append env values', async t => {
 
   await bg.prepare()
   const dotEnvFile = bg.getFileObject('.env')
-  assert.equal(dotEnvFile.contents.trim(), 'FOO=bar')
+  equal(dotEnvFile.contents.trim(), 'FOO=bar')
 
   const dotEnvSampleFile = bg.getFileObject('.env.sample')
-  assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=')
+  equal(dotEnvSampleFile.contents.trim(), 'FOO=')
 })
 
 test('should add a default env var to the .env.sample config', async t => {
@@ -218,10 +215,10 @@ test('should add a default env var to the .env.sample config', async t => {
 
   await bg.prepare()
   const dotEnvFile = bg.getFileObject('.env')
-  assert.equal(dotEnvFile.contents.trim(), 'FOO=bar\nBAR=baz')
+  equal(dotEnvFile.contents.trim(), 'FOO=bar\nBAR=baz')
 
   const dotEnvSampleFile = bg.getFileObject('.env.sample')
-  assert.equal(dotEnvSampleFile.contents.trim(), 'BAR=baz\nFOO=')
+  equal(dotEnvSampleFile.contents.trim(), 'BAR=baz\nFOO=')
 })
 
 test('should prepare the questions', async t => {
@@ -236,7 +233,7 @@ test('should prepare the questions', async t => {
   })
 
   await bg.prepareQuestions()
-  assert.deepStrictEqual(bg.questions, [
+  deepStrictEqual(bg.questions, [
     {
       type: 'input',
       name: 'targetDirectory',
@@ -263,7 +260,7 @@ test('should prepare the questions with a targetDirectory', async t => {
   })
 
   await bg.prepareQuestions()
-  assert.deepStrictEqual(bg.questions, [
+  deepStrictEqual(bg.questions, [
     {
       type: 'input',
       name: 'port',
@@ -285,7 +282,7 @@ test('should prepare the questions in runtime context', async t => {
   })
 
   await bg.prepareQuestions()
-  assert.deepStrictEqual(bg.questions, [])
+  deepStrictEqual(bg.questions, [])
 })
 
 test('should return application metadata', async t => {
@@ -301,7 +298,7 @@ test('should return application metadata', async t => {
   })
 
   const metadata = await bg.prepare()
-  assert.deepEqual(metadata, {
+  deepEqual(metadata, {
     targetDirectory: '/foo/bar',
     env: {
       FOO: 'bar'
@@ -319,10 +316,10 @@ test('should throw if prepare fails', async t => {
   }
   try {
     await bg.prepare()
-    assert.fail()
+    fail()
   } catch (err) {
-    assert.equal(err.code, 'PLT_GEN_PREPARE_ERROR')
-    assert.equal(err.message, 'Error while generating the files: beforePrepare error.')
+    equal(err.code, 'PLT_GEN_PREPARE_ERROR')
+    equal(err.message, 'Error while generating the files: beforePrepare error.')
   }
 })
 
@@ -346,13 +343,10 @@ test('should throw if there is a missing env variable', async () => {
 
   try {
     await bg.prepare()
-    assert.fail()
+    fail()
   } catch (err) {
-    assert.equal(err.code, 'PLT_GEN_MISSING_ENV_VAR')
-    assert.equal(
-      err.message,
-      'Env variable BAR is defined in config file platformatic.json, but not in config.env object.'
-    )
+    equal(err.code, 'PLT_GEN_MISSING_ENV_VAR')
+    equal(err.message, 'Env variable BAR is defined in config file platformatic.json, but not in config.env object.')
   }
 })
 
@@ -373,8 +367,8 @@ test('should add package', async () => {
   }
   await bg.addPackage(packageDefinition)
 
-  assert.equal(bg.packages.length, 1)
-  assert.deepEqual(bg.packages[0], packageDefinition)
+  equal(bg.packages.length, 1)
+  deepEqual(bg.packages[0], packageDefinition)
 })
 
 test('support packages', async t => {
@@ -410,7 +404,7 @@ test('support packages', async t => {
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
 
-    assert.deepEqual(contents.plugins, {
+    deepEqual(contents.plugins, {
       packages: [
         {
           name: '@fastify/compress',
@@ -422,11 +416,11 @@ test('support packages', async t => {
       ]
     })
 
-    assert.equal(svc.config.env.PLT_MY_APPLICATION_FST_PLUGIN_STATIC_FOOBAR, 123)
+    equal(svc.config.env.PLT_MY_APPLICATION_FST_PLUGIN_STATIC_FOOBAR, 123)
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
-    assert.equal(packageJson.dependencies['@fastify/compress'], 'latest')
+    equal(packageJson.dependencies['@fastify/compress'], 'latest')
   }
 
   {
@@ -455,7 +449,7 @@ test('support packages', async t => {
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
 
-    assert.deepEqual(contents.plugins, {
+    deepEqual(contents.plugins, {
       packages: [
         {
           name: '@fastify/compress',
@@ -494,7 +488,7 @@ test('support packages', async t => {
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
 
-    assert.deepEqual(contents.plugins, {
+    deepEqual(contents.plugins, {
       packages: [
         {
           name: '@fastify/static',
@@ -535,7 +529,7 @@ test('support packages', async t => {
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
 
-    assert.deepEqual(contents.plugins, {
+    deepEqual(contents.plugins, {
       packages: [
         {
           name: '@fastify/static',
@@ -580,7 +574,7 @@ test('support packages', async t => {
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
-    assert.equal(packageJson.dependencies.foobar, '1.42.0')
+    equal(packageJson.dependencies.foobar, '1.42.0')
   }
 
   {
@@ -613,7 +607,7 @@ test('support packages', async t => {
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
-    assert.equal(packageJson.dependencies.foobar, 'latest')
+    equal(packageJson.dependencies.foobar, 'latest')
   }
 
   {
@@ -650,7 +644,7 @@ test('support packages', async t => {
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
-    assert.equal(packageJson.dependencies[packageName], 'latest')
+    equal(packageJson.dependencies[packageName], 'latest')
   }
 
   {
@@ -683,11 +677,11 @@ test('support packages', async t => {
 
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
-    assert.equal(packageJson.dependencies.foobar, 'latest')
+    equal(packageJson.dependencies.foobar, 'latest')
   }
 })
 test('should load data from directory', async t => {
-  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
+  const runtimeDirectory = join(import.meta.dirname, 'fixtures', 'sample-runtime')
   const bg = new BaseGenerator({
     module: '@platformatic/service'
   })
@@ -734,12 +728,12 @@ test('should load data from directory', async t => {
       }
     ]
   }
-  assert.deepEqual(data, expected)
+  deepEqual(data, expected)
 })
 
 test('on update should just touch the packages configuration', async t => {
   mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
-  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'rival')
+  const runtimeDirectory = join(import.meta.dirname, 'fixtures', 'sample-runtime', 'services', 'rival')
   const dir = await moveToTmpdir(after)
   await cp(runtimeDirectory, dir, { recursive: true })
 
@@ -763,12 +757,12 @@ test('on update should just touch the packages configuration', async t => {
   })
   await bg.prepare()
 
-  assert.equal(bg.files.length, 1)
-  assert.equal(bg.files[0].file, 'platformatic.json')
-  assert.equal(bg.files[0].path, '')
+  equal(bg.files.length, 1)
+  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].path, '')
 
   const configFileContents = JSON.parse(bg.files[0].contents)
-  assert.deepEqual(configFileContents.plugins.packages, [
+  deepEqual(configFileContents.plugins.packages, [
     {
       name: '@fastify/foo-plugin',
       options: {
@@ -776,14 +770,14 @@ test('on update should just touch the packages configuration', async t => {
       }
     }
   ])
-  assert.deepEqual(bg.config.dependencies, {
+  deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })
 })
 
 test('on update should just touch the packages configuration', async t => {
   mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
-  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'no-plugin')
+  const runtimeDirectory = join(import.meta.dirname, 'fixtures', 'sample-runtime', 'services', 'no-plugin')
   const dir = await moveToTmpdir(after)
   await cp(runtimeDirectory, dir, { recursive: true })
 
@@ -807,13 +801,13 @@ test('on update should just touch the packages configuration', async t => {
   })
   await bg.prepare()
 
-  assert.equal(bg.files.length, 1)
-  assert.equal(bg.files[0].file, 'platformatic.json')
-  assert.equal(bg.files[0].path, '')
+  equal(bg.files.length, 1)
+  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].path, '')
 
   const configFileContents = JSON.parse(bg.files[0].contents)
-  assert.equal(configFileContents.plugins, undefined)
-  assert.deepEqual(bg.config.dependencies, {
+  equal(configFileContents.plugins, undefined)
+  deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })
 })
@@ -829,7 +823,7 @@ describe('runtime context', () => {
       applicationName: 'sample-application'
     })
 
-    assert.equal(bg.config.envPrefix, 'SAMPLE_APPLICATION')
+    equal(bg.config.envPrefix, 'SAMPLE_APPLICATION')
 
     bg.setConfig({
       isRuntimeContext: true,
@@ -841,8 +835,8 @@ describe('runtime context', () => {
       }
     })
 
-    assert.equal(bg.config.envPrefix, 'ANOTHER_PREFIX')
-    assert.deepEqual(bg.config.env, {
+    equal(bg.config.envPrefix, 'ANOTHER_PREFIX')
+    deepEqual(bg.config.env, {
       PLT_ANOTHER_PREFIX_FOO: 'bar',
       PLT_ANOTHER_PREFIX_BAZ: 'baz'
     })
@@ -865,7 +859,7 @@ describe('runtime context', () => {
 
     const meta = await bg.prepare()
 
-    assert.deepEqual(meta.env, {
+    deepEqual(meta.env, {
       PLT_ANOTHER_PREFIX_FOO: 'bar',
       PLT_ANOTHER_PREFIX_BAZ: 'baz'
     })
@@ -886,7 +880,7 @@ describe('runtime context', () => {
     })
 
     const metadata = await bg.prepare()
-    assert.deepEqual(metadata, {
+    deepEqual(metadata, {
       targetDirectory: '/foo/bar',
       env: {
         PLT_MY_APPLICATION_FOO: 'bar'
@@ -908,9 +902,9 @@ describe('runtime context', () => {
 
     const metadata = await bg.prepare()
 
-    assert.equal(bg.config.envPrefix, convertApplicationNameToPrefix(bg.config.applicationName))
+    equal(bg.config.envPrefix, convertApplicationNameToPrefix(bg.config.applicationName))
     const envPrefix = bg.config.envPrefix
-    assert.deepEqual(metadata, {
+    deepEqual(metadata, {
       targetDirectory: '/foo/bar',
       env: {
         [`PLT_${envPrefix}_FOO`]: 'bar'

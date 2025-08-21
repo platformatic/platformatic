@@ -1,13 +1,13 @@
-'use strict'
-
-const Topo = require('@hapi/topo')
-const { closest } = require('fastest-levenshtein')
-
-const errors = require('./errors')
-const { RoundRobinMap } = require('./worker/round-robin-map')
+import { Sorter } from '@hapi/topo'
+import { closest } from 'fastest-levenshtein'
+import { MissingDependencyError } from './errors.js'
+import { RoundRobinMap } from './worker/round-robin-map.js'
 
 function missingDependencyErrorMessage (clientName, application, applications) {
-  const allNames = applications.map(s => s.id).filter(id => id !== application.id).sort()
+  const allNames = applications
+    .map(s => s.id)
+    .filter(id => id !== application.id)
+    .sort()
   const closestName = closest(clientName, allNames)
   let errorMsg = `application '${application.id}' has unknown dependency: '${clientName}'.`
   if (closestName) {
@@ -19,20 +19,20 @@ function missingDependencyErrorMessage (clientName, application, applications) {
   return errorMsg
 }
 
-function checkDependencies (applications) {
+export function checkDependencies (applications) {
   const allApplications = new Set(applications.map(s => s.id))
 
   for (const application of applications) {
     for (const dependency of application.dependencies) {
       if (dependency.local && !allApplications.has(dependency.id)) {
-        throw new errors.MissingDependencyError(missingDependencyErrorMessage(dependency.id, application, applications))
+        throw new MissingDependencyError(missingDependencyErrorMessage(dependency.id, application, applications))
       }
     }
   }
 }
 
-function topologicalSort (workers, config) {
-  const topo = new Topo.Sorter()
+export function topologicalSort (workers, config) {
+  const topo = new Sorter()
 
   for (const application of config.applications) {
     const localDependencyIds = Array.from(application.dependencies)
@@ -61,5 +61,3 @@ function topologicalSort (workers, config) {
     workers.configuration
   )
 }
-
-module.exports = { checkDependencies, topologicalSort }

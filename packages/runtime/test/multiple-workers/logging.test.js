@@ -1,11 +1,8 @@
-'use strict'
-
-const { ok } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { createRuntime } = require('../helpers.js')
-const { updateFile, updateConfigFile, readLogs } = require('../helpers')
-const { prepareRuntime } = require('./helper')
+import { ok } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, readLogs, updateConfigFile, updateFile } from '../helpers.js'
+import { prepareRuntime } from './helper.js'
 
 for (const env of ['development', 'production']) {
   test(`logging properly works in ${env} mode when using separate processes`, async t => {

@@ -1,9 +1,8 @@
-'use strict'
+import { tableName } from '../utils.js'
+import { insertOne as sharedInsertOne } from './shared.js'
+export { deleteAll, insertMany, updateMany } from './shared.js'
 
-const shared = require('./shared')
-const { tableName } = require('../utils')
-
-async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+export async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const inputKeys = Object.keys(input)
   if (inputKeys.length === 0) {
     const insert = sql`
@@ -14,14 +13,10 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
     const res = await db.query(insert)
     return res[0]
   }
-  return shared.insertOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
+  return sharedInsertOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
 }
 
-module.exports.insertOne = insertOne
-module.exports.deleteAll = shared.deleteAll
-module.exports.insertMany = shared.insertMany
-
-async function listTables (db, sql, schemas) {
+export async function listTables (db, sql, schemas) {
   if (schemas) {
     const schemaList = sql.__dangerous__rawValue(schemas.map(s => `'${s}'`))
     const res = await db.query(sql`
@@ -40,9 +35,7 @@ async function listTables (db, sql, schemas) {
   return res.map(r => ({ schema: r.schemaname, table: r.tablename }))
 }
 
-module.exports.listTables = listTables
-
-async function listColumns (db, sql, table, schema) {
+export async function listColumns (db, sql, table, schema) {
   /*
   return db.query(sql`
     SELECT column_name, udt_name, is_nullable, is_generated
@@ -71,9 +64,7 @@ async function listColumns (db, sql, table, schema) {
   return res
 }
 
-module.exports.listColumns = listColumns
-
-async function listConstraints (db, sql, table, schema) {
+export async function listConstraints (db, sql, table, schema) {
   const query = sql`
     SELECT constraints.*, usage.*, usage2.table_name AS foreign_table_name, usage2.column_name AS foreign_column_name, usage2.table_schema AS foreign_table_schema
     FROM information_schema.table_constraints constraints
@@ -89,10 +80,8 @@ async function listConstraints (db, sql, table, schema) {
   return constraintsList
 }
 
-module.exports.listConstraints = listConstraints
-
-async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
   })
@@ -110,11 +99,7 @@ async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   return res[0]
 }
 
-module.exports.updateOne = updateOne
-
-module.exports.updateMany = shared.updateMany
-
-async function listEnumValues (db, sql, table, schema) {
+export async function listEnumValues (db, sql, table, schema) {
   const query = sql`
     SELECT udt_name, enumlabel, column_name
     FROM pg_enum e 
@@ -126,6 +111,4 @@ async function listEnumValues (db, sql, table, schema) {
   return db.query(query)
 }
 
-module.exports.listEnumValues = listEnumValues
-
-module.exports.hasILIKE = true
+export const hasILIKE = true

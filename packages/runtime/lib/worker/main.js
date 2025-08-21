@@ -1,31 +1,27 @@
-'use strict'
-
-const { EventEmitter } = require('node:events')
-const { hostname } = require('node:os')
-const { resolve } = require('node:path')
-const { workerData, threadId } = require('node:worker_threads')
-const { pathToFileURL } = require('node:url')
-const inspector = require('node:inspector')
-const diagnosticChannel = require('node:diagnostics_channel')
-const { ServerResponse } = require('node:http')
-
-const {
-  disablePinoDirectWrite,
-  executeWithTimeout,
-  ensureLoggableError,
-  getPrivateSymbol,
+import {
   buildPinoFormatters,
-  buildPinoTimestamp
-} = require('@platformatic/foundation')
-const dotenv = require('dotenv')
-const pino = require('pino')
-const { fetch } = require('undici')
-
-const { Controller } = require('./controller')
-const { SharedContext } = require('./shared-context')
-const { setupITC } = require('./itc')
-const { setDispatcher } = require('./interceptors')
-const { kId, kITC, kStderrMarker } = require('./symbols')
+  buildPinoTimestamp,
+  disablePinoDirectWrite,
+  ensureLoggableError,
+  executeWithTimeout,
+  getPrivateSymbol
+} from '@platformatic/foundation'
+import dotenv from 'dotenv'
+import { subscribe } from 'node:diagnostics_channel'
+import { EventEmitter } from 'node:events'
+import { ServerResponse } from 'node:http'
+import inspector from 'node:inspector'
+import { hostname } from 'node:os'
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { threadId, workerData } from 'node:worker_threads'
+import pino from 'pino'
+import { fetch } from 'undici'
+import { Controller } from './controller.js'
+import { setDispatcher } from './interceptors.js'
+import { setupITC } from './itc.js'
+import { SharedContext } from './shared-context.js'
+import { kId, kITC, kStderrMarker } from './symbols.js'
 
 function handleUnhandled (app, type, err) {
   const label =
@@ -212,7 +208,7 @@ async function main () {
 function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
 
-  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+  subscribe('http.server.request.start', ({ request, response }) => {
     if (request.url.startsWith(basePath)) {
       request.url = request.url.slice(basePath.length)
 

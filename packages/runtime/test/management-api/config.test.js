@@ -1,12 +1,10 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get runtime config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -36,16 +34,16 @@ test('should get runtime config', async t => {
     path: '/api/v1/config'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const runtimeConfig = await body.json()
-  assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.watch, false)
-  assert.deepStrictEqual(runtimeConfig.autoload, {
+  strictEqual(runtimeConfig.entrypoint, 'service-1')
+  strictEqual(runtimeConfig.watch, false)
+  deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
     exclude: []
   })
-  assert.deepStrictEqual(runtimeConfig.managementApi, {
+  deepStrictEqual(runtimeConfig.managementApi, {
     logs: { maxSize: 6 }
   })
 })

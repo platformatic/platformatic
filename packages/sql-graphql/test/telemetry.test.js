@@ -1,12 +1,10 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass, fail } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const { telemetry } = require('@platformatic/telemetry')
-const fastify = require('fastify')
+import sqlMapper from '@platformatic/sql-mapper'
+import { telemetry } from '@platformatic/telemetry'
+import fastify from 'fastify'
+import { equal, fail, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -36,15 +34,15 @@ const getSpanPerType = (spans, type = 'http') => {
   return spans.find(span => span.attributes[attibuteToLookFor])
 }
 
-test('creates the spans for the graphql mutation', async (t) => {
+test('creates the spans for the graphql mutation', async t => {
   const app = fastify()
 
   await app.register(telemetry, {
     applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   app.register(sqlMapper, {
@@ -53,7 +51,7 @@ test('creates the spans for the graphql mutation', async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -73,19 +71,23 @@ test('creates the spans for the graphql mutation', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const ress = res.json()
-    same(ress, {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      ress,
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   const { exporters } = app.openTelemetry
@@ -104,26 +106,29 @@ test('creates the spans for the graphql mutation', async (t) => {
   equal(graphqlSpan.attributes['graphql.operation.type'], 'mutation')
   const document = graphqlSpan.attributes['graphql.document']
   const documentObj = JSON.parse(document)
-  equal(documentObj.query, `
+  equal(
+    documentObj.query,
+    `
           mutation {
             savePage(input: { title: "Hello" }) {
               id
               title
             }
           }
-        `)
+        `
+  )
 })
 
 // We skip this for sqllite because in sqlite it's HARD to have a resolver exception without a schema validation exception first.
-test('creates the spans for errors', { skip: isSQLite }, async (t) => {
+test('creates the spans for errors', { skip: isSQLite }, async t => {
   const app = fastify()
 
   await app.register(telemetry, {
     applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   app.register(sqlMapper, {
@@ -132,7 +137,7 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -154,8 +159,8 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
               title
             }
           }
-         `,
-      },
+         `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
   }
@@ -176,35 +181,38 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
   equal(graphqlSpan.attributes['graphql.operation.type'], 'mutation')
   const document = graphqlSpan.attributes['graphql.document']
   const documentObj = JSON.parse(document)
-  equal(documentObj.query, `
+  equal(
+    documentObj.query,
+    `
           mutation {
             savePage(input: { title: "Platformatic is cool!" }) {
               id
               title
             }
           }
-         `)
+         `
+  )
   equal(graphqlSpan.status.code, 2)
   let expectedMessage
   if (isPg) {
     expectedMessage = 'value too long for type character varying(10)'
   } else if (isSQLite) {
-    expectedMessage = 'Data too long for column \'title\' at row 1'
+    expectedMessage = "Data too long for column 'title' at row 1"
   } else {
     expectedMessage = "Data too long for column 'title' at row 1"
   }
   equal(graphqlSpan.status.message, expectedMessage)
 })
 
-test('don\'t wrap the schema types starting with __', async (t) => {
+test("don't wrap the schema types starting with __", async t => {
   const app = fastify()
 
   await app.register(telemetry, {
     applicationName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   app.register(sqlMapper, {
@@ -213,7 +221,7 @@ test('don\'t wrap the schema types starting with __', async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -224,9 +232,7 @@ test('don\'t wrap the schema types starting with __', async (t) => {
   const schema = app.graphql.schema
   const schemaTypeMap = schema.getTypeMap()
   const types = Object.values(schemaTypeMap)
-  const schemaTypes = types.filter(
-    type => typeof type.getFields === 'function'
-  )
+  const schemaTypes = types.filter(type => typeof type.getFields === 'function')
 
   for (const schemaType of schemaTypes) {
     for (const [fieldName, field] of Object.entries(schemaType.getFields())) {

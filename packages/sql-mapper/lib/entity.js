@@ -1,20 +1,36 @@
-'use strict'
+import { findNearestString } from '@platformatic/foundation'
+import camelcase from 'camelcase'
+import { singularize } from 'inflected'
+import { buildCursorCondition } from './cursor.js'
+import {
+  InputNotProvidedError,
+  InvalidPrimaryKeyTypeError,
+  MissingWhereClauseError,
+  ParamNotAllowedError,
+  UnknownFieldError,
+  UnsupportedOperatorForArrayFieldError,
+  UnsupportedOperatorForNonArrayFieldError,
+  UnsupportedWhereClauseError
+} from './errors.js'
+import { wrapDB } from './telemetry.js'
+import { sanitizeLimit, tableName, toLowerFirst, toSingular, toUpperFirst } from './utils.js'
 
-const camelcase = require('camelcase')
-const {
-  toSingular,
-  toUpperFirst,
-  toLowerFirst,
-  tableName,
-  sanitizeLimit,
-} = require('./utils')
-const { singularize } = require('inflected')
-const { findNearestString } = require('@platformatic/foundation')
-const errors = require('./errors')
-const { wrapDB } = require('./telemetry')
-const { buildCursorCondition } = require('./cursor')
-
-function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig, columns, constraintsList) {
+function createMapper (
+  defaultDb,
+  sql,
+  log,
+  table,
+  fields,
+  primaryKeys,
+  relations,
+  queries,
+  autoTimestamp,
+  schema,
+  useSchemaInName,
+  limitConfig,
+  columns,
+  constraintsList
+) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
   const entityName = useSchemaInName ? toUpperFirst(`${schema}${toSingular(table)}`) : toSingular(table)
   /* istanbul ignore next */
@@ -23,7 +39,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   // If the db is in the opts, uses it, otherwise uses the defaultDb
   // if telemetry is enabled, wraps the db with telemetry
-  const getDB = (opts) => {
+  const getDB = opts => {
     let db = opts?.tx || defaultDb
     if (opts?.ctx?.app?.openTelemetry && opts?.ctx?.reply?.request) {
       const req = opts.ctx.reply.request
@@ -44,10 +60,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     return acc
   }, {})
 
-  const primaryKeysTypes = Array.from(primaryKeys).map((key) => {
+  const primaryKeysTypes = Array.from(primaryKeys).map(key => {
     return {
       key,
-      sqlType: fields[key].sqlType,
+      sqlType: fields[key].sqlType
     }
   })
 
@@ -60,7 +76,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
         if (fields[key] !== undefined) {
           newKey = key
         } else {
-          throw new errors.UnknownFieldError(key)
+          throw new UnknownFieldError(key)
         }
       }
       newInput[newKey] = value
@@ -87,10 +103,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   async function save (args) {
     const db = getDB(args)
     if (args.input === undefined) {
-      throw new errors.InputNotProvidedError()
+      throw new InputNotProvidedError()
     }
     // args.input is not array
-    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
+    const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const input = fixInput(args.input)
 
     let hasPrimaryKeys = true
@@ -106,7 +122,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       now = new Date()
       input[autoTimestamp.updatedAt] = now
     }
-    if (hasPrimaryKeys) { // update
+    if (hasPrimaryKeys) {
+      // update
       const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
       if (res) {
         return fixOutput(res)
@@ -128,7 +145,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   async function insert (args) {
     const db = getDB(args)
-    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
+    const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const inputs = args.inputs
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
     /* istanbul ignore else */
@@ -146,7 +163,17 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     /* istanbul ignore next */
     if (queries.insertMany) {
       // We are not fixing the input here because it is done in the query.
-      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKeysTypes, fieldsToRetrieve, fields)
+      const res = await queries.insertMany(
+        db,
+        sql,
+        table,
+        schema,
+        inputs,
+        inputToFieldMap,
+        primaryKeysTypes,
+        fieldsToRetrieve,
+        fields
+      )
       return res.map(fixOutput)
     } else {
       // TODO this can be optimized, we can still use a batch insert if we do not want any fields
@@ -163,13 +190,13 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   async function updateMany (args) {
     if (args.input === undefined) {
-      throw new errors.InputNotProvidedError()
+      throw new InputNotProvidedError()
     }
     if (args.where === undefined || Object.keys(args.where).length === 0) {
-      throw new errors.MissingWhereClauseError()
+      throw new MissingWhereClauseError()
     }
     const db = getDB(args)
-    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
+    const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const input = fixInput(args.input)
     if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
       const now = new Date()
@@ -190,9 +217,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
      * The 'field' can be a relational field which is undefined
      * in the inputToFieldMap
      * @see sql-graphql
-    */
-    const requestedFields = fields.map((field) => {
-      if (relations.some((relation) => field === relation.column_name)) {
+     */
+    const requestedFields = fields.map(field => {
+      if (relations.some(relation => field === relation.column_name)) {
         return field
       }
       return inputToFieldMap[field]
@@ -219,7 +246,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     all: 'ALL',
     contains: '@>',
     contained: '<@',
-    overlaps: '&&',
+    overlaps: '&&'
   }
 
   function computeCriteria (opts) {
@@ -238,14 +265,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       const value = where[key]
       const field = inputToFieldMap[key]
       if (!field) {
-        throw new errors.UnknownFieldError(key)
+        throw new UnknownFieldError(key)
       }
       for (const key of Object.keys(value)) {
         const operator = whereMap[key]
         /* istanbul ignore next */
         if (!operator) {
           // This should never happen
-          throw new errors.UnsupportedWhereClauseError(JSON.stringify(where[key]))
+          throw new UnsupportedWhereClauseError(JSON.stringify(where[key]))
         }
         const fieldWrap = fields[field]
         /* istanbul ignore next */
@@ -261,7 +288,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           } else if (operator === '&&') {
             criteria.push(sql`${sql.ident(field)} && ${value[key]}`)
           } else {
-            throw new errors.UnsupportedOperatorForArrayFieldError()
+            throw new UnsupportedOperatorForArrayFieldError()
           }
         } else if (operator === '=' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NULL`)
@@ -276,10 +303,18 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           }
           const like = operator === 'LIKE' ? sql`LIKE` : queries.hasILIKE ? sql`ILIKE` : sql`LIKE`
           criteria.push(sql`${leftHand} ${like} ${value[key]}`)
-        } else if (operator === 'ANY' || operator === 'ALL' || operator === '@>' || operator === '<@' || operator === '&&') {
-          throw new errors.UnsupportedOperatorForNonArrayFieldError()
+        } else if (
+          operator === 'ANY' ||
+          operator === 'ALL' ||
+          operator === '@>' ||
+          operator === '<@' ||
+          operator === '&&'
+        ) {
+          throw new UnsupportedOperatorForNonArrayFieldError()
         } else {
-          criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
+          criteria.push(
+            sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`
+          )
         }
       }
     }
@@ -289,13 +324,18 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   function computeCriteriaValue (fieldWrap, value) {
     if (Array.isArray(value)) {
       return sql`(${sql.join(
-        value.map((v) => computeCriteriaValue(fieldWrap, v)),
+        value.map(v => computeCriteriaValue(fieldWrap, v)),
         sql`, `
       )})`
     }
 
     /* istanbul ignore next */
-    if (fieldWrap.sqlType === 'int4' || fieldWrap.sqlType === 'int2' || fieldWrap.sqlType === 'float8' || fieldWrap.sqlType === 'float4') {
+    if (
+      fieldWrap.sqlType === 'int4' ||
+      fieldWrap.sqlType === 'int2' ||
+      fieldWrap.sqlType === 'float8' ||
+      fieldWrap.sqlType === 'float4'
+    ) {
       // This cat is needed in PostgreSQL
       return sql`${Number(value)}`
     } else {
@@ -305,7 +345,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   async function find (opts = {}) {
     const db = getDB(opts)
-    const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
+    const fieldsToRetrieve = computeFields(opts.fields).map(f => sql.ident(f))
     const criteria = computeCriteria(opts)
     const criteriaExists = criteria.length > 0
     const isBackwardPagination = opts.nextPage === false
@@ -320,7 +360,16 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     if (opts.cursor) {
-      const cursorCondition = buildCursorCondition(sql, opts.cursor, opts.orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination)
+      const cursorCondition = buildCursorCondition(
+        sql,
+        opts.cursor,
+        opts.orderBy,
+        inputToFieldMap,
+        fields,
+        computeCriteriaValue,
+        primaryKeys,
+        isBackwardPagination
+      )
       if (cursorCondition) {
         if (criteriaExists) query = sql`${query} AND ${cursorCondition}`
         else query = sql`${query} WHERE ${cursorCondition}`
@@ -328,7 +377,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     if (opts.orderBy && opts.orderBy.length > 0) {
-      const orderBy = opts.orderBy.map((order) => {
+      const orderBy = opts.orderBy.map(order => {
         const field = inputToFieldMap[order.field]
         let direction = order.direction.toLowerCase()
         if (isBackwardPagination) {
@@ -343,7 +392,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
       if (opts.offset !== undefined) {
         if (opts.offset < 0) {
-          throw new errors.ParamNotAllowedError(opts.offset)
+          throw new ParamNotAllowedError(opts.offset)
         }
         query = sql`${query} OFFSET ${opts.offset}`
       }
@@ -371,7 +420,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   async function _delete (opts) {
     const db = getDB(opts)
-    const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
+    const fieldsToRetrieve = computeFields(opts.fields).map(f => sql.ident(f))
     const criteria = computeCriteria(opts)
     const res = await queries.deleteAll(db, sql, table, schema, criteria, fieldsToRetrieve)
     return res.map(fixOutput)
@@ -393,11 +442,25 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     insert,
     save,
     delete: _delete,
-    updateMany,
+    updateMany
   }
 }
 
-function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig, schemaList, columns, constraintsList) {
+export function buildEntity (
+  db,
+  sql,
+  log,
+  table,
+  queries,
+  autoTimestamp,
+  schema,
+  useSchemaInName,
+  ignore,
+  limitConfig,
+  schemaList,
+  columns,
+  constraintsList
+) {
   const columnsNames = columns.map(c => c.column_name)
   for (const ignoredColumn of Object.keys(ignore)) {
     if (!columnsNames.includes(ignoredColumn)) {
@@ -407,21 +470,26 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
   }
 
   // Compute the columns
-  columns = columns.filter((c) => !ignore[c.column_name])
+  columns = columns.filter(c => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
-      isArray: column.isArray,
+      isArray: column.isArray
     }
 
     // To get enum values in mysql and mariadb
     /* istanbul ignore next */
     if (column.udt_name === 'enum') {
-      acc[column.column_name].enum = column.column_type.match(/'(.+?)'/g).map(enumValue => enumValue.slice(1, enumValue.length - 1))
+      acc[column.column_name].enum = column.column_type
+        .match(/'(.+?)'/g)
+        .map(enumValue => enumValue.slice(1, enumValue.length - 1))
     }
 
-    if (autoTimestamp && (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)) {
+    if (
+      autoTimestamp &&
+      (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)
+    ) {
       acc[column.column_name].autoTimestamp = true
     }
 
@@ -454,7 +522,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
       const validTypes = ['varchar', 'integer', 'uuid', 'serial']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
-        throw new errors.InvalidPrimaryKeyTypeError(pkType, validTypes.join(', '))
+        throw new InvalidPrimaryKeyTypeError(pkType, validTypes.join(', '))
       }
     }
   }
@@ -465,9 +533,12 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
     /* istanbul ignore next */
     if (!field) {
       // This should never happen
-      log.warn({
-        constraint,
-      }, `No field for ${constraint.column_name}`)
+      log.warn(
+        {
+          constraint
+        },
+        `No field for ${constraint.column_name}`
+      )
       continue
     }
 
@@ -480,13 +551,28 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
 
     // we need to ignore for coverage here because cannot be covered with sqlite (no schema support)
     // istanbul ignore next
-    const isForeignKeySchemaInConfig = schemaList?.length > 0 ? schemaList.includes(constraint.foreign_table_schema) : true
+    const isForeignKeySchemaInConfig =
+      schemaList?.length > 0 ? schemaList.includes(constraint.foreign_table_schema) : true
     /* istanbul ignore if */
     if (constraint.constraint_type === 'FOREIGN KEY' && isForeignKeySchemaInConfig) {
       field.foreignKey = true
-      const foreignEntityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.foreign_table_schema} ${constraint.foreign_table_name}`) : constraint.foreign_table_name))
-      const entityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.table_schema} ${constraint.table_name}`) : constraint.table_name))
-      const loweredTableWithSchemaName = toLowerFirst(useSchemaInName ? camelcase(`${constraint.table_schema} ${camelcase(constraint.table_name)}`) : camelcase(constraint.table_name))
+      const foreignEntityName = singularize(
+        camelcase(
+          useSchemaInName
+            ? camelcase(`${constraint.foreign_table_schema} ${constraint.foreign_table_name}`)
+            : constraint.foreign_table_name
+        )
+      )
+      const entityName = singularize(
+        camelcase(
+          useSchemaInName ? camelcase(`${constraint.table_schema} ${constraint.table_name}`) : constraint.table_name
+        )
+      )
+      const loweredTableWithSchemaName = toLowerFirst(
+        useSchemaInName
+          ? camelcase(`${constraint.table_schema} ${camelcase(constraint.table_name)}`)
+          : camelcase(constraint.table_name)
+      )
       constraint.loweredTableWithSchemaName = loweredTableWithSchemaName
       constraint.foreignEntityName = foreignEntityName
       constraint.entityName = entityName
@@ -521,10 +607,21 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema, useSchemaInName, limitConfig)
+  const entity = createMapper(
+    db,
+    sql,
+    log,
+    table,
+    fields,
+    primaryKeys,
+    currentRelations,
+    queries,
+    autoTimestamp,
+    schema,
+    useSchemaInName,
+    limitConfig
+  )
   entity.relations = currentRelations
 
   return entity
 }
-
-module.exports = buildEntity

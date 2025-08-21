@@ -1,14 +1,10 @@
-'use strict'
-
-const Swagger = require('@fastify/swagger')
-const { deepmerge } = require('@platformatic/foundation')
-const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
-const { findNearestString } = require('@platformatic/foundation')
-const entityPlugin = require('./lib/entity-to-routes')
-const manyToMany = require('./lib/many-to-many')
-const { getSchemaOverrideFromOpenApiPathItem } = require('./lib/utils')
-const fp = require('fastify-plugin')
-const errors = require('./lib/errors')
+import Swagger from '@fastify/swagger'
+import { deepmerge, findNearestString } from '@platformatic/foundation'
+import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
+import fp from 'fastify-plugin'
+import { entityPlugin } from './lib/entity-to-routes.js'
+import { manyToMany } from './lib/many-to-many.js'
+import { getSchemaOverrideFromOpenApiPathItem } from './lib/utils.js'
 
 async function setupOpenAPI (app, opts) {
   const prefix = opts.prefix || ''
@@ -158,5 +154,5 @@ async function setupOpenAPI (app, opts) {
   }
 }
 
-module.exports = fp(setupOpenAPI)
-module.exports.errors = errors
+export default fp(setupOpenAPI)
+export * as errors from './lib/errors.js'

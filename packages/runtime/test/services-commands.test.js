@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { loadApplicationsCommands } = require('../index.js')
-const { createDirectory, safeRemove } = require('@platformatic/foundation')
-const { writeFile } = require('node:fs/promises')
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { loadApplicationsCommands } from '../index.js'
 
 async function createTmpDir (t) {
   const originalCwd = process.cwd()
@@ -27,7 +25,7 @@ test('loadApplicationsCommands returns empty objects when no runtime config foun
 
   const result = await loadApplicationsCommands()
 
-  assert.deepStrictEqual(result, {
+  deepStrictEqual(result, {
     applications: {},
     commands: {},
     help: {}
@@ -55,7 +53,7 @@ test('loadApplicationsCommands returns empty objects when runtime config has no 
 
   const result = await loadApplicationsCommands()
 
-  assert.deepStrictEqual(result, {
+  deepStrictEqual(result, {
     applications: {},
     commands: {},
     help: {}
@@ -87,7 +85,7 @@ test('loadApplicationsCommands returns empty objects when applications have no c
   // This will cause the application to fail to load and be ignored
   const result = await loadApplicationsCommands()
 
-  assert.deepStrictEqual(result, {
+  deepStrictEqual(result, {
     applications: {},
     commands: {},
     help: {}
@@ -117,7 +115,7 @@ test('loadApplicationsCommands ignores applications that fail to load', async t 
 
   const result = await loadApplicationsCommands()
 
-  assert.deepStrictEqual(result, {
+  deepStrictEqual(result, {
     applications: {},
     commands: {},
     help: {}
@@ -126,7 +124,7 @@ test('loadApplicationsCommands ignores applications that fail to load', async t 
 
 test('loadApplicationsCommands works with existing fixtures that have commands', async t => {
   const originalCwd = process.cwd()
-  const fixtureDir = join(__dirname, '..', 'fixtures', 'metrics')
+  const fixtureDir = join(import.meta.dirname, '..', 'fixtures', 'metrics')
 
   t.after(() => {
     process.chdir(originalCwd)
@@ -137,25 +135,25 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   const result = await loadApplicationsCommands()
 
   // Verify the structure
-  assert.ok(typeof result === 'object')
-  assert.ok(typeof result.applications === 'object')
-  assert.ok(typeof result.commands === 'object')
-  assert.ok(typeof result.help === 'object')
+  ok(typeof result === 'object')
+  ok(typeof result.applications === 'object')
+  ok(typeof result.commands === 'object')
+  ok(typeof result.help === 'object')
 
   // The metrics fixture should have commands from service-db (DB package) and service-1 (Composer package)
   const applicationKeys = Object.keys(result.applications)
   const helpKeys = Object.keys(result.help)
 
   // Verify we have some commands
-  assert.ok(applicationKeys.length > 0, 'Should have found some application commands')
-  assert.ok(helpKeys.length > 0, 'Should have found some help entries')
+  ok(applicationKeys.length > 0, 'Should have found some application commands')
+  ok(helpKeys.length > 0, 'Should have found some help entries')
 
   // Verify that application keys match help keys
-  assert.deepStrictEqual(applicationKeys.sort(), helpKeys.sort())
+  deepStrictEqual(applicationKeys.sort(), helpKeys.sort())
 
   // Verify that we have the expected DB commands
   const dbCommands = applicationKeys.filter(key => key.startsWith('service-db:'))
-  assert.ok(dbCommands.length > 0, 'Should have found DB application commands')
+  ok(dbCommands.length > 0, 'Should have found DB application commands')
 
   // Verify specific expected DB commands
   const expectedDbCommands = [
@@ -167,13 +165,13 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   ]
 
   for (const expectedCommand of expectedDbCommands) {
-    assert.ok(applicationKeys.includes(expectedCommand), `Should include command: ${expectedCommand}`)
-    assert.ok(result.help[expectedCommand], `Should have help for command: ${expectedCommand}`)
-    assert.strictEqual(result.applications[expectedCommand].id, 'service-db')
+    ok(applicationKeys.includes(expectedCommand), `Should include command: ${expectedCommand}`)
+    ok(result.help[expectedCommand], `Should have help for command: ${expectedCommand}`)
+    strictEqual(result.applications[expectedCommand].id, 'service-db')
   }
 
   // Verify we have composer commands
   const composerCommands = applicationKeys.filter(key => key.startsWith('service-1:'))
-  assert.ok(composerCommands.length > 0, 'Should have found Composer application commands')
-  assert.ok(composerCommands.includes('service-1:fetch-openapi-schemas'))
+  ok(composerCommands.length > 0, 'Should have found Composer application commands')
+  ok(composerCommands.includes('service-1:fetch-openapi-schemas'))
 })

@@ -1,31 +1,28 @@
-'use strict'
-
-const process = require('node:process')
-const { resourceFromAttributes } = require('@opentelemetry/resources')
-const { AsyncLocalStorage } = require('node:async_hooks')
-const opentelemetry = require('@opentelemetry/sdk-node')
-const FileSpanExporter = require('./file-span-exporter')
-const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
-const { workerData } = require('node:worker_threads')
-const { resolve } = require('node:path')
-const { tmpdir } = require('node:os')
-const { abstractLogger } = require('@platformatic/foundation')
-const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
-const util = require('node:util')
-const { getInstrumentations } = require('./pluggable-instrumentations')
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
+import { resourceFromAttributes } from '@opentelemetry/resources'
+import * as opentelemetry from '@opentelemetry/sdk-node'
+import {
+  BatchSpanProcessor,
+  ConsoleSpanExporter,
+  InMemorySpanExporter,
+  SimpleSpanProcessor
+} from '@opentelemetry/sdk-trace-base'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
+import { abstractLogger } from '@platformatic/foundation'
+import { AsyncLocalStorage } from 'node:async_hooks'
+import { readFileSync, statSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
+import { resolve } from 'node:path'
+import process from 'node:process'
+import util from 'node:util'
+import { workerData } from 'node:worker_threads'
+import { FileSpanExporter } from './file-span-exporter.js'
+import { getInstrumentations } from './pluggable-instrumentations.js'
 
 const debuglog = util.debuglog('@platformatic/telemetry')
-const {
-  ConsoleSpanExporter,
-  BatchSpanProcessor,
-  SimpleSpanProcessor,
-  InMemorySpanExporter,
-} = require('@opentelemetry/sdk-trace-base')
-
-const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
-const {
-  UndiciInstrumentation,
-} = require('@opentelemetry/instrumentation-undici')
+const require = createRequire(import.meta.url)
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fixe the tests
@@ -52,9 +49,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
     if (exporter.type === 'console') {
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     } else if (exporter.type === 'otlp') {
-      const {
-        OTLPTraceExporter,
-      } = require('@opentelemetry/exporter-trace-otlp-proto')
+      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
       exporterObj = new OTLPTraceExporter(exporterOptions)
     } else if (exporter.type === 'zipkin') {
       const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
@@ -64,9 +59,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
     } else if (exporter.type === 'file') {
       exporterObj = new FileSpanExporter(exporterOptions)
     } else {
-      abstractLogger.warn(
-        `Unknown exporter type: ${exporter.type}, defaulting to console.`
-      )
+      abstractLogger.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     }
 
@@ -89,7 +82,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     instrumentations: [
       new UndiciInstrumentation({
-        responseHook: (span) => {
+        responseHook: span => {
           const store = clientSpansAls.getStore()
           if (store) {
             store.span = span
@@ -106,13 +99,14 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   sdk.start()
 
   process.on('SIGTERM', () => {
-    sdk.shutdown()
+    sdk
+      .shutdown()
       .then(() => debuglog('Tracing terminated'))
-      .catch((error) => debuglog('Error terminating tracing', error))
+      .catch(error => debuglog('Error terminating tracing', error))
   })
 }
 
-const main = async () => {
+async function main () {
   let data = null
   const useWorkerData = !!workerData
 

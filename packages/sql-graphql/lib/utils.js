@@ -1,13 +1,11 @@
-'use strict'
-
-const graphql = require('graphql')
-const scalars = require('graphql-scalars')
-const { GraphQLJSONObject } = require('graphql-type-json')
-const errors = require('./errors')
+import * as graphql from 'graphql'
+import * as scalars from 'graphql-scalars'
+import { GraphQLJSONObject } from 'graphql-type-json'
+import { UnsupportedKindError } from './errors.js'
 
 // The sqlTypeToGraphQL is shared between
 // all database adapters.
-function sqlTypeToGraphQL (sqlType) {
+export function sqlTypeToGraphQL (sqlType) {
   // TODO support more types
   /* istanbul ignore next */
   switch (sqlType) {
@@ -68,7 +66,7 @@ function sqlTypeToGraphQL (sqlType) {
   }
 }
 
-function fromSelectionSet (selectionSet, fields = new Set()) {
+export function fromSelectionSet (selectionSet, fields = new Set()) {
   /* istanbul ignore next */
   for (const s of selectionSet.selections) {
     if (s.kind === 'Field') {
@@ -76,14 +74,10 @@ function fromSelectionSet (selectionSet, fields = new Set()) {
     } else if (s.kind === 'InlineFragment') {
       fromSelectionSet(s.selectionSet, fields)
     } else {
-      throw new errors.UnsupportedKindError(s.kind)
+      throw new UnsupportedKindError(s.kind)
     }
   }
   return fields
 }
 
-module.exports = {
-  sqlTypeToGraphQL,
-  fromSelectionSet,
-  typeSym: Symbol('graphlType'),
-}
+export const typeSym = Symbol('graphlType')

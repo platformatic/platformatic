@@ -1,10 +1,10 @@
-'use strict'
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('composer', async t => {
   const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
@@ -19,14 +19,14 @@ test('composer', async t => {
   {
     const res = await request(entryUrl + '/hello')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 
   {
     const res = await request(entryUrl + '/hello2')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { hello: 'world2' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { hello: 'world2' })
   }
 })

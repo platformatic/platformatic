@@ -1,16 +1,14 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const constructGraph = require('./lib/entity-to-type')
-const mercurius = require('mercurius')
-const graphql = require('graphql')
-const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
-const { findNearestString } = require('@platformatic/foundation')
-const establishRelations = require('./lib/relationship')
-const setupSubscriptions = require('./lib/subscriptions')
-const setupTelemetry = require('./lib/telemetry')
-const scalars = require('graphql-scalars')
-const errors = require('./lib/errors')
+import { mercuriusFederationPlugin } from '@mercuriusjs/federation'
+import { findNearestString } from '@platformatic/foundation'
+import fp from 'fastify-plugin'
+import { GraphQLObjectType, GraphQLSchema, GraphQLString, printSchema } from 'graphql'
+import { GraphQLDate, GraphQLDateTime } from 'graphql-scalars'
+import mercurius from 'mercurius'
+import { constructGraph } from './lib/entity-to-type.js'
+import { ErrorPrintingGraphQLSchema } from './lib/errors.js'
+import { establishRelations } from './lib/relationship.js'
+import { setupSubscriptions } from './lib/subscriptions.js'
+import { setupTelemetry } from './lib/telemetry.js'
 
 async function mapperToGraphql (app, opts) {
   const mapper = app.platformatic
@@ -28,19 +26,18 @@ async function mapperToGraphql (app, opts) {
     resolvers,
     loaders,
     federationReplacements,
-    federationMetadata: opts.federationMetadata,
+    federationMetadata: opts.federationMetadata
   }
   const metaMap = new Map()
 
   if (Object.keys(mapper.entities).length === 0) {
     // no schema
-    queryTopFields.hello = { type: graphql.GraphQLString }
+    queryTopFields.hello = { type: GraphQLString }
     resolvers.Query = {
-      hello: () => 'Hello Platformatic!',
+      hello: () => 'Hello Platformatic!'
     }
   } else {
-    const entitiesNames = Object.values(mapper.entities)
-      .map(entity => entity.singularName)
+    const entitiesNames = Object.values(mapper.entities).map(entity => entity.singularName)
 
     for (const ignoredEntity of Object.keys(ignore)) {
       if (!entitiesNames.includes(ignoredEntity)) {
@@ -94,17 +91,18 @@ async function mapperToGraphql (app, opts) {
     }
   }
 
-  const query = new graphql.GraphQLObjectType({
+  const query = new GraphQLObjectType({
     name: 'Query',
-    fields: queryTopFields,
+    fields: queryTopFields
   })
 
-  const mutation = Object.keys(mutationTopFields).length > 0
-    ? new graphql.GraphQLObjectType({
-      name: 'Mutation',
-      fields: mutationTopFields,
-    })
-    : null
+  const mutation =
+    Object.keys(mutationTopFields).length > 0
+      ? new GraphQLObjectType({
+        name: 'Mutation',
+        fields: mutationTopFields
+      })
+      : null
 
   if (!mutation) {
     delete resolvers.Mutation
@@ -130,7 +128,7 @@ async function mapperToGraphql (app, opts) {
 
     if (entitiesList.length > 0) {
       opts.subscription = {
-        emitter: app.platformatic.mq,
+        emitter: app.platformatic.mq
       }
       // TODO support ignoring some of those
       subscription = setupSubscriptions(app, metaMap, resolvers, ignoreList)
@@ -139,14 +137,14 @@ async function mapperToGraphql (app, opts) {
 
   let sdl = ''
   try {
-    sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+    sdl = printSchema(new GraphQLSchema({ query, mutation, subscription }))
   } catch (error) {
     // The next lines are excluded from test coverage:
     // it's quite hard to test the following lines for all of the DB types
     /* istanbul ignore next */
     app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
     /* istanbul ignore next */
-    const newError = new errors.ErrorPrintingGraphQLSchema()
+    const newError = new ErrorPrintingGraphQLSchema()
     /* istanbul ignore next */
     newError.cause = error
     /* istanbul ignore next */
@@ -167,10 +165,10 @@ async function mapperToGraphql (app, opts) {
   // Ignoriring because SQLite doesn't support dates
   /* istanbul ignore next */
   if (sdl.match(/scalar Date\n/)) {
-    resolvers.Date = scalars.GraphQLDate
+    resolvers.Date = GraphQLDate
   }
   if (sdl.indexOf('scalar DateTime') >= 0) {
-    resolvers.DateTime = scalars.GraphQLDateTime
+    resolvers.DateTime = GraphQLDateTime
   }
 
   opts.graphiql = opts.graphiql !== false
@@ -184,7 +182,7 @@ async function mapperToGraphql (app, opts) {
     ...opts,
     schema: sdl,
     loaders,
-    resolvers,
+    resolvers
   })
 
   if (app.openTelemetry) {
@@ -194,5 +192,5 @@ async function mapperToGraphql (app, opts) {
   app.log.debug({ schema: sdl }, 'computed schema')
 }
 
-module.exports = fp(mapperToGraphql)
-module.exports.errors = errors
+export default fp(mapperToGraphql)
+export * as errors from './lib/errors.js'

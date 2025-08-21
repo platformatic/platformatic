@@ -1,13 +1,14 @@
-'use strict'
+import { CompositePropagator, merge, W3CTraceContextPropagator } from '@opentelemetry/core'
+import { emptyResource } from '@opentelemetry/resources'
+import { AlwaysOnSampler } from '@opentelemetry/sdk-trace-base'
+import { createRequire } from 'node:module'
+import { MultiSpanProcessor } from './multispan-processor.js'
 
-const { emptyResource } = require('@opentelemetry/resources')
-const { merge, CompositePropagator, W3CTraceContextPropagator } = require('@opentelemetry/core')
-const { AlwaysOnSampler } = require('@opentelemetry/sdk-trace-base')
+const require = createRequire(import.meta.url)
 // We need to import the Tracer to write our own TracerProvider that does NOT extend the OpenTelemetry one.
 const { Tracer } = require('@opentelemetry/sdk-trace-base/build/src/Tracer')
-const { MultiSpanProcessor } = require('./multispan-processor')
 
-class PlatformaticTracerProvider {
+export class PlatformaticTracerProvider {
   activeSpanProcessor = null
   _registeredSpanProcessors = []
   // This MUST be called `resource`, see: https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/Tracer.ts#L57
@@ -18,13 +19,13 @@ class PlatformaticTracerProvider {
     const mergedConfig = merge(
       {},
       {
-        sampler: new AlwaysOnSampler(),
+        sampler: new AlwaysOnSampler()
       },
       config
     )
     this.resource = mergedConfig.resource ?? emptyResource
     this._config = Object.assign({}, mergedConfig, {
-      resource: this.resource,
+      resource: this.resource
     })
   }
 
@@ -39,9 +40,7 @@ class PlatformaticTracerProvider {
     } else {
       this._registeredSpanProcessors.push(spanProcessor)
     }
-    this.activeSpanProcessor = new MultiSpanProcessor(
-      this._registeredSpanProcessors
-    )
+    this.activeSpanProcessor = new MultiSpanProcessor(this._registeredSpanProcessors)
   }
 
   getActiveSpanProcessor () {
@@ -51,8 +50,8 @@ class PlatformaticTracerProvider {
   getPropagator () {
     return new CompositePropagator({
       propagators: [
-        new W3CTraceContextPropagator(), // see: https://www.w3.org/TR/trace-context/
-      ],
+        new W3CTraceContextPropagator() // see: https://www.w3.org/TR/trace-context/
+      ]
     })
   }
 
@@ -65,5 +64,3 @@ class PlatformaticTracerProvider {
     return this.activeSpanProcessor.shutdown()
   }
 }
-
-module.exports = { PlatformaticTracerProvider }

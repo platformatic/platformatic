@@ -1,16 +1,14 @@
-'use strict'
+import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { parentPort, workerData } from 'node:worker_threads'
+import { Agent, Client, Pool, setGlobalDispatcher } from 'undici'
+import { wire } from 'undici-thread-interceptor'
+import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
+import { kInterceptors } from './symbols.js'
 
-const { join } = require('node:path')
-const { workerData, parentPort } = require('node:worker_threads')
-const { pathToFileURL } = require('node:url')
-const { createRequire } = require('node:module')
-const { setGlobalDispatcher, Client, Pool, Agent } = require('undici')
-const { wire } = require('undici-thread-interceptor')
-const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
-const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
-const { kInterceptors } = require('./symbols')
-
-async function setDispatcher (runtimeConfig) {
+export async function setDispatcher (runtimeConfig) {
   const threadDispatcher = createThreadInterceptor(runtimeConfig)
   const threadInterceptor = threadDispatcher.interceptor
 
@@ -34,7 +32,7 @@ async function setDispatcher (runtimeConfig) {
   return { threadDispatcher }
 }
 
-async function updateUndiciInterceptors (undiciConfig) {
+export async function updateUndiciInterceptors (undiciConfig) {
   const updatableInterceptors = globalThis[kInterceptors]
   if (!updatableInterceptors) return
 
@@ -173,7 +171,7 @@ function createThreadInterceptor (runtimeConfig) {
     domain: '.plt.local',
     port: parentPort,
     timeout: runtimeConfig.applicationTimeout,
-    ...telemetryHooks,
+    ...telemetryHooks
   })
   return threadDispatcher
 }
@@ -197,5 +195,3 @@ function createHttpCacheInterceptor (runtimeConfig) {
   })
   return cacheInterceptor
 }
-
-module.exports = { setDispatcher, updateUndiciInterceptors }

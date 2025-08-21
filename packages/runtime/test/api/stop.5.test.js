@@ -1,13 +1,11 @@
-'use strict'
+import { ok } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should stop accepting new request immediately under high load', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-log.json')
@@ -45,6 +43,6 @@ test('should stop accepting new request immediately under high load', async t =>
   await app.stop()
   active = false
 
-  assert.ok(!errors.some(m => m.match(/No target found for serviceapp.plt.local in thread \d./)))
-  assert.ok(!errors.includes('The target worker thread has exited before sending a response.'))
+  ok(!errors.some(m => m.match(/No target found for serviceapp.plt.local in thread \d./)))
+  ok(!errors.includes('The target worker thread has exited before sending a response.'))
 })

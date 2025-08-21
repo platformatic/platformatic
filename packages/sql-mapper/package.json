@@ -2,8 +2,9 @@
   "name": "@platformatic/sql-mapper",
   "version": "3.0.0-alpha.5",
   "description": "A data mapper utility for SQL databases",
-  "main": "mapper.js",
-  "types": "mapper.d.ts",
+  "main": "index.js",
+  "type": "module",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
     "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
@@ -26,7 +27,6 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.2.0",
     "@opentelemetry/api": "^1.9.0",
     "borp": "^0.20.0",
     "eslint": "9",

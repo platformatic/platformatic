@@ -1,12 +1,10 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should stop the runtimes with a management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -18,12 +16,12 @@ test('should stop the runtimes with a management api', async t => {
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -33,9 +31,9 @@ test('should stop the runtimes with a management api', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/stop',
+    path: '/api/v1/stop'
   })
   await body.text()
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 })

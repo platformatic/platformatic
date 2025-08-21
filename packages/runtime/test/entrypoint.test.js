@@ -1,12 +1,10 @@
-'use strict'
+import { deepStrictEqual, ifError, rejects } from 'node:assert'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from './helpers.js'
 
-const { deepStrictEqual, ifError, rejects } = require('node:assert')
-const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
-const { test } = require('node:test')
-const { createRuntime } = require('./helpers.js')
-
-const fixturesDir = join(__dirname, '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should automatically detect the entrypoint if it there is only a single application', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-single-service.json')

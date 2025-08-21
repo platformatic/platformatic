@@ -1,17 +1,15 @@
-'use strict'
+import { createDirectory, features, safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual } from 'node:assert'
+import { cp, symlink } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { request } from 'undici'
 
-const { cp, symlink } = require('node:fs/promises')
-const { deepStrictEqual } = require('node:assert')
-const { join, resolve } = require('node:path')
-const { request } = require('undici')
-const { createDirectory, safeRemove, features } = require('@platformatic/foundation')
-
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const tmpDir = resolve(__dirname, '../../tmp')
+export const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
+export const tmpDir = resolve(import.meta.dirname, '../../tmp')
 
 const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 
-async function prepareRuntime (t, name, dependencies) {
+export async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
 
   await createDirectory(root)
@@ -31,7 +29,7 @@ async function prepareRuntime (t, name, dependencies) {
   return root
 }
 
-async function verifyResponse (baseUrl, application, expectedWorker, socket, additionalChecks) {
+export async function verifyResponse (baseUrl, application, expectedWorker, socket, additionalChecks) {
   const res = await request(baseUrl + `/${application}/hello`)
   const json = await res.body.json()
 
@@ -42,7 +40,7 @@ async function verifyResponse (baseUrl, application, expectedWorker, socket, add
   additionalChecks?.(res, json)
 }
 
-async function verifyInject (client, application, expectedWorker, additionalChecks) {
+export async function verifyInject (client, application, expectedWorker, additionalChecks) {
   const res = await client.request({ method: 'GET', path: `/api/v1/applications/${application}/proxy/hello` })
   const json = await res.body.json()
 
@@ -52,13 +50,13 @@ async function verifyInject (client, application, expectedWorker, additionalChec
   additionalChecks?.(res, json)
 }
 
-function formatEvent (event) {
+export function formatEvent (event) {
   return Object.entries(event)
     .map(([key, value]) => `${key}=${value}`)
     .join(', ')
 }
 
-function getExpectedEvents (entrypoint, workers) {
+export function getExpectedEvents (entrypoint, workers) {
   const start = []
   const stop = []
 
@@ -83,7 +81,7 @@ function getExpectedEvents (entrypoint, workers) {
   return { start, stop }
 }
 
-function waitForEvents (app, ...events) {
+export function waitForEvents (app, ...events) {
   const timeout = typeof events.at(-1) === 'number' ? events.pop() : WAIT_TIMEOUT
 
   events = events.flat(Number.POSITIVE_INFINITY)
@@ -144,15 +142,4 @@ function waitForEvents (app, ...events) {
   })
 
   return promise
-}
-
-module.exports = {
-  fixturesDir,
-  tmpDir,
-  prepareRuntime,
-  verifyResponse,
-  verifyInject,
-  formatEvent,
-  getExpectedEvents,
-  waitForEvents
 }

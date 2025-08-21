@@ -1,11 +1,9 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should start stopped application by application id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -21,13 +19,13 @@ test('should start stopped application by application id', async t => {
 
   {
     const applicationDetails = await app.getApplicationDetails('with-logger', true)
-    assert.strictEqual(applicationDetails.status, 'stopped')
+    strictEqual(applicationDetails.status, 'stopped')
   }
 
   await app.startApplication('with-logger')
 
   {
     const applicationDetails = await app.getApplicationDetails('with-logger')
-    assert.strictEqual(applicationDetails.status, 'started')
+    strictEqual(applicationDetails.status, 'started')
   }
 })

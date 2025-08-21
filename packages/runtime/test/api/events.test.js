@@ -1,10 +1,9 @@
-'use strict'
+import { deepStrictEqual, rejects } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('emits an exhaustive list of events', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-events.json')
@@ -23,7 +22,7 @@ test('emits an exhaustive list of events', async t => {
     await app.close()
   })
 
-  await assert.rejects(async () => {
+  await rejects(async () => {
     await app.start()
   }, /boom/)
 
@@ -47,7 +46,7 @@ test('emits an exhaustive list of events', async t => {
     error: 'boom'
   }
 
-  assert.deepStrictEqual(events, [
+  deepStrictEqual(events, [
     { event: 'starting', payload: undefined },
     { event: 'application:starting', payload: 'serviceThrowsOnStart' },
     { event: 'application:worker:starting', payload: basePayload },

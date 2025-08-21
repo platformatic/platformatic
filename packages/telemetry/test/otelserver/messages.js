@@ -1,8 +1,6 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const protobuf = require('protobufjs')
-const { join } = require('path')
+import fp from 'fastify-plugin'
+import { join } from 'path'
+import protobuf from 'protobufjs'
 
 // Protobuf setup to correctly decode messages
 async function plugin (fastify, opts) {
@@ -17,7 +15,7 @@ async function plugin (fastify, opts) {
   // This must point where the `opentelemetry` folder is located
   const root = new protobuf.Root()
   root.resolvePath = (_origin, target) => {
-    return join(__dirname, target)
+    return join(import.meta.dirname, target)
   }
   root.loadSync(traceProtoPath)
   root.resolveAll()
@@ -34,18 +32,14 @@ async function plugin (fastify, opts) {
     }
   })
 
-  fastify.addContentTypeParser('application/x-protobuf', { parseAs: 'buffer' },
-    (req, body, done) => {
-      try {
-        const spans = tracePackage.decode(body)
-        return done(null, spans)
-      } catch (err) {
-        return done(err)
-      }
+  fastify.addContentTypeParser('application/x-protobuf', { parseAs: 'buffer' }, (req, body, done) => {
+    try {
+      const spans = tracePackage.decode(body)
+      return done(null, spans)
+    } catch (err) {
+      return done(err)
     }
-  )
+  })
 }
 
-module.exports = fp(plugin, {
-  name: 'messages'
-})
+export default fp(plugin, { name: 'messages' })

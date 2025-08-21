@@ -1,7 +1,7 @@
 /// <reference types="@platformatic/service" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
-module.exports = async function (fastify, opts) {
+export default async function (fastify, opts) {
   fastify.get('/path/with/:fieldId', async (req, res) => {
     return {
       query: req.query,

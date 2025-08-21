@@ -1,14 +1,11 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get applications topology', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -38,12 +35,12 @@ test('should get applications topology', async t => {
     path: '/api/v1/applications'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const entrypointDetails = await app.getEntrypointDetails()
   const topology = await body.json()
 
-  assert.deepStrictEqual(topology, {
+  deepStrictEqual(topology, {
     entrypoint: 'service-1',
     production: false,
     applications: [
@@ -51,7 +48,7 @@ test('should get applications topology', async t => {
         id: 'service-1',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
@@ -61,7 +58,7 @@ test('should get applications topology', async t => {
         id: 'service-2',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
         dependencies: []
@@ -70,7 +67,7 @@ test('should get applications topology', async t => {
         id: 'service-db',
         type: 'db',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: false,
         localUrl: 'http://service-db.plt.local',
         dependencies: []

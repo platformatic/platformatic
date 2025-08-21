@@ -1,12 +1,10 @@
-'use strict'
-
-const { deepStrictEqual, fail, ifError, throws } = require('node:assert')
-const { once } = require('node:events')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { MessageChannel } = require('node:worker_threads')
-const { ITC } = require('../index.js')
-const { generateItcRequest, generateItcResponse } = require('./helper.js')
+import { deepStrictEqual, fail, ifError, throws } from 'node:assert'
+import { once } from 'node:events'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { MessageChannel } from 'node:worker_threads'
+import { ITC } from '../lib/index.js'
+import { generateItcRequest, generateItcResponse } from './helper.js'
 
 test('should send a request between threads', async t => {
   const { port1, port2 } = new MessageChannel()

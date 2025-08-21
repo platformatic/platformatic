@@ -1,5 +1,6 @@
 {
   "name": "test",
+  "type": "commonjs",
   "private": true,
   "workspaces": [
     "services/*"

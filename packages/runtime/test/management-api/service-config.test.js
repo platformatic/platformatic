@@ -1,13 +1,11 @@
-'use strict'
+import { getPlatformaticVersion } from '@platformatic/foundation'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { getPlatformaticVersion } = require('@platformatic/foundation')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -37,12 +35,12 @@ test('should get application config', async t => {
     path: '/api/v1/applications/service-1/config'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const applicationConfig = await body.json()
   const platformaticVersion = await getPlatformaticVersion()
 
-  assert.deepStrictEqual(applicationConfig, {
+  deepStrictEqual(applicationConfig, {
     $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',

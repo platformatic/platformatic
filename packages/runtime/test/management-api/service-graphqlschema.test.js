@@ -1,56 +1,55 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { isatty } from 'tty'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { isatty } = require('tty')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should get application graphql schema', async (t) => {
+test('should get application graphql schema', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-    ])
+    await Promise.all([client.close(), app.close()])
   })
 
   const res = await client.request({
     method: 'GET',
-    path: '/api/v1/applications/service-db/graphql-schema',
+    path: '/api/v1/applications/service-db/graphql-schema'
   })
 
   const { statusCode, body } = res
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const graphqlSchema = await body.text()
 
   const logger = {}
   if (isatty(1) && !logger.transport) {
     logger.transport = {
-      target: 'pino-pretty',
+      target: 'pino-pretty'
     }
   }
 
-  assert.deepStrictEqual(graphqlSchema,
-`type Query {
+  deepStrictEqual(
+    graphqlSchema,
+    `type Query {
   getMovieById(id: ID!): Movie
   movies(limit: LimitInt, offset: Int, orderBy: [MovieOrderByArguments], where: MovieWhereArguments): [Movie]
   countMovies(where: MovieWhereArguments): moviesCount
@@ -129,5 +128,6 @@ type Mutation {
 input MovieInput {
   id: ID
   title: String
-}`)
+}`
+  )
 })

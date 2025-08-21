@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.5",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "npm run lint && borp --timeout=120000 --concurrency=1",
     "lint": "eslint"

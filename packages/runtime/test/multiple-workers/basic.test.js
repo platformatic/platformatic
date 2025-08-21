@@ -1,12 +1,9 @@
-'use strict'
-
-const { ok } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { features } = require('@platformatic/foundation')
-const { createRuntime } = require('../helpers.js')
-const { updateFile, updateConfigFile } = require('../helpers')
-const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
+import { features } from '@platformatic/foundation'
+import { ok } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, updateConfigFile, updateFile } from '../helpers.js'
+import { getExpectedEvents, prepareRuntime, waitForEvents } from './helper.js'
 
 test('applications are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
