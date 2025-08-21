@@ -24,36 +24,20 @@ This guide shows you how to:
 3. Invalidate cache by specific routes or tags
 4. Test your caching implementation
 
+MISSING CONTENT: this guide should explain why we have implemented CLIENT based caching and how it works underneath.
+The content for this is provided in blog posts, so we can fetch it from there.
+
 ## Prerequisites 
 
 Before starting, ensure you have:
 
 - [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
 - [npm](https://docs.npmjs.com/cli/) (v10 or higher)
-- A Watt application ([setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt))
 - Basic understanding of HTTP caching headers 
 
 ## Step 1: Setup Fastify and Enable HTTP Cache
 
 ### Setting up Fastify
-
-First, if you're starting with a basic Node.js core `createServer` setup, you'll need to set up Fastify. 
-
-Make sure your `package.json` includes `"type": "module"` for ESM support:
-
-```json
-{
-  "name": "your-app",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "fastify": "^5.0.0"
-  }
-}
-```
 
 Create your Watt application using the create command:
 
@@ -61,7 +45,7 @@ Create your Watt application using the create command:
 npx wattpm@latest create
 ```
 
-This will prompt you to create services. Choose `@platformatic/service` to create a Fastify-based service that will handle your cached endpoints.
+This will prompt you to create services. Choose `@platformatic/node` to create a Fastify-based service that will handle your cached endpoints.
 
 Your application structure will look like:
 ```
@@ -71,42 +55,45 @@ my-cache-app/
 └── web/
     └── api/                  # Your service
         ├── package.json
-        ├── platformatic.json # Service configuration
+        ├── watt.json # Service configuration
         └── index.js          # Main service file
 ```
 
 Watt automatically loads your services based on the `watt.json` configuration and handles the server lifecycle.
+This is provided by the autoload feature.
 
-### Enable HTTP Cache in Watt
+Then execute:
 
-Add HTTP caching configuration to your `watt.json` file:
+```bash
+cd web/api; npm install fastify @fastify/autoload; mkdir -p routes; cd ..
+```
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/watt/2.74.1.json",
-  "httpCache": {
-    "cacheTagsHeader": "X-Cache-Tags"
-  },
-  "services": [
-    {
-      "id": "api",
-      "path": "./web/api"
-    }
-  ],
-  "entrypoint": "api"
+Then replace the `web/api/index.js` file with:
+
+```
+import fastify from 'fastify'
+import autoload from '@fastify/autoload'
+import { join } from 'node:path'
+
+export async function create () {
+  const app = fastify({
+    loggerIntance: globalThis.platformatic?.logger
+  })
+
+  app.register(autoload, {
+    dir: join(import.meta.dirname, 'routes')
+  })
+
+ app.get('/', () => 'hello world')
+
+  return app
 }
 ```
 
-**Understanding the configuration:**
-- `httpCache`: Enables Watt's built-in HTTP caching layer  
-- `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
-- `services`: Array of services that Watt will load and manage
-- `entrypoint`: The service that handles external traffic (other services are internal only)
+Finally, make sure that `web/api/package.json` includes `type: "module"`.
 
-**What this does:**
-- Enables Watt's built-in HTTP caching layer
-- Sets up cache tag header for intelligent invalidation
-- No external cache services needed (Redis, Memcached, etc.)
+This created a Fastify app that will autoload the routes.
+
 
 ## Step 2: Add Multiple Services for Demonstration
 
@@ -116,7 +103,7 @@ Let's create a more realistic example with multiple services to show how caching
 npx wattpm create
 ```
 
-Choose `@platformatic/composer` to create an API gateway, and then create another service for your data backend. Your structure should look like:
+Choose `@platformatic/composer` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
 
 ```
 my-cache-app/
@@ -128,37 +115,14 @@ my-cache-app/
     └── data-service/       # Backend data service
 ```
 
-Update your `watt.json` to include all services:
+Follow the same steps to create the `data-service` that you used for `api`.
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/watt/2.74.1.json",
-  "httpCache": {
-    "cacheTagsHeader": "X-Cache-Tags"
-  },
-  "services": [
-    {
-      "id": "composer",
-      "path": "./web/composer"
-    },
-    {
-      "id": "api",
-      "path": "./web/api"
-    },
-    {
-      "id": "data-service", 
-      "path": "./web/data-service"
-    }
-  ],
-  "entrypoint": "composer"
-}
-```
+By default, this setup will expose the `api` service as `/api` and `data-service` as `data-service`.
 
 **Key Watt Concepts:**
-- **Internal Service Mesh**: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
-- **Automatic Load Balancing**: Watt handles traffic distribution across service instances
-- **Zero Network Overhead**: Internal calls don't go through the network stack
-- **Unified Caching**: All services share the same HTTP cache layer
+- Internal Service Mesh: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
+- Zero Network Overhead: Internal calls don't go through the network stack
+- Reverse-Proxy: the `@platformatic/composer` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
 
 ## Step 3: Add Cache Headers to Your Responses
 
@@ -261,19 +225,17 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 The composer acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
 
 ```js
-// web/composer/platformatic.json
+// web/composer/watt.json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.74.1.json",
   "composer": {
     "services": [
       {
         "id": "api",
-        "origin": "http://api.plt.local",
         "prefix": "/api"
       },
       {
         "id": "data-service", 
-        "origin": "http://data-service.plt.local",
         "prefix": "/data"
       }
     ]
@@ -287,6 +249,35 @@ The composer acts as your API gateway, routing external requests to internal ser
 - API service calls data service (`http://data-service.plt.local/counter`)
 - Watt caches the entire response chain at the composer level
 - Subsequent requests return cached data without hitting any services
+- **Unified Caching**: All services share the same HTTP cache layer
+
+## Step 4: Enable HTTP Cache in Watt
+
+Add HTTP caching configuration to your root-level `watt.json` file:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.74.1.json",
+  "httpCache": {
+    "cacheTagsHeader": "X-Cache-Tags"
+  },
+  "autoload": {
+    "path": "web"
+  },
+  "entrypoint": "api"
+}
+```
+
+**Understanding the configuration:**
+- `httpCache`: Enables Watt's built-in HTTP caching layer  
+- `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
+- `services`: Array of services that Watt will load and manage
+- `entrypoint`: The service that handles external traffic (other services are internal only)
+
+**What this does:**
+- Enables Watt's built-in HTTP caching layer
+- Sets up cache tag header for intelligent invalidation
+- No external cache services needed (Redis, Memcached, etc.)
 
 ## Step 5: Implement Cache Invalidation
 
@@ -393,7 +384,7 @@ export default async function (fastify) {
 }
 ```
 
-## Step 4: Verification and Testing
+## Step 6: Verification and Testing
 
 ### Test Cache Behavior
 
