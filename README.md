@@ -59,7 +59,7 @@ Your application will be running at `http://localhost:3042` with auto-generated 
 Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 
 ### ⚡ Experienced Developer?
-**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start-watt) → [Architecture Overview](https://docs.platformatic.dev/docs/overview)  
+**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start) → [Architecture Overview](https://docs.platformatic.dev/docs/overview)  
 Get running in 5 minutes, then dive into advanced patterns and integrations.
 
 ### 🔄 Migrating Existing Apps?

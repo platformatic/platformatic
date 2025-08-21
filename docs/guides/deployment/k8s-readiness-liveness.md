@@ -49,12 +49,12 @@ cd my-health-app
 ```
 
 ```bash
-cd web/api; npm install fastify;cd ..
+cd web/api; npm install fastify @fastify/postgresql @fastify/autoload;cd ..
 ```
 
 Then replace the `web/api/index.js` file with:
 
-```
+```javascript
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
@@ -64,7 +64,25 @@ export async function create () {
     loggerIntance: globalThis.platformatic?.logger
   })
 
-  app.get('/', () => 'hello world')
+  // Register PostgreSQL plugin
+  await app.register(import('@fastify/postgresql'), {
+    connectionString: process.env.DATABASE_URL || 'postgres://postgres:password@postgres:5432/healthdb'
+  })
+
+  // Autoload routes
+  await app.register(autoload, {
+    dir: join(import.meta.dirname, 'routes')
+  })
+
+  app.get('/', async () => {
+    const client = await app.pg.connect()
+    try {
+      const result = await client.query('SELECT NOW() as current_time')
+      return { message: 'hello world', db_time: result.rows[0].current_time }
+    } finally {
+      client.release()
+    }
+  })
 
   return app
 }
@@ -132,31 +150,33 @@ Update your `web/api/index.js` to implements comprehensive health checks:
 
 ```javascript
 import fastify from 'fastify'
+import autoload from '@fastify/autoload'
+import { join } from 'node:path'
 
-export function create () {
+export async function create () {
   const app = fastify({ 
     loggerIntance: globalThis.platformatic?.logger
+  })
+
+  // Register PostgreSQL plugin
+  await app.register(import('@fastify/postgresql'), {
+    connectionString: process.env.DATABASE_URL || 'postgres://postgres:password@postgres:5432/healthdb'
+  })
+
+  // Autoload routes
+  await app.register(autoload, {
+    dir: join(import.meta.dirname, 'routes')
   })
 
   // Register custom liveness check (for /status endpoint)
   globalThis.platformatic.setCustomHealthCheck(async () => {
     try {
-      // Example: Check database connectivity
-      if (app.hasDecorator('db')) {
-        await app.db.query('SELECT 1')
-      }
-      
-      // Example: Check external service health
-      const response = await fetch('https://api.external-service.com/health', {
-        timeout: 5000
-      })
-      
-      if (!response.ok) {
-        return {
-          status: false,
-          statusCode: 503,
-          body: 'External service unavailable'
-        }
+      // Check PostgreSQL database connectivity
+      const client = await app.pg.connect()
+      try {
+        await client.query('SELECT 1')
+      } finally {
+        client.release()
       }
       
       return { status: true }
@@ -165,7 +185,7 @@ export function create () {
       return {
         status: false,
         statusCode: 503,
-        body: `Health check failed: ${err.message}`
+        body: `Database health check failed: ${err.message}`
       }
     }
   })
@@ -173,15 +193,19 @@ export function create () {
   // Register custom readiness check (for /ready endpoint)
   globalThis.platformatic.setCustomReadinessCheck(async () => {
     try {
-      // Basic service readiness checks
-      // These should be fast and lightweight
-      
-      // Check if critical dependencies are initialized
-      if (app.hasDecorator('db') && !app.db.pool) {
+      // Check if PostgreSQL connection pool is ready
+      if (!app.pg || !app.pg.pool) {
         return false
       }
       
-      return true
+      // Quick connection test
+      const client = await app.pg.connect()
+      try {
+        await client.query('SELECT 1')
+        return true
+      } finally {
+        client.release()
+      }
     } catch (err) {
       app.log.error({ err }, 'Readiness check failed')
       return false
@@ -190,7 +214,13 @@ export function create () {
 
   // Add application routes
   app.get('/', async () => {
-    return { message: 'hello world' }
+    const client = await app.pg.connect()
+    try {
+      const result = await client.query('SELECT NOW() as current_time')
+      return { message: 'hello world', db_time: result.rows[0].current_time }
+    } finally {
+      client.release()
+    }
   })
 
   return app
@@ -230,7 +260,86 @@ Configure the metrics server in your `watt.json` file:
 }
 ```
 
-### 3. Kubernetes Configuration
+### 3. PostgreSQL Database Setup
+
+First, create a PostgreSQL deployment and service for your database:
+
+**`postgres-deployment.yaml`:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "healthdb"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "password"
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - healthdb
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - healthdb
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+```
+
+### 4. Kubernetes Application Configuration
 
 Create a Kubernetes deployment configuration that defines the probes:
 
@@ -262,6 +371,8 @@ spec:
         env:
         - name: PLT_SERVER_HOSTNAME
           value: "0.0.0.0"
+        - name: DATABASE_URL
+          value: "postgres://postgres:password@postgres:5432/healthdb"
         readinessProbe:
           httpGet:
             path: /ready
@@ -309,7 +420,7 @@ Key configuration points:
 - Liveness probe has higher failure threshold to avoid unnecessary restarts
 - Timeout values account for potential network latency
 
-### 4. Docker Configuration
+### 5. Docker Configuration
 
 Create a `Dockerfile` for your Watt application:
 
@@ -469,13 +580,17 @@ npm run dev
 
 **2. Test health endpoints:**
 ```bash
-# Test readiness endpoint
+# Test readiness endpoint (includes database connectivity check)
 curl -v http://localhost:9090/ready
 # Expected: 200 OK "Ready" (or custom response)
 
-# Test liveness endpoint  
+# Test liveness endpoint (includes database query)
 curl -v http://localhost:9090/status
 # Expected: 200 OK "Healthy" (or custom response)
+
+# Test the main application endpoint with database integration
+curl http://localhost:3042/
+# Expected: {"message":"hello world","db_time":"2024-01-01T12:00:00.000Z"}
 
 # Check metrics endpoint
 curl http://localhost:9090/metrics
@@ -484,9 +599,15 @@ curl http://localhost:9090/metrics
 
 **3. Test with failing health checks:**
 ```bash
-# If your app has test endpoints to simulate failures:
-curl -X POST http://localhost:3042/api/test/fail-health
+# Stop PostgreSQL to simulate database failure
+docker stop postgres-dev  # if running locally with Docker
+# or kubectl delete pod -l app=postgres  # if running in K8s
+
+# Test health endpoints - should now fail
 curl http://localhost:9090/status
+# Expected: 503 Service Unavailable with database error message
+
+curl http://localhost:9090/ready
 # Expected: 503 Service Unavailable
 ```
 
@@ -494,6 +615,13 @@ curl http://localhost:9090/status
 
 **1. Deploy to Kubernetes:**
 ```bash
+# Deploy PostgreSQL first
+kubectl apply -f postgres-deployment.yaml
+
+# Wait for PostgreSQL to be ready
+kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
+
+# Deploy the application
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 ```
@@ -658,14 +786,20 @@ kubectl exec <pod-name> -- curl -v http://localhost:9090/status
 kubectl logs <pod-name> --tail=100
 
 # Verify container environment
-kubectl exec <pod-name> -- env | grep PLT_
+kubectl exec <pod-name> -- env | grep -E "PLT_|DATABASE_"
+
+# Test database connectivity directly
+kubectl exec <pod-name> -- pg_isready -h postgres -p 5432 -U postgres -d healthdb
 ```
 
 **Common fixes:**
 - Ensure `metrics.hostname` is `"0.0.0.0"` (not `"127.0.0.1"` or `"localhost"`)
 - Verify `metrics.port` matches probe port configuration  
 - Check that `PLT_SERVER_HOSTNAME=0.0.0.0` environment variable is set
-- Ensure custom health check functions handle errors gracefully
+- Verify `DATABASE_URL` environment variable is correctly formatted
+- Ensure PostgreSQL service is accessible from the application pod
+- Check that PostgreSQL credentials and database name are correct
+- Ensure custom health check functions handle database connection errors gracefully
 - Verify all Watt services are starting without errors
 
 ### Slow Startup Times

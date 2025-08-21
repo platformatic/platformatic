@@ -163,5 +163,5 @@ Preserves the workspace structure when copying package.json files from subdirect
 ## Next Steps
 
 - [Deploy to Kubernetes](./k8s-readiness-liveness.md)
-- [Set up monitoring in production](../monitoring.md)
+- [Set up monitoring in production](../metrics.md)
 - [Configure logging for containers](../logging.md)

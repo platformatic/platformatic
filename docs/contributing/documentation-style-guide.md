@@ -93,7 +93,7 @@ clean.
 When writing articles or guides, your content should communicate directly to
 readers in the second person ("you") addressed form. It is easier to give them
 direct instruction on what to do on a particular topic. To see an example, visit
-the [Quick Start Guide](../getting-started/quick-start-guide.md).
+the [Quick Start Guide](../getting-started/quick-start.md).
 
 **Example**
 

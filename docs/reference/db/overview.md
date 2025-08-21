@@ -68,7 +68,7 @@ Database Service is perfect when you need:
 - **Enterprise Features**: Advanced authorization, migrations, and schema management
 
 :::info
-Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start-watt.md) to create your first Watt application with a Database Service! ⚡
+Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start.md) to create your first Watt application with a Database Service! ⚡
 :::
 
 ## Supported databases

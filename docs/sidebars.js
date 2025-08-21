@@ -30,8 +30,7 @@ const sidebars = {
       label: 'Getting Started',
       collapsed: false,
       items: [
-        'getting-started/quick-start-watt',
-        'getting-started/quick-start-guide',
+        'getting-started/quick-start',
         'getting-started/port-your-app',
         {
           type: 'category',
@@ -79,8 +78,8 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
-            'guides/monitoring',
-            'guides/telemetry',
+            'guides/metrics',
+            'guides/distributed_tracing',
             'guides/logging-to-elasticsearch'
           ]
         }

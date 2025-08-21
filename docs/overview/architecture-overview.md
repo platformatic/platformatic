@@ -539,6 +539,6 @@ Watt uses [Prometheus](https://prometheus.io/) client libraries for metrics coll
 - **[Configuration Guide](../reference/watt/configuration.md)**: Learn how to configure Watt applications
 - **[Service Mesh Details](../guides/service-mesh.md)**: Deep dive into inter-service communication
 - **[Deployment Patterns](../guides/deployment/)**: Production deployment strategies
-- **[Monitoring Setup](../guides/monitoring.md)**: Setting up monitoring stack
+- **[Monitoring Setup](../guides/metrics.md)**: Setting up monitoring stack
 
 This architecture enables teams to build distributed applications with the simplicity of monoliths and the flexibility of microservices, making Watt ideal for teams who want to move fast without sacrificing architectural quality.
