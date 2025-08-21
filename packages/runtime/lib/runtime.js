@@ -628,7 +628,7 @@ class Runtime extends EventEmitter {
   }
 
   getManagementApiUrl () {
-    return this.#managementApi?.server.address()
+    return this.#managementApi?.server.address() ?? null
   }
 
   async getEntrypointDetails () {
