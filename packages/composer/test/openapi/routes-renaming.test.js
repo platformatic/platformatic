@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import { createFromConfig, createOpenApiService } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
 const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should rename static route', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -32,7 +32,7 @@ test('should rename static route', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -72,7 +72,7 @@ test('should rename static route', async t => {
 })
 
 test('should rename parametric route', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -94,7 +94,7 @@ test('should rename parametric route', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -129,7 +129,7 @@ test('should rename parametric route', async t => {
 })
 
 test('should rename parametric route with prefix', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -151,7 +151,7 @@ test('should rename parametric route with prefix', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

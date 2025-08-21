@@ -152,8 +152,8 @@ export function getRoot (positionals) {
   return root
 }
 
-export function serviceToEnvVariable (service) {
-  return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
+export function applicationToEnvVariable (application) {
+  return `PLT_APPLICATION_${application.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
 export async function findRuntimeConfigurationFile (
@@ -166,7 +166,7 @@ export async function findRuntimeConfigurationFile (
 ) {
   let configFile = await findConfigurationFileRecursive(root, configurationFile, '@platformatic/runtime')
 
-  // If a runtime was not found, search for service file that we wrap in a runtime
+  // If a runtime was not found, search for application file that we wrap in a runtime
   if (!configFile && !configurationFile) {
     configFile = await findConfigurationFileRecursive(root, configurationFile)
   }

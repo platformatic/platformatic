@@ -5,7 +5,7 @@ const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { mkdtemp, mkdir, writeFile } = require('node:fs/promises')
 const { RuntimeGenerator, WrappedGenerator } = require('../lib/generator')
-const { Generator: ServiceGenerator } = require('../../service/lib/generator')
+const { Generator: ApplicationGenerator } = require('../../service/lib/generator')
 const { Generator: ComposerGenerator } = require('../../composer/lib/generator')
 const { join, basename } = require('node:path')
 const { MockAgent, setGlobalDispatcher } = require('undici')
@@ -27,20 +27,20 @@ async function createTemporaryDirectory (t, prefix) {
   return directory
 }
 
-test('RuntimeGenerator - should create a runtime with 2 services', async () => {
+test('RuntimeGenerator - should create a runtime with 2 applications', async () => {
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
 
-  // adding one service
-  const firstService = new ServiceGenerator()
-  firstService.addEnvVar('FOO', 'bar', { overwrite: false, default: true })
-  firstService.addEnvVar('FOO', 'foo', { overwrite: true, default: false })
-  rg.addService(firstService, 'first-service')
+  // adding one application
+  const firstApplication = new ApplicationGenerator()
+  firstApplication.addEnvVar('FOO', 'bar', { overwrite: false, default: true })
+  firstApplication.addEnvVar('FOO', 'foo', { overwrite: true, default: false })
+  rg.addApplication(firstApplication, 'first-service')
 
-  // adding another service
-  const secondService = new ServiceGenerator()
-  rg.addService(secondService, 'second-service')
+  // adding another application
+  const secondApplication = new ApplicationGenerator()
+  rg.addApplication(secondApplication, 'second-service')
 
   rg.setEntryPoint('first-service')
 
@@ -66,9 +66,15 @@ test('RuntimeGenerator - should create a runtime with 2 services', async () => {
   const runtimeFileList = rg.listFiles()
   assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
 
-  // services have correct target directory
-  assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
-  assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
+  // applications have correct target directory
+  assert.equal(
+    firstApplication.targetDirectory,
+    join(rg.targetDirectory, 'applications', firstApplication.config.applicationName)
+  )
+  assert.equal(
+    secondApplication.targetDirectory,
+    join(rg.targetDirectory, 'applications', secondApplication.config.applicationName)
+  )
 
   // Should have correct env variables
   const env = rg.getFileObject('.env')
@@ -83,11 +89,11 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
     targetDirectory: '/tmp/runtime'
   })
 
-  const firstService = new ServiceGenerator()
-  firstService.setConfig({
+  const firstApplication = new ApplicationGenerator()
+  firstApplication.setConfig({
     isRuntimeContext: false
   })
-  rg.addService(firstService, 'first-service')
+  rg.addApplication(firstApplication, 'first-service')
 
   rg.setEntryPoint('first-service')
 
@@ -99,26 +105,26 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
   await rg.prepare()
   const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
   assert.equal(packageJson.name, 'test-runtime')
-  assert.deepStrictEqual(packageJson.workspaces, ['services/*'])
+  assert.deepStrictEqual(packageJson.workspaces, ['applications/*'])
 
   assert.ok(packageJson.dependencies['@platformatic/runtime'])
 })
 
-test('RuntimeGenerator - should have services plugin dependencies in package.json', async () => {
+test('RuntimeGenerator - should have applications plugin dependencies in package.json', async () => {
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
 
-  // adding one service
-  const firstService = new ServiceGenerator()
-  firstService.setConfig({
+  // adding one application
+  const firstApplication = new ApplicationGenerator()
+  firstApplication.setConfig({
     isRuntimeContext: false
   })
-  await firstService.addPackage({
+  await firstApplication.addPackage({
     name: '@fastify/helmet',
     options: []
   })
-  rg.addService(firstService, 'first-service')
+  rg.addApplication(firstApplication, 'first-service')
 
   rg.setEntryPoint('first-service')
 
@@ -128,7 +134,7 @@ test('RuntimeGenerator - should have services plugin dependencies in package.jso
   })
 
   const output = await rg.prepare()
-  // runtime package.json has the service dependencies
+  // runtime package.json has the application dependencies
   const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
   assert.equal(packageJson.dependencies['@fastify/helmet'], 'latest')
 
@@ -143,28 +149,28 @@ test('RuntimeGenerator - should have services plugin dependencies in package.jso
   })
 })
 
-test('RuntimeGenerator - should create a runtime with 1 service and 1 db', async () => {
+test('RuntimeGenerator - should create a runtime with 1 application and 1 db', async () => {
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
 
-  // adding one service
-  const firstService = new ServiceGenerator()
-  firstService.setConfig({
+  // adding one application
+  const firstApplication = new ApplicationGenerator()
+  firstApplication.setConfig({
     env: {
-      SERVICE_1: 'foo'
+      APPLICATION_1: 'foo'
     }
   })
-  rg.addService(firstService, 'first-service')
+  rg.addApplication(firstApplication, 'first-service')
 
-  // adding another service
-  const secondService = new ServiceGenerator()
-  secondService.setConfig({
+  // adding another application
+  const secondApplication = new ApplicationGenerator()
+  secondApplication.setConfig({
     env: {
-      SERVICE_2: 'foo'
+      APPLICATION_2: 'foo'
     }
   })
-  rg.addService(secondService, 'second-service')
+  rg.addApplication(secondApplication, 'second-service')
 
   rg.setEntryPoint('first-service')
 
@@ -177,8 +183,8 @@ test('RuntimeGenerator - should create a runtime with 1 service and 1 db', async
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_FIRST_SERVICE_SERVICE_1: 'foo',
-      PLT_SECOND_SERVICE_SERVICE_2: 'foo',
+      PLT_FIRST_SERVICE_APPLICATION_1: 'foo',
+      PLT_SECOND_SERVICE_APPLICATION_2: 'foo',
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_MANAGEMENT_API: true,
       PLT_SERVER_LOGGER_LEVEL: 'info',
@@ -190,29 +196,35 @@ test('RuntimeGenerator - should create a runtime with 1 service and 1 db', async
   const runtimeFileList = rg.listFiles()
   assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
 
-  // services have correct target directory
-  assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
-  assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
+  // applications have correct target directory
+  assert.equal(
+    firstApplication.targetDirectory,
+    join(rg.targetDirectory, 'applications', firstApplication.config.applicationName)
+  )
+  assert.equal(
+    secondApplication.targetDirectory,
+    join(rg.targetDirectory, 'applications', secondApplication.config.applicationName)
+  )
 })
 
-test('RuntimeGenerator - should create a runtime with 2 services and 2 composers', async () => {
+test('RuntimeGenerator - should create a runtime with 2 applications and 2 composers', async () => {
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
 
-  // adding one service
-  const firstService = new ServiceGenerator()
-  rg.addService(firstService, 'first-service')
+  // adding one application
+  const firstApplication = new ApplicationGenerator()
+  rg.addApplication(firstApplication, 'first-service')
 
-  // adding another service
-  const secondService = new ServiceGenerator()
-  rg.addService(secondService, 'second-service')
+  // adding another application
+  const secondApplication = new ApplicationGenerator()
+  rg.addApplication(secondApplication, 'second-service')
 
   // adding composers
   const firstComposer = new ComposerGenerator()
-  rg.addService(firstComposer, 'first-composer')
+  rg.addApplication(firstComposer, 'first-composer')
   const secondComposer = new ComposerGenerator()
-  rg.addService(secondComposer, 'second-composer')
+  rg.addApplication(secondComposer, 'second-composer')
 
   rg.setEntryPoint('first-service')
 
@@ -225,7 +237,7 @@ test('RuntimeGenerator - should create a runtime with 2 services and 2 composers
   // double check config files
   const firstComposerConfigFile = firstComposer.getFileObject('platformatic.json')
   const firstComposerConfigFileJson = JSON.parse(firstComposerConfigFile.contents)
-  assert.deepEqual(firstComposerConfigFileJson.composer.services, [
+  assert.deepEqual(firstComposerConfigFileJson.composer.applications, [
     {
       id: 'first-service',
       openapi: {
@@ -244,7 +256,7 @@ test('RuntimeGenerator - should create a runtime with 2 services and 2 composers
 
   const secondComposerConfigFile = secondComposer.getFileObject('platformatic.json')
   const secondComposerConfigFileJson = JSON.parse(secondComposerConfigFile.contents)
-  assert.deepEqual(secondComposerConfigFileJson.composer.services, [
+  assert.deepEqual(secondComposerConfigFileJson.composer.applications, [
     {
       id: 'first-service',
       openapi: {
@@ -262,7 +274,7 @@ test('RuntimeGenerator - should create a runtime with 2 services and 2 composers
   ])
 })
 
-test('RuntimeGenerator - add services to an existing folder', async t => {
+test('RuntimeGenerator - add applications to an existing folder', async t => {
   const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
 
   t.after(async () => {
@@ -274,13 +286,13 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
       targetDirectory
     })
 
-    // adding one service
-    const firstService = new ServiceGenerator()
-    rg.addService(firstService, 'first-service')
+    // adding one application
+    const firstApplication = new ApplicationGenerator()
+    rg.addApplication(firstApplication, 'first-service')
 
-    // adding another service
-    const secondService = new ServiceGenerator()
-    rg.addService(secondService, 'second-service')
+    // adding another application
+    const secondApplication = new ApplicationGenerator()
+    rg.addApplication(secondApplication, 'second-service')
 
     rg.setEntryPoint('first-service')
 
@@ -297,9 +309,9 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
       targetDirectory
     })
 
-    // adding another service
-    const thirdService = new ServiceGenerator()
-    rg.addService(thirdService, 'first-service')
+    // adding another application
+    const thirdApplication = new ApplicationGenerator()
+    rg.addApplication(thirdApplication, 'first-service')
 
     const output = await rg.prepare()
 
@@ -317,12 +329,15 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
     const runtimeFileList = rg.listFiles()
     assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
 
-    // services have correct target directory
-    assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'services', thirdService.config.serviceName))
+    // applications have correct target directory
+    assert.equal(
+      thirdApplication.targetDirectory,
+      join(rg.targetDirectory, 'applications', thirdApplication.config.applicationName)
+    )
   }
 })
 
-test('RuntimeGenerator - add services to an existing folder (web/)', async t => {
+test('RuntimeGenerator - add applications to an existing folder (web/)', async t => {
   const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
   t.after(async () => {
     await safeRemove(targetDirectory)
@@ -337,13 +352,13 @@ test('RuntimeGenerator - add services to an existing folder (web/)', async t => 
       autoload: 'web'
     })
 
-    // adding one service
-    const firstService = new ServiceGenerator()
-    rg.addService(firstService, 'first-service')
+    // adding one application
+    const firstApplication = new ApplicationGenerator()
+    rg.addApplication(firstApplication, 'first-service')
 
-    // adding another service
-    const secondService = new ServiceGenerator()
-    rg.addService(secondService, 'second-service')
+    // adding another application
+    const secondApplication = new ApplicationGenerator()
+    rg.addApplication(secondApplication, 'second-service')
 
     rg.setEntryPoint('first-service')
 
@@ -360,9 +375,9 @@ test('RuntimeGenerator - add services to an existing folder (web/)', async t => 
       targetDirectory
     })
 
-    // adding another service
-    const thirdService = new ServiceGenerator()
-    rg.addService(thirdService, 'first-service')
+    // adding another application
+    const thirdApplication = new ApplicationGenerator()
+    rg.addApplication(thirdApplication, 'first-service')
 
     const output = await rg.prepare()
 
@@ -380,8 +395,11 @@ test('RuntimeGenerator - add services to an existing folder (web/)', async t => 
     const runtimeFileList = rg.listFiles()
     assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
 
-    // services have correct target directory
-    assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'web', thirdService.config.serviceName))
+    // applications have correct target directory
+    assert.equal(
+      thirdApplication.targetDirectory,
+      join(rg.targetDirectory, 'web', thirdApplication.config.applicationName)
+    )
   }
 })
 

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { createFromConfig } from '../helper.js'
 
-test('get service config via capability api', async t => {
+test('get application config via capability api', async t => {
   const config = {
     server: {
       logger: {
@@ -11,7 +11,7 @@ test('get service config via capability api', async t => {
       }
     },
     composer: {
-      services: []
+      applications: []
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
@@ -24,9 +24,10 @@ test('get service config via capability api', async t => {
 
   const capabilityConfig = await capability.getConfig()
   assert.deepStrictEqual(capabilityConfig, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json',
     application: {},
     composer: {
-      services: [],
+      applications: [],
       refreshTimeout: 1000,
       addEmptySchema: false
     },

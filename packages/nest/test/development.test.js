@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import {
   createRuntime,
   isCIOnWindows,
-  prepareRuntimeWithServices,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyDevelopmentMode,
@@ -52,7 +52,7 @@ async function verifyComposerWithPrefix (
   additionalSetup,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -90,13 +90,21 @@ async function verifyComposerWithoutPrefix (
   pauseTimeout,
   additionalCheck
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '', pauseTimeout, async root => {
-    await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-      const json = JSON.parse(contents)
-      json.composer.services[1].proxy = { prefix: '' }
-      return JSON.stringify(json, null, 2)
-    })
-  })
+  const { runtime, url } = await prepareRuntimeWithApplications(
+    t,
+    id,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    async root => {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.composer.applications[1].proxy = { prefix: '' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
+  )
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -127,7 +135,7 @@ async function verifyComposerAutodetectPrefix (
   additionalSetup,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -207,7 +215,7 @@ test('NestJS watch mode is correctly tracked in development', async t => {
     return contents.replace("production: process.env.NODE_ENV === 'production'", 'ok: true')
   })
 
-  await once(runtime, 'service:worker:event:url')
+  await once(runtime, 'application:worker:event:url')
 
   await verifyJSONViaHTTP(url, '/', 200, { ok: true })
 })

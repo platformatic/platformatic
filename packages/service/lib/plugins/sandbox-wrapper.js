@@ -51,7 +51,6 @@ function stringPatternToRegExp (stringPattern) {
 }
 
 async function sandboxWrapperPlugin (app, options) {
-  // fake require next to the configManager dirname
   const require = createRequire(resolve(app.platformatic.config[kMetadata].root, 'noop.js'))
 
   for (const plugin of options.packages || []) {

@@ -24,7 +24,12 @@ const platformaticRuntimeSchema = {
   title: 'Platformatic Runtime Config',
   type: 'object',
   properties: schemaComponents.runtimeProperties,
-  anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
+  anyOf: [
+    { required: ['autoload'] },
+    { required: ['applications'] },
+    { required: ['services'] },
+    { required: ['web'] }
+  ],
   additionalProperties: false
 }
 

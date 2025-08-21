@@ -14,7 +14,7 @@ try {
   await createDirectory(base)
 } catch {}
 
-test('watches CommonJS files with watch on a single service', async t => {
+test('watches CommonJS files with watch on a single application', async t => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => safeRemove(tmpDir))
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')

@@ -16,19 +16,19 @@ function ensureCleanup (t, folders) {
   return cleanup()
 }
 
-function waitEventOnAllServices (runtime, services, event) {
+function waitEventOnAllApplications (runtime, applications, event) {
   const pending = new Set()
 
-  for (const [service, workers] of Object.entries(services)) {
+  for (const [application, workers] of Object.entries(applications)) {
     for (let i = 0; i < workers; i++) {
-      pending.add(`${service}:${i}`)
+      pending.add(`${application}:${i}`)
     }
   }
 
   const { promise, resolve } = Promise.withResolvers()
 
-  function listener ({ service, worker }) {
-    pending.delete(`${service}:${worker}`)
+  function listener ({ application, worker }) {
+    pending.delete(`${application}:${worker}`)
 
     if (pending.size === 0) {
       runtime.off(event, listener)
@@ -40,12 +40,12 @@ function waitEventOnAllServices (runtime, services, event) {
   return promise
 }
 
-test('should properly report as failed on the health check route when all dependent services crash', async t => {
+test('should properly report as failed on the health check route when all dependent applications crash', async t => {
   const nodeModulesRoot = resolvePath(import.meta.dirname, './health-check/fixtures/node-with-failure/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolvePath(nodeModulesRoot, '@platformatic'))
   await symlink(
@@ -94,7 +94,7 @@ test('should properly report as failed on the health check route when all depend
     true
   )
 
-  const services = {
+  const applications = {
     first: 2,
     second: 3,
     third: 1
@@ -106,15 +106,15 @@ test('should properly report as failed on the health check route when all depend
 
   const url = await runtime.start()
 
-  // Right away, the health check and all services should be successful.
+  // Right away, the health check and all applications should be successful.
   {
     const { statusCode } = await request(`${url}/status`)
     assert.strictEqual(statusCode, 200)
   }
 
-  for (const [service, workers] of Object.entries(services)) {
+  for (const [application, workers] of Object.entries(applications)) {
     for (let i = 0; i < workers; i++) {
-      const { statusCode, body } = await request(`${url}/${service}/api`)
+      const { statusCode, body } = await request(`${url}/${application}/api`)
 
       assert.strictEqual(statusCode, 200)
       assert.deepStrictEqual(await body.json(), { ok: true })
@@ -122,8 +122,8 @@ test('should properly report as failed on the health check route when all depend
   }
 
   // Wait for all processes to crash and then for the health check to report the failure.
-  await waitEventOnAllServices(runtime, services, 'service:worker:error')
-  await once(runtime, 'service:worker:event:unhealthy')
+  await waitEventOnAllApplications(runtime, applications, 'application:worker:error')
+  await once(runtime, 'application:worker:event:unhealthy')
 
   // Verify health check
   {
@@ -131,9 +131,9 @@ test('should properly report as failed on the health check route when all depend
     assert.strictEqual(statusCode, 503)
   }
 
-  // Wait for services to restart and the health check to report the success.
-  await waitEventOnAllServices(runtime, services, 'service:worker:started')
-  await once(runtime, 'service:worker:event:healthy')
+  // Wait for applications to restart and the health check to report the success.
+  await waitEventOnAllApplications(runtime, applications, 'application:worker:started')
+  await once(runtime, 'application:worker:event:healthy')
 
   // Verify health check
   {

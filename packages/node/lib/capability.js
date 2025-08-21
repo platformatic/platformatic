@@ -14,7 +14,7 @@ import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as resolvePath } from 'node:path'
 import { version } from './schema.js'
-import { getTsconfig, ignoreDirs, isServiceBuildable } from './utils.js'
+import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
 const validFields = [
   'main',
@@ -116,13 +116,13 @@ export class NodeCapability extends BaseCapability {
 
     const config = this.config
 
-    if (!this.isProduction && (await isServiceBuildable(this.root, config))) {
-      this.logger.info(`Building service "${this.serviceId}" before starting in development mode ...`)
+    if (!this.isProduction && (await isApplicationBuildable(this.root, config))) {
+      this.logger.info(`Building application "${this.applicationId}" before starting in development mode ...`)
       try {
         await this.build()
         this.childManager = null
       } catch (e) {
-        this.logger.error(`Error while building service "${this.serviceId}": ${e.message}`)
+        this.logger.error(`Error while building application "${this.applicationId}": ${e.message}`)
       }
     }
 
@@ -339,7 +339,7 @@ export class NodeCapability extends BaseCapability {
     if (typeof this.workerId === 'undefined' || this.workerId === 0) {
       if (!entrypoint) {
         this.logger.error(
-          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
+          `The application "${this.applicationId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
         )
 
         process.exit(1)
@@ -347,7 +347,7 @@ export class NodeCapability extends BaseCapability {
 
       if (!hadEntrypointField) {
         this.logger.warn(
-          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
+          `The application "${this.applicationId}" had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
         )
       }
     }
@@ -377,7 +377,7 @@ export class NodeCapability extends BaseCapability {
       return { enabled, path: this.root }
     }
 
-    // ignore the outDir from tsconfig or service config if any
+    // ignore the outDir from tsconfig or application config if any
     let ignore = config.watch?.ignore
     if (!ignore) {
       const tsConfig = await getTsconfig(this.root, config)

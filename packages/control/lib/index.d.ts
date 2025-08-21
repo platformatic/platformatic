@@ -18,12 +18,12 @@ export interface RuntimeDependency {
   local: boolean
 }
 
-export interface RuntimeServiceBase {
+export interface RuntimeApplicationBase {
   id: string
   status: string
 }
 
-export interface RuntimeService {
+export interface RuntimeApplication {
   id: string
   type: string
   status: string
@@ -49,10 +49,10 @@ export interface Runtime {
   platformaticVersion: string
 }
 
-export interface RuntimeServices {
+export interface RuntimeApplications {
   entrypoint: string
   production: boolean
-  services: (RuntimeService | RuntimeServiceBase)[]
+  applications: (RuntimeApplication | RuntimeApplicationBase)[]
 }
 
 export interface MetricValue {
@@ -71,7 +71,7 @@ export interface MetricValue {
     patch?: number
     le?: number | string
     kind?: string
-    serviceId: string
+    applicationId: string
     workerId?: number
     dispatcher_stats_url?: string
   }
@@ -96,12 +96,12 @@ export class RuntimeApiClient {
   getMatchingRuntime (options?: { pid?: string; name?: string }): Promise<Runtime>
   getRuntimes (): Promise<Runtime[]>
   getRuntimeMetadata (pid: number): Promise<Runtime>
-  getRuntimeServices (pid: number): Promise<RuntimeServices>
+  getRuntimeApplications (pid: number): Promise<RuntimeApplications>
   getRuntimeConfig (pid: number): Promise<Record<string, unknown>>
-  getRuntimeServiceConfig (pid: number, serviceId?: string): Promise<Record<string, unknown>>
+  getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
-  getRuntimeOpenapi (pid: number, serviceId: string): Promise<Record<string, unknown>>
-  getRuntimeServiceEnv (pid: number, serviceId: string): Promise<Record<string, string>>
+  getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
+  getRuntimeApplicationEnv (pid: number, applicationId: string): Promise<Record<string, string>>
   reloadRuntime (pid: number, options?: object): Promise<ChildProcess>
   restartRuntime (pid: number): Promise<void>
   stopRuntime (pid: number): Promise<void>
@@ -116,7 +116,7 @@ export class RuntimeApiClient {
   getRuntimeLogIndexes (pid: number, options?: { all?: boolean }): Promise<LogIndexes[]>
   injectRuntime (
     pid: number,
-    serviceId: string,
+    applicationId: string,
     options: {
       url: string
       method: string

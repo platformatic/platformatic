@@ -3,24 +3,24 @@ import mercurius from 'mercurius'
 import { fetchGraphqlSubgraphs } from './graphql-fetch.js'
 
 async function graphqlGeneratorPlugin (app, opts) {
-  if (!opts.services.some(s => s.graphql)) {
+  if (!opts.applications.some(s => s.graphql)) {
     return
   }
 
-  const services = []
+  const applications = []
 
-  for (const service of opts.services) {
-    if (!service.graphql) {
+  for (const application of opts.applications) {
+    if (!application.graphql) {
       continue
     }
-    services.push(service)
+    applications.push(application)
   }
 
   const graphqlConfig = {
     graphiql: opts.graphql?.graphiql
   }
-  if (services.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql, app)
+  if (applications.length > 0) {
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(applications, opts.graphql, app)
     graphqlConfig.schema = graphqlSupergraph.sdl
     graphqlConfig.resolvers = graphqlSupergraph.resolvers
     graphqlConfig.subscription = false // TODO support subscriptions, will be !!opts.graphql.subscriptions

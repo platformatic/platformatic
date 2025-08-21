@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should start stopped service by service id', async t => {
+test('should start stopped application by application id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -17,17 +17,17 @@ test('should start stopped service by service id', async t => {
     await app.close()
   })
 
-  await app.stopService('with-logger')
+  await app.stopApplication('with-logger')
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger', true)
-    assert.strictEqual(serviceDetails.status, 'stopped')
+    const applicationDetails = await app.getApplicationDetails('with-logger', true)
+    assert.strictEqual(applicationDetails.status, 'stopped')
   }
 
-  await app.startService('with-logger')
+  await app.startApplication('with-logger')
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('with-logger')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 })

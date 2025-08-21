@@ -30,10 +30,10 @@ Which will output:
 ```
 Hello YOUR_NAME, welcome to Watt 2.70.1!
 ? Where would you like to create your project? .
-? Which kind of service do you want to create? @platformatic/service
+? Which kind of application do you want to create? @platformatic/node
 ✔ Installing @platformatic/service@^2.70.1 using npm ...
-? What is the name of the service? my-app
-? Do you want to create another service? no
+? What is the name of the application? my-app
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 3042
 ```
@@ -43,7 +43,7 @@ The `watt.json` file is automatically created in the `my-app` folder, and the `p
 
 ## Add your first Node.js application to Watt
 
-By choosing the `@platformatic/node` service, you have already created your nodejs app.
+By choosing the `@platformatic/node` application, you have already created your nodejs app.
 
 This file is created as your nodejs app:
 
@@ -81,7 +81,7 @@ This will internally run `wattpm start` and start your Watt server.
 
 :::note
 
-running `npm run start` at the root directory is running the watt server. if you run `npm run start` at the service directory(in this case `web/my-app`) it is running that single service via this command from the service package.json script: `start-platformatic-node`
+running `npm run start` at the root directory is running the watt server. if you run `npm run start` at the application directory(in this case `web/my-app`) it is running that single application via this command from the application package.json script: `start-platformatic-node`
 
 :::
 
@@ -112,10 +112,10 @@ This will output:
 ```
 Hello Matteo Collina, welcome to Platformatic 2.64.0
 Using existing configuration ...
-? Which kind of service do you want to create? @platformatic/composer
-? What is the name of the service? composer
-? Do you want to create another service? no
-? Which service should be exposed? composer
+? Which kind of application do you want to create? @platformatic/composer
+? What is the name of the application? composer
+? Do you want to create another application? no
+? Which application should be exposed? composer
 ? Do you want to use TypeScript? no
 [16:06:50] INFO: /Users/matteo/tmp/my-app/.env written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/.env.sample written!
@@ -125,7 +125,7 @@ Using existing configuration ...
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/plt-env.d.ts written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the service composer using npm ...
+[16:06:50] INFO: Installing dependencies for the application composer using npm ...
 [16:06:52] INFO: Project created successfully, executing post-install actions...
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
@@ -151,14 +151,14 @@ curl http://localhost:3042/node
 
 :::note
 
-You can customize how the various services are exposed by changing `web/composer/platformatic.json`.
+You can customize how the various applications are exposed by changing `web/composer/platformatic.json`.
 Here is the equivalent of the default configuration when exposing a Node.js application:
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
   "composer": {
-    "services": [{
+    "applications": [{
       "id": "node",
       "proxy": {
         "prefix": "/node"
@@ -249,7 +249,7 @@ and the `prefix` in `web/composer/platformatic.json` accordingly if you customiz
 
 ## `fetch` the data from the Node.js app in the Next.js app
 
-Replace `web/next/src/app/page.js`, with the following code:
+Replace `web/next/src/app/page.js` with the following code:
 
 ```js
 import styles from "./page.module.css";
@@ -259,7 +259,7 @@ export default async function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        ${content}
+        {content}
       </main>
     </div>
   );
@@ -267,7 +267,7 @@ export default async function Home() {
 ```
 
 This will fetch the data from the Node.js app and display it in the Next.js app.
-Note that it uses the `node.plt.local` hostname, which is the _internal_ hostname for the `node` service.
+Note that it uses the `node.plt.local` hostname, which is the _internal_ hostname for the `node` application.
 This domain name would not work outside of a Watt or Platformatic environment.
 
 :::note
@@ -299,7 +299,7 @@ npm run start
 
 which will call `wattpm start`.
 
-## Debug individual services with Chrome DevTools
+## Debug individual applications with Chrome DevTools
 
 You can debug your Watt server with Chrome DevTools by running:
 
@@ -307,19 +307,19 @@ You can debug your Watt server with Chrome DevTools by running:
 npm run start -- --inspect
 ```
 
-This will start an inspector instance in each service, and you can connect to it with Chrome DevTools.
-Open `chrome://inspect` in Chrome, and you will see the services listed there.
+This will start an inspector instance in each application, and you can connect to it with Chrome DevTools.
+Open `chrome://inspect` in Chrome, and you will see the applications listed there.
 
-![Chrome Inspector showing 4 services](./images/inspector.png)
+![Chrome Inspector showing 4 applications](./images/inspector.png)
 
-Then, you can click on `inspect` to open the DevTools for that service.
+Then, you can click on `inspect` to open the DevTools for that application.
 
-## Debug individual services with VS Code
+## Debug individual applications with VS Code
 
-You can debug the code of individual Watt services directly in VS Code.
+You can debug the code of individual Watt applications directly in VS Code.
 
 To run the debugger in VS Code:
-* add a breakpoint in your Watt service code
+* add a breakpoint in your Watt application code
 * open the `Command Palette` (`Ctrl+Shift+P` on Windows, `CMD+Shift+P` on Mac)
 * search `Debug: Toggle Auto Attach`, then select `Always` from the list of options
 * run watt with `npm run dev`
@@ -329,6 +329,6 @@ Debugger listening on ws://127.0.0.1:62807/6132054c-766e-4d86-a716-f634118275ed
 For help, see: https://nodejs.org/en/docs/inspector
 Debugger attached.
 ```
-* do a request to your service, to trigger the breakpoint code, and use VS Code to debug it as by the following screenshot
+* do a request to your application, to trigger the breakpoint code, and use VS Code to debug it as by the following screenshot
 
-![VS Code Debug Watt service](./images/vs-code-debug.png)
+![VS Code Debug Watt application](./images/vs-code-debug.png)

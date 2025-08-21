@@ -17,7 +17,6 @@ const {
 const {
   InspectAndInspectBrkError,
   InvalidEntrypointError,
-  InvalidServicesWithWebError,
   MissingEntrypointError,
   InspectorPortError,
   InspectorHostError
@@ -26,19 +25,19 @@ const { schema } = require('./schema')
 const { upgrade } = require('./upgrade')
 
 async function wrapInRuntimeConfig (config, context) {
-  let serviceId = 'main'
+  let applicationId = 'main'
   try {
     const packageJson = join(config[kMetadata].root, 'package.json')
-    serviceId = require(packageJson).name || 'main'
+    applicationId = require(packageJson).name || 'main'
 
-    if (serviceId.startsWith('@')) {
-      serviceId = serviceId.split('/')[1]
+    if (applicationId.startsWith('@')) {
+      applicationId = applicationId.split('/')[1]
     }
   } catch (err) {
     // on purpose, the package.json might be missing
   }
 
-  // If the service supports its (so far, only @platformatic/service and descendants)
+  // If the application supports its (so far, only @platformatic/service and descendants)
   const { hostname, port, http2, https } = config.server ?? {}
   const server = { hostname, port, http2, https }
   const production = context?.isProduction ?? context?.production
@@ -50,10 +49,10 @@ async function wrapInRuntimeConfig (config, context) {
     server,
     watch: !production,
     ...omitProperties(config.runtime ?? {}, runtimeUnwrappablePropertiesList),
-    entrypoint: serviceId,
-    services: [
+    entrypoint: applicationId,
+    applications: [
       {
-        id: serviceId,
+        id: applicationId,
         path: config[kMetadata].root,
         config: config[kMetadata].path
       }
@@ -114,17 +113,7 @@ function parseInspectorOptions (config, inspect, inspectBreak) {
 
 async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
-
-  let services
-  if (config.web?.length) {
-    if (config.services?.length) {
-      throw new InvalidServicesWithWebError()
-    }
-
-    services = config.web
-  } else {
-    services = config.services ?? []
-  }
+  const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
 
   const watchType = typeof config.watch
   if (watchType === 'string') {
@@ -158,108 +147,104 @@ async function transform (config, _, context) {
         config = join(entryPath, configFilename)
       }
 
-      const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp, health: mapping.health }
-      const existingServiceId = services.findIndex(service => service.id === id)
+      const application = { id, config, path: entryPath, useHttp: !!mapping.useHttp, health: mapping.health }
+      const existingApplicationId = applications.findIndex(application => application.id === id)
 
-      if (existingServiceId !== -1) {
-        services[existingServiceId] = { ...service, ...services[existingServiceId] }
+      if (existingApplicationId !== -1) {
+        applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
       } else {
-        services.push(service)
+        applications.push(application)
       }
     }
   }
 
-  config.serviceMap = new Map()
   config.inspectorOptions = undefined
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   let hasValidEntrypoint = false
 
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
+  for (let i = 0; i < applications.length; ++i) {
+    const application = applications[i]
 
     // We need to have absolute paths here, ot the `loadConfig` will fail
     // Make sure we don't resolve if env var was not replaced
-    if (service.path && !isAbsolute(service.path) && !service.path.match(/^\{.*\}$/)) {
-      service.path = resolvePath(config[kMetadata].root, service.path)
+    if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
+      application.path = resolvePath(config[kMetadata].root, application.path)
     }
 
-    if (service.path && service.config) {
-      service.config = resolvePath(service.path, service.config)
+    if (application.path && application.config) {
+      application.config = resolvePath(application.path, application.config)
     }
 
     try {
       let pkg
 
-      if (service.config) {
-        const config = await loadConfiguration(service.config)
-        pkg = await loadConfigurationModule(service.path, config)
+      if (application.config) {
+        const config = await loadConfiguration(application.config)
+        pkg = await loadConfigurationModule(application.path, config)
 
-        service.type = extractModuleFromSchemaUrl(config, true).module
-        service.skipTelemetryHooks = pkg.skipTelemetryHooks
+        application.type = extractModuleFromSchemaUrl(config, true).module
+        application.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
-        const { moduleName, capability } = await importCapabilityAndConfig(service.path)
+        const { moduleName, capability } = await importCapabilityAndConfig(application.path)
         pkg = capability
 
-        service.type = moduleName
+        application.type = moduleName
       }
 
-      service.skipTelemetryHooks = pkg.skipTelemetryHooks
+      application.skipTelemetryHooks = pkg.skipTelemetryHooks
 
       // This is needed to work around Rust bug on dylibs:
       // https://github.com/rust-lang/rust/issues/91979
       // https://github.com/rollup/rollup/issues/5761
-      const _require = createRequire(service.path)
+      const _require = createRequire(application.path)
       for (const m of pkg.modulesToLoad ?? []) {
         const toLoad = _require.resolve(m)
         loadModule(_require, toLoad).catch(() => {})
       }
     } catch (err) {
       // This should not happen, it happens on running some unit tests if we prepare the runtime
-      // when not all the services configs are available. Given that we are running this only
-      // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
-      service.type = 'unknown'
+      // when not all the applications configs are available. Given that we are running this only
+      // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
+      application.type = 'unknown'
     }
 
-    service.entrypoint = service.id === config.entrypoint
-    service.dependencies = []
-    service.localServiceEnvVars = new Map()
-    service.localUrl = `http://${service.id}.plt.local`
+    application.entrypoint = application.id === config.entrypoint
+    application.dependencies = []
+    application.localUrl = `http://${application.id}.plt.local`
 
-    if (typeof service.watch === 'undefined') {
-      service.watch = config.watch
+    if (typeof application.watch === 'undefined') {
+      application.watch = config.watch
     }
 
-    if (service.entrypoint) {
+    if (application.entrypoint) {
       hasValidEntrypoint = true
     }
-
-    config.serviceMap.set(service.id, service)
   }
 
   // If there is no entrypoint, autodetect one
   if (!config.entrypoint) {
-    // If there is only one service, it becomes the entrypoint
-    if (services.length === 1) {
-      services[0].entrypoint = true
-      config.entrypoint = services[0].id
+    // If there is only one application, it becomes the entrypoint
+    if (applications.length === 1) {
+      applications[0].entrypoint = true
+      config.entrypoint = applications[0].id
       hasValidEntrypoint = true
     } else {
-      // Search if exactly service uses @platformatic/composer
+      // Search if exactly application uses @platformatic/composer
       const composers = []
 
-      for (const service of services) {
-        if (!service.config) {
+      for (const application of applications) {
+        if (!application.config) {
           continue
         }
 
-        if (service.type === '@platformatic/composer') {
-          composers.push(service.id)
+        if (application.type === '@platformatic/composer') {
+          composers.push(application.id)
         }
       }
 
       if (composers.length === 1) {
-        services.find(s => s.id === composers[0]).entrypoint = true
+        applications.find(s => s.id === composers[0]).entrypoint = true
         config.entrypoint = composers[0]
         hasValidEntrypoint = true
       }
@@ -269,16 +254,17 @@ async function transform (config, _, context) {
   if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
     if (config.entrypoint) {
       throw new InvalidEntrypointError(config.entrypoint)
-    } else if (services.length >= 1) {
+    } else if (applications.length >= 1) {
       throw new MissingEntrypointError()
     }
-    // If there are no services, and no entrypoint it's an empty app.
+    // If there are no applications, and no entrypoint it's an empty app.
     // It won't start, but we should be able to parse and operate on it,
-    // like adding other services.
+    // like adding other applications.
   }
 
-  config.services = services
+  config.applications = applications
   config.web = undefined
+  config.services = undefined
   config.logger ??= {}
 
   if (production) {

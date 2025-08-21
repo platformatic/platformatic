@@ -8,7 +8,7 @@ process.setMaxListeners(100)
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('should set telemetry in config on all the node services', async t => {
+test('should set telemetry in config on all the node applications', async t => {
   const { runtime } = await createRuntime(t, 'express-api-with-telemetry')
 
   const client = new Client(
@@ -25,14 +25,14 @@ test('should set telemetry in config on all the node services', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/api/config'
+    path: '/api/v1/applications/api/config'
   })
 
   assert.strictEqual(statusCode, 200)
 
-  const serviceConfig = await body.json()
-  assert.deepEqual(serviceConfig.telemetry, {
-    serviceName: 'test-service-api',
+  const applicationConfig = await body.json()
+  assert.deepEqual(applicationConfig.telemetry, {
+    applicationName: 'test-application-api',
     version: '1.0.0',
     exporter: {
       type: 'memory'

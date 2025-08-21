@@ -18,13 +18,13 @@ Check that the server is running by opening [http://localhost:16686/](http://loc
 
 ## Platformatic setup
 
-Will test this with a Platformatic Composer that proxy requests to a Platformatic Service, which in turn invokes a Platformatic DB Service.
-In this way we show that the telemetry is propagated from the Composer throughout the services and the collected correctly.
+We'll test this with a Platformatic Composer that proxies requests to a Platformatic Application, which in turn invokes a Platformatic DB Application.
+In this way we show that the telemetry is propagated from the Composer throughout the applications and the collected correctly.
 Let's setup all these components:
 
-### Platformatic DB Service
+### Platformatic DB Application
 
-Create a DB service using `npm create wattpm`:
+Create a DB application using `npm create wattpm`:
 
 ```bash
 mkdir test-db
@@ -32,16 +32,16 @@ cd test-db
 npm create wattpm
 ```
 
-To make it simple, use `sqlite` and create/apply the default migrations. This DB Service is exposed on port `5042`:
+To make it simple, use `sqlite` and create/apply the default migrations. This DB Application is exposed on port `5042`:
 
 ```bash 
 Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? Which kind of service do you want to create? @platformatic/db
-? What is the name of the service? main
+? Which kind of application do you want to create? @platformatic/db
+? What is the name of the application? main
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? yes
-? Do you want to create another service? no
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5042
 [12:11:45.131] INFO (504): /work/package.json written!
@@ -65,7 +65,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:11:45.149] INFO (504): /work/web/main/plt-env.d.ts written!
 ? Do you want to init the git repository? no
 [12:11:46.798] INFO (504): Installing dependencies for the application using npm ...
-[12:11:51.343] INFO (504): Installing dependencies for the service db using npm ...
+[12:11:51.343] INFO (504): Installing dependencies for the application db using npm ...
 [12:11:52.165] INFO (504): Project created successfully, executing post-install actions...
 [12:11:52.166] INFO (504): You are all set! Run `npm start` to start your project.
 ```
@@ -74,7 +74,7 @@ Open the `web/main/platformatic.json` file and add the telemetry configuration:
 
 ```json
   "telemetry": {
-    "serviceName": "test-db",
+    "applicationName": "test-db",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -90,13 +90,13 @@ Finally, start the application:
 npm run start
 ```
 
-### Platformatic Service
+### Platformatic Application
 
-Create at the same level of `test-db` another folder for Service and cd into it:
+Create at the same level of `test-db` another folder for Application and cd into it:
 
 ```bash
-mkdir test-service
-cd test-service
+mkdir test-application
+cd test-application
 npm create wattpm
 ```
 
@@ -105,9 +105,9 @@ Then create a `service` on the `5043` port in the folder using `npm create wattp
 ```bash
 Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? Which kind of service do you want to create? @platformatic/service
-? What is the name of the service? main
-? Do you want to create another service? no
+? Which kind of application do you want to create? @platformatic/service
+? What is the name of the application? main
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5043
 [12:14:16.552] INFO (1819): /work/test-service/package.json written!
@@ -133,11 +133,11 @@ Hello User, welcome to Watt 2.64.0!
 [12:14:46.568] INFO (1819): You are all set! Run `npm start` to start your project.
 ```
 
-Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `serviceName`)
+Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `applicationName`)
 
 ```json
   "telemetry": {
-    "serviceName": "test-service",
+    "applicationName": "test-service",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -146,7 +146,7 @@ Open the `web/main/platformatic.json` file and add the following telemetry confi
     }
   }
 ```
-We want this service to invoke the DB service, so we need to add a client for `test-db` to it:
+We want this application to invoke the DB application, so we need to add a client for `test-db` to it:
 
 ```bash
 cd web/main
@@ -185,7 +185,7 @@ module.exports = async function (fastify, opts) {
 
 This code calls `movies` to get all the movies and returns the length of the array.
 
-Finally, start the service:
+Finally, start the application:
 
 ```bash
 npm run start
@@ -204,9 +204,9 @@ npm create wattpm
 ```bash
 Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? Which kind of service do you want to create? @platformatic/composer
-? What is the name of the service? main
-? Do you want to create another service? no
+? Which kind of application do you want to create? @platformatic/composer
+? What is the name of the application? main
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5044
 [12:19:25.784] INFO (3205): /work/test-composer/package.json written!
@@ -245,7 +245,7 @@ Open `web/main/platformatic.json` and change it to the following:
     "refreshTimeout": 3000
   },
   "telemetry": {
-    "serviceName": "test-composer",
+    "applicationName": "test-composer",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -257,7 +257,7 @@ Open `web/main/platformatic.json` and change it to the following:
 }
 ```
 
-Note that we just added `test-service` as `origin` of the proxied service and added the usual `telemetry` configuration, with a different `serviceName`.
+Note that we just added `test-service` as `origin` of the proxied application and added the usual `telemetry` configuration, with a different `applicationName`.
 
 Finally, start the composer:
 
@@ -272,7 +272,7 @@ Check that the composer is exposing `movies-length` opening: http://127.0.0.1:50
 You should see:
 ![image](./telemetry-images/compose-openapi.png)
 
-To add some data, we can POST directly to the DB service (port `5042`):
+To add some data, we can POST directly to the DB application (port `5042`):
 
 ```bash 
 curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix"}' http://127.0.0.1:5042/movies 

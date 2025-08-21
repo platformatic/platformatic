@@ -11,9 +11,9 @@ async function waitForMessages (child, last) {
 
   const patterns = [
     ['crash', /Error: Crash/i],
-    ['restartDelayed', /The service \\"a\\" will be restarted in 1000ms .../i],
-    ['restartImmediate', /The service \\"a\\" is being restarted .../i],
-    ['unavailable', /The service \\"a\\" is no longer available./i],
+    ['restartDelayed', /The application \\"a\\" will be restarted in 1000ms .../i],
+    ['restartImmediate', /The application \\"a\\" is being restarted .../i],
+    ['unavailable', /The application \\"a\\" is no longer available./i],
     ['listening', /listening/i]
   ]
 

@@ -7,16 +7,16 @@ import {
   watch,
   wrappedRuntime
 } from '@platformatic/foundation'
-import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+import { schemaComponents as applicationSchemaComponents } from '@platformatic/service'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const { $defs, graphqlBase, openApiBase, plugins } = serviceSchemaComponents
+const { $defs, graphqlBase, openApiBase, plugins } = applicationSchemaComponents
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
-export const openApiService = {
+export const openApiApplication = {
   type: 'object',
   properties: {
     url: { type: 'string' },
@@ -86,7 +86,7 @@ export const entities = {
   }
 }
 
-export const graphqlService = {
+export const graphqlApplication = {
   anyOf: [
     { type: 'boolean' },
     {
@@ -121,15 +121,15 @@ export const graphqlComposerOptions = {
 export const composer = {
   type: 'object',
   properties: {
-    services: {
+    applications: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: { type: 'string' },
           origin: { type: 'string' },
-          openapi: openApiService,
-          graphql: graphqlService,
+          openapi: openApiApplication,
+          graphql: graphqlApplication,
           proxy: {
             anyOf: [
               { type: 'boolean', const: false },
@@ -205,10 +205,10 @@ export const types = {
 }
 
 export const schemaComponents = {
-  openApiService,
+  openApiApplication,
   entityResolver,
   entities,
-  graphqlService,
+  graphqlApplication,
   graphqlComposerOptions,
   composer,
   types

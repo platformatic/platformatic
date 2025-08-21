@@ -1,5 +1,5 @@
 import { getExecutableId, getExecutableName, logFatalError, logo } from '@platformatic/foundation'
-import { loadServicesCommands } from '@platformatic/runtime'
+import { loadApplicationsCommands } from '@platformatic/runtime'
 import { bold } from 'colorette'
 
 function sanitizeHelp (raw) {
@@ -26,7 +26,7 @@ export async function showGeneralHelp (logger) {
 
   const executableId = getExecutableId()
   const commands = Object.values(await loadCommands())
-  const servicesCommands = Object.values((await loadServicesCommands()).help)
+  const applicationsCommands = Object.values((await loadApplicationsCommands()).help)
 
   const options = [
     { usage: '-V, --version', description: `Show ${executableId} version` },
@@ -42,7 +42,7 @@ export async function showGeneralHelp (logger) {
     Math.max(
       ...options.map(c => c.usage.length),
       ...commands.map(c => c.usage.length),
-      ...servicesCommands.map(c => c.usage.length)
+      ...applicationsCommands.map(c => c.usage.length)
     ) + 5
 
   // Print all options
@@ -59,9 +59,9 @@ export async function showGeneralHelp (logger) {
   }
   logger('')
 
-  if (servicesCommands.length) {
-    logger('Services Commands:\n')
-    for (const { usage, description } of servicesCommands) {
+  if (applicationsCommands.length) {
+    logger('Applications Commands:\n')
+    for (const { usage, description } of applicationsCommands) {
       logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)})`)
     }
     logger('')
@@ -114,11 +114,11 @@ export async function helpCommand (logger, args) {
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    const servicesCommands = (await loadServicesCommands()).help
+    const applicationsCommands = (await loadApplicationsCommands()).help
 
-    if (servicesCommands[command]) {
-      // If the command is a service command, we show the help for that command
-      return showHelp(servicesCommands[command])
+    if (applicationsCommands[command]) {
+      // If the command is an application command, we show the help for that command
+      return showHelp(applicationsCommands[command])
     }
 
     return logFatalError(

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { checkNodeVersionForServices } from '@platformatic/foundation'
+import { checkNodeVersionForApplications } from '@platformatic/foundation'
 import { createPlatformatic } from 'create-wattpm'
 import parseArgs from 'minimist'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-checkNodeVersionForServices()
+checkNodeVersionForApplications()
 
 const _args = process.argv.slice(2)
 const args = parseArgs(_args, {

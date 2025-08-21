@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { createFromConfig, createOpenApiService } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
 test('should throw an error if can not read openapi config file', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -20,7 +20,7 @@ test('should throw an error if can not read openapi config file', async t => {
         }
       },
       composer: {
-        services: [
+        applications: [
           {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -36,12 +36,12 @@ test('should throw an error if can not read openapi config file', async t => {
     await capability.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
-    assert.equal(err.message, 'Could not read openapi config for "api1" service')
+    assert.equal(err.message, 'Could not read openapi config for "api1" application')
   }
 })
 
 test('should throw an error if openapi config is not valid', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -60,7 +60,7 @@ test('should throw an error if openapi config is not valid', async t => {
         }
       },
       composer: {
-        services: [
+        applications: [
           {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -76,6 +76,6 @@ test('should throw an error if openapi config is not valid', async t => {
     await capability.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
-    assert.equal(err.message, 'Could not read openapi config for "api1" service')
+    assert.equal(err.message, 'Could not read openapi config for "api1" application')
   }
 })

@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime, readLogs } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('logs stdio from the service thread', async t => {
+test('logs stdio from the application thread', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
   const context = {}
   const app = await createRuntime(configFile, null, context)
@@ -38,10 +38,10 @@ test('logs stdio from the service thread', async t => {
       })
       .filter(m => m.msg !== 'Runtime event')
 
-    const serviceMessages = messages.filter(m => m.name === 'stdio')
+    const applicationMessages = messages.filter(m => m.name === 'stdio')
     const runtimeMessages = messages.filter(m => m.name === undefined)
 
-    deepStrictEqual(serviceMessages, [
+    deepStrictEqual(applicationMessages, [
       {
         level: 20,
         pid,
@@ -158,7 +158,7 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Starting the service "stdio"...',
+        msg: 'Starting the application "stdio"...',
         payload: undefined,
         stdout: undefined
       },
@@ -167,7 +167,7 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Started the service "stdio"...',
+        msg: 'Started the application "stdio"...',
         payload: undefined,
         stdout: undefined
       },

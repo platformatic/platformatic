@@ -73,9 +73,9 @@ export default async function (app: FastifyInstance) {
 
 Note that the generator would also have updated the `.env` and `.env.sample` files if they exist.
 
-## Generating a client for a unexposed service running within Platformatic Runtime
+## Generating a client for an unexposed application running within Platformatic Runtime
 
-You can use the Platformatic Management API to extract the schema of a service which is not exposed.
+You can use the Platformatic Management API to extract the schema of an application which is not exposed.
 
 Let's say you have an application created via `wattpm create`:
 
@@ -84,21 +84,21 @@ $ npx wattpm create
 Hello User, welcome to Watt 3.0.0!
 ? Where would you like to create your project? example
 ? Which package manager do you want to use? pnpm
-? Which kind of service do you want to create? @platformatic/db
-? What is the name of the service? movies
+? Which kind of application do you want to create? @platformatic/db
+? What is the name of the application? movies
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? yes
 ? Do you want to use TypeScript? no
-? Do you want to create another service? yes
-? Which kind of service do you want to create? @platformatic/service
-? What is the name of the service? main
+? Do you want to create another application? yes
+? Which kind of application do you want to create? @platformatic/service
+? What is the name of the application? main
 ? Do you want to use TypeScript? no
-? Do you want to create another service? no
-? Which service should be exposed? main
+? Do you want to create another application? no
+? Which application should be exposed? main
 ? What port do you want to use? 3042
 ```
 
-As you can see, the `movies` service is not exposed so it is not possible to pass the URL to `plt-client`.
+As you can see, the `movies` application is not exposed so it is not possible to pass the URL to `plt-client`.
 
 To download the OpenAPI schema, you can use the `wattpm inject` command:
 
@@ -114,7 +114,7 @@ $ npx --package @platformatic/client-cli plt-client --name movies -f web/main/mo
 
 This will create the client in the `web/main/movies` folder.
 
-Now you can modify your `web/main/routes/root.js` file to add another route to use the new service:
+Now you can modify your `web/main/routes/root.js` file to add another route to use the new client:
 
 ```js
 import myClient from './movies/movies.js'

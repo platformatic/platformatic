@@ -21,9 +21,9 @@ Configuration settings containing sensitive data, such as database connection UR
 
 ### `basePath`
 
-Service proxy base path when exposing this service in a [composer](../composer/configuration.md) when setting the `proxy` property.
+Application proxy base path when exposing this application in a [composer](../composer/configuration.md) when setting the `proxy` property.
 
-If not specified, the service will be exposed on the service or a value specified in the service code via `platformatic.setBasePath()`.
+If not specified, the application will be exposed on the application or a value specified in the application code via `platformatic.setBasePath()`.
 
 ### `server`
 
@@ -32,7 +32,6 @@ An object with the following settings:
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
 - **`port`** — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
-
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
 
@@ -135,7 +134,7 @@ _Example_
 
 ### `watch`
 
-Enables watching for file changes if set to `true` or `"true"`. When changes are detected, then the service will be restarted after loading changed files.
+Enables watching for file changes if set to `true` or `"true"`. When changes are detected, then the application will be restarted after loading changed files.
 
 This is only available when executing within a Platformatic Runtime and if the runtime `watch` configuration is enabled.
 
@@ -188,7 +187,6 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   ```
 
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
-
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
@@ -236,7 +234,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
-- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
+- **`applicationName`** (**required**, `string`) — Name of the application as will be reported in open telemetry.
 - **`version`** (`string`) — Optional version (free form)
 - **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
@@ -254,7 +252,7 @@ _Example_
 ```json
 {
   "telemetry": {
-    "serviceName": "test-service",
+    "applicationName": "test-application",
     "exporter": {
       "type": "otlp",
       "options": {

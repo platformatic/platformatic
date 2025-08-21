@@ -96,7 +96,7 @@ npm start
     config.$schema = `https://schemas.platformatic.dev/@platformatic/composer/${this.platformaticVersion}.json`
 
     config.composer = {
-      services: [
+      applications: [
         {
           id: 'example',
           origin: `{${this.getEnvVarName('PLT_EXAMPLE_ORIGIN')}}`,
@@ -109,14 +109,14 @@ npm start
     }
 
     if (this.runtime !== null) {
-      config.composer.services = this.runtime.services
-        .filter(serviceMeta => serviceMeta.service.module !== '@platformatic/composer')
-        .map(serviceMeta => {
+      config.composer.applications = this.runtime.applications
+        .filter(applicationMeta => applicationMeta.application.module !== '@platformatic/composer')
+        .map(applicationMeta => {
           return {
-            id: serviceMeta.name,
+            id: applicationMeta.name,
             openapi: {
               url: '/documentation/json',
-              prefix: `/${serviceMeta.name}`
+              prefix: `/${applicationMeta.name}`
             }
           }
         })

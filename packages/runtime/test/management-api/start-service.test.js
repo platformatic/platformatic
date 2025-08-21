@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should start stopped service by service id', async (t) => {
+test('should start stopped application by application id', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -21,11 +21,11 @@ test('should start stopped service by service id', async (t) => {
     ])
   })
 
-  await app.stopService('service-1')
+  await app.stopApplication('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1', true)
-    assert.strictEqual(serviceDetails.status, 'stopped')
+    const applicationDetails = await app.getApplicationDetails('service-1', true)
+    assert.strictEqual(applicationDetails.status, 'stopped')
   }
 
   const client = new Client({
@@ -43,14 +43,14 @@ test('should start stopped service by service id', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/start',
+    path: '/api/v1/applications/service-1/start',
   })
   await body.text()
 
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-1')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 })

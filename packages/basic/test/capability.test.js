@@ -30,7 +30,7 @@ const expectedLogger = {
 }
 
 test('BaseCapability - should properly initialize', async t => {
-  const capability = await create(t, { serviceId: 'service' })
+  const capability = await create(t, { applicationId: 'application' })
   deepStrictEqual(capability.logger.level, 'trace')
 })
 
@@ -230,7 +230,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
-          service: 1000
+          application: 1000
         }
       }
     },
@@ -286,25 +286,25 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
   const capability = await create(
     t,
     {
-      serviceId: 'test-service-id',
+      applicationId: 'test-application-id',
       isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
       telemetryConfig: {
-        serviceName: 'test-telemetry',
+        applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
           options: {
-            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+            url: 'http://127.0.0.1:3044/risk-application/v1/traces'
           }
         }
       },
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
-          service: 1000
+          application: 1000
         }
       }
     },
@@ -340,18 +340,18 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           ignore: ['second']
         }
       },
-      serviceId: 'test-service-id',
+      applicationId: 'test-application-id',
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {
-        serviceName: 'test-telemetry',
+        applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
           options: {
-            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+            url: 'http://127.0.0.1:3044/risk-application/v1/traces'
           }
         }
       },
@@ -405,7 +405,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 10,
-          service: 10
+          application: 10
         }
       }
     },

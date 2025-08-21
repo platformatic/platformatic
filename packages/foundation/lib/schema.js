@@ -618,13 +618,13 @@ export const telemetry = {
         }
       ]
     },
-    serviceName: {
+    applicationName: {
       type: 'string',
-      description: 'The name of the service. Defaults to the folder name if not specified.'
+      description: 'The name of the application. Defaults to the folder name if not specified.'
     },
     version: {
       type: 'string',
-      description: 'The version of the service (optional)'
+      description: 'The version of the application (optional)'
     },
     skip: {
       type: 'array',
@@ -655,11 +655,11 @@ export const telemetry = {
       ]
     }
   },
-  required: ['serviceName'],
+  required: ['applicationName'],
   additionalProperties: false
 }
 
-export const services = {
+export const applications = {
   type: 'array',
   items: {
     type: 'object',
@@ -750,10 +750,11 @@ export const services = {
 export const runtimeUnwrappablePropertiesList = [
   '$schema',
   'entrypoint',
+  'applications',
   'autoload',
-  'services',
+  'applications',
   'web',
-  'resolvedServicesBasePath'
+  'resolvedApplicationsBasePath'
 ]
 
 export const runtimeProperties = {
@@ -816,9 +817,10 @@ export const runtimeProperties = {
       }
     }
   },
-  services,
+  applications,
+  services: applications,
+  web: applications,
   workers: { ...workers, default: 1 },
-  web: services,
   logger,
   server,
   startTimeout: {
@@ -849,7 +851,7 @@ export const runtimeProperties = {
         ],
         default: 10000
       },
-      service: {
+      application: {
         anyOf: [
           {
             type: 'number',
@@ -861,7 +863,7 @@ export const runtimeProperties = {
       }
     },
     default: {},
-    required: ['runtime', 'service'],
+    required: ['runtime', 'application'],
     additionalProperties: false
   },
   health,
@@ -1081,7 +1083,7 @@ export const runtimeProperties = {
       }
     }
   },
-  serviceTimeout: {
+  applicationTimeout: {
     anyOf: [
       {
         type: 'number',
@@ -1101,7 +1103,7 @@ export const runtimeProperties = {
     ],
     default: 30000 // 5 minutes
   },
-  resolvedServicesBasePath: {
+  resolvedApplicationsBasePath: {
     type: 'string',
     default: 'external'
   },
@@ -1182,7 +1184,7 @@ export const schemaComponents = {
   healthWithoutDefaults,
   telemetryExporter,
   telemetry,
-  services,
+  applications,
   runtimeProperties,
   wrappedRuntimeProperties,
   wrappedRuntime

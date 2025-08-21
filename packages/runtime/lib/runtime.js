@@ -29,13 +29,12 @@ const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { startScheduler } = require('./scheduler')
 const { createSharedStore } = require('./shared-http-cache')
-const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { RoundRobinMap } = require('./worker/round-robin-map.js')
 const {
   kId,
   kFullId,
-  kServiceId,
+  kApplicationId,
   kWorkerId,
   kITC,
   kHealthCheckTimer,
@@ -65,33 +64,38 @@ const telemetryPath = require.resolve('@platformatic/telemetry')
 const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
 
 class Runtime extends EventEmitter {
+  logger
+  #loggerDestination
+  #stdio
+
+  #status // starting, started, stopping, stopped, closed
   #root
   #config
   #env
   #context
+  #sharedContext
   #isProduction
-  #runtimeTmpDir
-  #servicesIds
   #entrypointId
   #url
-  #loggerDestination
+
   #metrics
   #metricsTimeout
-  #status // starting, started, stopping, stopped, closed
+
   #meshInterceptor
   #dispatcher
+
   #managementApi
   #prometheusServer
   #inspectorServer
+
+  #applicationsConfigsPatches
   #workers
   #workersBroadcastChannel
   #workerITCHandlers
   #restartingWorkers
+
   #sharedHttpCache
-  servicesConfigsPatches
   #scheduler
-  #stdio
-  #sharedContext
 
   constructor (config, context) {
     super()
@@ -102,19 +106,14 @@ class Runtime extends EventEmitter {
     this.#env = config[kMetadata].env
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
-    this.#runtimeTmpDir = getRuntimeTmpDir(this.#root)
     this.#workers = new RoundRobinMap()
-    this.#servicesIds = []
     this.#url = undefined
-    this.#meshInterceptor = createThreadInterceptor({
-      domain: '.plt.local',
-      timeout: this.#config.serviceTimeout
-    })
+    this.#meshInterceptor = createThreadInterceptor({ domain: '.plt.local', timeout: this.#config.applicationTimeout })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
-    this.servicesConfigsPatches = new Map()
+    this.#applicationsConfigsPatches = new Map()
 
     if (!this.#config.logger.captureStdio) {
       this.#stdio = {
@@ -124,9 +123,9 @@ class Runtime extends EventEmitter {
     }
 
     this.#workerITCHandlers = {
-      getServiceMeta: this.getServiceMeta.bind(this),
-      listServices: () => this.#servicesIds,
-      getServices: this.getServices.bind(this),
+      getApplicationMeta: this.getApplicationMeta.bind(this),
+      listApplications: this.getApplicationsIds.bind(this),
+      getApplications: this.getApplications.bind(this),
       getWorkers: this.getWorkers.bind(this),
       getWorkerMessagingChannel: this.#getWorkerMessagingChannel.bind(this),
       getHttpCacheValue: this.#getHttpCacheValue.bind(this),
@@ -147,9 +146,6 @@ class Runtime extends EventEmitter {
     const config = this.#config
     const autoloadEnabled = config.autoload
 
-    // This cannot be transferred to worker threads
-    delete config.configManager
-
     if (config.managementApi) {
       this.#managementApi = await startManagementApi(this, this.#root)
     }
@@ -163,19 +159,18 @@ class Runtime extends EventEmitter {
     this.logger = logger
     this.#loggerDestination = destination
 
-    this.#servicesIds = config.services.map(service => service.id)
     this.#createWorkersBroadcastChannel()
 
     const workersConfig = []
-    for (const service of config.services) {
-      const count = service.workers ?? this.#config.workers
-      if (count > 1 && service.entrypoint && !features.node.reusePort) {
+    for (const application of config.applications) {
+      const count = application.workers ?? this.#config.workers
+      if (count > 1 && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
-          `"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
+          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
         )
-        workersConfig.push({ id: service.id, workers: 1 })
+        workersConfig.push({ id: application.id, workers: 1 })
       } else {
-        workersConfig.push({ id: service.id, workers: count })
+        workersConfig.push({ id: application.id, workers: count })
       }
     }
 
@@ -189,56 +184,53 @@ class Runtime extends EventEmitter {
       this.#env['PLT_ENVIRONMENT'] = 'development'
     }
 
-    // Create all services, each in is own worker thread
-    for (const serviceConfig of config.services) {
-      // If there is no service path, check if the service was resolved
-      if (!serviceConfig.path) {
-        if (serviceConfig.url) {
-          // Try to backfill the path for external services
-          serviceConfig.path = join(this.#root, config.resolvedServicesBasePath, serviceConfig.id)
+    // Create all applications, each in is own worker thread
+    for (const applicationConfig of config.applications) {
+      // If there is no application path, check if the application was resolved
+      if (!applicationConfig.path) {
+        if (applicationConfig.url) {
+          // Try to backfill the path for external applications
+          applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, applicationConfig.id)
 
-          if (!existsSync(serviceConfig.path)) {
+          if (!existsSync(applicationConfig.path)) {
             const executable = globalThis.platformatic?.executable ?? 'platformatic'
             this.logger.error(
-              `The path for service "%s" does not exist. Please run "${executable} resolve" and try again.`,
-              serviceConfig.id
+              `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+              applicationConfig.id
             )
 
             await this.closeAndThrow(new errors.RuntimeAbortedError())
           }
         } else {
           this.logger.error(
-            'The service "%s" has no path defined. Please check your configuration and try again.',
-            serviceConfig.id
+            'The application "%s" has no path defined. Please check your configuration and try again.',
+            applicationConfig.id
           )
 
           await this.closeAndThrow(new errors.RuntimeAbortedError())
         }
       }
 
-      await this.#setupService(serviceConfig)
+      await this.#setupApplication(applicationConfig)
     }
 
     try {
-      checkDependencies(config.services)
+      checkDependencies(config.applications)
 
-      // Make sure the list exists before computing the dependencies, otherwise some services might not be stopped
+      // Make sure the list exists before computing the dependencies, otherwise some applications might not be stopped
       if (autoloadEnabled) {
         this.#workers = topologicalSort(this.#workers, config)
       }
 
-      // Recompute the list of services after sorting
-      this.#servicesIds = config.services.map(service => service.id)
-
-      // When autoloading is disabled, add a warning if a service is defined before its dependencies
+      // When autoloading is disabled, add a warning if an application is defined before its dependencies
       if (!autoloadEnabled) {
-        for (let i = 0; i < config.services.length; i++) {
-          const current = config.services[i]
+        for (let i = 0; i < config.applications.length; i++) {
+          const current = config.applications[i]
 
           for (const dep of current.dependencies ?? []) {
-            if (config.services.findIndex(s => s.id === dep.id) > i) {
+            if (config.applications.findIndex(s => s.id === dep.id) > i) {
               this.logger.warn(
-                `Service "${current.id}" depends on service "${dep.id}", but it is defined and it will be started before it. Please check your configuration file.`
+                `Application "${current.id}" depends on application "${dep.id}", but it is defined and it will be started before it. Please check your configuration file.`
               )
             }
           }
@@ -270,8 +262,8 @@ class Runtime extends EventEmitter {
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
-      for (const service of this.#servicesIds) {
-        await this.startService(service, silent)
+      for (const application of this.getApplicationsIds()) {
+        await this.startApplication(application, silent)
       }
 
       if (this.#config.inspectorOptions) {
@@ -304,7 +296,7 @@ class Runtime extends EventEmitter {
 
         await server.listen({ port })
         this.logger.info(
-          'The inspector server is now listening for all services. Open `chrome://inspect` in Google Chrome to connect.'
+          'The inspector server is now listening for all applications. Open `chrome://inspect` in Google Chrome to connect.'
         )
         this.#inspectorServer = server
       }
@@ -339,17 +331,17 @@ class Runtime extends EventEmitter {
 
     // Stop the entrypoint first so that no new requests are accepted
     if (this.#entrypointId) {
-      await this.stopService(this.#entrypointId, silent)
+      await this.stopApplication(this.#entrypointId, silent)
     }
 
-    // Stop services in reverse order to ensure services which depend on others are stopped first
-    for (const service of this.#servicesIds.reverse()) {
+    // Stop applications in reverse order to ensure applications which depend on others are stopped first
+    for (const application of this.getApplicationsIds().reverse()) {
       // The entrypoint has been stopped above
-      if (service === this.#entrypointId) {
+      if (application === this.#entrypointId) {
         continue
       }
 
-      await this.stopService(service, silent)
+      await this.stopApplication(application, silent)
     }
 
     await this.#meshInterceptor.close()
@@ -370,16 +362,11 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  getRuntimeStatus () {
-    return this.#status
-  }
-
   async close (silent = false) {
-    this.#updateStatus('closing')
-
     clearInterval(this.#metricsTimeout)
 
     await this.stop(silent)
+    this.#updateStatus('closing')
 
     // The management API autocloses by itself via event in management-api.js.
     // This is needed to let management API stop endpoint to reply.
@@ -412,71 +399,9 @@ class Runtime extends EventEmitter {
     throw error
   }
 
-  async startService (id, silent = false) {
-    // Since when a service is stopped the worker is deleted, we consider a service start if its first service
-    // is no longer in the init phase
-    const firstWorker = this.#workers.get(`${id}:0`)
-    if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
-      throw new errors.ApplicationAlreadyStartedError()
-    }
-
-    const config = this.#config
-    const serviceConfig = config.services.find(s => s.id === id)
-
-    if (!serviceConfig) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#servicesIds).join(', '))
-    }
-
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-
-    this.emit('service:starting', id)
-
-    for (let i = 0; i < workersCount; i++) {
-      await this.#startWorker(config, serviceConfig, workersCount, id, i, silent)
-    }
-
-    this.emit('service:started', id)
-  }
-
-  async stopService (id, silent = false) {
-    const config = this.#config
-    const serviceConfig = config.services.find(s => s.id === id)
-
-    if (!serviceConfig) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#servicesIds).join(', '))
-    }
-
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-
-    this.emit('service:stopping', id)
-
-    for (let i = 0; i < workersCount; i++) {
-      await this.#stopWorker(workersCount, id, i, silent)
-    }
-
-    this.emit('service:stopped', id)
-  }
-
-  async buildService (id) {
-    const service = await this.#getServiceById(id)
-
-    this.emit('service:building', id)
-    try {
-      await sendViaITC(service, 'build')
-      this.emit('service:built', id)
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
   async inject (id, injectParams) {
-    // Make sure the service exists
-    await this.#getServiceById(id, true)
+    // Make sure the application exists
+    await this.#getApplicationById(id, true)
 
     if (typeof injectParams === 'string') {
       injectParams = { url: injectParams }
@@ -516,6 +441,96 @@ class Runtime extends EventEmitter {
       body: responseBody,
       payload: responseBody,
       rawPayload: responsePayload
+    }
+  }
+
+  emit (event, payload) {
+    for (const worker of this.#workers.values()) {
+      if (worker[kForwardEvents]) {
+        worker[kITC].notify('runtime:event', { event, payload })
+      }
+    }
+
+    this.logger.trace({ event, payload }, 'Runtime event')
+    return super.emit(event, payload)
+  }
+
+  async sendCommandToApplication (id, name, message) {
+    const application = await this.#getApplicationById(id)
+
+    try {
+      return await sendViaITC(application, name, message)
+    } catch (e) {
+      // The application exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
+  async startApplication (id, silent = false) {
+    // Since when an application is stopped the worker is deleted, we consider an application start if its first application
+    // is no longer in the init phase
+    const firstWorker = this.#workers.get(`${id}:0`)
+    if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
+      throw new errors.ApplicationAlreadyStartedError()
+    }
+
+    const config = this.#config
+    const applicationConfig = config.applications.find(s => s.id === id)
+
+    if (!applicationConfig) {
+      throw new errors.ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const workersCount = await this.#workers.getCount(applicationConfig.id)
+
+    this.emit('application:starting', id)
+
+    for (let i = 0; i < workersCount; i++) {
+      await this.#startWorker(config, applicationConfig, workersCount, id, i, silent)
+    }
+
+    this.emit('application:started', id)
+  }
+
+  async stopApplication (id, silent = false) {
+    const config = this.#config
+    const applicationConfig = config.applications.find(s => s.id === id)
+
+    if (!applicationConfig) {
+      throw new errors.ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const workersCount = await this.#workers.getCount(applicationConfig.id)
+
+    this.emit('application:stopping', id)
+
+    if (typeof workersCount === 'number') {
+      for (let i = 0; i < workersCount; i++) {
+        await this.#stopWorker(workersCount, id, i, silent)
+      }
+    }
+
+    this.emit('application:stopped', id)
+  }
+
+  async buildApplication (id) {
+    const application = await this.#getApplicationById(id)
+
+    this.emit('application:building', id)
+    try {
+      await sendViaITC(application, 'build')
+      this.emit('application:built', id)
+    } catch (e) {
+      // The application exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
     }
   }
 
@@ -560,6 +575,25 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
+  invalidateHttpCache (options = {}) {
+    const { keys, tags } = options
+
+    if (!this.#sharedHttpCache) {
+      return
+    }
+
+    const promises = []
+    if (keys && keys.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteKeys(keys))
+    }
+
+    if (tags && tags.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteTags(tags))
+    }
+
+    return Promise.all(promises)
+  }
+
   async addLoggerDestination (writableStream) {
     // Add the stream - We output everything we get
     this.#loggerDestination.add({ stream: writableStream, level: 1 })
@@ -579,8 +613,147 @@ class Runtime extends EventEmitter {
     this.on('closed', onClose)
   }
 
+  async updateSharedContext (options = {}) {
+    const { context, overwrite = false } = options
+
+    const sharedContext = overwrite ? {} : this.#sharedContext
+    Object.assign(sharedContext, context)
+
+    this.#sharedContext = sharedContext
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(sendViaITC(worker, 'setSharedContext', sharedContext))
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, 'Cannot update shared context')
+      }
+    }
+
+    return sharedContext
+  }
+
+  setApplicationConfigPatch (id, patch) {
+    this.#applicationsConfigsPatches.set(id, patch)
+  }
+
+  removeApplicationConfigPatch (id) {
+    this.#applicationsConfigsPatches.delete(id)
+  }
+
+  /**
+   * Updates the resources of the applications, such as the number of workers and health configurations (e.g., heap memory settings).
+   *
+   * This function handles three update scenarios for each application:
+   *  1. **Updating workers only**: Adjusts the number of workers for the application.
+   *  2. **Updating health configurations only**: Updates health parameters like `maxHeapTotal` or `maxYoungGeneration`.
+   *  3. **Updating both workers and health configurations**: Scales the workers and also applies health settings.
+   *
+   * When updating both workers and health:
+   *  - **Scaling down workers**: Stops extra workers, then restarts the remaining workers with the previous settings.
+   *  - **Scaling up workers**: Starts new workers with the updated heap settings, then restarts the old workers with the updated settings.
+   *
+   * Scaling up new resources (workers and/or heap memory) may fails due to insufficient memory, in this case the operation may fail partially or entirely.
+   * Scaling down is expected to succeed without issues.
+   *
+   * @param {Array<Object>} updates - An array of objects that define the updates for each application.
+   * @param {string} updates[].application - The ID of the application to update.
+   * @param {number} [updates[].workers] - The desired number of workers for the application. If omitted, workers will not be updated.
+   * @param {Object} [updates[].health] - The health configuration to update for the application, which may include:
+   *   @param {string|number} [updates[].health.maxHeapTotal] - The maximum heap memory for the application. Can be a valid memory string (e.g., '1G', '512MB') or a number representing bytes.
+   *   @param {string|number} [updates[].health.maxYoungGeneration] - The maximum young generation memory for the application. Can be a valid memory string (e.g., '128MB') or a number representing bytes.
+   *
+   * @returns {Promise<Array<Object>>} - A promise that resolves to an array of reports for each application, detailing the success or failure of the operations:
+   *   - `application`: The application ID.
+   *   - `workers`: The workers' update report, including the current, new number of workers, started workers, and success status.
+   *   - `health`: The health update report, showing the current and new heap settings, updated workers, and success status.
+   *
+   * @example
+   * await runtime.updateApplicationsResources([
+   *   { application: 'application-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
+   *   { application: 'application-2', health: { maxHeapTotal: '1G' } },
+   *   { application: 'application-3', workers: 2 },
+   * ])
+   *
+   * In this example:
+   * - `application-1` will have 2 workers and updated heap memory configurations.
+   * - `application-2` will have updated heap memory settings (without changing workers).
+   * - `application-3` will have its workers set to 2 but no change in memory settings.
+   *
+   * @throws {InvalidArgumentError} - Throws if any update parameter is invalid, such as:
+   *   - Missing application ID.
+   *   - Invalid worker count (not a positive integer).
+   *   - Invalid memory size format for `maxHeapTotal` or `maxYoungGeneration`.
+   * @throws {ApplicationNotFoundError} - Throws if the specified application ID does not exist in the current application configuration.
+   */
+  async updateApplicationsResources (updates) {
+    if (this.#status === 'stopping' || this.#status === 'closed') {
+      this.logger.warn('Cannot update application resources when the runtime is stopping or closed')
+      return
+    }
+
+    const ups = await this.#validateUpdateApplicationResources(updates)
+    const config = this.#config
+
+    const report = []
+    for (const update of ups) {
+      const { applicationId, config: applicationConfig, workers, health, currentWorkers, currentHealth } = update
+
+      if (workers && health) {
+        const r = await this.#updateApplicationWorkersAndHealth(
+          applicationId,
+          config,
+          applicationConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        )
+        report.push({
+          application: applicationId,
+          workers: r.workers,
+          health: r.health
+        })
+      } else if (health) {
+        const r = await this.#updateApplicationHealth(
+          applicationId,
+          config,
+          applicationConfig,
+          currentWorkers,
+          currentHealth,
+          health
+        )
+        report.push({
+          application: applicationId,
+          health: r.health
+        })
+      } else if (workers) {
+        const r = await this.#updateApplicationWorkers(
+          applicationId,
+          config,
+          applicationConfig,
+          workers,
+          currentWorkers
+        )
+        report.push({
+          application: applicationId,
+          workers: r.workers
+        })
+      }
+    }
+
+    return report
+  }
+
   async getUrl () {
     return this.#url
+  }
+
+  getRuntimeStatus () {
+    return this.#status
   }
 
   async getRuntimeMetadata () {
@@ -632,43 +805,15 @@ class Runtime extends EventEmitter {
   }
 
   async getEntrypointDetails () {
-    return this.getServiceDetails(this.#entrypointId)
-  }
-
-  async getServices () {
-    return {
-      entrypoint: this.#entrypointId,
-      production: this.#isProduction,
-      services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id)))
-    }
-  }
-
-  async getWorkers () {
-    const status = {}
-
-    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${service}:${i}`
-        const worker = this.#workers.get(label)
-
-        status[label] = {
-          service,
-          worker: i,
-          status: worker?.[kWorkerStatus] ?? 'exited',
-          thread: worker?.threadId
-        }
-      }
-    }
-
-    return status
+    return this.getApplicationDetails(this.#entrypointId)
   }
 
   async getCustomHealthChecks () {
     const status = {}
 
-    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
+    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
       for (let i = 0; i < count; i++) {
-        const label = `${service}:${i}`
+        const label = `${application}:${i}`
         const worker = this.#workers.get(label)
 
         status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
@@ -681,9 +826,9 @@ class Runtime extends EventEmitter {
   async getCustomReadinessChecks () {
     const status = {}
 
-    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
+    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
       for (let i = 0; i < count; i++) {
-        const label = `${service}:${i}`
+        const label = `${application}:${i}`
         const worker = this.#workers.get(label)
 
         status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
@@ -693,98 +838,35 @@ class Runtime extends EventEmitter {
     return status
   }
 
-  async getServiceDetails (id, allowUnloaded = false) {
-    let service
-
-    try {
-      service = await this.#getServiceById(id)
-    } catch (e) {
-      if (allowUnloaded) {
-        return { id, status: 'stopped' }
-      }
-
-      throw e
-    }
-
-    const { entrypoint, dependencies, localUrl } = service[kConfig]
-
-    const status = await sendViaITC(service, 'getStatus')
-    const { type, version } = await sendViaITC(service, 'getServiceInfo')
-
-    const serviceDetails = {
-      id,
-      type,
-      status,
-      version,
-      localUrl,
-      entrypoint,
-      dependencies
-    }
-
-    if (this.#isProduction) {
-      serviceDetails.workers = this.#workers.getCount(id)
-    }
-
-    if (entrypoint) {
-      serviceDetails.url = status === 'started' ? this.#url : null
-    }
-
-    return serviceDetails
-  }
-
-  async getService (id, ensureStarted = true) {
-    return this.#getServiceById(id, ensureStarted)
-  }
-
-  async getServiceConfig (id, ensureStarted = true) {
-    const service = await this.#getServiceById(id, ensureStarted)
-
-    return sendViaITC(service, 'getServiceConfig')
-  }
-
-  async getServiceEnv (id, ensureStarted = true) {
-    const service = await this.#getServiceById(id, ensureStarted)
-
-    return sendViaITC(service, 'getServiceEnv')
-  }
-
-  async getServiceOpenapiSchema (id) {
-    const service = await this.#getServiceById(id, true)
-
-    return sendViaITC(service, 'getServiceOpenAPISchema')
-  }
-
-  async getServiceGraphqlSchema (id) {
-    const service = await this.#getServiceById(id, true)
-
-    return sendViaITC(service, 'getServiceGraphQLSchema')
-  }
-
   async getMetrics (format = 'json') {
     let metrics = null
 
     for (const worker of this.#workers.values()) {
       try {
-        // The service might be temporarily unavailable
+        // The application might be temporarily unavailable
         if (worker[kWorkerStatus] !== 'started') {
           continue
         }
 
-        const serviceMetrics = await sendViaITC(worker, 'getMetrics', format)
-        if (serviceMetrics) {
+        const applicationMetrics = await sendViaITC(worker, 'getMetrics', format)
+        if (applicationMetrics) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
           }
 
           if (format === 'json') {
-            metrics.push(...serviceMetrics)
+            metrics.push(...applicationMetrics)
           } else {
-            metrics += serviceMetrics
+            metrics += applicationMetrics
           }
         }
       } catch (e) {
-        // The service exited while we were sending the ITC, skip it
-        if (e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' || e.code === 'PLT_RUNTIME_SERVICE_EXIT') {
+        // The application exited while we were sending the ITC, skip it
+        if (
+          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+        ) {
           continue
         }
 
@@ -817,7 +899,7 @@ class Runtime extends EventEmitter {
         'http_request_all_summary_seconds'
       ]
 
-      const servicesMetrics = {}
+      const applicationsMetrics = {}
 
       for (const metric of metrics) {
         const { name, values } = metric
@@ -826,15 +908,15 @@ class Runtime extends EventEmitter {
         if (!values || values.length === 0) continue
 
         const labels = values[0].labels
-        const serviceId = labels?.serviceId
+        const applicationId = labels?.applicationId
 
-        if (!serviceId) {
-          throw new Error('Missing serviceId label in metrics')
+        if (!applicationId) {
+          throw new Error('Missing applicationId label in metrics')
         }
 
-        let serviceMetrics = servicesMetrics[serviceId]
-        if (!serviceMetrics) {
-          serviceMetrics = {
+        let applicationMetrics = applicationsMetrics[applicationId]
+        if (!applicationMetrics) {
+          applicationMetrics = {
             cpu: 0,
             rss: 0,
             totalHeapSize: 0,
@@ -849,45 +931,45 @@ class Runtime extends EventEmitter {
               p99: 0
             }
           }
-          servicesMetrics[serviceId] = serviceMetrics
+          applicationsMetrics[applicationId] = applicationMetrics
         }
 
-        parsePromMetric(serviceMetrics, metric)
+        parsePromMetric(applicationMetrics, metric)
       }
 
-      function parsePromMetric (serviceMetrics, promMetric) {
+      function parsePromMetric (applicationMetrics, promMetric) {
         const { name } = promMetric
 
         if (name === 'process_cpu_percent_usage') {
-          serviceMetrics.cpu = promMetric.values[0].value
+          applicationMetrics.cpu = promMetric.values[0].value
           return
         }
         if (name === 'process_resident_memory_bytes') {
-          serviceMetrics.rss = promMetric.values[0].value
+          applicationMetrics.rss = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_size_total_bytes') {
-          serviceMetrics.totalHeapSize = promMetric.values[0].value
+          applicationMetrics.totalHeapSize = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_size_used_bytes') {
-          serviceMetrics.usedHeapSize = promMetric.values[0].value
+          applicationMetrics.usedHeapSize = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_space_size_total_bytes') {
           const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
           const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
 
-          serviceMetrics.newSpaceSize = newSpaceSize.value
-          serviceMetrics.oldSpaceSize = oldSpaceSize.value
+          applicationMetrics.newSpaceSize = newSpaceSize.value
+          applicationMetrics.oldSpaceSize = oldSpaceSize.value
           return
         }
         if (name === 'nodejs_eventloop_utilization') {
-          serviceMetrics.elu = promMetric.values[0].value
+          applicationMetrics.elu = promMetric.values[0].value
           return
         }
         if (name === 'http_request_all_summary_seconds') {
-          serviceMetrics.latency = {
+          applicationMetrics.latency = {
             p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
             p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
             p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
@@ -899,7 +981,7 @@ class Runtime extends EventEmitter {
       return {
         version: 1,
         date: new Date().toISOString(),
-        services: servicesMetrics
+        applications: applicationsMetrics
       }
     } catch (err) {
       // If any metric is missing, return nothing
@@ -909,13 +991,58 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getServiceMeta (id) {
-    const service = await this.#getServiceById(id)
+  getSharedContext () {
+    return this.#sharedContext
+  }
+
+  async getApplicationResourcesInfo (id) {
+    const workers = this.#workers.getCount(id)
+
+    const worker = await this.#getWorkerById(id, 0, false, false)
+    const health = worker[kConfig].health
+
+    return { workers, health }
+  }
+
+  getApplicationsIds () {
+    return this.#config.applications.map(application => application.id)
+  }
+
+  async getApplications () {
+    return {
+      entrypoint: this.#entrypointId,
+      production: this.#isProduction,
+      applications: await Promise.all(this.getApplicationsIds().map(id => this.getApplicationDetails(id)))
+    }
+  }
+
+  async getWorkers () {
+    const status = {}
+
+    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
+      for (let i = 0; i < count; i++) {
+        const label = `${application}:${i}`
+        const worker = this.#workers.get(label)
+
+        status[label] = {
+          application,
+          worker: i,
+          status: worker?.[kWorkerStatus] ?? 'exited',
+          thread: worker?.threadId
+        }
+      }
+    }
+
+    return status
+  }
+
+  async getApplicationMeta (id) {
+    const application = await this.#getApplicationById(id)
 
     try {
-      return await sendViaITC(service, 'getServiceMeta')
+      return await sendViaITC(application, 'getApplicationMeta')
     } catch (e) {
-      // The service exports no meta, return an empty object
+      // The application exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
         return {}
       }
@@ -924,12 +1051,71 @@ class Runtime extends EventEmitter {
     }
   }
 
-  setServiceConfigPatch (id, patch) {
-    this.servicesConfigsPatches.set(id, patch)
+  async getApplicationDetails (id, allowUnloaded = false) {
+    let application
+
+    try {
+      application = await this.#getApplicationById(id)
+    } catch (e) {
+      if (allowUnloaded) {
+        return { id, status: 'stopped' }
+      }
+
+      throw e
+    }
+
+    const { entrypoint, dependencies, localUrl } = application[kConfig]
+
+    const status = await sendViaITC(application, 'getStatus')
+    const { type, version } = await sendViaITC(application, 'getApplicationInfo')
+
+    const applicationDetails = {
+      id,
+      type,
+      status,
+      version,
+      localUrl,
+      entrypoint,
+      dependencies
+    }
+
+    if (this.#isProduction) {
+      applicationDetails.workers = this.#workers.getCount(id)
+    }
+
+    if (entrypoint) {
+      applicationDetails.url = status === 'started' ? this.#url : null
+    }
+
+    return applicationDetails
   }
 
-  removeServiceConfigPatch (id) {
-    this.servicesConfigsPatches.delete(id)
+  async getApplication (id, ensureStarted = true) {
+    return this.#getApplicationById(id, ensureStarted)
+  }
+
+  async getApplicationConfig (id, ensureStarted = true) {
+    const application = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(application, 'getApplicationConfig')
+  }
+
+  async getApplicationEnv (id, ensureStarted = true) {
+    const application = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(application, 'getApplicationEnv')
+  }
+
+  async getApplicationOpenapiSchema (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationOpenAPISchema')
+  }
+
+  async getApplicationGraphqlSchema (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationGraphQLSchema')
   }
 
   #getHttpCacheValue ({ request }) {
@@ -954,78 +1140,6 @@ class Runtime extends EventEmitter {
     }
 
     return this.#sharedHttpCache.delete(request)
-  }
-
-  invalidateHttpCache (options = {}) {
-    const { keys, tags } = options
-
-    if (!this.#sharedHttpCache) {
-      return
-    }
-
-    const promises = []
-    if (keys && keys.length > 0) {
-      promises.push(this.#sharedHttpCache.deleteKeys(keys))
-    }
-
-    if (tags && tags.length > 0) {
-      promises.push(this.#sharedHttpCache.deleteTags(tags))
-    }
-
-    return Promise.all(promises)
-  }
-
-  async sendCommandToService (id, name, message) {
-    const service = await this.#getServiceById(id)
-
-    try {
-      return await sendViaITC(service, name, message)
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
-  emit (event, payload) {
-    for (const worker of this.#workers.values()) {
-      if (worker[kForwardEvents]) {
-        worker[kITC].notify('runtime:event', { event, payload })
-      }
-    }
-
-    this.logger.trace({ event, payload }, 'Runtime event')
-    return super.emit(event, payload)
-  }
-
-  async updateSharedContext (options = {}) {
-    const { context, overwrite = false } = options
-
-    const sharedContext = overwrite ? {} : this.#sharedContext
-    Object.assign(sharedContext, context)
-
-    this.#sharedContext = sharedContext
-
-    const promises = []
-    for (const worker of this.#workers.values()) {
-      promises.push(sendViaITC(worker, 'setSharedContext', sharedContext))
-    }
-
-    const results = await Promise.allSettled(promises)
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        this.logger.error({ err: result.reason }, 'Cannot update shared context')
-      }
-    }
-
-    return sharedContext
-  }
-
-  getSharedContext () {
-    return this.#sharedContext
   }
 
   async #setDispatcher (undiciConfig) {
@@ -1055,23 +1169,23 @@ class Runtime extends EventEmitter {
     this.logger.info(`Platformatic is now listening at ${this.#url}`)
   }
 
-  async #setupService (serviceConfig) {
+  async #setupApplication (applicationConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
     const config = this.#config
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-    const id = serviceConfig.id
+    const workersCount = await this.#workers.getCount(applicationConfig.id)
+    const id = applicationConfig.id
 
     for (let i = 0; i < workersCount; i++) {
-      await this.#setupWorker(config, serviceConfig, workersCount, id, i)
+      await this.#setupWorker(config, applicationConfig, workersCount, id, i)
     }
 
-    this.emit('service:init', id)
+    this.emit('application:init', id)
   }
 
-  async #setupWorker (config, serviceConfig, workersCount, serviceId, index, enabled = true) {
+  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true) {
     const { restartOnError } = config
-    const workerId = `${serviceId}:${index}`
+    const workerId = `${applicationId}:${index}`
 
     // Handle inspector
     let inspectorOptions
@@ -1085,19 +1199,19 @@ class Runtime extends EventEmitter {
     }
 
     if (config.telemetry) {
-      serviceConfig.telemetry = {
+      applicationConfig.telemetry = {
         ...config.telemetry,
-        ...serviceConfig.telemetry,
-        serviceName: `${config.telemetry.serviceName}-${serviceConfig.id}`
+        ...applicationConfig.telemetry,
+        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
       }
     }
 
-    const errorLabel = this.#workerExtendedLabel(serviceId, index, workersCount)
-    const health = deepmerge(config.health ?? {}, serviceConfig.health ?? {})
+    const errorLabel = this.#workerExtendedLabel(applicationId, index, workersCount)
+    const health = deepmerge(config.health ?? {}, applicationConfig.health ?? {})
 
     const execArgv = []
 
-    if (!serviceConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
@@ -1105,16 +1219,16 @@ class Runtime extends EventEmitter {
       execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
     }
 
-    if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {
+    if ((applicationConfig.sourceMaps ?? config.sourceMaps) === true) {
       execArgv.push('--enable-source-maps')
     }
 
     const workerEnv = structuredClone(this.#env)
 
-    if (serviceConfig.nodeOptions?.trim().length > 0) {
+    if (applicationConfig.nodeOptions?.trim().length > 0) {
       const originalNodeOptions = workerEnv['NODE_OPTIONS'] ?? ''
 
-      workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
+      workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${applicationConfig.nodeOptions}`.trim()
     }
 
     const maxHeapTotal =
@@ -1132,10 +1246,10 @@ class Runtime extends EventEmitter {
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
-        serviceConfig: {
-          ...serviceConfig,
+        applicationConfig: {
+          ...applicationConfig,
           isProduction: this.#isProduction,
-          configPatch: this.servicesConfigsPatches.get(serviceId)
+          configPatch: this.#applicationsConfigsPatches.get(applicationId)
         },
         worker: {
           id: workerId,
@@ -1145,7 +1259,7 @@ class Runtime extends EventEmitter {
         inspectorOptions,
         dirname: this.#root
       },
-      argv: serviceConfig.arguments,
+      argv: applicationConfig.arguments,
       execArgv,
       env: workerEnv,
       resourceLimits: {
@@ -1156,13 +1270,13 @@ class Runtime extends EventEmitter {
       stderr: true
     })
 
-    this.#handleWorkerStandardStreams(worker, serviceId, workersCount > 1 ? index : undefined)
+    this.#handleWorkerStandardStreams(worker, applicationId, workersCount > 1 ? index : undefined)
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
     worker.setMaxListeners(1e3)
 
-    // Track service exiting
-    const eventPayload = { service: serviceId, worker: index, workersCount }
+    // Track application exiting
+    const eventPayload = { application: applicationId, worker: index, workersCount }
     worker.once('exit', code => {
       if (worker[kWorkerStatus] === 'exited') {
         return
@@ -1170,7 +1284,7 @@ class Runtime extends EventEmitter {
 
       const started = worker[kWorkerStatus] === 'started'
       worker[kWorkerStatus] = 'exited'
-      this.emit('service:worker:exited', eventPayload)
+      this.emit('application:worker:exited', eventPayload)
 
       this.#cleanupWorker(worker)
 
@@ -1181,13 +1295,13 @@ class Runtime extends EventEmitter {
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
         if (started && (!config.watch || code !== 0)) {
-          this.emit('service:worker:error', { ...eventPayload, code })
+          this.emit('application:worker:error', { ...eventPayload, code })
           this.#broadcastWorkers()
 
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
-        // Restart the service if it was started
+        // Restart the application if it was started
         if (started && this.#status === 'started') {
           if (restartOnError > 0) {
             if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
@@ -1196,20 +1310,22 @@ class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, serviceConfig, workersCount, serviceId, index, false, 0).catch(err => {
-              this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
-            })
+            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0).catch(
+              err => {
+                this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+              }
+            )
           } else {
-            this.emit('service:worker:unvailable', eventPayload)
+            this.emit('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
           }
         }
       })
     })
 
-    worker[kId] = workersCount > 1 ? workerId : serviceId
+    worker[kId] = workersCount > 1 ? workerId : applicationId
     worker[kFullId] = workerId
-    worker[kServiceId] = serviceId
+    worker[kApplicationId] = applicationId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
     worker[kWorkerStatus] = 'boot'
     worker[kForwardEvents] = false
@@ -1217,7 +1333,7 @@ class Runtime extends EventEmitter {
     if (inspectorOptions) {
       worker[kInspectorOptions] = {
         port: inspectorOptions.port,
-        id: serviceId,
+        id: applicationId,
         dirname: this.#root
       }
     }
@@ -1237,30 +1353,30 @@ class Runtime extends EventEmitter {
 
     // Forward events from the worker
     worker[kITC].on('event', ({ event, payload }) => {
-      this.emit(`service:worker:event:${event}`, { ...eventPayload, payload })
+      this.emit(`application:worker:event:${event}`, { ...eventPayload, payload })
     })
 
     // Only activate watch for the first instance
     if (index === 0) {
-      // Handle services changes
+      // Handle applications changes
       // This is not purposely activated on when this.#config.watch === true
-      // so that services can eventually manually trigger a restart. This mechanism is current
+      // so that applications can eventually manually trigger a restart. This mechanism is current
       // used by the composer.
       worker[kITC].on('changed', async () => {
-        this.emit('service:worker:changed', eventPayload)
+        this.emit('application:worker:changed', eventPayload)
 
         try {
           const wasStarted = worker[kWorkerStatus].startsWith('start')
-          await this.stopService(serviceId)
+          await this.stopApplication(applicationId)
 
           if (wasStarted) {
-            await this.startService(serviceId)
+            await this.startApplication(applicationId)
           }
 
-          this.logger.info(`The service "${serviceId}" has been successfully reloaded ...`)
-          this.emit('service:worker:reloaded', eventPayload)
+          this.logger.info(`The application "${applicationId}" has been successfully reloaded ...`)
+          this.emit('application:worker:reloaded', eventPayload)
 
-          if (serviceConfig.entrypoint) {
+          if (applicationConfig.entrypoint) {
             this.#showUrl()
           }
         } catch (e) {
@@ -1274,27 +1390,21 @@ class Runtime extends EventEmitter {
       this.#workers.set(workerId, worker)
 
       // Setup the interceptor
-      this.#meshInterceptor.route(serviceId, worker)
+      this.#meshInterceptor.route(applicationId, worker)
     }
 
     // Store dependencies
     const [{ dependencies }] = await waitEventFromITC(worker, 'init')
+    applicationConfig.dependencies = dependencies
 
-    if (serviceConfig.entrypoint) {
-      this.#entrypointId = serviceId
-    }
-
-    serviceConfig.dependencies = dependencies
-    for (const { envVar, url } of dependencies) {
-      if (envVar) {
-        serviceConfig.localServiceEnvVars.set(envVar, url)
-      }
+    if (applicationConfig.entrypoint) {
+      this.#entrypointId = applicationId
     }
 
     // This must be done here as the dependencies are filled above
-    worker[kConfig] = { ...serviceConfig, health, workers: workersCount }
+    worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
-    this.emit('service:worker:init', eventPayload)
+    this.emit('application:worker:init', eventPayload)
 
     return worker
   }
@@ -1312,7 +1422,7 @@ class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel, timeout) {
+  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel, timeout) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1338,9 +1448,9 @@ class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      this.emit('service:worker:health', {
+      this.emit('application:worker:health', {
         id: worker[kId],
-        service: id,
+        application: id,
         worker: index,
         currentHealth: health,
         unhealthy,
@@ -1367,14 +1477,14 @@ class Runtime extends EventEmitter {
 
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
-          this.emit('service:worker:unhealthy', { service: id, worker: index })
+          this.emit('application:worker:unhealthy', { application: id, worker: index })
 
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
           )
 
-          await this.#replaceWorker(config, serviceConfig, workersCount, id, index, worker)
+          await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
         } catch (e) {
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
@@ -1391,7 +1501,7 @@ class Runtime extends EventEmitter {
 
   async #startWorker (
     config,
-    serviceConfig,
+    applicationConfig,
     workersCount,
     id,
     index,
@@ -1410,16 +1520,16 @@ class Runtime extends EventEmitter {
       worker = await this.#getWorkerById(id, index, false, false)
     }
 
-    const eventPayload = { service: id, worker: index, workersCount }
+    const eventPayload = { application: id, worker: index, workersCount }
 
-    // The service was stopped, recreate the thread
+    // The application was stopped, recreate the thread
     if (!worker) {
-      await this.#setupService(serviceConfig, index)
+      await this.#setupApplication(applicationConfig, index)
       worker = await this.#getWorkerById(id, index)
     }
 
     worker[kWorkerStatus] = 'starting'
-    this.emit('service:worker:starting', eventPayload)
+    this.emit('application:worker:starting', eventPayload)
 
     try {
       let workerUrl
@@ -1427,10 +1537,10 @@ class Runtime extends EventEmitter {
         workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
         if (workerUrl === kTimeout) {
-          this.emit('service:worker:startTimeout', eventPayload)
+          this.emit('application:worker:startTimeout', eventPayload)
           this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
-          throw new errors.ServiceStartTimeoutError(id, config.startTimeout)
+          throw new errors.ApplicationStartTimeoutError(id, config.startTimeout)
         }
       } else {
         workerUrl = await sendViaITC(worker, 'start')
@@ -1443,7 +1553,7 @@ class Runtime extends EventEmitter {
       }
 
       worker[kWorkerStatus] = 'started'
-      this.emit('service:worker:started', eventPayload)
+      this.emit('application:worker:started', eventPayload)
       this.#broadcastWorkers()
 
       if (!silent) {
@@ -1456,7 +1566,7 @@ class Runtime extends EventEmitter {
         // however, the health event will start when the worker is started
         this.#setupHealthCheck(
           config,
-          serviceConfig,
+          applicationConfig,
           workersCount,
           id,
           index,
@@ -1474,20 +1584,20 @@ class Runtime extends EventEmitter {
       this.#cleanupWorker(worker)
 
       if (worker[kWorkerStatus] !== 'exited') {
-        // This prevent the exit handler to restart service
+        // This prevent the exit handler to restart application
         worker[kWorkerStatus] = 'exited'
 
         // Wait for the worker to exit gracefully, otherwise we terminate it
-        const waitTimeout = await executeWithTimeout(once(worker, 'exit'), config.gracefulShutdown.service)
+        const waitTimeout = await executeWithTimeout(once(worker, 'exit'), config.gracefulShutdown.application)
 
         if (waitTimeout === kTimeout) {
           await worker.terminate()
         }
       }
 
-      this.emit('service:worker:start:error', { ...eventPayload, error })
+      this.emit('application:worker:start:error', { ...eventPayload, error })
 
-      if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
+      if (error.code !== 'PLT_RUNTIME_APPLICATION_START_TIMEOUT') {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
       }
 
@@ -1512,7 +1622,7 @@ class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
+      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
   }
 
@@ -1530,11 +1640,11 @@ class Runtime extends EventEmitter {
       return this.#discardWorker(worker)
     }
 
-    const eventPayload = { service: id, worker: index, workersCount }
+    const eventPayload = { application: id, worker: index, workersCount }
 
     worker[kWorkerStatus] = 'stopping'
     worker[kITC].removeAllListeners('changed')
-    this.emit('service:worker:stopping', eventPayload)
+    this.emit('application:worker:stopping', eventPayload)
 
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
@@ -1549,7 +1659,7 @@ class Runtime extends EventEmitter {
     try {
       await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
     } catch (error) {
-      this.emit('service:worker:stop:timeout', eventPayload)
+      this.emit('application:worker:stop:timeout', eventPayload)
       this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].close()
@@ -1559,19 +1669,19 @@ class Runtime extends EventEmitter {
       this.logger.info(`Stopped the ${label}...`)
     }
 
-    // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
+    // Wait for the worker thread to finish, we're going to create a new one if the application is ever restarted
     const res = await executeWithTimeout(exitPromise, exitTimeout)
 
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
-      this.emit('service:worker:exit:timeout', eventPayload)
+      this.emit('application:worker:exit:timeout', eventPayload)
       await worker.terminate()
     }
 
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
-    this.emit('service:worker:stopped', eventPayload)
+    this.emit('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
   }
 
@@ -1588,18 +1698,20 @@ class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    this.#meshInterceptor.unroute(worker[kServiceId], worker, true)
+    this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
     return this.#cleanupWorker(worker)
   }
 
-  #workerExtendedLabel (serviceId, workerId, workersCount) {
-    return workersCount > 1 ? `worker ${workerId} of the service "${serviceId}"` : `service "${serviceId}"`
+  #workerExtendedLabel (applicationId, workerId, workersCount) {
+    return workersCount > 1
+      ? `worker ${workerId} of the application "${applicationId}"`
+      : `application "${applicationId}"`
   }
 
-  async #restartCrashedWorker (config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt) {
+  async #restartCrashedWorker (config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt) {
     const workerId = `${id}:${index}`
 
     let restartPromise = this.#restartingWorkers.get(workerId)
@@ -1619,8 +1731,8 @@ class Runtime extends EventEmitter {
         }
 
         try {
-          await this.#setupWorker(config, serviceConfig, workersCount, id, index)
-          await this.#startWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
+          await this.#setupWorker(config, applicationConfig, workersCount, id, index)
+          await this.#startWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
 
           this.logger.info(
             `The ${this.#workerExtendedLabel(id, index, workersCount)} has been successfully restarted ...`
@@ -1647,13 +1759,13 @@ class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, serviceConfig, workersCount, serviceId, index, worker) {
-    const workerId = `${serviceId}:${index}`
+  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker) {
+    const workerId = `${applicationId}:${index}`
     let newWorker
 
     try {
       // Create a new worker
-      newWorker = await this.#setupWorker(config, serviceConfig, workersCount, serviceId, index, false)
+      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -1661,7 +1773,7 @@ class Runtime extends EventEmitter {
       }
 
       // Add the worker to the mesh
-      await this.#startWorker(config, serviceConfig, workersCount, serviceId, index, false, 0, newWorker, true)
+      await this.#startWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -1669,7 +1781,7 @@ class Runtime extends EventEmitter {
       }
 
       this.#workers.set(workerId, newWorker)
-      this.#meshInterceptor.route(serviceId, newWorker)
+      this.#meshInterceptor.route(applicationId, newWorker)
 
       // Remove the old worker and then kill it
       await sendViaITC(worker, 'removeFromMesh')
@@ -1678,52 +1790,54 @@ class Runtime extends EventEmitter {
       throw e
     }
 
-    await this.#stopWorker(workersCount, serviceId, index, false, worker)
+    await this.#stopWorker(workersCount, applicationId, index, false, worker)
   }
 
-  async #getServiceById (serviceId, ensureStarted = false, mustExist = true) {
-    // If the serviceId includes the worker, properly split
+  async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {
+    // If the applicationId includes the worker, properly split
     let workerId
-    const matched = serviceId.match(/^(.+):(\d+)$/)
+    const matched = applicationId.match(/^(.+):(\d+)$/)
 
     if (matched) {
-      serviceId = matched[1]
+      applicationId = matched[1]
       workerId = matched[2]
     }
 
-    return this.#getWorkerById(serviceId, workerId, ensureStarted, mustExist)
+    return this.#getWorkerById(applicationId, workerId, ensureStarted, mustExist)
   }
 
-  async #getWorkerById (serviceId, workerId, ensureStarted = false, mustExist = true) {
+  async #getWorkerById (applicationId, workerId, ensureStarted = false, mustExist = true) {
     let worker
 
     if (typeof workerId !== 'undefined') {
-      worker = this.#workers.get(`${serviceId}:${workerId}`)
+      worker = this.#workers.get(`${applicationId}:${workerId}`)
     } else {
-      worker = this.#workers.next(serviceId)
+      worker = this.#workers.next(applicationId)
     }
 
+    const applicationsIds = this.getApplicationsIds()
+
     if (!worker) {
-      if (!mustExist && this.#servicesIds.includes(serviceId)) {
+      if (!mustExist && applicationsIds.includes(applicationId)) {
         return null
       }
 
-      if (this.#servicesIds.includes(serviceId)) {
+      if (applicationsIds.includes(applicationId)) {
         const availableWorkers = Array.from(this.#workers.keys())
-          .filter(key => key.startsWith(serviceId + ':'))
+          .filter(key => key.startsWith(applicationId + ':'))
           .map(key => key.split(':')[1])
           .join(', ')
-        throw new errors.WorkerNotFoundError(workerId, serviceId, availableWorkers)
+        throw new errors.WorkerNotFoundError(workerId, applicationId, availableWorkers)
       } else {
-        throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+        throw new errors.ApplicationNotFoundError(applicationId, applicationsIds.join(', '))
       }
     }
 
     if (ensureStarted) {
-      const serviceStatus = await sendViaITC(worker, 'getStatus')
+      const applicationStatus = await sendViaITC(worker, 'getStatus')
 
-      if (serviceStatus !== 'started') {
-        throw new errors.ServiceNotStartedError(serviceId)
+      if (applicationStatus !== 'started') {
+        throw new errors.ApplicationNotStartedError(applicationId)
       }
     }
 
@@ -1744,17 +1858,17 @@ class Runtime extends EventEmitter {
         continue
       }
 
-      const service = worker[kServiceId]
-      let serviceWorkers = workers.get(service)
+      const application = worker[kApplicationId]
+      let applicationWorkers = workers.get(application)
 
-      if (!serviceWorkers) {
-        serviceWorkers = []
-        workers.set(service, serviceWorkers)
+      if (!applicationWorkers) {
+        applicationWorkers = []
+        workers.set(application, applicationWorkers)
       }
 
-      serviceWorkers.push({
+      applicationWorkers.push({
         id: worker[kId],
-        service: worker[kServiceId],
+        application: worker[kApplicationId],
         worker: worker[kWorkerId],
         thread: worker.threadId
       })
@@ -1767,8 +1881,8 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #getWorkerMessagingChannel ({ service, worker }, context) {
-    const target = await this.#getWorkerById(service, worker, true, true)
+  async #getWorkerMessagingChannel ({ application, worker }, context) {
+    const target = await this.#getWorkerById(application, worker, true, true)
 
     const { port1, port2 } = new MessageChannel()
 
@@ -1779,11 +1893,11 @@ class Runtime extends EventEmitter {
     )
 
     if (response === kTimeout) {
-      throw new errors.MessagingError(service, 'Timeout while establishing a communication channel.')
+      throw new errors.MessagingError(application, 'Timeout while establishing a communication channel.')
     }
 
     context.transferList = [port2]
-    this.emit('service:worker:messagingChannel', { service, worker })
+    this.emit('application:worker:messagingChannel', { application, worker })
     return port2
   }
 
@@ -1795,8 +1909,8 @@ class Runtime extends EventEmitter {
     return packageJson
   }
 
-  #handleWorkerStandardStreams (worker, serviceId, workerId) {
-    const binding = { name: serviceId }
+  #handleWorkerStandardStreams (worker, applicationId, workerId) {
+    const binding = { name: applicationId }
 
     if (typeof workerId !== 'undefined') {
       binding.worker = workerId
@@ -1893,151 +2007,44 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getServiceResourcesInfo (id) {
-    const workers = this.#workers.getCount(id)
+  async #updateApplicationConfigWorkers (applicationId, workers) {
+    this.logger.info(`Updating application "${applicationId}" config workers to ${workers}`)
 
-    const worker = await this.#getWorkerById(id, 0, false, false)
-    const health = worker[kConfig].health
-
-    return { workers, health }
-  }
-
-  async #updateServiceConfigWorkers (serviceId, workers) {
-    this.logger.info(`Updating service "${serviceId}" config workers to ${workers}`)
-
-    this.#config.services.find(s => s.id === serviceId).workers = workers
-    const service = await this.#getServiceById(serviceId)
-    this.#workers.setCount(serviceId, workers)
-    service[kConfig].workers = workers
+    this.#config.applications.find(s => s.id === applicationId).workers = workers
+    const application = await this.#getApplicationById(applicationId)
+    this.#workers.setCount(applicationId, workers)
+    application[kConfig].workers = workers
 
     const promises = []
     for (const [workerId, worker] of this.#workers.entries()) {
-      if (workerId.startsWith(`${serviceId}:`)) {
-        promises.push(sendViaITC(worker, 'updateWorkersCount', { serviceId, workers }))
+      if (workerId.startsWith(`${applicationId}:`)) {
+        promises.push(sendViaITC(worker, 'updateWorkersCount', { applicationId, workers }))
       }
     }
 
     const results = await Promise.allSettled(promises)
     for (const result of results) {
       if (result.status === 'rejected') {
-        this.logger.error({ err: result.reason }, `Cannot update service "${serviceId}" workers`)
+        this.logger.error({ err: result.reason }, `Cannot update application "${applicationId}" workers`)
         throw result.reason
       }
     }
   }
 
-  async #updateServiceConfigHealth (serviceId, health) {
-    this.logger.info(`Updating service "${serviceId}" config health heap to ${JSON.stringify(health)}`)
+  async #updateApplicationConfigHealth (applicationId, health) {
+    this.logger.info(`Updating application "${applicationId}" config health heap to ${JSON.stringify(health)}`)
     const { maxHeapTotal, maxYoungGeneration } = health
 
-    const service = this.#config.services.find(s => s.id === serviceId)
+    const application = this.#config.applications.find(s => s.id === applicationId)
     if (maxHeapTotal) {
-      service.health.maxHeapTotal = maxHeapTotal
+      application.health.maxHeapTotal = maxHeapTotal
     }
     if (maxYoungGeneration) {
-      service.health.maxYoungGeneration = maxYoungGeneration
+      application.health.maxYoungGeneration = maxYoungGeneration
     }
   }
 
-  /**
-   * Updates the resources of the services, such as the number of workers and health configurations (e.g., heap memory settings).
-   *
-   * This function handles three update scenarios for each service:
-   *  1. **Updating workers only**: Adjusts the number of workers for the service.
-   *  2. **Updating health configurations only**: Updates health parameters like `maxHeapTotal` or `maxYoungGeneration`.
-   *  3. **Updating both workers and health configurations**: Scales the workers and also applies health settings.
-   *
-   * When updating both workers and health:
-   *  - **Scaling down workers**: Stops extra workers, then restarts the remaining workers with the previous settings.
-   *  - **Scaling up workers**: Starts new workers with the updated heap settings, then restarts the old workers with the updated settings.
-   *
-   * Scaling up new resources (workers and/or heap memory) may fails due to insufficient memory, in this case the operation may fail partially or entirely.
-   * Scaling down is expected to succeed without issues.
-   *
-   * @param {Array<Object>} updates - An array of objects that define the updates for each service.
-   * @param {string} updates[].service - The ID of the service to update.
-   * @param {number} [updates[].workers] - The desired number of workers for the service. If omitted, workers will not be updated.
-   * @param {Object} [updates[].health] - The health configuration to update for the service, which may include:
-   *   @param {string|number} [updates[].health.maxHeapTotal] - The maximum heap memory for the service. Can be a valid memory string (e.g., '1G', '512MB') or a number representing bytes.
-   *   @param {string|number} [updates[].health.maxYoungGeneration] - The maximum young generation memory for the service. Can be a valid memory string (e.g., '128MB') or a number representing bytes.
-   *
-   * @returns {Promise<Array<Object>>} - A promise that resolves to an array of reports for each service, detailing the success or failure of the operations:
-   *   - `service`: The service ID.
-   *   - `workers`: The workers' update report, including the current, new number of workers, started workers, and success status.
-   *   - `health`: The health update report, showing the current and new heap settings, updated workers, and success status.
-   *
-   * @example
-   * await runtime.updateServicesResources([
-   *   { service: 'service-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
-   *   { service: 'service-2', health: { maxHeapTotal: '1G' } },
-   *   { service: 'service-3', workers: 2 },
-   * ])
-   *
-   * In this example:
-   * - `service-1` will have 2 workers and updated heap memory configurations.
-   * - `service-2` will have updated heap memory settings (without changing workers).
-   * - `service-3` will have its workers set to 2 but no change in memory settings.
-   *
-   * @throws {InvalidArgumentError} - Throws if any update parameter is invalid, such as:
-   *   - Missing service ID.
-   *   - Invalid worker count (not a positive integer).
-   *   - Invalid memory size format for `maxHeapTotal` or `maxYoungGeneration`.
-   * @throws {ServiceNotFoundError} - Throws if the specified service ID does not exist in the current service configuration.
-   */
-  async updateServicesResources (updates) {
-    if (this.#status === 'stopping' || this.#status === 'closed') {
-      this.logger.warn('Cannot update service resources when the runtime is stopping or closed')
-      return
-    }
-
-    const ups = await this.#validateUpdateServiceResources(updates)
-    const config = this.#config
-
-    const report = []
-    for (const update of ups) {
-      const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
-
-      if (workers && health) {
-        const r = await this.#updateServiceWorkersAndHealth(
-          serviceId,
-          config,
-          serviceConfig,
-          workers,
-          health,
-          currentWorkers,
-          currentHealth
-        )
-        report.push({
-          service: serviceId,
-          workers: r.workers,
-          health: r.health
-        })
-      } else if (health) {
-        const r = await this.#updateServiceHealth(
-          serviceId,
-          config,
-          serviceConfig,
-          currentWorkers,
-          currentHealth,
-          health
-        )
-        report.push({
-          service: serviceId,
-          health: r.health
-        })
-      } else if (workers) {
-        const r = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
-        report.push({
-          service: serviceId,
-          workers: r.workers
-        })
-      }
-    }
-
-    return report
-  }
-
-  async #validateUpdateServiceResources (updates) {
+  async #validateUpdateApplicationResources (updates) {
     if (!Array.isArray(updates)) {
       throw new errors.InvalidArgumentError('updates', 'must be an array')
     }
@@ -2048,17 +2055,17 @@ class Runtime extends EventEmitter {
     const config = this.#config
     const validatedUpdates = []
     for (const update of updates) {
-      const { service: serviceId } = update
+      const { application: applicationId } = update
 
-      if (!serviceId) {
-        throw new errors.InvalidArgumentError('service', 'must be a string')
+      if (!applicationId) {
+        throw new errors.InvalidArgumentError('application', 'must be a string')
       }
-      const serviceConfig = config.services.find(s => s.id === serviceId)
-      if (!serviceConfig) {
-        throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+      const applicationConfig = config.applications.find(s => s.id === applicationId)
+      if (!applicationConfig) {
+        throw new errors.ApplicationNotFoundError(applicationId, Array.from(this.getApplicationsIds()).join(', '))
       }
 
-      const { workers: currentWorkers, health: currentHealth } = await this.getServiceResourcesInfo(serviceId)
+      const { workers: currentWorkers, health: currentHealth } = await this.getApplicationResourcesInfo(applicationId)
 
       let workers
       if (update.workers !== undefined) {
@@ -2073,7 +2080,10 @@ class Runtime extends EventEmitter {
         }
 
         if (currentWorkers === update.workers) {
-          this.logger.warn({ serviceId, workers: update.workers }, 'No change in the number of workers for service')
+          this.logger.warn(
+            { applicationId, workers: update.workers },
+            'No change in the number of workers for application'
+          )
         } else {
           workers = update.workers
         }
@@ -2101,7 +2111,7 @@ class Runtime extends EventEmitter {
           }
 
           if (currentHealth.maxHeapTotal === maxHeapTotal) {
-            this.logger.warn({ serviceId, maxHeapTotal }, 'No change in the max heap total for service')
+            this.logger.warn({ applicationId, maxHeapTotal }, 'No change in the max heap total for application')
             maxHeapTotal = undefined
           }
         }
@@ -2126,7 +2136,10 @@ class Runtime extends EventEmitter {
           }
 
           if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
-            this.logger.warn({ serviceId, maxYoungGeneration }, 'No change in the max young generation for service')
+            this.logger.warn(
+              { applicationId, maxYoungGeneration },
+              'No change in the max young generation for application'
+            )
             maxYoungGeneration = undefined
           }
         }
@@ -2143,17 +2156,24 @@ class Runtime extends EventEmitter {
             health.maxYoungGeneration = maxYoungGeneration
           }
         }
-        validatedUpdates.push({ serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth })
+        validatedUpdates.push({
+          applicationId,
+          config: applicationConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        })
       }
     }
 
     return validatedUpdates
   }
 
-  async #updateServiceWorkersAndHealth (
-    serviceId,
+  async #updateApplicationWorkersAndHealth (
+    applicationId,
     config,
-    serviceConfig,
+    applicationConfig,
     workers,
     health,
     currentWorkers,
@@ -2161,12 +2181,18 @@ class Runtime extends EventEmitter {
   ) {
     if (currentWorkers > workers) {
       // stop workers
-      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
-      // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(
-        serviceId,
+      const reportWorkers = await this.#updateApplicationWorkers(
+        applicationId,
         config,
-        serviceConfig,
+        applicationConfig,
+        workers,
+        currentWorkers
+      )
+      // update heap for current workers
+      const reportHealth = await this.#updateApplicationHealth(
+        applicationId,
+        config,
+        applicationConfig,
         workers,
         currentHealth,
         health
@@ -2174,15 +2200,21 @@ class Runtime extends EventEmitter {
 
       return { workers: reportWorkers, health: reportHealth }
     } else {
-      // update service heap
-      await this.#updateServiceConfigHealth(serviceId, health)
+      // update application heap
+      await this.#updateApplicationConfigHealth(applicationId, health)
       // start new workers with new heap
-      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
-      // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(
-        serviceId,
+      const reportWorkers = await this.#updateApplicationWorkers(
+        applicationId,
         config,
-        serviceConfig,
+        applicationConfig,
+        workers,
+        currentWorkers
+      )
+      // update heap for current workers
+      const reportHealth = await this.#updateApplicationHealth(
+        applicationId,
+        config,
+        applicationConfig,
         currentWorkers,
         currentHealth,
         health,
@@ -2193,10 +2225,10 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #updateServiceHealth (
-    serviceId,
+  async #updateApplicationHealth (
+    applicationId,
     config,
-    serviceConfig,
+    applicationConfig,
     currentWorkers,
     currentHealth,
     health,
@@ -2209,16 +2241,16 @@ class Runtime extends EventEmitter {
     }
     try {
       if (updateConfig) {
-        await this.#updateServiceConfigHealth(serviceId, health)
+        await this.#updateApplicationConfigHealth(applicationId, health)
       }
 
       for (let i = 0; i < currentWorkers; i++) {
         this.logger.info(
           { health: { current: currentHealth, new: health } },
-          `Restarting service "${serviceId}" worker ${i} to update config health heap...`
+          `Restarting application "${applicationId}" worker ${i} to update config health heap...`
         )
 
-        const worker = await this.#getWorkerById(serviceId, i)
+        const worker = await this.#getWorkerById(applicationId, i)
         if (health.maxHeapTotal) {
           worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
         }
@@ -2226,22 +2258,22 @@ class Runtime extends EventEmitter {
           worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration
         }
 
-        await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
+        await this.#replaceWorker(config, applicationConfig, currentWorkers, applicationId, i, worker)
         report.updated.push(i)
         this.logger.info(
           { health: { current: currentHealth, new: health } },
-          `Restarted service "${serviceId}" worker ${i}`
+          `Restarted application "${applicationId}" worker ${i}`
         )
       }
       report.success = true
     } catch (err) {
       if (report.updated.length < 1) {
-        this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
-        await this.#updateServiceConfigHealth(serviceId, currentHealth)
+        this.logger.error({ err }, 'Cannot update application health heap, no worker updated')
+        await this.#updateApplicationConfigHealth(applicationId, currentHealth)
       } else {
         this.logger.error(
           { err },
-          `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`
+          `Cannot update application health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`
         )
       }
       report.success = false
@@ -2249,7 +2281,7 @@ class Runtime extends EventEmitter {
     return report
   }
 
-  async #updateServiceWorkers (serviceId, config, serviceConfig, workers, currentWorkers) {
+  async #updateApplicationWorkers (applicationId, config, applicationConfig, workers, currentWorkers) {
     const report = {
       current: currentWorkers,
       new: workers
@@ -2257,47 +2289,47 @@ class Runtime extends EventEmitter {
     if (currentWorkers < workers) {
       report.started = []
       try {
-        await this.#updateServiceConfigWorkers(serviceId, workers)
+        await this.#updateApplicationConfigWorkers(applicationId, workers)
         for (let i = currentWorkers; i < workers; i++) {
-          await this.#setupWorker(config, serviceConfig, workers, serviceId, i)
-          await this.#startWorker(config, serviceConfig, workers, serviceId, i, false, 0)
+          await this.#setupWorker(config, applicationConfig, workers, applicationId, i)
+          await this.#startWorker(config, applicationConfig, workers, applicationId, i, false, 0)
           report.started.push(i)
         }
         report.success = true
       } catch (err) {
         if (report.started.length < 1) {
-          this.logger.error({ err }, 'Cannot start service workers, no worker started')
-          await this.#updateServiceConfigWorkers(serviceId, currentWorkers)
+          this.logger.error({ err }, 'Cannot start application workers, no worker started')
+          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers)
         } else {
           this.logger.error(
             { err },
-            `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`
+            `Cannot start application workers, started workers: ${report.started.length} out of ${workers}`
           )
-          await this.#updateServiceConfigWorkers(serviceId, currentWorkers + report.started.length)
+          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers + report.started.length)
         }
         report.success = false
       }
     } else {
-      // keep the current workers count until all the service workers are all stopped
+      // keep the current workers count until all the application workers are all stopped
       report.stopped = []
       try {
         for (let i = currentWorkers - 1; i >= workers; i--) {
-          const worker = await this.#getWorkerById(serviceId, i, false, false)
+          const worker = await this.#getWorkerById(applicationId, i, false, false)
           await sendViaITC(worker, 'removeFromMesh')
-          await this.#stopWorker(currentWorkers, serviceId, i, false, worker)
+          await this.#stopWorker(currentWorkers, applicationId, i, false, worker)
           report.stopped.push(i)
         }
-        await this.#updateServiceConfigWorkers(serviceId, workers)
+        await this.#updateApplicationConfigWorkers(applicationId, workers)
         report.success = true
       } catch (err) {
         if (report.stopped.length < 1) {
-          this.logger.error({ err }, 'Cannot stop service workers, no worker stopped')
+          this.logger.error({ err }, 'Cannot stop application workers, no worker stopped')
         } else {
           this.logger.error(
             { err },
-            `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`
+            `Cannot stop application workers, stopped workers: ${report.stopped.length} out of ${workers}`
           )
-          await this.#updateServiceConfigWorkers(serviceId, currentWorkers - report.stopped)
+          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers - report.stopped)
         }
         report.success = false
       }

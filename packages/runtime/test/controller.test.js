@@ -5,10 +5,11 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
-const { PlatformaticApp } = require('../lib/worker/app')
+const { abstractLogger } = require('@platformatic/foundation')
+const { Controller } = require('../lib/worker/controller')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('errors when starting an already started application', async t => {
+test('errors when starting an already started application (no logging)', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.no-logging.json')
   const config = {
@@ -17,10 +18,9 @@ test('errors when starting an already started application', async t => {
     path: appPath,
     entrypoint: true,
     watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    dependencies: []
   }
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
   await app.init()
 
   t.after(app.stop.bind(app))
@@ -39,10 +39,9 @@ test('errors when stopping an already stopped application', async t => {
     path: appPath,
     entrypoint: true,
     watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    dependencies: []
   }
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
   await app.init()
 
   await assert.rejects(async () => {
@@ -59,22 +58,14 @@ test('logs errors if an env variable is missing', async t => {
     entrypoint: true,
     watch: true
   }
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
 
-  let error = ''
-  t.mock.method(globalThis.platformatic.logger, 'error', obj => {
-    error = obj.err
-  })
+  globalThis.platformatic = { logger: abstractLogger }
 
   await assert.rejects(async () => {
     await app.init()
     await app.start()
-  }, /has/)
-
-  assert.strictEqual(
-    error.message.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"),
-    true
-  )
+  }, /The configuration does not validate against the configuration schema/)
 })
 
 test('Uses the server config if passed', async t => {
@@ -86,8 +77,7 @@ test('Uses the server config if passed', async t => {
     path: appPath,
     entrypoint: true,
     watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    dependencies: []
   }
   const serverConfig = {
     hostname: '127.0.0.1',
@@ -96,7 +86,7 @@ test('Uses the server config if passed', async t => {
       level: 'info'
     }
   }
-  const app = new PlatformaticApp(config, 0, null, null, serverConfig)
+  const app = new Controller(config, 0, null, null, serverConfig)
 
   t.after(async function () {
     t.mock.restoreAll()
@@ -136,7 +126,7 @@ test('logs errors during startup', async t => {
     entrypoint: true,
     watch: true
   }
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
 
   let data = ''
   t.mock.method(process.stdout, 'write', chunk => {
@@ -160,10 +150,9 @@ test('returns application statuses', async t => {
     path: appPath,
     entrypoint: true,
     watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    dependencies: []
   }
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
   await app.init()
 
   app.start()
@@ -196,11 +185,10 @@ test('supports configuration overrides', async t => {
     path: appPath,
     entrypoint: true,
     watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    dependencies: []
   }
 
-  const app = new PlatformaticApp(config)
+  const app = new Controller(config)
 
   await app.init()
 

@@ -65,7 +65,7 @@ server.listen(3000)
 
   ok(
     wattProcess.stdout.includes(
-      `Service ${basename(rootDir)} is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.`
+      `Application ${basename(rootDir)} is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.`
     )
   )
 

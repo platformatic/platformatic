@@ -16,7 +16,7 @@ test('change $schema location', async () => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:3051',

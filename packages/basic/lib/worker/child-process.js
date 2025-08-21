@@ -196,8 +196,8 @@ export class ChildProcess extends ITC {
     this.#socket.close()
   }
 
-  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
-    await collectMetrics(serviceId, workerId, metricsConfig, this.#metricsRegistry)
+  async #collectMetrics ({ applicationId, workerId, metricsConfig }) {
+    await collectMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
     this.#setHttpCacheMetrics()
   }
 
@@ -300,7 +300,7 @@ export class ChildProcess extends ITC {
     const pinoOptions = {
       ...loggerOptions,
       level: loggerOptions.level ?? 'info',
-      name: globalThis.platformatic.serviceId
+      name: globalThis.platformatic.applicationId
     }
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
@@ -385,8 +385,8 @@ export class ChildProcess extends ITC {
   #setupHandlers () {
     const errorLabel =
       typeof globalThis.platformatic.workerId !== 'undefined'
-        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
-        : `service "${globalThis.platformatic.serviceId}"`
+        ? `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
+        : `application "${globalThis.platformatic.applicationId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)

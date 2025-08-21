@@ -49,7 +49,7 @@ test('can increase port when starting a runtime with a port allocated', async t 
   await runtime.close()
 })
 
-test('can increase port when starting services without runtime config and port set via environment variable', async t => {
+test('can increase port when starting applications without runtime config and port set via environment variable', async t => {
   const dummyServer = http.createServer(function (req, res) {
     res.write('test')
     res.end()
@@ -75,7 +75,7 @@ test('can increase port when starting services without runtime config and port s
 })
 
 // This situation should not happen in practice, but we are testing the different combinations of configurations
-test('can increase port when starting services without runtime config and no port set at all', async t => {
+test('can increase port when starting applications without runtime config and no port set at all', async t => {
   const dummyServer = http.createServer(function (req, res) {
     res.write('test')
     res.end()

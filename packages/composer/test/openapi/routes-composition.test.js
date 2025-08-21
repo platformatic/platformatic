@@ -3,14 +3,14 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
 import { request } from 'undici'
-import { createBasicService, createFromConfig, createOpenApiService, testEntityRoutes } from '../helper.js'
+import { createBasicApplication, createFromConfig, createOpenApiApplication, testEntityRoutes } from '../helper.js'
 
 const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should compose openapi with prefixes', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -22,7 +22,7 @@ test('should compose openapi with prefixes', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -58,8 +58,8 @@ test('should compose openapi with prefixes', async t => {
 })
 
 test('should compose openapi without prefixes', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -71,7 +71,7 @@ test('should compose openapi without prefixes', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -105,8 +105,8 @@ test('should compose openapi without prefixes', async t => {
 })
 
 test('should read schemas from disk and compose openapi', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -118,7 +118,7 @@ test('should read schemas from disk and compose openapi', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -152,8 +152,8 @@ test('should read schemas from disk and compose openapi', async t => {
 })
 
 test('should not proxy request if it is not in a schema file', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   api1.get('/not-in-the-schema', async () => {
     assert.fail('should not proxy request')
@@ -169,7 +169,7 @@ test('should not proxy request if it is not in a schema file', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -212,9 +212,9 @@ test('should not proxy request if it is not in a schema file', async t => {
   }
 })
 
-test('should automatically compose API with service id as prefix if there is no openapi nor graphql config', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+test('should automatically compose API with application id as prefix if there is no openapi nor graphql config', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -226,7 +226,7 @@ test('should automatically compose API with service id as prefix if there is no 
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -266,8 +266,8 @@ test('should automatically compose API with service id as prefix if there is no 
 })
 
 test('should allow custom title', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -279,7 +279,7 @@ test('should allow custom title', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -318,7 +318,7 @@ test('should allow custom title', async t => {
 })
 
 test('should parse array querystring', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
+  const api1 = await createOpenApiApplication(t, ['users'])
   await api1.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -328,7 +328,7 @@ test('should parse array querystring', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
@@ -350,7 +350,7 @@ test('should parse array querystring', async t => {
 })
 
 test('should compose empty responses', async t => {
-  const api = await createBasicService(t)
+  const api = await createBasicApplication(t)
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -360,7 +360,7 @@ test('should compose empty responses', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -390,8 +390,8 @@ test('should compose empty responses', async t => {
   assert.ok(emptyRouteResponses['302'])
 })
 
-test('should compose services with authentication components', async t => {
-  const api = await createBasicService(t, {
+test('should compose applications with authentication components', async t => {
+  const api = await createBasicApplication(t, {
     openapi: {
       components: {
         securitySchemes: {
@@ -439,7 +439,7 @@ test('should compose services with authentication components', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

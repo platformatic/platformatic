@@ -8,33 +8,33 @@ import { PlatformaticRuntimeConfig } from './config'
 
 export type RuntimeConfiguration = Promise<Configuration<PlatformaticRuntimeConfig>>
 
-export type ServiceCommandContext = {
+export type ApplicationCommandContext = {
   colorette: typeof colorette
   parseArgs: typeof parseArgs
   logFatalError: typeof logFatalError
 }
 
-export type ServiceCommand = (
+export type ApplicationCommand = (
   logger: Logger,
   configuration: Configuration<unknown>,
   args: string[],
-  context: ServiceCommandContext
+  context: ApplicationCommandContext
 ) => Promise<void>
 
-export interface ServicesCommands {
-  services: Record<string, Configuration<unknown>>
-  commands: Record<string, ServiceCommand>
+export interface ApplicationsCommands {
+  applications: Record<string, Configuration<unknown>>
+  commands: Record<string, ApplicationCommand>
   help: Record<string, string | (() => string)>
 }
 
 export module errors {
   export const RuntimeExitedError: () => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
-  export const ServiceNotFoundError: (id: string) => FastifyError
-  export const ServiceNotStartedError: (id: string) => FastifyError
+  export const ApplicationNotFoundError: (id: string) => FastifyError
+  export const ApplicationNotStartedError: (id: string) => FastifyError
   export const FailedToRetrieveOpenAPISchemaError: (id: string, error: string) => FastifyError
   export const ApplicationAlreadyStartedError: () => FastifyError
-  export const ApplicationNotStartedError: () => FastifyError
+  export const RuntimeNotStartedError: () => FastifyError
   export const ConfigPathMustBeStringError: () => FastifyError
   export const NoConfigFileFoundError: (id: string) => FastifyError
   export const InvalidEntrypointError: (entrypoint: string) => FastifyError
@@ -51,7 +51,7 @@ export module symbols {
   export declare const kConfig: unique symbol
   export declare const kId: unique symbol
   export declare const kFullId: unique symbol
-  export declare const kServiceId: unique symbol
+  export declare const kApplicationId: unique symbol
   export declare const kWorkerId: unique symbol
   export declare const kITC: unique symbol
   export declare const kHealthCheckTimer: unique symbol
@@ -91,4 +91,4 @@ export function create (
 
 export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration> | RuntimeConfiguration
 
-export declare function loadServicesCommands (): Promise<ServicesCommands>
+export declare function loadApplicationsCommands (): Promise<ApplicationsCommands>

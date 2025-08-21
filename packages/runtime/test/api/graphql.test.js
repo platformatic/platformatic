@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get a service graphql schema', async t => {
+test('should get a application graphql schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -17,11 +17,11 @@ test('should get a service graphql schema', async t => {
     await app.close()
   })
 
-  const graphqlSchema = await app.getServiceGraphqlSchema('db-app')
+  const graphqlSchema = await app.getApplicationGraphqlSchema('db-app')
   assert.deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
-test('should fail to get a service graphql schema if service does not expose it', async t => {
+test('should fail to get a application graphql schema if application does not expose it', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -31,6 +31,6 @@ test('should fail to get a service graphql schema if service does not expose it'
     await app.close()
   })
 
-  const graphqlSchema = await app.getServiceGraphqlSchema('with-logger')
+  const graphqlSchema = await app.getApplicationGraphqlSchema('with-logger')
   assert.strictEqual(graphqlSchema, null)
 })

@@ -1,3 +1,4 @@
+import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
@@ -14,8 +15,8 @@ import { create as createRuntime } from '../../runtime/index.js'
 import {
   createComposerInRuntime,
   createFromConfig,
-  createOpenApiService,
-  createWebsocketService,
+  createOpenApiApplication,
+  createWebsocketApplication,
   REFRESH_TIMEOUT,
   testEntityRoutes
 } from './helper.js'
@@ -40,7 +41,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
     globalThis.platformatic = { ...globalThis.platformatic, prometheus: { registry: prometheusRegistry, client } }
   }
 
-  const { service, wsServer } = await createWebsocketService(t)
+  const { application, wsServer } = await createWebsocketApplication(t)
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       setTimeout(() => {
@@ -48,7 +49,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
       }, 500)
     })
   })
-  const port = service.address().port
+  const port = application.address().port
 
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
@@ -60,7 +61,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'to-ws',
           proxy: {
@@ -104,11 +105,13 @@ test('should increment and decrement activeWsConnections metric', async t => {
   // Test: Close first connection, should decrement to 1
   client1.close()
   await once(client1, 'close')
+  await sleepImmediate()
   assert.equal(await getActiveConnections(), 1)
 
   // Test: Close second connection, should decrement to 0
   client2.close()
   await once(client2, 'close')
+  await sleepImmediate()
   assert.equal(await getActiveConnections(), 0)
 
   await composer.close()
@@ -116,13 +119,13 @@ test('should increment and decrement activeWsConnections metric', async t => {
 })
 
 test('should proxy openapi requests', async t => {
-  const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
-  const service2 = await createOpenApiService(t, ['posts'])
-  const service3 = await createOpenApiService(t, ['comments'])
+  const application1 = await createOpenApiApplication(t, ['users'], { addHeadersSchema: true })
+  const application2 = await createOpenApiApplication(t, ['posts'])
+  const application3 = await createOpenApiApplication(t, ['comments'])
 
-  const origin1 = await service1.listen({ port: 0 })
-  const origin2 = await service2.listen({ port: 0 })
-  const origin3 = await service3.listen({ port: 0 })
+  const origin1 = await application1.listen({ port: 0 })
+  const origin2 = await application2.listen({ port: 0 })
+  const origin3 = await application3.listen({ port: 0 })
 
   const config = {
     server: {
@@ -131,7 +134,7 @@ test('should proxy openapi requests', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'service1',
           origin: origin1,
@@ -180,8 +183,9 @@ test('should proxy openapi requests', async t => {
   openApiValidator.validate(openApiSchema)
 
   for (const path in openApiSchema.paths) {
-    for (const service of config.composer.services) {
-      const proxyPrefix = service.proxy.prefix.at(-1) === '/' ? service.proxy.prefix.slice(0, -1) : service.proxy.prefix
+    for (const application of config.composer.applications) {
+      const proxyPrefix =
+        application.proxy.prefix.at(-1) === '/' ? application.proxy.prefix.slice(0, -1) : application.proxy.prefix
 
       if (path === proxyPrefix + '/' || path === proxyPrefix + '/*') {
         assert.fail('proxy routes should be removed from openapi schema')
@@ -239,7 +243,7 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     'composer-default-prefix',
     {
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {}
@@ -291,7 +295,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     'composer-prefix-in-conf',
     {
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {}
@@ -329,7 +333,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     'composer-prefix-in-code',
     {
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {}
@@ -361,12 +365,12 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
   }
 })
 
-test('should proxy all services if none are defined', async t => {
+test('should proxy all applications if none are defined', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -443,12 +447,12 @@ test('should fix the path using the referer only if asked to', async t => {
     resolve(import.meta.dirname, './proxy/fixtures/astro/.astro')
   ])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
-  // Make sure there is @platformatic/astro available in the astro service.
+  // Make sure there is @platformatic/astro available in the astro application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
@@ -519,13 +523,13 @@ test('should fix the path using the referer only if asked to', async t => {
   }
 })
 
-test('should rewrite Location headers for proxied services', async t => {
+test('should rewrite Location headers for proxied applications', async t => {
   const runtime = await createComposerInRuntime(
     t,
     'composer-prefix-in-conf',
     {
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {
@@ -563,12 +567,12 @@ test('should rewrite Location headers for proxied services', async t => {
   }
 })
 
-test('should rewrite Location headers that include full url of the running service', async t => {
+test('should rewrite Location headers that include full url of the running application', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -578,7 +582,7 @@ test('should rewrite Location headers that include full url of the running servi
     'composer-prefix-in-conf',
     {
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {
@@ -630,22 +634,22 @@ test('should properly configure the frontends on their paths if no composer conf
     resolve(import.meta.dirname, './proxy/fixtures/next/.next')
   ])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
-  // Make sure there is @platformatic/astro available in the astro service.
+  // Make sure there is @platformatic/astro available in the astro application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
 
-  // Make sure there is @platformatic/next available in the next service.
+  // Make sure there is @platformatic/next available in the next application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nextModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
 
-  // Make sure there is @platformatic/next available in the next service.
+  // Make sure there is @platformatic/next available in the next application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
@@ -709,12 +713,12 @@ test('should properly configure the frontends on their paths if no composer conf
   }
 })
 
-test('should properly match services by their hostname', async t => {
+test('should properly match applications by their hostname', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -725,7 +729,7 @@ test('should properly match services by their hostname', async t => {
     {
       composer: {
         refreshTimeout: REFRESH_TIMEOUT,
-        services: [
+        applications: [
           {
             id: 'service',
             proxy: { hostname: 'service.example.com' }
@@ -907,7 +911,7 @@ test('should properly match services by their hostname', async t => {
   }
 
   // Routes are not mixed between hostnames
-  // The route is defined on the "service" service but not on the "node" service, we therefore forbid access
+  // The route is defined on the "application" application but not on the "node" application, we therefore forbid access
   {
     const { statusCode } = await request(address, {
       method: 'POST',
@@ -922,12 +926,12 @@ test('should properly match services by their hostname', async t => {
   }
 })
 
-test('should properly allow all domains when a service is the only one with a hostname', async t => {
+test('should properly allow all domains when a application is the only one with a hostname', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -938,7 +942,7 @@ test('should properly allow all domains when a service is the only one with a ho
     {
       composer: {
         refreshTimeout: REFRESH_TIMEOUT,
-        services: [
+        applications: [
           {
             id: 'service',
             proxy: { hostname: 'service.example.com' }
@@ -1041,7 +1045,7 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
 
   await ensureCleanup(t, [astroModulesRoot, resolve(import.meta.dirname, './proxy/fixtures/astro/.astro')])
 
-  // Make sure there is @platformatic/astro available in the astro service.
+  // Make sure there is @platformatic/astro available in the astro application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
@@ -1052,7 +1056,7 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
     {
       composer: {
         refreshTimeout: REFRESH_TIMEOUT,
-        services: [
+        applications: [
           {
             id: 'backend',
             openapi: {
@@ -1147,7 +1151,7 @@ test('adds x-forwarded-proto', async t => {
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -1167,7 +1171,7 @@ test('adds x-forwarded-proto', async t => {
         }
       },
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {
@@ -1201,12 +1205,12 @@ test('adds x-forwarded-proto', async t => {
   }
 })
 
-test('should rewrite Location headers for proxied services https', async t => {
+test('should rewrite Location headers for proxied applications https', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -1249,7 +1253,7 @@ test('should rewrite Location headers for proxied services https', async t => {
         }
       },
       composer: {
-        services: [
+        applications: [
           {
             id: 'main',
             proxy: {
@@ -1286,12 +1290,12 @@ test('should rewrite Location headers for proxied services https', async t => {
   }
 })
 
-test('should properly strip runtime basePath from proxied services', async t => {
+test('should properly strip runtime basePath from proxied applications', async t => {
   const remixModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [remixModulesRoot, resolve(import.meta.dirname, './proxy/fixtures/remix/build')])
 
-  // Make sure there is @platformatic/remix available in the node service.
+  // Make sure there is @platformatic/remix available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
@@ -1302,7 +1306,7 @@ test('should properly strip runtime basePath from proxied services', async t => 
     {
       composer: {
         refreshTimeout: REFRESH_TIMEOUT,
-        services: [
+        applications: [
           {
             id: 'remix'
           }
@@ -1323,7 +1327,7 @@ test('should properly strip runtime basePath from proxied services', async t => 
     async runtimeConfigPath => {
       const devRuntime = await createRuntime(runtimeConfigPath)
       await devRuntime.init()
-      await devRuntime.buildService('remix')
+      await devRuntime.buildApplication('remix')
       await devRuntime.close()
     }
   )
@@ -1355,20 +1359,20 @@ test('should properly strip runtime basePath from proxied services', async t => 
     assert.ok(headers['content-type'].startsWith('application/javascript'))
   }
 
-  const composerConfig = await runtime.getServiceMeta('composer', 'getMeta')
-  const remixConfig = await runtime.getServiceMeta('remix', 'getMeta')
+  const composerConfig = await runtime.getApplicationMeta('composer', 'getMeta')
+  const remixConfig = await runtime.getApplicationMeta('remix', 'getMeta')
 
   assert.equal(composerConfig.composer.proxies.remix.prefix, '/remix')
   assert.equal(composerConfig.composer.proxies.remix.rewritePrefix, '/base/remix/')
   assert.equal(remixConfig.composer.prefix, '/base/remix/')
 })
 
-test('should properly handle basePath root for generic services', async t => {
+test('should properly handle basePath root for generic applications', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
-  // Make sure there is @platformatic/node available in the node service.
+  // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
@@ -1379,7 +1383,7 @@ test('should properly handle basePath root for generic services', async t => {
     {
       composer: {
         refreshTimeout: REFRESH_TIMEOUT,
-        services: [
+        applications: [
           {
             id: 'node'
           }
@@ -1414,14 +1418,14 @@ test('should properly handle basePath root for generic services', async t => {
   }
 })
 
-test('should proxy to a websocket service', async t => {
-  const { service, wsServer } = await createWebsocketService(t)
+test('should proxy to a websocket application', async t => {
+  const { application, wsServer } = await createWebsocketApplication(t)
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       socket.send(message)
     })
   })
-  const port = service.address().port
+  const port = application.address().port
 
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
@@ -1442,7 +1446,7 @@ test('should proxy to a websocket service', async t => {
       }
     },
     composer: {
-      services: [proxyConfig]
+      applications: [proxyConfig]
     }
   })
 
@@ -1462,15 +1466,15 @@ test('should proxy to a websocket service', async t => {
   client.close()
 })
 
-test('should proxy to a websocket service with reconnect options', async t => {
+test('should proxy to a websocket application with reconnect options', async t => {
   globalThis.foo = new EventEmitter()
-  const { service: wsService, wsServer } = await createWebsocketService(t, { autoPong: false })
+  const { application: wsApplication, wsServer } = await createWebsocketApplication(t, { autoPong: false })
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       socket.send(message)
     })
   })
-  const port = wsService.address().port
+  const port = wsApplication.address().port
 
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
@@ -1505,7 +1509,7 @@ test('should proxy to a websocket service with reconnect options', async t => {
       }
     },
     composer: {
-      services: [proxyConfig]
+      applications: [proxyConfig]
     }
   })
 
@@ -1522,10 +1526,10 @@ test('should proxy to a websocket service with reconnect options', async t => {
   await once(globalThis.platformatic.events, 'onOutgoingMessage')
 
   // close the target to cause reconnection
-  await wsService.close()
+  await wsApplication.close()
   await wsServer.close()
 
-  await createWebsocketService(t, {}, port)
+  await createWebsocketApplication(t, {}, port)
 
   await once(globalThis.platformatic.events, 'onReconnect')
   await once(globalThis.platformatic.events, 'onPong')

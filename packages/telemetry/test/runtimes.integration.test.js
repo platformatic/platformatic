@@ -18,8 +18,8 @@ let otelServerURL
 test.before(async () => {
   otelServer = await startOTEL(test, resourceSpans => {
     for (const resourceSpan of resourceSpans) {
-      const service = resourceSpan.resource.attributes.find(attr => attr.key === 'service.name')
-      const serviceName = service.value.stringValue
+      const application = resourceSpan.resource.attributes.find(attr => attr.key === 'service.name')
+      const applicationName = application.value.stringValue
 
       received.push(
         ...resourceSpan.scopeSpans.map(scopeSpan => {
@@ -28,7 +28,7 @@ test.before(async () => {
             spans: scopeSpan.spans.map(span => {
               return {
                 ...span,
-                serviceName
+                applicationName
               }
             })
           }
@@ -111,8 +111,8 @@ test('configure telemetry correctly with a node app - integration test', async t
   equal(spans.length, 1)
   const serverSpan = spans[0]
   equal(serverSpan.kind, 2)
-  const serviceUrl = serverSpan.attributes.find(attr => attr.key === 'http.url')
-  equal(serviceUrl.value.stringValue, `${url}/`)
+  const applicationUrl = serverSpan.attributes.find(attr => attr.key === 'http.url')
+  equal(applicationUrl.value.stringValue, `${url}/`)
 })
 
 test('configure telemetry correctly with a composer + next - integration test', async t => {
@@ -178,7 +178,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   const spanComposerServer = allSpans.find(span => {
     if (span.kind === 2) {
       // Server
-      return span.serviceName === 'test-runtime-composer'
+      return span.applicationName === 'test-runtime-composer'
     }
     return false
   })
@@ -187,7 +187,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
     if (span.kind === 3) {
       // Client
       return (
-        span.serviceName === 'test-runtime-composer' &&
+        span.applicationName === 'test-runtime-composer' &&
         span.attributes['url.full'].stringValue === 'http://next.plt.local/next'
       )
     }
@@ -199,7 +199,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   // to the composer one
   const spanNodeServer = allSpans.find(span => {
     if (span.kind === 2) {
-      return span.serviceName === 'test-runtime-node'
+      return span.applicationName === 'test-runtime-node'
     }
     return false
   })
@@ -208,7 +208,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   const spanNextServer = findSpanWithParentWithId(allSpans, spanNextClientNode, spanComposerClient.spanId)
   const spanFastifyServer = allSpans.find(span => {
     if (span.kind === 2) {
-      return span.serviceName === 'test-runtime-fastify'
+      return span.applicationName === 'test-runtime-fastify'
     }
     return false
   })

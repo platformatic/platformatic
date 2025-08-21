@@ -75,21 +75,21 @@ test('help - should complain for invalid commands', async t => {
   )
 })
 
-test('help - should support service commands', async t => {
+test('help - should support application commands', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
   const mainProcess = await wattpm('help', { cwd: rootDir })
-  const serviceHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
+  const applicationHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 
-  ok(mainProcess.stdout.includes('\nServices Commands:'))
+  ok(mainProcess.stdout.includes('\nApplications Commands:'))
   ok(
     mainProcess.stdout
       .replaceAll(/ {2,}/g, '@')
-      .includes('main:fetch-openapi-schemas@Fetch OpenAPI schemas from remote services')
+      .includes('main:fetch-openapi-schemas@Fetch OpenAPI schemas from remote applications')
   )
 
   ok(
-    serviceHelpProcess.stdout.match(
-      '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from remote services.'
+    applicationHelpProcess.stdout.match(
+      '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from remote applications.'
     )
   )
 })

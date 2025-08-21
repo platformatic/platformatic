@@ -17,8 +17,8 @@ test('can start timeout when applications dont start', async t => {
 
   const waitPromise = waitForEvents(
     app,
-    { event: 'service:worker:starting', service: 'node', worker: 0 },
-    { event: 'service:worker:startTimeout', service: 'node', worker: 0 }
+    { event: 'application:worker:starting', application: 'node', worker: 0 },
+    { event: 'application:worker:startTimeout', application: 'node', worker: 0 }
   )
 
   await rejects(() => app.start())

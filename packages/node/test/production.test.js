@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -60,7 +60,7 @@ const configurations = [
   {
     id: 'node-no-configuration-composer-with-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer with a prefix)',
-    files: [...filesESM, ...internalServicesFiles],
+    files: [...filesESM, ...internalApplicationsFiles],
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
@@ -83,7 +83,7 @@ const configurations = [
   },
   {
     id: 'node-no-configuration-composer-no-services',
-    name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no services)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no applications)',
     files: filesESM,
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'js',

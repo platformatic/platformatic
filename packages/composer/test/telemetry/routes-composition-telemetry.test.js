@@ -1,10 +1,10 @@
 import assert from 'assert/strict'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createFromConfig, createOpenApiService } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
 test('should compose openapi with prefixes', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
+  const api1 = await createOpenApiApplication(t, ['users'])
 
   const api1Origin = await api1.listen({ host: '127.0.0.1', port: 0 })
 
@@ -15,7 +15,7 @@ test('should compose openapi with prefixes', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: `${api1Origin}`,
@@ -27,7 +27,7 @@ test('should compose openapi with prefixes', async t => {
       ]
     },
     telemetry: {
-      serviceName: 'test-composer',
+      applicationName: 'test-composer',
       version: '1.0.0',
       exporter: {
         type: 'memory'

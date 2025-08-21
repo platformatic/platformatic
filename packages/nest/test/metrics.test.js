@@ -17,7 +17,7 @@ const envs = {
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`NestJS service properly collects metrics - ${env}`, async t => {
+  test(`NestJS application properly collects metrics - ${env}`, async t => {
     const { url } = await createRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/metrics'),

@@ -121,8 +121,8 @@ export async function getDependencyVersion (dependencyName) {
   }
 }
 
-export function convertServiceNameToPrefix (serviceName) {
-  return serviceName.replace(/-/g, '_').toUpperCase()
+export function convertApplicationNameToPrefix (applicationName) {
+  return applicationName.replace(/-/g, '_').toUpperCase()
 }
 
 export function addPrefixToEnv (env, prefix) {

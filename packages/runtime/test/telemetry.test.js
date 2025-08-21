@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const { createRuntime } = require('./helpers.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('propagate the traceId correctly to runtime services', async t => {
+test('propagate the traceId correctly to runtime applications', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
 

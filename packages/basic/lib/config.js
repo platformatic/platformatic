@@ -54,7 +54,7 @@ export async function resolve (fileOrDirectory, sourceOrConfig, suffixes) {
 }
 
 export async function transform (config) {
-  const patch = workerData?.serviceConfig?.configPatch
+  const patch = workerData?.applicationConfig?.configPatch
 
   if (!config) {
     return config

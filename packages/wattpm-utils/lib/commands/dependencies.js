@@ -37,16 +37,16 @@ async function executeCommand (root, ...args) {
   return execa(...args)
 }
 
-export async function installDependencies (logger, root, services, production, packageManager) {
-  if (typeof services === 'string') {
-    const config = await loadConfiguration(services, null, { validate: false })
+export async function installDependencies (logger, root, applications, production, packageManager) {
+  if (typeof applications === 'string') {
+    const config = await loadConfiguration(applications, null, { validate: false })
 
     /* c8 ignore next 3 - Hard to test */
     if (!config) {
       return
     }
 
-    services = config.services
+    applications = config.applications
   }
 
   if (!packageManager) {
@@ -75,18 +75,18 @@ export async function installDependencies (logger, root, services, production, p
     )
   }
 
-  for (let { id, path, packageManager: servicePackageManager } of services) {
-    servicePackageManager ??= await getPackageManager(path, packageManager)
-    const servicePackageArgs = getInstallationCommand(servicePackageManager, production)
+  for (let { id, path, packageManager: applicationPackageManager } of applications) {
+    applicationPackageManager ??= await getPackageManager(path, packageManager)
+    const applicationPackageArgs = getInstallationCommand(applicationPackageManager, production)
 
     try {
       logger.info(
-        `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(
+        `Installing ${production ? 'production ' : ''}dependencies for the application ${bold(
           id
-        )} using ${servicePackageManager} ...`
+        )} using ${applicationPackageManager} ...`
       )
 
-      await executeCommand(root, servicePackageManager, servicePackageArgs, {
+      await executeCommand(root, applicationPackageManager, applicationPackageArgs, {
         cwd: resolve(root, path),
         stdio: 'inherit',
         reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
@@ -96,7 +96,7 @@ export async function installDependencies (logger, root, services, production, p
       return logFatalError(
         logger,
         { error: ensureLoggableError(error) },
-        `Unable to install dependencies of the service ${bold(id)}.`
+        `Unable to install dependencies of the application ${bold(id)}.`
       )
     }
   }
@@ -201,7 +201,7 @@ export async function installCommand (logger, args) {
   const installed = await installDependencies(logger, root, configurationFile, production, packageManager)
 
   if (installed) {
-    logger.done('All services have been resolved.')
+    logger.done('All applications have been resolved.')
   }
 }
 
@@ -239,7 +239,7 @@ export async function updateCommand (logger, args) {
     return
   }
 
-  const services = configuration.services
+  const applications = configuration.applications
 
   // First of all, get all version from NPM for the runtime
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')
@@ -263,9 +263,9 @@ export async function updateCommand (logger, args) {
 
   await updateDependencies(logger, latest, availableVersions, root, `the ${bold('application')}`, force)
 
-  // Now, for all the services in the configuration file, update the dependencies
-  for (const service of services) {
-    await updateDependencies(logger, latest, availableVersions, service.path, `the service ${bold(service.id)}`, force)
+  // Now, for all the applications in the configuration file, update the dependencies
+  for (const application of applications) {
+    await updateDependencies(logger, latest, availableVersions, application.path, `the application ${bold(application.id)}`, force)
   }
 
   logger.done('All dependencies have been updated.')
@@ -274,11 +274,11 @@ export async function updateCommand (logger, args) {
 export const help = {
   install: {
     usage: 'install [root]',
-    description: 'Install all dependencies of an application and its services',
+    description: 'Install all dependencies of an application and its applications',
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [
@@ -302,7 +302,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [

@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   getLogsFromFile,
-  prepareRuntimeWithServices,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyJSONViaHTTP
@@ -13,7 +13,7 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject request via IPC even if a server is started', async t => {
-  const { root, runtime, url } = await prepareRuntimeWithServices(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     'node-no-configuration-composer-with-prefix',
     false,
@@ -40,11 +40,11 @@ test('should inject request via IPC even if a server is started', async t => {
     }
   )
 
-  const info = await runtime.getServiceMeta('frontend')
+  const info = await runtime.getApplicationMeta('frontend')
   ok(info.composer.url)
 
   // Close the server so that we can verify the IPC injection
-  await runtime.sendCommandToService('frontend', 'closeServer')
+  await runtime.sendCommandToApplication('frontend', 'closeServer')
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: false })
 
@@ -54,7 +54,7 @@ test('should inject request via IPC even if a server is started', async t => {
 })
 
 test('should inject request via the HTTP port if asked to', async t => {
-  const { root, runtime, url } = await prepareRuntimeWithServices(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     'node-no-configuration-composer-with-prefix',
     false,
@@ -90,13 +90,13 @@ test('should inject request via the HTTP port if asked to', async t => {
     }
   )
 
-  const info = await runtime.getServiceMeta('frontend')
+  const info = await runtime.getApplicationMeta('frontend')
   ok(info.composer.url)
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: true })
 
   // To double verify it, close the HTTP server and verify we get a connection refused
-  await runtime.sendCommandToService('frontend', 'closeServer')
+  await runtime.sendCommandToApplication('frontend', 'closeServer')
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 500, content => {
     ok(content.message.includes('ECONNREFUSED'))

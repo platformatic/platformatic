@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should stop service by service id', async t => {
+test('should stop application by application id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -16,19 +16,19 @@ test('should stop service by service id', async t => {
   await app.start()
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-1')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -39,41 +39,41 @@ test('should stop service by service id', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/stop',
+    path: '/api/v1/applications/service-1/stop'
   })
   await body.text()
 
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1', true)
-    assert.strictEqual(serviceDetails.status, 'stopped')
+    const applicationDetails = await app.getApplicationDetails('service-1', true)
+    assert.strictEqual(applicationDetails.status, 'stopped')
   }
 })
 
-test('should start stopped service by service id', async t => {
+test('should start stopped application by application id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
 
-  await app.stopService('service-1')
+  await app.stopApplication('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1', true)
-    assert.strictEqual(serviceDetails.status, 'stopped')
+    const applicationDetails = await app.getApplicationDetails('service-1', true)
+    assert.strictEqual(applicationDetails.status, 'stopped')
   }
 
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -84,19 +84,19 @@ test('should start stopped service by service id', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/start',
+    path: '/api/v1/applications/service-1/start'
   })
   await body.text()
 
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-1')
+    assert.strictEqual(applicationDetails.status, 'started')
   }
 })
 
-test('should proxy request to the service', async t => {
+test('should proxy request to the application', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -106,12 +106,12 @@ test('should proxy request to the service', async t => {
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -123,7 +123,7 @@ test('should proxy request to the service', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-2/proxy/hello',
+    path: '/api/v1/applications/service-2/proxy/hello'
   })
 
   assert.strictEqual(statusCode, 200)

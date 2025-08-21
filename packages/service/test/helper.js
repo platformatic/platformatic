@@ -29,10 +29,13 @@ export async function createFromConfig (t, options, applicationFactory, creation
     isEntrypoint: true,
     isProduction: creationOptions.production
   })
-  t.after(() => service.stop())
 
   if (!creationOptions.skipInit) {
     await service.init()
+  }
+
+  if (!creationOptions.skipCleanup) {
+    t.after(() => service.stop())
   }
 
   return service

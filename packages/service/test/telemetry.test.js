@@ -46,7 +46,7 @@ test('should setup telemetry if configured', async t => {
       },
 
       telemetry: {
-        serviceName: 'test-service',
+        applicationName: 'test-service',
         version: '1.0.0',
         exporter: {
           type: 'memory'

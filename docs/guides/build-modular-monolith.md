@@ -2,14 +2,14 @@
 
 ## Introduction
 
-In this guide we'll create a "modular monolith" Library application. It will be a Platformatic Runtime app which contains multiple Platformatic DB and Composer services. We'll learn how to:
+In this guide we'll create a "modular monolith" Library application. It will be a Platformatic Runtime app which contains multiple Platformatic DB and Composer applications. We'll learn how to:
 
-- Create and configure a [Platformatic Runtime](https://docs.platformatic.dev/docs/reference/runtime/introduction) app with multiple services
-  - Three [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) services, each with their own databases
-  - A [Platformatic Composer](https://docs.platformatic.dev/docs/reference/composer/introduction) service which aggregates multiple service's REST APIs into a composed API
-- Customise the composed API that's automatically generated in a Composer service
-- Generate a client for a service's REST API and use it in a Platformatic service to make API requests
-- Add custom functionality to a Composer service's composed API by modifying its routes and responses
+- Create and configure a [Platformatic Runtime](https://docs.platformatic.dev/docs/reference/runtime/introduction) app with multiple applications
+  - Three [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) applications, each with their own databases
+  - A [Platformatic Composer](https://docs.platformatic.dev/docs/reference/composer/introduction) application which aggregates multiple application's REST APIs into a composed API
+- Customise the composed API that's automatically generated in a Composer application
+- Generate a client for an application's REST API and use it in a Platformatic application to make API requests
+- Add custom functionality to a Composer application's composed API by modifying its routes and responses
 
 The architecture for our Library application will look like this:
 
@@ -28,7 +28,7 @@ To follow along with this tutorial, you'll need to have this software installed:
 
 ## Create a Platformatic Runtime app: Library app
 
-We're going to start by creating our Library app. This will be a Platformatic Runtime app that contains all of our services.
+We're going to start by creating our Library app. This will be a Platformatic Runtime app that contains all of our applications.
 
 First, let's run the Watt creator wizard in our terminal:
 
@@ -40,16 +40,16 @@ And then let's enter the following settings:
 
 ```
 ? Where would you like to create your project? library-app
-? Which kind of service do you want to create? @platformatic/db
-? What is the name of the service? people-service
+? Which kind of application do you want to create? @platformatic/db
+? What is the name of the application? people-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
-? Do you want to create another service? no
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 3042
 ```
 
-After answering these questions, the creator will create all the files for the `people-service`. 
+After answering these questions, the creator will create all the files for the `people-application`. 
 
 Once the creator has finished, our `library-app` directory should look like this:
 
@@ -59,7 +59,7 @@ library-app/
 ├── package.json
 ├── platformatic.runtime.json
 └── web
-    └── people-service
+    └── people-application
         ├── README.md
         ├── migrations
         ├── package.json
@@ -89,24 +89,24 @@ We'll see a warning message displayed like this in our terminal:
 <!-- SCREENSHOT: start-the-runtime-app-01.png -->
 ![Start the Runtime app - 01](./build-modular-monolith-images/start-the-runtime-app-01.png)
 
-If we open up the API documentation for our People service at http://127.0.0.1:3042/documentation/ we will just see the `/example` route.
+If we open up the API documentation for our People application at http://127.0.0.1:3042/documentation/ we will just see the `/example` route.
 
-We're seeing these messages because we haven't yet defined a schema for our People database. To fix this, let's go ahead and configure our People service.
+We're seeing these messages because we haven't yet defined a schema for our People database. To fix this, let's go ahead and configure our People application.
 
-## Configure the People service
+## Configure the People application
 
-To help us get our People service up and running, we're now going to do the following things:
+To help us get our People application up and running, we're now going to do the following things:
 
-- **Create the People database schema** — We'll create an SQL migration that adds the schema for our People database, and then apply it to our database using the Platformatic CLI. When we start our People service, Platformatic DB will automatically generate REST and GraphQL APIs based on our database schema (we'll only be working with the REST one in this tutorial).
+- **Create the People database schema** — We'll create an SQL migration that adds the schema for our People database, and then apply it to our database using the Platformatic CLI. When we start our People application, Platformatic DB will automatically generate REST and GraphQL APIs based on our database schema (we'll only be working with the REST one in this tutorial).
 - **Populate the People database** — We'll create a script that can add preset data into our database, and then use the Platformatic CLI to run it. This is commonly referred to as "seeding" the database.
-- **Test the People service** — We'll explore the API documentation for our People service, and then make an HTTP request to one of the REST API routes. This will help us verify that our People database has the correct schema and contains the data that we seeded it with.
+- **Test the People application** — We'll explore the API documentation for our People application, and then make an HTTP request to one of the REST API routes. This will help us verify that our People database has the correct schema and contains the data that we seeded it with.
 
 ### Create the People database schema
 
-First, let's create `web/people-service/migrations/001.do.sql` with the following SQL contents:
+First, let's create `web/people-application/migrations/001.do.sql` with the following SQL contents:
 
 ```sql
-# web/people-service/migrations/001.do.sql
+# web/people-application/migrations/001.do.sql
 
 CREATE TABLE IF NOT EXISTS people (
   id INTEGER PRIMARY KEY,
@@ -116,32 +116,32 @@ CREATE TABLE IF NOT EXISTS people (
 );
 ```
 
-Then, let's create `web/people-service/migrations/001.undo.sql` with the following SQL contents:
+Then, let's create `web/people-application/migrations/001.undo.sql` with the following SQL contents:
 
 ```sql
-# web/people-service/migrations/001.undo.sql
+# web/people-application/migrations/001.undo.sql
 
 DROP TABLE people;
 ```
 
-Now in another terminal, let's change into the `people-service` directory:
+Now in another terminal, let's change into the `people-application` directory:
 
 ```bash
-cd web/people-service
+cd web/people-application
 ```
 
 And apply our migration:
 
 ```bash
-npx wattpm people-service:migrations:apply
+npx wattpm people-application:migrations:apply
 ```
 
 ### Populate the People database
 
-Let's create a new file, `web/people-service/seed.js`, and add this code to it:
+Let's create a new file, `web/people-application/seed.js`, and add this code to it:
 
 ```javascript
-// web/people-service/seed.js
+// web/people-application/seed.js
 
 'use strict'
 
@@ -166,7 +166,7 @@ module.exports = async function ({ entities, logger }) {
 Now let's populate the database
 
 ```bash
-npx wattpm people-service:seed seed.js
+npx wattpm people-application:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -193,14 +193,14 @@ Created person: {
 
 > You can learn more about seeding the database for a Platformatic DB app [in this guide](https://docs.platformatic.dev/docs/guides/seed-a-database?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
 
-### Test the People service
+### Test the People application
 
-Let's refresh the API documentation page for our People service (http://127.0.0.1:3042/documentation/). We should now see all the `/people` API routes that Platformatic DB has automatically generated based on our database schema.
+Let's refresh the API documentation page for our People application (http://127.0.0.1:3042/documentation/). We should now see all the `/people` API routes that Platformatic DB has automatically generated based on our database schema.
 
 <!-- SCREENSHOT: test-the-people-service-01.png -->
-![Test the People service - 01](./build-modular-monolith-images/test-the-people-service-01.png)
+![Test the People application - 01](./build-modular-monolith-images/test-the-people-service-01.png)
 
-Now we can test our People service API by making a request to it with cURL:
+Now we can test our People application API by making a request to it with cURL:
 
 ```bash
 curl localhost:3042/people/
@@ -212,11 +212,11 @@ We should receive a response like this:
 [{"id":1,"name":"Stephen King","createdAt":"1687827965773","updatedAt":"1687827965773"},{"id":2,"name":"Miranda July","createdAt":"1687827965778","updatedAt":"1687827965778"},{"id":3,"name":"Lewis Carroll","createdAt":"1687827965780","updatedAt":"1687827965780"},{"id":4,"name":"Martha Schumacher","createdAt":"1687827965782","updatedAt":"1687827965782"},{"id":5,"name":"Mick Garris","createdAt":"1687827965784","updatedAt":"1687827965784"},{"id":6,"name":"Dede Gardner","createdAt":"1687827965786","updatedAt":"1687827965786"}]
 ```
 
-## Create a Platformatic DB service: Books service
+## Create a Platformatic DB application: Books application
 
-We're now going to create a Books service. We'll follow a similar process to the one that we just used to set up our People service.
+We're now going to create a Books application. We'll follow a similar process to the one that we just used to set up our People application.
 
-In the root directory of our Runtime project (`library-app`), let's run this command to create the new service:
+In the root directory of our Runtime project (`library-app`), let's run this command to create the new application:
 
 ```bash
 npm create wattpm
@@ -225,25 +225,25 @@ npm create wattpm
 And then let's enter the following settings:
 
 ```
-? Which kind of service do you want to create? @platformatic/db
-? What is the name of the service? books-service
+? Which kind of application do you want to create? @platformatic/db
+? What is the name of the application? books-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
-? Do you want to create another service? no
-? Which service should be exposed? books-service
+? Do you want to create another application? no
+? Which application should be exposed? books-application
 ? Do you want to use TypeScript? no
 ```
 
-Once the command has finished running, we should see that a Platformatic DB service has been created for us in the `web/books-service/` directory.
+Once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/books-application/` directory.
 
 ### Create the Books database schema
 
 Now we're going to create a migration that adds the schema for our Books database.
 
-First, let's create `web/books-service/migrations/001.do.sql` with the following SQL contents:
+First, let's create `web/books-application/migrations/001.do.sql` with the following SQL contents:
 
 ```sql
-# web/books-service/migrations/001.do.sql
+# web/books-application/migrations/001.do.sql
 
 CREATE TABLE IF NOT EXISTS books (
   id INTEGER PRIMARY KEY,
@@ -255,32 +255,32 @@ CREATE TABLE IF NOT EXISTS books (
 );
 ```
 
-Then, let's create `web/books-service/migrations/001.undo.sql` with the following SQL contents:
+Then, let's create `web/books-application/migrations/001.undo.sql` with the following SQL contents:
 
 ```sql
-# web/books-service/migrations/001.undo.sql
+# web/books-application/migrations/001.undo.sql
 
 DROP TABLE books;
 ```
 
-Now we'll change into the `books-service` directory:
+Now we'll change into the `books-application` directory:
 
 ```bash
-cd web/books-service
+cd web/books-application
 ```
 
 And apply our migration:
 
 ```bash
-npx wattpm books-service:migrations:apply
+npx wattpm books-application:migrations:apply
 ```
 
 ### Populate the Books database
 
-Let's create a new file, `web/books-service/seed.js`, and add this code to it:
+Let's create a new file, `web/books-application/seed.js`, and add this code to it:
 
 ```javascript
-// web/books-service/seed.js
+// web/books-application/seed.js
 
 'use strict'
 
@@ -315,7 +315,7 @@ module.exports = async function ({ entities, logger }) {
 Now let's populate the database
 
 ```bash
-npx wattpm books-service:seed seed.js
+npx wattpm books-application:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -336,16 +336,16 @@ Created book: {
 [12:13:31] INFO: seeding complete
 ```
 
-### Test the Books service API
+### Test the Books application API
 
-To publicly expose the Books service so that we can test it, we need to change the `entrypoint` in `watt.json` to `books-service` (if you follow the settings above, you will not have to change anything):
+To publicly expose the Books application so that we can test it, we need to change the `entrypoint` in `watt.json` to `books-application` (if you follow the settings above, you will not have to change anything):
 
 ```json
 // watt.json
 
 {
   ...
-  "entrypoint": "books-service",
+  "entrypoint": "books-application",
   ...
 }
 ```
@@ -356,7 +356,7 @@ In the terminal where we have our Library app running, let's stop it by pressing
 npm start
 ```
 
-Now we can test our Books service API by making a request to it:
+Now we can test our Books application API by making a request to it:
 
 ```bash
 curl localhost:3042/books/
@@ -368,16 +368,16 @@ The response should look like this:
 [{"id":1,"title":"Fairy Tale","authorId":1,"publishedYear":2022,"createdAt":"1687893211326","updatedAt":"1687893211326"},{"id":2,"title":"No One Belongs Here More Than You","authorId":2,"publishedYear":2007,"createdAt":"1687893211333","updatedAt":"1687893211333"},{"id":3,"title":"Alice's Adventures in Wonderland","authorId":3,"publishedYear":1865,"createdAt":"1687893211336","updatedAt":"1687893211336"}]
 ```
 
-If we open up the API documentation for our Books service at http://127.0.0.1:3042/documentation/, we can see all of its routes:
+If we open up the API documentation for our Books application at http://127.0.0.1:3042/documentation/, we can see all of its routes:
 
 <!-- SCREENSHOT: test-the-books-service-api-01.png -->
-![Test the Books Service API 01](./build-modular-monolith-images/test-the-books-service-api-01.png)
+![Test the Books Application API 01](./build-modular-monolith-images/test-the-books-service-api-01.png)
 
-## Create a Platformatic DB service: Movies service
+## Create a Platformatic DB application: Movies application
 
-We're now going to create our third and final Platformatic DB service: the Movies service.
+We're now going to create our third and final Platformatic DB application: the Movies application.
 
-In the root directory of our Runtime project (`library-app`), let's create the new service:
+In the root directory of our Runtime project (`library-app`), let's create the new application:
 
 ```bash
 npm create wattpm
@@ -386,24 +386,24 @@ npm create wattpm
 And then let's enter the following settings:
 
 ```bash
-? Which kind of service do you want to create? @platformatic/db
-? What is the name of the service? movies-service
+? Which kind of application do you want to create? @platformatic/db
+? What is the name of the application? movies-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
-? Do you want to create another service? no
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ```
 
-Similarly to before, once the command has finished running, we should see that a Platformatic DB service has been created for us in the `web/movies-service/` directory.
+Similarly to before, once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/movies-application/` directory.
 
 ### Create the Movies database schema
 
 Lets create a migration to add the schema for our Movies database.
 
-First, let's create `web/movies-service/migrations/001.do.sql` with the following SQL contents:
+First, let's create `web/movies-application/migrations/001.do.sql` with the following SQL contents:
 
 ```sql
-# web/movies-service/migrations/001.do.sql
+# web/movies-application/migrations/001.do.sql
 
 CREATE TABLE IF NOT EXISTS movies (
   id INTEGER PRIMARY KEY,
@@ -416,32 +416,32 @@ CREATE TABLE IF NOT EXISTS movies (
 );
 ```
 
-Then, let's create `web/people-service/migrations/001.undo.sql` with the following SQL contents:
+Then, let's create `web/movies-application/migrations/001.undo.sql` with the following SQL contents:
 
 ```sql
-# web/movies-service/migrations/001.undo.sql
+# web/movies-application/migrations/001.undo.sql
 
 DROP TABLE movies;
 ```
 
-Now we'll change into the `movies-service` directory:
+Now we'll change into the `movies-application` directory:
 
 ```bash
-cd web/movies-service
+cd web/movies-application
 ```
 
 And apply our migration:
 
 ```bash
-npx wattpm movies-service:migrations:apply
+npx wattpm movies-application:migrations:apply
 ```
 
 ### Populate the Movies database
 
-Let's create a new file, `web/movies-service/seed.js`, and add this code to it:
+Let's create a new file, `web/movies-application/seed.js`, and add this code to it:
 
 ```javascript
-// web/movies-service/seed.js
+// web/movies-application/seed.js
 
 'use strict'
 
@@ -479,7 +479,7 @@ module.exports = async function ({ entities, logger }) {
 Now let's populate the database
 
 ```bash
-npx wattpm movies-service:seed seed.js
+npx wattpm movies-application:seed seed.js
 ```
 
 We should see output like this from our script:
@@ -501,16 +501,16 @@ Created movie: {
 [12:43:24] INFO: seeding complete
 ```
 
-### Test the Movies service API
+### Test the Movies application API
 
-To publicly expose the Movies service so that we can test it, we need to change the `entrypoint` in `watt.json` to `movies-service`:
+To publicly expose the Movies application so that we can test it, we need to change the `entrypoint` in `watt.json` to `movies-application`:
 
 ```json
 // watt.json
 
 {
   ...
-  "entrypoint": "movies-service",
+  "entrypoint": "movies-application",
   ...
 }
 ```
@@ -521,7 +521,7 @@ And then let's stop our Library app running by pressing `CTRL+C`, and start it a
 npm start
 ```
 
-We can now test our Movies service API by making a request to it:
+We can now test our Movies application API by making a request to it:
 
 ```bash
 curl localhost:3042/movies/
@@ -533,16 +533,16 @@ And we should then receive a response like this:
 [{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687895004362","updatedAt":"1687895004362"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687895004369","updatedAt":"1687895004369"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687895004372","updatedAt":"1687895004372"}]
 ```
 
-If we open up the Swagger UI documentation at http://127.0.0.1:3042/documentation/, we can see all of our Movie service's API routes:
+If we open up the Swagger UI documentation at http://127.0.0.1:3042/documentation/, we can see all of our Movie application's API routes:
 
 <!-- SCREENSHOT: test-the-movies-service-api-01.png -->
-![Test the Movies service API - 01](./build-modular-monolith-images/test-the-movies-service-api-01.png)
+![Test the Movies application API - 01](./build-modular-monolith-images/test-the-movies-service-api-01.png)
 
-## Create a Composer service: Media service
+## Create a Composer application: Media application
 
-We're now going to use Platformatic Composer to create a Media service. This service will compose the `books-service` and `movies-service` APIs into a single REST API.
+We're now going to use Platformatic Composer to create a Media application. This application will compose the `books-application` and `movies-application` APIs into a single REST API.
 
-In the root directory of our Runtime project (`library-app`), let's create the Media service by running:
+In the root directory of our Runtime project (`library-app`), let's create the Media application by running:
 
 ```bash
 npm create wattpm
@@ -551,22 +551,22 @@ npm create wattpm
 And then let's enter the following settings:
 
 ``` bash
-? Which kind of service do you want to create? @platformatic/composer
-? What is the name of the service? media-service
-? Do you want to create another service? no
+? Which kind of application do you want to create? @platformatic/composer
+? What is the name of the application? media-application
+? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ```
 
-Once the command has finished, we'll see that our Platformatic Composer service has been created in the `web/media-service` directory.
+Once the command has finished, we'll see that our Platformatic Composer application has been created in the `web/media-application` directory.
 
-### Configure the composed services
+### Configure the composed applications
 
-We're now going to replace the example `services` configuration for our Media service, and configure it to compose the APIs for our Books and Movies services.
+We're now going to replace the example `services` configuration for our Media application, and configure it to compose the APIs for our Books and Movies applications.
 
-Let's open up `web/media-service/platformatic.json` and replace the `services` array so that it looks like this:
+Let's open up `web/media-application/platformatic.json` and replace the `services` array so that it looks like this:
 
 ```json
-// web/media-service/platformatic.json
+// web/media-application/platformatic.json
 
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.64.0.json",
@@ -574,13 +574,13 @@ Let's open up `web/media-service/platformatic.json` and replace the `services` a
   "composer": {
     "services": [
       {
-        "id": "books-service",
+        "id": "books-application",
         "openapi": {
           "url": "/documentation/json"
         }
       },
       {
-        "id": "movies-service",
+        "id": "movies-application",
         "openapi": {
           "url": "/documentation/json"
         }
@@ -594,20 +594,20 @@ Let's open up `web/media-service/platformatic.json` and replace the `services` a
 
 Let's take a look at the settings we've added here:
 
-- `composer.services[].id` — The `id` values are the identifiers for our Books and Movies services. These are derived from the services' directory names.
-- `composer.services[].openapi.url` — This is the URL that Composer will automatically call to retrieve the service's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media service's composed API.
-- `composer.refreshTimeout` — This configures Composer to retrieve the OpenAPI schema for each service every 1 second (1000 milliseconds = 1 second). This is a good value during development, but should be longer in production. If Composer detects that the OpenAPI schema for a service has changed, it will rebuild the composed API.
+- `composer.services[].id` — The `id` values are the identifiers for our Books and Movies applications. These are derived from the applications' directory names.
+- `composer.services[].openapi.url` — This is the URL that Composer will automatically call to retrieve the application's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media application's composed API.
+- `composer.refreshTimeout` — This configures Composer to retrieve the OpenAPI schema for each application every 1 second (1000 milliseconds = 1 second). This is a good value during development, but should be longer in production. If Composer detects that the OpenAPI schema for an application has changed, it will rebuild the composed API.
 
-### Test the composed Media service API
+### Test the composed Media application API
 
-To expose our Media service, we need to change the `entrypoint` in `watt.json` to `media-service`:
+To expose our Media application, we need to change the `entrypoint` in `watt.json` to `media-application`:
 
 ```json
 // watt.json
 
 {
   ...
-  "entrypoint": "media-service",
+  "entrypoint": "media-application",
   ...
 }
 ```
@@ -618,12 +618,12 @@ And then stop (`CTRL+C`) and start our Library app:
 npm start
 ```
 
-Now let's open up the Media service's API documentation at http://127.0.0.1:3042/documentation/. Here we can see that our Media service is composing all of our Books and Movie services' API routes into a single REST API:
+Now let's open up the Media application's API documentation at http://127.0.0.1:3042/documentation/. Here we can see that our Media application is composing all of our Books and Movie applications' API routes into a single REST API:
 
 <!-- SCREENSHOT: test-the-composed-media-service-api-01.png -->
-![Test the Composed Media Service API - 01](./build-modular-monolith-images/test-the-composed-media-service-api-01.png)
+![Test the Composed Media Application API - 01](./build-modular-monolith-images/test-the-composed-media-service-api-01.png)
 
-Now let's test our composed Media service API by making a request to retrieve books:
+Now let's test our composed Media application API by making a request to retrieve books:
 
 ```bash
 curl localhost:3042/books/
@@ -635,7 +635,7 @@ We should receive a response like this:
 [{"id":1,"title":"Fairy Tale","authorId":1,"publishedYear":2022,"createdAt":"1687893211326","updatedAt":"1687893211326"},{"id":2,"title":"No One Belongs Here More Than You","authorId":2,"publishedYear":2007,"createdAt":"1687893211333","updatedAt":"1687893211333"},{"id":3,"title":"Alice's Adventures in Wonderland","authorId":3,"publishedYear":1865,"createdAt":"1687893211336","updatedAt":"1687893211336"}]
 ```
 
-And then we can make a request to retrieve movies through the Media service API:
+And then we can make a request to retrieve movies through the Media application API:
 
 ```bash
 curl localhost:3042/movies/
@@ -649,16 +649,16 @@ We should receive a response like this:
 
 > If Composer has already generated a composed API, but later is unable to retrieve the OpenAPI schema for a service, it will remove the routes for that service from the composed API. Those routes will then return a 404 error response.
 
-### Make the composed Media service API read-only
+### Make the composed Media application API read-only
 
-Platformatic Composer allows us to customise the composed API that it generates for us. We can do this by creating an OpenAPI configuration file for each service, and then configuring our Composer service to load it.
+Platformatic Composer allows us to customise the composed API that it generates for us. We can do this by creating an OpenAPI configuration file for each application, and then configuring our Composer application to load it.
 
-Our Books and Movies databases are already populated with data, and we don't want anyone to be able to add to, edit or delete that data. We're now going to configure the Media service to ignore `POST`, `PUT` and `DELETE` routes for the Books and Movies APIs. This will effectively make our Media service's composed API read-only.
+Our Books and Movies databases are already populated with data, and we don't want anyone to be able to add to, edit or delete that data. We're now going to configure the Media application to ignore `POST`, `PUT` and `DELETE` routes for the Books and Movies APIs. This will effectively make our Media application's composed API read-only.
 
-First, let's create a new file, `web/media-service/books-service-openapi.config.json`, and add in this JSON:
+First, let's create a new file, `web/media-application/books-application-openapi.config.json`, and add in this JSON:
 
 ```json
-// web/media-service/books-service-openapi.config.json
+// web/media-application/books-application-openapi.config.json
 
 {
   "paths": {
@@ -676,10 +676,10 @@ First, let's create a new file, `web/media-service/books-service-openapi.config.
 }
 ```
 
-Then let's create another file, `web/media-service/movies-service-openapi.config.json`, and add in this JSON:
+Then let's create another file, `web/media-application/movies-application-openapi.config.json`, and add in this JSON:
 
 ```json
-// web/media-service/movies-service-openapi.config.json
+// web/media-application/movies-application-openapi.config.json
 
 {
   "paths": {
@@ -697,29 +697,29 @@ Then let's create another file, `web/media-service/movies-service-openapi.config
 }
 ```
 
-Now let's open up `web/media-service/platformatic.composer.json` and configure the Media service to apply these service configurations to our composed API:
+Now let's open up `web/media-application/platformatic.json` and configure the Media application to apply these application configurations to our composed API:
 
 ```diff
-// web/media-service/platformatic.composer.json
+// web/media-application/platformatic.json
 
   {
     ...,
     "composer": {
       "services": [
         {
-          "id": "books-service",
+          "id": "books-application",
           "openapi": {
 -           "url": "/documentation/json"
 +           "url": "/documentation/json",
-+           "config": "books-service-openapi.config.json"
++           "config": "books-application-openapi.config.json"
           }
         },
         {
-          "id": "movies-service",
+          "id": "movies-application",
           "openapi": {
 -           "url": "/documentation/json"
 +           "url": "/documentation/json",
-+           "config": "movies-service-openapi.config.json"
++           "config": "movies-application-openapi.config.json"
           }
         }
       ],
@@ -729,21 +729,21 @@ Now let's open up `web/media-service/platformatic.composer.json` and configure t
   }
 ```
 
-If we open up the API documentation for our Media service at http://127.0.0.1:3042/documentation/, we should now see that only the composed `GET` routes are available:
+If we open up the API documentation for our Media application at http://127.0.0.1:3042/documentation/, we should now see that only the composed `GET` routes are available:
 
 <!-- SCREENSHOT: make-the-composed-media-service-api-read-only-01.png -->
-![Make the Composed Media Service API Read Only - 01](./build-modular-monolith-images/make-the-composed-media-service-api-read-only-01.png)
+![Make the Composed Media Application API Read Only - 01](./build-modular-monolith-images/make-the-composed-media-service-api-read-only-01.png)
 
 > As well as allowing us to ignore specific routes, Platformatic Composer also supports aliasing for route paths and the renaming of route response fields. See the [Composer OpenAPI](https://docs.platformatic.dev/docs/reference/composer/configuration?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#openapi-configuration) documentation to learn more.
 
-### Add People data to Media service responses
+### Add People data to Media application responses
 
-Our Books and Media services currently send responses containing IDs that relate to people in the People database, but those responses don't contain the names of those people. We're now going to create a client for the People service, and then create a plugin for our Media service that uses it to enrich the Books and Movies service responses with people's names. The responses from the `/books/` and `/movies/` routes in our Media service's composed API will then contain IDs _and_ names for the people that each resource relates to.
+Our Books and Movies applications currently send responses containing IDs that relate to people in the People database, but those responses don't contain the names of those people. We're now going to create a client for the People application, and then create a plugin for our Media application that uses it to enrich the Books and Movies application responses with people's names. The responses from the `/books/` and `/movies/` routes in our Media application's composed API will then contain IDs _and_ names for the people that each resource relates to.
 
-First, let's change into the directory for our Media service:
+First, let's change into the directory for our Media application:
 
 ```bash
-cd web/media-service/
+cd web/media-application/
 ```
 
 And then let's install [`@platformatic/client`](https://www.npmjs.com/package/@platformatic/client?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) as a dependency:
@@ -752,16 +752,16 @@ And then let's install [`@platformatic/client`](https://www.npmjs.com/package/@p
 npm install @platformatic/client
 ```
 
-Now we can generate a client for the People service:
+Now we can generate a client for the People application:
 
 ```bash
-npx --package @platformatic/client-cli plt-client --name people --runtime people-service --folder clients/people/
+npx --package @platformatic/client-cli plt-client --name people --runtime people-application --folder clients/people/
 ```
 
-We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People service's OpenAPI schema and types that we can use when we integrate the client with our Media service. If we open up `platformatic.composer.json`, we'll also see that a `clients` block like this has been added:
+We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People application's OpenAPI schema and types that we can use when we integrate the client with our Media application. If we open up `platformatic.json`, we'll also see that a `clients` block like this has been added:
 
 ```json
-// web/media-service/platformatic.composer.json
+// web/media-application/platformatic.json
 
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
@@ -771,19 +771,19 @@ We'll see that this has generated a new directory, `clients/people/`, which cont
       "schema": "clients/people/people.openapi.json",
       "name": "people",
       "type": "openapi",
-      "serviceId": "people-service"
+      "serviceId": "people-application"
     }
   ],
   ...
 }
 ```
 
-This configuration will make the People service client available as `app.people` inside any plugins that we create for our Media service.
+This configuration will make the People application client available as `app.people` inside any plugins that we create for our Media application.
 
-To create the skeleton structure for our plugin, let's create a new file, `web/media-service/plugin.js`, and add the following code:
+To create the skeleton structure for our plugin, let's create a new file, `web/media-application/plugin.js`, and add the following code:
 
 ```javascript
-// web/media-service/plugin.js
+// web/media-application/plugin.js
 
 'use strict'
 
@@ -793,7 +793,7 @@ const { resolve } = require("node:path");
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function peopleDataPlugin (app) {
   const client = await buildOpenAPIClient({
-    url: "http://people-service.plt.local",
+    url: "http://people-application.plt.local",
     path: resolve(__dirname, "clients/people/people.openapi.json"),
   });
 }
@@ -801,7 +801,7 @@ module.exports = async function peopleDataPlugin (app) {
 
 The code we've just added is the skeleton structure for our plugin. A `@platformatic/client` is instantiated out of the OpenAPI specification.
 
-To be able to modify the responses that are sent from one of our Media service's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
+To be able to modify the responses that are sent from one of our Media application's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
 
 ```javascript
 app.platformatic.addComposerOnRouteHook('/books/', ['GET'], function (routeOptions) {
@@ -811,14 +811,14 @@ app.platformatic.addComposerOnRouteHook('/books/', ['GET'], function (routeOptio
 })
 ```
 
-With the code above, when Composer registers the `GET` route for `/books/` in the composed API, it will call the `onRoute` hook function. Then when the Media service receives a response for that route from the downstream service, it will run our `onComposerResponse` callback function. We can add code inside the `onComposerResponse` which modifies the response that is returned back to the client that made the original request.
+With the code above, when Composer registers the `GET` route for `/books/` in the composed API, it will call the `onRoute` hook function. Then when the Media application receives a response for that route from the downstream application, it will run our `onComposerResponse` callback function. We can add code inside the `onComposerResponse` which modifies the response that is returned back to the client that made the original request.
 
 > To get a clearer picture of how this works, take a look at our [Composer API modification](https://docs.platformatic.dev/docs/reference/composer/api-modification/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) documentation.
 
-Let's now apply what we've just learnt about Composer hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `web/media-service/plugin.js`:
+Let's now apply what we've just learnt about Composer hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `web/media-application/plugin.js`:
 
 ```javascript
-// web/media-service/plugin.js
+// web/media-application/plugin.js
 
 function buildOnComposerResponseCallback (peopleProps) {
   return async function addPeopleToResponse (request, reply, body) {
@@ -865,7 +865,7 @@ There are a few moving parts in the code above, so let's break down what's happe
 Now, let's add this function after the `buildOnComposerResponseCallback` function:
 
 ```javascript
-// web/media-service/plugin.js
+// web/media-application/plugin.js
 
 function booksOnRouteHook (routeOptions) {
   const responseSchema = routeOptions.schema.response[200]
@@ -880,7 +880,7 @@ function booksOnRouteHook (routeOptions) {
 }
 ```
 
-In the code above we're modifying the response schema for the route which the `routeOptions` have been passed for. This ensures that the `authorName` will be correctly serialized in the response from our Media service's `/books/` routes.
+In the code above we're modifying the response schema for the route which the `routeOptions` have been passed for. This ensures that the `authorName` will be correctly serialized in the response from our Media application's `/books/` routes.
 
 Then, we're registering an `onComposerResponse` callback, which is the function that's returned by the `buildOnComposerResponseCallback` that we added a little earlier. The `peopleProps` array that we're passing to `buildOnComposerResponseCallback` tells it to look for a person ID in the `authorId` property for any book entity, and then to set the name that it retrieves for the person matching that ID to a property named `authorName`.
 
@@ -891,7 +891,7 @@ app.platformatic.addComposerOnRouteHook('/books/', ['GET'], booksOnRouteHook)
 app.platformatic.addComposerOnRouteHook('/books/{id}', ['GET'], booksOnRouteHook)
 ```
 
-Now we can configure the Media service to load our new plugin. Let's open up `platformatic.composer.json` and add a `plugins` object to the service configuration:
+Now we can configure the Media application to load our new plugin. Let's open up `platformatic.json` and add a `plugins` object to the application configuration:
 
 ```json
 {
@@ -924,7 +924,7 @@ We're now going to add `onRoute` hooks for our composed `/movies/` routes. These
 First, let's add this function inside the `peopleDataPlugin`, after the other code that's already there:
 
 ```javascript
-// web/media-service/plugin.js
+// web/media-application/plugin.js
 
 function moviesOnRouteHook (routeOptions) {
   const responseSchema = routeOptions.schema.response[200]
@@ -946,7 +946,7 @@ Similarly to the `booksOnRouteHook` function, the code above is modifying the re
 Finally, let's wire up the `moviesOnRouteHook` to our `/movies/` routes:
 
 ```javascript
-// web/media-service/plugin.js
+// web/media-application/plugin.js
 
 app.platformatic.addComposerOnRouteHook('/movies/', ['GET'], moviesOnRouteHook)
 app.platformatic.addComposerOnRouteHook('/movies/{id}', ['GET'], moviesOnRouteHook)
@@ -966,14 +966,14 @@ If we make a request to retrieve the movie with the ID `3`, we should see that r
 curl localhost:3042/movies/3 | grep 'Name'
 ```
 
-### Configure a service proxy to debug the People service API
+### Configure a service proxy to debug the People application API
 
-Our Media service is composing the Books and Movies services into an API, and the Media service is then exposed by the Library app. But what if we want to test or debug the People service API during development? Fortunately, Platformatic Composer provides a service proxy feature ([`services[].proxy`](https://docs.platformatic.dev/docs/reference/composer/configuration#composer)) which we can use to help us do this.
+Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Composer provides a service proxy feature ([`services[].proxy`](https://docs.platformatic.dev/docs/reference/composer/configuration#composer)) which we can use to help us do this.
 
-Let's try this out by adding another service to the `services` in `platformatic.composer.json`:
+Let's try this out by adding another service to the `services` in `platformatic.json`:
 
 ```diff
-// platformatic.composer.json
+// platformatic.json
 
   {
     "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
@@ -982,17 +982,17 @@ Let's try this out by adding another service to the `services` in `platformatic.
       "services": [
         ...,
         {
-          "id": "movies-service",
+          "id": "movies-application",
           "openapi": {
             "url": "/documentation/json",
-            "config": "movies-service-openapi.config.json"
+            "config": "movies-application-openapi.config.json"
           }
 -       }
 +       },
 +       {
-+         "id": "people-service",
++         "id": "people-application",
 +         "proxy": {
-+           "prefix": "people-service"
++           "prefix": "people-application"
 +         }
 +       }
       ],
@@ -1002,24 +1002,24 @@ Let's try this out by adding another service to the `services` in `platformatic.
   }
 ```
 
-Now the People service API will be made available as part of the composed Media service API under the prefix `/people-service/`.
+Now the People application API will be made available as part of the composed Media application API under the prefix `/people-application/`.
 
-Let's test it now by making a request to one of the People service routes, via the composed Media service API:
+Let's test it now by making a request to one of the People application routes, via the composed Media application API:
 
 ```bash
-curl localhost:3042/people-service/people/
+curl localhost:3042/people-application/people/
 ```
 
-We should receive a response like this from the People service's `/people` route:
+We should receive a response like this from the People application's `/people` route:
 
 ```json
 [{"id":1,"name":"Stephen King","createdAt":"1687891503369","updatedAt":"1687891503369"},{"id":2,"name":"Miranda July","createdAt":"1687891503375","updatedAt":"1687891503375"},{"id":3,"name":"Lewis Carroll","createdAt":"1687891503377","updatedAt":"1687891503377"},{"id":4,"name":"Martha Schumacher","createdAt":"1687891503379","updatedAt":"1687891503379"},{"id":5,"name":"Mick Garris","createdAt":"1687891503381","updatedAt":"1687891503381"},{"id":6,"name":"Dede Gardner","createdAt":"1687891503383","updatedAt":"1687891503383"}]
 ```
 
-Although the Composer service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.composer.json`:
+Although the Composer service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.json`:
 
 ```diff
-// platformatic.composer.json
+// platformatic.json
 
   {
     "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
@@ -1028,17 +1028,17 @@ Although the Composer service proxy is a helpful feature, we don't want to use t
       "services": [
         ...,
         {
-          "id": "movies-service",
+          "id": "movies-application",
           "openapi": {
             "url": "/documentation/json",
-            "config": "movies-service-openapi.config.json"
+            "config": "movies-application-openapi.config.json"
           }
 +       }
 -       },
 -       {
--         "id": "people-service",
+-         "id": "people-application",
 -         "proxy": {
--           "prefix": "people-service"
+-           "prefix": "people-application"
 -         }
 -       }
       ],
@@ -1052,27 +1052,27 @@ Although the Composer service proxy is a helpful feature, we don't want to use t
 
 ### Integrating existing services into a Runtime application
 
-If you have existing services that aren't built with Platformatic or Fastify, there are two ways you can integrate them with the services in a Platformatic Runtime application:
+If you have existing services that aren't built with Platformatic or Fastify, there are two ways you can integrate them with the applications in a Platformatic Runtime application:
 
-1. If the existing service provides an OpenAPI schema (via a URL or a file), you can create a Platformatic Composer service inside the Runtime application and configure it to add the API for the existing service into a composed API.
-2. If the existing service provides an OpenAPI or GraphQL schema, you can generate a Platformatic Client for the existing service. The generated client can then be integrated with one of the Runtime services.
+1. If the existing service provides an OpenAPI schema (via a URL or a file), you can create a Platformatic Composer application inside the Runtime application and configure it to add the API for the existing service into a composed API.
+2. If the existing service provides an OpenAPI or GraphQL schema, you can generate a Platformatic Client for the existing service. The generated client can then be integrated with one of the Runtime applications.
 
-### Building Platformatic Runtime services in a monorepo
+### Building Platformatic Runtime applications in a monorepo
 
-Here at Platformatic we use a [pnpm](https://pnpm.io/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) workspace to manage our [platformatic](https://github.com/platformatic/platformatic/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) monorepo. If you want to build Platformatic Runtime services in a monorepo, you might want to take a look at [pnpm workspaces](https://pnpm.io/workspaces?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) for managing your repository.
+Here at Platformatic we use a [pnpm](https://pnpm.io/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) workspace to manage our [platformatic](https://github.com/platformatic/platformatic/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) monorepo. If you want to build Platformatic Runtime applications in a monorepo, you might want to take a look at [pnpm workspaces](https://pnpm.io/workspaces?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) for managing your repository.
 
-You can configure your Runtime services as pnpm workspaces by adding a `pnpm-workspace.yaml` file to your project like this:
+You can configure your Runtime applications as pnpm workspaces by adding a `pnpm-workspace.yaml` file to your project like this:
 
 ```yaml
 packages:
   - 'web/*'
 ```
 
-This allows you to then run scripts for all services, for example `pnpm run -r migrate`. See the [example application README](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#readme) for more details.
+This allows you to then run scripts for all applications, for example `pnpm run -r migrate`. See the [example application README](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#readme) for more details.
 
 ## Wrapping up
 
-If you've followed this tutorial step-by-step, you should now have a Platformatic Runtime app with four separate services that work together to provide a unified API. You can find the full application code [on GitHub](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
+If you've followed this tutorial step-by-step, you should now have a Platformatic Runtime app with four separate applications that work together to provide a unified API. You can find the full application code [on GitHub](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
 
 You can watch Platformatic Runtime and Composer in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created for our [Papilio Launch](https://papilio.platformatic.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog):
 

@@ -9,7 +9,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const platformaticVersion = require('../../package.json').version
 
-test('should get service details', async t => {
+test('should get application details', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -19,8 +19,8 @@ test('should get service details', async t => {
     await app.close()
   })
 
-  const serviceDetails = await app.getServiceDetails('with-logger')
-  assert.deepStrictEqual(serviceDetails, {
+  const applicationDetails = await app.getApplicationDetails('with-logger')
+  assert.deepStrictEqual(applicationDetails, {
     id: 'with-logger',
     type: 'service',
     status: 'started',

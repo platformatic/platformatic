@@ -313,8 +313,8 @@ export class CacheHandler {
       pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
     }
 
-    if (this.serviceId) {
-      pinoOptions.name = `cache:${this.serviceId}`
+    if (this.applicationId) {
+      pinoOptions.name = `cache:${this.applicationId}`
     }
 
     if (pinoOptions.base !== null && typeof globalThis.platformatic.workerId !== 'undefined') {
@@ -341,7 +341,7 @@ export class CacheHandler {
 
   #getPlatformaticMeta () {
     return {
-      serviceId: globalThis.platformatic.serviceId,
+      applicationId: globalThis.platformatic.applicationId,
       workerId: globalThis.platformatic.workerId
     }
   }

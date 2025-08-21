@@ -8,7 +8,7 @@ import { wattpm } from './helper.js'
 
 async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = false) {
   let mainLogFound
-  let serviceLogFound
+  let applicationLogFound
   let traceFound
   let acInstalled = false
   const ac = new AbortController()
@@ -54,7 +54,7 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
       }
 
       if (parsed.msg.startsWith('Service listening') && parsed.name === 'main') {
-        serviceLogFound = true
+        applicationLogFound = true
         updateStatus()
       }
     }
@@ -64,7 +64,7 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
     }
   }
 
-  return { messages, mainLogFound, serviceLogFound, traceFound }
+  return { messages, mainLogFound, applicationLogFound, traceFound }
 }
 
 test('inject - should stream runtime logs', async t => {
@@ -90,13 +90,13 @@ test('inject - should stream runtime logs', async t => {
   const logsProcess = wattpm('logs', 'main')
   const logs = matchLogs(logsProcess.stdout)
 
-  const { mainLogFound, serviceLogFound, traceFound } = await logs
-  ok(serviceLogFound)
+  const { mainLogFound, applicationLogFound, traceFound } = await logs
+  ok(applicationLogFound)
   ok(mainLogFound)
   ok(!traceFound)
 })
 
-test('inject - should stream runtime logs filtering by service', async t => {
+test('logs - should stream runtime logs filtering by application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
@@ -119,14 +119,14 @@ test('inject - should stream runtime logs filtering by service', async t => {
   const logsProcess = wattpm('logs', 'main', 'main')
   const logs = matchLogs(logsProcess.stdout, false)
 
-  const { mainLogFound, serviceLogFound, traceFound } = await logs
+  const { mainLogFound, applicationLogFound, traceFound } = await logs
 
-  ok(serviceLogFound)
+  ok(applicationLogFound)
   ok(!mainLogFound)
   ok(!traceFound)
 })
 
-test('inject - should stream runtime logs filtering by level', async t => {
+test('logs - should stream runtime logs filtering by level', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
@@ -149,14 +149,14 @@ test('inject - should stream runtime logs filtering by level', async t => {
   const logsProcess = wattpm('logs', '-l', 'trace', 'main')
   const logs = matchLogs(logsProcess.stdout, true, true)
 
-  const { mainLogFound, serviceLogFound, traceFound } = await logs
+  const { mainLogFound, applicationLogFound, traceFound } = await logs
 
-  ok(serviceLogFound)
+  ok(applicationLogFound)
   ok(mainLogFound)
   ok(traceFound)
 })
 
-test('inject - should complain when a runtime is not found', async t => {
+test('logs - should complain when a runtime is not found', async t => {
   const logsProcess = await wattpm('logs', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)

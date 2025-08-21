@@ -77,7 +77,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const entrypointRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="frontend"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('applicationId="frontend"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }

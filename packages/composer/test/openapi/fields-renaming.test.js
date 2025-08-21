@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import { createBasicService, createFromConfig, createOpenApiService } from '../helper.js'
+import { createBasicApplication, createFromConfig, createOpenApiApplication } from '../helper.js'
 
 const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should rename top level object fields', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -42,7 +42,7 @@ test('should rename top level object fields', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -86,7 +86,7 @@ test('should rename top level object fields', async t => {
 })
 
 test('should rename nested object fields', async t => {
-  const api = await createBasicService(t)
+  const api = await createBasicApplication(t)
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -122,7 +122,7 @@ test('should rename nested object fields', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -169,7 +169,7 @@ test('should rename nested object fields', async t => {
 })
 
 test('should rename property in required array', async t => {
-  const api = await createBasicService(t)
+  const api = await createBasicApplication(t)
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -200,7 +200,7 @@ test('should rename property in required array', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -243,7 +243,7 @@ test('should rename property in required array', async t => {
 })
 
 test('should rename top level object fields in array', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -278,7 +278,7 @@ test('should rename top level object fields in array', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

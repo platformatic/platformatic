@@ -65,7 +65,7 @@ test('should cache http requests', async t => {
   assert.strictEqual(counter, 2)
 })
 
-test('should get response cached by another service', async t => {
+test('should get response cached by another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
@@ -245,7 +245,7 @@ test('should remove a url from an http cache', async t => {
   }
 })
 
-test('should invalidate cache from another service', async t => {
+test('should invalidate cache from another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
@@ -417,7 +417,7 @@ test('should set an opentelemetry attribute', async t => {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.telemetry = {
-        serviceName: 'test-service',
+        applicationName: 'test-service',
         version: '1.0.0',
         exporter: {
           type: 'file',

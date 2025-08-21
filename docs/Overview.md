@@ -5,7 +5,7 @@ label: Welcome to Platformatic
 
 # Watt - The Node.js Application Server
 
-**Watt** is Platformatic's flagship Node.js Application Server that transforms how you build, deploy, and scale Node.js applications. Instead of managing multiple services, databases, and frameworks separately, Watt provides a unified platform where everything runs together seamlessly.
+**Watt** is Platformatic's flagship Node.js Application Server that transforms how you build, deploy, and scale Node.js applications. Instead of managing multiple applications, databases, and frameworks separately, Watt provides a unified platform where everything runs together seamlessly.
 
 ## What is Watt?
 
@@ -40,16 +40,16 @@ Watt provides a comprehensive set of capabilities:
 
 - **Database APIs** - Auto-generated REST and GraphQL endpoints from SQL databases (Platformatic DB)
 - **HTTP Services** - Custom application logic and APIs built on Fastify
-- **API Gateways** - Aggregate multiple services into unified endpoints
+- **API Gateways** - Aggregate multiple applications into unified endpoints
 - **Framework Integration** - [Next.js, Astro, Remix, Vite applications](/docs/guides/frameworks)
-- **Microservice Orchestration** - Multi-service applications as single deployments
+- **Microservice Orchestration** - Multi-application deployments as single units
 - **Built-in Authorization** - Role-based access control and JWT authentication
 - **Real-time Features** - WebSocket and GraphQL subscriptions
 - **Production Monitoring** - Prometheus metrics, OpenTelemetry tracing, structured logging
 
 ## How Watt Works
 
-Watt acts as the foundation that runs and orchestrates different types of services within a single Node.js application. Each service type serves a specific purpose while benefiting from shared infrastructure like logging, metrics, and configuration.
+Watt acts as the foundation that runs and orchestrates different types of applications within a single Node.js application. Each application type serves a specific purpose while benefiting from shared infrastructure like logging, metrics, and configuration.
 
 ### 🔍 Observability by Default
 

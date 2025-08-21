@@ -167,7 +167,7 @@ export declare function buildPinoTimestamp (timestamp: string): Function
 export declare function buildPinoOptions (
   loggerConfig: any,
   serverConfig: any,
-  serviceId?: string,
+  applicationId?: string,
   workerId?: string,
   context?: any,
   root?: string
@@ -201,7 +201,7 @@ export declare function detectApplicationType (
 export declare function loadModule (require: NodeRequire, path: string): Promise<any>
 
 // Node types
-export declare function checkNodeVersionForServices (): void
+export declare function checkNodeVersionForApplications (): void
 export declare const features: {
   node: {
     reusePort: boolean
@@ -234,7 +234,7 @@ export declare const health: JSONSchemaType<object>
 export declare const healthWithoutDefaults: JSONSchemaType<object>
 export declare const telemetryExporter: JSONSchemaType<object>
 export declare const telemetry: JSONSchemaType<object>
-export declare const services: JSONSchemaType<object[]>
+export declare const applications: JSONSchemaType<object[]>
 export declare const runtimeUnwrappablePropertiesList: string[]
 export declare const runtimeProperties: JSONSchemaType<object>
 export declare const wrappedRuntimeProperties: JSONSchemaType<object>

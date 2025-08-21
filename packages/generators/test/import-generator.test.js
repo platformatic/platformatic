@@ -13,7 +13,7 @@ const { ImportGenerator } = require('../lib/import-generator')
 function createGenerator (runtime, opts) {
   return new ImportGenerator({
     logger: fakeLogger,
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     module: '@platformatic/service',
     version: '1.0.0',
     parent: runtime,
@@ -34,7 +34,7 @@ function createMockedRuntimeGenerator (opts) {
     updateRuntimeEnv (env) {
       runtime.env = env
     },
-    servicesFolder: 'web',
+    applicationsFolder: 'web',
     config: {},
     env: '',
     ...opts
@@ -53,24 +53,24 @@ test('should create ImportGenerator instance', async t => {
   const runtime = createMockedRuntimeGenerator()
   const gen = createGenerator(runtime)
 
-  deepStrictEqual(gen.config.serviceName, 'test-service')
+  deepStrictEqual(gen.config.applicationName, 'test-application')
   deepStrictEqual(gen.config.module, '@platformatic/service')
   deepStrictEqual(gen.config.version, '1.0.0')
-  deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_PATH')
+  deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_PATH')
   deepStrictEqual(gen.runtime, runtime)
 })
 
-test('should sanitize service name for environment variable', async t => {
+test('should sanitize application name for environment variable', async t => {
   const runtime = createMockedRuntimeGenerator()
 
   {
-    const gen = createGenerator(runtime, { serviceName: 'test-service-123' })
-    deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_123_PATH')
+    const gen = createGenerator(runtime, { applicationName: 'test-application-123' })
+    deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_123_PATH')
   }
 
   {
-    const gen = createGenerator(runtime, { serviceName: 'test@service.name' })
-    deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_NAME_PATH')
+    const gen = createGenerator(runtime, { applicationName: 'test@application.name' })
+    deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_NAME_PATH')
   }
 })
 
@@ -307,24 +307,24 @@ test('import - should import application', async t => {
 
   // Check that runtime config was updated
   ok(Array.isArray(runtime.config.web))
-  deepStrictEqual(runtime.config.web[0].id, 'test-service')
-  deepStrictEqual(runtime.config.web[0].path, '{PLT_SERVICE_TEST_SERVICE_PATH}')
+  deepStrictEqual(runtime.config.web[0].id, 'test-application')
+  deepStrictEqual(runtime.config.web[0].path, '{PLT_APPLICATION_TEST_APPLICATION_PATH}')
   deepStrictEqual(runtime.config.web[0].url, 'git@github.com:hello/world.git')
 
   // Check that runtime env was updated
-  ok(runtime.env.includes('PLT_SERVICE_TEST_SERVICE_PATH=' + sourceDir))
+  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
 })
 
-test('import - should handle runtime with existing services', async t => {
+test('import - should handle runtime with existing applications', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    servicesBasePath: '/nonexistent/services',
+    applicationsBasePath: '/nonexistent/applications',
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          web: [{ id: 'existing-service', path: '/existing/path' }]
+          web: [{ id: 'existing-application', path: '/existing/path' }]
         })
       }
     },
@@ -340,13 +340,13 @@ test('import - should handle runtime with existing services', async t => {
   await gen._afterWriteFiles(runtime)
 
   deepStrictEqual(runtime.config.web.length, 2)
-  deepStrictEqual(runtime.config.web[0].id, 'existing-service')
-  deepStrictEqual(runtime.config.web[1].id, 'test-service')
+  deepStrictEqual(runtime.config.web[0].id, 'existing-application')
+  deepStrictEqual(runtime.config.web[1].id, 'test-application')
   ok(runtime.env.includes('EXISTING_VAR=value'))
-  ok(runtime.env.includes('PLT_SERVICE_TEST_SERVICE_PATH=' + sourceDir))
+  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
 })
 
-test('import - should not duplicate services in runtime config', async t => {
+test('import - should not duplicate applications in runtime config', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
@@ -354,7 +354,7 @@ test('import - should not duplicate services in runtime config', async t => {
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          services: [{ id: 'test-service', path: '/existing/path' }]
+          applications: [{ id: 'test-application', path: '/existing/path' }]
         })
       }
     },
@@ -368,11 +368,11 @@ test('import - should not duplicate services in runtime config', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  deepStrictEqual(runtime.config.services.length, 1)
-  deepStrictEqual(runtime.config.services[0].id, 'test-service')
+  deepStrictEqual(runtime.config.applications.length, 1)
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
 
-test('import - should use different services keys', async t => {
+test('import - should use different applications keys', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
@@ -380,7 +380,7 @@ test('import - should use different services keys', async t => {
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          services: []
+          applications: []
         })
       }
     },
@@ -394,6 +394,6 @@ test('import - should use different services keys', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  ok(Array.isArray(runtime.config.services))
-  deepStrictEqual(runtime.config.services[0].id, 'test-service')
+  ok(Array.isArray(runtime.config.applications))
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })

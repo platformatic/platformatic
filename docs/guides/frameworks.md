@@ -53,7 +53,7 @@ To add a framework to your Watt application:
 1. **Add the application to your configuration:**
    ```json
    {
-     "services": [
+     "applications": [
        {
          "id": "frontend",
          "path": "./frontend",
@@ -78,7 +78,7 @@ All framework integrations provide:
 - **Development Mode** - Hot reload and fast refresh during development
 - **Production Builds** - Optimized builds for deployment
 - **Environment Configuration** - Framework-specific environment variable handling
-- **Logging Integration** - Unified logging across all services
+- **Logging Integration** - Unified logging across all applications
 - **Metrics Collection** - Built-in observability and monitoring
 - **TypeScript Support** - Full TypeScript integration where applicable
 

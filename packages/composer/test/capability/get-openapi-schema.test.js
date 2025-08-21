@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
-import { createFromConfig, createOpenApiService } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
-test('get service openapi schema via capability api', async t => {
-  const api = await createOpenApiService(t, ['users'])
+test('get application openapi schema via capability api', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const config = {
@@ -13,7 +13,7 @@ test('get service openapi schema via capability api', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
@@ -49,7 +49,7 @@ test('get null if server does not expose openapi', async t => {
     },
 
     composer: {
-      services: []
+      applications: []
     }
   }
 

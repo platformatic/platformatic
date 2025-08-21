@@ -9,7 +9,7 @@ const defaultInstrumentations = [
   '@opentelemetry/instrumentation-undici'
 ]
 
-const getInstrumentationInstance = async (instrumentationConfig, serviceDir) => {
+const getInstrumentationInstance = async (instrumentationConfig, applicationDir) => {
   if (typeof instrumentationConfig === 'string') {
     instrumentationConfig = { package: instrumentationConfig, exportName: 'default', options: {} }
   }
@@ -21,7 +21,7 @@ const getInstrumentationInstance = async (instrumentationConfig, serviceDir) => 
 
   let mod
   try {
-    mod = await importOrLocal({ pkg: packageName, projectDir: serviceDir })
+    mod = await importOrLocal({ pkg: packageName, projectDir: applicationDir })
   } catch (err) {
     throw new Error(`Instrumentation package not found: ${instrumentationConfig.package}, please add it to your dependencies.`)
   }
@@ -51,10 +51,10 @@ const getInstrumentationInstance = async (instrumentationConfig, serviceDir) => 
 //          "exportName": "RedisInstrumentation",
 //          "options": { "foo": "bar" }
 //       }
-const getInstrumentations = async (configs = [], serviceDir) => {
+const getInstrumentations = async (configs = [], applicationDir) => {
   const instrumentations = []
   for (const instrumentationConfig of configs) {
-    const instance = await getInstrumentationInstance(instrumentationConfig, serviceDir)
+    const instance = await getInstrumentationInstance(instrumentationConfig, applicationDir)
     instrumentations.push(instance)
   }
   return instrumentations

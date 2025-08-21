@@ -18,7 +18,7 @@ Configuration file settings are grouped as follows:
 
 - **`basePath`** **(required)**: Configures the [basePath](../service/configuration.md#basePath).
 - **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
-- **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
+- **`composer`**: Specific settings for Platformatic Composer, such as application management and API composition.
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
@@ -27,33 +27,33 @@ Sensitive data within these settings should use [configuration placeholders](#co
 
 ### Composer
 
-Configure `@platformatic/composer` specific settings such as `services` or `refreshTimeout`:
+Configure `@platformatic/composer` specific settings such as `applications` or `refreshTimeout`:
 
-- **`services`** (`array`, default: `[]`) — is an array of objects that defines
-  the services managed by the composer. Each service object supports the following settings:
-  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
-  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin.
+- **`applications`** (`array`, default: `[]`) — is an array of objects that defines
+  the applications managed by the composer. Each application object supports the following settings:
+  - **`id`** (**required**, `string`) - A unique identifier for the application. Use a Platformatic Runtime application id if the application is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
+  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
-  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) service.
-  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
-    - `prefix` (`string`) - Service proxy prefix. All service routes will be prefixed with this value.
-    - `hostname` (`string`) - An additional domain name this service is reachable at. It will be matched against requests' `Host` header.
+  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
+  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled.
+    - `prefix` (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
+    - `hostname` (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header.
 
     :::note
-    If the prefix is not explicitly set, the composer and the service will try to find the best prefix for the service.
+    If the prefix is not explicitly set, the composer and the application will try to find the best prefix for the application.
 
-    First of all, if the application code used the `platformatic.setBasePath` (which is always available in each service),
-    then the value will become the service prefix.
+    First of all, if the application code used the `platformatic.setBasePath` (which is always available in each application),
+    then the value will become the application prefix.
 
-    The next attempt will be to let the service autodetect its own prefix by using the configuration (as the `basePath` setting for `@platformatic/service`)
+    The next attempt will be to let the application autodetect its own prefix by using the configuration (as the `basePath` setting for `@platformatic/service`)
     or by autodetecting the prefix from the host application (like Next.js).
 
-    When none of the criteria above successfully lead to a prefix, the service ID is chosen as last fallback to ensure there are not routing conflicts.
+    When none of the criteria above successfully lead to a prefix, the application ID is chosen as last fallback to ensure there are not routing conflicts.
     :::
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
 - **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus
-  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the services entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details.
+  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the applications entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details.
   - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the `@platformatic/db` mapped entities queries.
 
   ```js
@@ -74,15 +74,15 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
 
     It's important to note GraphQL subscriptions are not supported in the composer yet.
 
-- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Composer is running within a [Platformatic Runtime](../runtime/overview.md).
+- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Composer is running within a [Platformatic Runtime](../runtime/overview.md).
 
 - **`addEmptySchema`** (`boolean`) - If true, the composer will add an empty response schema to the composed OpenAPI specification. Default is `false`.
 
 ### OpenAPI
 
-- **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
+- **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If an application is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
 - **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
-- **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
+- **`prefix`** (`string`) - A prefix for the OpenAPI specification. All application routes will be prefixed with this value.
 - **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the [OpenAPI](#openapi-configuration)specification.
 
 ### OpenAPI Configuration
@@ -142,12 +142,12 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   }
   ```
 
-  Composition of two remote services:
+  Composition of two remote applications:
 
   ```json title="Example JSON object"
   {
     "composer": {
-      "services": [
+      "applications": [
         {
           "id": "auth-service",
           "origin": "https://auth-service.com",
@@ -169,12 +169,12 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   }
   ```
 
-  Composition of two local services inside Platformatic Runtime:
+  Composition of two local applications inside Platformatic Runtime:
 
   ```json title="Example JSON object"
   {
     "composer": {
-      "services": [
+      "applications": [
         {
           "id": "auth-service",
           "openapi": {
@@ -196,8 +196,8 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 
 ### GraphQL
 
-- **`host`** (`string`) - service host; if not specified, the `service.origin` is used.
-- **`name`** (`string`) - name to identify the service. If not specified, the `service.origin` is used.
+- **`host`** (`string`) - application host; if not specified, the `application.origin` is used.
+- **`name`** (`string`) - name to identify the application. If not specified, the `application.origin` is used.
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
 - **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
 - **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
@@ -226,11 +226,11 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 
 ### `telemetry`
 
-Telemetry involves the collection and analysis of data generated by the operations of services. See our [telemetry documentation](../service/configuration.md#telemetry) for details on configuring telemetry for Platformatic Service.
+Telemetry involves the collection and analysis of data generated by the operations of applications. See our [telemetry documentation](../service/configuration.md#telemetry) for details on configuring telemetry for Platformatic Service.
 
 ### `watch`
 
-The `watch` functionality helps in monitoring file changes and dynamically updating services. Learn more at Platformatic Service [watch](../service/configuration.md#watch)
+The `watch` functionality helps in monitoring file changes and dynamically updating applications. Learn more at Platformatic Service [watch](../service/configuration.md#watch)
 
 ## Setting and Using ENV placeholders
 

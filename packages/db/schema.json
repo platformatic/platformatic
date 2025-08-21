@@ -1187,13 +1187,13 @@
             }
           ]
         },
-        "serviceName": {
+        "applicationName": {
           "type": "string",
-          "description": "The name of the service. Defaults to the folder name if not specified."
+          "description": "The name of the application. Defaults to the folder name if not specified."
         },
         "version": {
           "type": "string",
-          "description": "The version of the service (optional)"
+          "description": "The version of the application (optional)"
         },
         "skip": {
           "type": "array",
@@ -1300,7 +1300,7 @@
         }
       },
       "required": [
-        "serviceName"
+        "applicationName"
       ],
       "additionalProperties": false
     },
@@ -1324,6 +1324,235 @@
         },
         "basePath": {
           "type": "string"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "anyOf": [
+              {
+                "required": [
+                  "id",
+                  "path"
+                ]
+              },
+              {
+                "required": [
+                  "id",
+                  "url"
+                ]
+              }
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string",
+                "allowEmptyPaths": true,
+                "resolvePath": true
+              },
+              "config": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "gitBranch": {
+                "type": "string",
+                "default": "main"
+              },
+              "useHttp": {
+                "type": "boolean"
+              },
+              "workers": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "health": {
+                "type": "object",
+                "default": {},
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "interval": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "gracePeriod": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxUnhealthyChecks": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxELU": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsed": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapTotal": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxYoungGeneration": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "envfile": {
+                "type": "string"
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "default": false
+              },
+              "packageManager": {
+                "type": "string",
+                "enum": [
+                  "npm",
+                  "pnpm",
+                  "yarn"
+                ]
+              },
+              "preload": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  }
+                ]
+              },
+              "nodeOptions": {
+                "type": "string"
+              },
+              "telemetry": {
+                "type": "object",
+                "properties": {
+                  "instrumentations": {
+                    "type": "array",
+                    "description": "An array of instrumentations loaded if telemetry is enabled",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "package": {
+                              "type": "string"
+                            },
+                            "exportName": {
+                              "type": "string"
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          },
+                          "required": [
+                            "package"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         "workers": {
           "anyOf": [
@@ -1639,7 +1868,7 @@
               ],
               "default": 10000
             },
-            "service": {
+            "application": {
               "anyOf": [
                 {
                   "type": "number",
@@ -1655,7 +1884,7 @@
           "default": {},
           "required": [
             "runtime",
-            "service"
+            "application"
           ],
           "additionalProperties": false
         },
@@ -2086,13 +2315,13 @@
                 }
               ]
             },
-            "serviceName": {
+            "applicationName": {
               "type": "string",
-              "description": "The name of the service. Defaults to the folder name if not specified."
+              "description": "The name of the application. Defaults to the folder name if not specified."
             },
             "version": {
               "type": "string",
-              "description": "The version of the service (optional)"
+              "description": "The version of the application (optional)"
             },
             "skip": {
               "type": "array",
@@ -2199,7 +2428,7 @@
             }
           },
           "required": [
-            "serviceName"
+            "applicationName"
           ],
           "additionalProperties": false
         },
@@ -2220,7 +2449,7 @@
             }
           }
         },
-        "serviceTimeout": {
+        "applicationTimeout": {
           "anyOf": [
             {
               "type": "number",

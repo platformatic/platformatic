@@ -20,12 +20,12 @@ const { schema } = require('./lib/schema')
 const { upgrade } = require('./lib/upgrade')
 
 async function restartRuntime (runtime) {
-  runtime.logger.info('Received SIGUSR2, restarting all services ...')
+  runtime.logger.info('Received SIGUSR2, restarting all applications ...')
 
   try {
     await runtime.restart()
   } catch (err) {
-    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart applications.')
   }
 }
 
@@ -58,8 +58,8 @@ async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   })
 }
 
-async function loadServicesCommands () {
-  const services = {}
+async function loadApplicationsCommands () {
+  const applications = {}
   const commands = {}
   const help = {}
 
@@ -79,18 +79,18 @@ async function loadServicesCommands () {
       throw new Error('No runtime configuration file found.')
     }
   } catch {
-    return { services, commands, help }
+    return { applications, commands, help }
   }
 
-  for (const service of config.services) {
+  for (const application of config.applications) {
     try {
-      const serviceConfig = await utilsLoadConfiguration(service.config)
-      const pkg = await loadConfigurationModule(service.path, serviceConfig)
+      const applicationConfig = await utilsLoadConfiguration(application.config)
+      const pkg = await loadConfigurationModule(application.path, applicationConfig)
 
       if (pkg.createCommands) {
-        const definition = await pkg.createCommands(service.id)
+        const definition = await pkg.createCommands(application.id)
         for (const command of Object.keys(definition.commands)) {
-          services[command] = service
+          applications[command] = application
         }
 
         Object.assign(commands, definition.commands)
@@ -98,11 +98,11 @@ async function loadServicesCommands () {
       }
       /* c8 ignore next 3 - Hard to test */
     } catch {
-      // No-op, ignore the service
+      // No-op, ignore the application
     }
   }
 
-  return { services, commands, help }
+  return { applications, commands, help }
 }
 
 async function create (configOrRoot, sourceOrConfig, context) {
@@ -160,4 +160,4 @@ module.exports.version = platformaticVersion
 module.exports.loadConfiguration = loadConfiguration
 module.exports.create = create
 module.exports.transform = transform
-module.exports.loadServicesCommands = loadServicesCommands
+module.exports.loadApplicationsCommands = loadApplicationsCommands

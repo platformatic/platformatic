@@ -3,10 +3,11 @@ import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { FailedToFetchOpenAPISchemaError } from '../errors.js'
 import { schema } from '../schema.js'
+import { upgrade } from '../upgrade.js'
 import { prefixWithSlash } from '../utils.js'
 
-export async function fetchOpenApiSchema (service) {
-  const { origin, openapi } = service
+export async function fetchOpenApiSchema (application) {
+  const { origin, openapi } = application
 
   const openApiUrl = origin + prefixWithSlash(openapi.url)
   const { statusCode, body } = await request(openApiUrl)
@@ -25,23 +26,23 @@ export async function fetchOpenApiSchema (service) {
 
 export async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
   const { bold } = colorette
-  const config = await loadConfiguration(configFile, schema)
-  const { services } = config.composer
+  const config = await loadConfiguration(configFile, schema, { upgrade })
+  const { applications } = config.composer
 
-  const servicesWithValidOpenApi = services.filter(({ openapi }) => openapi && openapi.url && openapi.file)
+  const applicationsWithValidOpenApi = applications.filter(({ openapi }) => openapi && openapi.url && openapi.file)
 
-  const fetchOpenApiRequests = servicesWithValidOpenApi.map(service => fetchOpenApiSchema(service))
+  const fetchOpenApiRequests = applicationsWithValidOpenApi.map(application => fetchOpenApiSchema(application))
 
   const fetchOpenApiResults = await Promise.allSettled(fetchOpenApiRequests)
 
-  logger.info('Fetching schemas for all services.')
+  logger.info('Fetching schemas for all applications.')
 
   fetchOpenApiResults.forEach((result, index) => {
-    const serviceId = servicesWithValidOpenApi[index].id
+    const applicationId = applicationsWithValidOpenApi[index].id
     if (result.status === 'rejected') {
-      logger.error(`Failed to fetch OpenAPI schema for service with id ${bold(serviceId)}: ${result.reason}`)
+      logger.error(`Failed to fetch OpenAPI schema for application with id ${bold(applicationId)}: ${result.reason}`)
     } else {
-      logger.info(`Successfully fetched OpenAPI schema for service with id ${bold(serviceId)}`)
+      logger.info(`Successfully fetched OpenAPI schema for application with id ${bold(applicationId)}`)
     }
   })
 }

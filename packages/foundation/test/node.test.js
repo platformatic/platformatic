@@ -1,13 +1,13 @@
 import { equal, throws } from 'node:assert'
 import test from 'node:test'
-import { checkNodeVersionForServices, features } from '../index.js'
+import { checkNodeVersionForApplications, features } from '../index.js'
 
-test('checkNodeVersionForServices - should pass for current Node.js version', () => {
+test('checkNodeVersionForApplications - should pass for current Node.js version', () => {
   // Since we're running on a supported Node.js version, this should not throw
-  checkNodeVersionForServices()
+  checkNodeVersionForApplications()
 })
 
-test('checkNodeVersionForServices - should throw for old Node.js version', t => {
+test('checkNodeVersionForApplications - should throw for old Node.js version', t => {
   // Mock process.version to simulate an old version
   const originalVersion = process.version
   Object.defineProperty(process, 'version', {
@@ -22,7 +22,7 @@ test('checkNodeVersionForServices - should throw for old Node.js version', t => 
     })
   })
 
-  throws(() => checkNodeVersionForServices(), {
+  throws(() => checkNodeVersionForApplications(), {
     name: 'Error',
     message:
       /Your current Node\.js version is v18\.0\.0, while the minimum supported version is v22\.18\.0\. Please upgrade Node\.js and try again\./

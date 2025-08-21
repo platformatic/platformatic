@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get a service openapi schema', async t => {
+test('should get a application openapi schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -17,7 +17,7 @@ test('should get a service openapi schema', async t => {
     await app.close()
   })
 
-  const openapiSchema = await app.getServiceOpenapiSchema('with-logger')
+  const openapiSchema = await app.getApplicationOpenapiSchema('with-logger')
   assert.deepStrictEqual(openapiSchema, {
     openapi: '3.0.3',
     info: {
@@ -41,7 +41,7 @@ test('should get a service openapi schema', async t => {
   })
 })
 
-test('should fail to get a service openapi schema if service does not expose it', async t => {
+test('should fail to get a application openapi schema if application does not expose it', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-openapi.json')
   const app = await createRuntime(configFile)
 
@@ -51,6 +51,6 @@ test('should fail to get a service openapi schema if service does not expose it'
     await app.close()
   })
 
-  const openapiSchema = await app.getServiceOpenapiSchema('without-openapi')
+  const openapiSchema = await app.getApplicationOpenapiSchema('without-openapi')
   assert.strictEqual(openapiSchema, null)
 })

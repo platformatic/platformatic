@@ -1,4 +1,4 @@
-export * from './lib/base.js'
+export * from './lib/capability.js'
 export * from './lib/config.js'
 export * from './lib/creation.js'
 export * as errors from './lib/errors.js'

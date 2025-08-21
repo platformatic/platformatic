@@ -17,10 +17,10 @@ test('create - should create a new project using watt.json by default', async t 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -48,21 +48,21 @@ test('create - should create a new project using watt.json by default', async t 
   })
 })
 
-test('create - should create a new project with two services', async t => {
+test('create - should create a new project with two applications', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'yes' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'yes' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'list', question: 'Which application should be exposed?', reply: 'alternate' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -97,10 +97,10 @@ test('create - should not install @platformatic/runtime as it is already availab
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -119,10 +119,10 @@ test('create - should use a custom configuration file', async t => {
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -156,10 +156,10 @@ test('create - should correctly set the chosen user entrypoint', async t => {
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -187,11 +187,11 @@ test('create - should correctly set the chosen user entrypoint', async t => {
   })
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' }
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'list', question: 'Which application should be exposed?', reply: 'alternate' }
   ])
 
   await wattpmUtils('create', '-P', 'pnpm', '-s', {
@@ -210,10 +210,10 @@ test('create - should create a new project using a different package manager', a
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -224,7 +224,7 @@ test('create - should create a new project using a different package manager', a
   })
 
   ok(createProcess.stdout.includes('Installing dependencies for the application using fake-npm'))
-  ok(createProcess.stdout.includes('Installing dependencies for the service main using fake-npm'))
+  ok(createProcess.stdout.includes('Installing dependencies for the application main using fake-npm'))
   ok(createProcess.stdout.includes('You are all set! Run `fake-npm start` to start your project.'))
 })
 
@@ -234,10 +234,10 @@ test('create - should support providing capability via command line', async t =>
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -260,7 +260,7 @@ test('create - should support providing capability via command line', async t =>
   ok(
     createProcess.stdout.includes(
       `
-? Which kind of service do you want to create? @platformatic/service
+? Which kind of application do you want to create? @platformatic/service
   first
   second
   third

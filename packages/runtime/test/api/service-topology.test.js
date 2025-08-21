@@ -9,7 +9,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const platformaticVersion = require('../../package.json').version
 
-test('should get services topology', async t => {
+test('should get applications topology', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -20,12 +20,12 @@ test('should get services topology', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
   assert.deepStrictEqual(topology, {
     entrypoint: 'serviceApp',
     production: false,
-    services: [
+    applications: [
       {
         id: 'db-app',
         type: 'db',
@@ -67,7 +67,7 @@ test('should get services topology', async t => {
   })
 })
 
-test('should get services topology (composer)', async t => {
+test('should get applications topology (composer)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
   const app = await createRuntime(configFile)
 
@@ -78,11 +78,11 @@ test('should get services topology (composer)', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
   assert.deepStrictEqual(topology, {
     production: false,
-    services: [
+    applications: [
       {
         id: 'dbApp',
         type: 'db',

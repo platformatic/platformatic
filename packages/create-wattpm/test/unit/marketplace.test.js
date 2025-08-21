@@ -18,7 +18,11 @@ const mockPool = mockAgent.get(MARKETPLACE_HOST)
 const defaultCapabilities = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
 test('should fetch capabilities from the marketplace', async () => {
-  const mockCapabilities = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
+  const mockCapabilities = [
+    { name: 'mock-application-1' },
+    { name: 'mock-application-2' },
+    { name: 'mock-application-3' }
+  ]
 
   mockPool.intercept({ path: '/templates' }).reply(200, mockCapabilities)
 
@@ -27,7 +31,11 @@ test('should fetch capabilities from the marketplace', async () => {
 })
 
 test('add custom capabilities', async () => {
-  const mockCapabilities = [{ name: 'mock-service-1' }, { name: 'mock-service-2' }, { name: 'mock-service-3' }]
+  const mockCapabilities = [
+    { name: 'mock-application-1' },
+    { name: 'mock-application-2' },
+    { name: 'mock-application-3' }
+  ]
 
   mockPool.intercept({ path: '/templates' }).reply(200, mockCapabilities)
 

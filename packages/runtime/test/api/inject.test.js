@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should inject request to service', async t => {
+test('should inject request to application', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
 
@@ -31,7 +31,7 @@ test('should inject request to service', async t => {
   assert.strictEqual(res.body, '{"hello":"world"}')
 })
 
-test('should fail inject request is service is not started', async t => {
+test('should fail inject request is application is not started', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
   await app.init()
@@ -43,6 +43,6 @@ test('should fail inject request is service is not started', async t => {
   try {
     await app.inject('with-logger', { method: 'GET', url: '/' })
   } catch (err) {
-    assert.strictEqual(err.message, "Service with id 'with-logger' is not started")
+    assert.strictEqual(err.message, "Application with id 'with-logger' is not started")
   }
 })

@@ -7,7 +7,11 @@ import { Readable } from 'node:stream'
 import { Client } from 'undici'
 import WebSocket from 'ws'
 import {
+  ApplicationNotFound,
   FailedToGetRuntimeAllLogs,
+  FailedToGetRuntimeApplicationConfig,
+  FailedToGetRuntimeApplicationEnv,
+  FailedToGetRuntimeApplications,
   FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
@@ -15,14 +19,10 @@ import {
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
-  FailedToGetRuntimeServiceConfig,
-  FailedToGetRuntimeServiceEnv,
-  FailedToGetRuntimeServices,
   FailedToReloadRuntime,
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
-  RuntimeNotFound,
-  ServiceNotFound
+  RuntimeNotFound
 } from './errors.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -146,21 +146,21 @@ export class RuntimeApiClient {
     return metadata
   }
 
-  async getRuntimeServices (pid) {
+  async getRuntimeApplications (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/v1/services',
+      path: '/api/v1/applications',
       method: 'GET'
     })
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new FailedToGetRuntimeServices(error)
+      throw new FailedToGetRuntimeApplications(error)
     }
 
-    const runtimeServices = await body.json()
-    return runtimeServices
+    const runtimeApplications = await body.json()
+    return runtimeApplications
   }
 
   async getRuntimeConfig (pid) {
@@ -180,11 +180,11 @@ export class RuntimeApiClient {
     return runtimeConfig
   }
 
-  async getRuntimeServiceConfig (pid, serviceId) {
+  async getRuntimeApplicationConfig (pid, applicationId) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/config`,
+      path: `/api/v1/applications/${applicationId}/config`,
       method: 'GET'
     })
 
@@ -198,17 +198,17 @@ export class RuntimeApiClient {
       }
 
       if (
-        jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
+        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
       ) {
-        throw new ServiceNotFound(error)
+        throw new ApplicationNotFound(error)
       }
 
-      throw new FailedToGetRuntimeServiceConfig(error)
+      throw new FailedToGetRuntimeApplicationConfig(error)
     }
 
-    const serviceConfig = await body.json()
-    return serviceConfig
+    const applicationConfig = await body.json()
+    return applicationConfig
   }
 
   async getRuntimeEnv (pid) {
@@ -228,11 +228,11 @@ export class RuntimeApiClient {
     return runtimeEnv
   }
 
-  async getRuntimeOpenapi (pid, serviceId) {
+  async getRuntimeOpenapi (pid, applicationId) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/openapi-schema`,
+      path: `/api/v1/applications/${applicationId}/openapi-schema`,
       method: 'GET'
     })
 
@@ -245,11 +245,11 @@ export class RuntimeApiClient {
     return openapi
   }
 
-  async getRuntimeServiceEnv (pid, serviceId) {
+  async getRuntimeApplicationEnv (pid, applicationId) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/env`,
+      path: `/api/v1/applications/${applicationId}/env`,
       method: 'GET'
     })
 
@@ -263,17 +263,17 @@ export class RuntimeApiClient {
       }
 
       if (
-        jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
+        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
       ) {
-        throw new ServiceNotFound(error)
+        throw new ApplicationNotFound(error)
       }
 
-      throw new FailedToGetRuntimeServiceEnv(error)
+      throw new FailedToGetRuntimeApplicationEnv(error)
     }
 
-    const serviceConfig = await body.json()
-    return serviceConfig
+    const applicationConfig = await body.json()
+    return applicationConfig
   }
 
   async reloadRuntime (pid, options = {}) {
@@ -429,11 +429,11 @@ export class RuntimeApiClient {
     return result.indexes
   }
 
-  async injectRuntime (pid, serviceId, options) {
+  async injectRuntime (pid, applicationId, options) {
     const client = this.#getUndiciClient(pid)
 
     const response = await client.request({
-      path: `/api/v1/services/${serviceId}/proxy` + options.url,
+      path: `/api/v1/applications/${applicationId}/proxy` + options.url,
       method: options.method,
       headers: options.headers,
       query: options.query,

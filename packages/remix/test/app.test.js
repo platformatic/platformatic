@@ -18,7 +18,7 @@ const envs = {
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`remix service properly response with correct headers - ${env}`, async t => {
+  test(`remix application properly response with correct headers - ${env}`, async t => {
     const { url } = await createRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/standalone'),

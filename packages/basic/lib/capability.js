@@ -32,7 +32,7 @@ export class BaseCapability extends EventEmitter {
     this.context.worker ??= { count: 1, index: 0 }
     this.standardStreams = standardStreams
 
-    this.serviceId = this.context.serviceId
+    this.applicationId = this.context.applicationId
     this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
     this.telemetryConfig = this.context.telemetryConfig
     this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
@@ -56,7 +56,7 @@ export class BaseCapability extends EventEmitter {
 
     // Setup globals
     this.registerGlobals({
-      serviceId: this.serviceId,
+      applicationId: this.applicationId,
       workerId: this.workerId,
       logLevel: this.logger.level,
       // Always use URL to avoid serialization problem in Windows
@@ -338,7 +338,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async stopCommand () {
-    const exitTimeout = this.runtimeConfig.gracefulShutdown.service
+    const exitTimeout = this.runtimeConfig.gracefulShutdown.application
 
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
@@ -380,7 +380,7 @@ export class BaseCapability extends EventEmitter {
     return {
       id: this.id,
       config: this.config,
-      serviceId: this.serviceId,
+      applicationId: this.applicationId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
       root: pathToFileURL(this.root).toString(),
@@ -430,7 +430,7 @@ export class BaseCapability extends EventEmitter {
     const pinoOptions = buildPinoOptions(
       loggerOptions,
       this.serverConfig?.logger,
-      this.serviceId,
+      this.applicationId,
       this.workerId,
       this.context,
       this.root
@@ -463,14 +463,14 @@ export class BaseCapability extends EventEmitter {
 
     if (this.childManager && this.clientWs) {
       await this.childManager.send(this.clientWs, 'collectMetrics', {
-        serviceId: this.serviceId,
+        applicationId: this.applicationId,
         workerId: this.workerId,
         metricsConfig
       })
       return
     }
 
-    await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
+    await collectMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {

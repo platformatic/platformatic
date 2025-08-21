@@ -28,7 +28,7 @@ export class ServiceCapability extends BaseCapability {
     }
 
     const config = this.config
-    this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.serviceId))
+    this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
 
     // Create the application
     this.#app = fastify({
@@ -234,8 +234,8 @@ export class ServiceCapability extends BaseCapability {
       logLevel: pinoOptions.level
     })
 
-    if (this.context?.serviceId) {
-      pinoOptions.name = this.context.serviceId
+    if (this.context?.applicationId) {
+      pinoOptions.name = this.context.applicationId
     }
 
     if (this.context?.worker?.count > 1 && this.loggerConfig?.base !== null) {

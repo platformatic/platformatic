@@ -8,46 +8,46 @@ import { wattpm } from './helper.js'
 
 test('build - should build the application', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
   await wattpm('build', buildDir)
 
-  ok(existsSync(resolve(serviceDir, 'dist/index.js')))
+  ok(existsSync(resolve(applicationDir, 'dist/index.js')))
 })
 
-test('build - should build the application from a service file', async t => {
+test('build - should build the application from an application file', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   await safeRemove(resolve(buildDir, 'watt.json'))
-  await saveConfigurationFile(resolve(serviceDir, 'watt.json'), {
+  await saveConfigurationFile(resolve(applicationDir, 'watt.json'), {
     $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
   })
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist'))
   })
 
-  await wattpm('build', serviceDir)
+  await wattpm('build', applicationDir)
 
-  ok(existsSync(resolve(serviceDir, 'dist/index.js')))
+  ok(existsSync(resolve(applicationDir, 'dist/index.js')))
 })
 
 test('build - should handle build errors', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build-error', false, 'watt.json')
-  const serviceDir = resolve(buildDir, 'web/main')
+  const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
-    await safeRemove(resolve(serviceDir, 'web/main/dist'))
+    await safeRemove(resolve(applicationDir, 'web/main/dist'))
   })
 
   const result = await wattpm('build', buildDir, { reject: false })
   deepStrictEqual(result.exitCode, 1)
-  ok(result.stdout.includes('Building service "main" has failed with exit code 1.'))
+  ok(result.stdout.includes('Building application "main" has failed with exit code 1.'))
 
-  ok(!existsSync(resolve(serviceDir, 'dist/index.js')))
+  ok(!existsSync(resolve(applicationDir, 'dist/index.js')))
 })

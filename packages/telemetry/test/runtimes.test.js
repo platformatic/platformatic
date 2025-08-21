@@ -17,7 +17,7 @@ async function getSpans (spanPaths) {
   const spans = await parseNDJson(spanPaths)
   return spans
 }
-const getAttributesForResource = (resource) => {
+const getAttributesForResource = resource => {
   return resource._rawAttributes.reduce((acc, attr) => {
     acc[attr[0]] = attr[1]
     return acc
@@ -102,7 +102,7 @@ test('configure telemetry correctly with a composer + node app', async t => {
   await sleep(500)
   const spans = await getSpans(spansPath)
 
-  // We can have spurious span (like the one from the composr to services) so we need to filter
+  // We can have spurious span (like the one from the composr to applications) so we need to filter
   // the one for the actual call
   const spanComposerServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
@@ -115,7 +115,7 @@ test('configure telemetry correctly with a composer + node app', async t => {
     if (span.kind === SpanKind.CLIENT) {
       return (
         containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer') &&
-span.attributes['url.full'] === 'http://node.plt.local/node'
+        span.attributes['url.full'] === 'http://node.plt.local/node'
       )
     }
     return false
@@ -175,7 +175,9 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
 
   const spanFastifyServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
-      return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') && span.traceId === traceId
+      return (
+        containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') && span.traceId === traceId
+      )
     }
     return false
   })
@@ -279,7 +281,9 @@ test('configure telemetry correctly with a composer + next', async t => {
 
   const spanFastifyServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
-      return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') && span.traceId === traceId
+      return (
+        containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') && span.traceId === traceId
+      )
     }
     return false
   })
@@ -313,9 +317,7 @@ test('configure telemetry correctly with a express app and additional express in
   await sleep(500)
 
   const spans = await getSpans(spansPath)
-  const expressSpans = spans.filter(
-    span => span.instrumentationScope.name === '@opentelemetry/instrumentation-express'
-  )
+  const expressSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-express')
   const httpSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-http')
 
   // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:
@@ -344,9 +346,7 @@ test('configure telemetry correctly with a ESM express app and additional expres
 
   const spans = await getSpans(spansPath)
   console.log(spans)
-  const expressSpans = spans.filter(
-    span => span.instrumentationScope.name === '@opentelemetry/instrumentation-express'
-  )
+  const expressSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-express')
   const httpSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-http')
 
   // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:

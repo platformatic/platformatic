@@ -23,15 +23,18 @@ async function verifyMiddlewareContext (t, url) {
   deepStrictEqual(statusCode, 200)
 
   const data = await body.text()
-  deepStrictEqual(data, JSON.stringify({
-    success: true,
-    message: 'middleware',
-    status: 200,
-    data: {
-      hello: 'world',
-      intercepted: true
-    }
-  }))
+  deepStrictEqual(
+    data,
+    JSON.stringify({
+      success: true,
+      message: 'middleware',
+      status: 200,
+      data: {
+        hello: 'world',
+        intercepted: true
+      }
+    })
+  )
 }
 
 async function verifyDevelopmentMiddlewareContext (t, configuration) {
@@ -56,7 +59,7 @@ const reactVersions = {
   [NEXT_VERSION_14_1]: [REACT_VERSION_18_0],
   [NEXT_VERSION_14_2]: [REACT_VERSION_18_0],
   [NEXT_VERSION_15_0]: [REACT_VERSION_18_0, REACT_VERSION_19_1],
-  [NEXT_VERSION_15_1]: [REACT_VERSION_18_0, REACT_VERSION_19_1],
+  [NEXT_VERSION_15_1]: [REACT_VERSION_18_0, REACT_VERSION_19_1]
 }
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
@@ -74,7 +77,11 @@ async function linkNext (nextVersion, reactVersion, root) {
     const modulesFolder = resolve(root, `services/frontend/node_modules/${mod}`)
 
     await safeRemove(modulesFolder)
-    await symlink(resolve(temporaryFolder, `next-${nextVersion}-${reactVersion}/node_modules/${mod}`), modulesFolder, 'dir')
+    await symlink(
+      resolve(temporaryFolder, `next-${nextVersion}-${reactVersion}/node_modules/${mod}`),
+      modulesFolder,
+      'dir'
+    )
   }
 }
 
@@ -92,7 +99,11 @@ async function installDependencies (nextVersion, reactVersion) {
   }
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-  await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`], { cwd: base })
+  await execa(
+    'pnpm',
+    ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`],
+    { cwd: base }
+  )
 }
 
 async function combine (nextVersions, configuration) {
@@ -112,40 +123,40 @@ async function combine (nextVersions, configuration) {
 
 async function run () {
   const developmentConfigurations = [
-    ...await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+    ...(await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
       id: 'compatibility',
       check: verifyDevelopmentFrontendWithPrefix,
       htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
       hmrTriggerFile,
-      language: 'js',
-    }),
-    ...await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      language: 'js'
+    })),
+    ...(await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
       id: 'middleware',
       files,
       check: verifyDevelopmentMiddlewareContext,
       htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-      language: 'js',
-    })
+      language: 'js'
+    }))
   ]
 
   verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
 
   const productionConfigurations = [
-    ...await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+    ...(await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
       id: 'compatibility',
       prefix: '/frontend',
       files,
       checks: [verifyFrontendOnPrefix],
       htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-      language: 'js',
-    }),
-    ...await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      language: 'js'
+    })),
+    ...(await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
       id: 'middleware',
       files,
       checks: [verifyMiddlewareContext],
       htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-      language: 'js',
-    })
+      language: 'js'
+    }))
   ]
 
   verifyBuildAndProductionMode(productionConfigurations)

@@ -195,7 +195,7 @@ export class Generator extends ServiceGenerator {
 
   async _getConfigFileContents () {
     const config = await super._getConfigFileContents()
-    delete config.service
+    delete config.application
     config.$schema = `https://schemas.platformatic.dev/@platformatic/db/${this.platformaticVersion}.json`
 
     config.db = {

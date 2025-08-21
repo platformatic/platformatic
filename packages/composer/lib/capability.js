@@ -1,6 +1,6 @@
 import { kMetadata, replaceEnv } from '@platformatic/foundation'
 import { ServiceCapability } from '@platformatic/service'
-import { ensureServices, platformaticComposer } from './application.js'
+import { ensureApplications, platformaticComposer } from './application.js'
 import { notHostConstraints } from './not-host-constraints.js'
 import { packageJson } from './schema.js'
 
@@ -17,20 +17,21 @@ export class ComposerCapability extends ServiceCapability {
 
     this.applicationFactory = this.context.applicationFactory ?? platformaticComposer
     this.fastifyOptions ??= {}
-    this.fastifyOptions.constraints = { notHost: notHostConstraints }
+    this.fastifyOptions.routerOptions ??= {}
+    this.fastifyOptions.routerOptions.constraints = { notHost: notHostConstraints }
   }
 
   async getBootstrapDependencies () {
-    await ensureServices(this.serviceId, this.config)
+    await ensureApplications(this.applicationId, this.config)
 
-    const composedServices = this.config.composer?.services
+    const composedApplications = this.config.composer?.applications
     const dependencies = []
 
-    if (Array.isArray(composedServices)) {
+    if (Array.isArray(composedApplications)) {
       dependencies.push(
         ...(await Promise.all(
-          composedServices.map(async service => {
-            return this.#parseDependency(service.id, service.origin)
+          composedApplications.map(async application => {
+            return this.#parseDependency(application.id, application.origin)
           })
         ))
       )
@@ -45,11 +46,11 @@ export class ComposerCapability extends ServiceCapability {
   }
 
   async getMeta () {
-    const serviceMeta = super.getMeta()
+    const applicationMeta = super.getMeta()
     const composerMeta = this.#meta ? { composer: this.#meta } : undefined
 
     return {
-      ...serviceMeta,
+      ...applicationMeta,
       ...composerMeta
     }
   }
@@ -57,11 +58,11 @@ export class ComposerCapability extends ServiceCapability {
   async isHealthy () {
     // If no dependencies (still booting), assume healthy
     if (this.#dependencies) {
-      const composedServices = this.#dependencies.map(dep => dep.id)
+      const composedApplications = this.#dependencies.map(dep => dep.id)
       const workers = await globalThis[kITC].send('getWorkers')
 
       for (const worker of Object.values(workers)) {
-        if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
+        if (composedApplications.includes(worker.application) && !worker.status.startsWith('start')) {
           globalThis[kITC].notify('event', { event: 'unhealthy' })
           return false
         }

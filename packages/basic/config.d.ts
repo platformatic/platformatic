@@ -10,6 +10,9 @@ export interface PlatformaticBasicConfig {
   runtime?: {
     preload?: string | string[];
     basePath?: string;
+    services?: {
+      [k: string]: unknown;
+    }[];
     workers?: number | string;
     logger?: {
       level: (
@@ -97,7 +100,7 @@ export interface PlatformaticBasicConfig {
     restartOnError?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
-      service: number | string;
+      application: number | string;
     };
     health?: {
       enabled?: boolean | string;
@@ -216,11 +219,11 @@ export interface PlatformaticBasicConfig {
     telemetry?: {
       enabled?: boolean | string;
       /**
-       * The name of the service. Defaults to the folder name if not specified.
+       * The name of the application. Defaults to the folder name if not specified.
        */
-      serviceName: string;
+      applicationName: string;
       /**
-       * The version of the service (optional)
+       * The version of the application (optional)
        */
       version?: string;
       /**
@@ -296,7 +299,7 @@ export interface PlatformaticBasicConfig {
       watchDisabled?: boolean;
       [k: string]: unknown;
     };
-    serviceTimeout?: number | string;
+    applicationTimeout?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;

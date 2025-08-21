@@ -8,7 +8,7 @@ const { createRuntime } = require('../helpers.js')
 const { updateFile, updateConfigFile } = require('../helpers')
 const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
 
-test('services are started with multiple workers according to the configuration', async t => {
+test('applications are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const app = await createRuntime(configFile, null, { isProduction: true })
@@ -23,15 +23,15 @@ test('services are started with multiple workers according to the configuration'
   await app.start()
   const startEvents = await startEventsPromise
 
-  ok(!startEvents.has('event=service:worker:stopped, service=service, worker=3'))
-  ok(!startEvents.has('event=service:worker:stopped, service=service, worker=4'))
+  ok(!startEvents.has('event=application:worker:stopped, application=service, worker=3'))
+  ok(!startEvents.has('event=application:worker:stopped, application=service, worker=4'))
 
   const stopEventsPromise = waitForEvents(app, expectedEvents.stop)
   await app.stop()
   await stopEventsPromise
 })
 
-test('services are started with a single workers when no workers information is specified in the files', async t => {
+test('applications are started with a single workers when no workers information is specified in the files', async t => {
   const root = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -43,7 +43,7 @@ test('services are started with a single workers when no workers information is 
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   const events = []
-  app.on('service:worker:started', payload => {
+  app.on('application:worker:started', payload => {
     events.push(payload)
   })
 
@@ -58,7 +58,7 @@ test('services are started with a single workers when no workers information is 
 })
 
 // Note: this cannot be tested in production mode as watching is always disabled
-test('can detect changes and restart all workers for a service', async t => {
+test('can detect changes and restart all workers for a application', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -81,8 +81,8 @@ test('can detect changes and restart all workers for a service', async t => {
 
   const events = waitForEvents(
     app,
-    { event: 'service:worker:changed', service: 'node', worker: 0 },
-    { event: 'service:worker:started', service: 'node', worker: 0 }
+    { event: 'application:worker:changed', application: 'node', worker: 0 },
+    { event: 'application:worker:started', application: 'node', worker: 0 }
   )
 
   await updateFile(resolve(root, 'node/index.mjs'), contents => {
@@ -105,25 +105,25 @@ test('can collect metrics with worker label', async t => {
 
   const { metrics } = await app.getMetrics()
 
-  const servicesMetrics = metrics.filter(s => {
+  const applicationsMetrics = metrics.filter(s => {
     const firstValue = s.values[0]
 
     if (!firstValue) {
       return false
     }
 
-    return 'serviceId' in firstValue.labels && 'workerId' in firstValue.labels
+    return 'applicationId' in firstValue.labels && 'workerId' in firstValue.labels
   })
 
   const received = new Set()
   ok(
-    servicesMetrics.every(s => {
+    applicationsMetrics.every(s => {
       const firstValue = s.values[0]
-      const serviceId = firstValue?.labels?.['serviceId']
+      const applicationId = firstValue?.labels?.['applicationId']
       const workerId = firstValue?.labels?.['workerId']
 
-      received.add(`${serviceId}:${workerId}`)
-      switch (serviceId) {
+      received.add(`${applicationId}:${workerId}`)
+      switch (applicationId) {
         case 'composer':
           if (features.node.reusePort) {
             return typeof workerId === 'number' && workerId >= 0 && workerId < 3
@@ -131,12 +131,12 @@ test('can collect metrics with worker label', async t => {
             return workerId === 0 || typeof workerId === 'undefined'
           }
 
-        case 'service':
+        case 'application':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 3
         case 'node':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 5
         default:
-          // No serviceId, all good
+          // No applicationId, all good
           return true
       }
     })
@@ -149,8 +149,8 @@ test('can collect metrics with worker label', async t => {
     'node:2',
     'node:3',
     'node:4',
-    'service:0',
-    'service:1',
-    'service:2'
+    'application:0',
+    'application:1',
+    'application:2'
   ])
 })

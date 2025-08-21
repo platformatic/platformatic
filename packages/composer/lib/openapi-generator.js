@@ -99,7 +99,7 @@ async function openApiComposerPlugin (app, { opts, generated }) {
             // to correctly close it in the onResponse hook
             // Note that we have 2 spans:
             // - request.span: the span of the request to the proxy
-            // - request.proxedCallSpan: the span of the request to the proxied service
+            // - request.proxedCallSpan: the span of the request to the proxied application
             request.proxedCallSpan = span
 
             headers = {
@@ -128,16 +128,16 @@ async function openApiComposerPlugin (app, { opts, generated }) {
 }
 
 export async function openApiGenerator (app, opts) {
-  if (!opts.services.some(s => s.openapi)) {
+  if (!opts.applications.some(s => s.openapi)) {
     return
   }
 
-  const { services } = opts
+  const { applications } = opts
 
   const openApiSchemas = []
   const apiByApiRoutes = {}
 
-  for (const { id, origin, openapi } of services) {
+  for (const { id, origin, openapi } of applications) {
     if (!openapi) continue
 
     let openapiConfig = null
@@ -154,7 +154,7 @@ export async function openApiGenerator (app, opts) {
     try {
       originSchema = await getOpenApiSchema(origin, openapi)
     } catch (error) {
-      app.log.error(error, `failed to fetch schema for "${id} service"`)
+      app.log.error(error, `failed to fetch schema for "${id} application"`)
       continue
     }
 
@@ -188,10 +188,10 @@ export async function openApiGenerator (app, opts) {
       components: app.composedOpenApiSchema.components
     },
     transform ({ schema, url }) {
-      for (const service of opts.services) {
-        if (!service.proxy) continue
+      for (const application of opts.applications) {
+        if (!application.proxy) continue
 
-        const prefix = service.proxy.prefix ?? ''
+        const prefix = application.proxy.prefix ?? ''
         const proxyPrefix = prefix.at(-1) === '/' ? prefix.slice(0, -1) : prefix
 
         const proxyUrls = [proxyPrefix + '/', proxyPrefix + '/*']

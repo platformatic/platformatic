@@ -3,7 +3,7 @@
 class RoundRobinMap extends Map {
   #instances
 
-  constructor (iterable, instances) {
+  constructor (iterable, instances = {}) {
     super(iterable)
     this.#instances = instances
   }
@@ -12,29 +12,37 @@ class RoundRobinMap extends Map {
     return { ...this.#instances }
   }
 
-  configure (services) {
+  configure (applications) {
     this.#instances = {}
 
-    for (const service of services) {
-      this.#instances[service.id] = { next: service.next ?? 0, count: service.workers }
+    for (const application of applications) {
+      this.#instances[application.id] = { next: application.next ?? 0, count: application.workers }
     }
   }
 
-  getCount (service) {
-    return this.#instances[service].count
+  getCount (application) {
+    if (!this.#instances[application]) {
+      return null
+    }
+
+    return this.#instances[application].count
   }
 
-  setCount (service, count) {
-    this.#instances[service].count = count
+  setCount (application, count) {
+    if (!this.#instances[application]) {
+      throw new Error(`Application ${application} is not configured.`)
+    }
+
+    this.#instances[application].count = count
   }
 
-  next (service) {
-    if (!this.#instances[service]) {
-      return undefined
+  next (application) {
+    if (!this.#instances[application]) {
+      return null
     }
 
     let worker
-    let { next, count } = this.#instances[service]
+    let { next, count } = this.#instances[application]
 
     // Try count times to get the next worker. This is to handle the case where a worker is being restarted.
     for (let i = 0; i < count; i++) {
@@ -43,14 +51,14 @@ class RoundRobinMap extends Map {
         next = 0
       }
 
-      worker = this.get(`${service}:${current}`)
+      worker = this.get(`${application}:${current}`)
 
       if (worker) {
         break
       }
     }
 
-    this.#instances[service].next = next
+    this.#instances[application].next = next
     return worker
   }
 }

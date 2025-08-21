@@ -10,7 +10,7 @@ function getArrayDifference (a, b) {
   })
 }
 
-function getServiceUrl (id) {
+function getApplicationUrl (id) {
   return `http://${id}.plt.local`
 }
 
@@ -23,5 +23,5 @@ function getRuntimeTmpDir (runtimeDir) {
 module.exports = {
   getArrayDifference,
   getRuntimeTmpDir,
-  getServiceUrl
+  getApplicationUrl
 }

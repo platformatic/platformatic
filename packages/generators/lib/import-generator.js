@@ -8,13 +8,13 @@ const { join, dirname, resolve, relative } = require('node:path')
 
 class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
-    const { serviceName, module, version, parent: runtime, ...opts } = options
+    const { applicationName, module, version, parent: runtime, ...opts } = options
     super({ ...opts, module })
 
     this.runtime = runtime
     this.setConfig({
-      serviceName,
-      servicePathEnvName: `PLT_SERVICE_${serviceName.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`,
+      applicationName,
+      applicationPathEnvName: `PLT_APPLICATION_${applicationName.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`,
       module,
       version
     })
@@ -83,9 +83,9 @@ class ImportGenerator extends BaseGenerator {
   }
 
   async _afterWriteFiles (runtime) {
-    // No need for an empty folder in the services folder
+    // No need for an empty folder in the applications folder
     if (this.config.operation === 'import') {
-      await safeRemove(join(runtime.servicesBasePath, this.config.serviceName))
+      await safeRemove(join(runtime.applicationsBasePath, this.config.applicationName))
     }
   }
 
@@ -168,9 +168,9 @@ class ImportGenerator extends BaseGenerator {
     /* c8 ignore next - else */
     let env = envObject?.contents ?? ''
 
-    // Find which key is being used for the manual services
+    // Find which key is being used for the manual applications
     let key
-    for (const candidate of new Set([runtime.servicesFolder, 'web', 'services'])) {
+    for (const candidate of new Set([runtime.applicationsFolder, 'applications', 'services', 'web'])) {
       if (Array.isArray(config[candidate])) {
         key = candidate
         break
@@ -178,23 +178,23 @@ class ImportGenerator extends BaseGenerator {
     }
 
     /* c8 ignore next - else */
-    key ??= runtime.servicesFolder ?? 'services'
-    const services = config[key] ?? []
+    key ??= runtime.applicationsFolder ?? 'applications'
+    const applications = config[key] ?? []
 
-    if (!services.some(service => service.id === this.config.serviceName)) {
-      services.push({
-        id: this.config.serviceName,
-        path: `{${this.config.servicePathEnvName}}`,
+    if (!applications.some(application => application.id === this.config.applicationName)) {
+      applications.push({
+        id: this.config.applicationName,
+        path: `{${this.config.applicationPathEnvName}}`,
         url: this.config.gitUrl
       })
     }
 
-    config[key] = services
+    config[key] = applications
 
     if (env.length > 0) {
       env += '\n'
     }
-    env += `${this.config.servicePathEnvName}=${this.config.applicationPath}`
+    env += `${this.config.applicationPathEnvName}=${this.config.applicationPath}`
 
     runtime.updateRuntimeConfig(config)
     runtime.updateRuntimeEnv(env)

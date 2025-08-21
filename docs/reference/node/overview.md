@@ -7,11 +7,11 @@ import SharedOverview from './\_shared-overview.md';
 
 # Platformatic Node
 
-The Platformatic Node allows to run a [Fastify](https://fastify.io/), [Express](https://expressjs.com/), [Koa](https://koajs.com/#) or plain Node application as a Platformatic Runtime service with no modifications.
+The Platformatic Node allows to run a [Fastify](https://fastify.io/), [Express](https://expressjs.com/), [Koa](https://koajs.com/#) or plain Node application as a Platformatic Runtime application with no modifications.
 
 ## Getting Started
 
-Create or copy your application inside the `web` or `services` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new service.
+Create or copy your application inside the `applications`, `services` or `web` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new application.
 
 You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
 
@@ -23,7 +23,7 @@ npm install @platformatic/node
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your service with the following contents:
+Create a `watt.json` in the root folder of your application with the following contents:
 
 ```json
 {
@@ -34,13 +34,13 @@ Create a `watt.json` in the root folder of your service with the following conte
 }
 ```
 
-## Specify service info
+## Specify application info
 
-Some info can be specified for the node services. Currently for this few lines of code must be added.
+Some info can be specified for the node applications. Currently for this few lines of code must be added.
 
 ### OpenAPI and GraphQL schema
 
-It's possible for the node services to expose the OpenAPI or GraphQL schemas, if any.
+It's possible for the node applications to expose the OpenAPI or GraphQL schemas, if any.
 This can be done adding few lines of code, e.g. for fastify:
 
 ```javascript
@@ -72,8 +72,8 @@ export async function build () {
 
 ### Connection String
 
-It's possible to specify if a node service uses a connection string (and which one).
-This is useful to map which service uses which database and to potentialy track database changes.
+It's possible to specify if a node application uses a connection string (and which one).
+This is useful to map which application uses which database and to potentialy track database changes.
 
 ```javascript
 import { createServer } from 'node:http'
@@ -89,19 +89,19 @@ server.listen(1)
 
 ## Architecture
 
-If your server entrypoint exports a `create` or `build` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the service is the runtime entrypoint.
+If your server entrypoint exports a `create` or `build` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.
 
 If your server entrypoint does not export a function, then Platformatic runtime will execute the function and wait for a TCP server to be started.
 
 In both cases, the listening port is always modified and chosen randomly, overriding any user or application setting.
 
-If the service uses the `commands` property then it's always responsible to start a HTTP server and the `create` or `build` functions are not supported anymore.
+If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` or `build` functions are not supported anymore.
 
-In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external service in the runtime.
+In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
-If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the service as a background service which doesn't expose any HTTP port. Alternatively, you can set the `node.hasServer` property to false in your `watt.json` file.
+If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Alternatively, you can set the `node.hasServer` property to false in your `watt.json` file.
 
-## Example services entrypoints
+## Example applications entrypoints
 
 ### Fastify with build function
 
@@ -139,7 +139,7 @@ app.get(`${prefix}/env`, (req, res) => {
 app.listen(3000)
 ```
 
-### Background only service
+### Background only application
 
 ```js
 export const hasServer = false
@@ -153,9 +153,9 @@ The Platformatic Node allows to run Typescript application with the use of custo
 
 To make Typescript work in development mode, setup a `commands.development` value which will start Node.js with a TypeScript loader.
 
-When configuring production mode instead, you have to configure both the `commands.build` and `commands.production` values. The former will be used to compile your service, while the latter will be used to start it.
+When configuring production mode instead, you have to configure both the `commands.build` and `commands.production` values. The former will be used to compile your application, while the latter will be used to start it.
 
-A complete typical setup for the service `watt.json` file will be something like this:
+A complete typical setup for the application `watt.json` file will be something like this:
 
 ```
 {

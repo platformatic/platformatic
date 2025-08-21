@@ -54,13 +54,13 @@ export function buildPinoTimestamp (timestamp) {
   return stdTimeFunctions[timestamp]
 }
 
-export function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, context, root) {
+export function buildPinoOptions (loggerConfig, serverConfig, applicationId, workerId, context, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
 
-  if (serviceId) {
-    pinoOptions.name = serviceId
+  if (applicationId) {
+    pinoOptions.name = applicationId
   }
 
   if (loggerConfig?.base) {

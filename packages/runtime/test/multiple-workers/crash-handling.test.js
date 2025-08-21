@@ -36,14 +36,14 @@ test('can restart only crashed workers when they throw an exception during start
   )
 
   const errors = []
-  app.on('service:worker:start:error', payload => {
+  app.on('application:worker:start:error', payload => {
     errors.push(payload.error)
   })
 
-  const eventsPromise = waitForEvents(app, { event: 'service:worker:start:error', service: 'node', worker: 0 })
+  const eventsPromise = waitForEvents(app, { event: 'application:worker:start:error', application: 'node', worker: 0 })
 
-  await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
@@ -80,20 +80,20 @@ test('can restart only crashed workers when they exit during start', async t => 
   )
 
   const errors = []
-  app.on('service:worker:start:error', payload => {
+  app.on('application:worker:start:error', payload => {
     errors.push(payload.error)
   })
 
-  const eventsPromise = waitForEvents(app, { event: 'service:worker:start:error', service: 'node', worker: 0 })
+  const eventsPromise = waitForEvents(app, { event: 'application:worker:start:error', application: 'node', worker: 0 })
 
-  await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
 
   deepStrictEqual(errors.length, 6)
-  deepStrictEqual(errors[0].message, 'The worker 0 of the service "node" exited prematurely with error code 1')
+  deepStrictEqual(errors[0].message, 'The worker 0 of the application "node" exited prematurely with error code 1')
 })
 
 test('can restart only crashed workers when they crash', async t => {
@@ -127,28 +127,28 @@ test('can restart only crashed workers when they crash', async t => {
   )
 
   const errors = []
-  app.on('service:worker:error', payload => {
+  app.on('application:worker:error', payload => {
     errors.push(payload)
   })
 
   const eventsPromise = waitForEvents(
     app,
-    { event: 'service:worker:error', service: 'node', worker: 0 },
-    { event: 'service:worker:error', service: 'node', worker: 2 },
-    { event: 'service:worker:error', service: 'node', worker: 4 }
+    { event: 'application:worker:error', application: 'node', worker: 0 },
+    { event: 'application:worker:error', application: 'node', worker: 2 },
+    { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
-  await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
 
-  ok(errors.find(e => e.service === 'node' && e.worker === 0))
-  ok(errors.find(e => e.service === 'node' && e.worker === 2))
-  ok(errors.find(e => e.service === 'node' && e.worker === 4))
-  ok(!errors.find(e => e.service === 'node' && e.worker === 1))
-  ok(!errors.find(e => e.service === 'node' && e.worker === 3))
+  ok(errors.find(e => e.application === 'node' && e.worker === 0))
+  ok(errors.find(e => e.application === 'node' && e.worker === 2))
+  ok(errors.find(e => e.application === 'node' && e.worker === 4))
+  ok(!errors.find(e => e.application === 'node' && e.worker === 1))
+  ok(!errors.find(e => e.application === 'node' && e.worker === 3))
 })
 
 test('can restart only crashed workers when they exit', async t => {
@@ -181,26 +181,26 @@ test('can restart only crashed workers when they exit', async t => {
   )
 
   const errors = []
-  app.on('service:worker:error', payload => {
+  app.on('application:worker:error', payload => {
     errors.push(payload)
   })
 
   const eventsPromise = waitForEvents(
     app,
-    { event: 'service:worker:error', service: 'node', worker: 0 },
-    { event: 'service:worker:error', service: 'node', worker: 2 },
-    { event: 'service:worker:error', service: 'node', worker: 4 }
+    { event: 'application:worker:error', application: 'node', worker: 0 },
+    { event: 'application:worker:error', application: 'node', worker: 2 },
+    { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
-  await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
 
-  ok(errors.find(e => e.service === 'node' && e.worker === 0))
-  ok(errors.find(e => e.service === 'node' && e.worker === 2))
-  ok(errors.find(e => e.service === 'node' && e.worker === 4))
-  ok(!errors.find(e => e.service === 'node' && e.worker === 1))
-  ok(!errors.find(e => e.service === 'node' && e.worker === 3))
+  ok(errors.find(e => e.application === 'node' && e.worker === 0))
+  ok(errors.find(e => e.application === 'node' && e.worker === 2))
+  ok(errors.find(e => e.application === 'node' && e.worker === 4))
+  ok(!errors.find(e => e.application === 'node' && e.worker === 1))
+  ok(!errors.find(e => e.application === 'node' && e.worker === 3))
 })

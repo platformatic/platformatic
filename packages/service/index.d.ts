@@ -59,7 +59,7 @@ export declare const schemaComponents: {
   proxy: JSONSchemaType<object>
   graphqlBase: JSONSchemaType<object>
   graphql: JSONSchemaType<object>
-  service: JSONSchemaType<object>
+  application: JSONSchemaType<object>
 }
 
 export declare const version: string

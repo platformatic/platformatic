@@ -19,8 +19,8 @@ async function prepareRuntime (t, name, dependencies) {
 
   await cp(resolve(fixturesDir, name), root, { recursive: true })
 
-  for (const [service, deps] of Object.entries(dependencies)) {
-    const depsRoot = resolve(root, service, 'node_modules/@platformatic')
+  for (const [application, deps] of Object.entries(dependencies)) {
+    const depsRoot = resolve(root, application, 'node_modules/@platformatic')
     await createDirectory(depsRoot)
 
     for (const dep of deps) {
@@ -31,24 +31,24 @@ async function prepareRuntime (t, name, dependencies) {
   return root
 }
 
-async function verifyResponse (baseUrl, service, expectedWorker, socket, additionalChecks) {
-  const res = await request(baseUrl + `/${service}/hello`)
+async function verifyResponse (baseUrl, application, expectedWorker, socket, additionalChecks) {
+  const res = await request(baseUrl + `/${application}/hello`)
   const json = await res.body.json()
 
   deepStrictEqual(res.statusCode, 200)
   deepStrictEqual(res.headers['x-plt-socket'], socket)
   deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
-  deepStrictEqual(json, { from: service })
+  deepStrictEqual(json, { from: application })
   additionalChecks?.(res, json)
 }
 
-async function verifyInject (client, service, expectedWorker, additionalChecks) {
-  const res = await client.request({ method: 'GET', path: `/api/v1/services/${service}/proxy/hello` })
+async function verifyInject (client, application, expectedWorker, additionalChecks) {
+  const res = await client.request({ method: 'GET', path: `/api/v1/applications/${application}/proxy/hello` })
   const json = await res.body.json()
 
   deepStrictEqual(res.statusCode, 200)
   deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
-  deepStrictEqual(json, { from: service })
+  deepStrictEqual(json, { from: application })
   additionalChecks?.(res, json)
 }
 
@@ -63,18 +63,18 @@ function getExpectedEvents (entrypoint, workers) {
   const stop = []
 
   if (!features.node.reusePort) {
-    start.push({ event: 'service:started', service: entrypoint })
-    stop.push({ event: 'service:stopped', service: entrypoint })
+    start.push({ event: 'application:started', application: entrypoint })
+    stop.push({ event: 'application:stopped', application: entrypoint })
   }
 
-  for (const [service, count] of Object.entries(workers)) {
-    if (service === entrypoint && !features.node.reusePort) {
+  for (const [application, count] of Object.entries(workers)) {
+    if (application === entrypoint && !features.node.reusePort) {
       continue
     }
 
     for (let i = 0; i < count; i++) {
-      start.push({ event: 'service:worker:started', service, worker: i })
-      stop.push({ event: 'service:worker:stopped', service, worker: i })
+      start.push({ event: 'application:worker:started', application, worker: i })
+      stop.push({ event: 'application:worker:stopped', application, worker: i })
     }
   }
 
@@ -108,14 +108,14 @@ function waitForEvents (app, ...events) {
       }
 
       if (typeof payload === 'string') {
-        payload = { service: payload }
+        payload = { application: payload }
       }
 
-      const { service, worker } = payload ?? {}
+      const { application, worker } = payload ?? {}
       let found = { event }
 
-      if (service) {
-        found.service = service
+      if (application) {
+        found.application = application
       }
 
       if (worker !== undefined) {

@@ -41,13 +41,13 @@ test('do not crash on syntax error', async t => {
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')
-  const serviceConfigFilePath = join(appDst, 'serviceAppWithLogger', 'platformatic.service.json')
+  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'platformatic.service.json')
 
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
-  const original = JSON.parse(await readFile(serviceConfigFilePath, 'utf8'))
+  const original = JSON.parse(await readFile(applicationConfigFilePath, 'utf8'))
   original.server.logger.level = 'trace'
-  await writeFile(serviceConfigFilePath, JSON.stringify(original, null, 2))
+  await writeFile(applicationConfigFilePath, JSON.stringify(original, null, 2))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
   const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })

@@ -30,7 +30,7 @@ async function patchFile (path, patch) {
 export async function patchConfig (logger, configurationFile, patchPath) {
   let runtime
   try {
-    // Determine if the configuration file is for a service or a runtime
+    // Determine if the configuration file is for an application or a runtime
     const config = await loadConfigurationFile(configurationFile)
 
     /* c8 ignore next 3 - Hard to test */
@@ -39,7 +39,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     }
 
     const mod = extractModuleFromSchemaUrl(config)
-    const isService = mod.module !== '@platformatic/runtime'
+    const isApplication = mod.module !== '@platformatic/runtime'
 
     const patchFunction = await loadModule(createRequire(configurationFile), patchPath)
 
@@ -61,35 +61,35 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     const parser = getParser(configurationFile)
     const original = {
       runtime: parser(await readFile(configurationFile, 'utf-8')),
-      services: {}
+      applications: {}
     }
 
     const loaded = {
       runtime: runtime.getRuntimeConfig(),
-      services: {}
+      applications: {}
     }
 
-    const services = Object.fromEntries(loaded.runtime.services.map(service => [service.id, service]))
+    const applications = Object.fromEntries(loaded.runtime.applications.map(application => [application.id, application]))
 
-    // Load configuration for all services
-    for (const service of loaded.runtime.services) {
-      if (!service.config) {
-        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(service.path, f)))
+    // Load configuration for all applications
+    for (const application of loaded.runtime.applications) {
+      if (!application.config) {
+        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(application.path, f)))
 
         if (candidate) {
-          service.config = resolve(service.path, candidate)
+          application.config = resolve(application.path, candidate)
         }
       }
 
-      const { id, config } = service
+      const { id, config } = application
       const parser = getParser(config)
 
-      original.services[id] = parser(await readFile(configurationFile, 'utf-8'))
-      loaded.services[id] = await runtime.getServiceConfig(id, false)
+      original.applications[id] = parser(await readFile(configurationFile, 'utf-8'))
+      loaded.applications[id] = await runtime.getApplicationConfig(id, false)
     }
 
     // Execute the patch function
-    const patches = await patchFunction(runtime, services, loaded, original)
+    const patches = await patchFunction(runtime, applications, loaded, original)
 
     // Apply patches
     if (typeof patches !== 'object') {
@@ -97,7 +97,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     }
 
     if (Array.isArray(patches.runtime)) {
-      if (isService) {
+      if (isApplication) {
         // Create a temporary file with existing configuration
         const temporaryDir = await mkdtemp(resolve(tmpdir(), 'wattpm-patch-'))
         const temporaryFile = resolve(temporaryDir, 'watt.json')
@@ -117,9 +117,9 @@ export async function patchConfig (logger, configurationFile, patchPath) {
       }
     }
 
-    if (typeof patches.services === 'object') {
-      for (const [id, patch] of Object.entries(patches.services)) {
-        const config = services[id].config
+    if (typeof patches.applications === 'object') {
+      for (const [id, patch] of Object.entries(patches.applications)) {
+        const config = applications[id].config
 
         if (Array.isArray(patch)) {
           await patchFile(config, patch)
@@ -190,7 +190,7 @@ export async function patchConfigCommand (logger, args) {
 export const help = {
   'patch-config': {
     usage: 'patch-config [root] [patch]',
-    description: 'Applies a patch file to the runtime and services configurations',
+    description: 'Applies a patch file to the runtime and applications configurations',
     args: [
       {
         name: 'root',

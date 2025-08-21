@@ -8,7 +8,7 @@ const { createRuntime } = require('./helpers.js')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('should automatically detect the entrypoint if it there is only a single service', async t => {
+test('should automatically detect the entrypoint if it there is only a single application', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-single-service.json')
   const runtime = await createRuntime(configFile)
 
@@ -20,11 +20,11 @@ test('should automatically detect the entrypoint if it there is only a single se
   })
 
   await runtime.init()
-  const { entrypoint } = await runtime.getServices()
+  const { entrypoint } = await runtime.getApplications()
 
   const config = await runtime.getRuntimeConfig()
   deepStrictEqual(config.entrypoint, 'main')
-  deepStrictEqual(config.services[0].entrypoint, true)
+  deepStrictEqual(config.applications[0].entrypoint, true)
   deepStrictEqual(entrypoint, 'main')
 })
 
@@ -40,11 +40,11 @@ test('should automatically detect the entrypoint if it there exacty a composer',
   })
 
   await runtime.init()
-  const { entrypoint } = await runtime.getServices()
+  const { entrypoint } = await runtime.getApplications()
 
   const config = await runtime.getRuntimeConfig()
   deepStrictEqual(config.entrypoint, 'composer')
-  deepStrictEqual(config.services.find(s => s.id === 'composer').entrypoint, true)
+  deepStrictEqual(config.applications.find(s => s.id === 'composer').entrypoint, true)
   deepStrictEqual(entrypoint, 'composer')
 })
 
@@ -60,13 +60,13 @@ test('should throw an exception if there are multiple composer', async t => {
   await rejects(() => createRuntime(configFile), /Cannot parse config file. Missing application entrypoint./)
 })
 
-test('should not throw if there are no services', async t => {
+test('should not throw if there are no applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-services-no-entrypoint.config.json')
 
   await createRuntime(configFile)
 })
 
-test('should throw an exception if there is an entrypoint with no services', async t => {
+test('should throw an exception if there is an entrypoint with no applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-services.config.json')
 
   await rejects(

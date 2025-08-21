@@ -6,7 +6,7 @@ import split2 from 'split2'
 import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm, wattpmUtils } from './helper.js'
 
-test('start - should use default folders for resolved services', async t => {
+test('start - should use default folders for resolved applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await prepareGitRepository(t, rootDir)
 
@@ -32,7 +32,7 @@ test('start - should use default folders for resolved services', async t => {
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Started the service "resolved"')) {
+    if (parsed.msg.startsWith('Started the application "resolved"')) {
       started = true
       break
     }
@@ -42,7 +42,7 @@ test('start - should use default folders for resolved services', async t => {
   ok(started)
 })
 
-test('start - should throw an error when a service has not been resolved', async t => {
+test('start - should throw an error when an application has not been resolved', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await prepareGitRepository(t, rootDir)
 
@@ -59,7 +59,7 @@ test('start - should throw an error when a service has not been resolved', async
       .find(l => {
         return (
           JSON.parse(l).msg ===
-          'The path for service "resolved" does not exist. Please run "wattpm resolve" and try again.'
+          'The path for application "resolved" does not exist. Please run "wattpm resolve" and try again.'
         )
       }),
     startProcess.stdout

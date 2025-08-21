@@ -12,7 +12,7 @@
     "path": "web"
   },
   "telemetry": {
-    "serviceName": "test-runtime",
+    "applicationName": "test-runtime",
     "exporter": {
       "type": "file"
     }

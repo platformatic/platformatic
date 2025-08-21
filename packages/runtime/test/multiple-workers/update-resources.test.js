@@ -6,7 +6,7 @@ const path = require('node:path')
 const { createRuntime } = require('../helpers.js')
 const { waitForEvents } = require('./helper')
 
-async function prepareRuntime (t, servicesId, fixture) {
+async function prepareRuntime (t, applicationsId, fixture) {
   const appPath = path.join(__dirname, '..', '..', 'fixtures', fixture)
   const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
   t.after(async () => {
@@ -16,15 +16,15 @@ async function prepareRuntime (t, servicesId, fixture) {
   await runtime.start()
 
   const resourcesInfo = {}
-  for (const serviceId of servicesId) {
-    resourcesInfo[serviceId] = await runtime.getServiceResourcesInfo(serviceId)
+  for (const applicationId of applicationsId) {
+    resourcesInfo[applicationId] = await runtime.getApplicationResourcesInfo(applicationId)
   }
 
   return { runtime, resourcesInfo }
 }
 
-test('should throw error for invalid parameters of updateServicesResources', async t => {
-  const serviceId = 'node'
+test('should throw error for invalid parameters of updateApplicationsResources', async t => {
+  const applicationId = 'node'
   const appPath = path.join(__dirname, '..', '..', 'fixtures', 'update-service-workers')
   const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
   t.after(async () => {
@@ -34,21 +34,24 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   await runtime.start()
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: 'non-existent-service',
+        application: 'non-existent-service',
         workers: 2
       }
     ])
     assert.fail('Expected error was not thrown')
   } catch (err) {
-    assert.equal(err.message, 'Service non-existent-service not found. Available services are: node, service, composer')
+    assert.equal(
+      err.message,
+      'Application non-existent-service not found. Available applications are: node, service, composer'
+    )
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         workers: 0
       }
     ])
@@ -58,9 +61,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         workers: 'invalid'
       }
     ])
@@ -70,27 +73,27 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([])
+    await runtime.updateApplicationsResources([])
     assert.fail('Expected error was not thrown for empty array')
   } catch (err) {
     assert.equal(err.message, 'Invalid argument: "updates" must have at least one element')
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
         workers: 2
       }
     ])
-    assert.fail('Expected error was not thrown for missing service')
+    assert.fail('Expected error was not thrown for missing application')
   } catch (err) {
-    assert.equal(err.message, 'Invalid argument: "service" must be a string')
+    assert.equal(err.message, 'Invalid argument: "application" must be a string')
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: { maxHeapTotal: -1 }
       }
     ])
@@ -100,9 +103,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: { maxHeapTotal: 'not-a-memory-size' }
       }
     ])
@@ -112,9 +115,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: {
           maxHeapTotal: false
         }
@@ -129,9 +132,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: { maxYoungGeneration: -1 }
       }
     ])
@@ -141,9 +144,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: { maxYoungGeneration: 'not-a-memory-size' }
       }
     ])
@@ -153,9 +156,9 @@ test('should throw error for invalid parameters of updateServicesResources', asy
   }
 
   try {
-    await runtime.updateServicesResources([
+    await runtime.updateApplicationsResources([
       {
-        service: serviceId,
+        application: applicationId,
         health: {
           maxYoungGeneration: false
         }
@@ -172,62 +175,62 @@ test('should throw error for invalid parameters of updateServicesResources', asy
 
 const variations = [1, -1, 2, -2]
 for (const variation of variations) {
-  test(`should ${variation > 0 ? 'increase' : 'decrease'} multiple services workers by ${Math.abs(variation)}`, async t => {
-    const servicesId = ['node', 'service']
-    const { runtime, resourcesInfo } = await prepareRuntime(t, servicesId, 'update-service-workers')
+  test(`should ${variation > 0 ? 'increase' : 'decrease'} multiple applications workers by ${Math.abs(variation)}`, async t => {
+    const applicationsId = ['node', 'service']
+    const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-workers')
 
     const currentConfig = runtime.getRuntimeConfig()
 
     const current = {}
     const update = {}
-    for (const serviceId of servicesId) {
-      current[serviceId] = currentConfig.services.find(s => s.id === serviceId)
-      update[serviceId] = current[serviceId].workers + variation
+    for (const applicationId of applicationsId) {
+      current[applicationId] = currentConfig.applications.find(s => s.id === applicationId)
+      update[applicationId] = current[applicationId].workers + variation
     }
 
-    for (const serviceId of servicesId) {
+    for (const applicationId of applicationsId) {
       assert.equal(
-        resourcesInfo[serviceId].workers,
-        current[serviceId].workers,
-        `Service "${serviceId}" should have ${current[serviceId].workers} workers on start`
+        resourcesInfo[applicationId].workers,
+        current[applicationId].workers,
+        `Application "${applicationId}" should have ${current[applicationId].workers} workers on start`
       )
     }
 
-    const servicesEvents = []
-    runtime.on('service:started', event => {
-      servicesEvents.push(event)
+    const applicationsEvents = []
+    runtime.on('application:started', event => {
+      applicationsEvents.push(event)
     })
 
     const eventsPromise = waitForEvents(
       runtime,
-      ...servicesId.map(serviceId => {
+      ...applicationsId.map(applicationId => {
         if (variation > 0) {
-          return { event: 'service:worker:started', service: serviceId, worker: update[serviceId] - 1 }
+          return { event: 'application:worker:started', application: applicationId, worker: update[applicationId] - 1 }
         } else {
-          return { event: 'service:worker:stopped', service: serviceId, worker: update[serviceId] }
+          return { event: 'application:worker:stopped', application: applicationId, worker: update[applicationId] }
         }
       })
     )
 
-    await runtime.updateServicesResources([
-      ...servicesId.map(serviceId => ({
-        service: serviceId,
-        workers: update[serviceId]
+    await runtime.updateApplicationsResources([
+      ...applicationsId.map(applicationId => ({
+        application: applicationId,
+        workers: update[applicationId]
       }))
     ])
 
     await eventsPromise
 
-    for (const serviceId of servicesId) {
-      const info = await runtime.getServiceResourcesInfo(serviceId)
+    for (const applicationId of applicationsId) {
+      const info = await runtime.getApplicationResourcesInfo(applicationId)
       assert.equal(
         info.workers,
-        update[serviceId],
-        `Service "${serviceId}" should have ${update[serviceId]} workers after update`
+        update[applicationId],
+        `Application "${applicationId}" should have ${update[applicationId]} workers after update`
       )
     }
 
-    deepStrictEqual(servicesEvents, [])
+    deepStrictEqual(applicationsEvents, [])
   })
 }
 
@@ -256,47 +259,47 @@ for (const heap of heapCases) {
   const newHeapTotal = heap.maxHeapTotal
   const newYoungGeneration = heap.maxYoungGeneration
 
-  test(`should update services ${testLabel(newHeapTotal, newYoungGeneration)}`, async t => {
-    const servicesId = ['node', 'service']
-    const { runtime, resourcesInfo } = await prepareRuntime(t, servicesId, 'update-service-heap')
+  test(`should update applications ${testLabel(newHeapTotal, newYoungGeneration)}`, async t => {
+    const applicationsId = ['node', 'service']
+    const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-heap')
 
     const expectedEvents = []
-    for (const serviceId of servicesId) {
-      for (let i = 0; i < resourcesInfo[serviceId].workers; i++) {
-        expectedEvents.push({ event: 'service:worker:started', service: serviceId, worker: i })
+    for (const applicationId of applicationsId) {
+      for (let i = 0; i < resourcesInfo[applicationId].workers; i++) {
+        expectedEvents.push({ event: 'application:worker:started', application: applicationId, worker: i })
       }
     }
 
     const eventsPromise = waitForEvents(runtime, expectedEvents)
 
-    await runtime.updateServicesResources([
-      ...servicesId.map(serviceId => ({
-        service: serviceId,
+    await runtime.updateApplicationsResources([
+      ...applicationsId.map(applicationId => ({
+        application: applicationId,
         health: { maxHeapTotal: newHeapTotal, maxYoungGeneration: newYoungGeneration }
       }))
     ])
 
     await eventsPromise
 
-    for (const serviceId of servicesId) {
-      const info = await runtime.getServiceResourcesInfo(serviceId)
+    for (const applicationId of applicationsId) {
+      const info = await runtime.getApplicationResourcesInfo(applicationId)
       assert.equal(
         info.workers,
-        resourcesInfo[serviceId].workers,
-        `Service "${serviceId}" should have same number of workers before and after update`
+        resourcesInfo[applicationId].workers,
+        `Application "${applicationId}" should have same number of workers before and after update`
       )
       if (newHeapTotal) {
         assert.equal(
           info.health.maxHeapTotal,
           expectedNewHeap,
-          `Service "${serviceId}" should have ${expectedNewHeap} maxHeapTotal after update`
+          `Application "${applicationId}" should have ${expectedNewHeap} maxHeapTotal after update`
         )
       }
       if (newYoungGeneration) {
         assert.equal(
           info.health.maxYoungGeneration,
           expectedNewYoungGeneration,
-          `Service "${serviceId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
+          `Application "${applicationId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
         )
       }
     }
@@ -304,35 +307,35 @@ for (const heap of heapCases) {
 
   const variations = [1, -1, 2, -2]
   for (const variation of variations) {
-    test(`should update services ${testLabel(newHeapTotal, newYoungGeneration)} and ${variation > 0 ? 'increase' : 'decrease'} workers by ${Math.abs(variation)} at the same time`, async t => {
-      const servicesId = ['node', 'service']
-      const { runtime, resourcesInfo } = await prepareRuntime(t, servicesId, 'update-service-heap')
+    test(`should update applications ${testLabel(newHeapTotal, newYoungGeneration)} and ${variation > 0 ? 'increase' : 'decrease'} workers by ${Math.abs(variation)} at the same time`, async t => {
+      const applicationsId = ['node', 'service']
+      const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-heap')
 
       const currentResources = {}
       const updateResources = {}
-      for (const serviceId of servicesId) {
-        currentResources[serviceId] = resourcesInfo[serviceId]
-        updateResources[serviceId] = {
-          workers: currentResources[serviceId].workers + variation,
+      for (const applicationId of applicationsId) {
+        currentResources[applicationId] = resourcesInfo[applicationId]
+        updateResources[applicationId] = {
+          workers: currentResources[applicationId].workers + variation,
           health: {
             maxHeapTotal: newHeapTotal,
             maxYoungGeneration: newYoungGeneration
           }
         }
       }
-      const expectedReport = servicesId.map(serviceId => {
+      const expectedReport = applicationsId.map(applicationId => {
         let workerOp, workerValues, updated
 
         if (variation > 0) {
           workerOp = 'started'
-          workerValues = new Array(variation).fill(0).map((_, i) => currentResources[serviceId].workers + i)
-          updated = new Array(currentResources[serviceId].workers).fill(0).map((_, i) => i)
+          workerValues = new Array(variation).fill(0).map((_, i) => currentResources[applicationId].workers + i)
+          updated = new Array(currentResources[applicationId].workers).fill(0).map((_, i) => i)
         } else {
           workerOp = 'stopped'
           workerValues = new Array(Math.abs(variation))
             .fill(0)
-            .map((_, i) => currentResources[serviceId].workers - i - 1)
-          updated = new Array(updateResources[serviceId].workers).fill(0).map((_, i) => i)
+            .map((_, i) => currentResources[applicationId].workers - i - 1)
+          updated = new Array(updateResources[applicationId].workers).fill(0).map((_, i) => i)
         }
 
         const expectedHealth = {}
@@ -344,15 +347,15 @@ for (const heap of heapCases) {
         }
 
         return {
-          service: serviceId,
+          application: applicationId,
           workers: {
-            current: currentResources[serviceId].workers,
-            new: updateResources[serviceId].workers,
+            current: currentResources[applicationId].workers,
+            new: updateResources[applicationId].workers,
             [workerOp]: workerValues,
             success: true
           },
           health: {
-            current: currentResources[serviceId].health,
+            current: currentResources[applicationId].health,
             new: expectedHealth,
             updated,
             success: true
@@ -361,29 +364,29 @@ for (const heap of heapCases) {
       })
 
       const expectedEvents = []
-      for (const serviceId of servicesId) {
+      for (const applicationId of applicationsId) {
         if (variation > 0) {
           expectedEvents.push({
-            event: 'service:worker:started',
-            service: serviceId,
-            worker: updateResources[serviceId].workers - 1
+            event: 'application:worker:started',
+            application: applicationId,
+            worker: updateResources[applicationId].workers - 1
           })
         } else {
           expectedEvents.push({
-            event: 'service:worker:stopped',
-            service: serviceId,
-            worker: updateResources[serviceId].workers
+            event: 'application:worker:stopped',
+            application: applicationId,
+            worker: updateResources[applicationId].workers
           })
         }
       }
 
       const eventsPromise = waitForEvents(runtime, expectedEvents)
 
-      const report = await runtime.updateServicesResources([
-        ...servicesId.map(serviceId => ({
-          service: serviceId,
-          workers: updateResources[serviceId].workers,
-          health: updateResources[serviceId].health
+      const report = await runtime.updateApplicationsResources([
+        ...applicationsId.map(applicationId => ({
+          application: applicationId,
+          workers: updateResources[applicationId].workers,
+          health: updateResources[applicationId].health
         }))
       ])
 
@@ -391,25 +394,25 @@ for (const heap of heapCases) {
 
       assert.deepEqual(report, expectedReport, 'Report should be equal to expected report')
 
-      for (const serviceId of servicesId) {
-        const info = await runtime.getServiceResourcesInfo(serviceId)
+      for (const applicationId of applicationsId) {
+        const info = await runtime.getApplicationResourcesInfo(applicationId)
         assert.equal(
           info.workers,
-          updateResources[serviceId].workers,
-          `Service "${serviceId}" should have ${updateResources[serviceId].workers} workers after update`
+          updateResources[applicationId].workers,
+          `Application "${applicationId}" should have ${updateResources[applicationId].workers} workers after update`
         )
         if (newHeapTotal) {
           assert.equal(
             info.health.maxHeapTotal,
             expectedNewHeap,
-            `Service "${serviceId}" should have ${expectedNewHeap} maxHeapTotal after update`
+            `Application "${applicationId}" should have ${expectedNewHeap} maxHeapTotal after update`
           )
         }
         if (newYoungGeneration) {
           assert.equal(
             info.health.maxYoungGeneration,
             expectedNewYoungGeneration,
-            `Service "${serviceId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
+            `Application "${applicationId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
           )
         }
       }
@@ -417,14 +420,14 @@ for (const heap of heapCases) {
   }
 
   test(`should update only ${testLabel(newHeapTotal, newYoungGeneration)} because workers are the same as current ones`, async t => {
-    const servicesId = ['node', 'service']
-    const { runtime, resourcesInfo } = await prepareRuntime(t, servicesId, 'update-service-heap')
+    const applicationsId = ['node', 'service']
+    const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-heap')
 
     const currentResources = {}
     const updateResources = {}
-    for (const serviceId of servicesId) {
-      currentResources[serviceId] = resourcesInfo[serviceId]
-      updateResources[serviceId] = {
+    for (const applicationId of applicationsId) {
+      currentResources[applicationId] = resourcesInfo[applicationId]
+      updateResources[applicationId] = {
         health: {
           maxHeapTotal: newHeapTotal,
           maxYoungGeneration: newYoungGeneration
@@ -432,61 +435,61 @@ for (const heap of heapCases) {
       }
     }
 
-    const servicesEvents = []
-    runtime.on('service:started', event => {
-      servicesEvents.push(event)
+    const applicationsEvents = []
+    runtime.on('application:started', event => {
+      applicationsEvents.push(event)
     })
 
     const events = []
-    for (const serviceId of servicesId) {
-      events.push({ event: 'service:worker:started', service: serviceId, worker: 0 })
+    for (const applicationId of applicationsId) {
+      events.push({ event: 'application:worker:started', application: applicationId, worker: 0 })
     }
     const eventsPromise = waitForEvents(runtime, events)
 
-    await runtime.updateServicesResources([
-      ...servicesId.map(serviceId => ({
-        service: serviceId,
-        workers: currentResources[serviceId].workers,
-        health: updateResources[serviceId].health
+    await runtime.updateApplicationsResources([
+      ...applicationsId.map(applicationId => ({
+        application: applicationId,
+        workers: currentResources[applicationId].workers,
+        health: updateResources[applicationId].health
       }))
     ])
 
     await eventsPromise
 
-    for (const serviceId of servicesId) {
-      const info = await runtime.getServiceResourcesInfo(serviceId)
+    for (const applicationId of applicationsId) {
+      const info = await runtime.getApplicationResourcesInfo(applicationId)
       assert.equal(
         info.workers,
-        currentResources[serviceId].workers,
-        `Service "${serviceId}" should have ${currentResources[serviceId].workers} workers after update`
+        currentResources[applicationId].workers,
+        `Application "${applicationId}" should have ${currentResources[applicationId].workers} workers after update`
       )
 
       if (newHeapTotal) {
         assert.equal(
           info.health.maxHeapTotal,
           expectedNewHeap,
-          `Service "${serviceId}" should have ${expectedNewHeap} maxHeapTotal after update`
+          `Application "${applicationId}" should have ${expectedNewHeap} maxHeapTotal after update`
         )
       }
       if (newYoungGeneration) {
         assert.equal(
           info.health.maxYoungGeneration,
           expectedNewYoungGeneration,
-          `Service "${serviceId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
+          `Application "${applicationId}" should have ${expectedNewYoungGeneration} maxYoungGeneration after update`
         )
       }
     }
 
-    deepStrictEqual(servicesEvents, [])
+    deepStrictEqual(applicationsEvents, [])
   })
 }
 
 test('should report on failures', async t => {
   const { runtime } = await prepareRuntime(t, ['node'], 'update-service-failure')
 
-  const report = await runtime.updateServicesResources([
+  const report = await runtime.updateApplicationsResources([
     {
-      service: 'node',
+      application: 'node',
       workers: 3,
       health: {
         maxHeapTotal: '512MB'
@@ -496,7 +499,7 @@ test('should report on failures', async t => {
 
   assert.deepEqual(report, [
     {
-      service: 'node',
+      application: 'node',
       workers: {
         current: 1,
         new: 3,

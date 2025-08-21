@@ -1,7 +1,7 @@
 export default function () {
   return {
     runtime: 'STRING',
-    services: {
+    applications: {
       main: 123
     }
   }

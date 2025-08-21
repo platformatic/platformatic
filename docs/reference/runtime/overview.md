@@ -13,7 +13,7 @@ Platformatic Runtime provides a unified environment for running multiple Platfor
 
 - **Programmatic start**: Start Platformatic Runtime [programmatically](../runtime/programmatic.md) in tests or other applications for enhanced integration.
 - **Monorepo support**: Efficiently manage applications within a monorepo setup.
-- **Interservice communication**: Enable [interservice communication](#interservice-communication) using private message passing to streamline service interactions.
+- **Inter-application communication**: Enable [inter-application communication](#inter-application-communication) using private message passing to streamline application interactions.
 
 ## Standalone usage
 
@@ -37,15 +37,15 @@ The following configuration file can be used to start a new Platformatic Runtime
 ## Platformatic Runtime context
 
 Every Platformatic Runtime application can be run as a standalone application
-or as a Platformatic Runtime service. Runtime service enables certain compile and runtime optimizations, enhancing performance and resource management. You can see the [interservice communication](#interservice-communication) for more features.
+or as a Platformatic Runtime application. Runtime application enables certain compile and runtime optimizations, enhancing performance and resource management. You can see the [inter-application communication](#inter-application-communication) for more features.
 
-## Interservice communication
+## Inter-application communication
 
 Platformatic Runtime allows multiple microservice applications to run
 within a single process. Only the entrypoint binds to an operating system
 port and can be reached from outside the runtime.
 
-Within the runtime, all interservice communication happens by injecting HTTP
+Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
 is handled by [`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher) and [`undici-thread-interceptor`](https://www.npmjs.com/package/undici-thread-interceptor).
 
@@ -58,15 +58,15 @@ addressed to `awesome.plt.local` to the corresponding Fastify server.
 
 ## Threading and networking model
 
-By default, each service is executed in a separate and dedicated [Node.js Worker Thread](https://nodejs.org/dist/latest/docs/api/worker_threads.html) within the same process.
+By default, each application is executed in a separate and dedicated [Node.js Worker Thread](https://nodejs.org/dist/latest/docs/api/worker_threads.html) within the same process.
 This means that `worker.isMainThread` will return `false` and there are some limitations like the inability to use `process.chdir`.
 
-The service application runtime configuration is accessible via the `workerData` and `globalThis.platformatic` objects, which allows to bypass such limitations.
+The application application runtime configuration is accessible via the `workerData` and `globalThis.platformatic` objects, which allows to bypass such limitations.
 
-If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting `globalThis.platformatic` and the interservice communication automatically.
+If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting `globalThis.platformatic` and the interapplication communication automatically.
 
 # TrustProxy
 
-For each service in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name.This is useful for services behind a proxy, ensuring the original client's IP address is preserved. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details.
+For each application in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name.This is useful for applications behind a proxy, ensuring the original client's IP address is preserved. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details.
 
 <Issues />

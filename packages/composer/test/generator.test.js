@@ -69,7 +69,7 @@ test('config', async t => {
     `https://schemas.platformatic.dev/@platformatic/composer/${svc.platformaticVersion}.json`
   )
   assert.deepEqual(contents.composer, {
-    services: [
+    applications: [
       {
         id: 'example',
         origin: '{PLT_EXAMPLE_ORIGIN}',
@@ -113,7 +113,7 @@ test('support packages', async t => {
     svc.setConfig({
       isRuntimeContext: true,
       plugin: false,
-      serviceName: 'my-composer'
+      applicationName: 'my-composer'
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -173,7 +173,7 @@ test('runtime context should have env prefix', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
-    serviceName: 'my-service',
+    applicationName: 'my-service',
     env: {
       FOO: 'bar',
       BAZ: 'baz'
@@ -199,7 +199,7 @@ test('runtime context should not have server.config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
-    serviceName: 'my-service'
+    applicationName: 'my-service'
   })
 
   await svc.prepare()
@@ -213,7 +213,7 @@ test('runtime context do not generate .env file', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
-    serviceName: 'my-service'
+    applicationName: 'my-service'
   })
 
   await svc.prepare()

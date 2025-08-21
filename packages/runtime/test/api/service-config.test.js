@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get service config', async t => {
+test('should get application config', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const app = await createRuntime(configFile)
 
@@ -17,18 +17,18 @@ test('should get service config', async t => {
     await app.close()
   })
 
-  const serviceConfig = await app.getServiceConfig('with-logger')
+  const applicationConfig = await app.getApplicationConfig('with-logger')
 
-  delete serviceConfig.$schema
+  delete applicationConfig.$schema
 
-  assert.deepStrictEqual(serviceConfig, {
+  assert.deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger
+      logger: applicationConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
@@ -48,18 +48,18 @@ test('do not force enable metrics without the management api', async t => {
     await app.close()
   })
 
-  const serviceConfig = await app.getServiceConfig('with-logger')
+  const applicationConfig = await app.getApplicationConfig('with-logger')
 
-  delete serviceConfig.$schema
+  delete applicationConfig.$schema
 
-  assert.deepStrictEqual(serviceConfig, {
+  assert.deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger
+      logger: applicationConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
@@ -79,18 +79,18 @@ test('do not force enable metrics if they are set to false', async t => {
     await app.close()
   })
 
-  const serviceConfig = await app.getServiceConfig('multi-plugin-service')
+  const applicationConfig = await app.getApplicationConfig('multi-plugin-service')
 
-  delete serviceConfig.$schema
+  delete applicationConfig.$schema
 
-  assert.deepStrictEqual(serviceConfig, {
+  assert.deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger
+      logger: applicationConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
@@ -113,7 +113,7 @@ test('do not force enable metrics if they are set to false', async t => {
   })
 })
 
-test('set serviceId in metrics as label in all services', async t => {
+test('set applicationId in metrics as label in all applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics.json')
   const app = await createRuntime(configFile)
 
@@ -123,18 +123,18 @@ test('set serviceId in metrics as label in all services', async t => {
     await app.close()
   })
 
-  const serviceConfig = await app.getServiceConfig('with-logger')
+  const applicationConfig = await app.getApplicationConfig('with-logger')
 
-  delete serviceConfig.$schema
+  delete applicationConfig.$schema
 
-  assert.deepStrictEqual(serviceConfig, {
+  assert.deepStrictEqual(applicationConfig, {
     application: {},
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger
+      logger: applicationConfig.server.logger
     },
     service: { openapi: true },
     plugins: {

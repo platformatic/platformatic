@@ -3,8 +3,8 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import {
   createComposerInRuntime,
-  createGraphqlService,
-  createOpenApiService,
+  createGraphqlApplication,
+  createOpenApiApplication,
   REFRESH_TIMEOUT,
   testEntityRoutes,
   waitForRestart
@@ -13,24 +13,24 @@ import {
 test('composer should restart when graphql changes', async t => {
   const schema1 = 'type Query {\n  rnd: Int\n}'
   const schema2 = 'type Query {\n  greetings: String\n}'
-  const graphql1 = await createGraphqlService(t, {
+  const graphql1 = await createGraphqlApplication(t, {
     schema: schema1,
     resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
   })
   const graphql1Origin = await graphql1.listen()
   const port = graphql1.server.address().port
 
-  const graphql1a = await createGraphqlService(t, {
+  const graphql1a = await createGraphqlApplication(t, {
     schema: schema2,
     resolvers: { Query: { greetings: () => 'welcome' } }
   })
 
-  const openapi1 = await createOpenApiService(t, ['users'])
+  const openapi1 = await createOpenApiApplication(t, ['users'])
   const openapi1Origin = await openapi1.listen()
 
   const runtime = await createComposerInRuntime(t, 'composer-external-watch', {
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Origin,
@@ -79,21 +79,21 @@ test('composer should restart when graphql changes', async t => {
 test('composer should restart when openapi changes', async t => {
   const schema = 'type Query {\n  rnd: Int\n}'
 
-  const graphql1 = await createGraphqlService(t, {
+  const graphql1 = await createGraphqlApplication(t, {
     schema,
     resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
   })
   const graphql1Origin = await graphql1.listen()
 
-  const openapi1 = await createOpenApiService(t, ['users'])
+  const openapi1 = await createOpenApiApplication(t, ['users'])
   const openapi1Origin = await openapi1.listen()
 
   const port = openapi1.server.address().port
-  const openapi1a = await createOpenApiService(t, ['posts'])
+  const openapi1a = await createOpenApiApplication(t, ['posts'])
 
   const runtime = await createComposerInRuntime(t, 'composer-external-watch', {
     composer: {
-      services: [
+      applications: [
         {
           id: 'graphql1',
           origin: graphql1Origin,

@@ -7,7 +7,7 @@ This section contains comprehensive technical specifications, configuration refe
 The reference documentation is organized by **user mental model** rather than internal package structure, making it easier to find what you need based on what you want to accomplish:
 
 ### 🏗️ Watt (Node.js Application Server)
-The core application server that runs and orchestrates all your services. This is the primary product that everything else runs within.
+The core application server that runs and orchestrates all your applications. This is the primary product that everything else runs within.
 
 - **Overview** - What Watt is and how it works
 - **Configuration** - Complete configuration options
@@ -16,12 +16,12 @@ The core application server that runs and orchestrates all your services. This i
 ### 🛠️ CLI Tools
 Command-line tools for creating, managing, and deploying Platformatic applications.
 
-### 🌐 Services & APIs
-Services that run within Watt to handle different aspects of your application:
+### 🌐 Applications & APIs
+Applications that run within Watt to handle different aspects of your application:
 
-- **Database Service** - Auto-generated APIs from your database schema
-- **HTTP Service** - Custom application logic and APIs  
-- **API Gateway (Composer)** - Aggregate multiple services into unified APIs
+- **Database Application** - Auto-generated APIs from your database schema
+- **HTTP Application** - Custom application logic and APIs  
+- **API Gateway (Composer)** - Aggregate multiple applications into unified APIs
 - **Client SDK** - Generated clients for consuming APIs
 
 ### 🎨 Framework Integrations (Capabilities)
@@ -34,7 +34,7 @@ Framework integrations that let you run frontend applications alongside your API
 - **Node.js** - Generic Node.js applications
 
 ### ⚙️ Runtime & Orchestration
-Development and production runtime environment for managing multiple services.
+Development and production runtime environment for managing multiple applications.
 
 ### 🗄️ SQL Data Layer
 Low-level components for database integration and API generation:
@@ -49,7 +49,7 @@ Low-level components for database integration and API generation:
 - **New to Platformatic?** Start with [Getting Started](/docs/getting-started/quick-start-watt)
 - **Need to solve a specific problem?** Check [How-to Guides](/docs/guides/build-modular-monolith)
 - **Need specific examples?** Check [How-to Guides](/docs/guides/build-modular-monolith) for practical solutions
-- **Looking for specific configuration options?** Use the search or browse the relevant service section above
+- **Looking for specific configuration options?** Use the search or browse the relevant application section above
 
 ## Configuration Patterns
 

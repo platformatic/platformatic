@@ -41,7 +41,7 @@ function toComposerOptions (options, app) {
 }
 
 export function createSupergraph ({ sdl = null, resolvers = {} } = {}) {
-  // in case of temporary failures of subgraphs on watching, the service can restart if no subgraphs are (tempoary) available
+  // in case of temporary failures of subgraphs on watching, the application can restart if no subgraphs are (tempoary) available
   if (!sdl) {
     return {
       sdl: placeholderSdl,
@@ -56,23 +56,23 @@ export function isSameGraphqlSchema (a, b) {
   return a?.sdl === b?.sdl
 }
 
-export function serviceToSubgraphConfig (service) {
-  if (!service.graphql) {
+export function applicationToSubgraphConfig (application) {
+  if (!application.graphql) {
     return
   }
   return {
-    name: service.graphql.name || service.id || service.origin,
-    entities: service.graphql.entities,
+    name: application.graphql.name || application.id || application.origin,
+    entities: application.graphql.entities,
     server: {
-      host: service.graphql.host || service.origin,
-      composeEndpoint: service.graphql.composeEndpoint,
-      graphqlEndpoint: service.graphql.graphqlEndpoint
+      host: application.graphql.host || application.origin,
+      composeEndpoint: application.graphql.composeEndpoint,
+      graphqlEndpoint: application.graphql.graphqlEndpoint
     }
   }
 }
 
-export async function fetchGraphqlSubgraphs (services, options, app) {
-  const subgraphs = services.map(serviceToSubgraphConfig).filter(s => !!s)
+export async function fetchGraphqlSubgraphs (applications, options, app) {
+  const subgraphs = applications.map(applicationToSubgraphConfig).filter(s => !!s)
   const composer = await compose({ ...toComposerOptions(options, app), subgraphs })
 
   return createSupergraph({

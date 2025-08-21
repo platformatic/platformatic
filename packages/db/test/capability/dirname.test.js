@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { create } from '../../index.js'
 
-test('get service info via capability api', async t => {
+test('get application info via capability api', async t => {
   const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'sqlite-basic')
   const config = join(projectRoot, 'platformatic.db.json')
 

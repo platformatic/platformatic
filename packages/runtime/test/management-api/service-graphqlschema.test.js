@@ -9,7 +9,7 @@ const { isatty } = require('tty')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get service graphql schema', async (t) => {
+test('should get application graphql schema', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -34,7 +34,7 @@ test('should get service graphql schema', async (t) => {
 
   const res = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-db/graphql-schema',
+    path: '/api/v1/applications/service-db/graphql-schema',
   })
 
   const { statusCode, body } = res

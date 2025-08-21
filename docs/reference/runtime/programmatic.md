@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 # Programmatic API
 
-Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `composer`, and `runtime`, simplifying operations across different services.
+Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `composer`, and `runtime`, simplifying operations across different applications.
 
 ## `create()`
 

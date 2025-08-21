@@ -1,21 +1,21 @@
 import { BaseCapability } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
 import {
+  ApplicationCapability,
+  ServerInstance as ApplicationInstance,
   Configuration,
-  ConfigurationOptions,
-  ServiceCapability,
-  ServerInstance as ServiceInstance
+  ConfigurationOptions
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
 import { PlatformaticComposerConfig } from './config'
 
-export { PlatformaticApplication } from '@platformatic/service'
+export { PlatformaticService } from '@platformatic/service'
 export { PlatformaticComposerConfig } from './config'
 
-export type ComposerCapability = ServiceCapability<PlatformaticComposerConfig>
+export type ComposerCapability = ApplicationCapability<PlatformaticComposerConfig>
 
-export type ServerInstance = ServiceInstance<PlatformaticComposerConfig>
+export type ServerInstance = ApplicationInstance<PlatformaticComposerConfig>
 
 type ComposerConfiguration = Configuration<PlatformaticComposerConfig>
 
@@ -40,10 +40,10 @@ export declare const packageJson: Record<string, unknown>
 export declare const schema: JSONSchemaType<PlatformaticComposerConfig>
 
 export declare const schemaComponents: {
-  openApiService: JSONSchemaType<object>
+  openApiApplication: JSONSchemaType<object>
   entityResolver: JSONSchemaType<object>
   entities: JSONSchemaType<object>
-  graphqlService: JSONSchemaType<object>
+  graphqlApplication: JSONSchemaType<object>
   graphqlComposerOptions: JSONSchemaType<object>
   composer: JSONSchemaType<object>
   types: JSONSchemaType<object>

@@ -10,7 +10,7 @@ import { join } from 'path'
 import semver from 'semver'
 import {
   addPrefixToEnv,
-  convertServiceNameToPrefix,
+  convertApplicationNameToPrefix,
   findComposerConfigFile,
   findDBConfigFile,
   findRuntimeConfigFile,
@@ -199,16 +199,16 @@ test('isFileAccessible', async () => {
   await safeRemove(tmpDir1)
 })
 
-test('should convert service name to env prefix', async () => {
+test('should convert application name to env prefix', async () => {
   const expectations = {
-    'my-service': 'MY_SERVICE',
+    'my-application': 'MY_APPLICATION',
     a: 'A',
-    MY_SERVICE: 'MY_SERVICE',
+    MY_APPLICATION: 'MY_APPLICATION',
     asderas123: 'ASDERAS123'
   }
 
   Object.entries(expectations).forEach(exp => {
-    const converted = convertServiceNameToPrefix(exp[0])
+    const converted = convertApplicationNameToPrefix(exp[0])
     equal(exp[1], converted)
   })
 })

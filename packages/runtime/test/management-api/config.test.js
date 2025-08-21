@@ -18,12 +18,12 @@ test('should get runtime config', async t => {
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -33,7 +33,7 @@ test('should get runtime config', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/config',
+    path: '/api/v1/config'
   })
 
   assert.strictEqual(statusCode, 200)
@@ -43,9 +43,9 @@ test('should get runtime config', async t => {
   assert.strictEqual(runtimeConfig.watch, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: [],
+    exclude: []
   })
   assert.deepStrictEqual(runtimeConfig.managementApi, {
-    logs: { maxSize: 6 },
+    logs: { maxSize: 6 }
   })
 })

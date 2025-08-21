@@ -3,7 +3,7 @@
 const { generateDashedName } = require('@platformatic/foundation')
 const { readFile } = require('node:fs/promises')
 const {
-  convertServiceNameToPrefix,
+  convertApplicationNameToPrefix,
   extractEnvVariablesFromText,
   getPackageConfigurationObject,
   PLT_ROOT,
@@ -14,7 +14,7 @@ const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
-const { getServiceTemplateFromSchemaUrl } = require('./utils')
+const { getApplicationTemplateFromSchemaUrl } = require('./utils')
 const { flattenObject } = require('./utils')
 const { envStringToObject } = require('./utils')
 /* c8 ignore start */
@@ -27,7 +27,7 @@ const fakeLogger = {
 }
 /* c8 ignore start */
 
-const DEFAULT_SERVICES_PATH = 'services'
+const DEFAULT_SERVICES_PATH = 'applications'
 
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
@@ -63,7 +63,7 @@ class BaseGenerator extends FileGenerator {
       dependencies: {},
       devDependencies: {},
       isRuntimeContext: false,
-      serviceName: '',
+      applicationName: '',
       envPrefix: '',
       env: {},
       defaultEnv: {},
@@ -150,12 +150,12 @@ class BaseGenerator extends FileGenerator {
     }
 
     if (this.config.isRuntimeContext) {
-      if (!this.config.serviceName) {
-        this.config.serviceName = generateDashedName()
+      if (!this.config.applicationName) {
+        this.config.applicationName = generateDashedName()
       }
       // set envPrefix
-      if (this.config.serviceName && !this.config.envPrefix) {
-        this.config.envPrefix = convertServiceNameToPrefix(this.config.serviceName)
+      if (this.config.applicationName && !this.config.envPrefix) {
+        this.config.envPrefix = convertApplicationNameToPrefix(this.config.applicationName)
       }
     }
     this.setEnvVars(this.config.env)
@@ -291,7 +291,7 @@ class BaseGenerator extends FileGenerator {
         contents.plugins = {}
       }
       contents.plugins.packages = this.packages.map(packageDefinition => {
-        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
+        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.applicationName)
         if (Object.keys(packageConfigOutput.env).length > 0) {
           const envForPackages = {}
           Object.entries(packageConfigOutput.env).forEach(kv => {
@@ -340,7 +340,7 @@ class BaseGenerator extends FileGenerator {
 
   async generatePackageJson () {
     const template = {
-      name: `${this.config.serviceName}`,
+      name: `${this.config.applicationName}`,
       scripts: {
         start: 'platformatic start',
         test: 'borp'
@@ -417,17 +417,17 @@ class BaseGenerator extends FileGenerator {
     this.packages.push(pkg)
   }
 
-  async loadFromDir (serviceName, runtimeRootPath) {
+  async loadFromDir (applicationName, runtimeRootPath) {
     const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
-    const servicesPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
-    const servicePkgJsonFileData = JSON.parse(
-      await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8')
+    const applicationsPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
+    const applicationPkgJsonFileData = JSON.parse(
+      await readFile(join(runtimeRootPath, applicationsPath, applicationName, 'platformatic.json'), 'utf-8')
     )
     const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
-    const serviceNamePrefix = convertServiceNameToPrefix(serviceName)
+    const applicationNamePrefix = convertApplicationNameToPrefix(applicationName)
     const plugins = []
-    if (servicePkgJsonFileData.plugins && servicePkgJsonFileData.plugins.packages) {
-      for (const pkg of servicePkgJsonFileData.plugins.packages) {
+    if (applicationPkgJsonFileData.plugins && applicationPkgJsonFileData.plugins.packages) {
+      for (const pkg of applicationPkgJsonFileData.plugins.packages) {
         const flattened = flattenObject(pkg)
         const output = {
           name: flattened.name,
@@ -438,9 +438,9 @@ class BaseGenerator extends FileGenerator {
             .filter(([key, value]) => key.indexOf('options.') === 0 && flattened[key].startsWith('{PLT_'))
             .forEach(([key, value]) => {
               const runtimeEnvVarKey = value.replace(/[{}]/g, '')
-              const serviceEnvVarKey = runtimeEnvVarKey.replace(`PLT_${serviceNamePrefix}_`, '')
+              const applicationEnvVarKey = runtimeEnvVarKey.replace(`PLT_${applicationNamePrefix}_`, '')
               const option = {
-                name: serviceEnvVarKey,
+                name: applicationEnvVarKey,
                 path: key.replace('options.', ''),
                 type: 'string',
                 value: runtimeEnv[runtimeEnvVarKey]
@@ -454,8 +454,8 @@ class BaseGenerator extends FileGenerator {
     }
 
     return {
-      name: serviceName,
-      template: getServiceTemplateFromSchemaUrl(servicePkgJsonFileData.$schema),
+      name: applicationName,
+      template: getApplicationTemplateFromSchemaUrl(applicationPkgJsonFileData.$schema),
       fields: [],
       plugins
     }

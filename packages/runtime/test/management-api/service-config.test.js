@@ -9,7 +9,7 @@ const { getPlatformaticVersion } = require('@platformatic/foundation')
 const { createRuntime } = require('../helpers.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get service config', async t => {
+test('should get application config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -34,15 +34,15 @@ test('should get service config', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/config'
+    path: '/api/v1/applications/service-1/config'
   })
 
   assert.strictEqual(statusCode, 200)
 
-  const serviceConfig = await body.json()
+  const applicationConfig = await body.json()
   const platformaticVersion = await getPlatformaticVersion()
 
-  assert.deepStrictEqual(serviceConfig, {
+  assert.deepStrictEqual(applicationConfig, {
     $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',

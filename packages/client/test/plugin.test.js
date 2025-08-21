@@ -449,7 +449,7 @@ test('configureClient getHeaders', async t => {
   })
 })
 
-test('serviceId', async t => {
+test('applicationId', async t => {
   const agent = getGlobalDispatcher()
   t.after(() => {
     setGlobalDispatcher(agent)
@@ -481,7 +481,7 @@ test('serviceId', async t => {
     fullRequest: false,
     fullResponse: false,
     type: 'openapi',
-    serviceId: 'movies',
+    applicationId: 'movies',
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 

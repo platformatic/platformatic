@@ -61,7 +61,7 @@ const createHelp = {
     {
       usage: '-M, --module <name>',
       description:
-        'An additional module (or a comma separated list of modules) to use as service generator (it can be used multiple times)'
+        'An additional module (or a comma separated list of modules) to use as application generator (it can be used multiple times)'
     }
   ]
 }

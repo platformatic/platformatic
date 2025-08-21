@@ -2,13 +2,13 @@ import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import test from 'node:test'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import { createFromConfig, createOpenApiService, testEntityRoutes } from '../helper.js'
+import { createFromConfig, createOpenApiApplication, testEntityRoutes } from '../helper.js'
 
 const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should add custom composer route to the composed schema', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const composer = await createFromConfig(t, {
@@ -18,7 +18,7 @@ test('should add custom composer route to the composed schema', async t => {
       }
     },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,

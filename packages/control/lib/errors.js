@@ -4,7 +4,7 @@ export const ERROR_PREFIX = 'PLT_CTR'
 
 export const RuntimeNotFound = createError(`${ERROR_PREFIX}_RUNTIME_NOT_FOUND`, 'Runtime not found.')
 
-export const ServiceNotFound = createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service not found.')
+export const ApplicationNotFound = createError(`${ERROR_PREFIX}_APPLICATION_NOT_FOUND`, 'Application not found.')
 
 export const MissingRequestURL = createError(`${ERROR_PREFIX}_MISSING_REQUEST_URL`, 'Request URL is required.')
 
@@ -13,9 +13,9 @@ export const FailedToGetRuntimeMetadata = createError(
   'Failed to get runtime metadata %s.'
 )
 
-export const FailedToGetRuntimeServices = createError(
-  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICES`,
-  'Failed to get runtime services %s.'
+export const FailedToGetRuntimeApplications = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_APPLICATIONS`,
+  'Failed to get runtime applications %s.'
 )
 
 export const FailedToGetRuntimeEnv = createError(
@@ -48,14 +48,14 @@ export const FailedToGetRuntimeConfig = createError(
   'Failed to get runtime config %s.'
 )
 
-export const FailedToGetRuntimeServiceEnv = createError(
-  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICE_ENV`,
-  'Failed to get runtime service environment variables %s.'
+export const FailedToGetRuntimeApplicationEnv = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_APPLICATION_ENV`,
+  'Failed to get runtime application environment variables %s.'
 )
 
-export const FailedToGetRuntimeServiceConfig = createError(
-  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICE_CONFIG`,
-  'Failed to get runtime service config %s.'
+export const FailedToGetRuntimeApplicationConfig = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_APPLICATION_CONFIG`,
+  'Failed to get runtime application config %s.'
 )
 
 export const FailedToGetRuntimeHistoryLogs = createError(

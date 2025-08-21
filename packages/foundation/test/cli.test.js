@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import {
+  applicationToEnvVariable,
   createCliLogger,
   fallbackToTemporaryConfigFile,
   findRuntimeConfigurationFile,
@@ -15,7 +16,6 @@ import {
   logFatalError,
   logo,
   parseArgs,
-  serviceToEnvVariable,
   setExecutableId,
   setExecutableName,
   setVerbose
@@ -264,49 +264,49 @@ test('getRoot - should ignore additional positional arguments', () => {
   strictEqual(result, join(process.cwd(), 'test-dir'))
 })
 
-test('serviceToEnvVariable - should convert simple service name', () => {
-  const result = serviceToEnvVariable('service1')
-  strictEqual(result, 'PLT_SERVICE_SERVICE1_PATH')
+test('applicationToEnvVariable - should convert simple application name', () => {
+  const result = applicationToEnvVariable('application1')
+  strictEqual(result, 'PLT_APPLICATION_APPLICATION1_PATH')
 })
 
-test('serviceToEnvVariable - should convert service name with hyphens', () => {
-  const result = serviceToEnvVariable('my-service')
-  strictEqual(result, 'PLT_SERVICE_MY_SERVICE_PATH')
+test('applicationToEnvVariable - should convert application name with hyphens', () => {
+  const result = applicationToEnvVariable('my-application')
+  strictEqual(result, 'PLT_APPLICATION_MY_APPLICATION_PATH')
 })
 
-test('serviceToEnvVariable - should convert service name with dots', () => {
-  const result = serviceToEnvVariable('my.service')
-  strictEqual(result, 'PLT_SERVICE_MY_SERVICE_PATH')
+test('applicationToEnvVariable - should convert application name with dots', () => {
+  const result = applicationToEnvVariable('my.application')
+  strictEqual(result, 'PLT_APPLICATION_MY_APPLICATION_PATH')
 })
 
-test('serviceToEnvVariable - should convert service name with spaces', () => {
-  const result = serviceToEnvVariable('my service')
-  strictEqual(result, 'PLT_SERVICE_MY_SERVICE_PATH')
+test('applicationToEnvVariable - should convert application name with spaces', () => {
+  const result = applicationToEnvVariable('my application')
+  strictEqual(result, 'PLT_APPLICATION_MY_APPLICATION_PATH')
 })
 
-test('serviceToEnvVariable - should convert service name with special characters', () => {
-  const result = serviceToEnvVariable('my@service#123')
-  strictEqual(result, 'PLT_SERVICE_MY_SERVICE_123_PATH')
+test('applicationToEnvVariable - should convert application name with special characters', () => {
+  const result = applicationToEnvVariable('my@application#123')
+  strictEqual(result, 'PLT_APPLICATION_MY_APPLICATION_123_PATH')
 })
 
-test('serviceToEnvVariable - should handle lowercase to uppercase conversion', () => {
-  const result = serviceToEnvVariable('lowercase')
-  strictEqual(result, 'PLT_SERVICE_LOWERCASE_PATH')
+test('applicationToEnvVariable - should handle lowercase to uppercase conversion', () => {
+  const result = applicationToEnvVariable('lowercase')
+  strictEqual(result, 'PLT_APPLICATION_LOWERCASE_PATH')
 })
 
-test('serviceToEnvVariable - should handle mixed case', () => {
-  const result = serviceToEnvVariable('MixedCase')
-  strictEqual(result, 'PLT_SERVICE_MIXEDCASE_PATH')
+test('applicationToEnvVariable - should handle mixed case', () => {
+  const result = applicationToEnvVariable('MixedCase')
+  strictEqual(result, 'PLT_APPLICATION_MIXEDCASE_PATH')
 })
 
-test('serviceToEnvVariable - should handle numbers', () => {
-  const result = serviceToEnvVariable('service123')
-  strictEqual(result, 'PLT_SERVICE_SERVICE123_PATH')
+test('applicationToEnvVariable - should handle numbers', () => {
+  const result = applicationToEnvVariable('application123')
+  strictEqual(result, 'PLT_APPLICATION_APPLICATION123_PATH')
 })
 
-test('serviceToEnvVariable - should handle empty string', () => {
-  const result = serviceToEnvVariable('')
-  strictEqual(result, 'PLT_SERVICE__PATH')
+test('applicationToEnvVariable - should handle empty string', () => {
+  const result = applicationToEnvVariable('')
+  strictEqual(result, 'PLT_APPLICATION__PATH')
 })
 
 test('findRuntimeConfigurationFile - should find runtime config file', async () => {

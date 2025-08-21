@@ -19,7 +19,7 @@ const sidebars = {
       type: 'category',
       label: 'Overview',
       collapsed: false,
-      items: ['Overview']
+      items: ['overview']
     },
 
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)

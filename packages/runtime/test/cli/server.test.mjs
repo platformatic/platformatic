@@ -96,7 +96,7 @@ test('does start if node inspector flag is provided by VS Code', async t => {
     for (const message of messages) {
       stdout += message
 
-      if (/Started the service/.test(stdout)) {
+      if (/Started the application/.test(stdout)) {
         found = true
       }
     }
