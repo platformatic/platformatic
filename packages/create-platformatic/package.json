@@ -11,7 +11,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "pnpm run lint && borp --timeout 1200000 --concurrency 1",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
     "lint": "eslint",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;BlueOak-1.0.0'"
   },
@@ -22,7 +22,7 @@
     "create-wattpm": "workspace:*"
   },
   "devDependencies": {
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "import-in-the-middle": "^1.14.2",
     "neostandard": "^0.12.0"

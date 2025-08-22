@@ -6,7 +6,6 @@
   ],
   "devDependencies": {
     "fastify": "^4.26.2",
-    "borp": "^0.17.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {

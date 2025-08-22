@@ -5,8 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --timeout 1200000",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout 1200000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -26,8 +25,8 @@
   "dependencies": {
     "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/node": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/node": "workspace:*",
     "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
@@ -35,7 +34,7 @@
     "@fastify/vite": "^7.0.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",

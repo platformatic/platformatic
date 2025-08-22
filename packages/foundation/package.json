@@ -6,8 +6,7 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
-    "coverage": "c8 -r html -r text node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
     "lint": "eslint"
   },
   "repository": {
@@ -38,8 +37,8 @@
     "yaml": "^2.4.1"
   },
   "devDependencies": {
-    "borp": "^0.20.0",
     "c8": "^10.0.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",

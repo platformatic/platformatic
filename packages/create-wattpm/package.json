@@ -12,16 +12,16 @@
     "create-wattpm": "./bin/cli.js"
   },
   "scripts": {
-    "test:cli": "borp --pattern \"test/cli/*test.js\" --timeout=1200000 --concurrency=1",
-    "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" borp --pattern \"test/unit/*test.js\" --timeout=1200000 --concurrency=1",
     "test": "npm run test:unit && npm run test:cli",
+    "test:cli": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/cli/*test.js",
+    "test:unit": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/unit/*test.js",
     "lint": "eslint"
   },
   "license": "Apache-2.0",
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "dependencies": {
-    "@platformatic/generators": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
     "columnify": "^1.6.0",
     "execa": "^9.0.0",
     "inquirer": "^9.2.16",
@@ -39,8 +39,8 @@
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
-    "borp": "^0.20.0",
     "c8": "^10.0.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "cross-env": "^7.0.3",
     "eslint": "9",
     "esmock": "^2.6.4",

@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --timeout=120000 --concurrency=1",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -18,7 +18,7 @@
     "@databases/pg": "^5.5.0",
     "@opentelemetry/instrumentation-express": "^0.52.0",
     "@opentelemetry/instrumentation-pg": "^0.55.0",
-    "borp": "^0.20.1",
+    "cleaner-spec-reporter": "^0.5.0",
     "express": "^5.1.0",
     "fastify": "^5.4.0",
     "neostandard": "^0.12.2",

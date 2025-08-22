@@ -7,12 +7,12 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
-    "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql borp --timeout=1200000 --concurrency=1 test/*.test.js",
-    "test:mariadb": "DB=mariadb borp --timeout=1200000 --concurrency=1",
-    "test:mysql": "DB=mysql borp --timeout=1200000 --concurrency=1",
-    "test:mysql8": "DB=mysql8 borp --timeout=1200000 --concurrency=1",
-    "test:sqlite": "DB=sqlite borp --timeout=1200000 --concurrency=1",
+    "test": "npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test:postgresql": "DB=postgresql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test:mariadb": "DB=mariadb node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
     "test:typescript": "tsd"
   },
   "repository": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.4.0",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
@@ -42,9 +42,9 @@
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@fastify/swagger": "^9.0.0",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
-    "@platformatic/foundation": "workspace:*",
     "@scalar/fastify-api-reference": "1.33.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",

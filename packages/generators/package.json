@@ -7,7 +7,8 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --timeout=1200000 -C -X fixtures -X test --concurrency=1 && tsd"
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "posttest": "tsd"
   },
   "keywords": [],
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -23,8 +24,8 @@
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "borp": "^0.20.0",
     "c8": "^10.0.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
     "tsd": "^0.32.0",

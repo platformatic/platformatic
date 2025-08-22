@@ -1,8 +1,7 @@
 {
   "name": "first",
   "scripts": {
-    "start": "platformatic start",
-    "test": "borp"
+    "start": "platformatic start"
   },
   "dependencies": {
     "@platformatic/service": "^2.63.3"
