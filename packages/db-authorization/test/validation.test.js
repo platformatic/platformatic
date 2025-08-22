@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, fail, ok } = require('node:assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
-const auth = require('..')
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { equal, fail, ok } from 'node:assert'
+import { test } from 'node:test'
+import auth from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -37,7 +35,7 @@ async function createBasicPages (db, sql) {
 
 test('wrong entity name', async () => {
   const app = fastify({
-    pluginTimeout: 3000,
+    pluginTimeout: 3000
   })
   app.register(core, {
     ...connInfo,
@@ -47,34 +45,37 @@ test('wrong entity name', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'pages',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'pages',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -84,13 +85,13 @@ test('wrong entity name', async () => {
     await app.ready()
     fail('should not be ready')
   } catch (err) {
-    equal(err.message, 'Unknown entity \'pages\' in authorization rule 0. Did you mean \'page\'?')
+    equal(err.message, "Unknown entity 'pages' in authorization rule 0. Did you mean 'page'?")
   }
 })
 
 test('missing entity', async () => {
   const app = fastify({
-    pluginTimeout: 3000,
+    pluginTimeout: 3000
   })
   app.register(core, {
     ...connInfo,
@@ -100,20 +101,22 @@ test('missing entity', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'anonymous',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+    rules: [
+      {
+        role: 'anonymous',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()

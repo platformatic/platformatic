@@ -1,35 +1,31 @@
-'use strict'
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const { getRequestFromContext, getRoles } = require('../lib/utils')
+import { deepEqual, equal, throws } from 'node:assert'
+import { test } from 'node:test'
+import { getRequestFromContext, getRoles } from '../lib/utils.js'
 
 const ANONYMOUS_ROLE = 'anonymous'
-test('should extract request from context', (t) => {
-  const { equal } = tspl(t, { plan: 1 })
+test('should extract request from context', t => {
   const fakeContext = {
     reply: {
-      request: 'hooray',
-    },
+      request: 'hooray'
+    }
   }
   const res = getRequestFromContext(fakeContext)
   equal(res, 'hooray')
 })
 
-test('should throw', (t) => {
-  const { throws } = tspl(t, { plan: 2 })
+test('should throw', t => {
   throws(() => {
     getRequestFromContext()
   })
 
   throws(() => {
     getRequestFromContext({
-      noReplyHere: true,
+      noReplyHere: true
     })
   })
 })
 
-test('should get roles from user', (t) => {
-  const { deepEqual } = tspl(t, { plan: 4 })
+test('should get roles from user', t => {
   const roleKey = 'role'
   {
     const requestWithNoUser = {}
@@ -38,31 +34,30 @@ test('should get roles from user', (t) => {
   {
     const requestWithStringRoles = {
       user: {
-        [roleKey]: 'role1,role2,role3',
-      },
+        [roleKey]: 'role1,role2,role3'
+      }
     }
     deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
   }
   {
     const requestWithArrayRoles = {
       user: {
-        [roleKey]: ['role1', 'role2', 'role3'],
-      },
+        [roleKey]: ['role1', 'role2', 'role3']
+      }
     }
     deepEqual(getRoles(requestWithArrayRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
   }
   {
     const requestWithOtherKindOfRole = {
       user: {
-        [roleKey]: { role1: true, role2: true },
-      },
+        [roleKey]: { role1: true, role2: true }
+      }
     }
     deepEqual(getRoles(requestWithOtherKindOfRole, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
   }
 })
 
-test('should get roles from user with path', (t) => {
-  const { deepEqual } = tspl(t, { plan: 4 })
+test('should get roles from user with path', t => {
   const roleKey = 'role'
   const isRolePath = true
   {
@@ -73,8 +68,8 @@ test('should get roles from user with path', (t) => {
     // Past is set, but it is not a path
     const requestWithStringRoles = {
       user: {
-        [roleKey]: 'role1,role2,role3',
-      },
+        [roleKey]: 'role1,role2,role3'
+      }
     }
     deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
   }
@@ -87,14 +82,10 @@ test('should get roles from user with path', (t) => {
       user: {
         resource_access: {
           'rest-api': {
-            roles: [
-              'role1',
-              'role2',
-              'role3',
-            ],
-          },
-        },
-      },
+            roles: ['role1', 'role2', 'role3']
+          }
+        }
+      }
     }
     deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
   }
@@ -107,10 +98,10 @@ test('should get roles from user with path', (t) => {
       user: {
         resource_access: {
           'rest-api': {
-            roles: 'role1,role2,role3',
-          },
-        },
-      },
+            roles: 'role1,role2,role3'
+          }
+        }
+      }
     }
     deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
   }

@@ -1,14 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { strictEqual as equal, notStrictEqual as not, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const sqlOpenAPI = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-const tspl = require('@matteo.collina/tspl')
-
-test('basic hooks', async (t) => {
-  const { deepEqual: same, strictEqual: equal, notStrictEqual: not } = tspl(t, { plan: 15 })
+test('basic hooks', async t => {
   const app = fastify()
   t.after(() => {
     return app.close()
@@ -41,27 +38,27 @@ test('basic hooks', async (t) => {
           not(ctx.app, undefined, 'ctx.app is defined')
           if (!input.id) {
             same(input, {
-              title: 'Hello',
+              title: 'Hello'
             })
 
             return original({
               input: {
-                title: 'Hello from hook',
+                title: 'Hello from hook'
               },
-              fields,
+              fields
             })
           } else {
             same(input, {
               id: 1,
-              title: 'Hello World',
+              title: 'Hello World'
             })
 
             return original({
               input: {
                 id: 1,
-                title: 'Hello from hook 2',
+                title: 'Hello from hook 2'
               },
-              fields,
+              fields
             })
           }
         },
@@ -70,19 +67,19 @@ test('basic hooks', async (t) => {
           not(args.ctx.app, undefined, 'ctx.app is defined')
           same(args.where, {
             id: {
-              eq: 1,
-            },
+              eq: 1
+            }
           })
           args.where = {
             id: {
-              in: ['2'],
-            },
+              in: ['2']
+            }
           }
           same(args.fields, ['id', 'title'])
           return original(args)
-        },
-      },
-    },
+        }
+      }
+    }
   })
   app.register(sqlOpenAPI)
 
@@ -93,20 +90,24 @@ test('basic hooks', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello',
-      },
+        title: 'Hello'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
-      id: 1,
-      title: 'Hello from hook',
-    }, 'POST /pages response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello from hook'
+      },
+      'POST /pages response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1?fields=id,title',
+      url: '/pages/1?fields=id,title'
     })
     equal(res.statusCode, 404, 'GET /pages/1 status code')
   }
@@ -116,22 +117,25 @@ test('basic hooks', async (t) => {
       method: 'PUT',
       url: '/pages/1',
       body: {
-        title: 'Hello World',
-      },
+        title: 'Hello World'
+      }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
-      id: 1,
-      title: 'Hello from hook 2',
-    }, 'PUT /pages/1 response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello from hook 2'
+      },
+      'PUT /pages/1 response'
+    )
   }
 })
 
-test('delete hook', async (t) => {
+test('delete hook', async t => {
   const app = fastify()
   t.after(() => app.close())
 
-  const { deepEqual: same, strictEqual: equal, notStrictEqual: not } = tspl(t, { plan: 8 })
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -155,14 +159,14 @@ test('delete hook', async (t) => {
           not(args.ctx.app, undefined, 'ctx.app is defined')
           same(args.where, {
             id: {
-              eq: 1,
-            },
+              eq: 1
+            }
           })
           same(args.fields, ['id', 'title'])
           return original(args)
-        },
-      },
-    },
+        }
+      }
+    }
   })
   app.register(sqlOpenAPI)
 
@@ -172,32 +176,40 @@ test('delete hook', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello',
-      },
+        title: 'Hello'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
-      id: 1,
-      title: 'Hello',
-    }, 'POST /pages response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello'
+      },
+      'POST /pages response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/pages/1?fields=id,title',
+      url: '/pages/1?fields=id,title'
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    same(res.json(), {
-      id: 1,
-      title: 'Hello',
-    }, 'DELETE /pages response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello'
+      },
+      'DELETE /pages response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1',
+      url: '/pages/1'
     })
     equal(res.statusCode, 404, 'GET /pages/1 status code')
   }

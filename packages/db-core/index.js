@@ -1,7 +1,6 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const sqlMapper = require('@platformatic/sql-mapper')
+import sqlMapper from '@platformatic/sql-mapper'
+import fp from 'fastify-plugin'
+import { createRequire } from 'node:module'
 
 const defaults = [
   {
@@ -18,7 +17,9 @@ const defaults = [
   }
 ]
 
-module.exports = fp(async function (app, opts) {
+export default fp(async function (app, opts) {
+  const require = createRequire(import.meta.url)
+
   await app.register(sqlMapper, {
     ...opts
   })
@@ -84,4 +85,4 @@ function shouldRegister (opts, configKey) {
   return true
 }
 
-module.exports.connect = sqlMapper.connect
+export { connect } from '@platformatic/sql-mapper'

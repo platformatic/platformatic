@@ -1,8 +1,9 @@
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+import { deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get meta for db applications in runtime schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -16,7 +17,7 @@ test('should get meta for db applications in runtime schema', async t => {
 
   const dbMeta = await app.getApplicationMeta('db-app')
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
-  assert.deepStrictEqual(dbMeta, {
+  deepStrictEqual(dbMeta, {
     composer: {
       needsRootTrailingSlash: false,
       prefix: '/db-app/',

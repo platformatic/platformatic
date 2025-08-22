@@ -1,12 +1,10 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should stop application by application id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -17,7 +15,7 @@ test('should stop application by application id', async t => {
 
   {
     const applicationDetails = await app.getApplicationDetails('service-1')
-    assert.strictEqual(applicationDetails.status, 'started')
+    strictEqual(applicationDetails.status, 'started')
   }
 
   const client = new Client(
@@ -43,11 +41,11 @@ test('should stop application by application id', async t => {
   })
   await body.text()
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   {
     const applicationDetails = await app.getApplicationDetails('service-1', true)
-    assert.strictEqual(applicationDetails.status, 'stopped')
+    strictEqual(applicationDetails.status, 'stopped')
   }
 })
 
@@ -62,7 +60,7 @@ test('should start stopped application by application id', async t => {
 
   {
     const applicationDetails = await app.getApplicationDetails('service-1', true)
-    assert.strictEqual(applicationDetails.status, 'stopped')
+    strictEqual(applicationDetails.status, 'stopped')
   }
 
   const client = new Client(
@@ -88,11 +86,11 @@ test('should start stopped application by application id', async t => {
   })
   await body.text()
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   {
     const applicationDetails = await app.getApplicationDetails('service-1')
-    assert.strictEqual(applicationDetails.status, 'started')
+    strictEqual(applicationDetails.status, 'started')
   }
 })
 
@@ -126,8 +124,8 @@ test('should proxy request to the application', async t => {
     path: '/api/v1/applications/service-2/proxy/hello'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const data = await body.json()
-  assert.deepStrictEqual(data, { service: 'service-2' })
+  deepStrictEqual(data, { service: 'service-2' })
 })

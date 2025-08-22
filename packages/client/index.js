@@ -1,20 +1,22 @@
-'use strict'
-
-const { getGlobalDispatcher, request, interceptors } = require('undici')
-const { join } = require('path')
-const fs = require('fs/promises')
-const Ajv = require('ajv')
-const $RefParser = require('@apidevtools/json-schema-ref-parser')
-const { createHash } = require('node:crypto')
-const validateFunctionCache = {}
-const errors = require('./lib/errors')
-const camelCase = require('camelcase')
-const { kHeaders, kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
+import $RefParser from '@apidevtools/json-schema-ref-parser'
+import Ajv from 'ajv'
+import camelCase from 'camelcase'
+import fs from 'fs/promises'
+import { createHash } from 'node:crypto'
+import { join } from 'path'
+import * as undici from 'undici'
+import * as errors from './lib/errors.js'
+import { kGetHeaders, kHeaders, kTelemetryContext } from './lib/symbols.js'
 
 const {
   FormData,
-  errors: { UndiciError }
-} = require('undici')
+  errors: { UndiciError },
+  getGlobalDispatcher,
+  request,
+  interceptors
+} = undici
+
+const validateFunctionCache = {}
 
 function noop () {}
 
@@ -31,151 +33,10 @@ const abstractLogger = {
   }
 }
 
-function generateOperationId (path, method, methodMeta, all) {
-  let operationId = null
-  // use methodMeta.operationId only if it's present AND it is a valid string that can be
-  // concatenated without converting it
-  // i.e
-  // operationId = "MyOperationId123" is valid
-  // operationId = "/v3/accounts/{id}" is NOT valid and sholuld be converted in "V3AccountsId"
-  if (methodMeta.operationId && methodMeta.operationId.match(/^[a-zA-z0-9]+$/)) {
-    operationId = methodMeta.operationId
-  }
-  if (!operationId) {
-    const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
-    let stringToUpdate = path
-    for (const param of pathParams) {
-      stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
-    }
-    operationId =
-      method.toLowerCase() +
-      stringToUpdate
-        .split(/[/-]+/)
-        .map(token => {
-          const sanitized = token.replace(/[^a-zA-z0-9]/g, '')
-          return capitalize(sanitized)
-        })
-        .join('')
-  } else {
-    let count = 0
-    let candidate = operationId
-    while (all.includes(candidate)) {
-      if (count === 0) {
-        // first try with method name
-        candidate = `${method}${capitalize(operationId)}`
-      } else {
-        candidate = `${method}${capitalize(operationId)}${count}`
-      }
-      count++
-    }
-    operationId = candidate
-  }
-  operationId = camelCase(operationId)
-  all.push(operationId)
-  return operationId
-}
-
-async function buildOpenAPIClient (options, openTelemetry) {
-  const client = {}
-  let spec
-  let baseUrl
-
-  if (typeof options.getHeaders === 'function') {
-    const getHeaders = options.getHeaders
-    options = { ...options }
-    client[kGetHeaders] = getHeaders
-    options.getHeaders = undefined
-  }
-
-  const { validateResponse, queryParser } = options
-
-  // this is tested, not sure why c8 is not picking it up
-  if (!options.url) {
-    throw new errors.OptionsUrlRequiredError()
-  }
-  if (options.path) {
-    spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
-    baseUrl = options.url.replace(/\/$/, '')
-  } else {
-    const res = await request(options.url)
-    spec = await res.body.json()
-    baseUrl = computeURLWithoutPath(options.url)
-  }
-
-  const kOperationIdMap = Symbol.for('plt.operationIdMap')
-  client[kOperationIdMap] = {}
-  client[kHeaders] = options.headers || {}
-
-  let { fullRequest = true, fullResponse = true, bodyTimeout, headersTimeout, dispatcher } = options
-
-  if (options.throwOnError) {
-    if (!dispatcher) {
-      dispatcher = getGlobalDispatcher()
-    }
-    dispatcher = dispatcher.compose(interceptors.responseError())
-  }
-
-  const generatedOperationIds = []
-  for (const path of Object.keys(spec.paths)) {
-    const pathMeta = spec.paths[path]
-    let commonParameters = []
-    if (pathMeta.parameters) {
-      commonParameters = pathMeta.parameters
-      delete pathMeta.parameters
-    }
-    for (const method of Object.keys(pathMeta)) {
-      const methodMeta = pathMeta[method]
-      if (methodMeta.parameters) {
-        methodMeta.parameters = [...methodMeta.parameters, ...commonParameters]
-      } else {
-        methodMeta.parameters = commonParameters
-      }
-      const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
-      const responses = pathMeta[method].responses
-      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      if (successResponses.length !== 1) {
-        // force fullResponse = true if
-        // - there is more than 1 responses with 2XX code
-        // - there is no responses with 2XX code
-        fullResponse = true
-      }
-
-      client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(
-        spec,
-        baseUrl,
-        path,
-        method,
-        methodMeta,
-        openTelemetry,
-        fullRequest,
-        fullResponse,
-        validateResponse,
-        queryParser,
-        bodyTimeout,
-        headersTimeout,
-        dispatcher
-      )
-    }
-  }
-  return client
-}
-
 function computeURLWithoutPath (url) {
   url = new URL(url)
   url.pathname = ''
   return url.toString()
-}
-function hasDuplicatedParameters (methodMeta) {
-  if (!methodMeta.parameters) return false
-  if (methodMeta.parameters.length === 0) {
-    return false
-  }
-  const s = new Set()
-  methodMeta.parameters.forEach(param => {
-    s.add(param.name)
-  })
-  return s.size !== methodMeta.parameters.length
 }
 
 async function buildCallFunction (
@@ -384,12 +245,14 @@ function getRequestBodyContentType (methodMetadata) {
   }
   return output
 }
+
 function createErrorResponse (message) {
   return {
     statusCode: 500,
     message
   }
 }
+
 function sanitizeContentType (contentType) {
   if (!contentType) {
     return false
@@ -397,6 +260,7 @@ function sanitizeContentType (contentType) {
   const split = contentType.split(';')
   return split[0]
 }
+
 function checkResponseAgainstSchema (body, schema, ajv) {
   const validate = getValidateFunction(schema, ajv)
   const valid = validate(body)
@@ -410,6 +274,7 @@ function getValidateFunction (schema, ajvInstance) {
   }
   return validateFunctionCache[hash]
 }
+
 function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
@@ -483,7 +348,149 @@ function wrapGraphQLClient (url, openTelemetry, logger) {
   }
 }
 
-async function buildGraphQLClient (options, openTelemetry, logger = abstractLogger) {
+export function generateOperationId (path, method, methodMeta, all) {
+  let operationId = null
+  // use methodMeta.operationId only if it's present AND it is a valid string that can be
+  // concatenated without converting it
+  // i.e
+  // operationId = "MyOperationId123" is valid
+  // operationId = "/v3/accounts/{id}" is NOT valid and sholuld be converted in "V3AccountsId"
+  if (methodMeta.operationId && methodMeta.operationId.match(/^[a-zA-z0-9]+$/)) {
+    operationId = methodMeta.operationId
+  }
+  if (!operationId) {
+    const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
+    let stringToUpdate = path
+    for (const param of pathParams) {
+      stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
+    }
+    operationId =
+      method.toLowerCase() +
+      stringToUpdate
+        .split(/[/-]+/)
+        .map(token => {
+          const sanitized = token.replace(/[^a-zA-z0-9]/g, '')
+          return capitalize(sanitized)
+        })
+        .join('')
+  } else {
+    let count = 0
+    let candidate = operationId
+    while (all.includes(candidate)) {
+      if (count === 0) {
+        // first try with method name
+        candidate = `${method}${capitalize(operationId)}`
+      } else {
+        candidate = `${method}${capitalize(operationId)}${count}`
+      }
+      count++
+    }
+    operationId = candidate
+  }
+  operationId = camelCase(operationId)
+  all.push(operationId)
+  return operationId
+}
+
+export async function buildOpenAPIClient (options, openTelemetry) {
+  const client = {}
+  let spec
+  let baseUrl
+
+  if (typeof options.getHeaders === 'function') {
+    const getHeaders = options.getHeaders
+    options = { ...options }
+    client[kGetHeaders] = getHeaders
+    options.getHeaders = undefined
+  }
+
+  const { validateResponse, queryParser } = options
+
+  // this is tested, not sure why c8 is not picking it up
+  if (!options.url) {
+    throw new errors.OptionsUrlRequiredError()
+  }
+  if (options.path) {
+    spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
+    baseUrl = options.url.replace(/\/$/, '')
+  } else {
+    const res = await request(options.url)
+    spec = await res.body.json()
+    baseUrl = computeURLWithoutPath(options.url)
+  }
+
+  const kOperationIdMap = Symbol.for('plt.operationIdMap')
+  client[kOperationIdMap] = {}
+  client[kHeaders] = options.headers || {}
+
+  let { fullRequest = true, fullResponse = true, bodyTimeout, headersTimeout, dispatcher } = options
+
+  if (options.throwOnError) {
+    if (!dispatcher) {
+      dispatcher = getGlobalDispatcher()
+    }
+    dispatcher = dispatcher.compose(interceptors.responseError())
+  }
+
+  const generatedOperationIds = []
+  for (const path of Object.keys(spec.paths)) {
+    const pathMeta = spec.paths[path]
+    let commonParameters = []
+    if (pathMeta.parameters) {
+      commonParameters = pathMeta.parameters
+      delete pathMeta.parameters
+    }
+    for (const method of Object.keys(pathMeta)) {
+      const methodMeta = pathMeta[method]
+      if (methodMeta.parameters) {
+        methodMeta.parameters = [...methodMeta.parameters, ...commonParameters]
+      } else {
+        methodMeta.parameters = commonParameters
+      }
+      const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
+      const responses = pathMeta[method].responses
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+      if (successResponses.length !== 1) {
+        // force fullResponse = true if
+        // - there is more than 1 responses with 2XX code
+        // - there is no responses with 2XX code
+        fullResponse = true
+      }
+
+      client[kOperationIdMap][operationId] = { path, method }
+      client[operationId] = await buildCallFunction(
+        spec,
+        baseUrl,
+        path,
+        method,
+        methodMeta,
+        openTelemetry,
+        fullRequest,
+        fullResponse,
+        validateResponse,
+        queryParser,
+        bodyTimeout,
+        headersTimeout,
+        dispatcher
+      )
+    }
+  }
+  return client
+}
+
+export function hasDuplicatedParameters (methodMeta) {
+  if (!methodMeta.parameters) return false
+  if (methodMeta.parameters.length === 0) {
+    return false
+  }
+  const s = new Set()
+  methodMeta.parameters.forEach(param => {
+    s.add(param.name)
+  })
+  return s.size !== methodMeta.parameters.length
+}
+
+export async function buildGraphQLClient (options, openTelemetry, logger = abstractLogger) {
   options = options || {}
   if (!options.url) {
     throw new Error('options.url is required')
@@ -495,8 +502,4 @@ async function buildGraphQLClient (options, openTelemetry, logger = abstractLogg
   }
 }
 
-module.exports.buildOpenAPIClient = buildOpenAPIClient
-module.exports.buildGraphQLClient = buildGraphQLClient
-module.exports.generateOperationId = generateOperationId
-module.exports.hasDuplicatedParameters = hasDuplicatedParameters
-module.exports.errors = errors
+export * as errors from './lib/errors.js'

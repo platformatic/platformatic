@@ -2,17 +2,18 @@
   "name": "@platformatic/client-cli",
   "version": "3.0.0-alpha.5",
   "description": "A client for all platformatic backends",
-  "main": "cli.mjs",
+  "main": "index.js",
   "types": "index.d.ts",
+  "type": "module",
   "bin": {
-    "plt-client": "cli.mjs"
+    "plt-client": "index.js"
   },
   "scripts": {
     "lint": "eslint",
     "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",
     "pree2e:test": "npm run e2e:prepare",
     "e2e:test": "playwright test -c test/e2e/playwright.config.js && cd test/e2e && tsc --noEmit -p .",
-    "e2e:prepare": "node test/e2e/prepare.mjs",
+    "e2e:prepare": "node test/e2e/prepare.js",
     "e2e:dev": "vite test/e2e/client",
     "e2e:server": "wattpm start --config platformatic.e2e.db.json test/e2e/server",
     "e2e:build": "npm run e2e:prepare && vite build test/e2e/client",

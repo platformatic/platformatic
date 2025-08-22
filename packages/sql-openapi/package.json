@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.5",
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
+  "type": "module",
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
@@ -26,7 +27,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
-    "@matteo.collina/tspl": "^0.2.0",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.20.0",
     "eslint": "^9.4.0",

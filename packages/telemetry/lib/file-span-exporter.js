@@ -1,12 +1,10 @@
-'use strict'
-
-const { ExportResultCode, hrTimeToMicroseconds } = require('@opentelemetry/core')
-const { resolve: resolvePath } = require('node:path')
-const { appendFileSync } = require('node:fs')
-const { workerData } = require('node:worker_threads')
+import { ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core'
+import { appendFileSync } from 'node:fs'
+import { resolve as resolvePath } from 'node:path'
+import { workerData } from 'node:worker_threads'
 
 // Export spans to a file, mostly for testing purposes.
-class FileSpanExporter {
+export class FileSpanExporter {
   #path
   constructor (opts) {
     this.#path = resolvePath(workerData?.dirname ?? process.cwd(), opts.path ?? 'spans.log')
@@ -51,5 +49,3 @@ class FileSpanExporter {
     }
   }
 }
-
-module.exports = FileSpanExporter

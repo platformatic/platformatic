@@ -1,6 +1,6 @@
 import createError from '@fastify/error'
 
-const ERROR_PREFIX = 'PLT_BASIC'
+export const ERROR_PREFIX = 'PLT_BASIC'
 
 export const exitCodes = {
   MANAGER_MESSAGE_HANDLING_FAILED: 11,

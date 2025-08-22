@@ -1,11 +1,9 @@
-'use strict'
+import { fail, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should fail to start running application', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -19,8 +17,8 @@ test('should fail to start running application', async t => {
 
   try {
     await app.startApplication('with-logger')
-    assert.fail('should have thrown')
+    fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, 'Application is already started')
+    strictEqual(err.message, 'Application is already started')
   }
 })

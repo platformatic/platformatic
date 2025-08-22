@@ -1,14 +1,12 @@
-'use strict'
-
-const { safeRemove } = require('@platformatic/foundation')
-const { spawnSync } = require('node:child_process')
-const { readFile, writeFile, mkdir } = require('node:fs/promises')
-const { existsSync } = require('node:fs')
-const { test } = require('node:test')
-const { deepStrictEqual, ok } = require('node:assert')
-const { join } = require('node:path')
-const { fakeLogger, getTempDir } = require('./helpers')
-const { ImportGenerator } = require('../lib/import-generator')
+import { safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual, ok } from 'node:assert'
+import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { ImportGenerator } from '../lib/import-generator.js'
+import { fakeLogger, getTempDir } from './helpers.js'
 
 function createGenerator (runtime, opts) {
   return new ImportGenerator({
@@ -118,7 +116,7 @@ test('should validate application path', async t => {
   }
 
   {
-    const result = await pathQuestion.validate(__filename)
+    const result = await pathQuestion.validate(import.meta.filename)
     deepStrictEqual(result, 'Please enter a valid path')
   }
 })

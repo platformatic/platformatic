@@ -1,15 +1,13 @@
-'use strict'
-
-const { test } = require('node:test')
-const assert = require('node:assert')
-const { tmpdir } = require('node:os')
-const { mkdtemp, mkdir, writeFile } = require('node:fs/promises')
-const { RuntimeGenerator, WrappedGenerator } = require('../lib/generator')
-const { Generator: ApplicationGenerator } = require('../../service/lib/generator')
-const { Generator: ComposerGenerator } = require('../../composer/lib/generator')
-const { join, basename } = require('node:path')
-const { MockAgent, setGlobalDispatcher } = require('undici')
-const { safeRemove, getPlatformaticVersion } = require('@platformatic/foundation')
+import { getPlatformaticVersion, safeRemove } from '@platformatic/foundation'
+import assert from 'node:assert'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { basename, join } from 'node:path'
+import test from 'node:test'
+import { MockAgent, setGlobalDispatcher } from 'undici'
+import { Generator as ComposerGenerator } from '../../composer/lib/generator.js'
+import { Generator as ApplicationGenerator } from '../../service/lib/generator.js'
+import { RuntimeGenerator, WrappedGenerator } from '../lib/generator.js'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)

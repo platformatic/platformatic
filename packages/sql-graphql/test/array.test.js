@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg } from './helper.js'
 
-const { clear, connInfo, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('array support', { skip: !isPg }, async (t) => {
+test('array support', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -20,7 +18,7 @@ test('array support', { skip: !isPg }, async (t) => {
       title VARCHAR(42) NOT NULL,
       tags VARCHAR(42)[] NOT NULL
     );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -40,19 +38,23 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            tags: ['foo', 'bar']
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -68,19 +70,23 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello',
+            tags: ['foo', 'bar']
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -96,19 +102,25 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [{
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              id: 1,
+              title: 'Hello',
+              tags: ['foo', 'bar']
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -124,19 +136,25 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [{
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              id: 1,
+              title: 'Hello',
+              tags: ['foo', 'bar']
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -152,19 +170,25 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [{
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              id: 1,
+              title: 'Hello',
+              tags: ['foo', 'bar']
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -180,19 +204,25 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [{
-          id: 1,
-          title: 'Hello',
-          tags: ['foo', 'bar'],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              id: 1,
+              title: 'Hello',
+              tags: ['foo', 'bar']
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -208,15 +238,19 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: []
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -232,15 +266,19 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: []
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -256,15 +294,19 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: []
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -280,15 +322,19 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: []
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -304,15 +350,19 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: []
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -328,19 +378,23 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-          tags: ['foo', 'bar', 'baz'],
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World',
+            tags: ['foo', 'bar', 'baz']
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -356,18 +410,22 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-          tags: ['foo', 'bar', 'baz'],
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World',
+            tags: ['foo', 'bar', 'baz']
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })

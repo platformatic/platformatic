@@ -2,9 +2,11 @@
   "name": "@platformatic/itc",
   "version": "3.0.0-alpha.5",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "type": "module",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "npm run lint && borp --timeout=1200000 --concurrency=1 --coverage && tsd",
+    "test": "npm run lint && borp --timeout=1200000 --concurrency=1 --coverage && tsd -t index.test-d.ts test",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

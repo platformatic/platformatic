@@ -1,7 +1,5 @@
-'use strict'
-
-const { randomUUID } = require('crypto')
-const errors = require('../errors')
+import { randomUUID } from 'crypto'
+import { SQLiteOnlySupportsAutoIncrementOnOneColumnError } from '../errors.js'
 
 function fixValue (value) {
   if (value instanceof Date) {
@@ -12,7 +10,7 @@ function fixValue (value) {
   return value
 }
 
-async function listTables (db, sql) {
+export async function listTables (db, sql) {
   const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='table'
@@ -21,9 +19,7 @@ async function listTables (db, sql) {
   return res.map(r => ({ schema: null, table: r.name }))
 }
 
-module.exports.listTables = listTables
-
-async function listColumns (db, sql, table) {
+export async function listColumns (db, sql, table) {
   // pragma_table_info is not returning hidden column which tells if the column is generated or not
   // therefore it is changed to pragma_table_xinfo
   const columns = await db.query(sql`
@@ -36,14 +32,12 @@ async function listColumns (db, sql, table) {
     // convert is_nullable
     column.is_nullable = column.notnull === 0 && column.pk === 0 ? 'YES' : 'NO'
     // convert hidden to is_generated
-    column.is_generated = (column.hidden === 2 || column.hidden === 3) ? 'YES' : 'NO'
+    column.is_generated = column.hidden === 2 || column.hidden === 3 ? 'YES' : 'NO'
   }
   return columns
 }
 
-module.exports.listColumns = listColumns
-
-async function listConstraints (db, sql, table) {
+export async function listConstraints (db, sql, table) {
   const constraints = []
   const pks = await db.query(sql`
     SELECT *
@@ -54,7 +48,7 @@ async function listConstraints (db, sql, table) {
   for (const pk of pks) {
     constraints.push({
       column_name: pk.name,
-      constraint_type: 'PRIMARY KEY',
+      constraint_type: 'PRIMARY KEY'
     })
   }
 
@@ -69,7 +63,7 @@ async function listConstraints (db, sql, table) {
     if (index.unique === 1) {
       constraints.push({
         column_name: index.name,
-        constraint_type: 'UNIQUE',
+        constraint_type: 'UNIQUE'
       })
     }
   }
@@ -85,15 +79,13 @@ async function listConstraints (db, sql, table) {
       column_name: foreignKey.from,
       constraint_type: 'FOREIGN KEY',
       foreign_table_name: foreignKey.table,
-      foreign_column_name: foreignKey.to,
+      foreign_column_name: foreignKey.to
     })
   }
   return constraints
 }
 
-module.exports.listConstraints = listConstraints
-
-async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+export async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const primaryKeyValues = {}
 
   let hasAutoIncrementPK = false
@@ -109,7 +101,7 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
         primaryKeyValue = null
         hasAutoIncrementPK = true
       } else {
-        throw new errors.SQLiteOnlySupportsAutoIncrementOnOneColumnError()
+        throw new SQLiteOnlySupportsAutoIncrementOnOneColumnError()
       }
       input[key] = primaryKeyValue
     }
@@ -170,10 +162,8 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   }
 }
 
-module.exports.insertOne = insertOne
-
-async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${fixValue(value)}`
   })
@@ -199,9 +189,7 @@ async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   return res[0]
 }
 
-module.exports.updateOne = updateOne
-
-async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
+export async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   let query = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}
@@ -228,10 +216,8 @@ async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   return data
 }
 
-module.exports.deleteAll = deleteAll
-
-async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${fixValue(value)}`
   })
@@ -245,6 +231,4 @@ async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetr
   return res
 }
 
-module.exports.updateMany = updateMany
-
-module.exports.hasILIKE = false
+export const hasILIKE = false

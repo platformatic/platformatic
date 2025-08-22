@@ -1,22 +1,10 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual, equal, match, ok } = require('node:assert')
-const fastify = require('fastify')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const {
-  clear,
-  isSQLite,
-  isPg,
-  isMysql,
-  isMariaDB,
-  isMysql8,
-  connInfo,
-  expectedTelemetryPrefix,
-  expectedPort
-} = require('./helper')
-const { telemetry } = require('@platformatic/telemetry')
-const { plugin: mapper } = require('..')
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { telemetry } from '@platformatic/telemetry'
+import fastify from 'fastify'
+import { deepEqual, equal, match, ok } from 'node:assert'
+import { test } from 'node:test'
+import { plugin as mapper } from '../index.js'
+import { clear, connInfo, expectedPort, expectedTelemetryPrefix, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
@@ -121,7 +109,7 @@ test('should trace a request getting DB from the request and running the query m
       equal(span.attributes['db.user'], 'postgres')
       equal(span.attributes['net.peer.name'], '127.0.0.1')
       equal(span.attributes['net.peer.port'], expectedPort)
-    } else if (isMysql || isMariaDB || isMysql8) {
+    } else if (isMysql || isMysql8) {
       equal(span.attributes['db.system'], 'mysql')
       equal(span.attributes['db.name'], 'graph')
       equal(span.attributes['db.user'], 'root')

@@ -12,6 +12,6 @@
     "openapi": true
   },
   "plugins": {
-    "paths": ["./plugin.cjs"]
+    "paths": ["./plugin.js"]
   }
 }

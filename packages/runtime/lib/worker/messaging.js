@@ -1,14 +1,12 @@
-'use strict'
-
-const { executeWithTimeout, kTimeout } = require('@platformatic/foundation')
-const { ITC, generateResponse, sanitize } = require('@platformatic/itc')
-const errors = require('../errors')
-const { RoundRobinMap } = require('./round-robin-map')
-const { kWorkersBroadcast, kITC } = require('./symbols')
+import { executeWithTimeout, kTimeout } from '@platformatic/foundation'
+import { ITC, generateResponse, sanitize } from '@platformatic/itc'
+import { MessagingError } from '../errors.js'
+import { RoundRobinMap } from './round-robin-map.js'
+import { kITC, kWorkersBroadcast } from './symbols.js'
 
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
 
-class MessagingITC extends ITC {
+export class MessagingITC extends ITC {
   #timeout
   #listener
   #closeResolvers
@@ -52,7 +50,7 @@ class MessagingITC extends ITC {
     const worker = this.#workers.next(application)
 
     if (!worker) {
-      throw new errors.MessagingError(application, 'No workers available')
+      throw new MessagingError(application, 'No workers available')
     }
 
     if (!worker.channel) {
@@ -65,7 +63,7 @@ class MessagingITC extends ITC {
 
       /* c8 ignore next 3 - Hard to test */
       if (channel === kTimeout) {
-        throw new errors.MessagingError(application, 'Timeout while waiting for a communication channel.')
+        throw new MessagingError(application, 'Timeout while waiting for a communication channel.')
       }
 
       worker.channel = channel
@@ -83,7 +81,7 @@ class MessagingITC extends ITC {
     const response = await executeWithTimeout(super.send(name, message, context), this.#timeout)
 
     if (response === kTimeout) {
-      throw new errors.MessagingError(application, 'Timeout while waiting for a response.')
+      throw new MessagingError(application, 'Timeout while waiting for a response.')
     }
 
     return response
@@ -173,7 +171,7 @@ class MessagingITC extends ITC {
       this._emitResponse(
         generateResponse(
           request,
-          new errors.MessagingError(application, 'The communication channel was closed before receiving a response.'),
+          new MessagingError(application, 'The communication channel was closed before receiving a response.'),
           null
         )
       )
@@ -182,5 +180,3 @@ class MessagingITC extends ITC {
     channel[kPendingResponses].clear()
   }
 }
-
-module.exports = { MessagingITC }

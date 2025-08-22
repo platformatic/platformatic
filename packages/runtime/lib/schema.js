@@ -1,9 +1,7 @@
 #! /usr/bin/env node
-'use strict'
 
-const { schemaComponents } = require('@platformatic/foundation')
-
-const pkg = require('../package.json')
+import { schemaComponents } from '@platformatic/foundation'
+import { version } from './version.js'
 
 const runtimeLogger = {
   ...schemaComponents.runtimeProperties.logger,
@@ -19,7 +17,7 @@ const runtimeLogger = {
 schemaComponents.runtimeProperties.logger = runtimeLogger
 
 const platformaticRuntimeSchema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
+  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Runtime Config',
   type: 'object',
@@ -33,8 +31,8 @@ const platformaticRuntimeSchema = {
   additionalProperties: false
 }
 
-module.exports.schema = platformaticRuntimeSchema
+export const schema = platformaticRuntimeSchema
 
-if (require.main === module) {
+if (import.meta.main) {
   console.log(JSON.stringify(platformaticRuntimeSchema, null, 2))
 }

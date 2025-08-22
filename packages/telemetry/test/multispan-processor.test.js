@@ -1,15 +1,13 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal } = require('node:assert')
-const { MultiSpanProcessor } = require('../lib/multispan-processor')
+import { equal } from 'node:assert'
+import { test } from 'node:test'
+import { MultiSpanProcessor } from '../lib/multispan-processor.js'
 
 test('should add multiple processors', async () => {
   const mockSpanProcessor = {
     onStart: () => {},
     onEnd: () => {},
     shutdown: async () => {},
-    forceFlush: async () => {},
+    forceFlush: async () => {}
   }
   const processor = new MultiSpanProcessor()
   equal(processor._spanProcessors.length, 0)
@@ -24,11 +22,15 @@ test('should call onStart on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    onStart: () => { called1 = true },
+    onStart: () => {
+      called1 = true
+    }
   }
   const mockSpanProcessor2 = {
     called: false,
-    onStart: () => { called2 = true },
+    onStart: () => {
+      called2 = true
+    }
   }
   const processor = new MultiSpanProcessor([mockSpanProcessor1, mockSpanProcessor2])
   processor.onStart()
@@ -40,10 +42,14 @@ test('should call onEnd on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    onEnd: () => { called1 = true },
+    onEnd: () => {
+      called1 = true
+    }
   }
   const mockSpanProcessor2 = {
-    onEnd: () => { called2 = true },
+    onEnd: () => {
+      called2 = true
+    }
   }
   const processor = new MultiSpanProcessor([mockSpanProcessor1, mockSpanProcessor2])
   processor.onEnd()
@@ -55,10 +61,14 @@ test('should call shutdown on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    shutdown: async () => { called1 = true },
+    shutdown: async () => {
+      called1 = true
+    }
   }
   const mockSpanProcessor2 = {
-    shutdown: async () => { called2 = true },
+    shutdown: async () => {
+      called2 = true
+    }
   }
   const processor = new MultiSpanProcessor([mockSpanProcessor1, mockSpanProcessor2])
   await processor.shutdown()
@@ -70,10 +80,14 @@ test('should call forceFlush on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    forceFlush: async () => { called1 = true },
+    forceFlush: async () => {
+      called1 = true
+    }
   }
   const mockSpanProcessor2 = {
-    forceFlush: async () => { called2 = true },
+    forceFlush: async () => {
+      called2 = true
+    }
   }
   const processor = new MultiSpanProcessor([mockSpanProcessor1, mockSpanProcessor2])
   await processor.forceFlush()

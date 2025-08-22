@@ -5,7 +5,7 @@ import {
   ensureLoggableError,
   features
 } from '@platformatic/foundation'
-import { ITC } from '@platformatic/itc'
+import { ITC } from '@platformatic/itc/lib/index.js'
 import { client, collectMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'

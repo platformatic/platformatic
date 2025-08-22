@@ -1,18 +1,15 @@
-'use strict'
-
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const { connect } = require('..')
-const { clear, connInfo, createBasicPages } = require('./helper')
+import { equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {},
+  warn: () => {}
 }
 
-test('specify table to be added', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 3 })
+test('specify table to be added', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -29,8 +26,8 @@ test('specify table to be added', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     include: {
-      pages: true,
-    },
+      pages: true
+    }
   })
 
   const pageEntity = mapper.entities.page
@@ -40,8 +37,7 @@ test('specify table to be added', async (t) => {
   equal(categoryEntity, undefined, 'category entity is ignored')
 })
 
-test('specify tables to be added', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 3 })
+test('specify tables to be added', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -59,8 +55,8 @@ test('specify tables to be added', async (t) => {
     onDatabaseLoad,
     include: {
       pages: true,
-      categories: true,
-    },
+      categories: true
+    }
   })
 
   const pageEntity = mapper.entities.page
@@ -70,9 +66,7 @@ test('specify tables to be added', async (t) => {
   equal(categoryEntity.name, 'Category')
 })
 
-test('show a warning if there is no table to be included (no tables included)', async (t) => {
-  const { equal, ok } = tspl(t, { plan: 3 })
-
+test('show a warning if there is no table to be included (no tables included)', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -87,9 +81,9 @@ test('show a warning if there is no table to be included (no tables included)', 
   const logger = {
     trace: () => {},
     error: () => {},
-    warn: (msg) => {
+    warn: msg => {
       equal(msg, 'Specified table "missing_table_pages" not found. Did you mean "pages"?')
-    },
+    }
   }
 
   const mapper = await connect({
@@ -97,17 +91,15 @@ test('show a warning if there is no table to be included (no tables included)', 
     log: logger,
     onDatabaseLoad,
     include: {
-      missing_table_pages: true,
-    },
+      missing_table_pages: true
+    }
   })
 
   const pageEntity = mapper.entities.page
   equal(pageEntity, undefined, 'page entity is ignored')
 })
 
-test('include an entity and ignore a column', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 4 })
-
+test('include an entity and ignore a column', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -124,13 +116,13 @@ test('include an entity and ignore a column', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     include: {
-      categories: true,
+      categories: true
     },
     ignore: {
       categories: {
-        name: true,
-      },
-    },
+        name: true
+      }
+    }
   })
 
   const categoryEntity = mapper.entities.category

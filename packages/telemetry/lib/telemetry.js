@@ -1,8 +1,6 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const { SpanKind } = require('@opentelemetry/api')
-const { setupTelemetry } = require('./telemetry-config')
+import { SpanKind } from '@opentelemetry/api'
+import fp from 'fastify-plugin'
+import { setupTelemetry } from './telemetry-config.js'
 
 // Telemetry fastify plugin
 async function telemetry (app, opts) {
@@ -36,8 +34,8 @@ async function telemetry (app, opts) {
     startSpan,
     endSpan,
     shutdown,
-    SpanKind,
+    SpanKind
   })
 }
 
-module.exports = fp(telemetry)
+export default fp(telemetry)

@@ -1,22 +1,18 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual: same } = require('node:assert')
-const sqlMapper = require('@platformatic/sql-mapper')
-const { connect } = sqlMapper
-const { clear, connInfo, isSQLite } = require('./helper')
-const sqlEvents = require('..')
-const { setupEmitter } = sqlEvents
-const MQEmitterRedis = require('mqemitter-redis')
-const { promisify } = require('util')
-const { PassThrough } = require('stream')
+import { connect } from '@platformatic/sql-mapper'
+import MQEmitterRedis from 'mqemitter-redis'
+import { equal, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import { PassThrough } from 'stream'
+import { promisify } from 'util'
+import { setupEmitter } from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace () {},
-  error () {},
+  error () {}
 }
 
-test('emit events', async (t) => {
+test('emit events', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     t.after(() => db.dispose())
@@ -36,7 +32,7 @@ test('emit events', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   const pageEntity = mapper.entities.page
 
@@ -51,52 +47,49 @@ test('emit events', async (t) => {
     messages.write(msg, cb)
   })
 
-  const queue = await mapper.subscribe([
-    '/entity/page/save/+',
-    '/entity/page/delete/+',
-  ])
+  const queue = await mapper.subscribe(['/entity/page/save/+', '/entity/page/delete/+'])
 
   const expected = []
 
   // save - new record
   const page = await pageEntity.save({
-    input: { title: 'fourth page' },
+    input: { title: 'fourth page' }
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id,
-    },
+      id: page.id
+    }
   })
 
   // save - update record
   await pageEntity.save({
     input: {
       id: page.id,
-      title: 'fifth page',
-    },
+      title: 'fifth page'
+    }
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id,
-    },
+      id: page.id
+    }
   })
 
   await pageEntity.delete({
     where: {
       id: {
-        eq: page.id,
-      },
+        eq: page.id
+      }
     },
-    fields: ['id', 'title'],
+    fields: ['id', 'title']
   })
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
     payload: {
-      id: page.id,
-    },
+      id: page.id
+    }
   })
 
   let i = 0

@@ -3,6 +3,8 @@
   "version": "3.0.0-alpha.5",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
+  "type": "module",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
     "test": "pnpm run lint && borp --timeout=1200000 -C -X fixtures -X test --concurrency=1 && tsd"

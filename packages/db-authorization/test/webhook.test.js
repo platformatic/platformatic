@@ -1,32 +1,33 @@
-'use strict'
-
-const fastify = require('fastify')
-const auth = require('..')
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const { request, Agent, setGlobalDispatcher } = require('undici')
+import fastifyCookie from '@fastify/cookie'
+import fastifySession from '@fastify/session'
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { Agent, request, setGlobalDispatcher } from 'undici'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 const agent = new Agent({
   keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
+  keepAliveMaxTimeout: 10
 })
+
 setGlobalDispatcher(agent)
 
 async function buildAuthorizer (opts = {}) {
   const app = fastify()
-  app.register(require('@fastify/cookie'))
-  app.register(require('@fastify/session'), {
+  app.register(fastifyCookie)
+  app.register(fastifySession, {
     cookieName: 'sessionId',
     secret: 'a secret with minimum length of 32 characters',
-    cookie: { secure: false },
+    cookie: { secure: false }
   })
 
   app.post('/login', async (request, reply) => {
     request.session.user = request.body
     return {
-      status: 'ok',
+      status: 'ok'
     }
   })
 
@@ -47,9 +48,7 @@ async function buildAuthorizer (opts = {}) {
   return app
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async (t) => {
-  const { equal, deepEqual, ok } = tspl(t, { plan: 11 })
-
+test("users can save and update their own pages, read everybody's and delete none", async t => {
   const authorizer = await buildAuthorizer()
   const app = fastify()
   app.register(core, {
@@ -59,34 +58,37 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`,
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -99,12 +101,12 @@ test('users can save and update their own pages, read everybody\'s and delete no
     const res = await request(`http://localhost:${authorizer.server.address().port}/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         'X-PLATFORMATIC-USER-ID': userId,
-        'X-PLATFORMATIC-ROLE': role,
-      }),
+        'X-PLATFORMATIC-ROLE': role
+      })
     })
 
     res.body.resume()
@@ -120,7 +122,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie,
+        cookie
       },
       body: {
         query: `
@@ -131,19 +133,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -151,7 +157,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie,
+        cookie
       },
       body: {
         query: `
@@ -162,19 +168,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   // check that works also with a GET request
@@ -183,16 +193,21 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'GET',
       url: '/pages',
       headers: {
-        cookie,
-      },
+        cookie
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), [{
-      id: 1,
-      title: 'Hello',
-      userId: 42,
-    }]
-    , 'pages response')
+    deepEqual(
+      res.json(),
+      [
+        {
+          id: 1,
+          title: 'Hello',
+          userId: 42
+        }
+      ],
+      'pages response'
+    )
   }
 
   {
@@ -200,7 +215,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie,
+        cookie
       },
       body: {
         query: `
@@ -210,18 +225,22 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -229,7 +248,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie,
+        cookie
       },
       body: {
         query: `
@@ -239,33 +258,35 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })
 
-test('Non-200 status code', async (t) => {
-  const { equal, deepEqual, ok } = tspl(t, { plan: 6 })
-
+test('Non-200 status code', async t => {
   const authorizer = await buildAuthorizer({
-    onAuthorize: async (request) => {
+    onAuthorize: async request => {
       if (request.headers['x-status-code']) {
         ok('authorizer called, throwing exception')
         const err = new Error('Unauthorized')
         err.statusCode = request.headers['X-STATUS-CODE']
         throw err
       }
-    },
+    }
   })
   const app = fastify()
   app.register(core, {
@@ -275,34 +296,37 @@ test('Non-200 status code', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`,
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -324,29 +348,31 @@ test('Non-200 status code', async (t) => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -354,7 +380,7 @@ test('Non-200 status code', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-STATUS-CODE': '403',
+        'X-STATUS-CODE': '403'
       },
       body: {
         query: `
@@ -365,28 +391,30 @@ test('Non-200 status code', async (t) => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 })

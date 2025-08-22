@@ -1,5 +1,5 @@
 import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
-import { ITC } from '@platformatic/itc'
+import { ITC } from '@platformatic/itc/lib/index.js'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'

@@ -1,6 +1,6 @@
 import createError from '@fastify/error'
 
-const ERROR_PREFIX = 'PLT_DB'
+export const ERROR_PREFIX = 'PLT_DB'
 
 export const MigrateMissingMigrationsError = createError(
   `${ERROR_PREFIX}_MIGRATE_ERROR`,

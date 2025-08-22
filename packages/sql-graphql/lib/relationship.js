@@ -1,21 +1,25 @@
-'use strict'
-
 /* eslint camelcase: 0 */
 
-const camelcase = require('camelcase')
-const {
-  fromSelectionSet,
-} = require('./utils')
-const assert = require('assert')
+import assert from 'assert'
+import camelcase from 'camelcase'
+import { fromSelectionSet } from './utils.js'
 
-module.exports = function establishRelations (app, relations, resolvers, loaders, queryTopFields, relationships, metaMap) {
+export function establishRelations (app, relations, resolvers, loaders, queryTopFields, relationships, metaMap) {
   const entitiesTypeMap = {}
   const entities = app.platformatic.entities
   for (const key of Object.keys(entities)) {
     entitiesTypeMap[key] = metaMap.get(entities[key])
   }
   for (const relation of relations) {
-    const { table_name, foreign_table_name, column_name, foreign_column_name, entityName, foreignEntityName, loweredTableWithSchemaName } = relation
+    const {
+      table_name,
+      foreign_table_name,
+      column_name,
+      foreign_column_name,
+      entityName,
+      foreignEntityName,
+      loweredTableWithSchemaName
+    } = relation
     const enhanceAssertLogMsg = `(table: "${table_name}", foreign table: "${foreign_table_name}", column: "${column_name}")`
 
     assert(table_name, `table_name is required ${enhanceAssertLogMsg}`)
@@ -23,7 +27,10 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
 
     const current = entitiesTypeMap[entityName]
     const foreign = entitiesTypeMap[foreignEntityName]
-    assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}. Relation: ${JSON.stringify(relation, null, 2)}`)
+    assert(
+      foreign !== undefined,
+      `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}. Relation: ${JSON.stringify(relation, null, 2)}`
+    )
 
     // current to foreign, we skip this if the foreign table has a composite primary key
     // TODO implement support for this case
@@ -40,17 +47,15 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
           loader (queries, ctx) {
             const keys = []
             for (const { obj } of queries) {
-              const value = obj[originalField] != null
-                ? obj[originalField].toString()
-                : null
+              const value = obj[originalField] != null ? obj[originalField].toString() : null
 
               keys.push([{ key, value }])
             }
             return foreign.loadMany(keys, queries, ctx)
           },
           opts: {
-            cache: false,
-          },
+            cache: false
+          }
         }
       }
     }
@@ -76,7 +81,10 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
           resolvers[foreign.type][lowered] = async function (obj, args, ctx, info) {
             const previousResponse = await previousResolve(obj, args, ctx, info)
             const currentResponse = await resolveRelation(obj, args, ctx, info)
-            return uniqueBy([...previousResponse, ...currentResponse], findPrimaryColumnName(current.entity.camelCasedFields))
+            return uniqueBy(
+              [...previousResponse, ...currentResponse],
+              findPrimaryColumnName(current.entity.camelCasedFields)
+            )
           }
         }
       }
@@ -109,4 +117,4 @@ function unique (arr) {
 function uniqueBy (arr, key) {
   const uniqueValues = unique(arr.map(el => el[key]))
   return uniqueValues.map(value => arr.find(el => el[key] === value))
-};
+}

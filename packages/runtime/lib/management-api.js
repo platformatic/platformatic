@@ -1,16 +1,15 @@
-'use strict'
-
-const { platform, tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { createDirectory, safeRemove } = require('@platformatic/foundation')
-
-const fastify = require('fastify')
-const ws = require('ws')
+import fastifyAccepts from '@fastify/accepts'
+import fastifyWebsocket from '@fastify/websocket'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import fastify from 'fastify'
+import { platform, tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createWebSocketStream } from 'ws'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
-async function managementApiPlugin (app, opts) {
-  app.register(require('@fastify/accepts'))
+export async function managementApiPlugin (app, opts) {
+  app.register(fastifyAccepts)
 
   const runtime = opts.runtime
 
@@ -149,11 +148,11 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/logs/live', { websocket: true }, async (socket, req) => {
-    runtime.addLoggerDestination(ws.createWebSocketStream(socket))
+    runtime.addLoggerDestination(createWebSocketStream(socket))
   })
 }
 
-async function startManagementApi (runtime, root) {
+export async function startManagementApi (runtime, root) {
   const runtimePID = process.pid
 
   try {
@@ -170,7 +169,7 @@ async function startManagementApi (runtime, root) {
     }
 
     const managementApi = fastify()
-    managementApi.register(require('@fastify/websocket'))
+    managementApi.register(fastifyWebsocket)
     managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
 
     managementApi.addHook('onClose', async () => {
@@ -190,5 +189,3 @@ async function startManagementApi (runtime, root) {
     process.exit(1)
   }
 }
-
-module.exports = { startManagementApi, managementApiPlugin }

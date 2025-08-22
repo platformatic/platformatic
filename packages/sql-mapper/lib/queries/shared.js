@@ -1,11 +1,9 @@
-'use strict'
-
-const { tableName } = require('../utils')
-const errors = require('../errors')
+import { UnknownFieldError } from '../errors.js'
+import { tableName } from '../utils.js'
 
 /* istanbul ignore file */
 
-async function insertOne (db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve) {
+export async function insertOne (db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve) {
   const inputKeys = Object.keys(input)
   if (inputKeys.length === 0) {
     const insert = sql`
@@ -19,14 +17,16 @@ async function insertOne (db, sql, table, schema, input, primaryKeysTypes, field
   }
 
   const keys = sql.join(
-    inputKeys.map((key) => sql.ident(key)),
+    inputKeys.map(key => sql.ident(key)),
     sql`, `
   )
   const values = sql.join(
-    Object.keys(input).map((key) => {
+    Object.keys(input).map(key => {
       const val = input[key]
       return sql.value(val)
-    }), sql`, `)
+    }),
+    sql`, `
+  )
 
   const insert = sql`
     INSERT INTO ${tableName(sql, table, schema)} (${keys})
@@ -37,7 +37,7 @@ async function insertOne (db, sql, table, schema, input, primaryKeysTypes, field
   return res[0]
 }
 
-async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
+export async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   let query = sql`
       DELETE FROM ${tableName(sql, table, schema)}
     `
@@ -51,7 +51,17 @@ async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   return res
 }
 
-async function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields) {
+export async function insertMany (
+  db,
+  sql,
+  table,
+  schema,
+  inputs,
+  inputToFieldMap,
+  primaryKey,
+  fieldsToRetrieve,
+  fields
+) {
   const { keys, values } = insertPrep(inputs, inputToFieldMap, fields, sql)
   const insert = sql`
     insert into ${tableName(sql, table, schema)} (${keys})
@@ -63,7 +73,7 @@ async function insertMany (db, sql, table, schema, inputs, inputToFieldMap, prim
   return res
 }
 
-function insertPrep (inputs, inputToFieldMap, fields, sql) {
+export function insertPrep (inputs, inputToFieldMap, fields, sql) {
   const tableFields = Object.keys(fields)
   const inputRaws = []
 
@@ -72,7 +82,7 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
       const field = inputToFieldMap[entityKey]
 
       if (field === undefined && fields[entityKey] === undefined) {
-        throw new errors.UnknownFieldError(entityKey)
+        throw new UnknownFieldError(entityKey)
       }
     }
 
@@ -82,12 +92,7 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
       const inputKey = fieldMetadata.camelcase
 
       let inputValue = input[inputKey] ?? input[field]
-      if (
-        inputValue &&
-        typeof inputValue === 'object' &&
-        !fieldMetadata.isArray &&
-        !(inputValue instanceof Date)
-      ) {
+      if (inputValue && typeof inputValue === 'object' && !fieldMetadata.isArray && !(inputValue instanceof Date)) {
         // This is a JSON field
         inputValue = JSON.stringify(inputValue)
       }
@@ -101,15 +106,15 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
     inputRaws.push(sql` (${sql.join(inputValues, sql`, `)})`)
   }
   const keys = sql.join(
-    tableFields.map((key) => sql.ident(key)),
+    tableFields.map(key => sql.ident(key)),
     sql`, `
   )
 
   return { keys, values: inputRaws }
 }
 
-async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
   })
@@ -121,12 +126,4 @@ async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetr
     `
   const res = await db.query(update)
   return res
-}
-
-module.exports = {
-  insertOne,
-  insertPrep,
-  deleteAll,
-  insertMany,
-  updateMany,
 }

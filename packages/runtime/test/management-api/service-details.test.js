@@ -1,14 +1,11 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application details', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -38,15 +35,15 @@ test('should get application details', async t => {
     path: '/api/v1/applications/service-1'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const entrypointDetails = await app.getEntrypointDetails()
   const applicationDetails = await body.json()
-  assert.deepStrictEqual(applicationDetails, {
+  deepStrictEqual(applicationDetails, {
     id: 'service-1',
     type: 'service',
     status: 'started',
-    version: platformaticVersion,
+    version,
     entrypoint: true,
     url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',

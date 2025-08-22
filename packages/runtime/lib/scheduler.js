@@ -1,10 +1,8 @@
-'use strict'
+import { CronJob, validateCronExpression } from 'cron'
+import { setTimeout } from 'node:timers/promises'
+import { request } from 'undici'
 
-const { CronJob, validateCronExpression } = require('cron')
-const { setTimeout } = require('node:timers/promises')
-const { request } = require('undici')
-
-class SchedulerService {
+export class SchedulerService {
   constructor (schedulerConfig, dispatcher, logger) {
     this.logger = logger
     this.jobsConfig = []
@@ -49,7 +47,7 @@ class SchedulerService {
         },
         start: true,
         timeZone: 'UTC',
-        waitForCompletion: true,
+        waitForCompletion: true
       })
 
       this.cronJobs.push(cronJob)
@@ -71,7 +69,9 @@ class SchedulerService {
         const delay = attempt > 0 ? 100 * Math.pow(2, attempt) : 0
 
         if (delay > 0) {
-          this.logger.info(`Retrying scheduler "${scheduler.name}" in ${delay}ms (attempt ${attempt + 1}/${scheduler.maxRetries})`)
+          this.logger.info(
+            `Retrying scheduler "${scheduler.name}" in ${delay}ms (attempt ${attempt + 1}/${scheduler.maxRetries})`
+          )
           await setTimeout(delay)
         }
         const headers = {
@@ -98,7 +98,10 @@ class SchedulerService {
           throw new Error(`HTTP error ${response.statusCode}`)
         }
       } catch (error) {
-        this.logger.error(`Error executing scheduler "${scheduler.name}" (attempt ${attempt + 1}/${scheduler.maxRetries}):`, error.message)
+        this.logger.error(
+          `Error executing scheduler "${scheduler.name}" (attempt ${attempt + 1}/${scheduler.maxRetries}):`,
+          error.message
+        )
         attempt++
       }
     }
@@ -109,13 +112,8 @@ class SchedulerService {
   }
 }
 
-const startScheduler = (config, interceptors, logger) => {
+export function startScheduler (config, interceptors, logger) {
   const schedulerService = new SchedulerService(config, interceptors, logger)
   schedulerService.start()
   return schedulerService
-}
-
-module.exports = {
-  startScheduler,
-  SchedulerService
 }

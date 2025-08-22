@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
-'use strict'
-
-const { execSync } = require('child_process')
+import { execSync } from 'node:child_process'
 
 // Function to get modified files from git status
-function getUpdatedFiles() {
+function getUpdatedFiles () {
   try {
     // Get the output of git status in porcelain format
     const gitStatus = execSync('git status --porcelain', { encoding: 'utf-8' })
@@ -27,11 +25,11 @@ function getUpdatedFiles() {
   }
 }
 
-function schemaFilesUpdates(files) {
+function schemaFilesUpdates (files) {
   return files.some(file => file.match(/schema\.js$/))
 }
 
-function runGenSchema() {
+function runGenSchema () {
   console.log(`Running gen-schema...`)
   try {
     const output = execSync(`npm run gen-schema`, {
@@ -45,7 +43,7 @@ function runGenSchema() {
   }
 }
 
-function runGenType() {
+function runGenType () {
   console.log(`Running gen-types...`)
   try {
     const output = execSync(`npm run gen-types`, {
@@ -60,7 +58,7 @@ function runGenType() {
 }
 
 // Main function
-function main() {
+function main () {
   console.log('\n*** Checking for changes in schema.js files...')
   console.log('> Getting modified files from git status...')
   const modifiedFiles = getUpdatedFiles()

@@ -1,10 +1,9 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should inject request to application', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -21,14 +20,14 @@ test('should inject request to application', async t => {
     url: '/'
   })
 
-  assert.strictEqual(res.statusCode, 200)
-  assert.strictEqual(res.statusMessage, 'OK')
+  strictEqual(res.statusCode, 200)
+  strictEqual(res.statusMessage, 'OK')
 
-  assert.strictEqual(res.headers['content-type'], 'application/json; charset=utf-8')
-  assert.strictEqual(res.headers['content-length'], '17')
-  assert.strictEqual(res.headers.connection, 'keep-alive')
+  strictEqual(res.headers['content-type'], 'application/json; charset=utf-8')
+  strictEqual(res.headers['content-length'], '17')
+  strictEqual(res.headers.connection, 'keep-alive')
 
-  assert.strictEqual(res.body, '{"hello":"world"}')
+  strictEqual(res.body, '{"hello":"world"}')
 })
 
 test('should fail inject request is application is not started', async t => {
@@ -43,6 +42,6 @@ test('should fail inject request is application is not started', async t => {
   try {
     await app.inject('with-logger', { method: 'GET', url: '/' })
   } catch (err) {
-    assert.strictEqual(err.message, "Application with id 'with-logger' is not started")
+    strictEqual(err.message, "Application with id 'with-logger' is not started")
   }
 })

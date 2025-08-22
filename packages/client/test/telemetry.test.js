@@ -1,16 +1,14 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { mkdtemp, cp, unlink } = require('node:fs/promises')
-const Fastify = require('fastify')
-const { telemetry } = require('@platformatic/telemetry')
-const { safeRemove } = require('@platformatic/foundation')
-const { create } = require('@platformatic/db')
-const client = require('../fastify-plugin.js')
-require('./helper')
+import { create } from '@platformatic/db'
+import { safeRemove } from '@platformatic/foundation'
+import { telemetry } from '@platformatic/telemetry'
+import Fastify from 'fastify'
+import { equal } from 'node:assert/strict'
+import { cp, mkdtemp, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import client from '../fastify-plugin.js'
+import './helper.js'
 
 const getSpansPerType = (spans, type = 'http') => {
   let attibuteToLookFor
@@ -27,7 +25,7 @@ const getSpansPerType = (spans, type = 'http') => {
 }
 
 test('telemetry correctly propagates from an application client to a server for an OpenAPI endpoint', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -79,34 +77,34 @@ test('telemetry correctly propagates from an application client to a server for 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
-  assert.equal(finishedSpans.length, 2)
+  equal(finishedSpans.length, 2)
   const clientSpan = finishedSpans[0]
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
-  assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
-  assert.equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
-  assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
-  assert.equal(clientSpan.attributes['http.response.status_code'], 200)
+  equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
+  equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
+  equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
   const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
-  assert.equal(httpSpans.length, 2)
+  equal(httpSpans.length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
   const serverSpan = httpSpans[1]
-  assert.equal(serverSpan.name, 'POST /movies/')
+  equal(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works
-  assert.equal(serverParentSpanId, clientSpanId)
-  assert.equal(serverTraceId, clientTraceId)
+  equal(serverParentSpanId, clientSpanId)
+  equal(serverTraceId, clientTraceId)
 })
 
 test('telemetry correctly propagates from a generic client through an application client and then to another application, propagating the traceId', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -164,36 +162,36 @@ test('telemetry correctly propagates from a generic client through an applicatio
   const finishedSpans = exporters[0].getFinishedSpans()
 
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
-  assert.equal(finishedSpans.length, 2)
+  equal(finishedSpans.length, 2)
   const clientSpan = finishedSpans[0]
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
-  assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
-  assert.equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
-  assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
-  assert.equal(clientSpan.attributes['http.response.status_code'], 200)
+  equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
+  equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
+  equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
-  assert.equal(clientTraceId, traceId)
+  equal(clientTraceId, traceId)
 
   // Target app
   // We get the http spans (we also have the DB ones)
   const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
-  assert.equal(httpSpans.length, 2)
+  equal(httpSpans.length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
   const serverSpan = httpSpans[1]
-  assert.equal(serverSpan.name, 'POST /movies/')
+  equal(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works. Note that the `parentSpan` is changed, but the traceId is the same
-  assert.equal(serverParentSpanId, clientSpanId)
-  assert.equal(serverTraceId, traceId)
+  equal(serverParentSpanId, clientSpanId)
+  equal(serverTraceId, traceId)
 })
 
 test('telemetry correctly propagates from an application client to a server for a GraphQL endpoint', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -250,36 +248,36 @@ test('telemetry correctly propagates from an application client to a server for 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
-  assert.equal(finishedSpans.length, 2)
+  equal(finishedSpans.length, 2)
   const clientSpan = finishedSpans[0]
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
-  assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
-  assert.equal(clientSpan.name, `POST ${targetAppUrl}/graphql`)
-  assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/graphql`)
-  assert.equal(clientSpan.attributes['http.response.status_code'], 200)
+  equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
+  equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
+  equal(clientSpan.name, `POST ${targetAppUrl}/graphql`)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/graphql`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
   // We get the http spans (we also have the DB ones)
   const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
-  assert.equal(httpSpans.length, 1)
+  equal(httpSpans.length, 1)
   const serverSpan = httpSpans[0]
-  assert.equal(serverSpan.name, 'POST /graphql')
+  equal(serverSpan.name, 'POST /graphql')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works
-  assert.equal(serverParentSpanId, clientSpanId)
-  assert.equal(serverTraceId, clientTraceId)
+  equal(serverParentSpanId, clientSpanId)
+  equal(serverTraceId, clientTraceId)
 
   const graphqlSpan = getSpansPerType(
     targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(),
     'graphql'
   )[0]
-  assert.equal(graphqlSpan.name, 'mutation saveMovie')
-  assert.equal(graphqlSpan.spanContext().traceId, clientTraceId)
-  assert.equal(graphqlSpan.parentSpanContext.spanId, serverSpan.spanContext().spanId)
+  equal(graphqlSpan.name, 'mutation saveMovie')
+  equal(graphqlSpan.spanContext().traceId, clientTraceId)
+  equal(graphqlSpan.parentSpanContext.spanId, serverSpan.spanContext().spanId)
 })

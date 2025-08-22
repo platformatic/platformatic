@@ -1,19 +1,16 @@
-'use strict'
+import { parseNDJson } from '@platformatic/telemetry/test/helper.js'
+import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
+import { rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { gunzipSync } from 'node:zlib'
+import { request } from 'undici'
+import { transform } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { rm } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
-const zlib = require('node:zlib')
-const { createRuntime } = require('./helpers.js')
-const { transform } = require('../lib/config.js')
-
-const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
-
-const fixturesDir = join(__dirname, '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should cache http requests', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
@@ -30,21 +27,21 @@ test('should cache http requests', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
     const cacheEntryId = res.headers['x-plt-http-cache-id']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-    assert.ok(cacheEntryId)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    ok(cacheEntryId)
 
     if (firstCacheEntryId === null) {
       firstCacheEntryId = cacheEntryId
     } else {
-      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+      strictEqual(cacheEntryId, firstCacheEntryId)
     }
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   await sleep(cacheTimeoutSec * 1000)
@@ -53,16 +50,16 @@ test('should cache http requests', async t => {
     query: { maxAge: cacheTimeoutSec }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
   const cacheEntryId = res.headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-  assert.ok(cacheEntryId)
-  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
+  strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  ok(cacheEntryId)
+  notStrictEqual(cacheEntryId, firstCacheEntryId)
 
   const { counter } = await res.body.json()
-  assert.strictEqual(counter, 2)
+  strictEqual(counter, 2)
 })
 
 test('should get response cached by another application', async t => {
@@ -81,14 +78,14 @@ test('should get response cached by another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 1)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 1)
+    strictEqual(service, 'service-3')
   }
 
   {
@@ -98,14 +95,14 @@ test('should get response cached by another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 1)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 1)
+    strictEqual(service, 'service-3')
   }
 
   // Wait for the cache to expire
@@ -118,14 +115,14 @@ test('should get response cached by another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 2)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 2)
+    strictEqual(service, 'service-3')
   }
 })
 
@@ -158,10 +155,10 @@ test('should use a custom cache storage', async t => {
     const { statusCode, body } = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const { counter } = await body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
 
     await sleep(1000)
   }
@@ -169,16 +166,16 @@ test('should use a custom cache storage', async t => {
   const { statusCode, headers, body } = await request(entryUrl + '/service-1/cached-req-counter', {
     query: { maxAge: cacheTimeoutSec }
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const { message, options, entries } = await body.json()
-  assert.strictEqual(message, 'Custom cache store response')
-  assert.deepStrictEqual(options, cacheStoreOptions)
-  assert.strictEqual(entries.length, 1)
+  strictEqual(message, 'Custom cache store response')
+  deepStrictEqual(options, cacheStoreOptions)
+  strictEqual(entries.length, 1)
 
   const cacheEntry = entries[0]
   const cacheEntryId = headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheEntry.key.id, cacheEntryId)
+  strictEqual(cacheEntry.key.id, cacheEntryId)
 })
 
 test('should remove a url from an http cache', async t => {
@@ -196,13 +193,13 @@ test('should remove a url from an http cache', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -211,13 +208,13 @@ test('should remove a url from an http cache', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   await app.invalidateHttpCache({
@@ -235,13 +232,13 @@ test('should remove a url from an http cache', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
@@ -260,13 +257,13 @@ test('should invalidate cache from another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -275,13 +272,13 @@ test('should invalidate cache from another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -301,7 +298,7 @@ test('should invalidate cache from another application', async t => {
         ]
       })
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   {
@@ -309,13 +306,13 @@ test('should invalidate cache from another application', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
@@ -345,16 +342,16 @@ test('should invalidate cache by cache tags', async t => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const cacheTags = res.headers['cache-tags']
-    assert.strictEqual(cacheTags, 'tag1,tag2')
+    strictEqual(cacheTags, 'tag1,tag2')
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -366,16 +363,16 @@ test('should invalidate cache by cache tags', async t => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const cacheTags = res.headers['cache-tags']
-    assert.strictEqual(cacheTags, 'tag1,tag2')
+    strictEqual(cacheTags, 'tag1,tag2')
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -387,7 +384,7 @@ test('should invalidate cache by cache tags', async t => {
       },
       body: JSON.stringify({ tags: ['tag1'] })
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   {
@@ -398,13 +395,13 @@ test('should invalidate cache by cache tags', async t => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
@@ -441,7 +438,7 @@ test('should set an opentelemetry attribute', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
     const error = await body.text()
-    assert.strictEqual(statusCode, 200, error)
+    strictEqual(statusCode, 200, error)
   }
 
   await sleep(100)
@@ -452,23 +449,23 @@ test('should set an opentelemetry attribute', async t => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    assert.strictEqual(serverTraces.length, 4)
-    assert.strictEqual(clientTraces.length, 3)
+    strictEqual(serverTraces.length, 4)
+    strictEqual(clientTraces.length, 3)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.strictEqual(cacheIdAttribute, undefined)
-      assert.strictEqual(cacheHitAttribute, undefined)
+      strictEqual(cacheIdAttribute, undefined)
+      strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.ok(cacheIdAttribute)
-      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, 'false')
+      ok(cacheIdAttribute)
+      notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      strictEqual(cacheHitAttribute, 'false')
       previousCacheIdAttribute = cacheIdAttribute
     }
 
@@ -484,7 +481,7 @@ test('should set an opentelemetry attribute', async t => {
       query: { maxAge: cacheTimeoutSec }
     })
     const error = await body.text()
-    assert.strictEqual(statusCode, 200, error)
+    strictEqual(statusCode, 200, error)
   }
 
   await sleep(100)
@@ -494,28 +491,28 @@ test('should set an opentelemetry attribute', async t => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    assert.strictEqual(serverTraces.length, 1)
-    assert.strictEqual(clientTraces.length, 1)
+    strictEqual(serverTraces.length, 1)
+    strictEqual(clientTraces.length, 1)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.strictEqual(cacheIdAttribute, undefined)
-      assert.strictEqual(cacheHitAttribute, undefined)
+      strictEqual(cacheIdAttribute, undefined)
+      strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.ok(cacheIdAttribute)
-      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, 'true')
+      ok(cacheIdAttribute)
+      notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      strictEqual(cacheHitAttribute, 'true')
       previousCacheIdAttribute = cacheIdAttribute
     }
 
     const resultCacheId2 = clientTraces.at(-1).attributes['http.cache.id']
-    assert.strictEqual(resultCacheId1, resultCacheId2)
+    strictEqual(resultCacheId1, resultCacheId2)
   }
 })
 
@@ -537,22 +534,22 @@ test('should cache http requests gzipped', async t => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
     const cacheEntryId = res.headers['x-plt-http-cache-id']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-    assert.ok(cacheEntryId)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    ok(cacheEntryId)
 
     if (firstCacheEntryId === null) {
       firstCacheEntryId = cacheEntryId
     } else {
-      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+      strictEqual(cacheEntryId, firstCacheEntryId)
     }
 
     const buf = await res.body.arrayBuffer()
-    const { counter } = JSON.parse(zlib.gunzipSync(buf))
-    assert.strictEqual(counter, 1)
+    const { counter } = JSON.parse(gunzipSync(buf))
+    strictEqual(counter, 1)
   }
 
   await sleep(cacheTimeoutSec * 1000)
@@ -564,14 +561,14 @@ test('should cache http requests gzipped', async t => {
     }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
   const cacheEntryId = res.headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-  assert.ok(cacheEntryId)
-  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
+  strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  ok(cacheEntryId)
+  notStrictEqual(cacheEntryId, firstCacheEntryId)
 
-  const { counter } = JSON.parse(zlib.gunzipSync(await res.body.arrayBuffer()))
-  assert.strictEqual(counter, 2)
+  const { counter } = JSON.parse(gunzipSync(await res.body.arrayBuffer()))
+  strictEqual(counter, 2)
 })

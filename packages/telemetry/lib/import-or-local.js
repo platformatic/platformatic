@@ -1,10 +1,8 @@
-'use strict'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
-const { pathToFileURL } = require('node:url')
-const { createRequire } = require('node:module')
-const { join } = require('node:path')
-
-async function importOrLocal ({ projectDir, pkg }) {
+export async function importOrLocal ({ projectDir, pkg }) {
   try {
     return import(pkg)
   } catch (err) {
@@ -14,5 +12,3 @@ async function importOrLocal ({ projectDir, pkg }) {
     return import(pathToFileURL(fileToImport))
   }
 }
-
-module.exports = importOrLocal

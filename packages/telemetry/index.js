@@ -1,11 +1,3 @@
-'use strict'
-
-const telemetry = require('./lib/telemetry')
-const { createTelemetryThreadInterceptorHooks } = require('./lib/thread-interceptor-hooks')
-const schema = require('./lib/schema')
-
-module.exports = {
-  telemetry,
-  createTelemetryThreadInterceptorHooks,
-  schema,
-}
+export * as schema from './lib/schema.js'
+export * as telemetry from './lib/telemetry.js'
+export { createTelemetryThreadInterceptorHooks } from './lib/thread-interceptor-hooks.js'

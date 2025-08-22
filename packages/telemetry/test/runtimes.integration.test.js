@@ -1,15 +1,13 @@
-'use strict'
-
-const { equal, deepEqual } = require('node:assert')
-const { resolve, join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { startOTEL } = require('./otelserver')
-const { setFixturesDir, prepareRuntime, startRuntime } = require('../../basic/test/helper.js')
+import { deepEqual, equal } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
+import { startOTEL } from './otelserver/index.js'
 
 process.setMaxListeners(100)
-setFixturesDir(resolve(__dirname, './fixtures'))
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 let received = []
 let otelServer
@@ -129,7 +127,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   )
 
   // build next
-  const cliPath = join(__dirname, '../../wattpm', 'bin/cli.js')
+  const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
   const { execa } = await import('execa')
   await execa('node', [cliPath, 'build'], { cwd: root })
 

@@ -1,13 +1,10 @@
-'use strict'
+import { deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { createRuntime } = require('../helpers.js')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application details', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -20,11 +17,11 @@ test('should get application details', async t => {
   })
 
   const applicationDetails = await app.getApplicationDetails('with-logger')
-  assert.deepStrictEqual(applicationDetails, {
+  deepStrictEqual(applicationDetails, {
     id: 'with-logger',
     type: 'service',
     status: 'started',
-    version: platformaticVersion,
+    version,
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
     dependencies: []

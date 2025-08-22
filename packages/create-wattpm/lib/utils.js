@@ -3,11 +3,9 @@ import { execa } from 'execa'
 import { access, constants, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
-import * as url from 'node:url'
 
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 const ansiCodes = {
   // Platformatic Green: #21FA90
@@ -81,7 +79,7 @@ export const findRuntimeConfigFile = async directory => findConfigurationFile(di
  * @returns string
  */
 export async function getDependencyVersion (dependencyName) {
-  const rootPackageJson = join(__dirname, '..', 'package.json')
+  const rootPackageJson = join(import.meta.dirname, '..', 'package.json')
   const packageJsonContents = JSON.parse(await readFile(rootPackageJson, 'utf8'))
   const dependencies = packageJsonContents.dependencies
   const devDependencies = packageJsonContents.devDependencies

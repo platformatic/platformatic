@@ -1,6 +1,4 @@
-'use strict'
-
-class RoundRobinMap extends Map {
+export class RoundRobinMap extends Map {
   #instances
 
   constructor (iterable, instances = {}) {
@@ -62,5 +60,3 @@ class RoundRobinMap extends Map {
     return worker
   }
 }
-
-module.exports = { RoundRobinMap }

@@ -1,9 +1,8 @@
-'use strict'
+import { deepEqual } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual } = require('node:assert')
-const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
   error: () => {}

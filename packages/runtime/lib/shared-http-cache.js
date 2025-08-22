@@ -1,11 +1,9 @@
-'use strict'
+import { loadModule } from '@platformatic/foundation'
+import MemoryCacheStore from '@platformatic/undici-cache-memory'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
 
-const { join } = require('node:path')
-const { loadModule } = require('@platformatic/foundation')
-const MemoryCacheStore = require('@platformatic/undici-cache-memory')
-const { createRequire } = require('node:module')
-
-async function createSharedStore (projectDir, httpCacheConfig = {}) {
+export async function createSharedStore (projectDir, httpCacheConfig = {}) {
   const runtimeRequire = createRequire(join(projectDir, 'file'))
 
   const { store, ...storeConfig } = httpCacheConfig
@@ -43,5 +41,3 @@ async function createSharedStore (projectDir, httpCacheConfig = {}) {
 
   return new SharedCacheStore(storeConfig)
 }
-
-module.exports = { createSharedStore }

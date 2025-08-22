@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.5",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",
     "lint": "eslint"
@@ -17,7 +18,6 @@
   "devDependencies": {
     "@fastify/cookie": "^11.0.0",
     "@fastify/session": "^11.0.0",
-    "@matteo.collina/tspl": "^0.2.0",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.20.0",

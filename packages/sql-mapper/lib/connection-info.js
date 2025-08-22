@@ -1,7 +1,7 @@
 // The most general way to get the connection info is through the driver.
 // In this way, we don't need to do any assumptions about the connection string
 // (with the exception of SQLite)
-const getConnectionInfo = async (db, connectionString) => {
+export async function getConnectionInfo (db, connectionString) {
   let database, host, port, user
   let dbSystem = 'unknown'
   if (db.isPg) {
@@ -35,8 +35,6 @@ const getConnectionInfo = async (db, connectionString) => {
     isPg: !!db.isPg,
     isMySql: !!db.isMySql,
     isSQLite: !!db.isSQLite,
-    dbSystem,
+    dbSystem
   }
 }
-
-module.exports = { getConnectionInfo }

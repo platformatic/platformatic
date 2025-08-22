@@ -1,14 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
-const { clear, connInfo, createBasicPages } = require('./helper')
-const { tspl } = require('@matteo.collina/tspl')
-const { test } = require('node:test')
-const fastify = require('fastify')
-const sqlOpenAPI = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-
-test('include entity and partially ignore an entity with OpenAPI', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 4 })
+test('include entity and partially ignore an entity with OpenAPI', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -17,17 +14,17 @@ test('include entity and partially ignore an entity with OpenAPI', async (t) => 
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     include: {
-      category: true,
+      category: true
     },
     ignore: {
       category: {
-        name: true,
-      },
-    },
+        name: true
+      }
+    }
   })
   t.after(() => app.close())
 
@@ -35,7 +32,7 @@ test('include entity and partially ignore an entity with OpenAPI', async (t) => 
 
   const res = await app.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   equal(res.statusCode, 200, 'GET /documentation/json status code')
   const data = res.json()
@@ -43,8 +40,7 @@ test('include entity and partially ignore an entity with OpenAPI', async (t) => 
   equal(data.components.schemas.Category.properties.name, undefined, 'name property is ignored')
 })
 
-test('show a warning if included entity is not found', async (t) => {
-  const { ok } = tspl(t, { plan: 1 })
+test('show a warning if included entity is not found', async t => {
   const app = fastify({
     loggerInstance: {
       info () {},
@@ -59,8 +55,8 @@ test('show a warning if included entity is not found', async (t) => {
         if (msg === 'Included openapi entity "missingEntityPages" not found. Did you mean "page"?') {
           ok('warning message is shown')
         }
-      },
-    },
+      }
+    }
   })
 
   app.register(sqlMapper, {
@@ -70,20 +66,19 @@ test('show a warning if included entity is not found', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     include: {
-      missingEntityPages: true,
-    },
+      missingEntityPages: true
+    }
   })
   t.after(() => app.close())
 
   await app.ready()
 })
 
-test('show a warning if database is empty', async (t) => {
-  const { ok } = tspl(t, { plan: 1 })
+test('show a warning if database is empty', async t => {
   const app = fastify({
     loggerInstance: {
       info () {},
@@ -98,8 +93,8 @@ test('show a warning if database is empty', async (t) => {
         if (msg === 'Included openapi entity "missingEntityPages" not found.') {
           ok('warning message is shown')
         }
-      },
-    },
+      }
+    }
   })
 
   app.register(sqlMapper, {
@@ -108,20 +103,19 @@ test('show a warning if database is empty', async (t) => {
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     include: {
-      missingEntityPages: true,
-    },
+      missingEntityPages: true
+    }
   })
   t.after(() => app.close())
 
   await app.ready()
 })
 
-test('entity responds to traffic an entity in OpenAPI', async (t) => {
-  const { ok, equal, deepEqual: same } = tspl(t, { plan: 6 })
+test('entity responds to traffic an entity in OpenAPI', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -130,17 +124,17 @@ test('entity responds to traffic an entity in OpenAPI', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     include: {
-      category: true,
+      category: true
     },
     ignore: {
       category: {
-        name: true,
-      },
-    },
+        name: true
+      }
+    }
   })
   t.after(() => app.close())
 
@@ -151,20 +145,24 @@ test('entity responds to traffic an entity in OpenAPI', async (t) => {
       method: 'POST',
       url: '/categories',
       body: {
-        id: 123,
-      },
+        id: 123
+      }
     })
     equal(res.statusCode, 200, 'POST /categories status code')
     equal(res.headers.location, '/categories/123', 'POST /api/categories location')
-    same(res.json(), {
-      id: 123,
-    }, 'POST /categories response')
+    deepEqual(
+      res.json(),
+      {
+        id: 123
+      },
+      'POST /categories response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/categories/1',
+      url: '/categories/1'
     })
     equal(res.statusCode, 404, 'GET /categories/1 status code')
   }
@@ -172,8 +170,8 @@ test('entity responds to traffic an entity in OpenAPI', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/categories/123',
+      url: '/categories/123'
     })
-    same(res.json(), { id: 123 })
+    deepEqual(res.json(), { id: 123 })
   }
 })

@@ -1,16 +1,22 @@
-'use strict'
-
-const { once } = require('node:events')
-const { parentPort, workerData } = require('node:worker_threads')
-
-const { ITC } = require('@platformatic/itc')
-const { ensureLoggableError } = require('@platformatic/foundation')
-const { Unpromise } = require('@watchable/unpromise')
-
-const errors = require('../errors')
-const { updateUndiciInterceptors } = require('./interceptors')
-const { kITC, kId, kApplicationId, kWorkerId } = require('./symbols')
-const { MessagingITC } = require('./messaging')
+import { ensureLoggableError } from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import { Unpromise } from '@watchable/unpromise'
+import { once } from 'node:events'
+import { parentPort, workerData } from 'node:worker_threads'
+import {
+  ApplicationExitedError,
+  FailedToPerformCustomHealthCheckError,
+  FailedToPerformCustomReadinessCheckError,
+  FailedToRetrieveGraphQLSchemaError,
+  FailedToRetrieveHealthError,
+  FailedToRetrieveMetaError,
+  FailedToRetrieveMetricsError,
+  FailedToRetrieveOpenAPISchemaError,
+  WorkerExitedError
+} from '../errors.js'
+import { updateUndiciInterceptors } from './interceptors.js'
+import { MessagingITC } from './messaging.js'
+import { kApplicationId, kITC, kId, kWorkerId } from './symbols.js'
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -27,9 +33,9 @@ async function safeHandleInITC (worker, fn) {
 
     if (typeof exitCode === 'number') {
       if (typeof worker[kWorkerId] !== 'undefined') {
-        throw new errors.WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
+        throw new WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
       } else {
-        throw new errors.ApplicationExitedError(worker[kId], exitCode)
+        throw new ApplicationExitedError(worker[kId], exitCode)
       }
     } else {
       ac.abort()
@@ -49,21 +55,21 @@ async function safeHandleInITC (worker, fn) {
   }
 }
 
-async function sendViaITC (worker, name, message, transferList) {
-  return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
-}
-
-async function waitEventFromITC (worker, event) {
-  return safeHandleInITC(worker, () => once(worker[kITC], event))
-}
-
 async function closeITC (dispatcher, itc, messaging) {
   await dispatcher.interceptor.close()
   itc.close()
   messaging.close()
 }
 
-function setupITC (instance, application, dispatcher, sharedContext) {
+export async function sendViaITC (worker, name, message, transferList) {
+  return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
+}
+
+export async function waitEventFromITC (worker, event) {
+  return safeHandleInITC(worker, () => once(worker[kITC], event))
+}
+
+export function setupITC (instance, application, dispatcher, sharedContext) {
   const messaging = new MessagingITC(instance.appConfig.id, workerData.config)
 
   Object.assign(globalThis.platformatic ?? {}, {
@@ -166,7 +172,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.capability.getOpenapiSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveOpenAPISchemaError(application.id, err.message)
+          throw new FailedToRetrieveOpenAPISchemaError(application.id, err.message)
         }
       },
 
@@ -174,7 +180,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.capability.getGraphqlSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveGraphQLSchemaError(application.id, err.message)
+          throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
       },
 
@@ -182,7 +188,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.capability.getMeta()
         } catch (err) {
-          throw new errors.FailedToRetrieveMetaError(application.id, err.message)
+          throw new FailedToRetrieveMetaError(application.id, err.message)
         }
       },
 
@@ -190,7 +196,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.getMetrics({ format })
         } catch (err) {
-          throw new errors.FailedToRetrieveMetricsError(application.id, err.message)
+          throw new FailedToRetrieveMetricsError(application.id, err.message)
         }
       },
 
@@ -198,7 +204,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.getHealth()
         } catch (err) {
-          throw new errors.FailedToRetrieveHealthError(application.id, err.message)
+          throw new FailedToRetrieveHealthError(application.id, err.message)
         }
       },
 
@@ -206,7 +212,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.capability.getCustomHealthCheck()
         } catch (err) {
-          throw new errors.FailedToPerformCustomHealthCheckError(application.id, err.message)
+          throw new FailedToPerformCustomHealthCheckError(application.id, err.message)
         }
       },
 
@@ -214,7 +220,7 @@ function setupITC (instance, application, dispatcher, sharedContext) {
         try {
           return await instance.capability.getCustomReadinessCheck()
         } catch (err) {
-          throw new errors.FailedToPerformCustomReadinessCheckError(application.id, err.message)
+          throw new FailedToPerformCustomReadinessCheckError(application.id, err.message)
         }
       },
 
@@ -235,5 +241,3 @@ function setupITC (instance, application, dispatcher, sharedContext) {
   itc.listen()
   return itc
 }
-
-module.exports = { sendViaITC, setupITC, waitEventFromITC }

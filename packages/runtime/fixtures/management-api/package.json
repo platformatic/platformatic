@@ -1,4 +1,5 @@
 {
   "name": "test-runtime-package",
-  "version": "1.0.42"
+  "version": "1.0.42",
+  "type": "commonjs"
 }

@@ -1,14 +1,12 @@
-'use strict'
-
-const { test } = require('node:test')
-const { ok, equal, deepEqual, rejects, match, ifError } = require('node:assert')
-const { connect } = require('..')
-const { clear, connInfo, isMysql, isSQLite } = require('./helper')
+import { deepEqual, equal, ifError, match, ok, rejects } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {},
+  warn: () => {}
 }
 
 test('list', async () => {
@@ -39,163 +37,212 @@ test('list', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
-  rejects(entity.find.bind(entity, { where: { invalidField: { eq: 'Dog' } } }), { message: 'Unknown field invalidField' })
+  rejects(entity.find.bind(entity, { where: { invalidField: { eq: 'Dog' } } }), {
+    message: 'Unknown field invalidField'
+  })
 
-  deepEqual(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '1',
-    title: 'Dog',
-    longText: 'Foo',
-  }])
+  deepEqual(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }
+  ])
 
-  deepEqual(await entity.find({ limit: 1, fields: ['id', 'title', 'longText'] }), [{
-    id: '1',
-    title: 'Dog',
-    longText: 'Foo',
-  }])
+  deepEqual(await entity.find({ limit: 1, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }
+  ])
 
-  deepEqual(await entity.find({ offset: 3, fields: ['id', 'title', 'longText'] }), [{
-    id: '4',
-    title: 'Duck',
-    longText: 'A duck tale',
-  }])
+  deepEqual(await entity.find({ offset: 3, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }
+  ])
 
-  deepEqual(await entity.find({ limit: 1, offset: 0, fields: ['id', 'title', 'longText'] }), [{
-    id: '1',
-    title: 'Dog',
-    longText: 'Foo',
-  }])
+  deepEqual(await entity.find({ limit: 1, offset: 0, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }
+  ])
 
-  deepEqual(await entity.find({ limit: 1, offset: 0, orderBy: [{ field: 'id', direction: 'desc' }], fields: ['id', 'title'] }), [{
-    id: '4',
-    title: 'Duck',
-  }])
+  deepEqual(
+    await entity.find({ limit: 1, offset: 0, orderBy: [{ field: 'id', direction: 'desc' }], fields: ['id', 'title'] }),
+    [
+      {
+        id: '4',
+        title: 'Duck'
+      }
+    ]
+  )
 
-  deepEqual(await entity.find({ where: { title: { neq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }, {
-    id: '4',
-    title: 'Duck',
-    longText: 'A duck tale',
-  }])
+  deepEqual(await entity.find({ where: { title: { neq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    },
+    {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { gt: 10 } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }, {
-    id: '4',
-    title: 'Duck',
-    longText: 'A duck tale',
-  }])
+  deepEqual(await entity.find({ where: { counter: { gt: 10 } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    },
+    {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '1',
-    title: 'Dog',
-    longText: 'Foo',
-  }, {
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }])
+  deepEqual(await entity.find({ where: { counter: { lt: 40 } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    },
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { lte: 30 } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '1',
-    title: 'Dog',
-    longText: 'Foo',
-  }, {
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }])
+  deepEqual(await entity.find({ where: { counter: { lte: 30 } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    },
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { gte: 20 } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }, {
-    id: '4',
-    title: 'Duck',
-    longText: 'A duck tale',
-  }])
+  deepEqual(await entity.find({ where: { counter: { gte: 20 } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    },
+    {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { in: [20, 30] } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }])
+  deepEqual(await entity.find({ where: { counter: { in: [20, 30] } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { nin: [10, 40] } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }])
+  deepEqual(await entity.find({ where: { counter: { nin: [10, 40] } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { counter: { gt: 10, lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'Bar',
-  }, {
-    id: '3',
-    title: 'Mouse',
-    longText: 'Baz',
-  }])
+  deepEqual(await entity.find({ where: { counter: { gt: 10, lt: 40 } }, fields: ['id', 'title', 'longText'] }), [
+    {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    },
+    {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }
+  ])
 })
 
 test('totalCount', async () => {
@@ -226,31 +273,36 @@ test('totalCount', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
   deepEqual(await entity.count(), 4)
@@ -322,36 +374,44 @@ test('foreign keys', async () => {
           owner_id INTEGER REFERENCES owners(id)
         );`)
       }
-    },
+    }
   })
 
-  const owners = [{
-    name: 'Matteo',
-  }, {
-    name: 'Luca',
-  }]
+  const owners = [
+    {
+      name: 'Matteo'
+    },
+    {
+      name: 'Luca'
+    }
+  ]
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   {
     const res = await mapper.entities.owner.insert({
-      inputs: owners,
+      inputs: owners
     })
     const toAssign = [...posts]
     for (const owner of res) {
@@ -359,7 +419,7 @@ test('foreign keys', async () => {
       toAssign.shift().ownerId = owner.id
     }
     await mapper.entities.post.insert({
-      inputs: posts,
+      inputs: posts
     })
   }
 
@@ -368,37 +428,49 @@ test('foreign keys', async () => {
     equal(owners.length, 2)
 
     for (const owner of owners) {
-      owner.posts = await mapper.entities.post.find({ where: { ownerId: { eq: owner.id } }, fields: ['id', 'title', 'longText', 'ownerId'] })
+      owner.posts = await mapper.entities.post.find({
+        where: { ownerId: { eq: owner.id } },
+        fields: ['id', 'title', 'longText', 'ownerId']
+      })
     }
-    deepEqual(owners, [{
-      id: '1',
-      name: 'Matteo',
-      posts: [{
+    deepEqual(owners, [
+      {
         id: '1',
-        title: 'Dog',
-        longText: 'Foo',
-        ownerId: '1',
-      }, {
+        name: 'Matteo',
+        posts: [
+          {
+            id: '1',
+            title: 'Dog',
+            longText: 'Foo',
+            ownerId: '1'
+          },
+          {
+            id: '2',
+            title: 'Cat',
+            longText: 'Bar',
+            ownerId: '1'
+          }
+        ]
+      },
+      {
         id: '2',
-        title: 'Cat',
-        longText: 'Bar',
-        ownerId: '1',
-      }],
-    }, {
-      id: '2',
-      name: 'Luca',
-      posts: [{
-        id: '3',
-        title: 'Mouse',
-        longText: 'Baz',
-        ownerId: '2',
-      }, {
-        id: '4',
-        title: 'Duck',
-        longText: 'A duck tale',
-        ownerId: '2',
-      }],
-    }])
+        name: 'Luca',
+        posts: [
+          {
+            id: '3',
+            title: 'Mouse',
+            longText: 'Baz',
+            ownerId: '2'
+          },
+          {
+            id: '4',
+            title: 'Duck',
+            longText: 'A duck tale',
+            ownerId: '2'
+          }
+        ]
+      }
+    ])
   }
 })
 
@@ -430,7 +502,7 @@ test('limit should be 10 by default 100 at max', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
@@ -441,12 +513,12 @@ test('limit should be 10 by default 100 at max', async () => {
     posts.push({
       title: 'Dog',
       longText: 'Foo',
-      counter: i,
+      counter: i
     })
   }
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
   const defaultLimit = 10
@@ -489,7 +561,7 @@ test('limit should be 10 by default 100 at max', async () => {
 test('limit must accept custom configuration', async () => {
   const customLimitConf = {
     default: 1,
-    max: 5,
+    max: 5
   }
   const mapper = await connect({
     ...connInfo,
@@ -519,7 +591,7 @@ test('limit must accept custom configuration', async () => {
         );`)
       }
     },
-    limit: customLimitConf,
+    limit: customLimitConf
   })
 
   const entity = mapper.entities.post
@@ -530,12 +602,12 @@ test('limit must accept custom configuration', async () => {
     posts.push({
       title: 'Dog',
       longText: 'Foo',
-      counter: i,
+      counter: i
     })
   }
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
   deepEqual(await (await entity.find()).length, customLimitConf.default)
@@ -597,30 +669,37 @@ test('is NULL', async () => {
           title VARCHAR(42)
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
 
-  const posts = [{
-    title: 'Dog',
-  }, {
-    title: null,
-  }]
+  const posts = [
+    {
+      title: 'Dog'
+    },
+    {
+      title: null
+    }
+  ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
-  deepEqual(await entity.find({ where: { title: { eq: null } } }), [{
-    id: '2',
-    title: null,
-  }])
+  deepEqual(await entity.find({ where: { title: { eq: null } } }), [
+    {
+      id: '2',
+      title: null
+    }
+  ])
 
-  deepEqual(await entity.find({ where: { title: { neq: null } } }), [{
-    id: '1',
-    title: 'Dog',
-  }])
+  deepEqual(await entity.find({ where: { title: { neq: null } } }), [
+    {
+      id: '1',
+      title: 'Dog'
+    }
+  ])
 })
 
 test('LIKE', async () => {
@@ -651,7 +730,7 @@ test('LIKE', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
@@ -660,110 +739,152 @@ test('LIKE', async () => {
     {
       title: 'Dog',
       longText: 'The Dog barks',
-      counter: 1,
+      counter: 1
     },
     {
       title: 'Cat',
       longText: 'The Cat meows',
-      counter: 2,
+      counter: 2
     },
     {
       title: 'Potato',
       longText: 'The Potato is vegetable',
-      counter: 3,
+      counter: 3
     },
     {
       title: 'atmosphere',
       longText: 'The atmosphere is not a sphere',
-      counter: 4,
+      counter: 4
     },
     {
       title: 'planet',
       longText: 'The planet have atmosphere',
-      counter: 14,
-    },
+      counter: 14
+    }
   ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
-  deepEqual(await entity.find({ where: { title: { like: '%at' } } }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'The Cat meows',
-    counter: 2,
-  }], 'where: { title: { like: \'%at\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { like: '%at' } } }),
+    [
+      {
+        id: '2',
+        title: 'Cat',
+        longText: 'The Cat meows',
+        counter: 2
+      }
+    ],
+    "where: { title: { like: '%at' } }"
+  )
 
-  deepEqual(await entity.find({ where: { title: { like: '%at%' } } }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'The Cat meows',
-    counter: 2,
-  },
-  {
-    id: '3',
-    title: 'Potato',
-    longText: 'The Potato is vegetable',
-    counter: 3,
-  },
-  {
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { title: { like: \'%at%\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { like: '%at%' } } }),
+    [
+      {
+        id: '2',
+        title: 'Cat',
+        longText: 'The Cat meows',
+        counter: 2
+      },
+      {
+        id: '3',
+        title: 'Potato',
+        longText: 'The Potato is vegetable',
+        counter: 3
+      },
+      {
+        id: '4',
+        title: 'atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { title: { like: '%at%' } }"
+  )
 
-  deepEqual(await entity.find({ where: { title: { like: 'at%' } } }), [{
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { title: { like: \'at%\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { like: 'at%' } } }),
+    [
+      {
+        id: '4',
+        title: 'atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { title: { like: 'at%' } }"
+  )
 
-  deepEqual(await entity.find({ where: { longText: { like: '%is%' } } }), [{
-    id: '3',
-    title: 'Potato',
-    longText: 'The Potato is vegetable',
-    counter: 3,
-  },
-  {
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { longText: { like: \'%is%\' } }')
+  deepEqual(
+    await entity.find({ where: { longText: { like: '%is%' } } }),
+    [
+      {
+        id: '3',
+        title: 'Potato',
+        longText: 'The Potato is vegetable',
+        counter: 3
+      },
+      {
+        id: '4',
+        title: 'atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { longText: { like: '%is%' } }"
+  )
 
   deepEqual(await entity.find({ where: { longText: { like: null } } }), [], 'where: { longText: { like: null } }')
 
   if (!isSQLite) {
-    deepEqual(await entity.find({ where: { counter: { like: 4 } } }), [{
-      id: '4',
-      title: 'atmosphere',
-      longText: 'The atmosphere is not a sphere',
-      counter: 4,
-    }], 'where: { counter: { like: 4 } }')
+    deepEqual(
+      await entity.find({ where: { counter: { like: 4 } } }),
+      [
+        {
+          id: '4',
+          title: 'atmosphere',
+          longText: 'The atmosphere is not a sphere',
+          counter: 4
+        }
+      ],
+      'where: { counter: { like: 4 } }'
+    )
   }
 
-  deepEqual(await entity.find({ where: { counter: { like: '%4' } } }), [{
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  },
-  {
-    id: '5',
-    title: 'planet',
-    longText: 'The planet have atmosphere',
-    counter: 14,
-  }], 'where: { counter: { like: \'%4\' } }')
+  deepEqual(
+    await entity.find({ where: { counter: { like: '%4' } } }),
+    [
+      {
+        id: '4',
+        title: 'atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      },
+      {
+        id: '5',
+        title: 'planet',
+        longText: 'The planet have atmosphere',
+        counter: 14
+      }
+    ],
+    "where: { counter: { like: '%4' } }"
+  )
 
-  deepEqual(await entity.find({ where: { counter: { like: '4%' } } }), [{
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { counter: { like: \'4%\' } }')
+  deepEqual(
+    await entity.find({ where: { counter: { like: '4%' } } }),
+    [
+      {
+        id: '4',
+        title: 'atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { counter: { like: '4%' } }"
+  )
 
   deepEqual(await entity.find({ where: { counter: { like: null } } }), [], 'where: { counter: { like: null } }')
 })
@@ -796,7 +917,7 @@ test('ILIKE', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
@@ -805,110 +926,152 @@ test('ILIKE', async () => {
     {
       title: 'Dog',
       longText: 'The Dog barks',
-      counter: 1,
+      counter: 1
     },
     {
       title: 'Cat',
       longText: 'The Cat meows',
-      counter: 2,
+      counter: 2
     },
     {
       title: 'Potato',
       longText: 'The Potato is vegetable',
-      counter: 3,
+      counter: 3
     },
     {
       title: 'Atmosphere',
       longText: 'The atmosphere is not a sphere',
-      counter: 4,
+      counter: 4
     },
     {
       title: 'planet',
       longText: 'The planet have atmosphere',
-      counter: 14,
-    },
+      counter: 14
+    }
   ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
-  deepEqual(await entity.find({ where: { title: { ilike: '%at' } } }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'The Cat meows',
-    counter: 2,
-  }], 'where: { title: { like: \'%at\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { ilike: '%at' } } }),
+    [
+      {
+        id: '2',
+        title: 'Cat',
+        longText: 'The Cat meows',
+        counter: 2
+      }
+    ],
+    "where: { title: { like: '%at' } }"
+  )
 
-  deepEqual(await entity.find({ where: { title: { ilike: '%at%' } } }), [{
-    id: '2',
-    title: 'Cat',
-    longText: 'The Cat meows',
-    counter: 2,
-  },
-  {
-    id: '3',
-    title: 'Potato',
-    longText: 'The Potato is vegetable',
-    counter: 3,
-  },
-  {
-    id: '4',
-    title: 'Atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { title: { ilike: \'%at%\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { ilike: '%at%' } } }),
+    [
+      {
+        id: '2',
+        title: 'Cat',
+        longText: 'The Cat meows',
+        counter: 2
+      },
+      {
+        id: '3',
+        title: 'Potato',
+        longText: 'The Potato is vegetable',
+        counter: 3
+      },
+      {
+        id: '4',
+        title: 'Atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { title: { ilike: '%at%' } }"
+  )
 
-  deepEqual(await entity.find({ where: { title: { ilike: 'at%' } } }), [{
-    id: '4',
-    title: 'Atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { title: { ilike: \'at%\' } }')
+  deepEqual(
+    await entity.find({ where: { title: { ilike: 'at%' } } }),
+    [
+      {
+        id: '4',
+        title: 'Atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { title: { ilike: 'at%' } }"
+  )
 
-  deepEqual(await entity.find({ where: { longText: { ilike: '%is%' } } }), [{
-    id: '3',
-    title: 'Potato',
-    longText: 'The Potato is vegetable',
-    counter: 3,
-  },
-  {
-    id: '4',
-    title: 'Atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { longText: { ilike: \'%is%\' } }')
+  deepEqual(
+    await entity.find({ where: { longText: { ilike: '%is%' } } }),
+    [
+      {
+        id: '3',
+        title: 'Potato',
+        longText: 'The Potato is vegetable',
+        counter: 3
+      },
+      {
+        id: '4',
+        title: 'Atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { longText: { ilike: '%is%' } }"
+  )
 
   deepEqual(await entity.find({ where: { longText: { ilike: null } } }), [], 'where: { longText: { ilike: null } }')
 
   if (!isSQLite) {
-    deepEqual(await entity.find({ where: { counter: { ilike: 4 } } }), [{
-      id: '4',
-      title: 'Atmosphere',
-      longText: 'The atmosphere is not a sphere',
-      counter: 4,
-    }], 'where: { counter: { ilike: 4 } }')
+    deepEqual(
+      await entity.find({ where: { counter: { ilike: 4 } } }),
+      [
+        {
+          id: '4',
+          title: 'Atmosphere',
+          longText: 'The atmosphere is not a sphere',
+          counter: 4
+        }
+      ],
+      'where: { counter: { ilike: 4 } }'
+    )
   }
 
-  deepEqual(await entity.find({ where: { counter: { ilike: '%4' } } }), [{
-    id: '4',
-    title: 'Atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  },
-  {
-    id: '5',
-    title: 'planet',
-    longText: 'The planet have atmosphere',
-    counter: 14,
-  }], 'where: { counter: { ilike: \'%4\' } }')
+  deepEqual(
+    await entity.find({ where: { counter: { ilike: '%4' } } }),
+    [
+      {
+        id: '4',
+        title: 'Atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      },
+      {
+        id: '5',
+        title: 'planet',
+        longText: 'The planet have atmosphere',
+        counter: 14
+      }
+    ],
+    "where: { counter: { ilike: '%4' } }"
+  )
 
-  deepEqual(await entity.find({ where: { counter: { ilike: '4%' } } }), [{
-    id: '4',
-    title: 'Atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4,
-  }], 'where: { counter: { ilike: \'4%\' } }')
+  deepEqual(
+    await entity.find({ where: { counter: { ilike: '4%' } } }),
+    [
+      {
+        id: '4',
+        title: 'Atmosphere',
+        longText: 'The atmosphere is not a sphere',
+        counter: 4
+      }
+    ],
+    "where: { counter: { ilike: '4%' } }"
+  )
 
   deepEqual(await entity.find({ where: { counter: { ilike: null } } }), [], 'where: { counter: { ilike: null } }')
 })
@@ -941,29 +1104,34 @@ test('pagination can be disabled', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
   const limit = 2

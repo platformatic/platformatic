@@ -1,11 +1,3 @@
-'use strict'
-
-const { BaseGenerator } = require('./lib/base-generator')
-const { ImportGenerator } = require('./lib/import-generator')
-const utils = require('./lib/utils')
-
-module.exports = {
-  BaseGenerator,
-  ImportGenerator,
-  ...utils
-}
+export { BaseGenerator } from './lib/base-generator.js'
+export { ImportGenerator } from './lib/import-generator.js'
+export * from './lib/utils.js'

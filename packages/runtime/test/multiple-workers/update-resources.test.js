@@ -1,14 +1,12 @@
-'use strict'
-
-const { strict: assert, deepStrictEqual } = require('node:assert')
-const { test } = require('node:test')
-const path = require('node:path')
-const { createRuntime } = require('../helpers.js')
-const { waitForEvents } = require('./helper')
+import { strict as assert, deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
+import { waitForEvents } from './helper.js'
 
 async function prepareRuntime (t, applicationsId, fixture) {
-  const appPath = path.join(__dirname, '..', '..', 'fixtures', fixture)
-  const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
+  const appPath = join(import.meta.dirname, '..', '..', 'fixtures', fixture)
+  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
   t.after(async () => {
     await runtime.close()
   })
@@ -25,8 +23,8 @@ async function prepareRuntime (t, applicationsId, fixture) {
 
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const applicationId = 'node'
-  const appPath = path.join(__dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await createRuntime(path.join(appPath, 'platformatic.json'))
+  const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
+  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
   t.after(async () => {
     await runtime.close()
   })

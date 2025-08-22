@@ -1,22 +1,24 @@
-'use strict'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { readFile, writeFile } from 'node:fs/promises'
+import { platform } from 'node:os'
+import { join, resolve } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { create, transform } from '../index.js'
 
-const { readFile, writeFile } = require('node:fs/promises')
-const { join, resolve } = require('node:path')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { createDirectory, safeRemove } = require('@platformatic/foundation')
-const { transform, create } = require('../index.js')
+export const isWindows = platform() === 'win32'
+export const isCIOnWindows = process.env.CI && isWindows
+export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 
-const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 let tempDirCounter = 0
-const tempPath = resolve(__dirname, '../../../tmp/')
+const tempPath = resolve(import.meta.dirname, '../../../tmp/')
 
-async function getTempDir () {
+export async function getTempDir () {
   const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
 
-async function moveToTmpdir (teardown) {
+export async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
   const dir = await getTempDir()
   process.chdir(dir)
@@ -27,18 +29,18 @@ async function moveToTmpdir (teardown) {
   return dir
 }
 
-async function updateFile (path, update) {
+export async function updateFile (path, update) {
   const contents = await readFile(path, 'utf-8')
   await writeFile(path, await update(contents), 'utf-8')
 }
 
-async function updateConfigFile (path, update) {
+export async function updateConfigFile (path, update) {
   const contents = JSON.parse(await readFile(path, 'utf-8'))
   await update(contents)
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')
 }
 
-async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
+export async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
   if (typeof delay !== 'number') {
     delay = LOGS_TIMEOUT
   }
@@ -65,7 +67,7 @@ async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
     })
 }
 
-async function createRuntime (configOrRoot, sourceOrConfig, context) {
+export async function createRuntime (configOrRoot, sourceOrConfig, context) {
   await createDirectory(tempPath)
 
   const originalTransform = context?.transform ?? transform
@@ -91,14 +93,4 @@ async function createRuntime (configOrRoot, sourceOrConfig, context) {
       return config
     }
   })
-}
-
-module.exports = {
-  LOGS_TIMEOUT,
-  moveToTmpdir,
-  updateFile,
-  updateConfigFile,
-  readLogs,
-  getTempDir,
-  createRuntime
 }

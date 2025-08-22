@@ -1,27 +1,22 @@
-'use strict'
-
-const createError = require('@fastify/error')
-const { BaseGenerator } = require('@platformatic/generators')
-const { existsSync } = require('node:fs')
-const { join, basename } = require('node:path')
-const { envObjectToString } = require('@platformatic/generators/lib/utils')
-const { readFile, readdir, stat } = require('node:fs/promises')
-const { transform } = require('./config')
-const { getApplicationTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
-const { DotEnvTool } = require('dotenv-tool')
-const { getArrayDifference } = require('./utils')
-const { schema } = require('./schema')
-const { pathToFileURL } = require('node:url')
-const {
-  safeRemove,
-  generateDashedName,
+import createError from '@fastify/error'
+import {
+  defaultPackageManager,
   findConfigurationFile,
+  generateDashedName,
+  kMetadata,
   loadConfiguration,
   loadConfigurationFile,
-  kMetadata,
-  defaultPackageManager
-} = require('@platformatic/foundation')
-const { createRequire } = require('node:module')
+  safeRemove
+} from '@platformatic/foundation'
+import { BaseGenerator, envObjectToString, getApplicationTemplateFromSchemaUrl } from '@platformatic/generators'
+import { existsSync } from 'node:fs'
+import { readFile, readdir, stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { basename, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { transform } from './config.js'
+import { schema } from './schema.js'
+import { getArrayDifference } from './utils.js'
 
 const wrappableProperties = {
   logger: {
@@ -38,7 +33,7 @@ const engines = {
   node: '>=22.18.0'
 }
 
-const ERROR_PREFIX = 'PLT_RUNTIME_GEN'
+export const ERROR_PREFIX = 'PLT_RUNTIME_GEN'
 
 const NoApplicationNamedError = createError(
   `${ERROR_PREFIX}_NO_APPLICATION_FOUND`,
@@ -55,7 +50,13 @@ function getRuntimeBaseEnvVars (config) {
   }
 }
 
-class RuntimeGenerator extends BaseGenerator {
+// This is needed as dotenv-tool is not loading with ESM currently
+export function createDotenvTool (...args) {
+  const { DotEnvTool } = createRequire(import.meta.url)('dotenv-tool')
+  return new DotEnvTool(...args)
+}
+
+export class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
     super({
       ...opts,
@@ -372,7 +373,7 @@ class RuntimeGenerator extends BaseGenerator {
     const allCurrentApplicationsNames = this.applications.map(s => s.name)
     const allNewApplicationsNames = newConfig.applications.map(s => s.name)
     // load dotenv tool
-    const envTool = new DotEnvTool({
+    const envTool = createDotenvTool({
       path: join(this.targetDirectory, '.env')
     })
 
@@ -550,7 +551,7 @@ class RuntimeGenerator extends BaseGenerator {
   }
 }
 
-class WrappedGenerator extends BaseGenerator {
+export class WrappedGenerator extends BaseGenerator {
   async prepare () {
     await this.getPlatformaticVersion()
     await this.#updateEnvironment()
@@ -637,9 +638,4 @@ class WrappedGenerator extends BaseGenerator {
     const contents = await readFile(filePath, 'utf-8')
     return contents + suffix
   }
-}
-
-module.exports = {
-  RuntimeGenerator,
-  WrappedGenerator
 }

@@ -1,12 +1,11 @@
-'use strict'
-const { test } = require('node:test')
-const assert = require('node:assert')
-const { getArrayDifference } = require('../lib/utils')
+import { deepEqual } from 'node:assert'
+import { test } from 'node:test'
+import { getArrayDifference } from '../lib/utils.js'
 
 test('getArrayDifference', async t => {
   const a = [1, 2, 3]
   const b = [2, 3, 4]
 
-  assert.deepEqual(getArrayDifference(a, b), [1])
-  assert.deepEqual(getArrayDifference(b, a), [4])
+  deepEqual(getArrayDifference(a, b), [1])
+  deepEqual(getArrayDifference(b, a), [4])
 })

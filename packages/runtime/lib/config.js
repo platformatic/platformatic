@@ -1,34 +1,32 @@
-'use strict'
-
-const { join, resolve: resolvePath, isAbsolute } = require('node:path')
-const { readdir } = require('node:fs/promises')
-const { createRequire } = require('node:module')
-const { importCapabilityAndConfig, validationOptions } = require('@platformatic/basic')
-const {
-  kMetadata,
-  omitProperties,
-  loadModule,
-  runtimeUnwrappablePropertiesList,
+import { importCapabilityAndConfig, validationOptions } from '@platformatic/basic'
+import {
+  extractModuleFromSchemaUrl,
   findConfigurationFile,
-  loadConfigurationModule,
+  kMetadata,
   loadConfiguration,
-  extractModuleFromSchemaUrl
-} = require('@platformatic/foundation')
-const {
+  loadConfigurationModule,
+  loadModule,
+  omitProperties,
+  runtimeUnwrappablePropertiesList
+} from '@platformatic/foundation'
+import { readdir, readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+import {
   InspectAndInspectBrkError,
-  InvalidEntrypointError,
-  MissingEntrypointError,
+  InspectorHostError,
   InspectorPortError,
-  InspectorHostError
-} = require('./errors')
-const { schema } = require('./schema')
-const { upgrade } = require('./upgrade')
+  InvalidEntrypointError,
+  MissingEntrypointError
+} from './errors.js'
+import { schema } from './schema.js'
+import { upgrade } from './upgrade.js'
 
-async function wrapInRuntimeConfig (config, context) {
+export async function wrapInRuntimeConfig (config, context) {
   let applicationId = 'main'
   try {
-    const packageJson = join(config[kMetadata].root, 'package.json')
-    applicationId = require(packageJson).name || 'main'
+    const packageJson = JSON.parse(await readFile(join(config[kMetadata].root, 'package.json'), 'utf-8'))
+    applicationId = packageJson?.name ?? 'main'
 
     if (applicationId.startsWith('@')) {
       applicationId = applicationId.split('/')[1]
@@ -69,7 +67,7 @@ async function wrapInRuntimeConfig (config, context) {
   })
 }
 
-function parseInspectorOptions (config, inspect, inspectBreak) {
+export function parseInspectorOptions (config, inspect, inspectBreak) {
   const hasInspect = inspect != null
   const hasInspectBrk = inspectBreak != null
 
@@ -111,7 +109,7 @@ function parseInspectorOptions (config, inspect, inspectBreak) {
   config.watch = false
 }
 
-async function transform (config, _, context) {
+export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
   const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
 
@@ -280,10 +278,4 @@ async function transform (config, _, context) {
   }
 
   return config
-}
-
-module.exports = {
-  wrapInRuntimeConfig,
-  parseInspectorOptions,
-  transform
 }

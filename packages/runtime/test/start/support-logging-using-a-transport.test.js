@@ -1,22 +1,21 @@
-'use strict'
+import { readFile, unlink } from 'fs/promises'
+import { strictEqual } from 'node:assert'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { transform } from '../../lib/config.js'
+import { createRuntime } from '../helpers.js'
 
-const os = require('node:os')
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const fs = require('fs/promises')
-const { createRuntime } = require('../helpers.js')
-const { transform } = require('../../lib/config')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { setTimeout: sleep } = require('node:timers/promises')
-const tmpdir = os.tmpdir()
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
+const temporaryDirectory = tmpdir()
 
 test('supports logging using a transport', async t => {
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
-  const dest = join(tmpdir, `logger-transport-${process.pid}.log`)
+  const dest = join(temporaryDirectory, `logger-transport-${process.pid}.log`)
 
   t.after(async function () {
-    await fs.unlink(dest)
+    await unlink(dest)
     await app.close()
   })
 
@@ -33,11 +32,11 @@ test('supports logging using a transport', async t => {
   // Wait for logs to be written
   await sleep(3000)
 
-  const written = await fs.readFile(dest, 'utf8')
+  const written = await readFile(dest, 'utf8')
 
   for (const line of written.trim().split('\n')) {
     const parsed = JSON.parse(line)
 
-    assert.strictEqual(parsed.fromTransport, true)
+    strictEqual(parsed.fromTransport, true)
   }
 })

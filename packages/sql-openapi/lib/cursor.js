@@ -1,22 +1,25 @@
-'use strict'
-
-const Ajv = require('ajv')
-const camelCase = require('camelcase')
-const sjson = require('secure-json-parse')
-const fjs = require('fast-json-stringify')
-const { UnableToParseCursorStrError, CursorValidationError, PrimaryKeyNotIncludedInOrderByInCursorPaginationError } = require('./errors')
+import Ajv from 'ajv'
+import camelCase from 'camelcase'
+import fjs from 'fast-json-stringify'
+import fastUri from 'fast-uri'
+import sjson from 'secure-json-parse'
+import {
+  CursorValidationError,
+  PrimaryKeyNotIncludedInOrderByInCursorPaginationError,
+  UnableToParseCursorStrError
+} from './errors.js'
 
 const ajvOptions = {
   coerceTypes: 'array',
   useDefaults: true,
   removeAdditional: true,
-  uriResolver: require('fast-uri'),
+  uriResolver: fastUri,
   addUsedSchema: false,
   allErrors: false
 }
 const ajv = new Ajv(ajvOptions)
 
-function buildCursorUtils (app, entity) {
+export function buildCursorUtils (app, entity) {
   const entitySchema = app.getSchema(entity.name)
   const cursorSchema = {
     $id: entity.name + 'Cursor',
@@ -24,11 +27,11 @@ function buildCursorUtils (app, entity) {
     description: entitySchema.description + ' cursor',
     type: 'object',
     properties: entitySchema.properties,
-    additionalProperties: false,
+    additionalProperties: false
   }
   const validateCursor = ajv.compile(cursorSchema)
   const stringifyCursor = fjs(cursorSchema, {
-    ajv: ajvOptions,
+    ajv: ajvOptions
   })
 
   function encodeCursor (cursor) {
@@ -53,7 +56,7 @@ function buildCursorUtils (app, entity) {
   function transformQueryToCursor ({ startAfter, endBefore }) {
     const parsedData = {
       nextPage: true,
-      cursor: null,
+      cursor: null
     }
     if (startAfter) {
       parsedData.cursor = decodeCursor(startAfter)
@@ -62,14 +65,14 @@ function buildCursorUtils (app, entity) {
       parsedData.nextPage = false
     }
     return parsedData
-  };
+  }
 
   function buildCursorHeaders ({ findResult, orderBy, primaryKeys }) {
     const firstItem = findResult.at(0)
     const lastItem = findResult.at(-1)
     const firstItemCursor = {}
     const lastItemCursor = {}
-    const camelCasedPrimaryKeys = Array.from(primaryKeys).map((key) => camelCase(key))
+    const camelCasedPrimaryKeys = Array.from(primaryKeys).map(key => camelCase(key))
     let hasPrimaryKey = false
     for (const { field } of orderBy) {
       if (firstItem[field] === undefined) continue
@@ -80,7 +83,7 @@ function buildCursorUtils (app, entity) {
     if (!hasPrimaryKey) throw new PrimaryKeyNotIncludedInOrderByInCursorPaginationError()
     return {
       endBefore: encodeCursor(firstItemCursor),
-      startAfter: encodeCursor(lastItemCursor),
+      startAfter: encodeCursor(lastItemCursor)
     }
   }
 
@@ -88,8 +91,4 @@ function buildCursorUtils (app, entity) {
     transformQueryToCursor,
     buildCursorHeaders
   }
-}
-
-module.exports = {
-  buildCursorUtils,
 }

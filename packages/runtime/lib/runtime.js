@@ -1,54 +1,63 @@
-'use strict'
-
-const { ITC } = require('@platformatic/itc')
-const {
-  features,
-  ensureLoggableError,
-  ensureError,
-  executeWithTimeout,
+import {
   deepmerge,
-  parseMemorySize,
+  ensureError,
+  ensureLoggableError,
+  executeWithTimeout,
+  features,
+  kMetadata,
   kTimeout,
-  kMetadata
-} = require('@platformatic/foundation')
-const { once, EventEmitter } = require('node:events')
-const { existsSync } = require('node:fs')
-const { readFile } = require('node:fs/promises')
-const { STATUS_CODES } = require('node:http')
-const { join } = require('node:path')
-const { pathToFileURL } = require('node:url')
-const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
-const { Worker } = require('node:worker_threads')
-const { Agent, interceptors: undiciInterceptors, request } = require('undici')
-const { createThreadInterceptor } = require('undici-thread-interceptor')
-const SonicBoom = require('sonic-boom')
-const { checkDependencies, topologicalSort } = require('./dependencies')
-const errors = require('./errors')
-const { abstractLogger, createLogger } = require('./logger')
-const { startManagementApi } = require('./management-api')
-const { startPrometheusServer } = require('./prom-server')
-const { startScheduler } = require('./scheduler')
-const { createSharedStore } = require('./shared-http-cache')
-const { sendViaITC, waitEventFromITC } = require('./worker/itc')
-const { RoundRobinMap } = require('./worker/round-robin-map.js')
-const {
-  kId,
-  kFullId,
+  parseMemorySize
+} from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import fastify from 'fastify'
+import { EventEmitter, once } from 'node:events'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { STATUS_CODES } from 'node:http'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
+import { Worker } from 'node:worker_threads'
+import SonicBoom from 'sonic-boom'
+import { Agent, request, interceptors as undiciInterceptors } from 'undici'
+import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { checkDependencies, topologicalSort } from './dependencies.js'
+import {
+  ApplicationAlreadyStartedError,
+  ApplicationNotFoundError,
+  ApplicationNotStartedError,
+  ApplicationStartTimeoutError,
+  InvalidArgumentError,
+  MessagingError,
+  MissingEntrypointError,
+  RuntimeAbortedError,
+  RuntimeExitedError,
+  WorkerNotFoundError
+} from './errors.js'
+import { abstractLogger, createLogger } from './logger.js'
+import { startManagementApi } from './management-api.js'
+import { startPrometheusServer } from './prom-server.js'
+import { startScheduler } from './scheduler.js'
+import { createSharedStore } from './shared-http-cache.js'
+import { version } from './version.js'
+import { sendViaITC, waitEventFromITC } from './worker/itc.js'
+import { RoundRobinMap } from './worker/round-robin-map.js'
+import {
   kApplicationId,
-  kWorkerId,
-  kITC,
-  kHealthCheckTimer,
   kConfig,
-  kWorkerStatus,
-  kStderrMarker,
+  kFullId,
+  kHealthCheckTimer,
+  kId,
+  kITC,
   kLastELU,
-  kWorkersBroadcast
-} = require('./worker/symbols')
-const fastify = require('fastify')
+  kStderrMarker,
+  kWorkerId,
+  kWorkersBroadcast,
+  kWorkerStatus
+} from './worker/symbols.js'
 
-const platformaticVersion = require('../package.json').version
-const kWorkerFile = join(__dirname, 'worker/main.js')
-
+const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kForwardEvents = Symbol('plt.runtime.worker.forwardEvents')
 
@@ -60,10 +69,7 @@ const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
 
-const telemetryPath = require.resolve('@platformatic/telemetry')
-const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
-
-class Runtime extends EventEmitter {
+export class Runtime extends EventEmitter {
   logger
   #loggerDestination
   #stdio
@@ -199,7 +205,7 @@ class Runtime extends EventEmitter {
               applicationConfig.id
             )
 
-            await this.closeAndThrow(new errors.RuntimeAbortedError())
+            await this.closeAndThrow(new RuntimeAbortedError())
           }
         } else {
           this.logger.error(
@@ -207,7 +213,7 @@ class Runtime extends EventEmitter {
             applicationConfig.id
           )
 
-          await this.closeAndThrow(new errors.RuntimeAbortedError())
+          await this.closeAndThrow(new RuntimeAbortedError())
         }
       }
 
@@ -255,7 +261,7 @@ class Runtime extends EventEmitter {
     }
 
     if (typeof this.#config.entrypoint === 'undefined') {
-      throw new errors.MissingEntrypointError()
+      throw new MissingEntrypointError()
     }
     this.#updateStatus('starting')
     this.#createWorkersBroadcastChannel()
@@ -475,14 +481,14 @@ class Runtime extends EventEmitter {
     // is no longer in the init phase
     const firstWorker = this.#workers.get(`${id}:0`)
     if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
-      throw new errors.ApplicationAlreadyStartedError()
+      throw new ApplicationAlreadyStartedError()
     }
 
     const config = this.#config
     const applicationConfig = config.applications.find(s => s.id === id)
 
     if (!applicationConfig) {
-      throw new errors.ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
     const workersCount = await this.#workers.getCount(applicationConfig.id)
@@ -501,7 +507,7 @@ class Runtime extends EventEmitter {
     const applicationConfig = config.applications.find(s => s.id === id)
 
     if (!applicationConfig) {
-      throw new errors.ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
     const workersCount = await this.#workers.getCount(applicationConfig.id)
@@ -561,7 +567,7 @@ class Runtime extends EventEmitter {
       try {
         metrics = await this.getFormattedMetrics()
       } catch (error) {
-        if (!(error instanceof errors.RuntimeExitedError)) {
+        if (!(error instanceof RuntimeExitedError)) {
           this.logger.error({ err: ensureLoggableError(error) }, 'Error collecting metrics')
         }
         return
@@ -771,7 +777,7 @@ class Runtime extends EventEmitter {
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion
+      platformaticVersion: version
     }
   }
 
@@ -1212,7 +1218,11 @@ class Runtime extends EventEmitter {
     const execArgv = []
 
     if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+      const require = createRequire(import.meta.url)
+      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
+
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
       execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
@@ -1540,7 +1550,7 @@ class Runtime extends EventEmitter {
           this.emit('application:worker:startTimeout', eventPayload)
           this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
-          throw new errors.ApplicationStartTimeoutError(id, config.startTimeout)
+          throw new ApplicationStartTimeoutError(id, config.startTimeout)
         }
       } else {
         workerUrl = await sendViaITC(worker, 'start')
@@ -1827,9 +1837,9 @@ class Runtime extends EventEmitter {
           .filter(key => key.startsWith(applicationId + ':'))
           .map(key => key.split(':')[1])
           .join(', ')
-        throw new errors.WorkerNotFoundError(workerId, applicationId, availableWorkers)
+        throw new WorkerNotFoundError(workerId, applicationId, availableWorkers)
       } else {
-        throw new errors.ApplicationNotFoundError(applicationId, applicationsIds.join(', '))
+        throw new ApplicationNotFoundError(applicationId, applicationsIds.join(', '))
       }
     }
 
@@ -1837,7 +1847,7 @@ class Runtime extends EventEmitter {
       const applicationStatus = await sendViaITC(worker, 'getStatus')
 
       if (applicationStatus !== 'started') {
-        throw new errors.ApplicationNotStartedError(applicationId)
+        throw new ApplicationNotStartedError(applicationId)
       }
     }
 
@@ -1893,7 +1903,7 @@ class Runtime extends EventEmitter {
     )
 
     if (response === kTimeout) {
-      throw new errors.MessagingError(application, 'Timeout while establishing a communication channel.')
+      throw new MessagingError(application, 'Timeout while establishing a communication channel.')
     }
 
     context.transferList = [port2]
@@ -2046,10 +2056,10 @@ class Runtime extends EventEmitter {
 
   async #validateUpdateApplicationResources (updates) {
     if (!Array.isArray(updates)) {
-      throw new errors.InvalidArgumentError('updates', 'must be an array')
+      throw new InvalidArgumentError('updates', 'must be an array')
     }
     if (updates.length === 0) {
-      throw new errors.InvalidArgumentError('updates', 'must have at least one element')
+      throw new InvalidArgumentError('updates', 'must have at least one element')
     }
 
     const config = this.#config
@@ -2058,11 +2068,11 @@ class Runtime extends EventEmitter {
       const { application: applicationId } = update
 
       if (!applicationId) {
-        throw new errors.InvalidArgumentError('application', 'must be a string')
+        throw new InvalidArgumentError('application', 'must be a string')
       }
       const applicationConfig = config.applications.find(s => s.id === applicationId)
       if (!applicationConfig) {
-        throw new errors.ApplicationNotFoundError(applicationId, Array.from(this.getApplicationsIds()).join(', '))
+        throw new ApplicationNotFoundError(applicationId, Array.from(this.getApplicationsIds()).join(', '))
       }
 
       const { workers: currentWorkers, health: currentHealth } = await this.getApplicationResourcesInfo(applicationId)
@@ -2070,13 +2080,13 @@ class Runtime extends EventEmitter {
       let workers
       if (update.workers !== undefined) {
         if (typeof update.workers !== 'number') {
-          throw new errors.InvalidArgumentError('workers', 'must be a number')
+          throw new InvalidArgumentError('workers', 'must be a number')
         }
         if (update.workers <= 0) {
-          throw new errors.InvalidArgumentError('workers', 'must be greater than 0')
+          throw new InvalidArgumentError('workers', 'must be greater than 0')
         }
         if (update.workers > MAX_WORKERS) {
-          throw new errors.InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
+          throw new InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
         }
 
         if (currentWorkers === update.workers) {
@@ -2096,18 +2106,15 @@ class Runtime extends EventEmitter {
             try {
               maxHeapTotal = parseMemorySize(update.health.maxHeapTotal)
             } catch {
-              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
+              throw new InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
             }
           } else if (typeof update.health.maxHeapTotal === 'number') {
             maxHeapTotal = update.health.maxHeapTotal
             if (update.health.maxHeapTotal <= 0) {
-              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
+              throw new InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError(
-              'maxHeapTotal',
-              'must be a number or a string representing a memory size'
-            )
+            throw new InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
           }
 
           if (currentHealth.maxHeapTotal === maxHeapTotal) {
@@ -2121,15 +2128,15 @@ class Runtime extends EventEmitter {
             try {
               maxYoungGeneration = parseMemorySize(update.health.maxYoungGeneration)
             } catch {
-              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a valid memory size')
+              throw new InvalidArgumentError('maxYoungGeneration', 'must be a valid memory size')
             }
           } else if (typeof update.health.maxYoungGeneration === 'number') {
             maxYoungGeneration = update.health.maxYoungGeneration
             if (update.health.maxYoungGeneration <= 0) {
-              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
+              throw new InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError(
+            throw new InvalidArgumentError(
               'maxYoungGeneration',
               'must be a number or a string representing a memory size'
             )
@@ -2337,5 +2344,3 @@ class Runtime extends EventEmitter {
     return report
   }
 }
-
-module.exports = { Runtime }

@@ -1,4 +1,3 @@
-'use strict'
+import { schemaComponents } from '@platformatic/foundation'
 
-const { schemaComponents } = require('@platformatic/foundation')
-module.exports = schemaComponents.telemetry
+export default schemaComponents.telemetry

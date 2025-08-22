@@ -1,19 +1,17 @@
-'user strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { mkdtemp, cp, unlink } = require('node:fs/promises')
-const Fastify = require('fastify')
-const { create } = require('@platformatic/db')
-const { buildGraphQLClient } = require('..')
-const { safeRemove } = require('@platformatic/foundation')
-require('./helper')
+import { create } from '@platformatic/db'
+import { safeRemove } from '@platformatic/foundation'
+import Fastify from 'fastify'
+import { deepEqual, rejects } from 'node:assert/strict'
+import { cp, mkdtemp, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { buildGraphQLClient } from '../index.js'
+import './helper.js'
 
 test('rejects with no url', async t => {
-  await assert.rejects(buildGraphQLClient())
-  await assert.rejects(buildGraphQLClient({}))
+  await rejects(buildGraphQLClient())
+  await rejects(buildGraphQLClient({}))
 })
 
 test('status code !== 200', async t => {
@@ -36,7 +34,7 @@ test('status code !== 200', async t => {
     url: `http://localhost:${fastify.server.address().port}/graphql`
   })
 
-  await assert.rejects(
+  await rejects(
     client.graphql({
       query: `
       mutation createMovie($title: String!) {
@@ -75,7 +73,7 @@ test('errors', async t => {
     url: `http://localhost:${fastify.server.address().port}/graphql`
   })
 
-  await assert.rejects(
+  await rejects(
     client.graphql({
       query: `
       mutation createMovie($title: String!) {
@@ -94,7 +92,7 @@ test('errors', async t => {
 })
 
 test('build basic client from url', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -129,7 +127,7 @@ test('build basic client from url', async t => {
     }
   })
 
-  assert.deepEqual(movie, {
+  deepEqual(movie, {
     id: '1',
     title: 'The Matrix'
   })
@@ -149,7 +147,7 @@ test('build basic client from url', async t => {
     `
   })
 
-  assert.deepEqual(movies, {
+  deepEqual(movies, {
     movies: [
       {
         id: '1',
@@ -164,7 +162,7 @@ test('build basic client from url', async t => {
 })
 
 test('build basic client from url with custom headers', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -202,7 +200,7 @@ test('build basic client from url with custom headers', async t => {
     }
   })
 
-  assert.deepEqual(movie, {
+  deepEqual(movie, {
     id: '1',
     title: 'The Matrix'
   })
@@ -222,7 +220,7 @@ test('build basic client from url with custom headers', async t => {
     `
   })
 
-  assert.deepEqual(movies, {
+  deepEqual(movies, {
     movies: [
       {
         id: '1',
@@ -237,7 +235,7 @@ test('build basic client from url with custom headers', async t => {
 })
 
 test('bad query', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -258,7 +256,7 @@ test('bad query', async t => {
     url: `${app.url}/graphql`
   })
 
-  await assert.rejects(
+  await rejects(
     client.graphql({
       query: 'foo'
     })
@@ -266,7 +264,7 @@ test('bad query', async t => {
 })
 
 test('error within resolver', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -287,7 +285,7 @@ test('error within resolver', async t => {
     url: `${app.url}/graphql`
   })
 
-  await assert.rejects(
+  await rejects(
     client.graphql({
       query: '{ hello }'
     })

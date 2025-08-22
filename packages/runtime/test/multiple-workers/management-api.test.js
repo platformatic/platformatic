@@ -1,12 +1,10 @@
-'use strict'
-
-const { ok, deepStrictEqual } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { features } = require('@platformatic/foundation')
-const { createRuntime } = require('../helpers.js')
-const { prepareRuntime } = require('./helper')
+import { features } from '@platformatic/foundation'
+import { deepStrictEqual, ok } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
+import { prepareRuntime } from './helper.js'
 
 test('return workers information in the management API when starting in production mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

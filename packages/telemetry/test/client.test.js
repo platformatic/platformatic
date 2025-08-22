@@ -1,12 +1,10 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual, equal, ok } = require('node:assert')
-const fastify = require('fastify')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const telemetryPlugin = require('../lib/telemetry')
-const { PlatformaticContext } = require('../lib/platformatic-context')
-const { fastifyTextMapGetter } = require('../lib/fastify-text-map')
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { fastifyTextMapGetter } from '../lib/fastify-text-map.js'
+import { PlatformaticContext } from '../lib/platformatic-context.js'
+import telemetryPlugin from '../lib/telemetry.js'
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
   const app = fastify()
@@ -30,12 +28,16 @@ test('should add the propagation headers correctly, new propagation started', as
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient } = app.openTelemetry
 
@@ -45,7 +47,7 @@ test('should add the propagation headers correctly, new propagation started', as
   const spanId = span._spanContext.spanId
   const traceId = span._spanContext.traceId
   deepEqual(telemetryHeaders, {
-    traceparent: `00-${traceId}-${spanId}-01`,
+    traceparent: `00-${traceId}-${spanId}-01`
   })
 })
 
@@ -58,20 +60,24 @@ test('should add the propagation headers correctly, with propagation already sta
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test'
   const incomingHeaders = {
     host: 'test',
-    traceparent,
+    traceparent
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
@@ -84,7 +90,7 @@ test('should add the propagation headers correctly, with propagation already sta
   // We preserved the tracedId
   deepEqual(traceId, traceId2)
   deepEqual(telemetryHeaders, {
-    traceparent: `00-${traceId}-${spanId2}-01`,
+    traceparent: `00-${traceId}-${spanId2}-01`
   })
 })
 
@@ -95,13 +101,17 @@ test('should trace a client request', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient, endHTTPSpanClient } = app.openTelemetry
 
@@ -115,8 +125,8 @@ test('should trace a client request', async () => {
     method: 'GET',
     url: '/test',
     headers: {
-      ...telemetryHeaders,
-    },
+      ...telemetryHeaders
+    }
   }
 
   const response = await app.inject(args)
@@ -155,13 +165,17 @@ test('should trace a client request failing', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient, endHTTPSpanClient } = app.openTelemetry
 
@@ -173,7 +187,7 @@ test('should trace a client request failing', async () => {
   const args = {
     method: 'GET',
     url: '/wrong',
-    headers: telemetryHeaders,
+    headers: telemetryHeaders
   }
   const response = await app.inject(args)
   endHTTPSpanClient(span, response)
@@ -205,13 +219,17 @@ test('should trace a client request failing (no HTTP error)', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient, endHTTPSpanClient, setErrorInSpanClient } = app.openTelemetry
 
@@ -244,12 +262,16 @@ test('should not add the query in span name', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient } = app.openTelemetry
 
@@ -263,18 +285,22 @@ test('should ignore the skipped operations', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    applicationName: 'test-application',
-    skip: [
-      {
-        path: '/skipme',
-        method: 'POST',
-      },
-    ],
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      skip: [
+        {
+          path: '/skipme',
+          method: 'POST'
+        }
+      ],
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startHTTPSpanClient } = app.openTelemetry
 

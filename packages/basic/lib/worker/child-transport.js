@@ -1,5 +1,5 @@
 import { ensureLoggableError } from '@platformatic/foundation'
-import { generateRequest, sanitize } from '@platformatic/itc'
+import { generateRequest, sanitize } from '@platformatic/itc/lib/index.js'
 import { once } from 'node:events'
 import { platform } from 'node:os'
 import { workerData } from 'node:worker_threads'

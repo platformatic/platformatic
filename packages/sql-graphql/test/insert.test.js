@@ -1,14 +1,12 @@
-'use strict'
+import { match } from '@platformatic/foundation'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const { match } = require('@platformatic/foundation')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('batch inserts', async (t) => {
+test('batch inserts', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -28,7 +26,7 @@ test('batch inserts', async (t) => {
           title VARCHAR(42)
         );`)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -49,24 +47,24 @@ test('batch inserts', async (t) => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        insertPages: [
-          { id: 1, title: 'Page 1' },
-          { id: 2, title: 'Page 2' },
-          { id: 3, title: 'Page 3' },
-        ],
+    same(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            { id: 1, title: 'Page 1' },
+            { id: 2, title: 'Page 2' },
+            { id: 3, title: 'Page 3' }
+          ]
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -81,23 +79,27 @@ test('batch inserts', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [
-          { id: 1, title: 'Page 1' },
-          { id: 2, title: 'Page 2' },
-          { id: 3, title: 'Page 3' },
-        ],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            { id: 1, title: 'Page 1' },
+            { id: 2, title: 'Page 2' },
+            { id: 3, title: 'Page 3' }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 })
 
-test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
+test('[PG] - batch inserts UUID', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -112,7 +114,7 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
         id uuid PRIMARY KEY default uuid_generate_v1(),
         title VARCHAR(42)
       );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -134,25 +136,23 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     ids = res.json().data.insertPages
-    pass(match(res.json(), {
-      data: {
-        insertPages: [
-          { title: 'Page 1' },
-          { title: 'Page 2' },
-          { title: 'Page 3' },
-        ],
-      },
-    }, 'insertPages response'))
+    pass(
+      match(
+        res.json(),
+        {
+          data: {
+            insertPages: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+          }
+        },
+        'insertPages response'
+      )
+    )
   }
 
   for (const { id, title } of ids) {
@@ -167,17 +167,21 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getPageById status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id,
-          title,
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title
+          }
+        }
       },
-    }, 'getPageById response')
+      'getPageById response'
+    )
   }
 })

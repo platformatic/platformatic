@@ -1,12 +1,10 @@
-'use strict'
+import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
+import { spawnSync } from 'node:child_process'
+import { readFile, readdir, stat } from 'node:fs/promises'
+import { dirname, join, relative, resolve } from 'node:path'
+import { BaseGenerator } from './base-generator.js'
 
-const { safeRemove, findConfigurationFileRecursive } = require('@platformatic/foundation')
-const { BaseGenerator } = require('./base-generator')
-const { spawnSync } = require('node:child_process')
-const { stat, readFile, readdir } = require('node:fs/promises')
-const { join, dirname, resolve, relative } = require('node:path')
-
-class ImportGenerator extends BaseGenerator {
+export class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
     const { applicationName, module, version, parent: runtime, ...opts } = options
     super({ ...opts, module })
@@ -228,5 +226,3 @@ class ImportGenerator extends BaseGenerator {
     }
   }
 }
-
-module.exports = { ImportGenerator }

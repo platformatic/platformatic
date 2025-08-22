@@ -1,12 +1,9 @@
-'use strict'
-
-const { deepStrictEqual, ok } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const { updateFile } = require('../helpers')
-const { prepareRuntime, waitForEvents } = require('./helper')
+import { deepStrictEqual, ok } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime, updateFile } from '../helpers.js'
+import { prepareRuntime, waitForEvents } from './helper.js'
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

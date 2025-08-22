@@ -868,9 +868,6 @@ importers:
       '@fastify/session':
         specifier: ^11.0.0
         version: 11.1.0
-      '@matteo.collina/tspl':
-        specifier: ^0.2.0
-        version: 0.2.0
       '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
@@ -1760,9 +1757,6 @@ importers:
         specifier: ^6.0.0
         version: 6.1.0
     devDependencies:
-      '@matteo.collina/tspl':
-        specifier: ^0.2.0
-        version: 0.2.0
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
@@ -1824,9 +1818,6 @@ importers:
       '@matteo.collina/snap':
         specifier: ^0.3.0
         version: 0.3.0
-      '@matteo.collina/tspl':
-        specifier: ^0.2.0
-        version: 0.2.0
       '@mercuriusjs/gateway':
         specifier: ^5.0.0
         version: 5.0.0
@@ -1940,9 +1931,6 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
     devDependencies:
-      '@matteo.collina/tspl':
-        specifier: ^0.2.0
-        version: 0.2.0
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
@@ -2001,9 +1989,6 @@ importers:
       '@matteo.collina/snap':
         specifier: ^0.3.0
         version: 0.3.0
-      '@matteo.collina/tspl':
-        specifier: ^0.2.0
-        version: 0.2.0
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
@@ -3614,9 +3599,6 @@ packages:
 
   '@matteo.collina/sqlite-pool@0.6.0':
     resolution: {integrity: sha512-6FW+Mph48XnaXJg/7EL4tMHq9hmLvlQD43Ad+eZCMK921qTcGYLkl2PaZxBiyt5w+5ZeZOdzgN87dVsoJ/cPfg==}
-
-  '@matteo.collina/tspl@0.2.0':
-    resolution: {integrity: sha512-VEjxrBW/NTz2bMSUx6DFP4KH2nVspTBEbV/082Qsqi3lQ0fqK5m4KVHzqm/Noy3OJmpGR1lm2ps/gvERVRpsaA==}
 
   '@mdx-js/mdx@2.3.0':
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
@@ -11396,8 +11378,6 @@ snapshots:
       '@databases/escape-identifier': 1.0.3
       '@databases/sql': 3.3.0
       '@databases/sqlite-sync': 3.0.0
-
-  '@matteo.collina/tspl@0.2.0': {}
 
   '@mdx-js/mdx@2.3.0':
     dependencies:

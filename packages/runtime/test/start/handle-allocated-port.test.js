@@ -1,13 +1,11 @@
-'use strict'
+import { createServer } from 'http'
+import { strictEqual } from 'node:assert'
+import { once } from 'node:events'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, isCIOnWindows } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { createRuntime } = require('../helpers.js')
-const { isCIOnWindows } = require('../helpers')
-const { once } = require('node:events')
-const http = require('http')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 async function getPort () {
   if (isCIOnWindows) {
@@ -26,7 +24,7 @@ async function setupAndStartRuntime (configFile) {
 }
 
 test('can increase port when starting a runtime with a port allocated', async t => {
-  const dummyServer = http.createServer(function (req, res) {
+  const dummyServer = createServer(function (req, res) {
     res.write('test')
     res.end()
   })
@@ -45,12 +43,12 @@ test('can increase port when starting a runtime with a port allocated', async t 
   const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
-  assert.strictEqual(Number(url.port), dummyPort + 1)
+  strictEqual(Number(url.port), dummyPort + 1)
   await runtime.close()
 })
 
 test('can increase port when starting applications without runtime config and port set via environment variable', async t => {
-  const dummyServer = http.createServer(function (req, res) {
+  const dummyServer = createServer(function (req, res) {
     res.write('test')
     res.end()
   })
@@ -70,13 +68,13 @@ test('can increase port when starting applications without runtime config and po
   const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
-  assert.strictEqual(Number(url.port), dummyPort + 1)
+  strictEqual(Number(url.port), dummyPort + 1)
   await runtime.close()
 })
 
 // This situation should not happen in practice, but we are testing the different combinations of configurations
 test('can increase port when starting applications without runtime config and no port set at all', async t => {
-  const dummyServer = http.createServer(function (req, res) {
+  const dummyServer = createServer(function (req, res) {
     res.write('test')
     res.end()
   })
@@ -96,6 +94,6 @@ test('can increase port when starting applications without runtime config and no
   const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
-  assert.strictEqual(Number(url.port), dummyPort + 1)
+  strictEqual(Number(url.port), dummyPort + 1)
   await runtime.close()
 })

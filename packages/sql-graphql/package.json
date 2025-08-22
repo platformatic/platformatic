@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.5",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
+  "type": "module",
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
@@ -26,7 +27,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
-    "@matteo.collina/tspl": "^0.2.0",
     "@mercuriusjs/gateway": "^5.0.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",

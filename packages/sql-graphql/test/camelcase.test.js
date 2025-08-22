@@ -1,15 +1,13 @@
-'use strict'
-
-const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal } = require('node:assert/strict')
-const Fastify = require('fastify')
-const WebSocket = require('ws')
-const { once } = require('events')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlEvents = require('@platformatic/sql-events')
-const stream = require('stream')
+import sqlEvents from '@platformatic/sql-events'
+import sqlMapper from '@platformatic/sql-mapper'
+import { once } from 'events'
+import Fastify from 'fastify'
+import { equal, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import { PassThrough } from 'stream'
+import WebSocket, { createWebSocketStream } from 'ws'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -26,8 +24,8 @@ async function createBasicPages (db, sql) {
 }
 
 function createWebSocketClient (t, app) {
-  const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')
-  const client = WebSocket.createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
+  const ws = new WebSocket('ws://localhost:' + app.server.address().port + '/graphql', 'graphql-ws')
+  const client = createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
   t.after(() => {
     client.destroy()
   })
@@ -44,7 +42,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL)
@@ -53,9 +51,11 @@ test('subscription - crud when there is a primary key to be camelised', async t 
 
   const { client } = createWebSocketClient(t, app)
 
-  client.write(JSON.stringify({
-    type: 'connection_init',
-  }))
+  client.write(
+    JSON.stringify({
+      type: 'connection_init'
+    })
+  )
 
   {
     const query = `subscription {
@@ -64,13 +64,15 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         title
       }
     }`
-    client.write(JSON.stringify({
-      pageId: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        pageId: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -79,13 +81,15 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         pageId
       }
     }`
-    client.write(JSON.stringify({
-      pageId: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        pageId: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -104,8 +108,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -117,10 +121,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         data: {
           pageSaved: {
             pageId: '1',
-            title: 'Hello World',
-          },
-        },
-      },
+            title: 'Hello World'
+          }
+        }
+      }
     })
   }
 
@@ -134,8 +138,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -147,10 +151,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         data: {
           pageSaved: {
             pageId: '1',
-            title: 'Il libraccio',
-          },
-        },
-      },
+            title: 'Il libraccio'
+          }
+        }
+      }
     })
   }
 
@@ -164,8 +168,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -176,18 +180,15 @@ test('subscription - crud when there is a primary key to be camelised', async t 
       payload: {
         data: {
           pageDeleted: {
-            pageId: '1',
-          },
-        },
-      },
+            pageId: '1'
+          }
+        }
+      }
     })
   }
 
   {
-    const [
-      received,
-      stored,
-    ] = await Promise.all(([
+    const [received, stored] = await Promise.all([
       (async function () {
         const res = await app.inject({
           method: 'POST',
@@ -202,20 +203,16 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             }
           `,
             variables: {
-              inputs: [
-                { title: 'Page 1' },
-                { title: 'Page 2' },
-                { title: 'Page 3' },
-              ],
-            },
-          },
+              inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+            }
+          }
         })
         const pages = res.json().data.insertPages
         return pages
       })(),
       (async function () {
         const pages = []
-        const second = new stream.PassThrough({ objectMode: true })
+        const second = new PassThrough({ objectMode: true })
         client.pipe(second)
         for await (const chunk of second) {
           const data = JSON.parse(chunk)
@@ -225,8 +222,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
           }
         }
         return pages
-      })(),
-    ]))
+      })()
+    ])
 
     same(received, stored)
   }
@@ -253,11 +250,11 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
           name VARCHAR(42)
         );`)
       }
-    },
+    }
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['category'],
+    subscriptionIgnore: ['category']
   })
 
   await app.listen({ port: 0 })
@@ -265,9 +262,11 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   const { client } = createWebSocketClient(t, app)
   t.after(() => client.destroy())
 
-  client.write(JSON.stringify({
-    type: 'connection_init',
-  }))
+  client.write(
+    JSON.stringify({
+      type: 'connection_init'
+    })
+  )
 
   {
     const [chunk] = await once(client, 'data')
@@ -281,21 +280,25 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
         categoryId
       }
     }`
-    client.write(JSON.stringify({
-      categoryId: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        categoryId: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    same(data.payload, [{
-      locations: [{ line: 2, column: 7 }],
-      message: 'The subscription field "categorySaved" is not defined.',
-    }])
+    same(data.payload, [
+      {
+        locations: [{ line: 2, column: 7 }],
+        message: 'The subscription field "categorySaved" is not defined.'
+      }
+    ])
   }
 })

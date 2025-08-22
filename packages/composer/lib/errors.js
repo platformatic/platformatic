@@ -1,6 +1,6 @@
 import createError from '@fastify/error'
 
-const ERROR_PREFIX = 'PLT_COMPOSER'
+export const ERROR_PREFIX = 'PLT_COMPOSER'
 
 export const FastifyInstanceIsAlreadyListeningError = createError(
   `${ERROR_PREFIX}_FASTIFY_INSTANCE_IS_ALREADY_LISTENING`,

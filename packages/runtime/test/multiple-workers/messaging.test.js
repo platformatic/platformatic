@@ -1,13 +1,10 @@
-'use strict'
-
-const { deepStrictEqual } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createRuntime } = require('../helpers.js')
-const { kWorkersBroadcast } = require('../../lib/worker/symbols')
-const { prepareRuntime, waitForEvents } = require('./helper')
-const { updateFile } = require('../helpers')
+import { deepStrictEqual } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
+import { createRuntime, updateFile } from '../helpers.js'
+import { prepareRuntime, waitForEvents } from './helper.js'
 
 function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = false) {
   const threads = {}
@@ -295,7 +292,10 @@ test('should return an error if the target worker times out', async t => {
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
-    deepStrictEqual(error.message, 'Cannot send a message to application "second": Timeout while waiting for a response.')
+    deepStrictEqual(
+      error.message,
+      'Cannot send a message to application "second": Timeout while waiting for a response.'
+    )
   }
 })
 

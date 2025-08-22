@@ -1,10 +1,8 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual, equal, ok } = require('node:assert')
-const fastify = require('fastify')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const telemetryPlugin = require('../lib/telemetry')
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import telemetryPlugin from '../lib/telemetry.js'
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
   const app = fastify()

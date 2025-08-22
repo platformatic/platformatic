@@ -1,14 +1,12 @@
-'use strict'
-
-const { equal } = require('node:assert')
-const { resolve, join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { parseNDJson, createPGDataBase } = require('./helper.js')
-const { setFixturesDir, createRuntime } = require('../../basic/test/helper.js')
+import { equal } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { createPGDataBase, parseNDJson } from './helper.js'
 
 process.setMaxListeners(100)
-setFixturesDir(resolve(__dirname, './fixtures'))
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 async function getSpans (spanPaths) {
   const spans = await parseNDJson(spanPaths)

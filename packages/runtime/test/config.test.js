@@ -1,18 +1,17 @@
-'use strict'
+import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
+import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
+import { dirname, join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { wrapInRuntimeConfig } from '../index.js'
+import { parseInspectorOptions } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { join, resolve, dirname } = require('node:path')
-const { test } = require('node:test')
-const { parseInspectorOptions } = require('../lib/config')
-const { wrapInRuntimeConfig } = require('../index.js')
-const { createRuntime } = require('./helpers.js')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const { loadConfiguration: databaseLoadConfiguration } = require('@platformatic/db')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('throws if no entrypoint is found', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
 
-  await assert.rejects(async () => {
+  await rejects(async () => {
     await createRuntime(configFile)
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
@@ -28,7 +27,7 @@ test('dependencies are not considered if applications are specified manually', a
   await runtime.init()
   const { applications } = await runtime.getApplications()
 
-  assert.deepStrictEqual(
+  deepStrictEqual(
     applications.map(application => application.id),
     ['with-logger', 'db-app', 'composerApp', 'multi-plugin-service', 'serviceApp']
   )
@@ -46,14 +45,14 @@ test('dependencies are resolved if applications are not specified manually', asy
 
   const { applications } = await runtime.getApplications()
 
-  assert.deepStrictEqual(
+  deepStrictEqual(
     applications.map(application => application.id),
     ['dbApp', 'serviceApp', 'with-logger', 'multi-plugin-service', 'composerApp']
   )
 })
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
-  assert.throws(() => {
+  throws(() => {
     parseInspectorOptions({}, 'true', 'true')
   }, /--inspect and --inspect-brk cannot be used together/)
 })
@@ -62,7 +61,7 @@ test('parseInspectorOptions - --inspect default settings', () => {
   const cm = {}
 
   parseInspectorOptions(cm, true)
-  assert.deepStrictEqual(cm.inspectorOptions, {
+  deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 9229,
     breakFirstLine: false,
@@ -74,7 +73,7 @@ test('parseInspectorOptions - --inspect-brk default settings', () => {
   const cm = {}
 
   parseInspectorOptions(cm, undefined, true)
-  assert.deepStrictEqual(cm.inspectorOptions, {
+  deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 9229,
     breakFirstLine: true,
@@ -89,21 +88,21 @@ test('parseInspectorOptions - hot reloading is disabled if the inspector is used
   }
 
   parseInspectorOptions(cm1, undefined, '9229')
-  assert.strictEqual(cm1.watch, false)
+  strictEqual(cm1.watch, false)
 
   const cm2 = {
     watch: true
   }
 
   parseInspectorOptions(cm2)
-  assert.strictEqual(cm2.watch, true)
+  strictEqual(cm2.watch, true)
 })
 
 test('parseInspectorOptions - sets port to a custom value', () => {
   const cm = {}
 
   parseInspectorOptions(cm, '6666')
-  assert.deepStrictEqual(cm.inspectorOptions, {
+  deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 6666,
     breakFirstLine: false,
@@ -115,7 +114,7 @@ test('parseInspectorOptions - sets host and port to custom values', () => {
   const cm = {}
 
   parseInspectorOptions(cm, '0.0.0.0:6666')
-  assert.deepStrictEqual(cm.inspectorOptions, {
+  deepStrictEqual(cm.inspectorOptions, {
     host: '0.0.0.0',
     port: 6666,
     breakFirstLine: false,
@@ -124,14 +123,14 @@ test('parseInspectorOptions - sets host and port to custom values', () => {
 })
 
 test('parseInspectorOptions - throws if the host is empty', () => {
-  assert.throws(() => {
+  throws(() => {
     parseInspectorOptions({}, ':9229')
   }, /Inspector host cannot be empty/)
 })
 
 test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   for (const inspectFlag of ['127.0.0.1:', 'foo', '1', '-1', '1023', '65536']) {
-    assert.throws(() => {
+    throws(() => {
       parseInspectorOptions({}, inspectFlag)
     }, /Inspector port must be 0 or in range 1024 to 65535/)
   }
@@ -139,33 +138,33 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   const cm = {}
 
   parseInspectorOptions(cm, '0')
-  assert.strictEqual(cm.inspectorOptions.port, 0)
+  strictEqual(cm.inspectorOptions.port, 0)
 
   parseInspectorOptions(cm, '1024')
-  assert.strictEqual(cm.inspectorOptions.port, 1024)
+  strictEqual(cm.inspectorOptions.port, 1024)
 
   parseInspectorOptions(cm, '1025')
-  assert.strictEqual(cm.inspectorOptions.port, 1025)
+  strictEqual(cm.inspectorOptions.port, 1025)
 
   parseInspectorOptions(cm, '65534')
-  assert.strictEqual(cm.inspectorOptions.port, 65534)
+  strictEqual(cm.inspectorOptions.port, 65534)
 
   parseInspectorOptions(cm, '65535')
-  assert.strictEqual(cm.inspectorOptions.port, 65535)
+  strictEqual(cm.inspectorOptions.port, 65535)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
   const runtime = await createRuntime(configFile)
-  assert.strictEqual((await runtime.getRuntimeConfig()).watch, true)
+  strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'false'
   const runtime = await createRuntime(configFile)
-  assert.strictEqual((await runtime.getRuntimeConfig()).watch, false)
+  strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
 test('defaults the application name to `main` if there is no package.json', async t => {
@@ -173,8 +172,8 @@ test('defaults the application name to `main` if there is no package.json', asyn
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.applications.length, 1)
-  assert.strictEqual(runtimeConfig.applications[0].id, 'main')
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
 test('uses the name in package.json', async t => {
@@ -182,16 +181,16 @@ test('uses the name in package.json', async t => {
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.applications.length, 1)
-  assert.strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
 })
 
 test('uses the name in package.json, removing the scope', async t => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
-  assert.strictEqual(runtimeConfig.applications.length, 1)
-  assert.strictEqual(runtimeConfig.applications[0].id, 'myname')
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'myname')
 })
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
@@ -199,8 +198,8 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.strictEqual(runtimeConfig.applications.length, 1)
-  assert.strictEqual(runtimeConfig.applications[0].id, 'main')
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
@@ -209,11 +208,11 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   const config = await databaseLoadConfiguration(configFile, null, { validate: false })
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  assert.ok(typeof runtimeConfig.web, 'undefined')
-  assert.ok(typeof runtimeConfig.autoload, 'undefined')
-  assert.ok(runtimeConfig.watch === false)
-  assert.deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
-  assert.deepStrictEqual(runtimeConfig.applications, [
+  ok(typeof runtimeConfig.web, 'undefined')
+  ok(typeof runtimeConfig.autoload, 'undefined')
+  ok(runtimeConfig.watch === false)
+  deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
+  deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
@@ -260,7 +259,7 @@ test('supports configurable envfile location', async t => {
   })
   const data = JSON.parse(payload)
 
-  assert.deepStrictEqual(data, {
+  deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
     FROM_SERVICE_CONFIG_FILE: 'true',
@@ -285,7 +284,7 @@ test('supports default envfile location', async t => {
   })
   const data = JSON.parse(payload)
 
-  assert.deepStrictEqual(data, {
+  deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
     FROM_SERVICE_CONFIG_FILE: 'true',
@@ -304,7 +303,7 @@ test('supports configurable arguments', async t => {
   await runtime.init()
   await runtime.start()
 
-  const workerMain = resolve(__dirname, '../lib/worker/main.js')
+  const workerMain = resolve(import.meta.dirname, '../lib/worker/main.js')
 
   {
     const { payload } = await runtime.inject('a', {
@@ -313,7 +312,7 @@ test('supports configurable arguments', async t => {
     })
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, [process.argv[0], workerMain, 'first', 'second', 'third'])
+    deepStrictEqual(data, [process.argv[0], workerMain, 'first', 'second', 'third'])
   }
 
   {
@@ -324,7 +323,7 @@ test('supports configurable arguments', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, [process.argv[0], workerMain, ...process.argv.slice(2)])
+    deepStrictEqual(data, [process.argv[0], workerMain, ...process.argv.slice(2)])
   }
 })
 
@@ -353,7 +352,7 @@ test('should manage application config patch', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, { alternate: true })
+    deepStrictEqual(data, { alternate: true })
   }
 
   {
@@ -364,6 +363,6 @@ test('should manage application config patch', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, { alternate: true })
+    deepStrictEqual(data, { alternate: true })
   }
 })
