@@ -44,7 +44,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^9.2.0
-        version: 9.4.2(astro@5.13.2(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1))
+        version: 9.4.3(astro@5.13.3(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1))
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -53,7 +53,7 @@ importers:
         version: link:../service
       astro:
         specifier: ^5.7.1
-        version: 5.13.2(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1)
+        version: 5.13.3(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1)
       borp:
         specifier: ^0.20.0
         version: 0.20.1
@@ -1205,10 +1205,10 @@ importers:
         version: 1.55.0
       '@types/react':
         specifier: ^19.1.6
-        version: 19.1.10
+        version: 19.1.11
       '@types/react-dom':
         specifier: ^19.1.5
-        version: 19.1.7(@types/react@19.1.10)
+        version: 19.1.7(@types/react@19.1.11)
       '@vitejs/plugin-react':
         specifier: ^4.5.2
         version: 4.7.0(vite@5.4.19(@types/node@22.17.2)(terser@5.43.1))
@@ -2799,10 +2799,10 @@ packages:
   '@astrojs/markdown-remark@6.3.6':
     resolution: {integrity: sha512-bwylYktCTsLMVoCOEHbn2GSUA3c5KT/qilekBKA3CBng0bo1TYjNZPr761vxumRk9kJGqTOtU+fgCAp5Vwokug==}
 
-  '@astrojs/node@9.4.2':
-    resolution: {integrity: sha512-4whvXWUIL7yi84ayEXCZd/G2sLMqJKiA7hKps2Z3AVPlymXWY7qyafJ/5gphD6CzRjen6+mqPRYeqxnJG8VcDw==}
+  '@astrojs/node@9.4.3':
+    resolution: {integrity: sha512-P9BQHY8wQU1y9obknXzxV5SS3EpdaRnuDuHKr3RFC7t+2AzcMXeVmMJprQGijnQ8VdijJ8aS7+12tx325TURMQ==}
     peerDependencies:
-      astro: ^5.3.0
+      astro: ^5.7.0
 
   '@astrojs/prism@3.3.0':
     resolution: {integrity: sha512-q8VwfU/fDZNoDOf+r7jUnMC2//H2l0TuQ6FkGJL8vD8nw/q5KiL3DS1KKBI3QhI9UQhpJ5dc7AtqfbXWuOgLCQ==}
@@ -5007,8 +5007,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.0.0
 
-  '@types/react@19.1.10':
-    resolution: {integrity: sha512-EhBeSYX0Y6ye8pNebpKrwFJq7BoQ8J5SO6NlvNwwHjSj6adXJViPQrKlsyPw7hLBLvckEMO1yxeGdR82YBBlDg==}
+  '@types/react@19.1.11':
+    resolution: {integrity: sha512-lr3jdBw/BGj49Eps7EvqlUaoeA0xpj3pc0RoJkHpYaCHkVK7i28dKyImLQb3JVlqs3aYSXf7qYuWOW/fgZnTXQ==}
 
   '@types/through@0.0.33':
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
@@ -5493,8 +5493,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@5.13.2:
-    resolution: {integrity: sha512-yjcXY0Ua3EwjpVd3GoUXa65HQ6qgmURBptA+M9GzE0oYvgfuyM7bIbH8IR/TWIbdefVUJR5b7nZ0oVnMytmyfQ==}
+  astro@5.13.3:
+    resolution: {integrity: sha512-V0mUOUK70UZ7xqXp5Noqse/SREU0P756KgFufBEluq5LkmBejzC2GENMUA2Na+PFwUjemElJtRlpKyrnKpFhSQ==}
     engines: {node: 18.20.8 || ^20.3.0 || >=22.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -9892,8 +9892,8 @@ packages:
   tail-file-stream@0.2.0:
     resolution: {integrity: sha512-exGCDBk1fg+4qzRKXfxoWHVP9mvaFAt7g/RTyvcSDzeYDuVhVX7Z+HNSh3aLYjUDDadVZILIJ1cAfGVIqAp1Iw==}
 
-  tapable@2.2.2:
-    resolution: {integrity: sha512-Re10+NauLTMCudc7T5WLFLAwDhQ0JWdrMK+9B2M8zR5hRExKmsRDCBA7/aV/pNJFltmBFO5BAMlQFi/vq3nKOg==}
+  tapable@2.2.3:
+    resolution: {integrity: sha512-ZL6DDuAlRlLGghwcfmSn9sK3Hr6ArtyudlSAiCqQ6IfE+b+HHbydbYDIG15IfS5do+7XQQBdBiubF/cV2dnDzg==}
     engines: {node: '>=6'}
 
   tar-fs@2.1.3:
@@ -10853,10 +10853,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@9.4.2(astro@5.13.2(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1))':
+  '@astrojs/node@9.4.3(astro@5.13.3(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1))':
     dependencies:
       '@astrojs/internal-helpers': 0.7.2
-      astro: 5.13.2(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1)
+      astro: 5.13.3(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1)
       send: 1.2.0
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -13215,11 +13215,11 @@ snapshots:
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
-  '@types/react-dom@19.1.7(@types/react@19.1.10)':
+  '@types/react-dom@19.1.7(@types/react@19.1.11)':
     dependencies:
-      '@types/react': 19.1.10
+      '@types/react': 19.1.11
 
-  '@types/react@19.1.10':
+  '@types/react@19.1.11':
     dependencies:
       csstype: 3.1.3
 
@@ -13760,7 +13760,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@5.13.2(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1):
+  astro@5.13.3(@types/node@22.17.2)(ioredis@5.7.0)(rollup@4.47.1)(terser@5.43.1)(tsx@4.20.4)(typescript@5.8.3)(yaml@2.8.1):
     dependencies:
       '@astrojs/compiler': 2.12.2
       '@astrojs/internal-helpers': 0.7.2
@@ -14639,7 +14639,7 @@ snapshots:
   enhanced-resolve@5.18.3:
     dependencies:
       graceful-fs: 4.2.11
-      tapable: 2.2.2
+      tapable: 2.2.3
 
   entities@4.5.0: {}
 
@@ -15494,7 +15494,7 @@ snapshots:
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
       semver: 7.7.2
-      tapable: 2.2.2
+      tapable: 2.2.3
       typescript: 5.8.3
       webpack: 5.100.2
 
@@ -19413,7 +19413,7 @@ snapshots:
 
   tail-file-stream@0.2.0: {}
 
-  tapable@2.2.2: {}
+  tapable@2.2.3: {}
 
   tar-fs@2.1.3:
     dependencies:
@@ -19582,7 +19582,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.18.3
-      tapable: 2.2.2
+      tapable: 2.2.3
       tsconfig-paths: 4.2.0
 
   tsconfig-paths@4.2.0:
@@ -20141,7 +20141,7 @@ snapshots:
       mime-types: 2.1.35
       neo-async: 2.6.2
       schema-utils: 4.3.2
-      tapable: 2.2.2
+      tapable: 2.2.3
       terser-webpack-plugin: 5.3.14(webpack@5.100.2)
       watchpack: 2.4.4
       webpack-sources: 3.3.3
