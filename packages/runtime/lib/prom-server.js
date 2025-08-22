@@ -1,6 +1,6 @@
-'use strict'
-
-const fastify = require('fastify')
+import fastifyAccepts from '@fastify/accepts'
+import fastifyBasicAuth from '@fastify/basic-auth'
+import fastify from 'fastify'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -67,7 +67,7 @@ async function checkLiveness (runtime) {
   return { response, status }
 }
 
-async function startPrometheusServer (runtime, opts) {
+export async function startPrometheusServer (runtime, opts) {
   if (opts.enabled === false) {
     return
   }
@@ -77,19 +77,19 @@ async function startPrometheusServer (runtime, opts) {
   const auth = opts.auth ?? null
 
   const promServer = fastify({ name: 'Prometheus server' })
-  promServer.register(require('@fastify/accepts'))
+  promServer.register(fastifyAccepts)
 
   let onRequestHook
   if (auth) {
     const { username, password } = auth
 
-    await promServer.register(require('@fastify/basic-auth'), {
+    await promServer.register(fastifyBasicAuth, {
       validate: function (user, pass, req, reply, done) {
         if (username !== user || password !== pass) {
           return reply.code(401).send({ message: 'Unauthorized' })
         }
         return done()
-      },
+      }
     })
     onRequestHook = promServer.basicAuth
   }
@@ -129,7 +129,7 @@ async function startPrometheusServer (runtime, opts) {
         reply.type('text/plain')
       }
       return (await runtime.getMetrics(reqType)).metrics
-    },
+    }
   })
 
   if (opts.readiness !== false) {
@@ -167,7 +167,7 @@ async function startPrometheusServer (runtime, opts) {
             reply.status(failStatusCode).send(failBody)
           }
         }
-      },
+      }
     })
   }
 
@@ -206,14 +206,10 @@ async function startPrometheusServer (runtime, opts) {
             reply.status(failStatusCode).send(readiness?.body || failBody)
           }
         }
-      },
+      }
     })
   }
 
   await promServer.listen({ port, host })
   return promServer
-}
-
-module.exports = {
-  startPrometheusServer,
 }

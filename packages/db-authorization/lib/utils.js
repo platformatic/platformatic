@@ -1,13 +1,11 @@
-'use strict'
-
-function getRequestFromContext (ctx) {
+export function getRequestFromContext (ctx) {
   if (ctx && !ctx.reply) {
     throw new Error('Missing reply in context. You should call this function with { ctx: { reply }}')
   }
   return ctx.reply.request
 }
 
-function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
+export function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
   let output = []
   const user = request.user
   if (!user) {
@@ -36,8 +34,4 @@ function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
   }
 
   return output
-}
-module.exports = {
-  getRequestFromContext,
-  getRoles,
 }

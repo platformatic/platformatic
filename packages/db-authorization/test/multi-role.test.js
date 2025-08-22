@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const auth = require('..')
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 test('moderators can delete user pages', async () => {
   const app = fastify()
@@ -16,43 +14,47 @@ test('moderators can delete user pages', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'moderator',
-      entity: 'page',
-      find: true,
-      delete: true,
-      save: true,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'moderator',
+        entity: 'page',
+        find: true,
+        delete: true,
+        save: true,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
       },
-    }, {
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -62,7 +64,7 @@ test('moderators can delete user pages', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user,moderator',
+    'X-PLATFORMATIC-ROLE': 'user,moderator'
   })
 
   {
@@ -70,7 +72,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -81,19 +83,23 @@ test('moderators can delete user pages', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -101,7 +107,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -111,23 +117,29 @@ test('moderators can delete user pages', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 1,
-          title: 'Hello',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
+            {
+              id: 1,
+              title: 'Hello'
+            }
+          ]
+        }
       },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'moderator,user',
+    'X-PLATFORMATIC-ROLE': 'moderator,user'
   })
 
   {
@@ -135,7 +147,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -146,19 +158,23 @@ test('moderators can delete user pages', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 2,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 2,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -166,7 +182,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -176,23 +192,29 @@ test('moderators can delete user pages', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 2,
-          title: 'Hello',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
+            {
+              id: 2,
+              title: 'Hello'
+            }
+          ]
+        }
       },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 
   const token3 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -200,7 +222,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`,
+        Authorization: `Bearer ${token3}`
       },
       body: {
         query: `
@@ -211,19 +233,23 @@ test('moderators can delete user pages', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 3,
-          title: 'Hello',
-          userId: 43,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 3,
+            title: 'Hello',
+            userId: 43
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -231,7 +257,7 @@ test('moderators can delete user pages', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`,
+        Authorization: `Bearer ${token3}`
       },
       body: {
         query: `
@@ -241,29 +267,31 @@ test('moderators can delete user pages', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 })
 
@@ -276,40 +304,44 @@ test('blocked users cannot update', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'blocked',
-      entity: 'page',
-      find: true,
-      delete: false,
-      save: false,
-    }, {
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'blocked',
+        entity: 'page',
+        find: true,
+        delete: false,
+        save: false
       },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -319,7 +351,7 @@ test('blocked users cannot update', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -327,7 +359,7 @@ test('blocked users cannot update', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -338,24 +370,28 @@ test('blocked users cannot update', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'blocked,user',
+    'X-PLATFORMATIC-ROLE': 'blocked,user'
   })
 
   {
@@ -363,7 +399,7 @@ test('blocked users cannot update', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -374,19 +410,25 @@ test('blocked users cannot update', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        pages: [{
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              id: 1,
+              title: 'Hello',
+              userId: 42
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -394,7 +436,7 @@ test('blocked users cannot update', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -404,29 +446,31 @@ test('blocked users cannot update', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 
   {
@@ -434,7 +478,7 @@ test('blocked users cannot update', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -445,28 +489,30 @@ test('blocked users cannot update', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 })

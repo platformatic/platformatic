@@ -1,22 +1,18 @@
-'use strict'
+import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
+import { spawnSync } from 'node:child_process'
+import { readFile, readdir, stat } from 'node:fs/promises'
+import { dirname, join, relative, resolve } from 'node:path'
+import { BaseGenerator } from './base-generator.js'
 
-const { findConfigurationFile } = require('@platformatic/config')
-const { safeRemove } = require('@platformatic/utils')
-const { glob } = require('glob')
-const { BaseGenerator } = require('./base-generator')
-const { spawnSync } = require('node:child_process')
-const { stat, readFile } = require('node:fs/promises')
-const { join, dirname } = require('node:path')
-
-class ImportGenerator extends BaseGenerator {
+export class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
-    const { serviceName, module, version, parent: runtime, ...opts } = options
+    const { applicationName, module, version, parent: runtime, ...opts } = options
     super({ ...opts, module })
 
     this.runtime = runtime
     this.setConfig({
-      serviceName,
-      servicePathEnvName: `PLT_SERVICE_${serviceName.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`,
+      applicationName,
+      applicationPathEnvName: `PLT_APPLICATION_${applicationName.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`,
       module,
       version
     })
@@ -85,9 +81,9 @@ class ImportGenerator extends BaseGenerator {
   }
 
   async _afterWriteFiles (runtime) {
-    // No need for an empty folder in the services folder
+    // No need for an empty folder in the applications folder
     if (this.config.operation === 'import') {
-      await safeRemove(join(runtime.servicesBasePath, this.config.serviceName))
+      await safeRemove(join(runtime.applicationsBasePath, this.config.applicationName))
     }
   }
 
@@ -120,7 +116,7 @@ class ImportGenerator extends BaseGenerator {
   async #generateConfigFile (originalPath, updatedPath) {
     // Determine if there is a watt.json file in the application path - If it's missing, insert one
     // For import it means we don't update  the file, for copy it means it was already copied in #copy.
-    const existingConfig = await findConfigurationFile(originalPath)
+    const existingConfig = await findConfigurationFileRecursive(originalPath)
 
     if (existingConfig) {
       return
@@ -170,9 +166,9 @@ class ImportGenerator extends BaseGenerator {
     /* c8 ignore next - else */
     let env = envObject?.contents ?? ''
 
-    // Find which key is being used for the manual services
+    // Find which key is being used for the manual applications
     let key
-    for (const candidate of new Set([runtime.servicesFolder, 'web', 'services'])) {
+    for (const candidate of new Set([runtime.applicationsFolder, 'applications', 'services', 'web'])) {
       if (Array.isArray(config[candidate])) {
         key = candidate
         break
@@ -180,56 +176,53 @@ class ImportGenerator extends BaseGenerator {
     }
 
     /* c8 ignore next - else */
-    key ??= runtime.servicesFolder ?? 'services'
-    const services = config[key] ?? []
+    key ??= runtime.applicationsFolder ?? 'applications'
+    const applications = config[key] ?? []
 
-    if (!services.some(service => service.id === this.config.serviceName)) {
-      services.push({
-        id: this.config.serviceName,
-        path: `{${this.config.servicePathEnvName}}`,
+    if (!applications.some(application => application.id === this.config.applicationName)) {
+      applications.push({
+        id: this.config.applicationName,
+        path: `{${this.config.applicationPathEnvName}}`,
         url: this.config.gitUrl
       })
     }
 
-    config[key] = services
+    config[key] = applications
 
     if (env.length > 0) {
       env += '\n'
     }
-    env += `${this.config.servicePathEnvName}=${this.config.applicationPath}`
+    env += `${this.config.applicationPathEnvName}=${this.config.applicationPath}`
 
     runtime.updateRuntimeConfig(config)
     runtime.updateRuntimeEnv(env)
   }
 
   async #copy (root) {
-    const files = await glob('**/*', {
-      cwd: root,
-      dot: true,
-      ignore: ['node_modules/**', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
-      withFileTypes: true
-    })
+    const files = await readdir(root, { withFileTypes: true, recursive: true })
 
-    for (const file of files) {
-      if (file.isDirectory()) {
+    for await (const file of files) {
+      const absolutePath = resolve(file.parentPath, file.name)
+      let path = relative(root, dirname(absolutePath))
+
+      if (
+        file.isDirectory() ||
+        ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'].includes(file.name) ||
+        path.includes('node_modules')
+      ) {
         continue
       }
 
       /* c8 ignore next 6 */
-      let path = dirname(file.relative())
       if (path === '.') {
         path = ''
-      } else if (path.startsWith('./')) {
-        path = path.substring(2)
       }
 
       this.addFile({
         path,
         file: file.name,
-        contents: await readFile(file.fullpath())
+        contents: await readFile(resolve(file.parentPath, file.name))
       })
     }
   }
 }
-
-module.exports = { ImportGenerator }

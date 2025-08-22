@@ -1,9 +1,7 @@
-'use strict'
-
-const { setGlobalDispatcher, Agent, request } = require('undici')
-const { join } = require('path')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
-const os = require('node:os')
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import os from 'node:os'
+import { join } from 'path'
+import { Agent, setGlobalDispatcher } from 'undici'
 
 setGlobalDispatcher(
   new Agent({
@@ -12,13 +10,13 @@ setGlobalDispatcher(
   })
 )
 
-module.exports.request = request
+export { request } from 'undici'
 
 let counter = 0
 
-async function moveToTmpdir (teardown) {
+export async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
-  const tmp = join(__dirname, 'tmp')
+  const tmp = join(import.meta.dirname, 'tmp')
   try {
     await createDirectory(tmp)
   } catch {}
@@ -27,12 +25,14 @@ async function moveToTmpdir (teardown) {
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => safeRemove(tmp))
+    teardown(async () => {
+      await safeRemove(tmp)
+    })
   }
   return dir
 }
 
-async function safeKill (child) {
+export async function safeKill (child) {
   const execa = (await import('execa')).execa
   child.catch(() => {})
   child.kill('SIGINT')
@@ -49,6 +49,4 @@ async function safeKill (child) {
   }
 }
 
-module.exports.safeKill = safeKill
-module.exports.moveToTmpdir = moveToTmpdir
-module.exports.cliPath = join(__dirname, '..', 'cli.mjs')
+export const cliPath = join(import.meta.dirname, '..', 'index.js')

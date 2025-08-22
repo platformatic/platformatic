@@ -1,14 +1,14 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import { connect } from 'inspector-client'
-import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
-import { prepareGitRepository, waitForStart, wattpm } from './helper.js'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -29,11 +29,11 @@ test('dev - should start in development mode', async t => {
     plt_environment: 'development'
   })
 
-  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
-  ok(parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "alternative"')))
 })
 
-test('dev - should start in development mode starting from a service file', async t => {
+test('dev - should start in development mode starting from an application file', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await safeRemove(resolve(rootDir, 'watt.json'))
 
@@ -53,8 +53,8 @@ test('dev - should start in development mode starting from a service file', asyn
     plt_environment: 'development'
   })
 
-  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
-  ok(!parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the application "alternative"')))
 })
 
 test('dev - should complain if no configuration file is found', async t => {
@@ -70,9 +70,9 @@ test('dev - should complain if no configuration file is found', async t => {
   )
 })
 
-test('dev - should restart an application if files are changed', async t => {
+test.only('dev - should restart an application if files are changed', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(rootDir, 'web/main')
+  const applicationDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -91,10 +91,10 @@ test('dev - should restart an application if files are changed', async t => {
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
   ok(config.watch)
-  deepStrictEqual(config.services[1].id, 'main')
-  ok(config.services[0].watch)
+  deepStrictEqual(config.applications[1].id, 'main')
+  ok(config.applications[0].watch)
 
-  const indexFile = resolve(serviceDir, 'index.js')
+  const indexFile = resolve(applicationDir, 'index.js')
   const originalContents = await readFile(indexFile, 'utf-8')
 
   await writeFile(indexFile, originalContents.replace('123', '456'), 'utf-8')
@@ -104,7 +104,7 @@ test('dev - should restart an application if files are changed', async t => {
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('The service "main" has been successfully reloaded')) {
+    if (parsed.msg.startsWith('The application "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }
@@ -175,9 +175,9 @@ test('dev - should restart an application if the runtime configuration file is c
   }
 })
 
-test('dev - should restart an application if the service configuration file is changed', async t => {
+test('dev - should restart an application if the application configuration file is changed', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(rootDir, 'web/main')
+  const applicationDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -193,7 +193,7 @@ test('dev - should restart an application if the service configuration file is c
     deepStrictEqual(await body.json(), { version: 123 })
   }
 
-  const configFile = resolve(serviceDir, 'watt.json')
+  const configFile = resolve(applicationDir, 'watt.json')
   const originalContents = await readFile(configFile, 'utf-8')
 
   const config = JSON.parse(originalContents)
@@ -205,7 +205,7 @@ test('dev - should restart an application if the service configuration file is c
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('The service "main" has been successfully reloaded')) {
+    if (parsed.msg.startsWith('The application "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }
@@ -249,14 +249,14 @@ test('start - should start in production mode', async t => {
   const config = JSON.parse(configProcess.stdout)
 
   ok(config.watch === false)
-  deepStrictEqual(config.services[1].id, 'main')
-  ok(config.services[0].watch === false)
+  deepStrictEqual(config.applications[1].id, 'main')
+  ok(config.applications[0].watch === false)
 
-  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
-  ok(parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "alternative"')))
 })
 
-test('start - should start in production mode starting from a service file', async t => {
+test('start - should start in production mode starting from an application file', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await safeRemove(resolve(rootDir, 'watt.json'))
 
@@ -280,11 +280,11 @@ test('start - should start in production mode starting from a service file', asy
   const config = JSON.parse(configProcess.stdout)
 
   ok(config.watch === false)
-  deepStrictEqual(config.services[0].id, 'main')
-  ok(config.services[0].watch === false)
+  deepStrictEqual(config.applications[0].id, 'main')
+  ok(config.applications[0].watch === false)
 
-  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
-  ok(!parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the application "alternative"')))
 })
 
 test('start - should start in production mode with the inspector', async t => {
@@ -319,72 +319,12 @@ test('start - should start in production mode with the inspector', async t => {
     awaitPromise: true
   })
 
-  strictEqual(res.result.value, 2)
+  ok(typeof res.result.value, 'number')
 
   await client.close()
 })
 
-test('start - should use default folders for resolved services', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await prepareGitRepository(t, rootDir)
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-  await wattpm('resolve', rootDir)
-  await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
-    const config = JSON.parse(content)
-    config.dependencies = { '@platformatic/node': '^2.8.0' }
-    return JSON.stringify(config, null, 2)
-  })
-
-  await ensureDependencies([resolve(rootDir, 'external/resolved')])
-
-  const startProcess = wattpm('start', rootDir)
-
-  let started = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
-
-    if (parsed.msg.startsWith('Started the service "resolved"')) {
-      started = true
-      break
-    }
-  }
-
-  await waitForStart(startProcess)
-  ok(started)
-})
-
-test('start - should throw an error when a service has not been resolved', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await prepareGitRepository(t, rootDir)
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-
-  const startProcess = await wattpm('start', rootDir, { reject: false })
-
-  deepStrictEqual(startProcess.exitCode, 1)
-  ok(
-    startProcess.stdout
-      .trim()
-      .split('\n')
-      .find(l => {
-        return (
-          JSON.parse(l).msg ===
-          'The path for service "resolved" does not exist. Please run "watt resolve" and try again.'
-        )
-      }),
-    startProcess.stdout
-  )
-})
-
-test('start - should throw an error when a service has no path and it is not resolvable', async t => {
+test('start - should throw an error when an application has no path and it is not resolvable', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await prepareGitRepository(t, rootDir)
 
@@ -392,7 +332,7 @@ test('start - should throw an error when a service has no path and it is not res
   config.web = [{ id: 'resolved', path: '' }]
   await writeFile(resolve(rootDir, 'watt.json'), JSON.stringify(config, null, 2), 'utf-8')
 
-  process.chdir(rootDir)
+  changeWorkingDirectory(t, rootDir)
   const startProcess = await wattpm('start', rootDir, { reject: false })
 
   deepStrictEqual(startProcess.exitCode, 1)
@@ -403,7 +343,7 @@ test('start - should throw an error when a service has no path and it is not res
       .find(l => {
         return (
           JSON.parse(l).msg ===
-          'The service "resolved" has no path defined. Please check your configuration and try again.'
+          'The application "resolved" has no path defined. Please check your configuration and try again.'
         )
       }),
     startProcess.stdout

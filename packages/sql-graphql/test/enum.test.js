@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('should properly setup the enum types', { skip: isSQLite }, async (t) => {
+test('should properly setup the enum types', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -33,7 +31,7 @@ test('should properly setup the enum types', { skip: isSQLite }, async (t) => {
           PRIMARY KEY (id)
         );`)
       }
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -43,12 +41,11 @@ test('should properly setup the enum types', { skip: isSQLite }, async (t) => {
     await app.ready()
     same(true, true, 'Enum values are properly interpreted')
   } catch (err) {
-    console.log(err)
     same(true, false, 'Previous call should never fail')
   }
 })
 
-test('should not fail if enum value contains a space ', { skip: isSQLite }, async (t) => {
+test('should not fail if enum value contains a space ', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -74,7 +71,7 @@ test('should not fail if enum value contains a space ', { skip: isSQLite }, asyn
           PRIMARY KEY (id)
         );`)
       }
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -84,12 +81,11 @@ test('should not fail if enum value contains a space ', { skip: isSQLite }, asyn
     await app.ready()
     same(true, true, 'Enum with spaces are properly interpreted')
   } catch (err) {
-    console.log(err)
     same(true, false, 'Previous call should never fail')
   }
 })
 
-test('should not fail if tables have duplicate enum names', { skip: isSQLite }, async (t) => {
+test('should not fail if tables have duplicate enum names', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -126,7 +122,7 @@ test('should not fail if tables have duplicate enum names', { skip: isSQLite }, 
           PRIMARY KEY (pk)
         );`)
       }
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -136,12 +132,11 @@ test('should not fail if tables have duplicate enum names', { skip: isSQLite }, 
     await app.ready()
     same(true, true, 'test_enum is used twice but app not throws')
   } catch (err) {
-    console.log(err)
     same(true, false, 'Previous call should never fail')
   }
 })
 
-test('should not fail if tables have enum with special characters', { skip: isSQLite }, async (t) => {
+test('should not fail if tables have enum with special characters', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -169,7 +164,7 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
           );
         `)
       }
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -179,7 +174,6 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
     await app.ready()
     same(true, true, 'custom_enum have special chars, but app does not throws')
   } catch (err) {
-    console.log(err)
     same(true, false, 'Previous call should never fail')
   }
 
@@ -195,8 +189,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { id: 1 } },
-      },
+        variables: { input: { id: 1 } }
+      }
     })
     equal(res.statusCode, 200)
   }
@@ -213,8 +207,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { id: 2 } },
-      },
+        variables: { input: { id: 2 } }
+      }
     })
     equal(res.statusCode, 200)
   }
@@ -226,8 +220,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
       body: {
         query: `
             query { enumTests { id } }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200)
     same(res.json(), { data: { enumTests: [{ id: 1 }, { id: 2 }] } })
@@ -245,8 +239,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { eq: 1 } },
-      },
+        variables: { input: { eq: 1 } }
+      }
     })
     equal(res.statusCode, 200)
   }
@@ -258,8 +252,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
       body: {
         query: `
             query { enumTests { id } }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200)
     same(res.json(), { data: { enumTests: [{ id: 2 }] } })

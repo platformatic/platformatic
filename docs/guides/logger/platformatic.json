@@ -12,6 +12,6 @@
     }
   },
   "autoload": {
-    "path": "services"
+    "path": "applications"
   }
 }

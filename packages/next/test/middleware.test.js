@@ -7,40 +7,46 @@ import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/h
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should make a request with a custom interceptor from a middleware', async t => {
-  const { root, config } = await prepareRuntime(t, 'middleware', true)
-  const { url } = await startRuntime(t, root, config, false, ['frontend'])
+  const { runtime } = await prepareRuntime(t, 'middleware', true)
+  const url = await startRuntime(t, runtime, false, ['frontend'])
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
 
   const data = await body.text()
-  deepStrictEqual(data, JSON.stringify({
-    success: true,
-    message: 'middleware',
-    status: 200,
-    data: {
-      hello: 'world',
-      intercepted: true
-    }
-  }))
+  deepStrictEqual(
+    data,
+    JSON.stringify({
+      success: true,
+      message: 'middleware',
+      status: 200,
+      data: {
+        hello: 'world',
+        intercepted: true
+      }
+    })
+  )
 })
 
 test('should make a request with a custom interceptor from a middleware (child process)', async t => {
-  const { root, config } = await prepareRuntime(t, 'middleware-child-process', true)
-  const { url } = await startRuntime(t, root, config, false, ['frontend'])
+  const { runtime } = await prepareRuntime(t, 'middleware-child-process', true)
+  const url = await startRuntime(t, runtime, false, ['frontend'])
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
 
   const data = await body.text()
 
-  deepStrictEqual(data, JSON.stringify({
-    success: true,
-    message: 'middleware',
-    status: 200,
-    data: {
-      hello: 'world',
-      intercepted: true
-    }
-  }))
+  deepStrictEqual(
+    data,
+    JSON.stringify({
+      success: true,
+      message: 'middleware',
+      status: 200,
+      data: {
+        hello: 'world',
+        intercepted: true
+      }
+    })
+  )
 })

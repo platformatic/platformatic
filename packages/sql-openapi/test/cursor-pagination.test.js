@@ -1,17 +1,19 @@
-'use strict'
+import Snap from '@matteo.collina/snap'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import {
+  CursorValidationError,
+  PrimaryKeyNotIncludedInOrderByInCursorPaginationError,
+  UnableToParseCursorStrError
+} from '../lib/errors.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
-const Snap = require('@matteo.collina/snap')
-const { test } = require('node:test')
-const fastify = require('fastify')
-const sqlOpenAPI = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const { PrimaryKeyNotIncludedInOrderByInCursorPaginationError, UnableToParseCursorStrError, CursorValidationError } = require('../lib/errors')
+const snap = Snap(import.meta.filename)
 
-const snap = Snap(__filename)
-
-test('cursor pagination basics', async (t) => {
+test('cursor pagination basics', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -37,7 +39,7 @@ test('cursor pagination basics', async (t) => {
             created_at TIMESTAMP
           );`)
       }
-    },
+    }
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -46,7 +48,7 @@ test('cursor pagination basics', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
@@ -57,7 +59,7 @@ test('cursor pagination basics', async (t) => {
   for (let i = 1; i <= 10; i++) {
     const body = {
       title: `Post ${i}`,
-      createdAt: Date.now() - (i * 1000)
+      createdAt: Date.now() - i * 1000
     }
     const res = await app.inject({
       method: 'POST',
@@ -155,7 +157,7 @@ test('cursor pagination basics', async (t) => {
   }
 })
 
-test('cursor pagination edge cases', async (t) => {
+test('cursor pagination edge cases', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -183,7 +185,7 @@ test('cursor pagination edge cases', async (t) => {
             category VARCHAR(42)
           );`)
       }
-    },
+    }
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -193,7 +195,7 @@ test('cursor pagination edge cases', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
@@ -207,7 +209,7 @@ test('cursor pagination edge cases', async (t) => {
     { name: 'Item B1', category: 'B' },
     { name: 'Item B2', category: 'B' },
     wierdItem,
-    { name: 'Item C1', category: 'C' },
+    { name: 'Item C1', category: 'C' }
   ]
 
   for (const item of itemsToCreate) {
@@ -331,10 +333,12 @@ test('cursor pagination edge cases', async (t) => {
 
   // test cursor whose base64 encoding contains special characters
   {
-    const wierdCursor = await app.inject({
-      method: 'GET',
-      url: `/items?where.name.eq=${wierdItem.name}`
-    }).then(res => res.json()[0])
+    const wierdCursor = await app
+      .inject({
+        method: 'GET',
+        url: `/items?where.name.eq=${wierdItem.name}`
+      })
+      .then(res => res.json()[0])
     const encodedCursor = Buffer.from(JSON.stringify(wierdCursor)).toString('base64')
 
     const res = await app.inject({

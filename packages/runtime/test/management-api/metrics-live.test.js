@@ -1,18 +1,16 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { platform } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import WebSocket from 'ws'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { platform } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const WebSocket = require('ws')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should get runtime metrics via management api', async (t) => {
+test('should get runtime metrics via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -30,14 +28,15 @@ test('should get runtime metrics via management api', async (t) => {
       reject(new Error('Timeout'))
     }, 10000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
     let count = 0
 
-    webSocket.on('message', (data) => {
+    webSocket.on('message', data => {
       if (count++ > 5) {
+        webSocket.removeAllListeners('message')
         clearTimeout(timeout)
         webSocket.close()
         resolve()
@@ -46,38 +45,29 @@ test('should get runtime metrics via management api', async (t) => {
       const records = data.toString().split('\n')
       for (const record of records) {
         if (!record) continue
-        const { services } = JSON.parse(record)
+        const { applications } = JSON.parse(record)
 
-        assert.deepStrictEqual(
-          Object.keys(services).sort(),
-          ['service-1', 'service-2', 'service-db'].sort()
-        )
+        deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-        for (const serviceMetrics of Object.values(services)) {
-          assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-            'cpu',
-            'elu',
-            'newSpaceSize',
-            'oldSpaceSize',
-            'rss',
-            'totalHeapSize',
-            'usedHeapSize',
-            'latency',
-          ].sort())
+        for (const applicationMetrics of Object.values(applications)) {
+          deepStrictEqual(
+            Object.keys(applicationMetrics).sort(),
+            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+          )
 
-          const latencyMetrics = serviceMetrics.latency
+          const latencyMetrics = applicationMetrics.latency
           const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+          deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
         }
       }
     })
   })
 })
 
-test('should not throw if metrics are not enabled', async (t) => {
+test('should not throw if metrics are not enabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -95,24 +85,25 @@ test('should not throw if metrics are not enabled', async (t) => {
       reject(new Error('Timeout'))
     }, 10000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
     let count = 0
 
-    webSocket.on('message', (data) => {
-      if (count++ > 5) {
+    webSocket.on('message', data => {
+      if (count++ > 3) {
         clearTimeout(timeout)
         webSocket.close()
         resolve()
       }
 
       const records = data.toString().split('\n')
+
       for (const record of records) {
         if (!record) continue
         const metrics = JSON.parse(record)
-        assert.strictEqual(metrics, null)
+        strictEqual(metrics, null)
       }
     })
   })

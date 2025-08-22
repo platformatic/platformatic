@@ -1,18 +1,16 @@
-'use strict'
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
-
-const { buildServer } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -27,20 +25,23 @@ test('Hello', async t => {
     method: 'GET',
     path: '/'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
 The readiness endpoint is available at /ready.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without readiness', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'readiness-disabled.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -55,19 +56,22 @@ test('Hello without readiness', async t => {
     method: 'GET',
     path: '/'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without liveness', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'liveness-disabled.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -82,19 +86,22 @@ test('Hello without liveness', async t => {
     method: 'GET',
     path: '/'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The readiness endpoint is available at /ready.`)
+The readiness endpoint is available at /ready.`
+  )
 })
 
 test('should start a prometheus server on port 9090', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -109,7 +116,7 @@ test('should start a prometheus server on port 9090', async t => {
     method: 'GET',
     path: '/metrics'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.text()
   const metricsNames = metrics
@@ -164,7 +171,7 @@ test('should start a prometheus server on port 9090', async t => {
   ]
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+    ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
 
   const jsonRequest = await request('http://127.0.0.1:9090', {
@@ -172,18 +179,18 @@ test('should start a prometheus server on port 9090', async t => {
     path: '/metrics',
     headers: { Accept: 'application/json' }
   })
-  assert.strictEqual(jsonRequest.statusCode, 200, 'should return JSON metrics when required from the headers')
+  strictEqual(jsonRequest.statusCode, 200, 'should return JSON metrics when required from the headers')
 
   const jsonMetricNames = (await jsonRequest.body.json()).flatMap(({ name }) => name)
   for (const metricName of expectedMetricNames) {
-    assert.ok(jsonMetricNames.includes(metricName), `Expected metric ${metricName} to be present on JSON format`)
+    ok(jsonMetricNames.includes(metricName), `Expected metric ${metricName} to be present on JSON format`)
   }
 })
 
 test('should support custom metrics', async t => {
   const projectDir = join(fixturesDir, 'custom-metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -198,36 +205,36 @@ test('should support custom metrics', async t => {
     method: 'GET',
     path: '/metrics'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.text()
 
-  assert.ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
-  assert.ok(metrics.includes('# TYPE custom_service_1 counter'))
-  assert.ok(metrics.includes('custom_service_1{serviceId="service"} 123'))
-  assert.ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
-  assert.ok(metrics.includes('# TYPE custom_service_2 gauge'))
-  assert.ok(metrics.includes('custom_service_2{serviceId="service"} 456'))
+  ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
+  ok(metrics.includes('# TYPE custom_service_1 counter'))
+  ok(metrics.includes('custom_service_1{applicationId="service"} 123'))
+  ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
+  ok(metrics.includes('# TYPE custom_service_2 gauge'))
+  ok(metrics.includes('custom_service_2{applicationId="service"} 456'))
 
-  assert.ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
-  assert.ok(metrics.includes('# TYPE custom_internal_1 counter'))
-  assert.ok(metrics.includes('custom_internal_1{serviceId="internal"} 123'))
-  assert.ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
-  assert.ok(metrics.includes('# TYPE custom_internal_2 gauge'))
-  assert.ok(metrics.includes('custom_internal_2{serviceId="internal"} 456'))
+  ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
+  ok(metrics.includes('# TYPE custom_internal_1 counter'))
+  ok(metrics.includes('custom_internal_1{applicationId="internal"} 123'))
+  ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
+  ok(metrics.includes('# TYPE custom_internal_2 gauge'))
+  ok(metrics.includes('custom_internal_2{applicationId="internal"} 456'))
 
-  assert.ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
-  assert.ok(metrics.includes('# TYPE custom_external_1 counter'))
-  assert.ok(metrics.includes('custom_external_1{serviceId="external"} 123'))
-  assert.ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
-  assert.ok(metrics.includes('# TYPE custom_external_2 gauge'))
-  assert.ok(metrics.includes('custom_external_2{serviceId="external"} 456'))
+  ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
+  ok(metrics.includes('# TYPE custom_external_1 counter'))
+  ok(metrics.includes('custom_external_1{applicationId="external"} 123'))
+  ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
+  ok(metrics.includes('# TYPE custom_external_2 gauge'))
+  ok(metrics.includes('custom_external_2{applicationId="external"} 456'))
 })
 
-test('should track http cache hits/misses', async (t) => {
+test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -238,7 +245,7 @@ test('should track http cache hits/misses', async (t) => {
     const res = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   await sleep(cacheTimeoutSec * 1000)
@@ -247,38 +254,38 @@ test('should track http cache hits/misses', async (t) => {
     const res = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   {
     const res = await request(entryUrl + '/service-2/service-3/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
     path: '/metrics'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.text()
 
-  assert.ok(metrics.match(/http_cache_hit_count\{serviceId="main"\} \d+/))
-  assert.ok(metrics.match(/http_cache_miss_count\{serviceId="main"\} \d+/))
+  ok(metrics.match(/http_cache_hit_count\{applicationId="main"\} \d+/))
+  ok(metrics.match(/http_cache_miss_count\{applicationId="main"\} \d+/))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-1"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-1"} 0'))
+  ok(metrics.includes('http_cache_hit_count{applicationId="service-1"} 0'))
+  ok(metrics.includes('http_cache_miss_count{applicationId="service-1"} 0'))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2"} 1'))
+  ok(metrics.includes('http_cache_hit_count{applicationId="service-2"} 0'))
+  ok(metrics.includes('http_cache_miss_count{applicationId="service-2"} 1'))
 })
 
 test('metrics can be disabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'metrics-disabled.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -289,16 +296,18 @@ test('metrics can be disabled', async t => {
   // Wait for the prometheus server to start
   await sleep(2000)
 
-  await t.assert.rejects(request('http://127.0.0.1:9090', {
-    method: 'GET',
-    path: '/metrics'
-  }))
+  await t.assert.rejects(
+    request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/metrics'
+    })
+  )
 })
 
 test('readiness - should get 404 if readiness is not enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'readiness-disabled.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -313,13 +322,13 @@ test('readiness - should get 404 if readiness is not enabled', async t => {
     method: 'GET',
     path: '/ready'
   })
-  assert.strictEqual(statusCode, 404)
+  strictEqual(statusCode, 404)
 })
 
-test('readiness - should expose readiness by default and get a success response when all services are started, with default settings', async t => {
+test('readiness - should expose readiness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -334,14 +343,14 @@ test('readiness - should expose readiness by default and get a success response 
     method: 'GET',
     path: '/ready'
   })
-  assert.strictEqual(statusCode, 200)
-  assert.strictEqual(await body.text(), 'OK')
+  strictEqual(statusCode, 200)
+  strictEqual(await body.text(), 'OK')
 })
 
-test('readiness - should expose readiness and get a fail response when not all services are started, with default settings', async t => {
+test('readiness - should expose readiness and get a fail response when not all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -349,21 +358,21 @@ test('readiness - should expose readiness and get a fail response when not all s
     await app.close()
   })
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
     path: '/ready'
   })
-  assert.strictEqual(statusCode, 500)
-  assert.strictEqual(await body.text(), 'ERR')
+  strictEqual(statusCode, 500)
+  strictEqual(await body.text(), 'ERR')
 })
 
 test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'readiness-custom.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -379,27 +388,27 @@ test('readiness - should expose readiness and get a fail and success responses w
       method: 'GET',
       path: '/health'
     })
-    assert.strictEqual(statusCode, 201)
-    assert.strictEqual(await body.text(), 'All right')
+    strictEqual(statusCode, 201)
+    strictEqual(await body.text(), 'All right')
   }
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {
       method: 'GET',
       path: '/health'
     })
-    assert.strictEqual(statusCode, 501)
-    assert.strictEqual(await body.text(), 'No good')
+    strictEqual(statusCode, 501)
+    strictEqual(await body.text(), 'No good')
   }
 })
 
 test('liveness - should get 404 if liveness is not enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'liveness-disabled.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -414,13 +423,13 @@ test('liveness - should get 404 if liveness is not enabled', async t => {
     method: 'GET',
     path: '/status'
   })
-  assert.strictEqual(statusCode, 404)
+  strictEqual(statusCode, 404)
 })
 
-test('liveness - should expose liveness by default and get a success response when all services are started, with default settings', async t => {
+test('liveness - should expose liveness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -435,14 +444,14 @@ test('liveness - should expose liveness by default and get a success response wh
     method: 'GET',
     path: '/status'
   })
-  assert.strictEqual(statusCode, 200)
-  assert.strictEqual(await body.text(), 'OK')
+  strictEqual(statusCode, 200)
+  strictEqual(await body.text(), 'OK')
 })
 
-test('liveness - should expose liveness and get a fail response when not all services are ready, with default settings', async t => {
+test('liveness - should expose liveness and get a fail response when not all applications are ready, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -450,21 +459,21 @@ test('liveness - should expose liveness and get a fail response when not all ser
     await app.close()
   })
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  const { applications } = await app.getApplications()
+  await app.stopApplication(applications[0].id)
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
     path: '/status'
   })
-  assert.strictEqual(statusCode, 500)
-  assert.strictEqual(await body.text(), 'ERR')
+  strictEqual(statusCode, 500)
+  strictEqual(await body.text(), 'ERR')
 })
 
-test('liveness - should expose liveness and get a fail response when not all services are healthy, with default settings', async t => {
+test('liveness - should expose liveness and get a fail response when not all applications are healthy, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -481,14 +490,14 @@ test('liveness - should expose liveness and get a fail response when not all ser
     method: 'GET',
     path: '/status'
   })
-  assert.strictEqual(statusCode, 500)
-  assert.strictEqual(await body.text(), 'ERR')
+  strictEqual(statusCode, 500)
+  strictEqual(await body.text(), 'ERR')
 })
 
 test('liveness - should expose liveness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'liveness-custom.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -504,8 +513,8 @@ test('liveness - should expose liveness and get a fail and success responses wit
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 201)
-    assert.strictEqual(await body.text(), 'All right')
+    strictEqual(statusCode, 201)
+    strictEqual(await body.text(), 'All right')
   }
 
   await request(entryUrl, {
@@ -518,15 +527,15 @@ test('liveness - should expose liveness and get a fail and success responses wit
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 501)
-    assert.strictEqual(await body.text(), 'No good')
+    strictEqual(statusCode, 501)
+    strictEqual(await body.text(), 'No good')
   }
 })
 
 test('liveness - should respond to liveness with a custom content from setCustomHealthCheck', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -542,8 +551,8 @@ test('liveness - should respond to liveness with a custom content from setCustom
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 201)
-    assert.strictEqual(await body.text(), 'All right')
+    strictEqual(statusCode, 201)
+    strictEqual(await body.text(), 'All right')
   }
 
   await request(entryUrl, {
@@ -556,8 +565,8 @@ test('liveness - should respond to liveness with a custom content from setCustom
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 500)
-    assert.strictEqual(await body.text(), 'Database is unreachable')
+    strictEqual(statusCode, 500)
+    strictEqual(await body.text(), 'Database is unreachable')
   }
 
   await request(entryUrl, {
@@ -570,15 +579,15 @@ test('liveness - should respond to liveness with a custom content from setCustom
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 211)
-    assert.strictEqual(await body.text(), 'Everything is fine')
+    strictEqual(statusCode, 211)
+    strictEqual(await body.text(), 'Everything is fine')
   }
 })
 
 test('liveness - should respond to liveness with the response from settings when setCustomHealthCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -594,8 +603,8 @@ test('liveness - should respond to liveness with the response from settings when
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 201)
-    assert.strictEqual(await body.text(), 'All right')
+    strictEqual(statusCode, 201)
+    strictEqual(await body.text(), 'All right')
   }
 
   await request(entryUrl, {
@@ -608,8 +617,8 @@ test('liveness - should respond to liveness with the response from settings when
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 501)
-    assert.strictEqual(await body.text(), 'No good')
+    strictEqual(statusCode, 501)
+    strictEqual(await body.text(), 'No good')
   }
 
   await request(entryUrl, {
@@ -622,15 +631,15 @@ test('liveness - should respond to liveness with the response from settings when
       method: 'GET',
       path: '/live'
     })
-    assert.strictEqual(statusCode, 201)
-    assert.strictEqual(await body.text(), 'All right')
+    strictEqual(statusCode, 201)
+    strictEqual(await body.text(), 'All right')
   }
 })
 
 test('readiness - should respond to readiness with a custom content from setCustomReadinessCheck', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -646,8 +655,8 @@ test('readiness - should respond to readiness with a custom content from setCust
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 200)
-    assert.strictEqual(await body.text(), 'All ready')
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'All ready')
   }
 
   await request(entryUrl, {
@@ -660,8 +669,8 @@ test('readiness - should respond to readiness with a custom content from setCust
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 502)
-    assert.strictEqual(await body.text(), 'Database is unreachable')
+    strictEqual(statusCode, 502)
+    strictEqual(await body.text(), 'Database is unreachable')
   }
 
   await request(entryUrl, {
@@ -674,15 +683,15 @@ test('readiness - should respond to readiness with a custom content from setCust
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 202)
-    assert.strictEqual(await body.text(), 'Everything is ready')
+    strictEqual(statusCode, 202)
+    strictEqual(await body.text(), 'Everything is ready')
   }
 })
 
 test('readiness - should respond to readiness with the response from settings when setCustomReadinessCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -698,8 +707,8 @@ test('readiness - should respond to readiness with the response from settings wh
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 200)
-    assert.strictEqual(await body.text(), 'All ready')
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'All ready')
   }
 
   await request(entryUrl, {
@@ -712,8 +721,8 @@ test('readiness - should respond to readiness with the response from settings wh
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 502)
-    assert.strictEqual(await body.text(), 'Not ready')
+    strictEqual(statusCode, 502)
+    strictEqual(await body.text(), 'Not ready')
   }
 
   await request(entryUrl, {
@@ -726,15 +735,15 @@ test('readiness - should respond to readiness with the response from settings wh
       method: 'GET',
       path: '/readiness'
     })
-    assert.strictEqual(statusCode, 202)
-    assert.strictEqual(await body.text(), 'All ready')
+    strictEqual(statusCode, 202)
+    strictEqual(await body.text(), 'All ready')
   }
 })
 
 test('liveness - should respond to liveness with the custom readiness response from setCustomHealthCheck on liveness failure consequent of readiness check failure', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
 
@@ -759,7 +768,7 @@ test('liveness - should respond to liveness with the custom readiness response f
       method: 'GET',
       path: '/status'
     })
-    assert.strictEqual(statusCode, 500)
-    assert.strictEqual(await body.text(), 'Not ready')
+    strictEqual(statusCode, 500)
+    strictEqual(await body.text(), 'Not ready')
   }
 })

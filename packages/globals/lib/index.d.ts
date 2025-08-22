@@ -21,7 +21,7 @@ export interface PlatformaticGlobalInterface {
   host: string
   port: number
   config: object
-  serviceId: string
+  applicationId: string
   workerId: number | string
   root: string
   isEntrypoint: boolean
@@ -42,23 +42,23 @@ export interface PlatformaticGlobalInterface {
   clientSpansAls: AsyncLocalStorage
 
   // Caching
-  onHttpCacheHit(key: string): void
-  onHttpCacheMiss(key: string): void
-  invalidateHttpCache(options: InvalidateHttpCacheOptions): void
+  onHttpCacheHit (key: string): void
+  onHttpCacheMiss (key: string): void
+  invalidateHttpCache (options: InvalidateHttpCacheOptions): void
 
   // Setters
-  setBasePath(path: string): void
-  setOpenapiSchema(schema: object): void
-  setGraphqlSchema(schema: object): void
-  setConnectionString(connection: string): void
-  setCustomHealthCheck(
+  setBasePath (path: string): void
+  setOpenapiSchema (schema: object): void
+  setGraphqlSchema (schema: object): void
+  setConnectionString (connection: string): void
+  setCustomHealthCheck (
     healthCheck: () =>
       | boolean
       | Promise<boolean>
       | { status: boolean; statusCode?: number; body?: string }
       | Promise<{ status: boolean; statusCode?: number; body?: string }>
   ): void
-  setCustomReadinessCheck(
+  setCustomReadinessCheck (
     readinessCheck: () =>
       | boolean
       | Promise<boolean>
@@ -68,12 +68,12 @@ export interface PlatformaticGlobalInterface {
 
   // Messaging
   messaging: {
-    send(name: string, message: any, options?: Record<string, any>): Promise<any>
-    handle(message: Record<string, Handler>): void
-    handle(message: string, handler: Handler): void
+    send (name: string, message: any, options?: Record<string, any>): Promise<any>
+    handle (message: Record<string, Handler>): void
+    handle (message: string, handler: Handler): void
   }
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
-export declare function getGlobal<T = {}>(): PlatformaticGlobal & T
+export declare function getGlobal<T = {}> (): PlatformaticGlobal & T
 export default getGlobal

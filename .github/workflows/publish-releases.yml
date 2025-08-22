@@ -27,7 +27,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       - run: npm install npm -g
@@ -40,7 +40,7 @@ jobs:
           command: pnpm install
       - name: Change version number and sync
         run: |
-          node scripts/update-version.mjs ${{ inputs.version }}
+          node scripts/update-version.js ${{ inputs.version }}
           sh scripts/sync-version.sh
           pnpm -r run --if-present prepublishOnly
       - name: update lockfile

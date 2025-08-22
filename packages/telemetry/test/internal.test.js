@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual, equal } = require('node:assert')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { PlatformaticContext } = require('../lib/platformatic-context')
-const { fastifyTextMapGetter } = require('../lib/fastify-text-map')
-const { setupApp } = require('./helper')
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { deepEqual, equal } from 'node:assert'
+import { test } from 'node:test'
+import { fastifyTextMapGetter } from '../lib/fastify-text-map.js'
+import { PlatformaticContext } from '../lib/platformatic-context.js'
+import { setupApp } from './helper.js'
 
 test('start and ends an internal span', async () => {
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
@@ -16,25 +14,29 @@ test('start and ends an internal span', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startSpan, endSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
-    traceparent,
+    traceparent
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
 
   const attributes = {
-    'test-attribute': 'test-value',
+    'test-attribute': 'test-value'
   }
   const span = startSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)
@@ -58,13 +60,17 @@ test('start and ends an internal span with no parent context and no attributes',
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startSpan, endSpan } = app.openTelemetry
 
@@ -93,25 +99,29 @@ test('start and ends an internal span with error', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'memory',
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
     },
-  }, handler, test.after)
+    handler,
+    test.after
+  )
 
   const { startSpan, endSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
-    traceparent,
+    traceparent
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
 
   const attributes = {
-    'test-attribute': 'test-value',
+    'test-attribute': 'test-value'
   }
   const span = startSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)

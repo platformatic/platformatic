@@ -1,13 +1,11 @@
-'use strict'
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const core = require('@platformatic/db-core')
-const fastify = require('fastify')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const auth = require('..')
-
-test('users can save and update their own pages, read everybody\'s and delete none', async () => {
+test("users can save and update their own pages, read everybody's and delete none", async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -16,35 +14,38 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   await app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
-    anonymousRole: 'anonymous',
+    anonymousRole: 'anonymous'
   })
-  app.platformatic.addRulesForRoles([{
-    role: 'user',
-    entity: 'page',
-    find: true,
-    delete: false,
-    defaults: {
-      userId: 'X-PLATFORMATIC-USER-ID',
-    },
-    save: {
-      checks: {
-        userId: 'X-PLATFORMATIC-USER-ID',
+  app.platformatic.addRulesForRoles([
+    {
+      role: 'user',
+      entity: 'page',
+      find: true,
+      delete: false,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
       },
+      save: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
+      }
     },
-  }, {
-    role: 'anonymous',
-    entity: 'page',
-    find: false,
-    delete: false,
-    save: false,
-  }])
+    {
+      role: 'anonymous',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }
+  ])
   test.after(() => {
     app.close()
   })
@@ -53,7 +54,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -61,7 +62,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -72,19 +73,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -92,7 +97,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -103,19 +108,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -123,7 +132,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -133,18 +142,22 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -152,7 +165,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -162,23 +175,27 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -186,7 +203,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -196,29 +213,31 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -226,7 +245,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -237,19 +256,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World',
+            userId: 42
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -257,7 +280,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -270,24 +293,24 @@ test('users can save and update their own pages, read everybody\'s and delete no
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: [
-          { id: 2, title: 'Page 1', userId: 42 },
-          { id: 3, title: 'Page 2', userId: 42 },
-          { id: 4, title: 'Page 3', userId: 42 },
-        ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            { id: 2, title: 'Page 1', userId: 42 },
+            { id: 3, title: 'Page 2', userId: 42 },
+            { id: 4, title: 'Page 3', userId: 42 }
+          ]
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -303,29 +326,31 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'getPageById',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: null
         },
-      ],
-    }, 'getPageById response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['getPageById']
+          }
+        ]
+      },
+      'getPageById response'
+    )
   }
 
   {
@@ -341,29 +366,31 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -371,7 +398,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -381,29 +408,31 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 
   {
@@ -421,34 +450,32 @@ test('users can save and update their own pages, read everybody\'s and delete no
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'insertPages status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'insertPages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: null
         },
-      ],
-    }, 'insertPages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['insertPages']
+          }
+        ]
+      },
+      'insertPages response'
+    )
   }
 
   {
@@ -463,28 +490,30 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 })

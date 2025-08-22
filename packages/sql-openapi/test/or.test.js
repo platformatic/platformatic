@@ -1,16 +1,14 @@
-'use strict'
+import Snap from '@matteo.collina/snap'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { test } = require('node:test')
-const Snap = require('@matteo.collina/snap')
-const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
-const fastify = require('fastify')
-const sqlOpenAPI = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
+const snap = Snap(import.meta.filename)
 
-const snap = Snap(__filename)
-
-test('list', async (t) => {
+test('list', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -41,7 +39,7 @@ test('list', async (t) => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -51,36 +49,41 @@ test('list', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
     same(openapi, snapshot)
   }
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   for (const body of posts) {
     const res = await app.inject({
       method: 'POST',
       url: '/posts',
-      body,
+      body
     })
     equal(res.statusCode, 200, 'POST /posts status code')
   }
@@ -88,97 +91,149 @@ test('list', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText',
+      url: '/posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText'
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 2, title: 'Cat', longText: 'Bar' },
-    ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText response')
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 2, title: 'Cat', longText: 'Bar' }
+      ],
+      'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText',
+      url: '/posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-    ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [{ id: 1, title: 'Dog', longText: 'Foo' }],
+      'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText',
+      url: '/posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 3, title: 'Mouse', longText: 'Baz' },
-      { id: 4, title: 'Duck', longText: 'A duck tale' },
-    ], 'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 3, title: 'Mouse', longText: 'Baz' },
+        { id: 4, title: 'Duck', longText: 'A duck tale' }
+      ],
+      'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText',
+      url: '/posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText'
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 4, title: 'Duck', longText: 'A duck tale' },
-    ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText response')
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 4, title: 'Duck', longText: 'A duck tale' }
+      ],
+      'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText',
+      url: '/posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 3, title: 'Mouse', longText: 'Baz' },
-    ], 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 3, title: 'Mouse', longText: 'Baz' }
+      ],
+      'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText',
+      url: '/posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-    ], 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [{ id: 1, title: 'Dog', longText: 'Foo' }],
+      'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText',
+      url: '/posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 2, title: 'Cat', longText: 'Bar' },
-      { id: 3, title: 'Mouse', longText: 'Baz' },
-    ], 'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 2, title: 'Cat', longText: 'Bar' },
+        { id: 3, title: 'Mouse', longText: 'Baz' }
+      ],
+      'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText',
+      url: '/posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText'
     })
-    equal(res.statusCode, 200, 'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText status code')
-    same(res.json(), [
-      { id: 1, title: 'Dog', longText: 'Foo' },
-      { id: 2, title: 'Cat', longText: 'Bar' },
-      { id: 3, title: 'Mouse', longText: 'Baz' },
-    ], 'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText response')
+    equal(
+      res.statusCode,
+      200,
+      'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText status code'
+    )
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog', longText: 'Foo' },
+        { id: 2, title: 'Cat', longText: 'Bar' },
+        { id: 3, title: 'Mouse', longText: 'Baz' }
+      ],
+      'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText response'
+    )
   }
 })

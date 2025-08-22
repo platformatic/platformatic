@@ -7,8 +7,8 @@ You need to customize logging behavior in your Platformatic application for diff
 ## Solution Overview
 
 Platformatic uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
-- Set consistent logging across all services via Watt configuration
-- Override logging for specific services
+- Set consistent logging across all applications via Watt configuration
+- Override logging for specific applications
 - Integrate with external systems (Elasticsearch, files, etc.)
 - Redact sensitive information from logs
 
@@ -337,15 +337,15 @@ To avoid the log entry to be wrapped in the `stdout` property, set the `captureS
 
 ---
 
-### Capture Thread Services logs
+### Capture Thread Applications logs
 
-By default, Platformatic services logs are captured by the main service and wrapped in the `stdout` and `stderr` streams, for example:
+By default, Platformatic applications logs are captured by Watt and wrapped in the `stdout` and `stderr` streams, for example:
 
 ```txt
 {"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","caller":"STDOUT","stdout":{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}}
 ```
 
-The `captureStdio` option in `wattpm` can be set to `false` to disable the capture of the logs of the child services; in this case logs will be written directly to the `stdout` and `stderr` streams of the main service.
+The `captureStdio` option in `wattpm` can be set to `false` to disable the capture of the logs of the child applications; in this case logs will be written directly to the `stdout` and `stderr` streams of Watt.
 
 `watt.json`
 
@@ -421,7 +421,7 @@ export function level (label) {
 }
 ```
 
-In this example, the logger is configured run a `@platformatic/node` service, but the same configuration can be used for any other Platformatic service.
+In this example, the logger is configured run a `@platformatic/node` application, but the same configuration can be used for any other Platformatic application.
 In this example, the logger is configured to use a file transport and the `level` is set to `debug`.
 
 ## Programmatic Usage
@@ -451,9 +451,9 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ## Setting up a Platformatic application with logging configuration
 
-Let's see an example of a Platformatic application with `watt`, `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` services, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Platformatic application with `watt`, `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
 
-The main `watt` service has a shared logger configuration that is used by all the services, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` service ensures that the logs will be consistent across all the services.
+Watt has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in Watt ensures that the logs will be consistent across all the applications.
 
 `watt.json`
 
@@ -474,7 +474,7 @@ The main `watt` service has a shared logger configuration that is used by all th
 }
 ```
 
-The other services have their own logger configuration, for example the `backend` service has a redaction configuration
+The other applications have their own logger configuration, for example the `backend` application has a redaction configuration
 
 `backend/platformatic.json`
 
@@ -506,7 +506,7 @@ const app = fastify({
 ```
 
 
-The `next` service has a custom formatter that adds the `service` property to the logs, note the service level is different in the services.
+The `next` application has a custom formatter that adds the `application` property to the logs, note the application level is different in the applications.
 
 `next/platformatic.json`
 

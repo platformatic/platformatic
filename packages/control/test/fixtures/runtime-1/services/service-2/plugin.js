@@ -11,6 +11,6 @@ module.exports = async function (app, options) {
   app.log.fatal('logs finished')
 
   app.get('/hello', async () => {
-    return { runtime: 'runtime-1', service: 'service-2' }
+    return { runtime: 'runtime-1', application: 'application-2' }
   })
 }

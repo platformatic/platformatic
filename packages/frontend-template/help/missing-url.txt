@@ -1,4 +1,0 @@
-Something went wrong. Ensure the passed url is valid.
-
-You can find more details about the available options at:
-https://docs.platformatic.dev/docs/cli

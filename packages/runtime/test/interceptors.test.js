@@ -1,13 +1,12 @@
-'use strict'
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const idp = require(join(fixturesDir, 'interceptors', 'idp'))
-const external = require(join(fixturesDir, 'interceptors', 'external'))
+import { deepStrictEqual, notEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import external from '../fixtures/interceptors/external.js'
+import idp from '../fixtures/interceptors/idp.js'
+import { createRuntime } from './helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('interceptors as undici options', async t => {
   const idpServer = await idp({ port: 0 })
@@ -21,8 +20,7 @@ test('interceptors as undici options', async t => {
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'interceptors', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -32,8 +30,8 @@ test('interceptors as undici options', async t => {
   {
     const res = await request(entryUrl + '/hello')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 })
 
@@ -49,8 +47,7 @@ test('composable interceptors', async t => {
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'interceptors-2', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -60,15 +57,14 @@ test('composable interceptors', async t => {
   {
     const res = await request(entryUrl + '/hello')
 
-    assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 })
 
 test('mesh network works from external processes via ChildManager', async t => {
   const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -79,29 +75,26 @@ test('mesh network works from external processes via ChildManager', async t => {
     const res = await request(entryUrl + '/node/')
     const body = await res.body.json()
 
-    assert.notEqual(body.pid, process.pid)
+    notEqual(body.pid, process.pid)
 
-    assert.deepStrictEqual(body.responses[0], {
+    deepStrictEqual(body.responses[0], {
       body: {
         from: 'a'
       },
       statusCode: 200
     })
 
-    assert.deepStrictEqual(body.responses[1], {
+    deepStrictEqual(body.responses[1], {
       body: {
         from: 'b'
       },
       statusCode: 200
     })
 
-    assert.deepStrictEqual(body.responses[2].statusCode, 502)
-    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
-      'message',
-      'stack'
-    ])
+    deepStrictEqual(body.responses[2].statusCode, 502)
+    deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
 
-    assert.deepStrictEqual(body.responses[3], {
+    deepStrictEqual(body.responses[3], {
       body: `application/octet-stream:123:${'echo'.repeat(10)}`,
       statusCode: 200
     })
@@ -110,15 +103,15 @@ test('mesh network works from external processes via ChildManager', async t => {
 
 test('use client interceptors for internal requests', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
 
   const { statusCode, body } = await request(entryUrl + '/hello')
 
-  assert.strictEqual(statusCode, 200)
-  assert.deepStrictEqual(await body.json(), {
+  strictEqual(statusCode, 200)
+  deepStrictEqual(await body.json(), {
     reqIntercepted: 'true',
     resIntercepted: 'true',
     reqInterceptedValue: 'initial'
@@ -127,15 +120,15 @@ test('use client interceptors for internal requests', async t => {
 
 test('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
 
   {
     const { statusCode, body } = await request(entryUrl + '/hello')
-    assert.strictEqual(statusCode, 200)
-    assert.deepStrictEqual(await body.json(), {
+    strictEqual(statusCode, 200)
+    deepStrictEqual(await body.json(), {
       reqIntercepted: 'true',
       resIntercepted: 'true',
       reqInterceptedValue: 'initial'
@@ -143,10 +136,12 @@ test('update undici interceptor config', async t => {
   }
 
   const newUndiciConfig = {
-    interceptors: [{
-      module: './interceptor.js',
-      options: { testInterceptedValue: 'updated' }
-    }]
+    interceptors: [
+      {
+        module: './interceptor.js',
+        options: { testInterceptedValue: 'updated' }
+      }
+    ]
   }
 
   // Update the undici interceptor config
@@ -154,8 +149,8 @@ test('update undici interceptor config', async t => {
 
   {
     const { statusCode, body } = await request(entryUrl + '/hello')
-    assert.strictEqual(statusCode, 200)
-    assert.deepStrictEqual(await body.json(), {
+    strictEqual(statusCode, 200)
+    deepStrictEqual(await body.json(), {
       reqIntercepted: 'true',
       resIntercepted: 'true',
       reqInterceptedValue: 'updated'
@@ -163,5 +158,5 @@ test('update undici interceptor config', async t => {
   }
 
   const runtimeConfig = await app.getRuntimeConfig()
-  assert.deepStrictEqual(runtimeConfig.undici, newUndiciConfig)
+  deepStrictEqual(runtimeConfig.undici, newUndiciConfig)
 })

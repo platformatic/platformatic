@@ -1,7 +1,3 @@
-'use strict'
+import neostandard from 'neostandard'
 
-const neostandard = require('neostandard')
-
-module.exports = neostandard({
-  ts: true,
-})
+export default neostandard({ ts: true })

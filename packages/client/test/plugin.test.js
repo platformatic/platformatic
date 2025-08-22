@@ -1,32 +1,32 @@
-'use strict'
+import { create } from '@platformatic/db'
+import { safeRemove } from '@platformatic/foundation'
+import Fastify from 'fastify'
+import { deepEqual, equal, rejects } from 'node:assert/strict'
+import { cp, mkdtemp, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { getGlobalDispatcher, MockAgent, setGlobalDispatcher } from 'undici'
+import client from '../fastify-plugin.js'
+import { WrongOptsTypeError } from '../lib/errors.js'
+import './helper.js'
 
-const assert = require('node:assert/strict')
-const errors = require('../errors')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { mkdtemp, cp, unlink } = require('node:fs/promises')
-const Fastify = require('fastify')
-const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
-const { buildServer } = require('../../db')
-const { safeRemove } = require('@platformatic/utils')
-const client = require('..')
-require('./helper')
-
-test('wrong type', async (t) => {
+test('wrong type', async t => {
   const app = Fastify()
 
-  await assert.rejects(async () => {
+  await rejects(async () => {
     return await app.register(client, {
+      fullRequest: false,
+      fullResponse: false,
       type: 'foo',
       url: 'http://localhost:3042/documentation/json',
       name: 'client'
     })
-  }, new errors.WrongOptsTypeError())
+  }, new WrongOptsTypeError())
 })
 
-test('default decorator', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+test('default decorator', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -35,7 +35,7 @@ test('default decorator', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -46,7 +46,9 @@ test('default decorator', async (t) => {
 
   await app.register(client, {
     type: 'openapi',
-    url: `${targetApp.url}/documentation/json`
+    url: `${targetApp.url}/documentation/json`,
+    fullRequest: false,
+    fullResponse: false
   })
 
   app.post('/movies', async (req, res) => {
@@ -65,7 +67,7 @@ test('default decorator', async (t) => {
     path: '/movies'
   })
 
-  assert.deepEqual(movie.json(), {
+  deepEqual(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
@@ -75,7 +77,7 @@ test('default decorator', async (t) => {
     path: '/movies'
   })
 
-  assert.deepEqual(movies.json(), [
+  deepEqual(movies.json(), [
     {
       id: 1,
       title: 'The Matrix'
@@ -83,8 +85,8 @@ test('default decorator', async (t) => {
   ])
 })
 
-test('req decorator with OpenAPI and auth', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+test('req decorator with OpenAPI and auth', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -93,7 +95,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -105,6 +107,8 @@ test('req decorator with OpenAPI and auth', async (t) => {
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
+    fullRequest: false,
+    fullResponse: false,
     async getHeaders (req) {
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
@@ -112,7 +116,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.createMovie({
       title: 'The Matrix'
     })
@@ -128,15 +132,15 @@ test('req decorator with OpenAPI and auth', async (t) => {
     }
   })
 
-  assert.equal(res.statusCode, 200)
-  assert.deepEqual(res.json(), {
+  equal(res.statusCode, 200)
+  deepEqual(res.json(), {
     id: 1,
     title: 'The Matrix'
   })
 })
 
-test('app decorator with OpenAPI', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+test('app decorator with OpenAPI', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -145,7 +149,7 @@ test('app decorator with OpenAPI', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -155,6 +159,8 @@ test('app decorator with OpenAPI', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'client'
@@ -176,7 +182,7 @@ test('app decorator with OpenAPI', async (t) => {
     path: '/movies'
   })
 
-  assert.deepEqual(movie.json(), {
+  deepEqual(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
@@ -186,7 +192,7 @@ test('app decorator with OpenAPI', async (t) => {
     path: '/movies'
   })
 
-  assert.deepEqual(movies.json(), [
+  deepEqual(movies.json(), [
     {
       id: 1,
       title: 'The Matrix'
@@ -194,8 +200,8 @@ test('app decorator with OpenAPI', async (t) => {
   ])
 })
 
-test('req decorator with OpenAPI', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+test('req decorator with OpenAPI', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -204,7 +210,7 @@ test('req decorator with OpenAPI', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -214,20 +220,22 @@ test('req decorator with OpenAPI', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'client',
     async getHeaders (req, reply, options) {
-      assert.equal(typeof req, 'object')
-      assert.equal(typeof reply, 'object')
+      equal(typeof req, 'object')
+      equal(typeof reply, 'object')
 
       const targetAppUrl = new URL(targetApp.url + '/movies/')
-      assert.deepEqual(options.url, targetAppUrl)
+      deepEqual(options.url, targetAppUrl)
 
-      assert.equal(options.method, 'POST')
-      assert.deepEqual(options.headers, {})
-      assert.deepEqual(options.telemetryHeaders, {})
-      assert.deepEqual(options.body, { title: 'The Matrix' })
+      equal(options.method, 'POST')
+      deepEqual(options.headers, {})
+      deepEqual(options.telemetryHeaders, {})
+      deepEqual(options.body, { title: 'The Matrix' })
 
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
@@ -235,7 +243,7 @@ test('req decorator with OpenAPI', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.createMovie({
       title: 'The Matrix'
     })
@@ -253,15 +261,15 @@ test('req decorator with OpenAPI', async (t) => {
 
   const response = res.json()
 
-  assert.equal(res.statusCode, 200)
-  assert.deepEqual(response, {
+  equal(res.statusCode, 200)
+  deepEqual(response, {
     id: 1,
     title: 'The Matrix'
   })
 })
 
-test('validate response', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+test('validate response', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -270,7 +278,7 @@ test('validate response', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -280,13 +288,15 @@ test('validate response', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'movies',
     validateResponse: true
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix'
     })
@@ -294,7 +304,7 @@ test('validate response', async (t) => {
     return movie
   })
 
-  app.get('/allMovies', async (req) => {
+  app.get('/allMovies', async req => {
     const movies = await req.movies.getMovies({})
     return movies
   })
@@ -309,15 +319,17 @@ test('validate response', async (t) => {
     url: '/allMovies'
   })
 
-  assert.equal(res.statusCode, 200)
-  assert.deepEqual(res.json(), [{
-    id: 1,
-    title: 'The Matrix'
-  }])
+  equal(res.statusCode, 200)
+  deepEqual(res.json(), [
+    {
+      id: 1,
+      title: 'The Matrix'
+    }
+  ])
 })
 
-test('req decorator with GraphQL and auth', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+test('req decorator with GraphQL and auth', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -326,7 +338,7 @@ test('req decorator with GraphQL and auth', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -345,7 +357,7 @@ test('req decorator with GraphQL and auth', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.graphql({
       query: `
         mutation createMovie($title: String!) {
@@ -370,15 +382,15 @@ test('req decorator with GraphQL and auth', async (t) => {
     }
   })
 
-  assert.equal(res.statusCode, 200)
-  assert.deepEqual(res.json(), {
+  equal(res.statusCode, 200)
+  deepEqual(res.json(), {
     id: '1',
     title: 'The Matrix'
   })
 })
 
-test('configureClient getHeaders', async (t) => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+test('configureClient getHeaders', async t => {
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -387,7 +399,7 @@ test('configureClient getHeaders', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -397,6 +409,8 @@ test('configureClient getHeaders', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'movies'
@@ -410,7 +424,7 @@ test('configureClient getHeaders', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix'
     })
@@ -426,14 +440,14 @@ test('configureClient getHeaders', async (t) => {
     }
   })
 
-  assert.equal(res.statusCode, 200)
-  assert.deepEqual(res.json(), {
+  equal(res.statusCode, 200)
+  deepEqual(res.json(), {
     id: 1,
     title: 'The Matrix'
   })
 })
 
-test('serviceId', async (t) => {
+test('applicationId', async t => {
   const agent = getGlobalDispatcher()
   t.after(() => {
     setGlobalDispatcher(agent)
@@ -446,23 +460,27 @@ test('serviceId', async (t) => {
   const mockPool = mockAgent.get('http://movies.plt.local')
 
   // intercept the request
-  mockPool.intercept({
-    path: '/movies/',
-    method: 'POST',
-    body: JSON.stringify({
+  mockPool
+    .intercept({
+      path: '/movies/',
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'The Matrix'
+      })
+    })
+    .reply(200, {
+      id: 1,
       title: 'The Matrix'
     })
-  }).reply(200, {
-    id: 1,
-    title: 'The Matrix'
-  })
 
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
-    serviceId: 'movies',
-    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    applicationId: 'movies',
+    path: join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
   app.post('/movies', async (req, res) => {
@@ -477,7 +495,7 @@ test('serviceId', async (t) => {
     path: '/movies'
   })
 
-  assert.deepEqual(movie.json(), {
+  deepEqual(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })

@@ -1,18 +1,15 @@
-'use strict'
+import { deepEqual, equal, notEqual } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql8, isSQLite } from './helper.js'
 
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-
-const { clear, connInfo, isMysql8, isSQLite } = require('./helper')
-const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
   warn: () => {},
-  error: () => {},
+  error: () => {}
 }
 
-test('unique key', async (t) => {
-  const { equal, notEqual, deepEqual } = tspl(t, { plan: 8 })
+test('unique key', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     test.after(async () => {
@@ -34,7 +31,7 @@ test('unique key', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
   notEqual(pageEntity, undefined)
@@ -52,9 +49,7 @@ test('unique key', async (t) => {
   equal(pageEntity.camelCasedFields.name.unique, true)
 })
 
-test('no key', async (t) => {
-  const { equal, deepEqual } = tspl(t, { plan: 3 })
-
+test('no key', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     test.after(async () => {
@@ -77,12 +72,12 @@ test('no key', async (t) => {
       deepEqual(obj, { table: 'pages' })
       equal(str, 'Cannot find any primary keys for table')
     },
-    error: () => {},
+    error: () => {}
   }
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   deepEqual(mapper.entities, {})
 })

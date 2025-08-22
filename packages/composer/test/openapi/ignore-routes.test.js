@@ -1,54 +1,53 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { writeFile, mkdtemp } = require('node:fs/promises')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const {
-  createComposer,
-  createOpenApiService,
-} = require('../helper')
-
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should ignore static routes', async (t) => {
-  const api = await createOpenApiService(t, ['users'])
+test('should ignore static routes', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
     paths: {
       '/users': {
-        ignore: true,
-      },
-    },
+        ignore: true
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -68,42 +67,45 @@ test('should ignore static routes', async (t) => {
   }
 })
 
-test('should ignore parametric routes', async (t) => {
-  const api = await createOpenApiService(t, ['users'])
+test('should ignore parametric routes', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        ignore: true,
-      },
-    },
+        ignore: true
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -123,27 +125,27 @@ test('should ignore parametric routes', async (t) => {
   }
 })
 
-test('should ignore routes for only for one service', async (t) => {
-  const api1 = await createOpenApiService(t, ['users'])
+test('should ignore routes for only for one application', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
   await api1.listen({ port: 0 })
 
-  const api2 = await createOpenApiService(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['users'])
   await api2.listen({ port: 0 })
 
   const openapiConfig1 = {
     paths: {
       '/users': {
-        ignore: true,
-      },
-    },
+        ignore: true
+      }
+    }
   }
 
   const openapiConfig2 = {
     paths: {
       '/users/{id}': {
-        ignore: true,
-      },
-    },
+        ignore: true
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -154,34 +156,37 @@ test('should ignore routes for only for one service', async (t) => {
   const openapiConfigFile2 = join(cwd, 'openapi-2.json')
   await writeFile(openapiConfigFile2, JSON.stringify(openapiConfig2))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api1.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile1,
-            },
-          },
-          {
-            id: 'api2',
-            origin: 'http://127.0.0.1:' + api2.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile2,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile1
+          }
+        },
+        {
+          id: 'api2',
+          origin: 'http://127.0.0.1:' + api2.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile2
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -201,46 +206,49 @@ test('should ignore routes for only for one service', async (t) => {
   }
 })
 
-test('should ignore only specified methods', async (t) => {
-  const api = await createOpenApiService(t, ['users'])
+test('should ignore only specified methods', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
     paths: {
       '/users': {
-        post: { ignore: true },
+        post: { ignore: true }
       },
       '/users/{id}': {
         get: { ignore: true },
-        delete: { ignore: true },
-      },
-    },
+        delete: { ignore: true }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -257,40 +265,43 @@ test('should ignore only specified methods', async (t) => {
   assert.ok(openApiSchema.paths['/users/{id}'].delete === undefined)
 })
 
-test('should ignore all routes if methods array is not specified', async (t) => {
-  const api = await createOpenApiService(t, ['users'])
+test('should ignore all routes if methods array is not specified', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
     paths: {
-      '/users': { ignore: true },
-    },
+      '/users': { ignore: true }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -310,8 +321,8 @@ test('should ignore all routes if methods array is not specified', async (t) => 
   }
 })
 
-test('should skip route if all routes are ignored', async (t) => {
-  const api = await createOpenApiService(t, ['users'])
+test('should skip route if all routes are ignored', async t => {
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
@@ -319,35 +330,38 @@ test('should skip route if all routes are ignored', async (t) => {
       '/users': {
         get: { ignore: true },
         post: { ignore: true },
-        put: { ignore: true },
-      },
-    },
+        put: { ignore: true }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 

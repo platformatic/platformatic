@@ -2,28 +2,28 @@ import Issues from '../../getting-started/issues.md';
 
 ## API
 
-During service execution some APIs are made available in the `globalThis.platformatic` object.
+During application execution some APIs are made available in the `globalThis.platformatic` object.
 
-- **`globalThis.platformatic.setBasePath(path)`**: This function can be use to override the base path for the service. If not properly configure in the composer, this can make your application unaccessible.
-- **`globalThis.platformatic.serviceId`**: The id of the service.
-- **`globalThis.platformatic.workerId`**: The id of the service worker.
-- **`globalThis.platformatic.root`**: The root directory of the service.
-- **`globalThis.platformatic.basePath`**: The base path of the service in the composer.
-- **`globalThis.platformatic.logLevel`**: The log level configured for the service.
+- **`globalThis.platformatic.setBasePath(path)`**: This function can be use to override the base path for the application. If not properly configure in the composer, this can make your application unaccessible.
+- **`globalThis.platformatic.applicationId`**: The id of the application.
+- **`globalThis.platformatic.workerId`**: The id of the application worker.
+- **`globalThis.platformatic.root`**: The root directory of the application.
+- **`globalThis.platformatic.basePath`**: The base path of the application in the composer.
+- **`globalThis.platformatic.logLevel`**: The log level configured for the application.
 - **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
-- **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the service. The function should return a boolean value, or an object with the following properties:
+- **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the application. The function should return a boolean value, or an object with the following properties:
   - `status`: a boolean indicating if the health check is successful
   - `statusCode`: an optional HTTP status code
   - `body`: an optional body to return
 
-The healthcheck function will ensure the readiness of the service, and the readiness check function will ensure the readiness of the service dependencies; if the healthcheck fails, the readiness check will fail, and the service will be marked as unhealthy; in this case, the liveness probe will return the readiness check response in the body.
+The healthcheck function will ensure the readiness of the application, and the readiness check function will ensure the readiness of the application dependencies; if the healthcheck fails, the readiness check will fail, and the application will be marked as unhealthy; in this case, the liveness probe will return the readiness check response in the body.
 
-- **`globalThis.platformatic.setCustomReadinessCheck(fn)`**: This function can be use to set a custom readiness check function for the service. The function should return a boolean value, or an object with the following properties:
+- **`globalThis.platformatic.setCustomReadinessCheck(fn)`**: This function can be use to set a custom readiness check function for the application. The function should return a boolean value, or an object with the following properties:
   - `status`: a boolean indicating if the readiness check is successful
   - `statusCode`: an optional HTTP status code
   - `body`: an optional body to return
 
-- **`globalThis.platformatic.sharedContext.update(contextUpdate, options)`**: This function can be use to update the shared context. Context is shared between all runtime services.
+- **`globalThis.platformatic.sharedContext.update(contextUpdate, options)`**: This function can be use to update the shared context. Context is shared between all runtime applications.
   - `contextUpdate`: an object with the context updates
   - `options`: an optional object with the following properties:
     - `overwrite`: a boolean value indicating if the context should be overwritten or merged. Default is `false`
@@ -34,7 +34,7 @@ The healthcheck function will ensure the readiness of the service, and the readi
 
 Services can talk to each other using a messaging API available in the `globalThis.platformatic.messaging` object.
 
-Once a service adds an handler via `globalThis.platformatic.messaging.handle` API, then any other service can invoke the function using the `globalThis.platformatic.messaging.send` API.
+Once an application adds an handler via `globalThis.platformatic.messaging.handle` API, then any other application can invoke the function using the `globalThis.platformatic.messaging.send` API.
 
 Here it is an example:
 
@@ -52,7 +52,7 @@ globalThis.platformatic.messaging.handle({
 // web/entrypoint/index.js
 
 app.get('/time', async req => {
-  const response = await globalThis.platformatic.messaging.send('service', 'time', { offset: 1000 })
+  const response = await globalThis.platformatic.messaging.send('application', 'time', { offset: 1000 })
 
   return { thread: response }
 })
@@ -63,7 +63,7 @@ Note that messages are exchanged using Node.js [`MessageChannel`](https://nodejs
 ```js
 const { port1, port2 } = new MessageChannel()
 const response = await globalThis.platformatic.messaging.send(
-  'service',
+  'application',
   'connect',
   { port: port1 },
   { transferList: [port1] }
@@ -108,8 +108,8 @@ const pltApi = getGlobal()
 
 ### Custom Healthcheck
 
-Custom health check can be defined to provide more specific and detailed information about the health of your service, in case the default healthcheck for the service itself is not enough and you need to add more checks for the service dependencies.  
-This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a Platformatic service.
+Custom health check can be defined to provide more specific and detailed information about the health of your application, in case the default healthcheck for the application itself is not enough and you need to add more checks for the application dependencies.  
+This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a Platformatic application.
 
 The function should return a boolean value, or an object with the following properties, that will be used to set the status code and body of the response to the healthcheck endpoint:
 
@@ -131,8 +131,8 @@ export function create() {
     return Promise.all([
       // Check if the database is reachable
       app.db.query('SELECT 1'),
-      // Check if the external service is reachable
-      fetch('https://payment-service.com/status')
+      // Check if the external application is reachable
+      fetch('https://payment-application.com/status')
     ])
   })
 
@@ -202,7 +202,7 @@ export function create() {
 ```json
 {
   "type": "module",
-  "name": "service-node",
+  "name": "application-node",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {

@@ -14,7 +14,7 @@ setTimeout(() => {
 
 const app = fastify({
   logger: {
-    name: [globalThis.platformatic.serviceId, globalThis.platformatic.workerId]
+    name: [globalThis.platformatic.applicationId, globalThis.platformatic.workerId]
       .filter(f => typeof f !== 'undefined')
       .join(':'),
     level: globalThis.platformatic?.logLevel ?? 'info'

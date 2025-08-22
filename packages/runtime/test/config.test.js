@@ -1,66 +1,41 @@
-'use strict'
+import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
+import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
+import { dirname, join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { wrapInRuntimeConfig } from '../index.js'
+import { parseInspectorOptions } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { readFile, writeFile, cp, mkdtemp } = require('node:fs/promises')
-const { join, resolve, dirname } = require('node:path')
-const { test } = require('node:test')
-const { safeRemove, createDirectory } = require('@platformatic/utils')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticService } = require('@platformatic/service')
-const { platformaticDB } = require('@platformatic/db')
-const { Runtime } = require('../lib/runtime')
-const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
-const { wrapConfigInRuntimeConfig } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const { Store } = require('@platformatic/config')
-const { getRuntimeLogsDir } = require('../lib/utils')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('throws if no entrypoint is found', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
 
-  platformaticRuntime() // Coverage cheat.
-
-  await assert.rejects(async () => {
-    await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  await rejects(async () => {
+    await createRuntime(configFile)
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
-test('throws if both web and services are provided', async t => {
-  const configFile = join(fixturesDir, 'configs', 'invalid-web-with-services.json')
-
-  await assert.rejects(async () => {
-    await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  }, /The "services" property cannot be used when the "web" property is also defined/)
-})
-
-test('dependencies are not considered if services are specified manually', async t => {
+test('dependencies are not considered if applications are specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
   })
 
   await runtime.init()
-  const { services } = await runtime.getServices()
+  const { applications } = await runtime.getApplications()
 
-  assert.deepStrictEqual(
-    services.map(service => service.id),
+  deepStrictEqual(
+    applications.map(application => application.id),
     ['with-logger', 'db-app', 'composerApp', 'multi-plugin-service', 'serviceApp']
   )
 })
 
-test('dependencies are resolved if services are not specified manually', async t => {
+test('dependencies are resolved if applications are not specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   await runtime.init()
 
@@ -68,220 +43,176 @@ test('dependencies are resolved if services are not specified manually', async t
     await runtime.close()
   })
 
-  const { services } = await runtime.getServices()
+  const { applications } = await runtime.getApplications()
 
-  assert.deepStrictEqual(
-    services.map(service => service.id),
+  deepStrictEqual(
+    applications.map(application => application.id),
     ['dbApp', 'serviceApp', 'with-logger', 'multi-plugin-service', 'composerApp']
   )
 })
 
-test('parseInspectorOptions()', async t => {
-  await t.test('throws if --inspect and --inspect-brk are both used', () => {
-    assert.throws(() => {
-      const cm = {
-        args: { inspect: '', 'inspect-brk': '' },
-        current: {}
-      }
+test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
+  throws(() => {
+    parseInspectorOptions({}, 'true', 'true')
+  }, /--inspect and --inspect-brk cannot be used together/)
+})
 
-      parseInspectorOptions(cm)
-    }, /--inspect and --inspect-brk cannot be used together/)
-  })
+test('parseInspectorOptions - --inspect default settings', () => {
+  const cm = {}
 
-  await t.test('--inspect default settings', () => {
-    const cm = {
-      args: { inspect: '' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 9229,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('--inspect-brk default settings', () => {
-    const cm = {
-      args: { 'inspect-brk': '' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 9229,
-      breakFirstLine: true,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('hot reloading is disabled if the inspector is used', () => {
-    const cm1 = {
-      args: { 'inspect-brk': '' },
-      current: { watch: true }
-    }
-
-    parseInspectorOptions(cm1)
-    assert.strictEqual(cm1.current.watch, false)
-
-    const cm2 = {
-      args: {},
-      current: { watch: true }
-    }
-
-    parseInspectorOptions(cm2)
-    assert.strictEqual(cm2.current.watch, true)
-  })
-
-  await t.test('sets port to a custom value', () => {
-    const cm = {
-      args: { inspect: '6666' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 6666,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('sets host and port to custom values', () => {
-    const cm = {
-      args: { inspect: '0.0.0.0:6666' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '0.0.0.0',
-      port: 6666,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('throws if the host is empty', () => {
-    assert.throws(() => {
-      const cm = {
-        args: { inspect: ':9229' },
-        current: {}
-      }
-
-      parseInspectorOptions(cm)
-    }, /Inspector host cannot be empty/)
-  })
-
-  await t.test('differentiates valid and invalid ports', () => {
-    ;['127.0.0.1:', 'foo', '1', '-1', '1023', '65536'].forEach(inspectFlag => {
-      assert.throws(() => {
-        const cm = {
-          args: { inspect: inspectFlag },
-          current: {}
-        }
-
-        parseInspectorOptions(cm)
-      }, /Inspector port must be 0 or in range 1024 to 65535/)
-    })
-
-    const cm = {
-      args: {},
-      current: {}
-    }
-
-    cm.args.inspect = '0'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 0)
-    cm.args.inspect = '1024'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 1024)
-    cm.args.inspect = '1025'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 1025)
-    cm.args.inspect = '65534'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 65534)
-    cm.args.inspect = '65535'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 65535)
+  parseInspectorOptions(cm, true)
+  deepStrictEqual(cm.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 9229,
+    breakFirstLine: false,
+    watchDisabled: false
   })
 })
 
-test('same schemaOptions as platformatic service', async () => {
-  assert.deepStrictEqual(platformaticRuntime.schemaOptions, platformaticService.schemaOptions)
+test('parseInspectorOptions - --inspect-brk default settings', () => {
+  const cm = {}
+
+  parseInspectorOptions(cm, undefined, true)
+  deepStrictEqual(cm.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 9229,
+    breakFirstLine: true,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - hot reloading is disabled if the inspector is used', () => {
+  const cm1 = {
+    args: { 'inspect-brk': '' },
+    current: { watch: true }
+  }
+
+  parseInspectorOptions(cm1, undefined, '9229')
+  strictEqual(cm1.watch, false)
+
+  const cm2 = {
+    watch: true
+  }
+
+  parseInspectorOptions(cm2)
+  strictEqual(cm2.watch, true)
+})
+
+test('parseInspectorOptions - sets port to a custom value', () => {
+  const cm = {}
+
+  parseInspectorOptions(cm, '6666')
+  deepStrictEqual(cm.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 6666,
+    breakFirstLine: false,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - sets host and port to custom values', () => {
+  const cm = {}
+
+  parseInspectorOptions(cm, '0.0.0.0:6666')
+  deepStrictEqual(cm.inspectorOptions, {
+    host: '0.0.0.0',
+    port: 6666,
+    breakFirstLine: false,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - throws if the host is empty', () => {
+  throws(() => {
+    parseInspectorOptions({}, ':9229')
+  }, /Inspector host cannot be empty/)
+})
+
+test('parseInspectorOptions - differentiates valid and invalid ports', () => {
+  for (const inspectFlag of ['127.0.0.1:', 'foo', '1', '-1', '1023', '65536']) {
+    throws(() => {
+      parseInspectorOptions({}, inspectFlag)
+    }, /Inspector port must be 0 or in range 1024 to 65535/)
+  }
+
+  const cm = {}
+
+  parseInspectorOptions(cm, '0')
+  strictEqual(cm.inspectorOptions.port, 0)
+
+  parseInspectorOptions(cm, '1024')
+  strictEqual(cm.inspectorOptions.port, 1024)
+
+  parseInspectorOptions(cm, '1025')
+  strictEqual(cm.inspectorOptions.port, 1025)
+
+  parseInspectorOptions(cm, '65534')
+  strictEqual(cm.inspectorOptions.port, 65534)
+
+  parseInspectorOptions(cm, '65535')
+  strictEqual(cm.inspectorOptions.port, 65535)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.watch, true)
+  const runtime = await createRuntime(configFile)
+  strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'false'
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.watch, false)
+  const runtime = await createRuntime(configFile)
+  strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
-test('defaults the service name to `main` if there is no package.json', async t => {
+test('defaults the application name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'main')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
 test('uses the name in package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'mysimplename')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
 })
 
 test('uses the name in package.json, removing the scope', async t => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'myname')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'myname')
 })
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
   const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'main')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  strictEqual(runtimeConfig.applications.length, 1)
+  strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
-// Note, the file's runtime property purposely has invalid properties to make sure
-// API usage excludes them despite of JSON schema validation
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
-  // Do not use loadConfig here, as the schema is purposefully invalid
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB, {}, true, null, { validation: false })
+  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
+  const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-
-  assert.ok(typeof conf.web, 'undefined')
-  assert.ok(typeof conf.autoload, 'undefined')
-  assert.ok(conf.watch === false)
-  assert.deepStrictEqual(conf.server, { hostname: '127.0.0.1', port: 1234 })
-  assert.deepStrictEqual(conf.services, [
+  ok(typeof runtimeConfig.web, 'undefined')
+  ok(typeof runtimeConfig.autoload, 'undefined')
+  ok(runtimeConfig.watch === false)
+  deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
+  deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
@@ -289,114 +220,31 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       gitBranch: 'main',
       health: {},
       id: 'main',
-      isPLTService: true,
-      localServiceEnvVars: new Map(),
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
       sourceMaps: false,
-      type: 'db',
+      type: '@platformatic/db',
+      watch: false,
+      skipTelemetryHooks: true
+    },
+    {
+      dependencies: [],
+      entrypoint: false,
+      gitBranch: 'main',
+      health: {},
+      id: 'another',
+      localUrl: 'http://another.plt.local',
+      path: resolve(dirname(configFile), 'another'),
+      sourceMaps: false,
+      type: 'unknown',
       watch: false
     }
   ])
 })
 
-test('loads with the store', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
-})
-
-test('set isPLTService on plt services', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
-  const config = configManager.current
-
-  const dbApp = config.serviceMap.get('db-app')
-  const serviceApp = config.serviceMap.get('serviceApp')
-  const nodeApp = config.serviceMap.get('node')
-
-  assert.strictEqual(dbApp.isPLTService, true)
-  assert.strictEqual(serviceApp.isPLTService, true)
-  assert.strictEqual(nodeApp.isPLTService, false)
-})
-
-test('set type on services', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
-  const config = configManager.current
-
-  const dbApp = config.serviceMap.get('db-app')
-  const serviceApp = config.serviceMap.get('serviceApp')
-  const nodeApp = config.serviceMap.get('node')
-
-  assert.strictEqual(dbApp.type, 'db')
-  assert.strictEqual(serviceApp.type, 'service')
-  assert.strictEqual(nodeApp.type, 'nodejs')
-})
-
 test('supports configurable envfile location', async t => {
   const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -411,7 +259,7 @@ test('supports configurable envfile location', async t => {
   })
   const data = JSON.parse(payload)
 
-  assert.deepStrictEqual(data, {
+  deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
     FROM_SERVICE_CONFIG_FILE: 'true',
@@ -421,11 +269,7 @@ test('supports configurable envfile location', async t => {
 
 test('supports default envfile location', async t => {
   const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -440,7 +284,7 @@ test('supports default envfile location', async t => {
   })
   const data = JSON.parse(payload)
 
-  assert.deepStrictEqual(data, {
+  deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
     FROM_SERVICE_CONFIG_FILE: 'true',
@@ -450,11 +294,7 @@ test('supports default envfile location', async t => {
 
 test('supports configurable arguments', async t => {
   const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -463,7 +303,7 @@ test('supports configurable arguments', async t => {
   await runtime.init()
   await runtime.start()
 
-  const workerMain = resolve(__dirname, '../lib/worker/main.js')
+  const workerMain = resolve(import.meta.dirname, '../lib/worker/main.js')
 
   {
     const { payload } = await runtime.inject('a', {
@@ -472,7 +312,7 @@ test('supports configurable arguments', async t => {
     })
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, [process.argv[0], workerMain, 'first', 'second', 'third'])
+    deepStrictEqual(data, [process.argv[0], workerMain, 'first', 'second', 'third'])
   }
 
   {
@@ -483,26 +323,25 @@ test('supports configurable arguments', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, [process.argv[0], workerMain, ...process.argv.slice(2)])
+    deepStrictEqual(data, [process.argv[0], workerMain, ...process.argv.slice(2)])
   }
 })
 
-test('should manage service config patch', async t => {
+test('should manage application config patch', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+  const runtime = await createRuntime(configFile)
 
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
-
-  runtime.setServiceConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
-  runtime.setServiceConfigPatch('serviceApp', [{ op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }])
+  runtime.setApplicationConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
+  runtime.setApplicationConfigPatch('serviceApp', [
+    { op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }
+  ])
 
   t.after(async () => {
     await runtime.close()
   })
 
   await runtime.init()
+
   await runtime.start()
 
   {
@@ -513,7 +352,7 @@ test('should manage service config patch', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, { alternate: true })
+    deepStrictEqual(data, { alternate: true })
   }
 
   {
@@ -524,93 +363,6 @@ test('should manage service config patch', async t => {
 
     const data = JSON.parse(payload)
 
-    assert.deepStrictEqual(data, { alternate: true })
+    deepStrictEqual(data, { alternate: true })
   }
 })
-
-const sourceMapTests = [
-  {
-    title: 'service-level',
-    transform (json) {
-      json.services = [
-        {
-          id: 'movies',
-          path: 'services/movies'
-        },
-        {
-          id: 'titles',
-          path: 'services/titles',
-          sourceMaps: true
-        },
-        {
-          id: 'composer',
-          path: 'services/composer'
-        }
-      ]
-      json.autoload = undefined
-    }
-  },
-  {
-    title: 'top-level',
-    transform (json) {
-      json.sourceMaps = true
-    }
-  }
-]
-
-for (const { title, transform } of sourceMapTests) {
-  test(`supports ${title} sourceMaps configuration`, async t => {
-    const base = join(__dirname, 'tmp')
-    try {
-      await createDirectory(base)
-    } catch {}
-
-    const tmpDir = await mkdtemp(join(base, 'typescript'))
-    const prev = process.cwd()
-    process.chdir(tmpDir)
-    t.after(async () => {
-      process.chdir(prev)
-      await safeRemove(base)
-    })
-
-    const folder = join(fixturesDir, 'typescript')
-    await cp(folder, tmpDir, { recursive: true })
-
-    const { execa } = await import('execa')
-    const cliPath = join(__dirname, '..', 'runtime.mjs')
-    await execa(cliPath, ['compile'])
-
-    const configFile = join(tmpDir, 'platformatic.runtime.json')
-    await editJSON(configFile, transform)
-    const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    const dirname = config.configManager.dirname
-    const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-    const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
-
-    t.after(async () => {
-      await runtime.close()
-    })
-
-    await runtime.init()
-    await runtime.start()
-
-    const res = await runtime.inject('composer', {
-      method: 'GET',
-      url: 'source-map-test'
-    })
-
-    // Should contain ts file in the stack trace
-    assert.match(res.body, /root\.ts/)
-  })
-}
-
-async function editJSON (path, transform) {
-  const input = await readFile(path, 'utf8')
-  const data = JSON.parse(input)
-
-  transform(data)
-
-  const output = JSON.stringify(data, null, 2)
-  await writeFile(path, output, 'utf8')
-}

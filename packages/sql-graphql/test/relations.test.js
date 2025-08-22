@@ -1,16 +1,14 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import { randomUUID } from 'crypto'
+import fastify from 'fastify'
+import { equal, ok as pass, rejects, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
-const { isSQLite, connInfo, isMysql, clear } = require('./helper')
-const { test } = require('node:test')
-const { rejects, equal, ok: pass, deepEqual: same } = require('node:assert')
-const { tmpdir } = require('os')
-const { randomUUID } = require('crypto')
-const { join } = require('path')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('should fail when an unknown foreign key relationship exists', { skip: !isSQLite }, async (t) => {
+test('should fail when an unknown foreign key relationship exists', { skip: !isSQLite }, async t => {
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -34,28 +32,31 @@ test('should fail when an unknown foreign key relationship exists', { skip: !isS
             FOREIGN KEY (category_id) REFERENCES subcategories(id) ON DELETE CASCADE
           );
         );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
-  await rejects(app.inject({
-    method: 'POST',
-    url: '/graphql',
-    body: {
-      query: `
+  await rejects(
+    app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
           mutation {
             saveCategory(input: { name: "pets" }) {
               id
               name
             }
           }
-        `,
-    },
-  }), 'No foreign table named "subcategories" was found')
+        `
+      }
+    }),
+    'No foreign table named "subcategories" was found'
+  )
 })
 
-test('should handle multi references', async (t) => {
+test('should handle multi references', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -110,24 +111,28 @@ test('should handle multi references', async (t) => {
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const authors = [{
-    id: 1,
-    name: 'Mark',
-  }]
+  const authors = [
+    {
+      id: 1,
+      name: 'Mark'
+    }
+  ]
 
-  const books = [{
-    id: 1,
-    title: 'Harry',
-    authorId: 1,
-    anotherAuthorId: 1,
-  }]
+  const books = [
+    {
+      id: 1,
+      title: 'Harry',
+      authorId: 1,
+      anotherAuthorId: 1
+    }
+  ]
 
   {
     const res = await app.inject({
@@ -143,9 +148,9 @@ test('should handle multi references', async (t) => {
             }
           `,
         variables: {
-          inputs: authors,
-        },
-      },
+          inputs: authors
+        }
+      }
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -164,9 +169,9 @@ test('should handle multi references', async (t) => {
             }
           `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -188,23 +193,29 @@ test('should handle multi references', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query books')
-    same(res.json(), {
-      data: {
-        books: [{
-          id: 1,
-          author: {
-            id: 1,
-          },
-          anotherAuthor: {
-            id: 1,
-          },
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          books: [
+            {
+              id: 1,
+              author: {
+                id: 1
+              },
+              anotherAuthor: {
+                id: 1
+              }
+            }
+          ]
+        }
       },
-    }, 'query book response')
+      'query book response'
+    )
   }
 
   {
@@ -221,24 +232,32 @@ test('should handle multi references', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query authors')
-    same(res.json(), {
-      data: {
-        authors: [{
-          id: 1,
-          books: [{
-            id: 1,
-          }],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          authors: [
+            {
+              id: 1,
+              books: [
+                {
+                  id: 1
+                }
+              ]
+            }
+          ]
+        }
       },
-    }, 'query authors response')
+      'query authors response'
+    )
   }
 })
 
-test('cut out id exactly from ending when forming a name of relation', async (t) => {
+test('cut out id exactly from ending when forming a name of relation', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -288,23 +307,27 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const individuals = [{
-    id: 1,
-    name: 'Mark',
-  }]
+  const individuals = [
+    {
+      id: 1,
+      name: 'Mark'
+    }
+  ]
 
-  const organization = [{
-    id: 1,
-    name: 'Platformatic',
-    individualId: 1,
-  }]
+  const organization = [
+    {
+      id: 1,
+      name: 'Platformatic',
+      individualId: 1
+    }
+  ]
 
   {
     const res = await app.inject({
@@ -320,9 +343,9 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
             }
           `,
         variables: {
-          inputs: individuals,
-        },
-      },
+          inputs: individuals
+        }
+      }
     })
     equal(res.statusCode, 200, 'individuals status code')
   }
@@ -341,9 +364,9 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
             }
           `,
         variables: {
-          inputs: organization,
-        },
-      },
+          inputs: organization
+        }
+      }
     })
     equal(res.statusCode, 200, 'organization status code')
   }
@@ -364,26 +387,32 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query organization')
-    same(res.json(), {
-      data: {
-        organizations: [{
-          id: 1,
-          name: 'Platformatic',
-          individual: {
-            id: 1,
-            name: 'Mark',
-          },
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          organizations: [
+            {
+              id: 1,
+              name: 'Platformatic',
+              individual: {
+                id: 1,
+                name: 'Mark'
+              }
+            }
+          ]
+        }
       },
-    }, 'query organization response')
+      'query organization response'
+    )
   }
 })
 
-test('should handle reads from save', async (t) => {
+test('should handle reads from save', async t => {
   const app = fastify({ logger: false })
   app.register(sqlMapper, {
     ...connInfo,
@@ -459,27 +488,33 @@ test('should handle reads from save', async (t) => {
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const categories = [{
-    name: 'Sci-Fi',
-  }]
+  const categories = [
+    {
+      name: 'Sci-Fi'
+    }
+  ]
 
-  const authors = [{
-    name: 'Mark',
-    categoryId: 1,
-  }]
+  const authors = [
+    {
+      name: 'Mark',
+      categoryId: 1
+    }
+  ]
 
-  const books = [{
-    title: 'Harry',
-    authorId: 1,
-    categoryId: 1,
-  }]
+  const books = [
+    {
+      title: 'Harry',
+      authorId: 1,
+      categoryId: 1
+    }
+  ]
 
   {
     const res = await app.inject({
@@ -495,9 +530,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: categories,
-        },
-      },
+          inputs: categories
+        }
+      }
     })
     equal(res.statusCode, 200, 'categories status code')
   }
@@ -516,9 +551,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: authors,
-        },
-      },
+          inputs: authors
+        }
+      }
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -537,9 +572,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -561,26 +596,28 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'books status code')
     same(res.json(), {
       data: {
         saveAuthor: {
           id: 1,
-          books: [{
-            id: 1,
-            title: 'Harry',
-          }],
-        },
-      },
+          books: [
+            {
+              id: 1,
+              title: 'Harry'
+            }
+          ]
+        }
+      }
     })
   }
 })
 
-test('should handle nullable relation', async (t) => {
+test('should handle nullable relation', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -630,7 +667,7 @@ test('should handle nullable relation', async (t) => {
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -640,30 +677,30 @@ test('should handle nullable relation', async (t) => {
   const authors = [
     {
       id: 1,
-      name: 'Mark 1',
+      name: 'Mark 1'
     },
     {
       id: 2,
-      name: 'Mark 2',
-    },
+      name: 'Mark 2'
+    }
   ]
 
   const books = [
     {
       id: 1,
       title: 'Harry 1',
-      authorId: 1,
+      authorId: 1
     },
     {
       id: 2,
       title: 'Harry 2',
-      authorId: null,
+      authorId: null
     },
     {
       id: 3,
       title: 'Harry 3',
-      authorId: 2,
-    },
+      authorId: 2
+    }
   ]
 
   {
@@ -680,9 +717,9 @@ test('should handle nullable relation', async (t) => {
             }
           `,
         variables: {
-          inputs: authors,
-        },
-      },
+          inputs: authors
+        }
+      }
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -701,9 +738,9 @@ test('should handle nullable relation', async (t) => {
             }
           `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -722,32 +759,36 @@ test('should handle nullable relation', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query books')
-    same(res.json(), {
-      data: {
-        books: [
-          {
-            id: 1,
-            author: {
+    same(
+      res.json(),
+      {
+        data: {
+          books: [
+            {
               id: 1,
+              author: {
+                id: 1
+              }
             },
-          },
-          {
-            id: 2,
-            author: null,
-          },
-          {
-            id: 3,
-            author: {
+            {
               id: 2,
+              author: null
             },
-          },
-        ],
+            {
+              id: 3,
+              author: {
+                id: 2
+              }
+            }
+          ]
+        }
       },
-    }, 'query book response')
+      'query book response'
+    )
   }
 
   {
@@ -764,23 +805,27 @@ test('should handle nullable relation', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query authors')
-    same(res.json(), {
-      data: {
-        authors: [
-          {
-            id: 1,
-            books: [{ id: 1 }],
-          },
-          {
-            id: 2,
-            books: [{ id: 3 }],
-          },
-        ],
+    same(
+      res.json(),
+      {
+        data: {
+          authors: [
+            {
+              id: 1,
+              books: [{ id: 1 }]
+            },
+            {
+              id: 2,
+              books: [{ id: 3 }]
+            }
+          ]
+        }
       },
-    }, 'query authors response')
+      'query authors response'
+    )
   }
 })

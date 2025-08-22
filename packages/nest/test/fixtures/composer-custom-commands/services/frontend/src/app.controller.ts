@@ -3,20 +3,20 @@ import { AppService } from './app.service'
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor (private readonly appService: AppService) {}
 
   @Get()
-  root(): object {
+  root (): object {
     return this.appService.root()
   }
 
   @Get('/direct')
-  async direct(): Promise<object> {
+  async direct (): Promise<object> {
     return this.appService.direct()
   }
 
   @Get('/time')
-  async time(): Promise<object> {
+  async time (): Promise<object> {
     return this.appService.time()
   }
 }

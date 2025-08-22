@@ -1,9 +1,7 @@
-'use strict'
+import { mapSQLTypeToOpenAPIType } from '@platformatic/sql-json-schema-mapper'
+import { buildCursorUtils } from './cursor.js'
 
-const { buildCursorUtils } = require('./cursor')
-const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
-
-function generateArgs (entity, ignore) {
+export function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
 
   const whereArgs = sortedEntityFields.reduce((acc, name) => {
@@ -50,9 +48,9 @@ function generateArgs (entity, ignore) {
     'where.or': {
       type: 'array',
       items: {
-        type: 'string',
-      },
-    },
+        type: 'string'
+      }
+    }
   }
 
   Object.assign(whereArgs, whereOrArrayArgs)
@@ -60,9 +58,17 @@ function generateArgs (entity, ignore) {
   return { whereArgs, orderByArgs }
 }
 
-module.exports.generateArgs = generateArgs
-
-function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes) {
+export function rootEntityRoutes (
+  app,
+  entity,
+  whereArgs,
+  orderByArgs,
+  entityLinks,
+  entitySchema,
+  fields,
+  entitySchemaInput,
+  ignoreRoutes
+) {
   const ignoredGETRoute = ignoreRoutes.find(ignoreRoutes => {
     return ignoreRoutes.path === app.prefix && ignoreRoutes.method === 'GET'
   })
@@ -70,127 +76,143 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   if (!ignoredGETRoute) {
     const { buildCursorHeaders, transformQueryToCursor } = buildCursorUtils(app, entity)
 
-    app.get('/', {
-      schema: {
-        operationId: 'get' + capitalize(entity.pluralName),
-        summary: `Get ${entity.pluralName}.`,
-        description: `Fetch ${entity.pluralName} from the database.`,
-        tags: [entity.table],
-        querystring: {
-          type: 'object',
-          properties: {
-            limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
-            offset: { type: 'integer' },
-            totalCount: { type: 'boolean', default: false },
-            cursor: { type: 'boolean', default: false, description: 'Include cursor headers in response. Cursor keys built from orderBy clause' },
-            startAfter: {
-              type: 'string',
-              description: 'Cursor for forward pagination. List objects after this cursor position',
-              format: 'byte'
+    app.get(
+      '/',
+      {
+        schema: {
+          operationId: 'get' + capitalize(entity.pluralName),
+          summary: `Get ${entity.pluralName}.`,
+          description: `Fetch ${entity.pluralName} from the database.`,
+          tags: [entity.table],
+          querystring: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'integer',
+                description:
+                  'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
+              },
+              offset: { type: 'integer' },
+              totalCount: { type: 'boolean', default: false },
+              cursor: {
+                type: 'boolean',
+                default: false,
+                description: 'Include cursor headers in response. Cursor keys built from orderBy clause'
+              },
+              startAfter: {
+                type: 'string',
+                description: 'Cursor for forward pagination. List objects after this cursor position',
+                format: 'byte'
+              },
+              endBefore: {
+                type: 'string',
+                description: 'Cursor for backward pagination. List objects before this cursor position',
+                format: 'byte'
+              },
+              fields,
+              ...whereArgs,
+              ...orderByArgs
             },
-            endBefore: {
-              type: 'string',
-              description: 'Cursor for backward pagination. List objects before this cursor position',
-              format: 'byte'
-            },
-            fields,
-            ...whereArgs,
-            ...orderByArgs,
+            additionalProperties: false
           },
-          additionalProperties: false,
-        },
-        response: {
-          200: {
-            type: 'array',
-            items: entitySchema,
-          },
-        },
-      },
-    }, async function (request, reply) {
-      const query = request.query
-      const { limit, offset, fields, startAfter, endBefore } = query
-      const queryKeys = Object.keys(query)
-      const where = {}
-      const orderBy = []
-
-      for (let i = 0; i < queryKeys.length; i++) {
-        const key = queryKeys[i]
-        if (key.startsWith('where.or')) {
-          const orParam = query[key][0]
-          // NOTE: Remove the first and last character which are the brackets
-          // each or condition is separated by a pipe '|'
-          // the conditions inside the or statement are the same as it would normally be in the where statement
-          // except that the field name is not prefixed with 'where.'
-          // e.g. where.or=(name.eq=foo|name.eq=bar)
-          // e.g. where.or=(name.eq=foo|name.eq=bar|name.eq=baz)
-          //
-          // Also, the or statement supports in and nin operators
-          // e.g. where.or=(name.in=foo,bar|name.eq=baz)
-          const parsed = orParam.substring(1, orParam.length - 1).split('|').map((v) => v.split('=')).reduce((acc, [k, v]) => {
-            const [field, modifier] = k.split('.')
-            if (modifier === 'in' || modifier === 'nin') {
-              // TODO handle escaping of ,
-              v = v.split(',')
-              /* istanbul ignore next */
-              if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
-                v = v.map((v) => parseInt(v))
-              }
-            }
-            acc.push({ [field]: { [modifier]: parseNullableValue(field, v) } })
-            return acc
-          }, [])
-          where.or = parsed
-          continue
-        }
-
-        if (key.startsWith('where.')) {
-          const [, field, modifier] = key.split('.')
-          where[field] ||= {}
-          let value = query[key]
-          if (modifier === 'in' || modifier === 'nin') {
-            // TODO handle escaping of ,
-            value = query[key].split(',')
-            if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
-              value = value.map((v) => parseInt(v))
+          response: {
+            200: {
+              type: 'array',
+              items: entitySchema
             }
           }
-
-          where[field][modifier] = parseNullableValue(field, value)
-        } else if (key.startsWith('orderby.')) {
-          const [, field] = key.split('.')
-          orderBy[field] ||= {}
-          orderBy.push({ field, direction: query[key] })
         }
-      }
+      },
+      async function (request, reply) {
+        const query = request.query
+        const { limit, offset, fields, startAfter, endBefore } = query
+        const queryKeys = Object.keys(query)
+        const where = {}
+        const orderBy = []
 
-      const ctx = { app: this, reply }
-      const { cursor, nextPage } = transformQueryToCursor({ startAfter, endBefore })
-      const res = await entity.find({ limit, offset, fields, orderBy, where, ctx, cursor, nextPage })
+        for (let i = 0; i < queryKeys.length; i++) {
+          const key = queryKeys[i]
+          if (key.startsWith('where.or')) {
+            const orParam = query[key][0]
+            // NOTE: Remove the first and last character which are the brackets
+            // each or condition is separated by a pipe '|'
+            // the conditions inside the or statement are the same as it would normally be in the where statement
+            // except that the field name is not prefixed with 'where.'
+            // e.g. where.or=(name.eq=foo|name.eq=bar)
+            // e.g. where.or=(name.eq=foo|name.eq=bar|name.eq=baz)
+            //
+            // Also, the or statement supports in and nin operators
+            // e.g. where.or=(name.in=foo,bar|name.eq=baz)
+            const parsed = orParam
+              .substring(1, orParam.length - 1)
+              .split('|')
+              .map(v => v.split('='))
+              .reduce((acc, [k, v]) => {
+                const [field, modifier] = k.split('.')
+                if (modifier === 'in' || modifier === 'nin') {
+                  // TODO handle escaping of ,
+                  v = v.split(',')
+                  /* istanbul ignore next */
+                  if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
+                    v = v.map(v => parseInt(v))
+                  }
+                }
+                acc.push({ [field]: { [modifier]: parseNullableValue(field, v) } })
+                return acc
+              }, [])
+            where.or = parsed
+            continue
+          }
 
-      // X-Total-Count header
-      if (query.totalCount) {
-        let totalCount
-        if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit !== undefined) && (res.length < limit))) {
-          totalCount = (offset ?? 0) + res.length
-        } else {
-          totalCount = await entity.count({ where, ctx })
+          if (key.startsWith('where.')) {
+            const [, field, modifier] = key.split('.')
+            where[field] ||= {}
+            let value = query[key]
+            if (modifier === 'in' || modifier === 'nin') {
+              // TODO handle escaping of ,
+              value = query[key].split(',')
+              if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
+                value = value.map(v => parseInt(v))
+              }
+            }
+
+            where[field][modifier] = parseNullableValue(field, value)
+          } else if (key.startsWith('orderby.')) {
+            const [, field] = key.split('.')
+            orderBy[field] ||= {}
+            orderBy.push({ field, direction: query[key] })
+          }
         }
-        reply.header('X-Total-Count', totalCount)
-      }
 
-      // cursor headers
-      if ((query.cursor || startAfter || endBefore) && res.length > 0) {
-        const { startAfter, endBefore } = buildCursorHeaders({
-          findResult: res,
-          orderBy,
-          primaryKeys: entity.primaryKeys,
-        })
-        reply.header('X-Start-After', startAfter)
-        reply.header('X-End-Before', endBefore)
-      }
+        const ctx = { app: this, reply }
+        const { cursor, nextPage } = transformQueryToCursor({ startAfter, endBefore })
+        const res = await entity.find({ limit, offset, fields, orderBy, where, ctx, cursor, nextPage })
 
-      return res
-    })
+        // X-Total-Count header
+        if (query.totalCount) {
+          let totalCount
+          if (((offset ?? 0) === 0 || res.length > 0) && limit !== undefined && res.length < limit) {
+            totalCount = (offset ?? 0) + res.length
+          } else {
+            totalCount = await entity.count({ where, ctx })
+          }
+          reply.header('X-Total-Count', totalCount)
+        }
+
+        // cursor headers
+        if ((query.cursor || startAfter || endBefore) && res.length > 0) {
+          const { startAfter, endBefore } = buildCursorHeaders({
+            findResult: res,
+            orderBy,
+            primaryKeys: entity.primaryKeys
+          })
+          reply.header('X-Start-After', startAfter)
+          reply.header('X-End-Before', endBefore)
+        }
+
+        return res
+      }
+    )
   }
 
   const ignoredPOSTRoute = ignoreRoutes.find(ignoreRoute => {
@@ -198,31 +220,35 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   })
 
   if (!ignoredPOSTRoute) {
-    app.post('/', {
-      schema: {
-        operationId: 'create' + capitalize(entity.singularName),
-        summary: `Create ${entity.singularName}.`,
-        description: `Add new ${entity.singularName} to the database.`,
-        body: entitySchemaInput,
-        tags: [entity.table],
-        response: {
-          200: entitySchema,
+    app.post(
+      '/',
+      {
+        schema: {
+          operationId: 'create' + capitalize(entity.singularName),
+          summary: `Create ${entity.singularName}.`,
+          description: `Add new ${entity.singularName} to the database.`,
+          body: entitySchemaInput,
+          tags: [entity.table],
+          response: {
+            200: entitySchema
+          }
         },
+        links: {
+          200: entityLinks
+        }
       },
-      links: {
-        200: entityLinks,
-      },
-    }, async function (request, reply) {
-      const ctx = { app: this, reply }
-      const res = await entity.save({ input: request.body, ctx })
-      reply.header('location', `${app.prefix}/${res.id}`)
-      return res
-    })
+      async function (request, reply) {
+        const ctx = { app: this, reply }
+        const res = await entity.save({ input: request.body, ctx })
+        reply.header('location', `${app.prefix}/${res.id}`)
+        return res
+      }
+    )
   }
 
   const parseNullableValue = (field, value) => {
     const fieldIsNullable = entity.camelCasedFields[field].isNullable
-    if (fieldIsNullable && (typeof value === 'string' && value.toLowerCase() === 'null')) {
+    if (fieldIsNullable && typeof value === 'string' && value.toLowerCase() === 'null') {
       return null
     } else {
       return value
@@ -244,19 +270,19 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           type: 'object',
           properties: {
             fields,
-            ...whereArgs,
+            ...whereArgs
           },
-          additionalProperties: false,
+          additionalProperties: false
         },
         response: {
           200: {
             type: 'array',
-            items: entitySchema,
-          },
-        },
+            items: entitySchema
+          }
+        }
       },
       links: {
-        200: entityLinks,
+        200: entityLinks
       },
       async handler (request, reply) {
         const ctx = { app: this, reply }
@@ -274,7 +300,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
-                value = value.map((v) => parseInt(v))
+                value = value.map(v => parseInt(v))
               }
             }
             where[field][modifier] = parseNullableValue(field, value)
@@ -283,40 +309,34 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
 
         const res = await entity.updateMany({
           input: {
-            ...request.body,
+            ...request.body
           },
           where,
           fields: request.query.fields,
-          ctx,
+          ctx
         })
         // TODO: Should find a way to test this line
         // if (!res) return reply.callNotFound()
         reply.header('location', `${app.prefix}`)
         return res
-      },
+      }
     })
   }
 }
 
-module.exports.rootEntityRoutes = rootEntityRoutes
-
-function capitalize (str) {
+export function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-module.exports.capitalize = capitalize
-
-function getFieldsForEntity (entity, ignore) {
+export function getFieldsForEntity (entity, ignore) {
   return {
     type: 'array',
     items: {
       type: 'string',
       enum: Object.keys(entity.fields)
-        .map((field) => entity.fields[field].camelcase)
-        .filter((field) => !ignore[field])
-        .sort(),
-    },
+        .map(field => entity.fields[field].camelcase)
+        .filter(field => !ignore[field])
+        .sort()
+    }
   }
 }
-
-module.exports.getFieldsForEntity = getFieldsForEntity

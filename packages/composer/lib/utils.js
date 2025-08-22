@@ -1,27 +1,16 @@
-'use strict'
-
-function prefixWithSlash (url) {
+export function prefixWithSlash (url) {
   if (typeof url === 'string') {
-    return url.startsWith('/')
-      ? url
-      : `/${url}`
+    return url.startsWith('/') ? url : `/${url}`
   }
   return ''
 }
 
 /**
- * detect if a service if fetchable, so if it has configuration to retrieve schema info (openapi or gql)
- * a service can have openapi and/or gql either from a remote service or from file
- * note service.origin is always been set if missing at index.js/platformaticComposer
+ * detect if a application if fetchable, so if it has configuration to retrieve schema info (openapi or gql)
+ * a application can have openapi and/or gql either from a remote application or from file
+ * note application.origin is always been set if missing at index.js/platformaticComposer
  * @returns {boolean}
-*/
-function isFetchable (service) {
-  return Boolean(
-    (service?.openapi && service.openapi.url) || service?.graphql
-  )
-}
-
-module.exports = {
-  prefixWithSlash,
-  isFetchable,
+ */
+export function isFetchable (application) {
+  return Boolean((application?.openapi && application.openapi.url) || application?.graphql)
 }

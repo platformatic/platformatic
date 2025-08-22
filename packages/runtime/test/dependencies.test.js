@@ -1,35 +1,24 @@
-'use strict'
+import { deepStrictEqual, ok, rejects } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, readLogs } from './helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { Runtime } = require('../lib/runtime')
-const { getRuntimeLogsDir } = require('../lib/utils')
-const { Client } = require('undici')
-
-const fixturesDir = join(__dirname, '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('parses composer and client dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
   })
 
   await runtime.init()
-  const { services } = await runtime.getServices()
+  const { applications } = await runtime.getApplications()
 
-  const mainService = services.find(service => service.id === 'main')
+  const mainApplication = applications.find(application => application.id === 'main')
 
-  assert.deepStrictEqual(mainService.dependencies, [
+  deepStrictEqual(mainApplication.dependencies, [
     { id: 'service-1', url: 'http://service-1.plt.local', local: true },
     {
       id: 'external-service-1',
@@ -38,56 +27,46 @@ test('parses composer and client dependencies', async t => {
     }
   ])
 
-  const service1 = services.find(service => service.id === 'service-1')
-  assert.deepStrictEqual(service1.dependencies, [])
+  const application1 = applications.find(application => application.id === 'service-1')
+  deepStrictEqual(application1.dependencies, [])
 
-  const service2 = services.find(service => service.id === 'service-2')
-  assert.deepStrictEqual(service2.dependencies, [])
+  const application2 = applications.find(application => application.id === 'service-2')
+  deepStrictEqual(application2.dependencies, [])
 })
 
 test('correct throws on missing dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
   })
 
-  await assert.rejects(() => runtime.init(), {
+  await rejects(() => runtime.init(), {
     name: 'FastifyError',
-    message: "Missing dependency: \"service 'composer' has unknown dependency: 'missing'.\""
+    message: "Missing dependency: \"application 'composer' has unknown dependency: 'missing'.\""
   })
 })
 
-test('correct throws on missing dependencies, showing all services', async t => {
+test('correct throws on missing dependencies, showing all applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies2.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await createRuntime(configFile)
 
   t.after(async () => {
     await runtime.close()
   })
 
-  await assert.rejects(() => runtime.init(), {
+  await rejects(() => runtime.init(), {
     name: 'FastifyError',
-    message: "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
+    message:
+      "Missing dependency: \"application 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known applications are: service-2.\""
   })
 })
 
 test('correct warns on reversed dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-reversed-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const context = {}
+  const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await runtime.close()
@@ -95,30 +74,11 @@ test('correct warns on reversed dependencies', async t => {
 
   await runtime.init()
 
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: runtime.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
+  const logs = await readLogs(context.logsPath, 5000, true)
 
-  await sleep(5000)
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/v1/logs/all'
-  })
-  assert.strictEqual(statusCode, 200)
-
-  const logs = await body.text()
-  assert.ok(
+  ok(
     logs.includes(
-      'Service \\"main\\" depends on service \\"service-1\\", but it is defined and it will be started before it. Please check your configuration file.'
+      'Application \\"main\\" depends on application \\"service-1\\", but it is defined and it will be started before it. Please check your configuration file.'
     )
   )
 })

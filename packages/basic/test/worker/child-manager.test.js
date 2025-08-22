@@ -1,4 +1,3 @@
-import { withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { platform } from 'node:os'
 import { test } from 'node:test'
@@ -52,7 +51,7 @@ test('ChildManager - listen - should log when receiving invalid messages', async
     socket.send('NO-WAY')
   })
 
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
   t.mock.method(process, 'exit', code => {
     resolve(code)
   })
@@ -98,7 +97,7 @@ test('ChildManager - inject - should not include telemetry when enabled is false
   const context = {
     telemetryConfig: {
       enabled: false,
-      serviceName: 'test-service'
+      applicationName: 'test-application'
     }
   }
 
@@ -130,7 +129,7 @@ test('ChildManager - inject - should include telemetry when enabled is true', as
   const context = {
     telemetryConfig: {
       enabled: true,
-      serviceName: 'test-service'
+      applicationName: 'test-application'
     }
   }
 
@@ -160,7 +159,7 @@ test('ChildManager - inject - should include telemetry when config exists withou
 
   const context = {
     telemetryConfig: {
-      serviceName: 'test-service'
+      applicationName: 'test-application'
     }
   }
 

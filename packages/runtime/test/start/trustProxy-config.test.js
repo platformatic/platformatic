@@ -1,25 +1,22 @@
-'use strict'
+import { equal } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('all services have trustProxy = true in server config (except entrypoint)', async (t) => {
+test('all applications have trustProxy = true in server config (except entrypoint)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   await app.start()
-  const services = await app.getServices()
+  const applications = await app.getApplications()
 
-  for (const s of services.services) {
-    const config = await app.getServiceConfig(s.id)
+  for (const s of applications.applications) {
+    const config = await app.getApplicationConfig(s.id)
     if (s.entrypoint) {
-      assert.equal(config.server.trustProxy, undefined)
+      equal(config.server.trustProxy, undefined)
     } else {
-      assert.equal(config.server.trustProxy, true)
+      equal(config.server.trustProxy, true)
     }
   }
   t.after(async () => {

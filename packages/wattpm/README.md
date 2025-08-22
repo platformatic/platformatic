@@ -7,9 +7,9 @@
 [![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
 [![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
-Watt, Platformatic's Node.js application server, allows you to run multiple Node.js applications (services) that are centrally managed.
+Watt, Platformatic's Node.js application server, allows you to run multiple Node.js applications that are centrally managed.
 
-By using Watt, you gain access to a virtual mesh network, fast logging via [Pino](https://getpino.io/), 
+By using Watt, you gain access to a virtual mesh network, fast logging via [Pino](https://getpino.io/),
 monitoring through [Prometheus](https://prometheus.io/), and [OpenTelemetry](https://opentelemetry.io/) integrations.
 
 Watt supports the stacks you love most, including [Next.js](https://nextjs.org/), [Astro](https://astro.build/),
@@ -38,7 +38,7 @@ Check out our full documentation at [platformatic.dev](https://platformatic.dev)
 
 ## Support
 
-If you run into a bug, issues or have a suggestion for improvement, please raise an 
+If you run into a bug, issues or have a suggestion for improvement, please raise an
 [issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
 
 ## License

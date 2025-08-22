@@ -1,15 +1,6 @@
-'use strict'
-
-const why = require('why-is-node-running')
-
-if (process.env.WHY === 'true') {
-  setInterval(() => {
-    console.log('why is node running?')
-    why()
-  }, 60000).unref()
-}
-
-const { Agent, setGlobalDispatcher } = require('undici')
+import { Agent, setGlobalDispatcher } from 'undici'
+import { createTemporaryDirectory } from '../../basic/test/helper.js'
+import { create } from '../index.js'
 
 const agent = new Agent({
   keepAliveTimeout: 10,
@@ -21,7 +12,7 @@ const agent = new Agent({
 
 setGlobalDispatcher(agent)
 
-function buildConfig (options) {
+export function buildConfig (options) {
   const base = {
     server: {}
   }
@@ -29,4 +20,23 @@ function buildConfig (options) {
   return Object.assign(base, options)
 }
 
-module.exports.buildConfig = buildConfig
+export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
+  const directory = await createTemporaryDirectory(t)
+
+  const service = await create(directory, options, {
+    applicationFactory,
+    isStandalone: true,
+    isEntrypoint: true,
+    isProduction: creationOptions.production
+  })
+
+  if (!creationOptions.skipInit) {
+    await service.init()
+  }
+
+  if (!creationOptions.skipCleanup) {
+    t.after(() => service.stop())
+  }
+
+  return service
+}

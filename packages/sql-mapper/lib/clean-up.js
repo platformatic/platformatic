@@ -1,9 +1,7 @@
-'use strict'
+import { Sorter } from '@hapi/topo'
+import { tableName } from './utils.js'
 
-const { tableName } = require('./utils')
-const { Sorter } = require('@hapi/topo')
-
-function buildCleanUp (db, sql, logger, entities) {
+export function buildCleanUp (db, sql, logger, entities) {
   return async function cleanUp () {
     logger.trace('cleaning up')
     await db.tx(async tx => {
@@ -32,5 +30,3 @@ function buildCleanUp (db, sql, logger, entities) {
     })
   }
 }
-
-module.exports = buildCleanUp

@@ -1,19 +1,15 @@
-'use strict'
-
-const { platform, tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
-
-const fastify = require('fastify')
-const ws = require('ws')
-
-const errors = require('./errors')
-const { getRuntimeLogsDir } = require('./utils')
+import fastifyAccepts from '@fastify/accepts'
+import fastifyWebsocket from '@fastify/websocket'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import fastify from 'fastify'
+import { platform, tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createWebSocketStream } from 'ws'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
-async function managementApiPlugin (app, opts) {
-  app.register(require('@fastify/accepts'))
+export async function managementApiPlugin (app, opts) {
+  app.register(fastifyAccepts)
 
   const runtime = opts.runtime
 
@@ -35,62 +31,62 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.post('/stop', async () => {
-    app.log.debug('stop services')
+    app.log.debug('stop applications')
     await runtime.close()
   })
 
   app.post('/restart', async () => {
-    app.log.debug('restart services')
+    app.log.debug('restart applications')
     await runtime.restart()
   })
 
-  app.get('/services', async () => {
-    return runtime.getServices()
+  app.get('/applications', async () => {
+    return runtime.getApplications()
   })
 
-  app.get('/services/:id', async request => {
+  app.get('/applications/:id', async request => {
     const { id } = request.params
-    app.log.debug('get service details', { id })
-    return runtime.getServiceDetails(id)
+    app.log.debug('get application details', { id })
+    return runtime.getApplicationDetails(id)
   })
 
-  app.get('/services/:id/config', async request => {
+  app.get('/applications/:id/config', async request => {
     const { id } = request.params
-    app.log.debug('get service config', { id })
-    return runtime.getServiceConfig(id)
+    app.log.debug('get application config', { id })
+    return runtime.getApplicationConfig(id)
   })
 
-  app.get('/services/:id/env', async request => {
+  app.get('/applications/:id/env', async request => {
     const { id } = request.params
-    app.log.debug('get service config', { id })
-    return runtime.getServiceEnv(id)
+    app.log.debug('get application config', { id })
+    return runtime.getApplicationEnv(id)
   })
 
-  app.get('/services/:id/openapi-schema', async request => {
+  app.get('/applications/:id/openapi-schema', async request => {
     const { id } = request.params
     app.log.debug('get openapi-schema', { id })
-    return runtime.getServiceOpenapiSchema(id)
+    return runtime.getApplicationOpenapiSchema(id)
   })
 
-  app.get('/services/:id/graphql-schema', async request => {
+  app.get('/applications/:id/graphql-schema', async request => {
     const { id } = request.params
     app.log.debug('get graphql-schema', { id })
-    return runtime.getServiceGraphqlSchema(id)
+    return runtime.getApplicationGraphqlSchema(id)
   })
 
-  app.post('/services/:id/start', async request => {
+  app.post('/applications/:id/start', async request => {
     const { id } = request.params
-    app.log.debug('start service', { id })
-    await runtime.startService(id)
+    app.log.debug('start application', { id })
+    await runtime.startApplication(id)
   })
 
-  app.post('/services/:id/stop', async request => {
+  app.post('/applications/:id/stop', async request => {
     const { id } = request.params
-    app.log.debug('stop service', { id })
-    await runtime.stopService(id)
+    app.log.debug('stop application', { id })
+    await runtime.stopApplication(id)
   })
 
-  app.all('/services/:id/proxy/*', async (request, reply) => {
+  app.all('/applications/:id/proxy/*', async (request, reply) => {
     const { id, '*': requestUrl } = request.params
     app.log.debug('proxy request', { id, requestUrl })
 
@@ -152,58 +148,11 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/logs/live', { websocket: true }, async (socket, req) => {
-    const startLogId = req.query.start ? parseInt(req.query.start) : null
-
-    if (startLogId) {
-      const logIds = await runtime.getLogIds()
-      if (!logIds.includes(startLogId)) {
-        throw new errors.LogFileNotFound(startLogId)
-      }
-    }
-
-    const stream = ws.createWebSocketStream(socket)
-    runtime.pipeLogsStream(stream, req.log, startLogId)
-  })
-
-  app.get('/logs/indexes', async req => {
-    const returnAllIds = req.query.all === 'true'
-
-    if (returnAllIds) {
-      const runtimesLogsIds = await runtime.getAllLogIds()
-      return runtimesLogsIds
-    }
-
-    const runtimeLogsIds = await runtime.getLogIds()
-    return { indexes: runtimeLogsIds }
-  })
-
-  app.get('/logs/all', async (req, reply) => {
-    const runtimePID = parseInt(req.query.pid) || process.pid
-
-    const logsIds = await runtime.getLogIds(runtimePID)
-    const startLogId = logsIds.at(0)
-    const endLogId = logsIds.at(-1)
-
-    reply.hijack()
-
-    runtime.pipeLogsStream(reply.raw, req.log, startLogId, endLogId, runtimePID)
-  })
-
-  app.get('/logs/:id', async req => {
-    const logId = parseInt(req.params.id)
-    const runtimePID = parseInt(req.query.pid) || process.pid
-
-    const logIds = await runtime.getLogIds(runtimePID)
-    if (!logIds || !logIds.includes(logId)) {
-      throw new errors.LogFileNotFound(logId)
-    }
-
-    const logFileStream = await runtime.getLogFileStream(logId, runtimePID)
-    return logFileStream
+    runtime.addLoggerDestination(createWebSocketStream(socket))
   })
 }
 
-async function startManagementApi (runtime, configManager) {
+export async function startManagementApi (runtime, root) {
   const runtimePID = process.pid
 
   try {
@@ -211,9 +160,6 @@ async function startManagementApi (runtime, configManager) {
     if (platform() !== 'win32') {
       await createDirectory(runtimePIDDir, true)
     }
-
-    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
-    await createDirectory(runtimeLogsDir, true)
 
     let socketPath = null
     if (platform() === 'win32') {
@@ -223,7 +169,7 @@ async function startManagementApi (runtime, configManager) {
     }
 
     const managementApi = fastify()
-    managementApi.register(require('@fastify/websocket'))
+    managementApi.register(fastifyWebsocket)
     managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
 
     managementApi.addHook('onClose', async () => {
@@ -231,6 +177,9 @@ async function startManagementApi (runtime, configManager) {
         await safeRemove(runtimePIDDir)
       }
     })
+
+    // When the runtime closes, close the management API as well
+    runtime.on('closed', managementApi.close.bind(managementApi))
 
     await managementApi.listen({ path: socketPath })
     return managementApi
@@ -240,5 +189,3 @@ async function startManagementApi (runtime, configManager) {
     process.exit(1)
   }
 }
-
-module.exports = { startManagementApi, managementApiPlugin }

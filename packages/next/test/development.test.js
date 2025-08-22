@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  prepareRuntimeWithServices,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyDevelopmentFrontendStandalone,
@@ -39,7 +39,7 @@ export async function verifyDevelopmentFrontendWithExternalProxy (
   _websocketHMRHandler,
   pauseTimeout
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -49,7 +49,7 @@ export async function verifyDevelopmentFrontendWithExternalProxy (
     async root => {
       await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
         const json = JSON.parse(contents)
-        json.composer.services[1].proxy = { prefix: '/frontend' }
+        json.composer.applications[1].proxy = { prefix: '/frontend' }
         return JSON.stringify(json, null, 2)
       })
     }

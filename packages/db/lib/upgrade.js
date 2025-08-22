@@ -1,16 +1,12 @@
-'use strict'
+import { abstractLogger } from '@platformatic/foundation'
+import zeroSixteen from '@platformatic/service/lib/versions/0.16.0.js'
+import { join } from 'node:path'
+import { loadMigrationsFromPath, semgrator } from 'semgrator'
 
-const { join } = require('path')
-const zeroSixteen = require('@platformatic/service/lib/versions/0.16.0.js')
+export async function upgrade (logger, config, version) {
+  const iterator = loadMigrationsFromPath(join(import.meta.dirname, 'versions'))
 
-module.exports = async function upgrade (config, version) {
-  const { semgrator, loadMigrationsFromPath } = await import('semgrator')
-
-  const iterator = loadMigrationsFromPath(join(__dirname, 'versions'))
-
-  const migrations = [
-    zeroSixteen,
-  ]
+  const migrations = [zeroSixteen]
 
   for await (const migration of iterator) {
     migrations.push(migration)
@@ -20,7 +16,7 @@ module.exports = async function upgrade (config, version) {
     version,
     migrations,
     input: config,
-    logger: this.logger.child({ name: '@platformatic/db' }),
+    logger: logger?.child({ name: '@platformatic/db' }) ?? abstractLogger
   })
 
   let result

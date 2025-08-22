@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('count', async (t) => {
+test('count', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -31,30 +29,35 @@ test('count', async (t) => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   {
     const res = await app.inject({
@@ -70,9 +73,9 @@ test('count', async (t) => {
             }
           `,
         variables: {
-          inputs: posts,
-        },
-      },
+          inputs: posts
+        }
+      }
     })
     equal(res.statusCode, 200, 'posts status code')
   }
@@ -88,17 +91,21 @@ test('count', async (t) => {
               total
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'posts status code')
-    same(res.json(), {
-      data: {
-        countPosts: {
-          total: 4,
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          countPosts: {
+            total: 4
+          }
+        }
       },
-    }, 'posts response')
+      'posts response'
+    )
   }
 
   {
@@ -112,16 +119,20 @@ test('count', async (t) => {
               total
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'posts status code')
-    same(res.json(), {
-      data: {
-        countPosts: {
-          total: 2,
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          countPosts: {
+            total: 2
+          }
+        }
       },
-    }, 'posts response')
+      'posts response'
+    )
   }
 })

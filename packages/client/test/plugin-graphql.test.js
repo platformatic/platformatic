@@ -1,18 +1,16 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { mkdtemp, cp, unlink } = require('node:fs/promises')
-const Fastify = require('fastify')
-const { buildServer } = require('../../db')
-const client = require('..')
-const { safeRemove } = require('@platformatic/utils')
-require('./helper')
+import { create } from '@platformatic/db'
+import { safeRemove } from '@platformatic/foundation'
+import Fastify from 'fastify'
+import { deepEqual } from 'node:assert/strict'
+import { cp, mkdtemp, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import client from '../fastify-plugin.js'
+import './helper.js'
 
 test('app decorator with GraphQL', async t => {
-  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const fixtureDirPath = join(import.meta.dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
 
@@ -21,7 +19,7 @@ test('app decorator with GraphQL', async t => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await targetApp.close()
@@ -75,7 +73,7 @@ test('app decorator with GraphQL', async t => {
     path: '/movies'
   })
 
-  assert.deepEqual(movie.json(), {
+  deepEqual(movie.json(), {
     id: '1',
     title: 'The Matrix'
   })
@@ -85,7 +83,7 @@ test('app decorator with GraphQL', async t => {
     path: 'movies'
   })
 
-  assert.deepEqual(movies.json(), {
+  deepEqual(movies.json(), {
     movies: [
       {
         id: '1',

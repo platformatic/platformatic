@@ -1,7 +1,5 @@
-'use strict'
-
-const why = require('why-is-node-running')
-const { dropAllTables } = require('@platformatic/sql-mapper')
+import { dropAllTables } from '@platformatic/sql-mapper'
+import why from 'why-is-node-running'
 
 if (process.env.WHY === 'true') {
   setInterval(() => {
@@ -14,32 +12,34 @@ if (process.env.WHY === 'true') {
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-const connInfo = {}
+export const connInfo = {}
+export let isPg = false
+export let isMysql = false
+export let isMariaDB = false
+export let isSQLite = false
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  module.exports.isPg = true
+  isPg = true
 } else if (process.env.DB === 'mariadb') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
-  module.exports.isMariaDB = true
+  isMysql = true
+  isMariaDB = true
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'mysql8') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
-  module.exports.isSQLite = true
+  isSQLite = true
 }
 
-module.exports.connInfo = connInfo
-
-module.exports.clear = async function (db, sql) {
+export async function clear (db, sql) {
   await dropAllTables(db, sql)
   await dropAllTables(db, sql, ['test1', 'test2', 'test3', 'test4'])
 

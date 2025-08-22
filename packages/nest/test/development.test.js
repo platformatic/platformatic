@@ -1,12 +1,12 @@
 import { ok } from 'node:assert/strict'
+import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createRuntime,
   isCIOnWindows,
-  prepareRuntimeWithServices,
+  prepareRuntimeWithApplications,
   setFixturesDir,
-  sleep,
   updateFile,
   verifyDevelopmentMode,
   verifyJSONViaHTTP,
@@ -52,7 +52,7 @@ async function verifyComposerWithPrefix (
   additionalSetup,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -90,13 +90,21 @@ async function verifyComposerWithoutPrefix (
   pauseTimeout,
   additionalCheck
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '', pauseTimeout, async root => {
-    await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-      const json = JSON.parse(contents)
-      json.composer.services[1].proxy = { prefix: '' }
-      return JSON.stringify(json, null, 2)
-    })
-  })
+  const { runtime, url } = await prepareRuntimeWithApplications(
+    t,
+    id,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    async root => {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.composer.applications[1].proxy = { prefix: '' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
+  )
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -127,7 +135,7 @@ async function verifyComposerAutodetectPrefix (
   additionalSetup,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -198,7 +206,7 @@ const configurations = [
 verifyDevelopmentMode(configurations)
 
 test('NestJS watch mode is correctly tracked in development', async t => {
-  const { root, url } = await createRuntime(t, 'express-standalone')
+  const { root, url, runtime } = await createRuntime(t, 'express-standalone')
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
 
@@ -207,7 +215,7 @@ test('NestJS watch mode is correctly tracked in development', async t => {
     return contents.replace("production: process.env.NODE_ENV === 'production'", 'ok: true')
   })
 
-  await sleep(process.env.CI ? 5000 : 1000)
+  await once(runtime, 'application:worker:event:url')
 
   await verifyJSONViaHTTP(url, '/', 200, { ok: true })
 })

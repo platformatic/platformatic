@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo } from './helper.js'
 
-const { clear, connInfo } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal } = require('node:assert/strict')
-const fastify = require('fastify')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlOpenAPI = require('..')
-
-test('multiple tables have foreign keys pointing to the same primary key', async (t) => {
+test('multiple tables have foreign keys pointing to the same primary key', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -39,7 +37,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
   try {
     app.register(sqlMapper, {
       ...connInfo,
-      onDatabaseLoad,
+      onDatabaseLoad
     })
     app.register(sqlOpenAPI)
     t.after(() => app.close())
@@ -54,13 +52,17 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       method: 'POST',
       url: '/owners',
       body: {
-        id: 1,
-      },
+        id: 1
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 1,
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 1
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -68,13 +70,17 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       method: 'POST',
       url: '/owners',
       body: {
-        id: 2,
-      },
+        id: 2
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 2,
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 2
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -82,13 +88,17 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       method: 'POST',
       url: '/owners',
       body: {
-        id: 3,
-      },
+        id: 3
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 3,
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 3
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -98,15 +108,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 10,
         field1: 1,
-        field2: 2,
-      },
+        field2: 2
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 10,
-      field1: 1,
-      field2: 2,
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 10,
+        field1: 1,
+        field2: 2
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -116,15 +130,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 20,
         field1: 2,
-        field2: 3,
-      },
+        field2: 3
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 20,
-      field1: 2,
-      field2: 3,
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 20,
+        field1: 2,
+        field2: 3
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -134,15 +152,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 30,
         field1: 3,
-        field2: 1,
-      },
+        field2: 1
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 30,
-      field1: 3,
-      field2: 1,
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 30,
+        field1: 3,
+        field2: 1
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -152,8 +174,8 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 40,
         field1: 1,
-        field2: 'not existing',
-      },
+        field2: 'not existing'
+      }
     })
     equal(res.statusCode, 400, 'POST /editors status code')
   }
@@ -165,15 +187,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 1000,
         field1: 1,
-        field2: 2,
-      },
+        field2: 2
+      }
     })
     equal(res.statusCode, 200, 'POST /posts status code')
-    same(res.json(), {
-      id: 1000,
-      field1: 1,
-      field2: 2,
-    }, 'POST /posts response')
+    same(
+      res.json(),
+      {
+        id: 1000,
+        field1: 1,
+        field2: 2
+      },
+      'POST /posts response'
+    )
   }
 
   {
@@ -183,15 +209,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 2000,
         field1: 2,
-        field2: 3,
-      },
+        field2: 3
+      }
     })
     equal(res.statusCode, 200, 'POST /posts status code')
-    same(res.json(), {
-      id: 2000,
-      field1: 2,
-      field2: 3,
-    }, 'POST /posts response')
+    same(
+      res.json(),
+      {
+        id: 2000,
+        field1: 2,
+        field2: 3
+      },
+      'POST /posts response'
+    )
   }
 
   {
@@ -201,15 +231,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 3000,
         field1: 3,
-        field2: 1,
-      },
+        field2: 1
+      }
     })
     equal(res.statusCode, 200, 'POST /posts status code')
-    same(res.json(), {
-      id: 3000,
-      field1: 3,
-      field2: 1,
-    }, 'POST /posts response')
+    same(
+      res.json(),
+      {
+        id: 3000,
+        field1: 3,
+        field2: 1
+      },
+      'POST /posts response'
+    )
   }
 
   {
@@ -219,8 +253,8 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       body: {
         id: 4000,
         field1: 'not existing',
-        field2: 2,
-      },
+        field2: 2
+      }
     })
     equal(res.statusCode, 400, 'POST /posts status code')
   }
@@ -228,174 +262,170 @@ test('multiple tables have foreign keys pointing to the same primary key', async
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners',
+      url: '/owners'
     })
     equal(res.statusCode, 200)
-    same(res.json(), [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 },
-    ])
+    same(res.json(), [{ id: 1 }, { id: 2 }, { id: 3 }])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/1',
+      url: '/owners/1'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1,
+      id: 1
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/1/editorField1',
+      url: '/owners/1/editorField1'
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 10,
         field1: 1,
-        field2: 2,
-      },
+        field2: 2
+      }
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/2/postField2',
+      url: '/owners/2/postField2'
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 1000,
         field1: 1,
-        field2: 2,
-      },
+        field2: 2
+      }
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors',
+      url: '/editors'
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 10,
         field1: 1,
-        field2: 2,
+        field2: 2
       },
       {
         id: 20,
         field1: 2,
-        field2: 3,
+        field2: 3
       },
       {
         id: 30,
         field1: 3,
-        field2: 1,
-      },
+        field2: 1
+      }
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20',
+      url: '/editors/20'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
       id: 20,
       field1: 2,
-      field2: 3,
+      field2: 3
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/10/field1',
+      url: '/editors/10/field1'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1,
+      id: 1
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20/field2',
+      url: '/editors/20/field2'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 3,
+      id: 3
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts',
+      url: '/posts'
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 1000,
         field1: 1,
-        field2: 2,
+        field2: 2
       },
       {
         id: 2000,
         field1: 2,
-        field2: 3,
+        field2: 3
       },
       {
         id: 3000,
         field1: 3,
-        field2: 1,
-      },
+        field2: 1
+      }
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/3000',
+      url: '/posts/3000'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
       id: 3000,
       field1: 3,
-      field2: 1,
+      field2: 1
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/1000/field2',
+      url: '/posts/1000/field2'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 2,
+      id: 2
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/3000/field1',
+      url: '/posts/3000/field1'
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 3,
+      id: 3
     })
   }
 })

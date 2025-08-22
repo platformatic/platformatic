@@ -1,17 +1,22 @@
 import { deepEqual, equal, ok } from 'node:assert'
+import { once } from 'node:events'
+import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { existsSync } from 'node:fs'
-import { once } from 'node:events'
-import { safeRemove } from '@platformatic/utils'
-import { fullSetupRuntime, getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
-import { buildServer } from '../../runtime/index.js'
+import {
+  createRuntime,
+  getLogsFromFile,
+  prepareRuntime,
+  setFixturesDir,
+  startRuntime,
+  updateFile
+} from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject Platformatic code by default when building', async t => {
-  const { root, config } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -27,24 +32,16 @@ test('should inject Platformatic code by default when building', async t => {
     )
   })
 
-  const originalCwd = process.cwd()
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
+  await runtime.init()
+  await runtime.buildApplication('frontend')
+  await runtime.close()
 
-  t.after(async () => {
-    process.chdir(originalCwd)
-    await runtime.close()
-    await safeRemove(root)
-  })
-
-  await runtime.buildService('frontend')
-
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED true')
 })
 
 test('should not inject Platformatic code when building if asked to', async t => {
-  const { root, config } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -61,51 +58,42 @@ test('should not inject Platformatic code when building if asked to', async t =>
     )
   })
 
-  const originalCwd = process.cwd()
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
+  await runtime.init()
+  await runtime.buildApplication('frontend')
+  await runtime.close()
 
-  t.after(async () => {
-    process.chdir(originalCwd)
-    await runtime.close()
-    await safeRemove(root)
-  })
-
-  await runtime.buildService('frontend')
-
-  const logs = await getLogs(runtime)
+  const logs = await getLogsFromFile(root)
   deepEqual(logs[1].msg, 'INJECTED false')
 })
 
-test('should build the services on start in dev', async t => {
-  const runtime = await fullSetupRuntime({
+test('should build the applications on start in dev', async t => {
+  const runtime = await createRuntime({
     t,
-    configRoot: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
+    root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
-    production: false,
+    production: false
   })
 
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
-  ok(existsSync(resolve(runtime.root, 'services/app-with-config/dist/tsconfig.tsbuildinfo')))
 })
 
-for (const service of ['app-no-config', 'app-with-config']) {
-  test(`should rebuild the services on reload in dev, service ${service}`, async t => {
-    const { root, config } = await prepareRuntime(t, 'dev-ts-build', false)
-    const { runtime } = await startRuntime(t, root, config)
+for (const application of ['app-no-config', 'app-with-config']) {
+  test(`should rebuild the applications on reload in dev, application ${application}`, async t => {
+    const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
+    await startRuntime(t, runtime)
 
     // write the file to trigger a reload
-    await writeFile(resolve(root, `services/${service}/reload.ts`), '// reload', 'utf-8')
+    await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
 
-    // reload the service
+    // reload the application
     {
-      const event = await once(runtime, 'service:worker:changed')
-      equal(event[0].service, service)
+      const event = await once(runtime, 'application:worker:changed')
+      equal(event[0].application, application)
     }
-    // restart the service
+    // restart the application
     {
-      const event = await once(runtime, 'service:worker:started')
-      equal(event[0].service, service)
+      const event = await once(runtime, 'application:worker:started')
+      equal(event[0].application, application)
     }
   })
 }

@@ -1,17 +1,13 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should get a service graphql schema', async (t) => {
+test('should get a application graphql schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -19,14 +15,13 @@ test('should get a service graphql schema', async (t) => {
     await app.close()
   })
 
-  const graphqlSchema = await app.getServiceGraphqlSchema('db-app')
-  assert.deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
+  const graphqlSchema = await app.getApplicationGraphqlSchema('db-app')
+  deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
-test('should fail to get a service graphql schema if service does not expose it', async (t) => {
+test('should fail to get a application graphql schema if application does not expose it', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -34,6 +29,6 @@ test('should fail to get a service graphql schema if service does not expose it'
     await app.close()
   })
 
-  const graphqlSchema = await app.getServiceGraphqlSchema('with-logger')
-  assert.strictEqual(graphqlSchema, null)
+  const graphqlSchema = await app.getApplicationGraphqlSchema('with-logger')
+  strictEqual(graphqlSchema, null)
 })

@@ -4,7 +4,7 @@ module.exports = async function (fastify) {
   })
 
   fastify.get('/mesh', async () => {
-    const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getServiceMeta', 'composer')
+    const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getApplicationMeta', 'composer')
 
     const url = new URL(
       `${meta.composer.proxies.frontend.rewritePrefix}/direct`.replaceAll(/\/+/g, '/'),

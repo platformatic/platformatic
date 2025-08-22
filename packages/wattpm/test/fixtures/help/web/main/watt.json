@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.71.0.json",
+  "composer": {
+    "services": []
+  }
+}

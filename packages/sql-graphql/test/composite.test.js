@@ -1,14 +1,12 @@
-'use strict'
+import sqlEvents from '@platformatic/sql-events'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal } = require('node:assert')
-const fastify = require('fastify')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlEvents = require('@platformatic/sql-events')
-const sqlGraphQL = require('..')
-
-test('composite primary keys', async (t) => {
+test('composite primary keys', async t => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -76,7 +74,7 @@ test('composite primary keys', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   app.register(sqlEvents) // needed as if it's present it might throw
   app.register(sqlGraphQL)
@@ -96,18 +94,22 @@ test('composite primary keys', async (t) => {
               theTitle
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          theTitle: 'foobar',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            theTitle: 'foobar'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -122,18 +124,22 @@ test('composite primary keys', async (t) => {
               username
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveUser status code')
-    same(res.json(), {
-      data: {
-        saveUser: {
-          id: 1,
-          username: 'mcollina',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveUser: {
+            id: 1,
+            username: 'mcollina'
+          }
+        }
       },
-    }, 'saveUser response')
+      'saveUser response'
+    )
   }
 
   {
@@ -148,18 +154,22 @@ test('composite primary keys', async (t) => {
               username
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveUser status code')
-    same(res.json(), {
-      data: {
-        saveUser: {
-          id: 2,
-          username: 'lucamaraschi',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveUser: {
+            id: 2,
+            username: 'lucamaraschi'
+          }
+        }
       },
-    }, 'saveUser response')
+      'saveUser response'
+    )
   }
 
   {
@@ -181,25 +191,29 @@ test('composite primary keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          user: {
-            id: 1,
-            username: 'mcollina',
-          },
-          page: {
-            id: 1,
-            theTitle: 'foobar',
-          },
-          role: 'admin',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            user: {
+              id: 1,
+              username: 'mcollina'
+            },
+            page: {
+              id: 1,
+              theTitle: 'foobar'
+            },
+            role: 'admin'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -221,25 +235,29 @@ test('composite primary keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          user: {
-            id: 2,
-            username: 'lucamaraschi',
-          },
-          page: {
-            id: 1,
-            theTitle: 'foobar',
-          },
-          role: 'author',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            user: {
+              id: 2,
+              username: 'lucamaraschi'
+            },
+            page: {
+              id: 1,
+              theTitle: 'foobar'
+            },
+            role: 'author'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -261,25 +279,29 @@ test('composite primary keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          user: {
-            id: 1,
-            username: 'mcollina',
-          },
-          page: {
-            id: 1,
-            theTitle: 'foobar',
-          },
-          role: 'captain',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            user: {
+              id: 1,
+              username: 'mcollina'
+            },
+            page: {
+              id: 1,
+              theTitle: 'foobar'
+            },
+            role: 'captain'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -301,39 +323,46 @@ test('composite primary keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'editors status code')
-    same(res.json(), {
-      data: {
-        editors: [{
-          user: {
-            id: '1',
-            username: 'mcollina',
-          },
-          page: {
-            id: '1',
-            theTitle: 'foobar',
-          },
-          role: 'captain',
-        }, {
-          user: {
-            id: '2',
-            username: 'lucamaraschi',
-          },
-          page: {
-            id: '1',
-            theTitle: 'foobar',
-          },
-          role: 'author',
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          editors: [
+            {
+              user: {
+                id: '1',
+                username: 'mcollina'
+              },
+              page: {
+                id: '1',
+                theTitle: 'foobar'
+              },
+              role: 'captain'
+            },
+            {
+              user: {
+                id: '2',
+                username: 'lucamaraschi'
+              },
+              page: {
+                id: '1',
+                theTitle: 'foobar'
+              },
+              role: 'author'
+            }
+          ]
+        }
       },
-    }, 'editor response')
+      'editor response'
+    )
   }
 })
 
-test('composite primary keys with no foreign keys', async (t) => {
+test('composite primary keys with no foreign keys', async t => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -349,7 +378,7 @@ test('composite primary keys with no foreign keys', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   app.register(sqlEvents) // needed as if it's present it will throw
   app.register(sqlGraphQL)
@@ -370,19 +399,23 @@ test('composite primary keys with no foreign keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          userId: '1',
-          pageId: '1',
-          role: 'admin',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            userId: '1',
+            pageId: '1',
+            role: 'admin'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -398,19 +431,23 @@ test('composite primary keys with no foreign keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          userId: '2',
-          pageId: '1',
-          role: 'author',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            userId: '2',
+            pageId: '1',
+            role: 'author'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -426,19 +463,23 @@ test('composite primary keys with no foreign keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveEditor status code')
-    same(res.json(), {
-      data: {
-        saveEditor: {
-          userId: 1,
-          pageId: 1,
-          role: 'captain',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveEditor: {
+            userId: 1,
+            pageId: 1,
+            role: 'captain'
+          }
+        }
       },
-    }, 'saveEditor response')
+      'saveEditor response'
+    )
   }
 
   {
@@ -454,22 +495,29 @@ test('composite primary keys with no foreign keys', async (t) => {
               role
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'editors status code')
-    same(res.json(), {
-      data: {
-        editors: [{
-          userId: '1',
-          pageId: '1',
-          role: 'captain',
-        }, {
-          userId: '2',
-          pageId: '1',
-          role: 'author',
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          editors: [
+            {
+              userId: '1',
+              pageId: '1',
+              role: 'captain'
+            },
+            {
+              userId: '2',
+              pageId: '1',
+              role: 'author'
+            }
+          ]
+        }
       },
-    }, 'editor response')
+      'editor response'
+    )
   }
 })

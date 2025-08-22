@@ -9,7 +9,7 @@
     "port": 7866
   },
   "logger": {
-    "level": "warn"
+    "level": "fatal"
   },
   "httpCache": true,
   "metrics": true

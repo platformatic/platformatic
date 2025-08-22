@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticComposer {
+export interface PlatformaticComposerConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -162,7 +162,7 @@ export interface PlatformaticComposer {
     };
   };
   composer?: {
-    services?: {
+    applications?: {
       id: string;
       origin?: string;
       openapi?: {
@@ -367,24 +367,6 @@ export interface PlatformaticComposer {
     addEmptySchema?: boolean;
     refreshTimeout?: number;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   types?: {
     autogenerate?: boolean;
     /**
@@ -395,20 +377,13 @@ export interface PlatformaticComposer {
   plugins?: {
     [k: string]: unknown;
   };
-  clients?: {
-    serviceId?: string;
-    name?: string;
-    type?: "openapi" | "graphql";
-    path?: string;
-    schema?: string;
-    url?: string;
-    fullResponse?: boolean;
-    fullRequest?: boolean;
-    validateResponse?: boolean;
-  }[];
+  application?: {};
   runtime?: {
     preload?: string | string[];
     basePath?: string;
+    services?: {
+      [k: string]: unknown;
+    }[];
     workers?: number | string;
     logger?: {
       level: (
@@ -496,7 +471,7 @@ export interface PlatformaticComposer {
     restartOnError?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
-      service: number | string;
+      application: number | string;
     };
     health?: {
       enabled?: boolean | string;
@@ -615,11 +590,11 @@ export interface PlatformaticComposer {
     telemetry?: {
       enabled?: boolean | string;
       /**
-       * The name of the service. Defaults to the folder name if not specified.
+       * The name of the application. Defaults to the folder name if not specified.
        */
-      serviceName: string;
+      applicationName: string;
       /**
-       * The version of the service (optional)
+       * The version of the application (optional)
        */
       version?: string;
       /**
@@ -695,7 +670,7 @@ export interface PlatformaticComposer {
       watchDisabled?: boolean;
       [k: string]: unknown;
     };
-    serviceTimeout?: number | string;
+    applicationTimeout?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
@@ -722,11 +697,11 @@ export interface PlatformaticComposer {
   telemetry?: {
     enabled?: boolean | string;
     /**
-     * The name of the service. Defaults to the folder name if not specified.
+     * The name of the application. Defaults to the folder name if not specified.
      */
-    serviceName: string;
+    applicationName: string;
     /**
-     * The version of the service (optional)
+     * The version of the application (optional)
      */
     version?: string;
     /**

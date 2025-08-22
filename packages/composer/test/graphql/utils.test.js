@@ -1,20 +1,18 @@
-'use strict'
+import assert from 'assert/strict'
+import { test } from 'node:test'
+import { applicationToSubgraphConfig } from '../../lib/graphql-fetch.js'
 
-const assert = require('assert/strict')
-const { test } = require('node:test')
-const { serviceToSubgraphConfig } = require('../../lib/graphql-fetch')
-
-test('serviceToSubgraphConfig unit test', t => {
+test('applicationToSubgraphConfig unit test', t => {
   const cases = [
-    { label: 'empty service', service: {}, expected: undefined },
+    { label: 'empty application', application: {}, expected: undefined },
     {
-      label: 'default graphql service',
-      service: {
+      label: 'default graphql application',
+      application: {
         origin: 'http://origin',
         graphql: {
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql',
-        },
+          graphqlEndpoint: '/graphql'
+        }
       },
       expected: {
         name: 'http://origin',
@@ -22,13 +20,13 @@ test('serviceToSubgraphConfig unit test', t => {
         server: {
           host: 'http://origin',
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql',
-        },
-      },
-    },
+          graphqlEndpoint: '/graphql'
+        }
+      }
+    }
   ]
 
   for (const c of cases) {
-    assert.deepEqual(serviceToSubgraphConfig(c.service), c.expected, c.label)
+    assert.deepEqual(applicationToSubgraphConfig(c.application), c.expected, c.label)
   }
 })

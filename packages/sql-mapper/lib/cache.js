@@ -1,7 +1,6 @@
-'use strict'
-const { createCache } = require('async-cache-dedupe')
+import { createCache } from 'async-cache-dedupe'
 
-function setupCache (res, opts) {
+export function setupCache (res, opts) {
   // TODO validate opts
   if (opts === true) {
     opts = { ttl: 0 }
@@ -17,18 +16,22 @@ function setupCache (res, opts) {
     const fnName = `${entity.name}Find`
     const originalFn = entity.find
 
-    cache.define(fnName, {
-      serialize (query) {
-        const serialized = {
-          ...query,
-          ctx: undefined,
+    cache.define(
+      fnName,
+      {
+        serialize (query) {
+          const serialized = {
+            ...query,
+            ctx: undefined
+          }
+          return serialized
         }
-        return serialized
       },
-    }, async function (query) {
-      const res = await originalFn.call(entity, query)
-      return res
-    })
+      async function (query) {
+        const res = await originalFn.call(entity, query)
+        return res
+      }
+    )
 
     addEntityHooks(entity.singularName, {
       find (originalFn, query) {
@@ -36,11 +39,9 @@ function setupCache (res, opts) {
           return originalFn(query)
         }
         return cache[fnName](query)
-      },
+      }
     })
   }
 
   return cache
 }
-
-module.exports = setupCache

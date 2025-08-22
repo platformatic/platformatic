@@ -1,36 +1,27 @@
-'use strict'
+import { rejects } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
+import { waitForEvents } from '../multiple-workers/helper.js'
 
-const { ok, rejects } = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { openLogsWebsocket, waitForLogs } = require('../helpers')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('can start timeout when applications dont start', async (t) => {
+test('can start timeout when applications dont start', async t => {
   const configFile = join(fixturesDir, 'start-timeout/platformatic.json')
-  const app = await buildServer(configFile)
-
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "node"...',
-    'The service "node" failed to start in 500ms. Forcefully killing the thread.'
+  const waitPromise = waitForEvents(
+    app,
+    { event: 'application:worker:starting', application: 'node', worker: 0 },
+    { event: 'application:worker:startTimeout', application: 'node', worker: 0 }
   )
 
   await rejects(() => app.start())
-  await waitPromise
-
-  const messages = (await waitPromise).map((m) => m.msg)
-
-  ok(messages.includes('Starting the service "node"...'))
-  ok(messages.includes('The service "node" failed to start in 500ms. Forcefully killing the thread.'))
 
   await app.stop()
+  await waitPromise
 })

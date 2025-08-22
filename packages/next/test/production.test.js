@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   setFixturesDir,
   updateFile,
@@ -28,7 +28,7 @@ const configurations = [
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
-    files: [...files, ...internalServicesFiles],
+    files: [...files, ...internalApplicationsFiles],
     checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'ts',
     prefix: ''
@@ -43,7 +43,7 @@ const configurations = [
     async additionalSetup (root) {
       await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
         const json = JSON.parse(contents)
-        json.composer.services[1].proxy = { prefix: '/frontend' }
+        json.composer.applications[1].proxy = { prefix: '/frontend' }
         return JSON.stringify(json, null, 2)
       })
     }

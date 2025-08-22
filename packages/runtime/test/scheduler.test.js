@@ -1,19 +1,33 @@
-'use strict'
+import { EventEmitter, once } from 'events'
+import Fastify from 'fastify'
+import { deepStrictEqual, equal, fail, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { transform } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { buildServer } = require('..')
-const { buildRuntime } = require('../lib/start')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const Fastify = require('fastify')
-const { once, EventEmitter } = require('events')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('Should throw if cron is not valid', async (t) => {
+async function createRuntimeWithScheduler (t, scheduler) {
+  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.scheduler = scheduler
+      return config
+    }
+  })
+
+  t.after(() => app.close())
+  await app.init()
+
+  return app
+}
+
+test('Should throw if cron is not valid', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   target.get('/test', async (req, reply) => {
@@ -25,25 +39,23 @@ test('Should throw if cron is not valid', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
-    {
-      name: 'test',
-      cron: 'BOOM!', // not valid
-      callbackUrl,
-      method: 'GET',
-    },
-  ]
   try {
-    await buildServer(config.configManager.current)
-    assert.fail('Should throw')
+    await createRuntimeWithScheduler(t, [
+      {
+        name: 'test',
+        cron: 'BOOM!', // not valid
+        callbackUrl,
+        method: 'GET'
+      }
+    ])
+
+    fail('Should throw')
   } catch (e) {
-    assert.strictEqual(e.message, 'Invalid cron expression "BOOM!" for scheduler "test"')
+    strictEqual(e.message, 'Invalid cron expression "BOOM!" for scheduler "test"')
   }
 })
 
-test('Start a job that hits a server with a GET', async (t) => {
+test('Start a job that hits a server with a GET', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   target.get('/test', async (req, reply) => {
@@ -55,17 +67,15 @@ test('Start a job that hits a server with a GET', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
       callbackUrl,
-      method: 'GET',
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+      method: 'GET'
+    }
+  ])
+
   t.after(() => app.close())
   // should be called multiple times (one time per second)
   await once(ee, 'target called')
@@ -73,7 +83,7 @@ test('Start a job that hits a server with a GET', async (t) => {
   await once(ee, 'target called')
 })
 
-test('Should not start a job if disabled', async (t) => {
+test('Should not start a job if disabled', async t => {
   const target = Fastify()
   const calls = []
   target.get('/test', async (req, reply) => {
@@ -84,24 +94,22 @@ test('Should not start a job if disabled', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       enabled: false,
       name: 'test',
       cron: '*/1 * * * * *', // every second
       callbackUrl,
-      method: 'GET',
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+      method: 'GET'
+    }
+  ])
+
   t.after(() => app.close())
   await new Promise(resolve => setTimeout(resolve, 3000))
-  assert.equal(calls.length, 0, 'Should not have been called')
+  equal(calls.length, 0, 'Should not have been called')
 })
 
-test('Shoud retry 3 times if fails ', async (t) => {
+test('Should retry 3 times if fails ', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   let attempts = 0
@@ -121,24 +129,21 @@ test('Shoud retry 3 times if fails ', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test2',
       cron: '*/1 * * * * *', // every second
       callbackUrl,
-      method: 'GET',
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+      method: 'GET'
+    }
+  ])
   t.after(() => app.close())
   // 3 attempts, the third one should succeed
   await once(ee, 'success')
-  assert.deepStrictEqual(calls.slice(0, 3), ['failure', 'failure', 'success'])
+  deepStrictEqual(calls.slice(0, 3), ['failure', 'failure', 'success'])
 })
 
-test('Start a job that hits a server with a POST of a JSON', async (t) => {
+test('Start a job that hits a server with a POST of a JSON', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   let bodyCall = null
@@ -153,9 +158,7 @@ test('Start a job that hits a server with a POST of a JSON', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
@@ -163,16 +166,15 @@ test('Start a job that hits a server with a POST of a JSON', async (t) => {
       body: { test: 'test' },
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+    }
+  ])
   t.after(() => app.close())
   // should be called multiple times (one time per second)
   await once(ee, 'target called')
-  assert.deepStrictEqual(bodyCall, { test: 'test' })
+  deepStrictEqual(bodyCall, { test: 'test' })
 })
 
-test('Start a job that hits a server with a POST of a TXT', async (t) => {
+test('Start a job that hits a server with a POST of a TXT', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   let bodyCall = null
@@ -187,9 +189,7 @@ test('Start a job that hits a server with a POST of a TXT', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
@@ -197,16 +197,15 @@ test('Start a job that hits a server with a POST of a TXT', async (t) => {
       body: 'test',
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' }
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+    }
+  ])
   t.after(async () => app.close())
   // should be called multiple times (one time per second)
   await once(ee, 'target called')
-  assert.deepStrictEqual(bodyCall, 'test')
+  deepStrictEqual(bodyCall, 'test')
 })
 
-test('Shoud stop retrying after 3 times ', async (t) => {
+test('Shoud stop retrying after 3 times ', async t => {
   const ee = new EventEmitter()
   const target = Fastify()
   const attempts = []
@@ -223,43 +222,37 @@ test('Shoud stop retrying after 3 times ', async (t) => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test2',
       cron: '*/1 * * * * *', // every second
       callbackUrl,
-      method: 'GET',
-    },
-  ]
-  const app = await buildServer(config.configManager.current)
+      method: 'GET'
+    }
+  ])
   t.after(() => app.close())
 
   await once(ee, 'success')
 
   // 3 attempts, then should be reset
-  assert.deepStrictEqual(attempts, [1, 2, 3, 1])
+  deepStrictEqual(attempts, [1, 2, 3, 1])
 })
 
-test('Works with the mesh network', async (t) => {
+test('Works with the mesh network', async t => {
   const port = 16667
   const callbackUrl = `http://service.plt.local:${port}/inc`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.scheduler = [
+  const app = await createRuntimeWithScheduler(t, [
     {
       name: 'test',
       cron: '*/1 * * * * *', // every second
       callbackUrl,
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'application/json'
       },
-      method: 'POST',
-    },
-  ]
-  const app = await buildRuntime(config.configManager)
+      method: 'POST'
+    }
+  ])
   t.after(() => app.close())
 
   const entryUrl = await app.start()
@@ -268,5 +261,5 @@ test('Works with the mesh network', async (t) => {
 
   const body = await res.body.json()
   const { counter } = body
-  assert.ok(counter > 0)
+  ok(counter > 0)
 })

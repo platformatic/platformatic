@@ -1,28 +1,28 @@
-# How to Use Watt with Multiple Repository Services
+# How to Use Watt with Multiple Repository Applications
 
 ## Problem
 
 You need to build a microservices application where:
-- Services are developed and maintained in separate Git repositories
-- Different teams work on different services independently
-- You want to combine services from multiple repos into a single Watt application
-- You need flexible service resolution for local development vs. production
+- Applications are developed and maintained in separate Git repositories
+- Different teams work on different applications independently
+- You want to combine applications from multiple repos into a single Watt application
+- You need flexible application resolution for local development vs. production
 
 **When to use this solution:**
 - Large organizations with multiple development teams
-- Microservices architectures with independent service deployment
-- Need to combine services from different repositories for integration testing
-- Want to maintain service independence while enabling orchestration
+- Microapplications architectures with independent application deployment
+- Need to combine applications from different repositories for integration testing
+- Want to maintain application independence while enabling orchestration
 
 ## Solution Overview
 
-Watt's multi-repository service resolution allows you to:
-1. Define services from different Git repositories in your main application
-2. Automatically resolve and integrate services from remote repositories  
-3. Override service locations for local development
-4. Build and deploy unified applications from distributed services
+Watt's multi-repository application resolution allows you to:
+1. Define applications from different Git repositories in your project
+2. Automatically resolve and integrate applications from remote repositories  
+3. Override application locations for local development
+4. Build and deploy unified applications from distributed applications
 
-This guide shows you how to set up and manage a Watt application with multi-repository services.
+This guide shows you how to set up and manage a Watt application with multi-repository applications.
 
 ## Prerequisites
 
@@ -30,19 +30,19 @@ Before starting, ensure you have:
 
 - [Node.js](https://nodejs.org/en) (v20.16.0+ or v22.3.0+)
 - [npm](https://www.npmjs.com/package/npm) (v10 or higher)
-- Git access to your service repositories
+- Git access to your application repositories
 - A code editor (e.g., [Visual Studio Code](https://code.visualstudio.com))
 
-## Step 1: Create Your Main Watt Application
+## Step 1: Create Your Project
 
-**1. Initialize a new Watt application:**
+**1. Initialize a new Watt project:**
 ```bash
 mkdir my-microservices-app
 cd my-microservices-app
 npx wattpm@latest init
 ```
 
-**2. Configure service resolution in package.json:**
+**2. Configure application resolution in package.json:**
 
 ```json
 {
@@ -67,22 +67,22 @@ npx wattpm@latest init
 }
 ```
 
-**3. Create directory structure for services:**
+**3. Create directory structure for applications:**
 ```bash
 mkdir -p web/ external/
 ```
 
 **What this setup provides:**
-- `web/` - Directory for resolved web services
-- `external/` - Directory for resolved external services  
-- `wattpm resolve` command for service resolution
-- Workspace configuration for multi-service management
+- `web/` - Directory for resolved web applications
+- `external/` - Directory for resolved external applications  
+- `wattpm resolve` command for application resolution
+- Workspace configuration for multi-application management
 
 ## Step 2: Configure Multi-Repository Services
 
 ### Define Services in watt.json
 
-Configure your `watt.json` to include services from multiple repositories:
+Configure your `watt.json` to include applications from multiple repositories:
 
 ```json
 {
@@ -93,14 +93,14 @@ Configure your `watt.json` to include services from multiple repositories:
       "path": "web/composer"
     },
     {
-      "id": "user-service",
+      "id": "user-application",
       "path": "{PLT_USER_SERVICE_PATH}",
-      "url": "https://github.com/your-org/user-service.git"
+      "url": "https://github.com/your-org/user-application.git"
     },
     {
-      "id": "product-service", 
+      "id": "product-application", 
       "path": "{PLT_PRODUCT_SERVICE_PATH}",
-      "url": "https://github.com/your-org/product-service.git"
+      "url": "https://github.com/your-org/product-application.git"
     },
     {
       "id": "frontend",
@@ -112,23 +112,23 @@ Configure your `watt.json` to include services from multiple repositories:
 ```
 
 **Configuration explanation:**
-- **Local services** (like `composer`) use direct paths
-- **Remote services** use environment variables for paths + Git URLs
+- **Local applications** (like `composer`) use direct paths
+- **Remote applications** use environment variables for paths + Git URLs
 - **Environment variables** allow flexible local vs. remote resolution
-- **Git URLs** define where to fetch services when not available locally
+- **Git URLs** define where to fetch applications when not available locally
 
 ### Repository Architecture Example
 
 ```
 Organization Structure:
-├── my-microservices-app/          # Main orchestration app
+├── my-microservices-app/          # Watt runtime orchestration
 │   ├── watt.json                  # Service definitions
 │   ├── package.json               # Workspace configuration
-│   └── web/                       # Resolved services appear here
-├── user-service/                  # Separate repository
+│   └── web/                       # Resolved applications appear here
+├── user-application/                  # Separate repository
 │   ├── package.json
 │   └── platformatic.json
-├── product-service/               # Separate repository  
+├── product-application/               # Separate repository  
 │   ├── package.json
 │   └── platformatic.json
 └── nextjs-frontend/               # Separate repository
@@ -143,34 +143,34 @@ Organization Structure:
 Create a `.env` file for local development:
 
 ```env
-# Local service paths (when developing locally)
-PLT_USER_SERVICE_PATH=../user-service
-PLT_PRODUCT_SERVICE_PATH=../product-service  
+# Local application paths (when developing locally)
+PLT_USER_SERVICE_PATH=../user-application
+PLT_PRODUCT_SERVICE_PATH=../product-application  
 PLT_FRONTEND_PATH=../nextjs-frontend
 
-# Production paths (when services are resolved from Git)
-# PLT_USER_SERVICE_PATH=web/user-service
-# PLT_PRODUCT_SERVICE_PATH=web/product-service
+# Production paths (when applications are resolved from Git)
+# PLT_USER_SERVICE_PATH=web/user-application
+# PLT_PRODUCT_SERVICE_PATH=web/product-application
 # PLT_FRONTEND_PATH=web/frontend
 ```
 
 ### Production Configuration
 
-For production deployments, services are resolved from Git repositories:
+For production deployments, applications are resolved from Git repositories:
 
 ```env
-# Production environment - services resolved from Git
-PLT_USER_SERVICE_PATH=web/user-service
-PLT_PRODUCT_SERVICE_PATH=web/product-service
+# Production environment - applications resolved from Git
+PLT_USER_SERVICE_PATH=web/user-application
+PLT_PRODUCT_SERVICE_PATH=web/product-application
 PLT_FRONTEND_PATH=web/frontend
 ```
 
 ### Git Configuration
 
-Update your main repository's `.gitignore`:
+Update your project repository's `.gitignore`:
 
 ```gitignore
-# Ignore resolved services - they come from other repos
+# Ignore resolved applications - they come from other repos
 web/*
 external/*
 !web/.gitkeep
@@ -184,35 +184,35 @@ dist/
 build/
 ```
 
-**Why ignore resolved services:**
+**Why ignore resolved applications:**
 - Services are pulled from their own repositories
-- Prevents committing resolved service code to main repo
-- Keeps main repo focused on orchestration configuration
+- Prevents committing resolved application code to project repo
+- Keeps project repo focused on orchestration configuration
 
 ## Step 4: Resolve and Run Services
 
 ### Resolve Services from Repositories
 
-**1. Resolve all services:**
+**1. Resolve all applications:**
 ```bash
 npm run resolve
 ```
 
 **What this does:**
-- Clones services from Git repositories if not found locally
-- Installs dependencies for each resolved service
-- Links services according to workspace configuration
-- Prepares services for building and running
+- Clones applications from Git repositories if not found locally
+- Installs dependencies for each resolved application
+- Links applications according to workspace configuration
+- Prepares applications for building and running
 
-**2. Verify service resolution:**
+**2. Verify application resolution:**
 ```bash
 ls -la web/
-# Should show resolved services: user-service, product-service, frontend
+# Should show resolved applications: user-application, product-application, frontend
 ```
 
 ### Build and Start Your Application
 
-**1. Build all services:**
+**1. Build all applications:**
 ```bash
 npm run build
 ```
@@ -231,22 +231,22 @@ npm run start
 
 ### Verify Service Resolution
 
-**1. Check that services were resolved correctly:**
+**1. Check that applications were resolved correctly:**
 ```bash
-# List resolved services
+# List resolved applications
 ls -la web/
 
-# Verify service configurations
-cat web/user-service/package.json
-cat web/product-service/platformatic.json
+# Verify application configurations
+cat web/user-application/package.json
+cat web/product-application/platformatic.json
 ```
 
-**2. Test service connectivity:**
+**2. Test application connectivity:**
 ```bash
 # Start the application
 npm run dev
 
-# Test individual services (if exposed)
+# Test individual applications (if exposed)
 curl http://localhost:3042/users/health
 curl http://localhost:3042/products/health
 curl http://localhost:3042/
@@ -254,14 +254,14 @@ curl http://localhost:3042/
 
 ### Local Development Workflow
 
-**For active development on specific services:**
+**For active development on specific applications:**
 
 ```bash
 # Set up local development
-export PLT_USER_SERVICE_PATH=../user-service-local
-export PLT_PRODUCT_SERVICE_PATH=web/product-service  # Use resolved version
+export PLT_USER_SERVICE_PATH=../user-application-local
+export PLT_PRODUCT_SERVICE_PATH=web/product-application  # Use resolved version
 
-# Resolve with mixed local/remote services
+# Resolve with mixed local/remote applications
 npm run resolve
 
 # Start development server
@@ -269,16 +269,16 @@ npm run dev
 ```
 
 **Benefits of this approach:**
-- Develop locally on services you're working on
-- Use stable versions of other services from Git
-- Quickly switch between local and remote service versions
-- Test integration without affecting other services
+- Develop locally on applications you're working on
+- Use stable versions of other applications from Git
+- Quickly switch between local and remote application versions
+- Test integration without affecting other applications
 
 ## Troubleshooting
 
 ### Service Resolution Fails
 
-**Problem:** `npm run resolve` fails to clone or resolve services
+**Problem:** `npm run resolve` fails to clone or resolve applications
 
 **Solutions:**
 - Verify Git repository URLs are accessible
@@ -288,33 +288,33 @@ npm run dev
 
 ### Services Not Starting
 
-**Problem:** Resolved services fail to start
+**Problem:** Resolved applications fail to start
 
 **Solutions:**
-- Check that service dependencies were installed (`npm run resolve` again)
-- Verify service configurations are valid
-- Check port conflicts between services
-- Review service logs for specific errors
+- Check that application dependencies were installed (`npm run resolve` again)
+- Verify application configurations are valid
+- Check port conflicts between applications
+- Review application logs for specific errors
 
 ### Local Development Issues  
 
-**Problem:** Local services not being used despite environment variables
+**Problem:** Local applications not being used despite environment variables
 
 **Solutions:**
 - Verify environment variables are exported in current shell
-- Check that local service paths exist and contain valid service code
-- Ensure local services have proper `package.json` and configuration files
+- Check that local application paths exist and contain valid application code
+- Ensure local applications have proper `package.json` and configuration files
 - Try resolving again: `npm run resolve`
 
 ### Build Failures
 
-**Problem:** `npm run build` fails for resolved services
+**Problem:** `npm run build` fails for resolved applications
 
 **Solutions:**
-- Ensure all services have proper build scripts in `package.json`
-- Check that service dependencies are installed
-- Verify service configurations are valid
-- Try building individual services to isolate issues
+- Ensure all applications have proper build scripts in `package.json`
+- Check that application dependencies are installed
+- Verify application configurations are valid
+- Try building individual applications to isolate issues
 
 ## Advanced Patterns
 
@@ -338,10 +338,10 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Resolve services from Git
+      - name: Resolve applications from Git
         env:
-          PLT_USER_SERVICE_PATH: web/user-service
-          PLT_PRODUCT_SERVICE_PATH: web/product-service
+          PLT_USER_SERVICE_PATH: web/user-application
+          PLT_PRODUCT_SERVICE_PATH: web/product-application
           PLT_FRONTEND_PATH: web/frontend
         run: npm run resolve
         
@@ -354,15 +354,15 @@ jobs:
 
 ### Service Versioning
 
-Pin specific service versions by using Git tags in URLs:
+Pin specific application versions by using Git tags in URLs:
 
 ```json
 {
   "web": [
     {
-      "id": "user-service",
-      "path": "web/user-service",
-      "url": "https://github.com/your-org/user-service.git#v1.2.3"
+      "id": "user-application",
+      "path": "web/user-application",
+      "url": "https://github.com/your-org/user-application.git#v1.2.3"
     }
   ]
 }
@@ -370,15 +370,15 @@ Pin specific service versions by using Git tags in URLs:
 
 ## Next Steps
 
-Now that you have multi-repository services working:
+Now that you have multi-repository applications working:
 
-- **[Set up monitoring](/docs/guides/monitoring)** - Monitor all services from one place
-- **[Configure deployment](/docs/guides/deployment/)** - Deploy your multi-service application
-- **[Add inter-service communication](/docs/guides/service-communication/)** - Enable services to communicate securely
-- **[Implement service discovery](/docs/guides/service-mesh/)** - Advanced service orchestration patterns
+- **[Set up monitoring](/docs/guides/monitoring)** - Monitor all applications from one place
+- **[Configure deployment](/docs/guides/deployment/)** - Deploy your multi-application application
+- **[Add inter-application communication](/docs/guides/application-communication/)** - Enable applications to communicate securely
+- **[Implement application discovery](/docs/guides/application-mesh/)** - Advanced application orchestration patterns
 
 ## Additional Resources
 
 - [wattpm-resolve sample application](https://github.com/platformatic/wattpm-resolve) - Complete working example
 - [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
-- [Service Development Guide](/docs/guides/service-development/) - Best practices for individual services
+- [Service Development Guide](/docs/guides/application-development/) - Best practices for individual applications

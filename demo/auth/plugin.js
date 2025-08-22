@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = async function app (app) {
+export default async function app (app) {
   app.log.info('loaded')
 
   app.get('/hello', async function () {

@@ -1,36 +1,36 @@
-'use strict'
-
-const fastify = require('fastify')
-const auth = require('..')
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const core = require('@platformatic/db-core')
-const { createPublicKey, generateKeyPairSync } = require('crypto')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const { request, Agent, setGlobalDispatcher } = require('undici')
-const { createSigner } = require('fast-jwt')
+import fastifyCookie from '@fastify/cookie'
+import fastifySession from '@fastify/session'
+import core from '@platformatic/db-core'
+import { createPublicKey, generateKeyPairSync } from 'crypto'
+import { createSigner } from 'fast-jwt'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { Agent, request, setGlobalDispatcher } from 'undici'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 const agent = new Agent({
   keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
+  keepAliveMaxTimeout: 10
 })
 setGlobalDispatcher(agent)
 
 async function buildAuthorizer (opts = {}) {
   const app = fastify({
-    forceCloseConnections: true,
+    forceCloseConnections: true
   })
-  app.register(require('@fastify/cookie'))
-  app.register(require('@fastify/session'), {
+  app.register(fastifyCookie)
+  app.register(fastifySession, {
     cookieName: 'sessionId',
     secret: 'a secret with minimum length of 32 characters',
-    cookie: { secure: false },
+    cookie: { secure: false }
   })
 
   app.post('/login', async (request, reply) => {
     request.session.user = request.body
     return {
-      status: 'ok',
+      status: 'ok'
     }
   })
 
@@ -53,7 +53,7 @@ async function buildAuthorizer (opts = {}) {
 
 async function buildAuthorizerAPIToken (opts = {}) {
   const app = fastify({
-    forceCloseConnections: true,
+    forceCloseConnections: true
   })
 
   app.post('/authorize', async (request, reply) => {
@@ -69,7 +69,7 @@ async function buildAuthorizerAPIToken (opts = {}) {
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
   publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
-  privateKeyEncoding: { type: 'pkcs1', format: 'pem' },
+  privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
 })
 const jwtPublicKey = createPublicKey(publicKey).export({ format: 'jwk' })
 
@@ -92,69 +92,70 @@ test('JWT + cookies with WebHook', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
-  const jwksEndpoint = await buildJwksEndpoint(
-    {
-      keys: [
-        {
-          alg,
-          kty,
-          n,
-          e,
-          use: 'sig',
-          kid,
-        },
-      ],
-    }
-  )
+  const jwksEndpoint = await buildJwksEndpoint({
+    keys: [
+      {
+        alg,
+        kty,
+        n,
+        e,
+        use: 'sig',
+        kid
+      }
+    ]
+  })
   test.after(() => jwksEndpoint.close())
 
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
     kid,
     alg,
-    typ: 'JWT',
+    typ: 'JWT'
   }
   const app = fastify({
-    forceCloseConnections: true,
+    forceCloseConnections: true
   })
-  app.register(core, {
+  await app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
-  app.register(auth, {
+  await app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`,
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
     },
     jwt: {
-      jwks: true,
+      jwks: true
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -167,12 +168,12 @@ test('JWT + cookies with WebHook', async () => {
     const res = await request(`http://localhost:${authorizer.server.address().port}/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         'X-PLATFORMATIC-USER-ID': userId,
-        'X-PLATFORMATIC-ROLE': role,
-      }),
+        'X-PLATFORMATIC-ROLE': role
+      })
     })
 
     res.body.resume()
@@ -181,13 +182,14 @@ test('JWT + cookies with WebHook', async () => {
     return cookie
   }
 
+  let id
   {
     const cookie = await getCookie(42, 'user')
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie,
+        cookie
       },
       body: {
         query: `
@@ -198,19 +200,25 @@ test('JWT + cookies with WebHook', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    const response = res.json()
+    id = response.data.savePage.id
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -219,26 +227,26 @@ test('JWT + cookies with WebHook', async () => {
       key: privateKey,
       header,
       iss: issuer,
-      kid,
+      kid
     })
     const payload = {
       'X-PLATFORMATIC-USER-ID': 42,
-      'X-PLATFORMATIC-ROLE': ['user'],
+      'X-PLATFORMATIC-ROLE': ['user']
     }
     const token = signSync(payload)
 
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1',
+      url: '/pages/' + id,
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
-      id: 1,
+      id,
       title: 'Hello',
-      userId: 42,
+      userId: 42
     })
   }
 })
@@ -249,41 +257,39 @@ test('Authorization both with JWT and WebHook', async () => {
       equal(request.headers.authorization, 'Bearer foobar')
       const payload = {
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       }
 
       return payload
-    },
+    }
   })
   test.after(() => authorizer.close())
 
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
-  const jwksEndpoint = await buildJwksEndpoint(
-    {
-      keys: [
-        {
-          alg,
-          kty,
-          n,
-          e,
-          use: 'sig',
-          kid,
-        },
-      ],
-    }
-  )
+  const jwksEndpoint = await buildJwksEndpoint({
+    keys: [
+      {
+        alg,
+        kty,
+        n,
+        e,
+        use: 'sig',
+        kid
+      }
+    ]
+  })
   test.after(() => jwksEndpoint.close())
 
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
     kid,
     alg,
-    typ: 'JWT',
+    typ: 'JWT'
   }
   const app = fastify({
-    forceCloseConnections: true,
+    forceCloseConnections: true
   })
   app.register(core, {
     ...connInfo,
@@ -292,37 +298,40 @@ test('Authorization both with JWT and WebHook', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`,
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
     },
     jwt: {
-      jwks: true,
+      jwks: true
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -336,7 +345,7 @@ test('Authorization both with JWT and WebHook', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: 'Bearer foobar',
+        Authorization: 'Bearer foobar'
       },
       body: {
         query: `
@@ -347,19 +356,23 @@ test('Authorization both with JWT and WebHook', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -368,11 +381,11 @@ test('Authorization both with JWT and WebHook', async () => {
       key: privateKey,
       header,
       iss: issuer,
-      kid,
+      kid
     })
     const payload = {
       'X-PLATFORMATIC-USER-ID': 42,
-      'X-PLATFORMATIC-ROLE': ['user'],
+      'X-PLATFORMATIC-ROLE': ['user']
     }
     const token = signSync(payload)
 
@@ -380,14 +393,14 @@ test('Authorization both with JWT and WebHook', async () => {
       method: 'GET',
       url: '/pages/1',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
-      userId: 42,
+      userId: 42
     })
   }
 })

@@ -1,5 +1,6 @@
 {
   "name": "node-service",
+  "type": "commonjs",
   "scripts": {
     "dev": "wattpm dev",
     "start": "wattpm start"

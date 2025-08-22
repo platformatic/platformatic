@@ -1,16 +1,14 @@
-'use strict'
-
-const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const { equal, deepEqual: same } = require('node:assert')
-const Fastify = require('fastify')
-const WebSocket = require('ws')
-const { once } = require('events')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlEvents = require('@platformatic/sql-events')
-const stream = require('stream')
-const graphql = require('graphql')
+import sqlEvents from '@platformatic/sql-events'
+import sqlMapper from '@platformatic/sql-mapper'
+import { once } from 'events'
+import Fastify from 'fastify'
+import { printSchema } from 'graphql'
+import { equal, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import { PassThrough } from 'stream'
+import WebSocket, { createWebSocketStream } from 'ws'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -27,8 +25,8 @@ async function createBasicPages (db, sql) {
 }
 
 function createWebSocketClient (t, app) {
-  const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')
-  const client = WebSocket.createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
+  const ws = new WebSocket('ws://localhost:' + app.server.address().port + '/graphql', 'graphql-ws')
+  const client = createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
   t.after(() => client.destroy())
   client.setEncoding('utf8')
   return { client, ws }
@@ -43,7 +41,7 @@ test('subscription - crud', async t => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL)
@@ -52,9 +50,11 @@ test('subscription - crud', async t => {
 
   const { client } = createWebSocketClient(t, app)
 
-  client.write(JSON.stringify({
-    type: 'connection_init',
-  }))
+  client.write(
+    JSON.stringify({
+      type: 'connection_init'
+    })
+  )
 
   {
     const query = `subscription {
@@ -63,13 +63,15 @@ test('subscription - crud', async t => {
         title
       }
     }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -78,13 +80,15 @@ test('subscription - crud', async t => {
         id
       }
     }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -103,8 +107,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -117,10 +121,10 @@ test('subscription - crud', async t => {
         data: {
           pageSaved: {
             id: '1',
-            title: 'Hello World',
-          },
-        },
-      },
+            title: 'Hello World'
+          }
+        }
+      }
     })
   }
 
@@ -134,8 +138,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -148,10 +152,10 @@ test('subscription - crud', async t => {
         data: {
           pageSaved: {
             id: '1',
-            title: 'Harry Potter',
-          },
-        },
-      },
+            title: 'Harry Potter'
+          }
+        }
+      }
     })
   }
 
@@ -165,8 +169,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `,
-    },
+      `
+    }
   })
 
   {
@@ -178,18 +182,15 @@ test('subscription - crud', async t => {
       payload: {
         data: {
           pageDeleted: {
-            id: '1',
-          },
-        },
-      },
+            id: '1'
+          }
+        }
+      }
     })
   }
 
   {
-    const [
-      received,
-      stored,
-    ] = await Promise.all(([
+    const [received, stored] = await Promise.all([
       (async function () {
         const res = await app.inject({
           method: 'POST',
@@ -204,13 +205,9 @@ test('subscription - crud', async t => {
             }
           `,
             variables: {
-              inputs: [
-                { title: 'Page 1' },
-                { title: 'Page 2' },
-                { title: 'Page 3' },
-              ],
-            },
-          },
+              inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+            }
+          }
         })
 
         const pages = res.json().data.insertPages
@@ -219,7 +216,7 @@ test('subscription - crud', async t => {
       })(),
       (async function () {
         const pages = []
-        const second = new stream.PassThrough({ objectMode: true })
+        const second = new PassThrough({ objectMode: true })
         client.pipe(second)
         for await (const chunk of second) {
           const data = JSON.parse(chunk)
@@ -230,8 +227,8 @@ test('subscription - crud', async t => {
         }
 
         return pages
-      })(),
-    ]))
+      })()
+    ])
 
     same(received, stored)
   }
@@ -246,15 +243,15 @@ test('subscription - ignore', async t => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['page'],
+    subscriptionIgnore: ['page']
   })
 
   await app.ready()
-  equal(graphql.printSchema(app.graphql.schema).indexOf('type Subscription'), -1)
+  equal(printSchema(app.graphql.schema).indexOf('type Subscription'), -1)
 })
 
 test('subscription - crud with two schemas and a ignore', async t => {
@@ -278,11 +275,11 @@ test('subscription - crud with two schemas and a ignore', async t => {
           name VARCHAR(42)
         );`)
       }
-    },
+    }
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['category'],
+    subscriptionIgnore: ['category']
   })
 
   await app.listen({ port: 0 })
@@ -290,9 +287,11 @@ test('subscription - crud with two schemas and a ignore', async t => {
   const { client } = createWebSocketClient(t, app)
   t.after(() => client.destroy())
 
-  client.write(JSON.stringify({
-    type: 'connection_init',
-  }))
+  client.write(
+    JSON.stringify({
+      type: 'connection_init'
+    })
+  )
 
   {
     const [chunk] = await once(client, 'data')
@@ -306,21 +305,25 @@ test('subscription - crud with two schemas and a ignore', async t => {
         id
       }
     }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    same(data.payload, [{
-      message: 'The subscription field "categorySaved" is not defined.',
-      locations: [{ line: 2, column: 7 }],
-    }])
+    same(data.payload, [
+      {
+        message: 'The subscription field "categorySaved" is not defined.',
+        locations: [{ line: 2, column: 7 }]
+      }
+    ])
   }
 })

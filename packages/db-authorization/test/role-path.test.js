@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const auth = require('..')
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 test('roles defined in objects and extracted with rolePath', async () => {
   const app = fastify()
@@ -16,43 +14,47 @@ test('roles defined in objects and extracted with rolePath', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     rolePath: 'resource_access.account.roles',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'moderator',
-      entity: 'page',
-      find: true,
-      delete: true,
-      save: true,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'moderator',
+        entity: 'page',
+        find: true,
+        delete: true,
+        save: true,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
       },
-    }, {
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -65,9 +67,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
     'X-PLATFORMATIC-USER-ID': 42,
     resource_access: {
       account: {
-        roles: ['user', 'moderator'],
-      },
-    },
+        roles: ['user', 'moderator']
+      }
+    }
   })
 
   {
@@ -75,7 +77,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -86,19 +88,23 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -106,7 +112,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -116,18 +122,24 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 1,
-          title: 'Hello',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
+            {
+              id: 1,
+              title: 'Hello'
+            }
+          ]
+        }
       },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 
   // Token with user and moderator roles as comma separated string
@@ -135,9 +147,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
     'X-PLATFORMATIC-USER-ID': 42,
     resource_access: {
       account: {
-        roles: 'moderator, user',
-      },
-    },
+        roles: 'moderator, user'
+      }
+    }
   })
 
   {
@@ -145,7 +157,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -156,19 +168,23 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 2,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 2,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -176,7 +192,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`,
+        Authorization: `Bearer ${token2}`
       },
       body: {
         query: `
@@ -186,27 +202,33 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 2,
-          title: 'Hello',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
+            {
+              id: 2,
+              title: 'Hello'
+            }
+          ]
+        }
       },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 
   const token3 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
     resource_access: {
       account: {
-        roles: 'user',
-      },
-    },
+        roles: 'user'
+      }
+    }
   })
 
   {
@@ -214,7 +236,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`,
+        Authorization: `Bearer ${token3}`
       },
       body: {
         query: `
@@ -225,19 +247,23 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 3,
-          title: 'Hello',
-          userId: 43,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 3,
+            title: 'Hello',
+            userId: 43
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -245,7 +271,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`,
+        Authorization: `Bearer ${token3}`
       },
       body: {
         query: `
@@ -255,28 +281,30 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 })

@@ -1,20 +1,18 @@
-'use strict'
+import camelcase from 'camelcase'
+import { singularize } from 'inflected'
+import { ParamLimitMustBeNotNegativeError, ParamLimitNotAllowedError } from './errors.js'
 
-const { singularize } = require('inflected')
-const camelcase = require('camelcase')
-const errors = require('./errors')
-
-function toUpperFirst (str) {
+export function toUpperFirst (str) {
   str = str.toString()
   return str[0].toUpperCase() + str.slice(1)
 }
 
-function toLowerFirst (str) {
+export function toLowerFirst (str) {
   str = str.toString()
   return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
-function toSingular (str) {
+export function toSingular (str) {
   str = camelcase(singularize(str))
   str = toUpperFirst(str)
   return str
@@ -24,36 +22,27 @@ function toSingular (str) {
  * If limit is not defined or invalid
  * let's set a safe default value preventing to load huge amount of data in memory
  */
-function sanitizeLimit (unsafeLimit, conf) {
+export function sanitizeLimit (unsafeLimit, conf) {
   const defaultLimit = conf?.default ?? 10
-  const limit = (unsafeLimit !== undefined) ? unsafeLimit : defaultLimit
+  const limit = unsafeLimit !== undefined ? unsafeLimit : defaultLimit
   const max = conf?.max ?? 100
 
   if (limit > max) {
-    throw new errors.ParamLimitNotAllowedError(limit, max)
+    throw new ParamLimitNotAllowedError(limit, max)
   }
 
   if (limit < 0) {
-    throw new errors.ParamLimitMustBeNotNegativeError(limit)
+    throw new ParamLimitMustBeNotNegativeError(limit)
   }
 
   return limit
 }
 
-function tableName (sql, table, schema) {
+export function tableName (sql, table, schema) {
   /* istanbul ignore next */
   return schema ? sql.ident(schema, table) : sql.ident(table)
 }
 
-function areSchemasSupported (sql) {
+export function areSchemasSupported (sql) {
   return !sql.isSQLite
-}
-
-module.exports = {
-  toSingular,
-  toUpperFirst,
-  toLowerFirst,
-  sanitizeLimit,
-  tableName,
-  areSchemasSupported,
 }

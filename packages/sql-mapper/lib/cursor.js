@@ -1,17 +1,20 @@
-'use strict'
-
-const errors = require('./errors')
+import {
+  MissingOrderByClauseError,
+  MissingOrderByFieldForCursorError,
+  MissingUniqueFieldInCursorError,
+  UnknownFieldError
+} from './errors.js'
 
 function sanitizeCursor (cursor, orderBy, inputToFieldMap, fields, primaryKeys) {
-  if (!orderBy || orderBy.length === 0) throw new errors.MissingOrderByClauseError()
+  if (!orderBy || orderBy.length === 0) throw new MissingOrderByClauseError()
   let hasUniqueField = false
   const validCursorFields = new Map()
 
   for (const [key, value] of Object.entries(cursor)) {
     const dbField = inputToFieldMap[key]
-    if (!dbField) throw new errors.UnknownFieldError(key)
-    const order = orderBy.find((order) => order.field === key)
-    if (!order) throw new errors.MissingOrderByFieldForCursorError(key)
+    if (!dbField) throw new UnknownFieldError(key)
+    const order = orderBy.find(order => order.field === key)
+    if (!order) throw new MissingOrderByFieldForCursorError(key)
     if (primaryKeys.has(dbField)) hasUniqueField = true
     validCursorFields.set(key, {
       dbField,
@@ -20,7 +23,7 @@ function sanitizeCursor (cursor, orderBy, inputToFieldMap, fields, primaryKeys) 
       fieldWrap: fields[dbField]
     })
   }
-  if (!hasUniqueField) throw new errors.MissingUniqueFieldInCursorError()
+  if (!hasUniqueField) throw new MissingUniqueFieldInCursorError()
 
   // Process fields in orderBy order
   const cursorFields = []
@@ -72,15 +75,20 @@ function buildQuery (cursorFields, sql, computeCriteriaValue, isBackwardPaginati
   return sql`(${sql.join(conditions, sql` OR `)})`
 }
 
-function buildCursorCondition (sql, cursor, orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination) {
+export function buildCursorCondition (
+  sql,
+  cursor,
+  orderBy,
+  inputToFieldMap,
+  fields,
+  computeCriteriaValue,
+  primaryKeys,
+  isBackwardPagination
+) {
   if (!cursor || Object.keys(cursor).length === 0) return null
   const cursorFields = sanitizeCursor(cursor, orderBy, inputToFieldMap, fields, primaryKeys)
   const sameSortDirection = cursorFields.every(({ direction }) => direction === cursorFields[0].direction)
   return sameSortDirection
     ? buildTupleQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination)
     : buildQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination)
-}
-
-module.exports = {
-  buildCursorCondition,
 }

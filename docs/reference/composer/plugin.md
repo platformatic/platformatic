@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 # Plugin
 
-To extend the functionality of a service in Platformatic, you can register a [plugin](https://fastify.dev/docs/latest/Reference/Plugins/). These plugins are standard [Fastify](https://fastify.io) plugins.
+To extend the functionality of an application in Platformatic, you can register a [plugin](https://fastify.dev/docs/latest/Reference/Plugins/). These plugins are standard [Fastify](https://fastify.io) plugins.
 
 ## Plugin Configuration
 

@@ -18,5 +18,10 @@
   },
   "plugins": {
     "paths": ["./plugin.js"]
+  },
+  "runtime": {
+    "logger": {
+      "level": "fatal"
+    }
   }
 }

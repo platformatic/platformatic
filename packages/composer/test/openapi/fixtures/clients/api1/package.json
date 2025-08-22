@@ -1,5 +1,5 @@
 {
   "name": "api1",
-  "main": "./api1.cjs",
+  "main": "./api1.js",
   "types": "./api1.d.ts"
 }

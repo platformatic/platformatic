@@ -1,6 +1,4 @@
-'use strict'
-
-function findRule (rules, roles) {
+export function findRule (rules, roles) {
   let found = null
   for (const rule of rules) {
     for (const role of roles) {
@@ -15,5 +13,3 @@ function findRule (rules, roles) {
   }
   return found
 }
-
-module.exports = findRule

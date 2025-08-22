@@ -1,7 +1,7 @@
 /// <reference types="@platformatic/service" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
-module.exports = async function (fastify) {
+export default async function (fastify) {
   fastify.get('/docs', async ({ headers }) => {
     if (headers.authorization !== '42') {
       throw new Error('Ouch!')

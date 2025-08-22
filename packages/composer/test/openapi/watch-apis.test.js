@@ -1,46 +1,50 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { writeFile, mkdtemp } = require('node:fs/promises')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createComposerInRuntime, createOpenApiService, testEntityRoutes, waitForRestart } = require('../helper')
+import assert from 'node:assert/strict'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { createComposerInRuntime, createOpenApiApplication, testEntityRoutes, waitForRestart } from '../helper.js'
 
 const REFRESH_TIMEOUT = 1000
 
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should restart composer if api has been changed', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
   const runtime = await createComposerInRuntime(t, 'openapi-watch', {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1',
-          },
+            prefix: '/api1'
+          }
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2',
-          },
-        },
+            prefix: '/api2'
+          }
+        }
       ],
-      refreshTimeout: REFRESH_TIMEOUT,
-    },
+      refreshTimeout: REFRESH_TIMEOUT
+    }
   })
 
   let composerOrigin = await runtime.start()
@@ -48,7 +52,7 @@ test('should restart composer if api has been changed', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -65,7 +69,7 @@ test('should restart composer if api has been changed', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -76,41 +80,46 @@ test('should restart composer if api has been changed', async t => {
 
     const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/api1/users',
+      url: '/api1/users'
     })
     assert.equal(statusCode2, 404)
   }
 })
 
 test('should watch api only if it has a url', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
   const runtime = await createComposerInRuntime(t, 'openapi-watch', {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1',
-          },
+            prefix: '/api1'
+          }
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'posts.json'),
-            prefix: '/api2',
-          },
-        },
+            file: join(import.meta.dirname, 'fixtures', 'schemas', 'posts.json'),
+            prefix: '/api2'
+          }
+        }
       ],
-      refreshTimeout: REFRESH_TIMEOUT,
-    },
+      refreshTimeout: REFRESH_TIMEOUT
+    }
   })
 
   const composerOrigin = await runtime.start()
@@ -118,7 +127,7 @@ test('should watch api only if it has a url', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -135,7 +144,7 @@ test('should watch api only if it has a url', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -146,15 +155,15 @@ test('should watch api only if it has a url', async t => {
 
     const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/api2/posts',
+      url: '/api2/posts'
     })
     assert.equal(statusCode2, 500)
   }
 })
 
-test('should compose schema after service restart', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+test('should compose schema after application restart', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
@@ -163,27 +172,32 @@ test('should compose schema after service restart', async t => {
   const api2Port = api2.server.address().port
 
   const runtime = await createComposerInRuntime(t, 'openapi-watch', {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1Port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1',
-          },
+            prefix: '/api1'
+          }
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2Port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2',
-          },
-        },
+            prefix: '/api2'
+          }
+        }
       ],
-      refreshTimeout: REFRESH_TIMEOUT,
-    },
+      refreshTimeout: REFRESH_TIMEOUT
+    }
   })
 
   let composerOrigin = await runtime.start()
@@ -191,7 +205,7 @@ test('should compose schema after service restart', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -208,7 +222,7 @@ test('should compose schema after service restart', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -219,12 +233,12 @@ test('should compose schema after service restart', async t => {
 
     const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/api1/users',
+      url: '/api1/users'
     })
     assert.equal(statusCode2, 404)
   }
 
-  const newApi1 = await createOpenApiService(t, ['users'])
+  const newApi1 = await createOpenApiApplication(t, ['users'])
   await newApi1.listen({ port: api1Port })
 
   composerOrigin = await waitForRestart(runtime, composerOrigin)
@@ -232,7 +246,7 @@ test('should compose schema after service restart', async t => {
   {
     const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
-      url: '/documentation/json',
+      url: '/documentation/json'
     })
     assert.equal(statusCode, 200)
 
@@ -244,34 +258,39 @@ test('should compose schema after service restart', async t => {
 })
 
 test('should not watch an api if refreshTimeout equals 0', async t => {
-  const api1 = await createOpenApiService(t, ['users'])
-  const api2 = await createOpenApiService(t, ['posts'])
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
   const runtime = await createComposerInRuntime(t, 'openapi-watch', {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1',
-          },
+            prefix: '/api1'
+          }
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2',
-          },
-        },
+            prefix: '/api2'
+          }
+        }
       ],
-      refreshTimeout: 0,
-    },
+      refreshTimeout: 0
+    }
   })
 
   await runtime.start()
@@ -283,15 +302,15 @@ test('should not watch an api if refreshTimeout equals 0', async t => {
 })
 
 test('should not restart composer if schema has been changed', async t => {
-  const api = await createOpenApiService(t, ['users'])
+  const api = await createOpenApiApplication(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        alias: '/customers/{id}',
-      },
-    },
+        alias: '/customers/{id}'
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -299,19 +318,24 @@ test('should not restart composer if schema has been changed', async t => {
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
   const runtime = await createComposerInRuntime(t, 'openapi-watch', {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [
+      applications: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
             url: '/documentation/json',
-            config: openapiConfigFile,
-          },
-        },
+            config: openapiConfigFile
+          }
+        }
       ],
-      refreshTimeout: REFRESH_TIMEOUT,
-    },
+      refreshTimeout: REFRESH_TIMEOUT
+    }
   })
 
   await runtime.start()

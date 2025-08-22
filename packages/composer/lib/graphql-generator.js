@@ -1,24 +1,26 @@
-'use strict'
+import fp from 'fastify-plugin'
+import mercurius from 'mercurius'
+import { fetchGraphqlSubgraphs } from './graphql-fetch.js'
 
-const fp = require('fastify-plugin')
-const mercurius = require('mercurius')
-const { fetchGraphqlSubgraphs } = require('./graphql-fetch')
+async function graphqlGeneratorPlugin (app, opts) {
+  if (!opts.applications.some(s => s.graphql)) {
+    return
+  }
 
-async function composeGraphql (app, opts) {
-  if (!opts.services.some(s => s.graphql)) { return }
+  const applications = []
 
-  const services = []
-
-  for (const service of opts.services) {
-    if (!service.graphql) { continue }
-    services.push(service)
+  for (const application of opts.applications) {
+    if (!application.graphql) {
+      continue
+    }
+    applications.push(application)
   }
 
   const graphqlConfig = {
-    graphiql: opts.graphql?.graphiql,
+    graphiql: opts.graphql?.graphiql
   }
-  if (services.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql, app)
+  if (applications.length > 0) {
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(applications, opts.graphql, app)
     graphqlConfig.schema = graphqlSupergraph.sdl
     graphqlConfig.resolvers = graphqlSupergraph.resolvers
     graphqlConfig.subscription = false // TODO support subscriptions, will be !!opts.graphql.subscriptions
@@ -28,4 +30,4 @@ async function composeGraphql (app, opts) {
   await app.register(mercurius, graphqlConfig)
 }
 
-module.exports = fp(composeGraphql)
+export const graphqlGenerator = fp(graphqlGeneratorPlugin)

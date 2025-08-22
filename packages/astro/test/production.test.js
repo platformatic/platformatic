@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -32,7 +32,7 @@ const configurations = [
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
-    files: [...files, ...internalServicesFiles],
+    files: [...files, ...internalApplicationsFiles],
     checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'

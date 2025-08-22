@@ -6,7 +6,7 @@
       "transport": {
         "target": "pino/file",
         "options": {
-          "destination": "{LOG_DIR}/service.log",
+          "destination": "{LOG_DIR}/application.log",
           "mkdir": true
         }
       },
@@ -15,9 +15,7 @@
       },
       "timestamp": "isoTime",
       "redact": {
-        "paths": [
-          "secret"
-        ],
+        "paths": ["secret"],
         "censor": "***HIDDEN***"
       }
     }

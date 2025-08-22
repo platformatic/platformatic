@@ -1,5 +1,6 @@
 {
   "name": "composer",
+  "type": "commonjs",
   "scripts": {
     "start": "platformatic start"
   },

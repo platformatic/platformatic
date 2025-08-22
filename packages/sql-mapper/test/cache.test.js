@@ -1,6 +1,6 @@
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const { setupDatabase, isSQLite } = require('./helper')
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { isSQLite, setupDatabase } from './helper.js'
 
 const seed = [
   'DROP TABLE IF EXISTS movies',
@@ -15,7 +15,7 @@ const seed = [
     title VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
   )`,
-  'INSERT INTO movies (title) VALUES (\'Jurassic Park\'), (\'The Dark Knight\'), (\'Memento\')',
+  "INSERT INTO movies (title) VALUES ('Jurassic Park'), ('The Dark Knight'), ('Memento')"
 ]
 
 test('setup', async t => {
@@ -33,10 +33,18 @@ test('dedupe', async t => {
     let misses = 0
     let errors = 0
     const cache = {
-      onDedupe: () => { dedupes++ },
-      onHit: () => { hits++ },
-      onMiss: () => { misses++ },
-      onError: () => { errors++ },
+      onDedupe: () => {
+        dedupes++
+      },
+      onHit: () => {
+        hits++
+      },
+      onMiss: () => {
+        misses++
+      },
+      onError: () => {
+        errors++
+      }
     }
     const mapper = await setupDatabase({ seed, cache, t })
     const concurrency = 10
@@ -45,7 +53,8 @@ test('dedupe', async t => {
     const results = await Promise.allSettled(tasks)
 
     equal(results.length, concurrency)
-    results.forEach(r => deepEqual(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
+    results.forEach(r =>
+      deepEqual(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
     equal(dedupes, concurrency - 1)
     equal(hits, 0)
     equal(misses, 0)
@@ -58,10 +67,18 @@ test('dedupe', async t => {
     let misses = 0
     let errors = 0
     const cache = {
-      onDedupe: () => { dedupes++ },
-      onHit: () => { hits++ },
-      onMiss: () => { misses++ },
-      onError: () => { errors++ },
+      onDedupe: () => {
+        dedupes++
+      },
+      onHit: () => {
+        hits++
+      },
+      onMiss: () => {
+        misses++
+      },
+      onError: () => {
+        errors++
+      }
     }
     const mapper = await setupDatabase({ seed, cache, t })
     const concurrency = 10
@@ -71,7 +88,8 @@ test('dedupe', async t => {
       const results = await Promise.allSettled(tasks)
 
       equal(results.length, concurrency)
-      results.forEach(r => deepEqual(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
+      results.forEach(r =>
+        deepEqual(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
     })
 
     equal(dedupes, 0)

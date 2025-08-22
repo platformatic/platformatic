@@ -5,11 +5,11 @@ label: Database Service
 
 # Database Service
 
-The Database Service is a core service type that runs within Watt (the Node.js Application Server). It automatically generates GraphQL and REST APIs from your database schema, eliminating the need to write boilerplate CRUD operations.
+The Database Service is a core application type that runs within Watt (the Node.js Application Server). It automatically generates GraphQL and REST APIs from your database schema, eliminating the need to write boilerplate CRUD operations.
 
 The Database Service supports PostgreSQL, MySQL, MariaDB, and SQLite, automatically introspecting your database schema to create type-safe, fully-featured APIs with support for relationships, filtering, pagination, and real-time subscriptions.
 
-For a high level overview of how Watt and its services work, please reference the [Overview](../../Overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
 
 ## Features
 
@@ -38,6 +38,18 @@ For a high level overview of how Watt and its services work, please reference th
 ### Usage
 - Integrate Platformatic DB [programmatically](../db/programmatic.md) into your tests or other applications for more dynamic usage.
 
+### Command Line usage (CLI)
+
+When using [Watt](../watt/overview.md), `@platformatic/db` applications will make some additional commands available on the terminal.
+
+All the commands will be prefixed by the application id. For instance, if your application id is `movies`, then you will have the following commands available:
+
+- `movies:migrations:create`: Create a new migration file. See the [migration documentation](./migrations.md) for more informations.
+- `movies:migrations:apply`: Apply all configured migrations to the database. See the [migration documentation](./migrations.md) for more informations.
+- `movies:seed`: Load a seed into the database. See the [seed documentation](./seed.md) for more informations.
+- `movies:types`: Generate TypeScript types for your entities from the database.
+- `movies:schema`: Prints the OpenAPI or GraphQL schema for the database.
+
 ## Quick Start
 
 The easiest way to create a Database Service is within a Watt application:
@@ -55,7 +67,7 @@ wattpm dev
 
 Your Database Service will automatically generate REST and GraphQL APIs based on your database schema. Visit the interactive documentation at `http://localhost:3042/documentation` to explore your APIs.
 
-For service-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
+For application-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
 
 ## When to Use Database Service
 

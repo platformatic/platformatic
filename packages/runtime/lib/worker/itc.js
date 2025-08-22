@@ -1,15 +1,22 @@
-'use strict'
-
-const { once } = require('node:events')
-const { parentPort, workerData } = require('node:worker_threads')
-
-const { ITC } = require('@platformatic/itc')
-const { Unpromise } = require('@watchable/unpromise')
-
-const errors = require('../errors')
-const { updateUndiciInterceptors } = require('./interceptors')
-const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
-const { MessagingITC } = require('./messaging')
+import { ensureLoggableError } from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import { Unpromise } from '@watchable/unpromise'
+import { once } from 'node:events'
+import { parentPort, workerData } from 'node:worker_threads'
+import {
+  ApplicationExitedError,
+  FailedToPerformCustomHealthCheckError,
+  FailedToPerformCustomReadinessCheckError,
+  FailedToRetrieveGraphQLSchemaError,
+  FailedToRetrieveHealthError,
+  FailedToRetrieveMetaError,
+  FailedToRetrieveMetricsError,
+  FailedToRetrieveOpenAPISchemaError,
+  WorkerExitedError
+} from '../errors.js'
+import { updateUndiciInterceptors } from './interceptors.js'
+import { MessagingITC } from './messaging.js'
+import { kApplicationId, kITC, kId, kWorkerId } from './symbols.js'
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -26,9 +33,9 @@ async function safeHandleInITC (worker, fn) {
 
     if (typeof exitCode === 'number') {
       if (typeof worker[kWorkerId] !== 'undefined') {
-        throw new errors.WorkerExitedError(worker[kWorkerId], worker[kServiceId], exitCode)
+        throw new WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
       } else {
-        throw new errors.ServiceExitedError(worker[kId], exitCode)
+        throw new ApplicationExitedError(worker[kId], exitCode)
       }
     } else {
       ac.abort()
@@ -48,16 +55,22 @@ async function safeHandleInITC (worker, fn) {
   }
 }
 
-async function sendViaITC (worker, name, message, transferList) {
+async function closeITC (dispatcher, itc, messaging) {
+  await dispatcher.interceptor.close()
+  itc.close()
+  messaging.close()
+}
+
+export async function sendViaITC (worker, name, message, transferList) {
   return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
 }
 
-async function waitEventFromITC (worker, event) {
+export async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-function setupITC (app, service, dispatcher, sharedContext) {
-  const messaging = new MessagingITC(app.appConfig.id, workerData.config)
+export function setupITC (instance, application, dispatcher, sharedContext) {
+  const messaging = new MessagingITC(instance.appConfig.id, workerData.config)
 
   Object.assign(globalThis.platformatic ?? {}, {
     messaging: {
@@ -67,50 +80,55 @@ function setupITC (app, service, dispatcher, sharedContext) {
   })
 
   const itc = new ITC({
-    name: app.appConfig.id + '-worker',
+    name: instance.appConfig.id + '-worker',
     port: parentPort,
     handlers: {
       async start () {
-        const status = app.getStatus()
+        const status = instance.getStatus()
 
         if (status === 'starting') {
-          await once(app, 'start')
+          await once(instance, 'start')
         } else {
-          // This gives a chance to a stackable to perform custom logic
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('start')
 
-          await app.start()
+          try {
+            await instance.start()
+          } catch (e) {
+            await instance.stop(true)
+            await closeITC(dispatcher, itc, messaging)
+
+            throw ensureLoggableError(e)
+          }
         }
 
-        if (service.entrypoint) {
-          await app.listen()
+        if (application.entrypoint) {
+          await instance.listen()
         }
 
-        dispatcher.replaceServer(await app.stackable.getDispatchTarget())
-        return service.entrypoint ? app.stackable.getUrl() : null
+        dispatcher.replaceServer(await instance.capability.getDispatchTarget())
+        return application.entrypoint ? instance.capability.getUrl() : null
       },
 
       async stop () {
-        const status = app.getStatus()
+        const status = instance.getStatus()
 
         if (status === 'starting') {
-          await once(app, 'start')
+          await once(instance, 'start')
         }
 
         if (status.startsWith('start')) {
-          // This gives a chance to a stackable to perform custom logic
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('stop')
 
-          await app.stop()
+          await instance.stop()
         }
 
-        await dispatcher.interceptor.close()
-        itc.close()
-        messaging.close()
+        await closeITC(dispatcher, itc, messaging)
       },
 
       async build () {
-        return app.stackable.build()
+        return instance.capability.build()
       },
 
       async removeFromMesh () {
@@ -118,7 +136,7 @@ function setupITC (app, service, dispatcher, sharedContext) {
       },
 
       inject (injectParams) {
-        return app.stackable.inject(injectParams)
+        return instance.capability.inject(injectParams)
       },
 
       async updateUndiciInterceptors (undiciConfig) {
@@ -126,87 +144,83 @@ function setupITC (app, service, dispatcher, sharedContext) {
       },
 
       async updateWorkersCount (data) {
-        const { serviceId, workers } = data
-        const worker = workerData.config.serviceMap.get(serviceId)
-        if (worker) {
-          worker.workers = workers
-        }
-        workerData.serviceConfig.workers = workers
+        const { workers } = data
+        workerData.applicationConfig.workers = workers
         workerData.worker.count = workers
       },
 
       getStatus () {
-        return app.getStatus()
+        return instance.getStatus()
       },
 
-      getServiceInfo () {
-        return app.stackable.getInfo()
+      getApplicationInfo () {
+        return instance.capability.getInfo()
       },
 
-      async getServiceConfig () {
-        const current = await app.stackable.getConfig()
+      async getApplicationConfig () {
+        const current = await instance.capability.getConfig()
         // Remove all undefined keys from the config
         return JSON.parse(JSON.stringify(current))
       },
 
-      async getServiceEnv () {
+      async getApplicationEnv () {
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.stackable.getEnv()) }))
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await instance.capability.getEnv()) }))
       },
 
-      async getServiceOpenAPISchema () {
+      async getApplicationOpenAPISchema () {
         try {
-          return await app.stackable.getOpenapiSchema()
+          return await instance.capability.getOpenapiSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
+          throw new FailedToRetrieveOpenAPISchemaError(application.id, err.message)
         }
       },
 
-      async getServiceGraphQLSchema () {
+      async getApplicationGraphQLSchema () {
         try {
-          return await app.stackable.getGraphqlSchema()
+          return await instance.capability.getGraphqlSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
+          throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
       },
 
-      async getServiceMeta () {
+      async getApplicationMeta () {
         try {
-          return await app.stackable.getMeta()
+          return await instance.capability.getMeta()
         } catch (err) {
-          throw new errors.FailedToRetrieveMetaError(service.id, err.message)
+          throw new FailedToRetrieveMetaError(application.id, err.message)
         }
       },
 
       async getMetrics (format) {
         try {
-          return await app.getMetrics({ format })
+          return await instance.getMetrics({ format })
         } catch (err) {
-          throw new errors.FailedToRetrieveMetricsError(service.id, err.message)
+          throw new FailedToRetrieveMetricsError(application.id, err.message)
         }
       },
 
       async getHealth () {
         try {
-          return await app.getHealth()
+          return await instance.getHealth()
         } catch (err) {
-          throw new errors.FailedToRetrieveHealthError(service.id, err.message)
+          throw new FailedToRetrieveHealthError(application.id, err.message)
         }
       },
 
       async getCustomHealthCheck () {
         try {
-          return await app.stackable.getCustomHealthCheck()
+          return await instance.capability.getCustomHealthCheck()
         } catch (err) {
-          throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
+          throw new FailedToPerformCustomHealthCheckError(application.id, err.message)
         }
       },
 
       async getCustomReadinessCheck () {
         try {
-          return await app.stackable.getCustomReadinessCheck()
+          return await instance.capability.getCustomReadinessCheck()
         } catch (err) {
-          throw new errors.FailedToPerformCustomReadinessCheckError(service.id, err.message)
+          throw new FailedToPerformCustomReadinessCheckError(application.id, err.message)
         }
       },
 
@@ -220,12 +234,10 @@ function setupITC (app, service, dispatcher, sharedContext) {
     }
   })
 
-  app.on('changed', () => {
+  instance.on('changed', () => {
     itc.notify('changed')
   })
 
   itc.listen()
   return itc
 }
-
-module.exports = { sendViaITC, setupITC, waitEventFromITC }

@@ -1,66 +1,58 @@
-'use strict'
-
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-const connInfo = {}
+export const connInfo = {}
+export let isPg = false
+export let isMysql = false
+export let isSQLite = false
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  module.exports.isPg = true
+  isPg = true
 } else if (process.env.DB === 'mariadb') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'mysql8') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
-  module.exports.isSQLite = true
+  isSQLite = true
 }
 
-module.exports.connInfo = connInfo
-
-module.exports.clear = async function (db, sql) {
+export async function clear (db, sql) {
   try {
     await db.query(sql`DROP TABLE pages`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP TABLE categories`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE posts`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE simple_types`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE owners`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE users`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE versions`)
-  } catch {
-  }
+  } catch {}
 }

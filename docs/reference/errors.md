@@ -1,9 +1,38 @@
 # Platformatic Errors 
 
+## @platformatic/basic 
+
+### PLT_BASIC_NON_ZERO_EXIT_CODE
+**Message:** Process exited with non zero exit code %d. 
+
+### PLT_BASIC_UNSUPPORTED_VERSION
+**Message:** %s version %s is not supported. Please use version %s. 
+
 ## @platformatic/client 
 
 ### PLT_CLIENT_OPTIONS_URL_REQUIRED
 **Message:** options.url is required 
+
+### PLT_CLIENT_FORM_DATA_REQUIRED
+**Message:** Operation %s should be called with a undici.FormData as payload 
+
+### PLT_CLIENT_MISSING_PARAMS_REQUIRED
+**Message:** Param %s is missing, and it's required 
+
+### PLT_CLIENT_WRONG_OPTS_TYPE
+**Message:** opts.type must be either "openapi" or "graphql" 
+
+### PLT_CLIENT_INVALID_RESPONSE_SCHEMA
+**Message:** No matching response schema found for status code %s 
+
+### PLT_CLIENT_INVALID_CONTENT_TYPE
+**Message:** No matching content type schema found for %s 
+
+### PLT_CLIENT_INVALID_RESPONSE_FORMAT
+**Message:** Invalid response format 
+
+### PLT_CLIENT_UNEXPECTED_CALL_FAILURE
+**Message:** Unexpected failure calling the client: %s 
 
 ## @platformatic/client-cli 
 
@@ -15,85 +44,90 @@
 
 ## @platformatic/composer 
 
-### PLT_COMPOSER_FASTIFY_INSTANCE_IS_ALREADY_LISTENING
-**Message:** Fastify instance is already listening. Cannot call "addComposerOnRouteHook"! 
+### PLT_COMPOSER_COULD_NOT_READ_OPENAPI_CONFIG
+**Message:** Could not read openapi config for "%s" service 
 
 ### PLT_COMPOSER_FAILED_TO_FETCH_OPENAPI_SCHEMA
 **Message:** Failed to fetch OpenAPI schema from %s 
 
-### PLT_COMPOSER_VALIDATION_ERRORS
-**Message:** Validation errors: %s 
+### PLT_COMPOSER_FASTIFY_INSTANCE_IS_ALREADY_LISTENING
+**Message:** Fastify instance is already listening. Cannot call "addComposerOnRouteHook"! 
 
 ### PLT_COMPOSER_PATH_ALREADY_EXISTS
 **Message:** Path "%s" already exists 
 
-### PLT_COMPOSER_COULD_NOT_READ_OPENAPI_CONFIG
-**Message:** Could not read openapi config for "%s" service 
-
-## @platformatic/config 
-
-### PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA
-**Message:** The configuration does not validate against the configuration schema 
-
-### PLT_CONFIG_SOURCE_MISSING
-**Message:** Source missing. 
-
-### PLT_CONFIG_INVALID_PLACEHOLDER
-**Message:** %s is an invalid placeholder. All placeholders must be prefixed with PLT_.
-Did you mean PLT_%s? 
-
-### PLT_CONFIG_ENV_VAR_MISSING
-**Message:** %s env variable is missing. 
-
-### PLT_CONFIG_CANNOT_PARSE_CONFIG_FILE
-**Message:** Cannot parse config file. %s 
-
-### PLT_CONFIG_VALIDATION_ERRORS
+### PLT_COMPOSER_VALIDATION_ERRORS
 **Message:** Validation errors: %s 
 
-### PLT_CONFIG_APP_MUST_BE_A_FUNCTION
-**Message:** app must be a function 
+## @platformatic/control 
 
-### PLT_CONFIG_SCHEMA_MUST_BE_DEFINED
-**Message:** schema must be defined 
+### PLT_CTR_RUNTIME_NOT_FOUND
+**Message:** Runtime not found. 
 
-### PLT_CONFIG_SCHEMA_ID_MUST_BE_A_STRING
-**Message:** schema.$id must be a string with length > 0 
+### PLT_CTR_SERVICE_NOT_FOUND
+**Message:** Service not found. 
 
-### PLT_CONFIG_CONFIG_TYPE_MUST_BE_A_STRING
-**Message:** configType must be a string 
+### PLT_CTR_MISSING_REQUEST_URL
+**Message:** Request URL is required. 
 
-### PLT_CONFIG_ADD_A_MODULE_PROPERTY_TO_THE_CONFIG_OR_ADD_A_KNOWN_SCHEMA
-**Message:** Add a module property to the config or add a known $schema. 
+### PLT_CTR_FAILED_TO_GET_RUNTIME_METADATA
+**Message:** Failed to get runtime metadata %s. 
 
-### PLT_CONFIG_VERSION_MISMATCH
-**Message:** Version mismatch. You are running Platformatic %s but your app requires %s 
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICES
+**Message:** Failed to get runtime services %s. 
 
-### PLT_CONFIG_INVALID_CONFIG_FILE_EXTENSION
-**Message:** Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported. 
+### PLT_CTR_FAILED_TO_GET_RUNTIME_ENV
+**Message:** Failed to get runtime environment variables %s. 
 
-### PLT_CONFIG_NO_CONFIG_FILE_FOUND
-**Message:** no config file found 
+### PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI
+**Message:** Failed to get runtime OpenAPI schema %s. 
 
-### PLT_CONFIG_VERSION_MISSING
-**Message:** version is required if upgrade is specified. 
+### PLT_CTR_FAILED_TO_STREAM_RUNTIME_LOGS
+**Message:** Failed to stream runtime logs %s. 
+
+### PLT_CTR_FAILED_TO_STOP_RUNTIME
+**Message:** Failed to stop the runtime %s. 
+
+### PLT_CTR_FAILED_TO_RELOAD_RUNTIME
+**Message:** Failed to reload the runtime %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_CONFIG
+**Message:** Failed to get runtime config %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICE_ENV
+**Message:** Failed to get runtime service environment variables %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_SERVICE_CONFIG
+**Message:** Failed to get runtime service config %s. 
+
+### PLT_CTR_FAILED_TO_GET_HISTORY_LOGS
+**Message:** Failed to get history logs %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_ALL_LOGS
+**Message:** Failed to get runtime all logs %s. 
+
+### PLT_CTR_FAILED_TO_GET_HISTORY_LOGS_COUNT
+**Message:** Failed to get history logs count %s. 
+
+### PLT_CTR_FAILED_TO_GET_RUNTIME_METRICS
+**Message:** Failed to get runtime metrics %s. 
 
 ## @platformatic/db 
 
 ### PLT_DB_MIGRATE_ERROR
-**Message:** Missing "migrations" section in config file 
-
-### PLT_DB_UNKNOWN_DATABASE_ERROR
-**Message:** Unknown database 
+**Message:** Migrations directory %s does not exist 
 
 ### PLT_DB_MIGRATE_ERROR
-**Message:** Migrations directory %s does not exist 
+**Message:** Missing "migrations" section in config file 
+
+### PLT_DB_MIGRATIONS_TO_APPLY_ERROR
+**Message:** You have migrations to apply. 
 
 ### PLT_DB_MISSING_SEED_FILE_ERROR
 **Message:** Missing seed file 
 
-### PLT_DB_MIGRATIONS_TO_APPLY_ERROR
-**Message:** You have migrations to apply. Please run `platformatic db migrations apply` first. 
+### PLT_DB_UNKNOWN_DATABASE_ERROR
+**Message:** Unknown database 
 
 ## @platformatic/db-authorization 
 
@@ -106,10 +140,6 @@ Did you mean PLT_%s?
 ### PLT_DB_AUTH_NOT_NULLABLE_MISSING
 **Message:** missing not nullable field: "%s" in save rule for entity "%s" 
 
-## @platformatic/db-core 
-
-**No errors defined** 
-
 ## @platformatic/runtime 
 
 ### PLT_RUNTIME_EADDR_IN_USE
@@ -118,23 +148,50 @@ Did you mean PLT_%s?
 ### PLT_RUNTIME_RUNTIME_EXIT
 **Message:** The runtime exited before the operation completed 
 
+### PLT_RUNTIME_RUNTIME_ABORT
+**Message:** The runtime aborted the operation 
+
+### PLT_RUNTIME_SERVICE_EXIT
+**Message:** The service "%s" exited prematurely with error code %d 
+
+### PLT_RUNTIME_SERVICE_EXIT
+**Message:** The worker %s of the service "%s" exited prematurely with error code %d 
+
 ### PLT_RUNTIME_UNKNOWN_RUNTIME_API_COMMAND
 **Message:** Unknown Runtime API command "%s" 
 
 ### PLT_RUNTIME_SERVICE_NOT_FOUND
-**Message:** Service not found. Available services are: %s 
+**Message:** Service %s not found. Available services are: %s 
 
-### PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND
-**Message:** Service %s worker %s not found 
+### PLT_RUNTIME_WORKER_NOT_FOUND
+**Message:** Worker %s of service %s not found. Available services are: %s 
 
 ### PLT_RUNTIME_SERVICE_NOT_STARTED
 **Message:** Service with id '%s' is not started 
+
+### PLT_RUNTIME_SERVICE_START_TIMEOUT
+**Message:** Service with id '%s' failed to start in %dms. 
 
 ### PLT_RUNTIME_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA
 **Message:** Failed to retrieve OpenAPI schema for service with id "%s": %s 
 
 ### PLT_RUNTIME_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA
 **Message:** Failed to retrieve GraphQL schema for service with id "%s": %s 
+
+### PLT_RUNTIME_FAILED_TO_RETRIEVE_META
+**Message:** Failed to retrieve metadata for service with id "%s": %s 
+
+### PLT_RUNTIME_FAILED_TO_RETRIEVE_METRICS
+**Message:** Failed to retrieve metrics for service with id "%s": %s 
+
+### PLT_RUNTIME_FAILED_TO_RETRIEVE_HEALTH
+**Message:** Failed to retrieve health for service with id "%s": %s 
+
+### PLT_RUNTIME_FAILED_TO_PERFORM_CUSTOM_HEALTH_CHECK
+**Message:** Failed to perform custom healthcheck for service with id "%s": %s 
+
+### PLT_RUNTIME_FAILED_TO_PERFORM_CUSTOM_READINESS_CHECK
+**Message:** Failed to perform custom readiness check for service with id "%s": %s 
 
 ### PLT_RUNTIME_APPLICATION_ALREADY_STARTED
 **Message:** Application is already started 
@@ -150,6 +207,12 @@ Did you mean PLT_%s?
 
 ### PLT_RUNTIME_INVALID_ENTRYPOINT
 **Message:** Invalid entrypoint: '%s' does not exist 
+
+### PLT_RUNTIME_MISSING_ENTRYPOINT
+**Message:** Missing application entrypoint. 
+
+### PLT_RUNTIME_INVALID_SERVICES_WITH_WEB
+**Message:** The "services" property cannot be used when the "web" property is also defined 
 
 ### PLT_RUNTIME_MISSING_DEPENDENCY
 **Message:** Missing dependency: "%s" 
@@ -178,12 +241,33 @@ Did you mean PLT_%s?
 ### PLT_RUNTIME_REQUIRED_WORKER
 **Message:** The worker parameter is required 
 
-### PLT_RUNTIME_CANNOT_REMOVE_SERVICE_ON_UPDATE
-**Message:** Cannot remove service "%s" when updating a Runtime 
+### PLT_RUNTIME_INVALID_ARGUMENT
+**Message:** Invalid argument: "%s" 
 
-## @platformatic/service 
+### PLT_RUNTIME_MESSAGING_ERROR
+**Message:** Cannot send a message to service "%s": %s 
 
-**No errors defined** 
+## @platformatic/sql-events 
+
+### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
+**Message:** The object that will be published is required under the data property 
+
+### PLT_SQL_EVENTS_PRIMARY_KEY_IS_NECESSARY_INSIDE_DATA
+**Message:** The primaryKey is necessary inside data 
+
+### PLT_SQL_EVENTS_NO_SUCH_ACTION
+**Message:** No such action %s 
+
+## @platformatic/sql-graphql 
+
+### PLT_SQL_GRAPHQL_UNABLE_GENERATE_GRAPHQL_ENUM_TYPE
+**Message:** Unable to generate GraphQLEnumType 
+
+### PLT_SQL_GRAPHQL_UNSUPPORTED_KIND
+**Message:** Unsupported kind: %s 
+
+### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
+**Message:** Error printing the GraphQL schema 
 
 ## @platformatic/sql-mapper 
 
@@ -235,6 +319,15 @@ Did you mean PLT_%s?
 ### PLT_SQL_MAPPER_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN
 **Message:** SQLite only supports autoIncrement on one column 
 
+### PLT_SQL_MAPPER_MISSING_ORDER_BY_CLAUSE
+**Message:** Missing orderBy clause 
+
+### PLT_SQL_MAPPER_MISSING_ORDER_BY_FIELD_FOR_CURSOR
+**Message:** Cursor field(s) %s must be included in orderBy 
+
+### PLT_SQL_MAPPER_MISSING_UNIQUE_FIELD_IN_CURSOR
+**Message:** Cursor must contain at least one primary key field 
+
 ## @platformatic/sql-openapi 
 
 ### PLT_SQL_OPENAPI_UNABLE_CREATE_ROUTE_FOR_REVERSE_RELATIONSHIP
@@ -243,37 +336,40 @@ Did you mean PLT_%s?
 ### PLT_SQL_OPENAPI_UNABLE_CREATE_ROUTE_FOR_PK_COL_RELATIONSHIP
 **Message:** Unable to create the route for the PK col relationship 
 
-## @platformatic/sql-graphql 
+### PLT_SQL_OPENAPI_UNABLE_TO_PARSE_CURSOR_STR
+**Message:** Unable to parse cursor string. Make sure to provide valid encoding of cursor object. Error: %s 
 
-### PLT_SQL_GRAPHQL_UNABLE_GENERATE_GRAPHQL_ENUM_TYPE
-**Message:** Unable to generate GraphQLEnumType 
+### PLT_SQL_OPENAPI_CURSOR_VALIDATION_ERROR
+**Message:** Cursor validation error. %s 
 
-### PLT_SQL_GRAPHQL_UNSUPPORTED_KIND
-**Message:** Unsupported kind: %s 
+### PLT_SQL_OPENAPI_PRIMARY_KEY_NOT_INCLUDED_IN_ORDER_BY_IN_CURSOR_PAGINATION
+**Message:** At least one primary key must be included in orderBy clause in case of cursor pagination 
 
-### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
-**Message:** Error printing the GraphQL schema 
+## @platformatic/foundation 
 
-## @platformatic/sql-events 
+### PLT_ADD_A_MODULE_PROPERTY_TO_THE_CONFIG_OR_ADD_A_KNOWN_SCHEMA
+**Message:** Add a module property to the config or add a known $schema. 
 
-### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
-**Message:** The object that will be published is required under the data property 
+### PLT_CANNOT_PARSE_CONFIG_FILE
+**Message:** Cannot parse config file. %s 
 
-### PLT_SQL_EVENTS_PRIMARY_KEY_IS_NECESSARY_INSIDE_DATA
-**Message:** The primaryKey is necessary inside data 
+### PLT_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA
+**Message:** The configuration does not validate against the configuration schema 
 
-### PLT_SQL_EVENTS_NO_SUCH_ACTION
-**Message:** No such action %s 
+### PLT_INVALID_CONFIG_FILE_EXTENSION
+**Message:** Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported. 
 
-## @platformatic/sql-json-schema-mapper 
+### PLT_NO_CONFIG_FILE_FOUND
+**Message:** no config file found 
 
-**No errors defined** 
-
-## @platformatic/telemetry 
-
-**No errors defined** 
-
-## @platformatic/utils 
-
-### PLT_SQL_UTILS_PATH_OPTION_REQUIRED
+### PLT_PATH_OPTION_REQUIRED
 **Message:** path option is required 
+
+### PLT_ROOT_MISSING
+**Message:** Provide the root option to loadConfiguration when using an object as source. 
+
+### PLT_SCHEMA_MUST_BE_DEFINED
+**Message:** schema must be defined 
+
+### PLT_SOURCE_MISSING
+**Message:** Source missing. 

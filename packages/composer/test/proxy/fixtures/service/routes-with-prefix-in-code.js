@@ -1,7 +1,7 @@
 /* globals platformatic */
 platformatic.setBasePath('from-code')
 
-module.exports = async function (app) {
+export default async function (app) {
   app.get('/hello', async () => {
     return { ok: true }
   })

@@ -1,13 +1,22 @@
 #! /usr/bin/env node
-'use strict'
 
-const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } =
-  require('@platformatic/service').schemas
-const { schemaComponents } = require('@platformatic/utils')
-const telemetry = require('@platformatic/telemetry').schema
-const pkg = require('../package.json')
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import {
+  fastifyServer as server,
+  schemaComponents as utilsSchemaComponents,
+  watch,
+  wrappedRuntime
+} from '@platformatic/foundation'
+import { schemaComponents as applicationSchemaComponents } from '@platformatic/service'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const openApiService = {
+const { $defs, graphqlBase, openApiBase, plugins } = applicationSchemaComponents
+
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
+
+export const openApiApplication = {
   type: 'object',
   properties: {
     url: { type: 'string' },
@@ -19,7 +28,7 @@ const openApiService = {
   additionalProperties: false
 }
 
-const entityResolver = {
+export const entityResolver = {
   type: 'object',
   properties: {
     name: { type: 'string' },
@@ -34,7 +43,7 @@ const entityResolver = {
   additionalProperties: false
 }
 
-const entities = {
+export const entities = {
   type: 'object',
   patternProperties: {
     '^.*$': {
@@ -77,7 +86,7 @@ const entities = {
   }
 }
 
-const graphqlService = {
+export const graphqlApplication = {
   anyOf: [
     { type: 'boolean' },
     {
@@ -94,7 +103,7 @@ const graphqlService = {
   ]
 }
 
-const graphqlComposerOptions = {
+export const graphqlComposerOptions = {
   type: 'object',
   properties: {
     ...graphqlBase.properties,
@@ -109,18 +118,18 @@ const graphqlComposerOptions = {
   additionalProperties: false
 }
 
-const composer = {
+export const composer = {
   type: 'object',
   properties: {
-    services: {
+    applications: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: { type: 'string' },
           origin: { type: 'string' },
-          openapi: openApiService,
-          graphql: graphqlService,
+          openapi: openApiApplication,
+          graphql: graphqlApplication,
           proxy: {
             anyOf: [
               { type: 'boolean', const: false },
@@ -179,7 +188,7 @@ const composer = {
   additionalProperties: false
 }
 
-const types = {
+export const types = {
   type: 'object',
   properties: {
     autogenerate: {
@@ -195,10 +204,20 @@ const types = {
   additionalProperties: false
 }
 
-const platformaticComposerSchema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/composer/${pkg.version}.json`,
+export const schemaComponents = {
+  openApiApplication,
+  entityResolver,
+  entities,
+  graphqlApplication,
+  graphqlComposerOptions,
+  composer,
+  types
+}
+
+export const schema = {
+  $id: `https://schemas.platformatic.dev/@platformatic/composer/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Composer',
+  title: 'Platformatic Composer Config',
   type: 'object',
   properties: {
     basePath: {
@@ -206,12 +225,11 @@ const platformaticComposerSchema = {
     },
     server,
     composer,
-    metrics,
     types,
     plugins,
-    clients,
-    runtime: schemaComponents.wrappedRuntime,
-    telemetry,
+    application: basicSchemaComponents.application,
+    runtime: wrappedRuntime,
+    telemetry: utilsSchemaComponents.telemetry,
     watch: {
       anyOf: [
         watch,
@@ -231,12 +249,10 @@ const platformaticComposerSchema = {
     }
   },
   additionalProperties: false,
-  $defs: openApiDefs
+  $defs
 }
 
-module.exports.schema = platformaticComposerSchema
-
 /* c8 ignore next 3 */
-if (require.main === module) {
-  console.log(JSON.stringify(platformaticComposerSchema, null, 2))
+if (process.argv[1] === import.meta.filename) {
+  console.log(JSON.stringify(schema, null, 2))
 }
