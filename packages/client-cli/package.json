@@ -10,7 +10,7 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "posttest": "tsd",
     "pree2e:test": "npm run e2e:prepare",
     "e2e:test": "playwright test -c test/e2e/playwright.config.js && cd test/e2e && tsc --noEmit -p .",

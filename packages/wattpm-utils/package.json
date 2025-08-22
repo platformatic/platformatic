@@ -15,7 +15,7 @@
   },
   "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start-watt",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "build": "node scripts/list-package.js > lib/packages.js",
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"

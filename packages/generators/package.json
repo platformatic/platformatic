@@ -7,7 +7,7 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "posttest": "tsd"
   },
   "keywords": [],

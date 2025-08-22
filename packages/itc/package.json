@@ -6,7 +6,7 @@
   "type": "module",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "posttest": "tsd -t index.test-d.ts test",
     "lint": "eslint"
   },
