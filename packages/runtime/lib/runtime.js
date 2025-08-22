@@ -40,7 +40,7 @@ import { startManagementApi } from './management-api.js'
 import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
-import { version as platformaticVersion } from './version.js'
+import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import {
@@ -777,7 +777,7 @@ export class Runtime extends EventEmitter {
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion
+      platformaticVersion: version
     }
   }
 
