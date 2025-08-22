@@ -22,6 +22,6 @@ async function start (opts) {
 
 module.exports = start
 
-if (require.main === module) {
+if (import.meta.main) {
   start({ logger: { name: 'external' } }).then(app => app.listen({ port: process.env.PORT || 3001 }))
 }

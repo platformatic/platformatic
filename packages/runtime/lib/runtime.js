@@ -1,12 +1,12 @@
 import {
-    deepmerge,
-    ensureError,
-    ensureLoggableError,
-    executeWithTimeout,
-    features,
-    kMetadata,
-    kTimeout,
-    parseMemorySize
+  deepmerge,
+  ensureError,
+  ensureLoggableError,
+  executeWithTimeout,
+  features,
+  kMetadata,
+  kTimeout,
+  parseMemorySize
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc'
 import fastify from 'fastify'
@@ -24,16 +24,16 @@ import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { checkDependencies, topologicalSort } from './dependencies.js'
 import {
-    ApplicationAlreadyStartedError,
-    ApplicationNotFoundError,
-    ApplicationNotStartedError,
-    ApplicationStartTimeoutError,
-    InvalidArgumentError,
-    MessagingError,
-    MissingEntrypointError,
-    RuntimeAbortedError,
-    RuntimeExitedError,
-    WorkerNotFoundError
+  ApplicationAlreadyStartedError,
+  ApplicationNotFoundError,
+  ApplicationNotStartedError,
+  ApplicationStartTimeoutError,
+  InvalidArgumentError,
+  MessagingError,
+  MissingEntrypointError,
+  RuntimeAbortedError,
+  RuntimeExitedError,
+  WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
@@ -44,17 +44,17 @@ import { version as platformaticVersion } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import {
-    kApplicationId,
-    kConfig,
-    kFullId,
-    kHealthCheckTimer,
-    kId,
-    kITC,
-    kLastELU,
-    kStderrMarker,
-    kWorkerId,
-    kWorkersBroadcast,
-    kWorkerStatus
+  kApplicationId,
+  kConfig,
+  kFullId,
+  kHealthCheckTimer,
+  kId,
+  kITC,
+  kLastELU,
+  kStderrMarker,
+  kWorkerId,
+  kWorkersBroadcast,
+  kWorkerStatus
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')

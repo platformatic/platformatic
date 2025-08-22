@@ -40,7 +40,7 @@ jobs:
           command: pnpm install
       - name: Change version number and sync
         run: |
-          node scripts/update-version.mjs ${{ inputs.version }}
+          node scripts/update-version.js ${{ inputs.version }}
           sh scripts/sync-version.sh
           pnpm -r run --if-present prepublishOnly
       - name: update lockfile

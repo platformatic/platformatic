@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 
-'use strict'
-
-const { execSync } = require('child_process')
+import { execSync } from 'node:child_process'
 
 // Function to get modified files from git status
-function getUpdatedFiles() {
+function getUpdatedFiles () {
   try {
     // Get the output of git status in porcelain format
     const gitStatus = execSync('git status --porcelain', { encoding: 'utf-8' })
-    
+
     // Parse the output to extract file paths
     // Each line of git status --porcelain looks like:
     // XY filename
@@ -28,28 +26,28 @@ function getUpdatedFiles() {
 }
 
 // Function to extract unique package directories
-function getAffectedPackages(files) {
+function getAffectedPackages (files) {
   const packagesRegex = /^packages\/([^\/]+)/
-  
+
   // Filter files to only get those in packages/ directory
   // and extract unique package directories
   const packageDirs = new Set()
-  
+
   files.forEach(file => {
     const match = file.match(packagesRegex)
     if (match) {
       packageDirs.add(`packages/${match[1]}`)
     }
   })
-  
+
   return Array.from(packageDirs)
 }
 
 // Function to run eslint --fix on a directory
-function runEslintFix(directory) {
+function runEslintFix (directory) {
   console.log(`Running ESLint on ${directory} (npx eslint --fix)...`)
   try {
-    const output = execSync(`cd ${directory} && npx eslint --fix`, { 
+    const output = execSync(`cd ${directory} && npx eslint --fix`, {
       encoding: 'utf-8',
       stdio: 'inherit' // This will show the eslint output in real-time
     })
@@ -63,27 +61,27 @@ function runEslintFix(directory) {
 }
 
 // Main function
-function main() {
+function main () {
   console.log('\n*** Linting changed packages ...')
   console.log('> Getting modified files from git status...')
   const modifiedFiles = getUpdatedFiles()
-  
+
   if (modifiedFiles.length === 0) {
     console.log('  No modified files found, done.')
     return
   }
-  
+
   console.log(`  Found ${modifiedFiles.length} modified files.`)
-  
+
   const packagesToLint = getAffectedPackages(modifiedFiles)
-  
+
   if (packagesToLint.length === 0) {
     console.log('  No packages affected, done.')
     return
   }
-  
+
   console.log(`  Found ${packagesToLint.length} affected packages: ${packagesToLint.join(', ')}`)
-  
+
   let successCount = 0
   let failCount = 0
 
@@ -96,7 +94,7 @@ function main() {
       failCount++
     }
   })
-  
+
   console.log('\n> ESLint Summary:')
   console.log(`- ${successCount} packages linted successfully`)
   console.log(`- ${failCount} packages had linting issues`)

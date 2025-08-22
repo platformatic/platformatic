@@ -1,8 +1,5 @@
-'use strict'
-
-const { writeFile, readdir, readFile } = require('node:fs/promises')
-const { createRequire } = require('node:module')
-const { resolve } = require('node:path')
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 function extractErrors (module) {
   const { errors } = module
