@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.58.0.json",
+  "server": {
+    "https": {
+      "key": "key",
+      "cert": "cert"
+    }
+  },
+  "services": [
+    {
+      "id": "main",
+      "path": "main",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  }
+}

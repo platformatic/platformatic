@@ -1,0 +1,12 @@
+WattExtra - Start Command
+
+Usage: watt-extra start [options]
+
+Start the WattExtra runtime manager.
+
+Options:
+  --log-level, -l      Set log level (default: info)
+  --icc-url, -i        Set the ICC URL (PLT_ICC_URL)
+  --app-name, -a       Set the application name (PLT_APP_NAME)
+  --app-dir, -d        Set the application directory (PLT_APP_DIR, default: current directory)
+  --help, -h           Show this help message

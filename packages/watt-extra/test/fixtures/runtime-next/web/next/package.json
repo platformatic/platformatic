@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@platformatic/next": "^2.70.0",
+    "next": "^15.3.0"
+  }
+}

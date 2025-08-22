@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.58.0.json",
+  "server": {
+    "https": {
+      "key": "key",
+      "cert": "cert"
+    }
+  },
+  "plugins": {
+    "paths": [
+      "./routes"
+    ]
+  }
+}

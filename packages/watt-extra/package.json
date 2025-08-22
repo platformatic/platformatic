@@ -1,0 +1,56 @@
+{
+  "name": "@platformatic/watt-extra",
+  "version": "3.0.0-alpha.5",
+  "description": "The Platformatic runtime manager",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint",
+    "test": "pnpm run lint && node --test --test-timeout=180000 ./test/*.test.js",
+    "start": "node index.js",
+    "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf services/*/node_modules",
+    "clean": "rm -rf node_modules && rm -rf services/*/node_modules"
+  },
+  "bin": {
+    "watt-extra": "./cli.js"
+  },
+  "devDependencies": {
+    "@fastify/websocket": "^11.1.0",
+    "@platformatic/composer": "workspace:*",
+    "@platformatic/next": "workspace:*",
+    "@platformatic/node": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "borp": "^0.20.0",
+    "fastify": "^5.4.0",
+    "pprof-format": "^2.1.0",
+    "next": "^15.3.4",
+    "eslint": "9",
+    "neostandard": "^0.12.0",
+    "why-is-node-running": "^2.3.0"
+  },
+  "dependencies": {
+    "@datadog/pprof": "^5.9.0",
+    "@fastify/error": "^4.2.0",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/slicer-interceptor": "^0.3.0",
+    "@platformatic/undici-cache-redis": "^0.7.1",
+    "@platformatic/undici-trafficante-interceptor": "0.1.1",
+    "avvio": "^9.1.0",
+    "chalk": "^4.1.2",
+    "commist": "^3.2.0",
+    "env-schema": "^6.0.1",
+    "execa": "^9.6.0",
+    "help-me": "^5.0.0",
+    "minimist": "^1.2.8",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
+    "undici": "^7.11.0"
+  },
+  "engines": {
+    "node": "20.x || 22.x"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}

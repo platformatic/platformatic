@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.44.0.json",
+  "services": [
+    {
+      "id": "composer",
+      "path": "composer",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "alpha",
+      "path": "alpha",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "beta",
+      "path": "beta",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  },
+  "httpCache": {
+    "cacheTagsHeader": "x-custom-cache-tags"
+  }
+}

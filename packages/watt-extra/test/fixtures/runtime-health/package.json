@@ -1,0 +1,20 @@
+{
+  "name": "runtime-health",
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "start": "platformatic start"
+  },
+  "devDependencies": {
+    "fastify": "^5.0.0",
+    "borp": "^0.19.0"
+  },
+  "dependencies": {
+    "@platformatic/runtime": "^2.70.0",
+    "platformatic": "^2.70.0"
+  },
+  "engines": {
+    "node": "^18.8.0 || >=20.6.0"
+  }
+}
