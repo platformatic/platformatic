@@ -40,7 +40,7 @@ async function start (opts) {
 
 module.exports = start
 
-if (import.meta.main) {
+if (require.main === module) {
   start({ logger: { name: 'idp' }, port: process.env.PORT || 3000 }).catch(err => {
     console.error(err)
     process.exit(1)
