@@ -2,7 +2,6 @@ import {
   createDirectory,
   defaultPackageManager,
   detectApplicationType,
-  executeWithTimeout,
   findConfigurationFileRecursive,
   generateDashedName,
   getPackageManager,
@@ -22,11 +21,25 @@ import ora from 'ora'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import resolveModule from 'resolve'
-import { request } from 'undici'
 import { createGitRepository } from './git.js'
 import { findComposerConfigFile, getUsername, getVersion, say } from './utils.js'
-const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
-const defaultCapabilities = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
+
+const defaultCapabilities = [
+  '@platformatic/node',
+  '@platformatic/composer',
+  '@platformatic/next',
+  '@platformatic/vite',
+  '@platformatic/astro',
+  '@platformatic/remix',
+  '@platformatic/nest',
+  '@platformatic/service',
+  '@platformatic/db',
+  '@platformatic/php',
+  '@platformatic/ai-warp',
+  '@platformatic/pg-hooks',
+  '@platformatic/rabbitmq-hooks',
+  '@platformatic/kafka-hooks'
+]
 
 export * from './git.js'
 export * from './utils.js'
@@ -123,30 +136,6 @@ async function findApplicationRoot (projectDir) {
   return null
 }
 
-export async function fetchCapabilities (marketplaceHost, modules = []) {
-  const capabilities = new Set([...modules, ...defaultCapabilities])
-
-  // Skip the remote network request if we are running tests
-  if (process.env.PLT_MARKETPLACE_TEST) {
-    return Array.from(capabilities)
-  }
-
-  let response
-  try {
-    response = await executeWithTimeout(request(new URL('/templates', marketplaceHost || MARKETPLACE_HOST)), 5000)
-  } catch (err) {
-    // No-op: we just use the default capabilities
-  }
-
-  if (response && response.statusCode === 200) {
-    for (const capability of await response.body.json()) {
-      capabilities.add(capability.name)
-    }
-  }
-
-  return Array.from(capabilities)
-}
-
 export async function chooseCapability (inquirer, capabilities) {
   const options = await inquirer.prompt({
     type: 'list',
@@ -215,7 +204,7 @@ export async function createPlatformatic (argv) {
       module: []
     },
     boolean: ['install'],
-    string: ['global-config', 'marketplace-host', 'module']
+    string: ['global-config', 'module']
   })
 
   const username = await getUsername()
@@ -232,14 +221,13 @@ export async function createPlatformatic (argv) {
 
   const pkgManager = getPkgManager()
   const modules = Array.isArray(args.module) ? args.module : [args.module]
-  await createApplication(logger, pkgManager, modules, args['marketplace-host'], args['install'])
+  await createApplication(logger, pkgManager, modules, args['install'])
 }
 
 export async function createApplication (
   logger,
   packageManager,
   modules,
-  marketplaceHost,
   install,
   additionalGeneratorOptions = {},
   additionalGeneratorConfig = {}
@@ -377,7 +365,7 @@ export async function createApplication (
     await say('Using existing configuration ...')
   }
 
-  const capabilities = await fetchCapabilities(marketplaceHost, modules)
+  const capabilities = Array.from(new Set([...modules, ...defaultCapabilities]))
 
   const names = generator.existingApplications ?? []
 

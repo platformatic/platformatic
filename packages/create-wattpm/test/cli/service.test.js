@@ -8,13 +8,11 @@ import {
   createTemporaryDirectory,
   executeCreatePlatformatic,
   getApplications,
-  setupUserInputHandler,
-  startMarketplace
+  setupUserInputHandler
 } from './helper.js'
 
 test('Creates a Platformatic Application with no Typescript', async t => {
   const root = await createTemporaryDirectory(t, 'application')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -27,7 +25,7 @@ test('Creates a Platformatic Application with no Typescript', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler })
 
   const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
@@ -47,7 +45,6 @@ test('Creates a Platformatic Application with no Typescript', async t => {
 
 test('Creates a Platformatic Application with Typescript', async t => {
   const root = await createTemporaryDirectory(t, 'application')
-  const marketplaceHost = await startMarketplace(t)
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
@@ -60,7 +57,7 @@ test('Creates a Platformatic Application with Typescript', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler })
 
   const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
@@ -81,7 +78,6 @@ test('Creates a Platformatic Application with Typescript', async t => {
 
 test('Creates a Platformatic Application in a non empty directory', async t => {
   const root = await createTemporaryDirectory(t, 'application')
-  const marketplaceHost = await startMarketplace(t)
 
   const applicationsDir = join(root, 'applications')
   const applicationDir = join(applicationsDir, 'foo')
@@ -109,7 +105,7 @@ test('Creates a Platformatic Application in a non empty directory', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler })
 
   equal(await isFileAccessible(join(root, '.gitignore')), true)
   equal(await isFileAccessible(join(root, '.env')), true)

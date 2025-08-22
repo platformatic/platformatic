@@ -5,7 +5,7 @@ label: Remix
 
 import SharedOverview from '../node/\_shared-overview.md';
 
-# Platformatic Vite
+# Platformatic Remix
 
 The Platformatic Remix allows to run a [Remix](https://remix.run/) application as a Platformatic Runtime application with no modifications.
 

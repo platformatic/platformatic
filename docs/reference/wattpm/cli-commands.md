@@ -39,13 +39,12 @@ wattpm init  # creates in current directory
 **Options:**
 - `-c, --config <name>` - Configuration file name (default: `watt.json`)
 - `-s, --skip-dependencies` - Don't install dependencies after creating files
-- `-m, --marketplace <url>` - Platformatic Marketplace host (default: https://marketplace.platformatic.dev)
 - `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
 - `-M, --module <name>` - Additional application generator modules (can be used multiple times)
 
 **Example:**
 ```bash
-wattpm create my-api --marketplace https://custom-marketplace.com
+wattpm create my-api
 wattpm init --skip-dependencies --package-manager pnpm
 ```
 

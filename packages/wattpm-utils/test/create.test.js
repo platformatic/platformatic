@@ -266,9 +266,6 @@ test('create - should support providing capability via command line', async t =>
   third
   fourth
   fifth
-> @platformatic/service
-  @platformatic/composer
-  @platformatic/db
 `
     )
   )
