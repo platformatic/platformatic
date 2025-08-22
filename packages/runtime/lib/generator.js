@@ -108,8 +108,7 @@ export class RuntimeGenerator extends BaseGenerator {
         start: this.config.startCommand ?? 'platformatic start'
       },
       devDependencies: {
-        fastify: `^${this.fastifyVersion}`,
-        borp: `${this.pkgData.devDependencies.borp}`
+        fastify: `^${this.fastifyVersion}`
       },
       dependencies: {
         '@platformatic/runtime': `^${this.platformaticVersion}`,

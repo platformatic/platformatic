@@ -6,8 +6,7 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --timeout 1200000",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout 1200000",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -26,10 +25,10 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/error": "^4.0.0",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/foundation": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
     "pino": "^9.9.0",
@@ -40,7 +39,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "express": "^4.19.2",
     "fastify": "^5.0.0",

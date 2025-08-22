@@ -11,5 +11,7 @@
     "@platformatic/service": "^2.63.3",
     "wattpm": "^2.63.3"
   },
-  "workspaces": ["web/*"]
+  "workspaces": [
+    "web/*"
+  ]
 }

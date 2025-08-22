@@ -1,12 +1,10 @@
 {
   "name": "composer",
   "scripts": {
-    "start": "platformatic start",
-    "test": "borp"
+    "start": "platformatic start"
   },
   "devDependencies": {
-    "fastify": "^5.0.0",
-    "borp": "^0.19.0"
+    "fastify": "^5.0.0"
   },
   "dependencies": {
     "@platformatic/composer": "^2.61.0"

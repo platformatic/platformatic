@@ -6,7 +6,8 @@
   "type": "module",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "npm run lint && borp --timeout=1200000 --concurrency=1 --coverage && tsd -t index.test-d.ts test",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "posttest": "tsd -t index.test-d.ts test",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -21,7 +22,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@types/node": "^22.5.0",
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
     "tsd": "^0.32.0",

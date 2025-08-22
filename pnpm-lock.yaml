@@ -48,9 +48,9 @@ importers:
       astro:
         specifier: ^5.7.1
         version: 5.12.9(@types/node@22.17.1)(ioredis@5.7.0)(rollup@4.46.2)(terser@5.43.1)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -112,9 +112,9 @@ importers:
         specifier: ^8.18.0
         version: 8.18.3
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -146,12 +146,12 @@ importers:
         specifier: workspace:*
         version: link:../wattpm
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -198,12 +198,12 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -289,9 +289,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.5.2
         version: 4.7.0(vite@5.4.19(@types/node@22.17.1)(terser@5.43.1))
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -449,12 +449,12 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       dedent:
         specifier: ^1.5.1
         version: 1.6.0
@@ -531,9 +531,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -562,9 +562,9 @@ importers:
         specifier: workspace:*
         version: link:../create-wattpm
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -629,12 +629,12 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.17.1
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -798,12 +798,12 @@ importers:
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -874,9 +874,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -923,9 +923,9 @@ importers:
         specifier: ^5.0.0
         version: 5.0.1
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -990,12 +990,12 @@ importers:
         specifier: ^2.4.1
         version: 2.8.1
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1039,12 +1039,12 @@ importers:
       '@types/inquirer':
         specifier: ^9.0.7
         version: 9.0.9
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1070,9 +1070,9 @@ importers:
       '@types/node':
         specifier: ^22.10.6
         version: 22.17.1
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: ^9.18.0
         version: 9.33.0
@@ -1095,9 +1095,9 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.17.1
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1124,9 +1124,9 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
     devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1173,9 +1173,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1237,9 +1237,9 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.17.1
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1289,9 +1289,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1359,9 +1359,9 @@ importers:
       '@remix-run/react':
         specifier: ^2.16.8
         version: 2.17.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1525,12 +1525,12 @@ importers:
       autocannon:
         specifier: ^8.0.0
         version: 8.0.0
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
       c8:
         specifier: ^10.0.0
         version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1571,7 +1571,11 @@ importers:
         specifier: ^2.2.2
         version: 2.3.0
 
-  packages/scalar-theme: {}
+  packages/scalar-theme:
+    devDependencies:
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
 
   packages/service:
     dependencies:
@@ -1702,9 +1706,9 @@ importers:
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1760,9 +1764,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1830,9 +1834,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1870,9 +1874,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.2
@@ -1934,9 +1938,9 @@ importers:
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -1992,9 +1996,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: ^9.4.0
         version: 9.33.0
@@ -2077,9 +2081,9 @@ importers:
       '@opentelemetry/instrumentation-pg':
         specifier: ^0.55.0
         version: 0.55.0(@opentelemetry/api@1.9.0)
-      borp:
-        specifier: ^0.20.1
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -2126,9 +2130,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -2181,9 +2185,9 @@ importers:
       '@platformatic/node':
         specifier: workspace:*
         version: link:../node
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -2233,9 +2237,9 @@ importers:
       '@platformatic/node':
         specifier: workspace:*
         version: link:../node
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
       eslint:
         specifier: '9'
         version: 9.33.0
@@ -2256,18 +2260,6 @@ importers:
         version: 7.11.0
 
 packages:
-
-  '@actions/core@1.11.1':
-    resolution: {integrity: sha512-hXJCSrkwfA46Vd9Z3q4cpEpHB1rL5NG04+/rbqW9d3+CSvtB1tYe8UTpAlixa1vj0m/ULglfEK2UKxMGxCxv5A==}
-
-  '@actions/exec@1.1.1':
-    resolution: {integrity: sha512-+sCcHHbVdk93a0XT19ECtO/gIXoxvdsgQLzb2fE2/5sIZmWQuluYyjPQtrtTHdU1YzTZ7bAPN4sITq2xi1679w==}
-
-  '@actions/http-client@2.2.3':
-    resolution: {integrity: sha512-mx8hyJi/hjFvbPokCg4uRd4ZX78t+YyRPtnKWwIl+RzNaVuFpQHfmlGVfsKEJN8LwTCvL+DfVgAM04XaHkm6bA==}
-
-  '@actions/io@1.1.3':
-    resolution: {integrity: sha512-wi9JjgKLYS7U/z8PPbco+PvTb/nRWjeoFlJ1Qer83k/3C5PHQi28hiVdeE2kHXmIL99mQFawx8qt/JPjZilJ8Q==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -3031,10 +3023,6 @@ packages:
 
   '@fastify/basic-auth@6.2.0':
     resolution: {integrity: sha512-Ao9Jf8TyW8v7p3CPy++c+E3qcCDeWfAlSIfFo0CsKrfvm81i0OCpnobIMwaSSkg/At0rzsLzbJPDWrgNru0G1w==}
-
-  '@fastify/busboy@2.1.1':
-    resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
-    engines: {node: '>=14'}
 
   '@fastify/busboy@3.1.1':
     resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
@@ -4135,9 +4123,6 @@ packages:
   '@remix-run/web-stream@1.1.0':
     resolution: {integrity: sha512-KRJtwrjRV5Bb+pM7zxcTJkhIqWWSy+MYsIxHK+0m5atcznsf15YwUBWHWulZerV2+vvHH1Lp1DD7pw6qKW8SgA==}
 
-  '@reporters/github@1.9.1':
-    resolution: {integrity: sha512-MIuO3Ci0vCKV5CkueQOieiYKPqJvHkHJxYsk+raotCHcB4yPU4ns6yfy3tcXDsUFCkj+vbB+XXucdac139J6uA==}
-
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
 
@@ -4995,10 +4980,6 @@ packages:
     resolution: {integrity: sha512-1wEo1pNahY9js7Vkp1RQa/VWdWrXYJnVAmsHV3Pw/0YzspjABLw7dcekjukOMTIYWr8ir/aG0GX1eoEkYhpnUg==}
     hasBin: true
 
-  borp@0.20.1:
-    resolution: {integrity: sha512-+1juusmbzAetePd0AIGbj+wut27bmzLFa2BhP8J9VGNcV7sx7bs4pDR2DhOU2oDZestWZpUzjfgIKYEI7LDW/A==}
-    hasBin: true
-
   boxen@8.0.1:
     resolution: {integrity: sha512-F3PH5k5juxom4xktynS7MoFY+NUWH5LC4CnH11YB8NPew+HLpmBLCybSAEyb2F+4pRXhuhWqFesoQd6DAyc2hw==}
     engines: {node: '>=18'}
@@ -5172,6 +5153,10 @@ packages:
   clean-stack@2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
+
+  cleaner-spec-reporter@0.5.0:
+    resolution: {integrity: sha512-YOVxazH6MhVev7P/E6aw8cUAm757t83ELBHpo7cehGfIkReln3CH49zbJ7OMbDuqdvfDgeafXvS2OfvbJUmL2g==}
+    engines: {node: '>= 20.18.0'}
 
   cli-boxes@3.0.0:
     resolution: {integrity: sha512-/lzGpEWL/8PfI0BmBOPRwp0c/wFNX1RdUML3jK/RcSBA9T8mZDdQpqYBKtCFTOfQbwPqWEOpjqW+Fnayc0969g==}
@@ -5761,10 +5746,6 @@ packages:
   escape-string-regexp@1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
     engines: {node: '>=0.8.0'}
-
-  escape-string-regexp@2.0.0:
-    resolution: {integrity: sha512-UpzcLCXolUWcNu5HtVMHYdXJjArjsF9C0aNnquZYY4uW/Vu0miy5YoWvbV345HauVvcAUnpRuhMMcqTcGOY2+w==}
-    engines: {node: '>=8'}
 
   escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
@@ -9058,10 +9039,6 @@ packages:
   stable-hash@0.0.5:
     resolution: {integrity: sha512-+L3ccpzibovGXFK+Ap/f8LOS0ahMrHTf3xu7mMLSpEGU0EO9ucaysSylKo9eRDFNhWve/y275iPmIZ4z39a9iA==}
 
-  stack-utils@2.0.6:
-    resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
-    engines: {node: '>=10'}
-
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
@@ -9397,10 +9374,6 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  tunnel@0.0.6:
-    resolution: {integrity: sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==}
-    engines: {node: '>=0.6.11 <=0.7.0 || >=0.7.3'}
-
   turbo-stream@2.4.1:
     resolution: {integrity: sha512-v8kOJXpG3WoTN/+at8vK7erSzo6nW6CIaeOvNOkHQVDajfz1ZVeSxCbc6tOH4hrGZW7VUCV0TOXd8CPzYnYkrw==}
 
@@ -9504,10 +9477,6 @@ packages:
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
-  undici@5.29.0:
-    resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
-    engines: {node: '>=14.0'}
 
   undici@6.21.3:
     resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
@@ -10064,22 +10033,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@actions/core@1.11.1':
-    dependencies:
-      '@actions/exec': 1.1.1
-      '@actions/http-client': 2.2.3
-
-  '@actions/exec@1.1.1':
-    dependencies:
-      '@actions/io': 1.1.3
-
-  '@actions/http-client@2.2.3':
-    dependencies:
-      tunnel: 0.0.6
-      undici: 5.29.0
-
-  '@actions/io@1.1.3': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -10790,8 +10743,6 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       fastify-plugin: 5.0.1
-
-  '@fastify/busboy@2.1.1': {}
 
   '@fastify/busboy@3.1.1': {}
 
@@ -12122,11 +12073,6 @@ snapshots:
     dependencies:
       web-streams-polyfill: 3.3.3
 
-  '@reporters/github@1.9.1':
-    dependencies:
-      '@actions/core': 1.11.1
-      stack-utils: 2.0.6
-
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 
   '@rollup/pluginutils@5.2.0(rollup@4.46.2)':
@@ -13278,17 +13224,6 @@ snapshots:
       commander: 6.2.1
       lodash: 4.17.21
 
-  borp@0.20.1:
-    dependencies:
-      '@reporters/github': 1.9.1
-      c8: 10.1.3
-      execa: 9.6.0
-      find-up: 7.0.0
-      glob: 10.4.5
-      yaml: 2.8.1
-    transitivePeerDependencies:
-      - monocart-coverage-reports
-
   boxen@8.0.1:
     dependencies:
       ansi-align: 3.0.1
@@ -13482,6 +13417,8 @@ snapshots:
   cjs-module-lexer@1.4.3: {}
 
   clean-stack@2.2.0: {}
+
+  cleaner-spec-reporter@0.5.0: {}
 
   cli-boxes@3.0.0: {}
 
@@ -14145,8 +14082,6 @@ snapshots:
   escape-html@1.0.3: {}
 
   escape-string-regexp@1.0.5: {}
-
-  escape-string-regexp@2.0.0: {}
 
   escape-string-regexp@4.0.0: {}
 
@@ -18529,10 +18464,6 @@ snapshots:
 
   stable-hash@0.0.5: {}
 
-  stack-utils@2.0.6:
-    dependencies:
-      escape-string-regexp: 2.0.0
-
   stackback@0.0.2: {}
 
   standard-as-callback@2.1.0: {}
@@ -18886,8 +18817,6 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  tunnel@0.0.6: {}
-
   turbo-stream@2.4.1: {}
 
   type-check@0.4.0:
@@ -19009,10 +18938,6 @@ snapshots:
       undici: 7.11.0
 
   undici-types@6.21.0: {}
-
-  undici@5.29.0:
-    dependencies:
-      '@fastify/busboy': 2.1.1
 
   undici@6.21.3: {}
 

@@ -6,12 +6,12 @@
   "type": "module",
   "scripts": {
     "lint": "eslint",
-    "test": "npm run lint && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql borp --timeout=1200000 test/*.test.js",
-    "test:mariadb": "DB=mariadb borp --timeout=1200000 test/*.test.js",
-    "test:mysql": "DB=mysql borp --timeout=1200000 test/*.test.js",
-    "test:mysql8": "DB=mysql8 borp --timeout=1200000 test/*.test.js",
-    "test:sqlite": "DB=sqlite borp --timeout=1200000 test/*.test.js"
+    "test": "npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test:postgresql": "DB=postgresql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
+    "test:mariadb": "DB=mariadb node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
+    "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
+    "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
+    "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "dtsgenerator": "^3.19.1",
     "eslint": "9",
     "fastify": "^5.0.0",
