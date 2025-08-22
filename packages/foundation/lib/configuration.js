@@ -120,7 +120,8 @@ export function printValidationErrors (err) {
 
 export function listRecognizedConfigurationFiles (suffixes, extensions) {
   if (typeof suffixes === 'undefined' || suffixes === null) {
-    suffixes = ['runtime', 'service', 'application', 'db', 'composer']
+    // composer is retained for backward compatibility with V2
+    suffixes = ['runtime', 'service', 'application', 'db', 'gateway', 'composer']
   } else if (suffixes && !Array.isArray(suffixes)) {
     suffixes = [suffixes]
   } else if (!suffixes) {

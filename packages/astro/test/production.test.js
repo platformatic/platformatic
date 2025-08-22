@@ -9,7 +9,7 @@ import {
   verifyFrontendOnAutodetectedPrefix,
   verifyFrontendOnPrefix,
   verifyFrontendOnRoot,
-  verifyPlatformaticComposer,
+  verifyPlatformaticGateway,
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
@@ -33,7 +33,7 @@ const configurations = [
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
   },
@@ -41,7 +41,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'Astro (in composer without prefix)',
     files,
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -49,7 +49,7 @@ const configurations = [
     id: 'composer-autodetect-prefix',
     name: 'Astro (in composer with autodetected prefix)',
     files,
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -59,7 +59,7 @@ const configurations = [
     id: 'composer-custom-commands',
     name: 'Astro (in composer with prefix using custom commands)',
     files,
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -76,7 +76,7 @@ const configurations = [
     id: 'ssr-with-prefix',
     name: 'Astro SSR (in composer with prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -84,7 +84,7 @@ const configurations = [
     id: 'ssr-without-prefix',
     name: 'Astro SSR (in composer without prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -92,7 +92,7 @@ const configurations = [
     id: 'ssr-autodetect-prefix',
     name: 'Astro SSR (in composer with autodetected prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -100,7 +100,7 @@ const configurations = [
     id: 'ssr-custom-commands',
     name: 'Astro SSR (in composer with prefix using custom commands)',
     files: filesSSR,
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   }

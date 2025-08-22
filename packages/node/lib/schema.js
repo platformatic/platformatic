@@ -13,7 +13,7 @@ const node = {
       type: 'string'
     },
     absoluteUrl: {
-      description: 'This Node.js application requires the Absolute URL from the Composer',
+      description: 'This Node.js application requires the Absolute URL from the Gateway',
       type: 'boolean',
       default: false
     },

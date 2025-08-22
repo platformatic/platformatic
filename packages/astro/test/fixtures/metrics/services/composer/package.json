@@ -4,6 +4,6 @@
     "start": "platformatic start"
   },
   "dependencies": {
-    "@platformatic/composer": "^2.56.0"
+    "@platformatic/gateway": "^2.56.0"
   }
 }

@@ -70,7 +70,7 @@ test('dev - should complain if no configuration file is found', async t => {
   )
 })
 
-test.only('dev - should restart an application if files are changed', async t => {
+test('dev - should restart an application if files are changed', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const applicationDir = resolve(rootDir, 'web/main')
 

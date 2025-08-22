@@ -178,11 +178,11 @@ describe('utils', () => {
 
   describe('getApplicationTemplateFromSchemaUrl', () => {
     test('should get the right template name from schema url', () => {
-      const composerSchema = 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
+      const gatewaySchema = 'https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json'
       const applicationSchema = 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json'
       const dbSchema = 'https://schemas.platformatic.dev/@platformatic/db/1.52.0.json'
 
-      equal(getApplicationTemplateFromSchemaUrl(composerSchema), '@platformatic/composer')
+      equal(getApplicationTemplateFromSchemaUrl(gatewaySchema), '@platformatic/gateway')
       equal(getApplicationTemplateFromSchemaUrl(applicationSchema), '@platformatic/service')
       equal(getApplicationTemplateFromSchemaUrl(dbSchema), '@platformatic/db')
     })

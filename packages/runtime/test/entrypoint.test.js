@@ -26,7 +26,7 @@ test('should automatically detect the entrypoint if it there is only a single ap
   deepStrictEqual(entrypoint, 'main')
 })
 
-test('should automatically detect the entrypoint if it there exacty a composer', async t => {
+test('should automatically detect the entrypoint if it there exacty a gateway', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-with-composer.json')
   const runtime = await createRuntime(configFile)
 
@@ -46,13 +46,13 @@ test('should automatically detect the entrypoint if it there exacty a composer',
   deepStrictEqual(entrypoint, 'composer')
 })
 
-test('should throw an exception if there is no composer', async t => {
+test('should throw an exception if there is no gateway', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-no-composers.json')
 
   await rejects(() => createRuntime(configFile), /Cannot parse config file. Missing application entrypoint./)
 })
 
-test('should throw an exception if there are multiple composer', async t => {
+test('should throw an exception if there are multiple gateway', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-multiple-composers.json')
 
   await rejects(() => createRuntime(configFile), /Cannot parse config file. Missing application entrypoint./)

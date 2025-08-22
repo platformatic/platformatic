@@ -22,4 +22,4 @@ Platformatic supports the following file formats, their file extensions and the 
 | TOML   | `.tml`, `.toml`    | Yes                |
 
 
-#### [Back to docs](./reference/composer/configuration.md#configuration-files)
+#### [Back to docs](./reference/gateway/configuration.md#configuration-files)

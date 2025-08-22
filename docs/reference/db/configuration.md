@@ -14,7 +14,7 @@ Configuration file settings are grouped as follows:
 
 - **`basePath`** **(required)**: Configures the [basePath](../service/configuration.md#basePath).
 - **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
-- **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
+- **`gateway`**: Specific settings for Platformatic Gateway, such as service management and API composition.
 - **`metrics`**: Monitors and records performance [metrics](../service/configuration.md#metrics).
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).

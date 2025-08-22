@@ -228,22 +228,22 @@ export async function transform (config, _, context) {
       config.entrypoint = applications[0].id
       hasValidEntrypoint = true
     } else {
-      // Search if exactly application uses @platformatic/composer
-      const composers = []
+      // Search if exactly application uses @platformatic/gateway
+      const gateways = []
 
       for (const application of applications) {
         if (!application.config) {
           continue
         }
 
-        if (application.type === '@platformatic/composer') {
-          composers.push(application.id)
+        if (application.type === '@platformatic/gateway') {
+          gateways.push(application.id)
         }
       }
 
-      if (composers.length === 1) {
-        applications.find(s => s.id === composers[0]).entrypoint = true
-        config.entrypoint = composers[0]
+      if (gateways.length === 1) {
+        applications.find(s => s.id === gateways[0]).entrypoint = true
+        config.entrypoint = gateways[0]
         hasValidEntrypoint = true
       }
     }

@@ -271,7 +271,7 @@ With default pino settings:
   "time": 1747988551789,
   "pid": 29580,
   "hostname": "work",
-  "name": "composer",
+  "name": "gateway",
   "reqId": "c9f5d5b8-6ea5-4782-8c81-00ffb27386b3",
   "res": { "statusCode": 500 },
   "responseTime": 10.037883000448346,
@@ -303,12 +303,12 @@ With custom logger configuration, for example
 {
   "severity": "INFO",
   "time": "2025-05-23T08:20:51.464Z",
-  "name": "composer",
+  "name": "gateway",
   "caller": "STDOUT",
   "stdout": {
     "severity": "INFO",
     "time": "2025-05-23T08:20:51.464Z",
-    "name": "composer",
+    "name": "gateway",
     "reqId": "420ab3ab-aa5f-42d4-9736-d941cfaaf514",
     "res": {
       "statusCode": 200
@@ -325,7 +325,7 @@ To avoid the log entry to be wrapped in the `stdout` property, set the `captureS
 {
   "severity": "INFO",
   "time": "2025-05-23T08:21:49.813Z",
-  "name": "composer",
+  "name": "gateway",
   "reqId": "4a8ad43d-f749-4993-a1f4-3055c55b23ba",
   "res": {
     "statusCode": 200
@@ -451,7 +451,7 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ## Setting up a Platformatic application with logging configuration
 
-Let's see an example of a Platformatic application with `watt`, `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Platformatic application with `watt`, `gateway`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
 
 Watt has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in Watt ensures that the logs will be consistent across all the applications.
 

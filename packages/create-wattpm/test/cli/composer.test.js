@@ -9,13 +9,14 @@ import {
   setupUserInputHandler
 } from './helper.js'
 
-test('Creates a Platformatic Composer', async t => {
+// TODO@ShogunPanda:This test can be restored once a alpha of @platformatic/gateway is released
+test.skip('Creates a Platformatic Gateway', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/composer' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
@@ -41,13 +42,14 @@ test('Creates a Platformatic Composer', async t => {
   equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.js')), false)
 })
 
-test('Creates a Platformatic Composer (TypeScript)', async t => {
+// TODO@ShogunPanda:This test can be restored once a alpha of @platformatic/gateway is released
+test.skip('Creates a Platformatic Gateway (TypeScript)', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
 
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/composer' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'list', question: 'Do you want to create another application?', reply: 'no' },

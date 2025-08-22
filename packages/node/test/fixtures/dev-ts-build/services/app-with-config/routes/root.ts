@@ -16,7 +16,7 @@ export default async function  (fastify: FastifyInstance, opts: FastifyPluginOpt
     const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getApplicationMeta', 'composer')
 
     const url = new URL(
-      `${meta.composer.proxies.frontend.rewritePrefix}/direct`.replaceAll(/\/+/g, '/'),
+      `${meta.gateway.proxies.frontend.rewritePrefix}/direct`.replaceAll(/\/+/g, '/'),
       'http://frontend.plt.local'
     )
     const response = await fetch(url)

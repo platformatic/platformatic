@@ -82,7 +82,7 @@ test('should strip the runtime base path for an application as an entrypoint', a
   }
 })
 
-test('should strip the runtime base path for a composer as an entrypoint', async t => {
+test('should strip the runtime base path for a gateway as an entrypoint', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'composer')
 
   {
@@ -128,7 +128,7 @@ test('should strip the runtime base path for a composer as an entrypoint', async
   }
 
   {
-    // Check the composer openapi base path
+    // Check the gateway openapi base path
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/documentation/json'
     })

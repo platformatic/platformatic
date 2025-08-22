@@ -11,8 +11,8 @@ import semver from 'semver'
 import {
   addPrefixToEnv,
   convertApplicationNameToPrefix,
-  findComposerConfigFile,
   findDBConfigFile,
+  findGatewayConfigFile,
   findRuntimeConfigFile,
   findServiceConfigFile,
   getDependencyVersion,
@@ -167,13 +167,13 @@ test('findServiceConfigFile', async () => {
   await safeRemove(tmpDir2)
 })
 
-test('findComposerConfigFile', async () => {
+test('findGatewayConfigFile', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-wattpm-'))
   const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-wattpm-'))
-  const config = join(tmpDir1, 'platformatic.composer.yml')
+  const config = join(tmpDir1, 'platformatic.gateway.yml')
   await writeFile(config, 'TEST')
-  equal(await findComposerConfigFile(tmpDir1), 'platformatic.composer.yml')
-  equal(await findComposerConfigFile(tmpDir2), undefined)
+  equal(await findGatewayConfigFile(tmpDir1), 'platformatic.gateway.yml')
+  equal(await findGatewayConfigFile(tmpDir2), undefined)
   await safeRemove(tmpDir1)
   await safeRemove(tmpDir2)
 })

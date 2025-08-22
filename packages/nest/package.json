@@ -35,7 +35,7 @@
     "@nestjs/core": "^11.1.2",
     "@nestjs/platform-express": "^11.1.2",
     "@nestjs/platform-fastify": "^11.1.2",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",

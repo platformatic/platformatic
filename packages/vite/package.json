@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@fastify/vite": "^7.0.1",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",

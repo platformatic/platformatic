@@ -140,7 +140,7 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   ok(typeof result.commands === 'object')
   ok(typeof result.help === 'object')
 
-  // The metrics fixture should have commands from service-db (DB package) and service-1 (Composer package)
+  // The metrics fixture should have commands from service-db (DB package) and service-1 (Gateway package)
   const applicationKeys = Object.keys(result.applications)
   const helpKeys = Object.keys(result.help)
 
@@ -170,8 +170,8 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
     strictEqual(result.applications[expectedCommand].id, 'service-db')
   }
 
-  // Verify we have composer commands
-  const composerCommands = applicationKeys.filter(key => key.startsWith('service-1:'))
-  ok(composerCommands.length > 0, 'Should have found Composer application commands')
-  ok(composerCommands.includes('service-1:fetch-openapi-schemas'))
+  // Verify we have gateway commands
+  const gatewayCommands = applicationKeys.filter(key => key.startsWith('service-1:'))
+  ok(gatewayCommands.length > 0, 'Should have found Gateway application commands')
+  ok(gatewayCommands.includes('service-1:fetch-openapi-schemas'))
 })

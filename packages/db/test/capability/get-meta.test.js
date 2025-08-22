@@ -34,7 +34,7 @@ test('get meta info via capability api', async t => {
 
   const meta = await capability.getMeta()
   const expected = {
-    composer: {
+    gateway: {
       needsRootTrailingSlash: false,
       prefix: '/',
       wantsAbsoluteUrls: false,

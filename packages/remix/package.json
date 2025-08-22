@@ -33,7 +33,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@remix-run/dev": "^2.16.8",
     "@remix-run/node": "^2.16.8",

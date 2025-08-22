@@ -504,11 +504,11 @@ async function ensureExists (path) {
   )
 }
 
-export function verifyPlatformaticComposer (t, url) {
+export function verifyPlatformaticGateway (t, url) {
   return verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
 }
 
-export function verifyPlatformaticComposerWithProxy (t, url) {
+export function verifyPlatformaticGatewayWithProxy (t, url) {
   return verifyJSONViaHTTP(url, '/external-proxy/example', 200, { hello: 'foobar' })
 }
 
@@ -772,7 +772,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           if (id.endsWith('without-prefix')) {
             await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
               const json = JSON.parse(contents)
-              json.composer.applications[1].proxy = { prefix: '' }
+              json.gateway.applications[1].proxy = { prefix: '' }
               return JSON.stringify(json, null, 2)
             })
           }

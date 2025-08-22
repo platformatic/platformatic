@@ -122,14 +122,14 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'API Gateway (Composer)',
+              label: 'API Gateway (Gateway)',
               collapsed: true,
               items: [
-                'reference/composer/overview',
-                'reference/composer/configuration',
-                'reference/composer/api-modification',
-                'reference/composer/plugin',
-                'reference/composer/programmatic'
+                'reference/gateway/overview',
+                'reference/gateway/configuration',
+                'reference/gateway/api-modification',
+                'reference/gateway/plugin',
+                'reference/gateway/programmatic'
               ]
             },
             {

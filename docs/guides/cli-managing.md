@@ -169,7 +169,7 @@ The list command shows all applications that are currently running in the applic
 NAME      Workers   Type      Entrypoint
 movies    1         db        no
 payment   1         db        no
-gateway   1         composer  yes
+gateway   1         gateway  yes
 ```
 
 You can list all applications in a running application by specifying either its PID or its name.

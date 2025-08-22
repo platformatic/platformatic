@@ -64,7 +64,7 @@ test('should get applications topology', async t => {
   })
 })
 
-test('should get applications topology (composer)', async t => {
+test('should get applications topology (gateway)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
   const app = await createRuntime(configFile)
 
@@ -118,7 +118,7 @@ test('should get applications topology (composer)', async t => {
       },
       {
         id: 'composerApp',
-        type: 'composer',
+        type: 'gateway',
         status: 'started',
         version,
         localUrl: 'http://composerApp.plt.local',

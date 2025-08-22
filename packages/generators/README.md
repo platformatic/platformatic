@@ -7,7 +7,7 @@ Generates a Platformatic app programmatically.
 The base class `BaseGenerator` is basically a file writer with some default behaviours.
 
 It should be instantiated with an `options` object having this properties
-- `type`: `"db" | "service" | "composer"`
+- `type`: `"db" | "service" | "gateway"`
 - `logger`: A pino-like logger object. If not provided a fake logger with no output will be used
 - `questions`: An array of custom questions object to provide to `inquirer`. Default to `[]`
 

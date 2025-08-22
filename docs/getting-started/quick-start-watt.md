@@ -6,7 +6,7 @@ This guide will help you set up and run an application composed of the following
 - [Next.js](https://nextjs.org/) frontend, to render our frontend
 - Generic `node:http` [`createServer`](https://nodejs.org/docs/latest/api/http.html#httpcreateserveroptions-requestlistener),
   to showcase how to add an existing Node.js app
-- [Platformatic Composer](/docs/reference/composer/introduction), to coordinate/expose them all.
+- [Platformatic Gateway](/docs/reference/gateway/introduction), to coordinate/expose them all.
 
 :::note
 In this guide, we will use `Next.js` as our frontend framework, but Watt supports many more frameworks including Astro, Remix, Vite, and NestJS. See our [Framework Integration Guides](/docs/guides/frameworks) for complete details and setup instructions for all supported frameworks.
@@ -99,9 +99,9 @@ Your first Watt server is now live! 🌟 You can test it with:
 curl http://localhost:3042
 ```
 
-## Add a Platformatic Composer to run multiple apps
+## Add a Platformatic Gateway to run multiple apps
 
-Inside `my-app`, let's create a new Platformatic Composer
+Inside `my-app`, let's create a new Platformatic Gateway
 
 ```bash
 npm create wattpm
@@ -112,20 +112,20 @@ This will output:
 ```
 Hello Matteo Collina, welcome to Platformatic 2.64.0
 Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/composer
-? What is the name of the application? composer
+? Which kind of application do you want to create? @platformatic/gateway
+? What is the name of the application? gateway
 ? Do you want to create another application? no
-? Which application should be exposed? composer
+? Which application should be exposed? gateway
 ? Do you want to use TypeScript? no
 [16:06:50] INFO: /Users/matteo/tmp/my-app/.env written!
 [16:06:50] INFO: /Users/matteo/tmp/my-app/.env.sample written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/package.json written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/platformatic.json written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/plt-env.d.ts written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/README.md written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/gateway/package.json written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/gateway/platformatic.json written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/gateway/.gitignore written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/gateway/plt-env.d.ts written!
+[16:06:50] INFO: /Users/matteo/tmp/my-app/web/gateway/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the application composer using npm ...
+[16:06:50] INFO: Installing dependencies for the application gateway using npm ...
 [16:06:52] INFO: Project created successfully, executing post-install actions...
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
@@ -151,13 +151,13 @@ curl http://localhost:3042/node
 
 :::note
 
-You can customize how the various applications are exposed by changing `web/composer/platformatic.json`.
+You can customize how the various applications are exposed by changing `web/gateway/platformatic.json`.
 Here is the equivalent of the default configuration when exposing a Node.js application:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.0.0.json",
+  "gateway": {
     "applications": [{
       "id": "node",
       "proxy": {
@@ -242,7 +242,7 @@ Then, you can test it by opening your browser at [`http://localhost:3042/next`](
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
 You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/composer/platformatic.json` accordingly if you customize it.
+and the `prefix` in `web/gateway/platformatic.json` accordingly if you customize it.
 
 :::
 

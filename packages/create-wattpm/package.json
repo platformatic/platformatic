@@ -34,7 +34,7 @@
     "which": "^3.0.1"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",

@@ -1,9 +1,9 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.6.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.6.0.json",
   "server": {
     "healthCheck": true
   },
-  "composer": {
+  "gateway": {
     "services": [
       {
         "id": "express",

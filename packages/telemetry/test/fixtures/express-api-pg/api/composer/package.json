@@ -1,5 +1,5 @@
 {
-  "name": "composer-service",
+  "name": "gateway-service",
   "scripts": {
     "start": "platformatic start"
   },
@@ -7,6 +7,6 @@
     "fastify": "^5.1.0"
   },
   "dependencies": {
-    "@platformatic/composer": "^2.18.0"
+    "@platformatic/gateway": "^2.18.0"
   }
 }

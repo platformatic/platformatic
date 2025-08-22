@@ -70,7 +70,7 @@ export async function isDirectoryWriteable (directory) {
 export const findConfigFile = async directory => findConfigurationFile(directory)
 export const findDBConfigFile = async directory => findConfigurationFile(directory, 'db')
 export const findServiceConfigFile = async directory => findConfigurationFile(directory, 'service')
-export const findComposerConfigFile = async directory => findConfigurationFile(directory, 'composer')
+export const findGatewayConfigFile = async directory => findConfigurationFile(directory, 'gateway')
 export const findRuntimeConfigFile = async directory => findConfigurationFile(directory, 'runtime')
 
 /**

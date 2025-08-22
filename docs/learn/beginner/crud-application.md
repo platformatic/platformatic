@@ -58,7 +58,7 @@ Watt acts as your **application server** that can host multiple **applications**
 - **Database applications** for auto-generated APIs
 - **HTTP applications** for custom business logic
 - **Frontend applications** for web applications
-- **Composer applications** for API gateways
+- **Gateway applications** for API gateways
 
 All applications share the same configuration, logging, and deployment - giving you a unified development experience.
 
@@ -373,7 +373,7 @@ Now that you understand Watt's unified approach, you can expand your application
 1. **Connect to Your Enterprise Database**: Switch from SQLite to PostgreSQL, MySQL, or your production database
 2. **Add a Frontend Service**: Add a Next.js, Astro, or React capability to your Watt application
 3. **Add Custom HTTP Services**: Create additional applications for business logic that work alongside your database application
-4. **Add a Composer Service**: Create an API gateway that aggregates multiple applications
+4. **Add a Gateway Service**: Create an API gateway that aggregates multiple applications
 5. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command
 6. **Add Authentication**: Implement authentication that works across all applications in your Watt application
 

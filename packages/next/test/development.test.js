@@ -49,7 +49,7 @@ export async function verifyDevelopmentFrontendWithExternalProxy (
     async root => {
       await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
         const json = JSON.parse(contents)
-        json.composer.applications[1].proxy = { prefix: '/frontend' }
+        json.gateway.applications[1].proxy = { prefix: '/frontend' }
         return JSON.stringify(json, null, 2)
       })
     }

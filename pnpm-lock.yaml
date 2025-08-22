@@ -39,9 +39,9 @@ importers:
       '@astrojs/node':
         specifier: ^9.2.0
         version: 9.4.0(astro@5.12.9(@types/node@22.17.1)(ioredis@5.7.0)(rollup@4.46.2)(terser@5.43.1)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1))
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -262,15 +262,15 @@ importers:
         specifier: ^2.4.1
         version: 2.8.1
     devDependencies:
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/gateway':
+        specifier: workspace:*
+        version: link:../gateway
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -340,163 +340,6 @@ importers:
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
-
-  packages/composer:
-    dependencies:
-      '@fastify/error':
-        specifier: ^4.0.0
-        version: 4.2.0
-      '@fastify/http-proxy':
-        specifier: ^11.3.0
-        version: 11.3.0
-      '@fastify/reply-from':
-        specifier: ^12.0.0
-        version: 12.3.0
-      '@fastify/static':
-        specifier: ^8.0.0
-        version: 8.2.0
-      '@fastify/swagger':
-        specifier: ^9.0.0
-        version: 9.5.1
-      '@fastify/view':
-        specifier: ^10.0.1
-        version: 10.0.2
-      '@platformatic/basic':
-        specifier: workspace:*
-        version: link:../basic
-      '@platformatic/fastify-openapi-glue':
-        specifier: ^5.1.0
-        version: 5.1.0
-      '@platformatic/foundation':
-        specifier: workspace:^
-        version: link:../foundation
-      '@platformatic/graphql-composer':
-        specifier: ^0.10.0
-        version: 0.10.0
-      '@platformatic/scalar-theme':
-        specifier: workspace:*
-        version: link:../scalar-theme
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
-      '@platformatic/telemetry':
-        specifier: workspace:*
-        version: link:../telemetry
-      '@scalar/fastify-api-reference':
-        specifier: 1.33.0
-        version: 1.33.0
-      ajv:
-        specifier: ^8.12.0
-        version: 8.17.1
-      console-table-printer:
-        specifier: ^2.12.0
-        version: 2.14.6
-      execa:
-        specifier: ^9.0.0
-        version: 9.6.0
-      fast-deep-equal:
-        specifier: ^3.1.3
-        version: 3.1.3
-      fastify:
-        specifier: ^5.0.0
-        version: 5.5.0
-      fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.0.1
-      graphql:
-        specifier: ^16.8.1
-        version: 16.11.0
-      help-me:
-        specifier: ^5.0.0
-        version: 5.0.0
-      json-schema-traverse:
-        specifier: ^1.0.0
-        version: 1.0.0
-      mercurius:
-        specifier: ^16.0.0
-        version: 16.2.0(graphql@16.11.0)
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
-      my-ua-parser:
-        specifier: ^2.0.2
-        version: 2.0.4
-      nunjucks:
-        specifier: ^3.2.4
-        version: 3.2.4(chokidar@3.6.0)
-      ora:
-        specifier: ^6.3.1
-        version: 6.3.1
-      pino:
-        specifier: ^9.9.0
-        version: 9.9.0
-      pino-pretty:
-        specifier: ^13.0.0
-        version: 13.1.1
-      rfdc:
-        specifier: ^1.3.1
-        version: 1.4.1
-      semgrator:
-        specifier: ^0.3.0
-        version: 0.3.0
-      undici:
-        specifier: ^7.0.0
-        version: 7.11.0
-    devDependencies:
-      '@platformatic/client':
-        specifier: workspace:*
-        version: link:../client
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
-      c8:
-        specifier: ^10.0.0
-        version: 10.1.3
-      cleaner-spec-reporter:
-        specifier: ^0.5.0
-        version: 0.5.0
-      dedent:
-        specifier: ^1.5.1
-        version: 1.6.0
-      eslint:
-        specifier: '9'
-        version: 9.33.0
-      json-schema-to-typescript:
-        specifier: ^15.0.0
-        version: 15.0.4
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.39.1(eslint@9.33.0)(typescript@5.9.2))(eslint@9.33.0)(typescript@5.9.2)
-      openapi-schema-validator:
-        specifier: ^12.1.3
-        version: 12.1.3
-      pino-test:
-        specifier: ^1.0.1
-        version: 1.1.0
-      prom-client:
-        specifier: ^15.1.2
-        version: 15.1.3
-      self-cert:
-        specifier: ^2.0.0
-        version: 2.0.1
-      single-user-cache:
-        specifier: ^1.0.1
-        version: 1.0.1
-      split2:
-        specifier: ^4.2.0
-        version: 4.2.0
-      tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-      why-is-node-running:
-        specifier: '2'
-        version: 2.3.0
-      ws:
-        specifier: ^8.16.0
-        version: 8.18.3
 
   packages/control:
     dependencies:
@@ -614,12 +457,12 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/gateway':
+        specifier: workspace:*
+        version: link:../gateway
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -1012,6 +855,163 @@ importers:
         specifier: ^5.5.4
         version: 5.9.2
 
+  packages/gateway:
+    dependencies:
+      '@fastify/error':
+        specifier: ^4.0.0
+        version: 4.2.0
+      '@fastify/http-proxy':
+        specifier: ^11.3.0
+        version: 11.3.0
+      '@fastify/reply-from':
+        specifier: ^12.0.0
+        version: 12.3.0
+      '@fastify/static':
+        specifier: ^8.0.0
+        version: 8.2.0
+      '@fastify/swagger':
+        specifier: ^9.0.0
+        version: 9.5.1
+      '@fastify/view':
+        specifier: ^10.0.1
+        version: 10.0.2
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
+      '@platformatic/fastify-openapi-glue':
+        specifier: ^5.1.0
+        version: 5.1.0
+      '@platformatic/foundation':
+        specifier: workspace:^
+        version: link:../foundation
+      '@platformatic/graphql-composer':
+        specifier: ^0.10.0
+        version: 0.10.0
+      '@platformatic/scalar-theme':
+        specifier: workspace:*
+        version: link:../scalar-theme
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      '@platformatic/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
+      '@scalar/fastify-api-reference':
+        specifier: 1.33.0
+        version: 1.33.0
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      console-table-printer:
+        specifier: ^2.12.0
+        version: 2.14.6
+      execa:
+        specifier: ^9.0.0
+        version: 9.6.0
+      fast-deep-equal:
+        specifier: ^3.1.3
+        version: 3.1.3
+      fastify:
+        specifier: ^5.0.0
+        version: 5.5.0
+      fastify-plugin:
+        specifier: ^5.0.0
+        version: 5.0.1
+      graphql:
+        specifier: ^16.8.1
+        version: 16.11.0
+      help-me:
+        specifier: ^5.0.0
+        version: 5.0.0
+      json-schema-traverse:
+        specifier: ^1.0.0
+        version: 1.0.0
+      mercurius:
+        specifier: ^16.0.0
+        version: 16.2.0(graphql@16.11.0)
+      minimist:
+        specifier: ^1.2.8
+        version: 1.2.8
+      my-ua-parser:
+        specifier: ^2.0.2
+        version: 2.0.4
+      nunjucks:
+        specifier: ^3.2.4
+        version: 3.2.4(chokidar@3.6.0)
+      ora:
+        specifier: ^6.3.1
+        version: 6.3.1
+      pino:
+        specifier: ^9.9.0
+        version: 9.9.0
+      pino-pretty:
+        specifier: ^13.0.0
+        version: 13.1.1
+      rfdc:
+        specifier: ^1.3.1
+        version: 1.4.1
+      semgrator:
+        specifier: ^0.3.0
+        version: 0.3.0
+      undici:
+        specifier: ^7.0.0
+        version: 7.11.0
+    devDependencies:
+      '@platformatic/client':
+        specifier: workspace:*
+        version: link:../client
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      c8:
+        specifier: ^10.0.0
+        version: 10.1.3
+      cleaner-spec-reporter:
+        specifier: ^0.5.0
+        version: 0.5.0
+      dedent:
+        specifier: ^1.5.1
+        version: 1.6.0
+      eslint:
+        specifier: '9'
+        version: 9.33.0
+      json-schema-to-typescript:
+        specifier: ^15.0.0
+        version: 15.0.4
+      neostandard:
+        specifier: ^0.12.0
+        version: 0.12.2(@typescript-eslint/utils@8.39.1(eslint@9.33.0)(typescript@5.9.2))(eslint@9.33.0)(typescript@5.9.2)
+      openapi-schema-validator:
+        specifier: ^12.1.3
+        version: 12.1.3
+      pino-test:
+        specifier: ^1.0.1
+        version: 1.1.0
+      prom-client:
+        specifier: ^15.1.2
+        version: 15.1.3
+      self-cert:
+        specifier: ^2.0.0
+        version: 2.0.1
+      single-user-cache:
+        specifier: ^1.0.1
+        version: 1.0.1
+      split2:
+        specifier: ^4.2.0
+        version: 4.2.0
+      tsd:
+        specifier: ^0.32.0
+        version: 0.32.0
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+      why-is-node-running:
+        specifier: '2'
+        version: 2.3.0
+      ws:
+        specifier: ^8.16.0
+        version: 8.18.3
+
   packages/generators:
     dependencies:
       '@fastify/error':
@@ -1167,9 +1167,9 @@ importers:
       '@nestjs/platform-fastify':
         specifier: ^11.1.2
         version: 11.1.6(@fastify/static@8.2.0)(@fastify/view@10.0.2)(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6)
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1228,9 +1228,9 @@ importers:
       '@fastify/reply-from':
         specifier: ^12.0.0
         version: 12.3.0
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1283,9 +1283,9 @@ importers:
         specifier: ^6.0.0
         version: 6.6.0
     devDependencies:
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1344,9 +1344,9 @@ importers:
         specifier: ^7.6.3
         version: 7.7.2
     devDependencies:
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1504,12 +1504,12 @@ importers:
       '@fastify/formbody':
         specifier: ^8.0.0
         version: 8.0.2
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/gateway':
+        specifier: workspace:*
+        version: link:../gateway
       '@platformatic/node':
         specifier: workspace:*
         version: link:../node
@@ -2124,9 +2124,9 @@ importers:
       '@fastify/vite':
         specifier: ^7.0.1
         version: 7.0.1(@types/node@22.17.1)(terser@5.43.1)
-      '@platformatic/composer':
+      '@platformatic/gateway':
         specifier: workspace:*
-        version: link:../composer
+        version: link:../gateway
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service

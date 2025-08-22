@@ -10,8 +10,8 @@ import {
   verifyFrontendOnPrefix,
   verifyFrontendOnPrefixWithProxy,
   verifyFrontendOnRoot,
-  verifyPlatformaticComposer,
-  verifyPlatformaticComposerWithProxy,
+  verifyPlatformaticGateway,
+  verifyPlatformaticGatewayWithProxy,
   verifyPlatformaticService,
   verifyPlatformaticServiceWithProxy
 } from '../../basic/test/helper.js'
@@ -29,7 +29,7 @@ const configurations = [
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: ''
   },
@@ -37,13 +37,13 @@ const configurations = [
     id: 'composer-with-external-proxy',
     name: 'Next.js (in composer with external proxy)',
     files,
-    checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticComposerWithProxy, verifyPlatformaticServiceWithProxy],
+    checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticGatewayWithProxy, verifyPlatformaticServiceWithProxy],
     language: 'ts',
     prefix: '/frontend',
     async additionalSetup (root) {
       await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
         const json = JSON.parse(contents)
-        json.composer.applications[1].proxy = { prefix: '/frontend' }
+        json.gateway.applications[1].proxy = { prefix: '/frontend' }
         return JSON.stringify(json, null, 2)
       })
     }
@@ -52,7 +52,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'Next.js (in composer without prefix)',
     files,
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -60,7 +60,7 @@ const configurations = [
     id: 'composer-autodetect-prefix',
     name: 'Next.js (in composer with autodetected prefix)',
     files,
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -68,7 +68,7 @@ const configurations = [
     id: 'server-side',
     name: 'Next.js RSC (in composer with prefix)',
     files: [...files, ...filesSSR],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -76,7 +76,7 @@ const configurations = [
     id: 'composer-custom-commands',
     name: 'Next.js (in composer with prefix using custom commands)',
     files,
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   }

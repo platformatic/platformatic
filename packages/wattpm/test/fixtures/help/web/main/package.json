@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@platformatic/composer": "^2.71.0"
+    "@platformatic/gateway": "^2.71.0"
   }
 }

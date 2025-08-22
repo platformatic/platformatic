@@ -113,8 +113,8 @@ test('configure telemetry correctly with a node app - integration test', async t
   equal(applicationUrl.value.stringValue, `${url}/`)
 })
 
-test('configure telemetry correctly with a composer + next - integration test', async t => {
-  // composer -> next -> fastify
+test('configure telemetry correctly with a gateway + next - integration test', async t => {
+  // gateway -> next -> fastify
   //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
@@ -173,7 +173,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
     }
   }
 
-  const spanComposerServer = allSpans.find(span => {
+  const spanGatewayServer = allSpans.find(span => {
     if (span.kind === 2) {
       // Server
       return span.applicationName === 'test-runtime-composer'
@@ -181,7 +181,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
     return false
   })
 
-  const spanComposerClient = allSpans.find(span => {
+  const spanGatewayClient = allSpans.find(span => {
     if (span.kind === 3) {
       // Client
       return (
@@ -194,7 +194,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
 
   // Next also produces some "type 0" internal spans, that are not relevant for this test
   // so we start from the last ones (node and fastify server span) and go backward
-  // to the composer one
+  // to the gateway one
   const spanNodeServer = allSpans.find(span => {
     if (span.kind === 2) {
       return span.applicationName === 'test-runtime-node'
@@ -203,7 +203,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   })
 
   const spanNextClientNode = findParentSpan(allSpans, spanNodeServer, 3, 'GET http://node.plt.local/')
-  const spanNextServer = findSpanWithParentWithId(allSpans, spanNextClientNode, spanComposerClient.spanId)
+  const spanNextServer = findSpanWithParentWithId(allSpans, spanNextClientNode, spanGatewayClient.spanId)
   const spanFastifyServer = allSpans.find(span => {
     if (span.kind === 2) {
       return span.applicationName === 'test-runtime-fastify'
@@ -211,14 +211,14 @@ test('configure telemetry correctly with a composer + next - integration test', 
     return false
   })
   const spanNextClientFastify = findParentSpan(allSpans, spanFastifyServer, 3, 'GET http://fastify.plt.local/')
-  const spanNextServer2 = findSpanWithParentWithId(allSpans, spanNextClientFastify, spanComposerClient.spanId)
+  const spanNextServer2 = findSpanWithParentWithId(allSpans, spanNextClientFastify, spanGatewayClient.spanId)
 
   equal(spanNextServer.id, spanNextServer2.id) // Must be the same span
   equal(spanNextClientNode.traceId, traceId)
 
-  // check the spans chain back from next to composer call
-  equal(spanNextServer.parentSpanId, spanComposerClient.spanId)
-  equal(spanComposerClient.parentSpanId, spanComposerServer.spanId)
+  // check the spans chain back from next to gateway call
+  equal(spanNextServer.parentSpanId, spanGatewayClient.spanId)
+  equal(spanGatewayClient.parentSpanId, spanGatewayServer.spanId)
 })
 
 test('configure telemetry correctly with a express app and additional express instrumentation', async t => {

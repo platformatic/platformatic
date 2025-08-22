@@ -417,7 +417,7 @@ For backwards compatibility, these commands are available via `platformatic` or 
 
 - `platformatic db <command>` - Database application commands (create, start, migrations, seed, etc.)
 - `platformatic node <command>` - HTTP application commands (create, start, compile, etc.)
-- `platformatic composer <command>` - API gateway application commands (create, start, schema fetch, etc.)
+- `platformatic gateway <command>` - API gateway application commands (create, start, schema fetch, etc.)
 - `platformatic runtime <command>` - Runtime commands (start, compile, etc.)
 
 ### Client Generation

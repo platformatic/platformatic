@@ -5,6 +5,6 @@
     "start": "platformatic start"
   },
   "dependencies": {
-    "@platformatic/composer": "^2.3.1"
+    "@platformatic/gateway": "^2.3.1"
   }
 }
