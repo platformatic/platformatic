@@ -69,7 +69,8 @@ async function buildOpenAPIClient (options, openTelemetry) {
     options.getHeaders = undefined
   }
 
-  const { validateResponse, queryParser, dispatcher } = options
+  const { validateResponse, queryParser } = options
+
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
     throw new errors.OptionsUrlRequiredError()
@@ -87,7 +88,15 @@ async function buildOpenAPIClient (options, openTelemetry) {
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
 
-  let { fullRequest, fullResponse, throwOnError, bodyTimeout, headersTimeout } = options
+  let { fullRequest, fullResponse, bodyTimeout, headersTimeout, dispatcher } = options
+
+  if (options.throwOnError) {
+    if (!dispatcher) {
+      dispatcher = getGlobalDispatcher()
+    }
+    dispatcher = dispatcher.compose(interceptors.responseError())
+  }
+
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -114,7 +123,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher)
     }
   }
   return client
@@ -137,7 +146,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
   if (validateResponse) {
     await $RefParser.dereference(spec)
   }
@@ -219,13 +228,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
-    }
-
-    if (throwOnError) {
-      if (!dispatcher) {
-        dispatcher = getGlobalDispatcher()
-      }
-      dispatcher = dispatcher.compose(interceptors.responseError())
     }
 
     let res

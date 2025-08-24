@@ -9,8 +9,7 @@ This guide will help you set up and run an application composed of the following
 - [Platformatic Composer](/docs/reference/composer/introduction), to coordinate/expose them all.
 
 :::note
-In this guide, we will use `Next.js` as our frontend framework, but you can also use [Astro](https://astro.build/),
-or [Remix](https://remix.run/). We plan to expand the list of supported frameworks in the future.
+In this guide, we will use `Next.js` as our frontend framework, but Watt supports many more frameworks including Astro, Remix, Vite, and NestJS. See our [Framework Integration Guides](/docs/guides/frameworks) for complete details and setup instructions for all supported frameworks.
 :::
 
 

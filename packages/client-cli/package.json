@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "2.74.1",
+  "version": "2.74.3",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -35,7 +35,7 @@
     "fs-extra": "^11.2.0",
     "neostandard": "^0.12.0",
     "split2": "^4.2.0",
-    "tsd": "^0.32.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.4.2",
     "why-is-node-running": "^2.2.2"
   },

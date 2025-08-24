@@ -1,11 +1,11 @@
 # Platformatic Service API
 
-This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/service/overview) application.
+This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/reference/service/overview) application.
 
 ## Requirements
 
-Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
+Platformatic supports macOS, Linux and Windows ([WSL](https://learn.microsoft.com/en-us/windows/wsl/) recommended).
+You'll need to have [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
 
 ## Setup
 

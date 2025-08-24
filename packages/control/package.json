@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/control",
-  "version": "2.74.1",
+  "version": "2.74.3",
   "description": "Platformatic Control",
   "main": "index.js",
   "bin": {
@@ -30,7 +30,7 @@
     "execa": "^9.0.0",
     "neostandard": "^0.12.0",
     "split2": "^4.2.0",
-    "tsd": "^0.32.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {

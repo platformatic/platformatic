@@ -116,3 +116,4 @@ wattpm start
 
 - [Watt Quick Start](/docs/getting-started/quick-start-watt/)
 - [Full Stack Guide](/docs/getting-started/quick-start-guide)
+- [Framework Integration Guides](/docs/guides/frameworks) - Setup guides for Next.js, Astro, Remix, Vite, and more

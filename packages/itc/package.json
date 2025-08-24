@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/itc",
-  "version": "2.74.1",
+  "version": "2.74.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -22,7 +22,7 @@
     "borp": "^0.20.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
-    "tsd": "^0.32.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
