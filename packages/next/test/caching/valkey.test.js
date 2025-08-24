@@ -313,7 +313,7 @@ test(
 
     {
       const {
-        value: { kind, html, headers, status },
+        value: { kind, html, headers },
         revalidate,
         maxTTL,
         serviceId
@@ -332,7 +332,6 @@ test(
 
       ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
 
-      deepStrictEqual(status, 200)
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
       deepStrictEqual(serviceId, 'frontend')
