@@ -18,64 +18,108 @@
 
 <h1 align="center">
   <br/>
-  The Open Source Toolkit for Node.js
+  Watt - The Node.js Application Server
   <br/>
 </h1>
 
 <div align="center"> 
 
-  __Platformatic__'s Open Source toolkit helps you build modern Node.js  
-  applications without the endless loop of setup and maintenance. 
+  **Build and run multiple Node.js applications with unified logging, monitoring, and deployment.**  
+  
+  Transform Node.js development with a single server that handles databases, APIs, frontend frameworks, and microservices - all with built-in observability and zero-config deployment.
 </div>
 <br/>
 
-## How does it work?
-Platformatic puts Node development on autopilot, with:
+## Quick Start (2 minutes)
 
-- 🧱 Opinionated structures and composable templates
-- 🔋 Batteries-included API setup
-- 📄 Out-of-the-box documentation, logs, and metrics
-- ⚙️ Shareable and reusable configurations 
-
-## Ready to get started?
-
-### Install
-<hr />
+Get your first Watt application running in under 2 minutes:
 
 ```bash
-# Create a new application
-npm create platformatic@latest
-
-# Or install manually:
-npm install platformatic
+npm install -g wattpm
+npx wattpm create my-first-app
+cd my-first-app && npm start
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) to get up and running with Platformatic.
+Your application will be running at `http://localhost:3042` with auto-generated REST and GraphQL APIs.
 
-### Documentation
-<hr />
+## What Makes Watt Different?
 
-- [Overview](https://docs.platformatic.dev/docs/Overview)
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
-- [Guides](https://docs.platformatic.dev/docs/guides/movie-quotes-app-tutorial)
+**One Server, Multiple Services** - Watt runs your database APIs, custom services, frontend frameworks, and API gateways all within a single, unified application server.
 
-Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
+- **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box  
+- **🧱 Composable Architecture** - HTTP services, API composers, frontend frameworks, and data services
+- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, and plain Node.js
+- **📦 Production Ready** - Docker deployment, environment configuration, and scaling built-in
+- **🚀 TypeScript First** - Full type safety with auto-generated types and SDK
 
-### Support
-<hr />
+## Choose Your Learning Path
 
-Join our community on [Discord](https://discord.gg/platformatic).
-For a dedicated support, explore our [Enterprise Plans](https://www.platformatichq.com)
+### 👋 New to Node.js?
+**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/Overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 
-## Platformatic for Teams 
-<hr />
+### ⚡ Experienced Developer?
+**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start-watt) → [Architecture Overview](https://docs.platformatic.dev/docs/Overview)  
+Get running in 5 minutes, then dive into advanced patterns and integrations.
 
-Find out more about the enterprise command center that simplifies the development, management and operations of your Node.js apps at [platformaticHQ.com](https://www.platformatichq.com).
+### 🔄 Migrating Existing Apps?
+**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)  
+Add Watt to your existing Express, Fastify, or Next.js applications.
+
+### 📚 Exploring Options?
+**Compare:** [Watt vs Alternatives](https://docs.platformatic.dev/docs/Overview) → [Examples Gallery](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+See how Watt compares to Express, Fastify, and other Node.js platforms.
+
+---
+
+## Core Capabilities
+
+### HTTP Services  
+Custom application logic built on Fastify with automatic API documentation, validation, and plugin integration.
+
+### API Composition
+Combine multiple services into unified APIs with request/response transformation and intelligent caching.
+
+### Frontend Integration
+Deploy Next.js, Astro, Remix, or Vite applications alongside your APIs with optimized builds and routing.
+
+### Client SDK
+Auto-generated TypeScript/JavaScript clients for your APIs with full type safety and IDE integration.
+
+### Data Services
+Auto-generated REST and GraphQL APIs from your database schema with built-in authorization, migrations, and relationships.
+
+## Documentation Structure
+
+### 📖 [Overview](https://docs.platformatic.dev/docs/Overview)
+Understand what Watt is, why it exists, and how it fits your needs
+
+### 🎓 [Learning](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)  
+Tutorials, examples, and guided paths from beginner to advanced
+
+### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
+Solve specific problems with framework integration, deployment, and production setup
+
+### 📋 [Reference](https://docs.platformatic.dev/docs/reference-overview)
+Complete technical specifications for CLI, configuration, and APIs
+
+### 🧠 [Concepts](https://docs.platformatic.dev/docs/Overview) 
+Deep architectural understanding and design decisions
+
+## Get Support
+
+📖 **Documentation**: [docs.platformatic.dev](https://docs.platformatic.dev)  
+💬 **Community**: [Discord](https://discord.gg/platformatic)  
+🐛 **Issues**: [GitHub Issues](https://github.com/platformatic/platformatic/issues/new)  
+🏢 **Enterprise**: [PlatformaticHQ](https://www.platformatichq.com)
+
+---
+
+## Enterprise Solutions
+
+**Platformatic for Teams** provides enterprise-grade management, monitoring, and deployment tools for production Watt applications.
+
+[Learn more about Enterprise Plans →](https://www.platformatichq.com)
 
 ![Command Center](./assets/Hompage_Solution_White.png)
-
-## Issues
-
-If you run into a bug or have a suggestion for improvement, please raise an 
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
 

@@ -437,6 +437,58 @@ test('throw on error level response', async t => {
   )
 })
 
+test('only add the throwOnError interceptor once', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const agent = getGlobalDispatcher()
+
+  t.after(async () => {
+    await app.close()
+    await safeRemove(tmpDir)
+    setGlobalDispatcher(agent)
+    t.mock.reset()
+  })
+  await app.start()
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get(app.url)
+
+  // intercept the request
+  mockPool.intercept({
+    path: '/movies-api/movies/100',
+    method: 'GET'
+  }).reply(204, null)
+    .persist()
+
+  const spy = t.mock.method(mockAgent, 'compose')
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/movies-api`,
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    throwOnError: true
+  })
+
+  // Previosly the client was composing the dispatcher with the throw on error
+  // interceptor on every request, see PR #4194
+  for (let i = 0; i < 10; i++) {
+    await client.getMovieById({ id: 100 })
+  }
+
+  // Should only compose the dispatcher once
+  assert.equal(spy.mock.callCount(), 1)
+})
+
 test('throw on error level response (modified global dispatcher)', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))

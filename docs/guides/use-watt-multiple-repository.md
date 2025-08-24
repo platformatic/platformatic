@@ -1,36 +1,52 @@
-# Using Watt for Multi-Repository Service 
+# How to Use Watt with Multiple Repository Services
 
-This guide explains how to use [Watt](https://platformatic.dev/watt) to resolve and manage services from different `git` repositories, build and start your application. You'll learn how to set up, configure, and run a Watt application with multi-repository service resolution.
+## Problem
+
+You need to build a microservices application where:
+- Services are developed and maintained in separate Git repositories
+- Different teams work on different services independently
+- You want to combine services from multiple repos into a single Watt application
+- You need flexible service resolution for local development vs. production
+
+**When to use this solution:**
+- Large organizations with multiple development teams
+- Microservices architectures with independent service deployment
+- Need to combine services from different repositories for integration testing
+- Want to maintain service independence while enabling orchestration
+
+## Solution Overview
+
+Watt's multi-repository service resolution allows you to:
+1. Define services from different Git repositories in your main application
+2. Automatically resolve and integrate services from remote repositories  
+3. Override service locations for local development
+4. Build and deploy unified applications from distributed services
+
+This guide shows you how to set up and manage a Watt application with multi-repository services.
 
 ## Prerequisites
 
-Before beginning, ensure you have installed:
+Before starting, ensure you have:
 
 - [Node.js](https://nodejs.org/en) (v20.16.0+ or v22.3.0+)
 - [npm](https://www.npmjs.com/package/npm) (v10 or higher)
+- Git access to your service repositories
 - A code editor (e.g., [Visual Studio Code](https://code.visualstudio.com))
 
-## Project Setup
+## Step 1: Create Your Main Watt Application
 
-### Creating Your Watt Application
-
-To create a new Watt application, please refer to our [Watt setup guide](https://www.notion.so/Using-Watt-for-Multi-Repository-Service-Resolution-17b60f428d7e800cbcc3efd396732732?pvs=21).
-
-### Adding Service Resolution
-
-By default, the `wattpm resolve` command isn't included in your Watt application's package.json. You have two options to use it:
-
-1. Run directly via CLI:
-
-```sh
-npx wattpm resolve {repository name and directory path}
+**1. Initialize a new Watt application:**
+```bash
+mkdir my-microservices-app
+cd my-microservices-app
+npx wattpm@latest init
 ```
 
-2. Add it to your `package.json`:
+**2. Configure service resolution in package.json:**
 
 ```json
 {
-  "name": "with-resolve",
+  "name": "my-microservices-app",
   "private": true,
   "scripts": {
     "dev": "wattpm dev",
@@ -39,13 +55,10 @@ npx wattpm resolve {repository name and directory path}
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/runtime": "2.21.0",
-    "@platformatic/next": "2.21.0",
-    "@platformatic/node": "2.21.0",
-    "wattpm": "2.21.0"
-  },
-  "devDependencies": {
-    "platformatic": "2.21.0"
+    "@platformatic/runtime": "^2.21.0",
+    "@platformatic/next": "^2.21.0", 
+    "@platformatic/node": "^2.21.0",
+    "wattpm": "^2.21.0"
   },
   "workspaces": [
     "web/*",
@@ -54,147 +67,318 @@ npx wattpm resolve {repository name and directory path}
 }
 ```
 
-## Multi-Repository Structure Setup
-
-### Repository Organization
-When working with multiple repositories in Watt, you'll typically have:
-1. A main application repository containing your Watt configuration
-2. One or more service repositories containing individual services
-
-### Setting Up the Main Repository
-
-1. Create your main application repository:
-
-```sh
-mkdir my-watt-app
-cd my-watt-app
-git init
+**3. Create directory structure for services:**
+```bash
+mkdir -p web/ external/
 ```
 
-2. Initialize your Watt application:
+**What this setup provides:**
+- `web/` - Directory for resolved web services
+- `external/` - Directory for resolved external services  
+- `wattpm resolve` command for service resolution
+- Workspace configuration for multi-service management
 
-```sh
-npx wattpm@latest init
-```
+## Step 2: Configure Multi-Repository Services
 
+### Define Services in watt.json
 
-3. Create the directory structure for external services:
+Configure your `watt.json` to include services from multiple repositories:
 
-```sh
-mkdir -p web/
-mkdir -p external/
-```
-### Adding Service Repositories
-
-1. Update your root `watt.json` file to define your service repositories:
-
-```sh
- "web": [
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.21.0.json",
+  "web": [
     {
       "id": "composer",
       "path": "web/composer"
     },
     {
-      "id": "app",
-      "path": "web/app"
+      "id": "user-service",
+      "path": "{PLT_USER_SERVICE_PATH}",
+      "url": "https://github.com/your-org/user-service.git"
     },
     {
-      "id": "node",
-      "path": "{PLT_NODE_PATH}",
-      "url": "YOUR_SERVICE_GITHUB_URL"
+      "id": "product-service", 
+      "path": "{PLT_PRODUCT_SERVICE_PATH}",
+      "url": "https://github.com/your-org/product-service.git"
     },
     {
-      "id": "next",
-      "path": "{PLT_NEXT_PATH}",
-      "url": "YOUR_SERVICE_GITHUB_URL"
+      "id": "frontend",
+      "path": "{PLT_FRONTEND_PATH}",
+      "url": "https://github.com/your-org/nextjs-frontend.git"
     }
-  ],
+  ]
+}
 ```
 
-### Version Control Configuration
+**Configuration explanation:**
+- **Local services** (like `composer`) use direct paths
+- **Remote services** use environment variables for paths + Git URLs
+- **Environment variables** allow flexible local vs. remote resolution
+- **Git URLs** define where to fetch services when not available locally
 
-1. Update your main repository's `.gitignore`:
+### Repository Architecture Example
 
-```sh
-# Ignore resolved services
+```
+Organization Structure:
+├── my-microservices-app/          # Main orchestration app
+│   ├── watt.json                  # Service definitions
+│   ├── package.json               # Workspace configuration
+│   └── web/                       # Resolved services appear here
+├── user-service/                  # Separate repository
+│   ├── package.json
+│   └── platformatic.json
+├── product-service/               # Separate repository  
+│   ├── package.json
+│   └── platformatic.json
+└── nextjs-frontend/               # Separate repository
+    ├── package.json
+    └── next.config.js
+```
+
+## Step 3: Configure Environment Variables
+
+### Local Development Configuration
+
+Create a `.env` file for local development:
+
+```env
+# Local service paths (when developing locally)
+PLT_USER_SERVICE_PATH=../user-service
+PLT_PRODUCT_SERVICE_PATH=../product-service  
+PLT_FRONTEND_PATH=../nextjs-frontend
+
+# Production paths (when services are resolved from Git)
+# PLT_USER_SERVICE_PATH=web/user-service
+# PLT_PRODUCT_SERVICE_PATH=web/product-service
+# PLT_FRONTEND_PATH=web/frontend
+```
+
+### Production Configuration
+
+For production deployments, services are resolved from Git repositories:
+
+```env
+# Production environment - services resolved from Git
+PLT_USER_SERVICE_PATH=web/user-service
+PLT_PRODUCT_SERVICE_PATH=web/product-service
+PLT_FRONTEND_PATH=web/frontend
+```
+
+### Git Configuration
+
+Update your main repository's `.gitignore`:
+
+```gitignore
+# Ignore resolved services - they come from other repos
 web/*
 external/*
 !web/.gitkeep
 !external/.gitkeep
 
-# Node modules
+# Standard Node.js ignores
 node_modules/
-
-# Environment variables
 .env
+.env.local
+dist/
+build/
 ```
 
-2. Update your `package.json` 
+**Why ignore resolved services:**
+- Services are pulled from their own repositories
+- Prevents committing resolved service code to main repo
+- Keeps main repo focused on orchestration configuration
 
-In your root `package.json` file and update your workspace to include service workspaces: 
+## Step 4: Resolve and Run Services
 
-```sh
+### Resolve Services from Repositories
+
+**1. Resolve all services:**
+```bash
+npm run resolve
+```
+
+**What this does:**
+- Clones services from Git repositories if not found locally
+- Installs dependencies for each resolved service
+- Links services according to workspace configuration
+- Prepares services for building and running
+
+**2. Verify service resolution:**
+```bash
+ls -la web/
+# Should show resolved services: user-service, product-service, frontend
+```
+
+### Build and Start Your Application
+
+**1. Build all services:**
+```bash
+npm run build
+```
+
+**2. Start in development mode:**
+```bash
+npm run dev
+```
+
+**3. Start in production mode:**
+```bash
+npm run start
+```
+
+## Step 5: Verification and Testing
+
+### Verify Service Resolution
+
+**1. Check that services were resolved correctly:**
+```bash
+# List resolved services
+ls -la web/
+
+# Verify service configurations
+cat web/user-service/package.json
+cat web/product-service/platformatic.json
+```
+
+**2. Test service connectivity:**
+```bash
+# Start the application
+npm run dev
+
+# Test individual services (if exposed)
+curl http://localhost:3042/users/health
+curl http://localhost:3042/products/health
+curl http://localhost:3042/
+```
+
+### Local Development Workflow
+
+**For active development on specific services:**
+
+```bash
+# Set up local development
+export PLT_USER_SERVICE_PATH=../user-service-local
+export PLT_PRODUCT_SERVICE_PATH=web/product-service  # Use resolved version
+
+# Resolve with mixed local/remote services
+npm run resolve
+
+# Start development server
+npm run dev
+```
+
+**Benefits of this approach:**
+- Develop locally on services you're working on
+- Use stable versions of other services from Git
+- Quickly switch between local and remote service versions
+- Test integration without affecting other services
+
+## Troubleshooting
+
+### Service Resolution Fails
+
+**Problem:** `npm run resolve` fails to clone or resolve services
+
+**Solutions:**
+- Verify Git repository URLs are accessible
+- Check that you have proper Git authentication (SSH keys/tokens)
+- Ensure environment variables are set correctly
+- Verify network connectivity to Git repositories
+
+### Services Not Starting
+
+**Problem:** Resolved services fail to start
+
+**Solutions:**
+- Check that service dependencies were installed (`npm run resolve` again)
+- Verify service configurations are valid
+- Check port conflicts between services
+- Review service logs for specific errors
+
+### Local Development Issues  
+
+**Problem:** Local services not being used despite environment variables
+
+**Solutions:**
+- Verify environment variables are exported in current shell
+- Check that local service paths exist and contain valid service code
+- Ensure local services have proper `package.json` and configuration files
+- Try resolving again: `npm run resolve`
+
+### Build Failures
+
+**Problem:** `npm run build` fails for resolved services
+
+**Solutions:**
+- Ensure all services have proper build scripts in `package.json`
+- Check that service dependencies are installed
+- Verify service configurations are valid
+- Try building individual services to isolate issues
+
+## Advanced Patterns
+
+### CI/CD Pipeline Configuration
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Multi-Repo App
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: Resolve services from Git
+        env:
+          PLT_USER_SERVICE_PATH: web/user-service
+          PLT_PRODUCT_SERVICE_PATH: web/product-service
+          PLT_FRONTEND_PATH: web/frontend
+        run: npm run resolve
+        
+      - name: Build application  
+        run: npm run build
+        
+      - name: Deploy to production
+        run: npm run deploy
+```
+
+### Service Versioning
+
+Pin specific service versions by using Git tags in URLs:
+
+```json
 {
-  "workspaces": [
-    "web/services/*",
-    "external/services/*"
+  "web": [
+    {
+      "id": "user-service",
+      "path": "web/user-service",
+      "url": "https://github.com/your-org/user-service.git#v1.2.3"
+    }
   ]
 }
 ```
 
-## Working with Services
+## Next Steps
 
-### Resolving Services
+Now that you have multi-repository services working:
 
-To resolve services located in the web folder of your Watt application, run the below command:
-
-```sh
-npm run resolve
-```
-
-This command fetches and unifies all required services.
-
-### Building the Application
-
-```sh
-npm run build
-```
-
-This command builds the application with all resolved services.
-
-### Starting the Application
-
-Run the command below to start your application in development mode:
-
-```sh
-npm run dev
-```
-
-To run your application in production mode, run the command below:
-
-```sh
-npm start 
-```
-
-## Local Development Configuration
-
-Watt provides flexible options for service resolution during local development. You can configure services to resolve from local directories instead of Git repositories.
-
-### Environment Variables
-
-Configure local development using these environment variables:
-
-- `PLT_NODE_PATH`: Specifies local Node.js service directories
-- `PLT_NEXT_PATH`: Specifies local Next.js service directories
-
-Example configuration:
-
-```sh
-export PLT_NODE_PATH=/path/to/local/service
-export PLT_NEXT_PATH=/path/to/local/nextjs/service
-```
+- **[Set up monitoring](/docs/guides/monitoring)** - Monitor all services from one place
+- **[Configure deployment](/docs/guides/deployment/)** - Deploy your multi-service application
+- **[Add inter-service communication](/docs/guides/service-communication/)** - Enable services to communicate securely
+- **[Implement service discovery](/docs/guides/service-mesh/)** - Advanced service orchestration patterns
 
 ## Additional Resources
 
-- [wattpm-resolve sample application](https://github.com/platformatic/wattpm-resolve)
-- [Watt Setup Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
+- [wattpm-resolve sample application](https://github.com/platformatic/wattpm-resolve) - Complete working example
+- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Service Development Guide](/docs/guides/service-development/) - Best practices for individual services

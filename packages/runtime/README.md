@@ -1,6 +1,6 @@
 # @platformatic/runtime
 
-Check out the full documentation for Platformatic Runtime on [our website](https://docs.platformatic.dev/docs/runtime/overview).
+Check out the full documentation for Platformatic Runtime on [our website](https://docs.platformatic.dev/docs/reference/runtime/overview).
 
 ## Install
 

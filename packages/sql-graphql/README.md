@@ -1,6 +1,6 @@
 # @platformatic/sql-graphql
 
-Check out the full documentation on [our website](https://docs.platformatic.dev/docs/packages/sql-graphql/overview).
+Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/sql-graphql/overview).
 
 ## Install
 
