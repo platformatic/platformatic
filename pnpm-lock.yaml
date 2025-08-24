@@ -331,8 +331,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.4.2
         version: 5.8.3
@@ -434,8 +434,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.4.2
         version: 5.8.3
@@ -600,8 +600,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -740,8 +740,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1036,8 +1036,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1109,8 +1109,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1340,8 +1340,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1393,8 +1393,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1936,8 +1936,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2128,8 +2128,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2183,8 +2183,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2256,8 +2256,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2360,8 +2360,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.40.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2424,8 +2424,8 @@ importers:
         specifier: ^12.1.3
         version: 12.1.3
       tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -4978,8 +4978,8 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
-  '@tsd/typescript@5.8.3':
-    resolution: {integrity: sha512-oKarNCN1QUhG148M88mtZdOlBZWWGcInquef+U8QL7gwJkRuNo5WS45Fjsd+3hM9cDJWGpqSZ4Oo097KDx4IWA==}
+  '@tsd/typescript@5.9.2':
+    resolution: {integrity: sha512-mSMM0QtEPdMd+rdMDd17yCUYD4yI3pKHap89+jEZrZ3KIO5PhDofBjER0OtgHdvOXF74KMLO3fyD6k3Hz0v03A==}
     engines: {node: '>=14.17'}
 
   '@tybys/wasm-util@0.10.0':
@@ -10148,8 +10148,8 @@ packages:
     resolution: {integrity: sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg==}
     engines: {node: '>=6'}
 
-  tsd@0.32.0:
-    resolution: {integrity: sha512-R5lBZCbxGBowOcW0gpQaiIjGYrG5NmU+PfFDKcc3zbtzWjML1o/zAwzdDnS2ZheSlPu9GW51azpFqEPUBq9DoQ==}
+  tsd@0.33.0:
+    resolution: {integrity: sha512-/PQtykJFVw90QICG7zyPDMIyueOXKL7jOJVoX5pILnb3Ux+7QqynOxfVvarE+K+yi7BZyOSY4r+OZNWSWRiEwQ==}
     engines: {node: '>=14.16'}
     hasBin: true
 
@@ -13233,7 +13233,7 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
-  '@tsd/typescript@5.8.3': {}
+  '@tsd/typescript@5.9.2': {}
 
   '@tybys/wasm-util@0.10.0':
     dependencies:
@@ -19772,9 +19772,9 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsd@0.32.0:
+  tsd@0.33.0:
     dependencies:
-      '@tsd/typescript': 5.8.3
+      '@tsd/typescript': 5.9.2
       eslint-formatter-pretty: 4.1.0
       globby: 11.1.0
       jest-diff: 29.7.0
