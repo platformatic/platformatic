@@ -320,6 +320,10 @@ export interface Entity<EntityFields = any> {
    */
   primaryKey: string,
   /**
+   * Primary keys of the database entity.
+   */
+  primaryKeys: Set<string>,
+  /**
    * The table of the database entity.
    */
   table: string,
