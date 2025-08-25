@@ -1,16 +1,20 @@
 'use strict'
 
+const { setTimeout: sleep } = require('node:timers/promises')
 const pprof = require('@datadog/pprof')
 const {
   ProfilingAlreadyStartedError,
   ProfilingNotStartedError,
   NoProfileAvailableError,
+  ManualProfilingIsAlreadyStartedError
 } = require('./lib/errors')
 
 const kITC = Symbol.for('plt.runtime.itc')
 
 let isCapturing = false
+let isProfiling = false
 let latestProfile = null
+let latestTimeout = null
 let captureInterval = null
 
 // Keep trying until ITC is available. This is needed because preloads run
@@ -21,6 +25,7 @@ const registerInterval = setInterval(() => {
     globalThis[kITC].handle('getLastProfile', getLastProfile)
     globalThis[kITC].handle('startProfiling', startProfiling)
     globalThis[kITC].handle('stopProfiling', stopProfiling)
+    globalThis[kITC].handle('generateProfile', generateProfile)
     clearInterval(registerInterval)
   }
 }, 10)
@@ -34,7 +39,9 @@ function startProfiling (options = {}) {
   if (isCapturing) {
     throw new ProfilingAlreadyStartedError()
   }
+
   isCapturing = true
+  isProfiling = true
 
   pprof.time.start(options)
 
@@ -43,6 +50,7 @@ function startProfiling (options = {}) {
   if (timeout) {
     captureInterval = setInterval(rotateProfile, timeout)
     captureInterval.unref()
+    latestTimeout = timeout
   }
 }
 
@@ -55,8 +63,11 @@ function stopProfiling () {
   clearInterval(captureInterval)
   captureInterval = null
 
-  latestProfile = pprof.time.stop()
-  return latestProfile.encode()
+  if (isProfiling) {
+    isProfiling = false
+    latestProfile = pprof.time.stop()
+    return latestProfile.encode()
+  }
 }
 
 function getLastProfile () {
@@ -72,8 +83,43 @@ function getLastProfile () {
   return latestProfile.encode()
 }
 
+async function generateProfile (options = {}) {
+  if (!isCapturing && isProfiling) {
+    throw new ManualProfilingIsAlreadyStartedError()
+  }
+
+  const timeout = options.durationMillis
+
+  const wasCapturing = isCapturing
+  if (isCapturing) {
+    stopProfiling()
+  }
+
+  let profile = null
+  try {
+    isProfiling = true
+
+    pprof.time.start(options)
+    await sleep(timeout)
+
+    // Check if profiling was stopped in the meantime
+    if (isProfiling) {
+      profile = pprof.time.stop()
+    }
+  } finally {
+    isProfiling = false
+
+    if (wasCapturing) {
+      startProfiling({ durationMillis: latestTimeout })
+    }
+  }
+
+  return profile.encode()
+}
+
 module.exports = {
   startProfiling,
   stopProfiling,
-  getLastProfile
+  getLastProfile,
+  generateProfile
 }
