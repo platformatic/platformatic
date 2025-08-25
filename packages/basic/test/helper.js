@@ -321,7 +321,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   t.after(async () => {
     process.chdir(originalCwd)
     await runtime.close()
-    await safeRemove(root)
+
+    if (!process.env.PLT_TESTS_SKIP_REMOVE_TEMPORARY) {
+      await safeRemove(root)
+    }
   })
 
   // Build the runtime if needed

@@ -312,6 +312,6 @@ test('should handle errors watching applications', async t => {
 
   const [startingEvent] = await once(runtime, 'application:worker:starting')
   const [startErrorEvent] = await once(runtime, 'application:worker:start:error')
-  assert.deepEqual(startingEvent.application, 'gateway')
-  assert.deepEqual(startErrorEvent.application, 'gateway')
+  assert.deepEqual(startingEvent.application, 'composer')
+  assert.deepEqual(startErrorEvent.application, 'composer')
 })

@@ -50,7 +50,7 @@ test('should restart gateway if api has been changed', async t => {
   let gatewayOrigin = await runtime.start()
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -67,7 +67,7 @@ test('should restart gateway if api has been changed', async t => {
   gatewayOrigin = await waitForRestart(runtime)
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -78,7 +78,7 @@ test('should restart gateway if api has been changed', async t => {
 
     await testEntityRoutes(gatewayOrigin, ['/api2/posts'])
 
-    const { statusCode: statusCode2 } = await runtime.inject('gateway', {
+    const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
       url: '/api1/users'
     })
@@ -125,7 +125,7 @@ test('should watch api only if it has a url', async t => {
   const gatewayOrigin = await runtime.start()
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -142,7 +142,7 @@ test('should watch api only if it has a url', async t => {
   await assert.rejects(() => waitForRestart(runtime, gatewayOrigin))
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -153,7 +153,7 @@ test('should watch api only if it has a url', async t => {
 
     await testEntityRoutes(gatewayOrigin, ['/api1/users'])
 
-    const { statusCode: statusCode2 } = await runtime.inject('gateway', {
+    const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
       url: '/api2/posts'
     })
@@ -203,7 +203,7 @@ test('should compose schema after application restart', async t => {
   let gatewayOrigin = await runtime.start()
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -220,7 +220,7 @@ test('should compose schema after application restart', async t => {
   gatewayOrigin = await waitForRestart(runtime, gatewayOrigin)
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })
@@ -231,7 +231,7 @@ test('should compose schema after application restart', async t => {
 
     await testEntityRoutes(gatewayOrigin, ['/api2/posts'])
 
-    const { statusCode: statusCode2 } = await runtime.inject('gateway', {
+    const { statusCode: statusCode2 } = await runtime.inject('composer', {
       method: 'GET',
       url: '/api1/users'
     })
@@ -244,7 +244,7 @@ test('should compose schema after application restart', async t => {
   gatewayOrigin = await waitForRestart(runtime, gatewayOrigin)
 
   {
-    const { statusCode, body } = await runtime.inject('gateway', {
+    const { statusCode, body } = await runtime.inject('composer', {
       method: 'GET',
       url: '/documentation/json'
     })

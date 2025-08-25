@@ -24,7 +24,7 @@ export async function moveToTmpdir (teardown) {
   await createDirectory(dir)
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  if (!process.env.SKIP_RM_TMP) {
+  if (!process.env.PLT_TESTS_SKIP_REMOVE_TEMPORARY) {
     teardown(async () => {
       await safeRemove(tmp)
     })

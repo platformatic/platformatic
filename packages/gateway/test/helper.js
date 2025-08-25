@@ -461,7 +461,7 @@ export async function createGatewayInRuntime (
       watch: false,
       services: (applications ?? []).concat([
         {
-          id: 'gateway',
+          id: 'composer',
           path: resolve(tmpDir, 'gateway'),
           config: gatewayConfigPath
         }
@@ -541,7 +541,7 @@ export async function waitForRestart (runtime) {
 }
 
 export async function checkSchema (runtime, schema) {
-  const gateway = await runtime.getApplication('gateway')
+  const gateway = await runtime.getApplication('composer')
   const sdl = await gateway[symbols.kITC].send('getSchema')
   return sdl === schema
 }

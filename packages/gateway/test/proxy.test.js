@@ -1359,7 +1359,7 @@ test('should properly strip runtime basePath from proxied applications', async t
     assert.ok(headers['content-type'].startsWith('application/javascript'))
   }
 
-  const gatewayConfig = await runtime.getApplicationMeta('gateway', 'getMeta')
+  const gatewayConfig = await runtime.getApplicationMeta('composer', 'getMeta')
   const remixConfig = await runtime.getApplicationMeta('remix', 'getMeta')
 
   assert.equal(gatewayConfig.gateway.proxies.remix.prefix, '/remix')
