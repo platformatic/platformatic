@@ -19,8 +19,14 @@ const NoProfileAvailableError = createError(
   'No profile available - wait for profiling to complete or trigger manual capture'
 )
 
+const ManualProfilingIsAlreadyStartedError = createError(
+  `${ERROR_PREFIX}_MANUAL_PROFILING_IS_ALREADY_STARTED`,
+  'Manual profiling is already started'
+)
+
 module.exports = {
   ProfilingAlreadyStartedError,
   ProfilingNotStartedError,
-  NoProfileAvailableError
+  NoProfileAvailableError,
+  ManualProfilingIsAlreadyStartedError
 }

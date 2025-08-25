@@ -6,6 +6,7 @@ const {
   ProfilingAlreadyStartedError,
   ProfilingNotStartedError,
   NoProfileAvailableError,
+  ManualProfilingIsAlreadyStartedError
 } = require('./lib/errors')
 
 const kITC = Symbol.for('plt.runtime.itc')
@@ -83,6 +84,10 @@ function getLastProfile () {
 }
 
 async function generateProfile (options = {}) {
+  if (!isCapturing && isProfiling) {
+    throw new ManualProfilingIsAlreadyStartedError()
+  }
+
   const timeout = options.durationMillis
 
   const wasCapturing = isCapturing
