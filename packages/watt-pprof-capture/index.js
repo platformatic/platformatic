@@ -1,5 +1,6 @@
 'use strict'
 
+const { setTimeout: sleep } = require('node:timers/promises')
 const pprof = require('@datadog/pprof')
 const {
   ProfilingNotStartedError,
@@ -26,6 +27,7 @@ function registerHandler () {
     globalThis[kITC].handle('getLastProfile', getLastProfile)
     globalThis[kITC].handle('startProfiling', startProfiling)
     globalThis[kITC].handle('stopProfiling', stopProfiling)
+    globalThis[kITC].handle('generateProfile', generateProfile)
     isHandlerRegistered = true
     return true
   }
@@ -53,21 +55,29 @@ async function startProfiling ({ timeout }) {
 
 function stopProfiling () {
   isCapturing = false
+  if (isProfilingInProgress) {
+    isProfilingInProgress = false
+    pprof.time.stop()
+  }
   if (captureInterval) {
     clearInterval(captureInterval)
     captureInterval = null
   }
 }
 
-async function updateProfile ({ timeout }) {
-  // Prevent concurrent profiling calls
-  if (isProfilingInProgress) {
-    return
-  }
+async function collectProfile ({ timeout }) {
+  isProfilingInProgress = true
+
+  let profile = null
 
   try {
-    isProfilingInProgress = true
-    latestProfile = await pprof.time.profile({ durationMillis: timeout })
+    pprof.time.start()
+    await sleep(timeout)
+
+    // Check if profiling was not stopped while waiting
+    if (isProfilingInProgress) {
+      profile = pprof.time.stop()
+    }
   } catch (err) {
     // Log error but continue capturing
     if (globalThis.platformatic?.logger) {
@@ -76,6 +86,16 @@ async function updateProfile ({ timeout }) {
   } finally {
     isProfilingInProgress = false
   }
+
+  return profile
+}
+
+async function updateProfile ({ timeout }) {
+  // Prevent concurrent profiling calls
+  if (isProfilingInProgress) {
+    return
+  }
+  latestProfile = await collectProfile({ timeout })
 }
 
 function getLastProfile () {
@@ -88,6 +108,33 @@ function getLastProfile () {
   }
 
   const encoded = latestProfile.encode()
+  // Convert Uint8Array to Buffer for better ITC compatibility
+  return Buffer.from(encoded)
+}
+
+async function generateProfile ({ timeout }) {
+  const wasCapturing = isCapturing
+  if (isCapturing) {
+    // Stop profiling with an interval.
+    // CLI call has higher priority.
+    stopProfiling()
+  }
+
+  let profile = null
+  try {
+    profile = await collectProfile({ timeout })
+  } finally {
+    if (wasCapturing) {
+      // Restart profiling with an interval.
+      startProfiling({ timeout })
+    }
+  }
+
+  if (profile == null) {
+    return null
+  }
+
+  const encoded = profile.encode()
   // Convert Uint8Array to Buffer for better ITC compatibility
   return Buffer.from(encoded)
 }

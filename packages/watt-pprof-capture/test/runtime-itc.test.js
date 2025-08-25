@@ -185,3 +185,49 @@ test('watt-pprof-capture should auto-start when enabled', async (t) => {
   // Clean up
   await app.sendCommandToService('service', 'stopProfiling')
 })
+
+test('watt-pprof-capture should generate a profile', async (t) => {
+  // Test with auto-start enabled
+  const originalEnv = process.env.PLT_DISABLE_FLAMEGRAPHS
+  const originalInterval = process.env.PLT_FLAMEGRAPHS_INTERVAL_SEC
+
+  delete process.env.PLT_DISABLE_FLAMEGRAPHS // Enable auto-start
+  process.env.PLT_FLAMEGRAPHS_INTERVAL_SEC = '1' // Short interval for testing
+
+  t.after(() => {
+    if (originalEnv !== undefined) {
+      process.env.PLT_DISABLE_FLAMEGRAPHS = originalEnv
+    } else {
+      delete process.env.PLT_DISABLE_FLAMEGRAPHS
+    }
+    if (originalInterval !== undefined) {
+      process.env.PLT_FLAMEGRAPHS_INTERVAL_SEC = originalInterval
+    } else {
+      delete process.env.PLT_FLAMEGRAPHS_INTERVAL_SEC
+    }
+  })
+
+  const configFile = resolve(__dirname, 'fixtures/runtime-test/platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current, config.args)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  // Wait for auto-start profiling to begin and capture first profile
+  await new Promise(resolve => setTimeout(resolve, 1200))
+
+  const profile = await app.sendCommandToService('service', 'generateProfile', { timeout: 5000 })
+  assert.ok(profile instanceof Uint8Array, 'Should return Uint8Array from ITC')
+  assert.ok(profile.length > 0, 'Profile should have content')
+
+  const lastProfile = await app.sendCommandToService('service', 'getLastProfile')
+  assert.ok(lastProfile instanceof Uint8Array, 'Should return Uint8Array from ITC')
+  assert.ok(lastProfile.length > 0, 'Profile should have content')
+
+  // Clean up
+  await app.sendCommandToService('service', 'stopProfiling')
+})
