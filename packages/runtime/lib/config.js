@@ -122,6 +122,41 @@ async function _transformConfig (configManager, args) {
 
   let hasValidEntrypoint = false
 
+  // Validate and coerce workers values early to avoid runtime hangs when invalid
+  function coercePositiveInteger (value) {
+    if (typeof value === 'number') {
+      if (!Number.isInteger(value) || value < 1) return null
+      return value
+    }
+    if (typeof value === 'string') {
+      // Trim to handle accidental spaces
+      const trimmed = value.trim()
+      if (trimmed.length === 0) return null
+      const num = Number(trimmed)
+      if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) return null
+      return num
+    }
+    return null
+  }
+
+  function raiseInvalidWorkersError (location, received, hint) {
+    const extra = hint ? ` (${hint})` : ''
+    throw new errors.InvalidArgumentError(
+      `${location} workers must be a positive integer; received "${received}"${extra}`
+    )
+  }
+
+  // Root-level workers
+  if (typeof config.workers !== 'undefined') {
+    const coerced = coercePositiveInteger(config.workers)
+    if (coerced === null) {
+      const raw = configManager.currentRaw?.workers
+      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+      raiseInvalidWorkersError('Runtime', config.workers, hint)
+    }
+    config.workers = coerced
+  }
+
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
 
@@ -186,6 +221,17 @@ async function _transformConfig (configManager, args) {
       } catch {
         // Nothing to do here
       }
+    }
+
+    // Validate and coerce per-service workers
+    if (typeof service.workers !== 'undefined') {
+      const coerced = coercePositiveInteger(service.workers)
+      if (coerced === null) {
+        const raw = configManager.currentRaw?.services?.[i]?.workers
+        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+        raiseInvalidWorkersError(`Service "${service.id}"`, service.workers, hint)
+      }
+      service.workers = coerced
     }
 
     service.entrypoint = service.id === config.entrypoint
