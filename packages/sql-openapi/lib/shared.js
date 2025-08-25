@@ -205,6 +205,13 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
         description: `Add new ${entity.singularName} to the database.`,
         body: entitySchemaInput,
         tags: [entity.table],
+        querystring: {
+          type: 'object',
+          properties: {
+            fields,
+          },
+          additionalProperties: false,
+        },
         response: {
           200: entitySchema,
         },
@@ -213,8 +220,9 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
         200: entityLinks,
       },
     }, async function (request, reply) {
+      const { fields } = request.query
       const ctx = { app: this, reply }
-      const res = await entity.save({ input: request.body, ctx })
+      const res = await entity.save({ input: request.body, ctx, fields })
       reply.header('location', `${app.prefix}/${res.id}`)
       return res
     })
