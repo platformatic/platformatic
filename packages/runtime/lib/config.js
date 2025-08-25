@@ -17,11 +17,6 @@ const upgrade = require('./upgrade')
 const { parseArgs } = require('node:util')
 
 function autoDetectPprofCapture (config) {
-  // Skip if explicitly disabled
-  if (process.env.PLT_DISABLE_FLAMEGRAPHS) {
-    return config
-  }
-
   // Check if package is installed
   try {
     let pprofCapturePath

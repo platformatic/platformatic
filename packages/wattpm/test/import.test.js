@@ -10,12 +10,6 @@ import { version } from '../lib/schema.js'
 import { serviceToEnvVariable } from '../lib/utils.js'
 import { createTemporaryDirectory, executeCommand, wattpm } from './helper.js'
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 const autodetect = {
   astro: 'astro',
   node: null,

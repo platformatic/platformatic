@@ -5,12 +5,6 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 import { ok } from 'node:assert'
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('metrics - should return runtime metrics without format opt', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 

@@ -37,19 +37,6 @@ async function prepareRuntimeWithBackend (
   servicesToBuild = false,
   additionalSetup = null
 ) {
-  // Store original value and set PLT_DISABLE_FLAMEGRAPHS to avoid profiling interference
-  const originalFlamegraphs = process.env.PLT_DISABLE_FLAMEGRAPHS
-  process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
-  // Restore original value after test
-  t.after(() => {
-    if (originalFlamegraphs !== undefined) {
-      process.env.PLT_DISABLE_FLAMEGRAPHS = originalFlamegraphs
-    } else {
-      delete process.env.PLT_DISABLE_FLAMEGRAPHS
-    }
-  })
-
   const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
     process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'test.log')
 

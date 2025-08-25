@@ -6,9 +6,6 @@ import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/h
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('should make a request with a custom interceptor from a middleware', async t => {
   const { root, config } = await prepareRuntime(t, 'middleware', true)
   const { url } = await startRuntime(t, root, config, false, ['frontend'])

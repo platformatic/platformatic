@@ -8,12 +8,6 @@ import { pathToFileURL } from 'node:url'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { cliPath, executeCommand, wattpm } from './helper.js'
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('build - should build the application', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
   const serviceDir = resolve(buildDir, 'web/main')

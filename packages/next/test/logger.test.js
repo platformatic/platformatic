@@ -11,9 +11,6 @@ import {
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 const envs = {
   dev: {
     production: false

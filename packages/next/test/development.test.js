@@ -17,9 +17,6 @@ import {
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 const hmrTriggerFile = 'services/frontend/src/app/page.js'
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {

@@ -10,9 +10,6 @@ import { buildServer } from '../../runtime/index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('should inject Platformatic code by default when building', async t => {
   const { root, config } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {

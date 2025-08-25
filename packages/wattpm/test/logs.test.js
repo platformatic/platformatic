@@ -5,12 +5,6 @@ import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 async function matchLogs (stream, requiresMainLog = true) {
   let mainLogFound
   let serviceLogFound

@@ -2,83 +2,65 @@
 
 const pprof = require('@datadog/pprof')
 const {
+  ProfilingAlreadyStartedError,
   ProfilingNotStartedError,
   NoProfileAvailableError,
 } = require('./lib/errors')
-const { kITC } = require('../runtime/lib/worker/symbols')
 
-const timeout = (parseInt(process.env.PLT_FLAMEGRAPHS_INTERVAL_SEC) || 60) * 1000
+const kITC = Symbol.for('plt.runtime.itc')
 
-let isCapturing = false // Flag to control capture state
+let isCapturing = false
 let latestProfile = null
-let isHandlerRegistered = false
 let captureInterval = null
-let registerTimeout = 10
-let isProfilingInProgress = false // Flag to prevent concurrent pprof calls
 
-function registerHandler () {
-  if (isHandlerRegistered) {
-    return true
-  }
-
-  // Use ITC for handler registration
+// Keep trying until ITC is available. This is needed because preloads run
+// before the app thread initialization, so globalThis.platformatic.messaging
+// and ITC don't exist yet.
+const registerInterval = setInterval(() => {
   if (globalThis[kITC]) {
     globalThis[kITC].handle('getLastProfile', getLastProfile)
     globalThis[kITC].handle('startProfiling', startProfiling)
     globalThis[kITC].handle('stopProfiling', stopProfiling)
-    isHandlerRegistered = true
-    return true
+    clearInterval(registerInterval)
   }
+}, 10)
 
-  // Keep trying until ITC is available
-  setTimeout(registerHandler, registerTimeout)
-  registerTimeout *= 1.2
-
-  return false
+function rotateProfile () {
+  // `true` immediately restarts profiling after stopping
+  latestProfile = pprof.time.stop(true)
 }
 
-async function startProfiling ({ timeout }) {
-  // If already capturing, stop the current interval and restart with new timeout
-  if (isCapturing && captureInterval) {
-    clearInterval(captureInterval)
-    captureInterval = null
+function startProfiling (options = {}) {
+  if (isCapturing) {
+    throw new ProfilingAlreadyStartedError()
   }
-
   isCapturing = true
-  await updateProfile({ timeout })
 
-  captureInterval = setInterval(updateProfile, timeout, { timeout })
-  captureInterval.unref()
+  pprof.time.start(options)
+
+  // Set up profile window rotation if durationMillis is provided
+  const timeout = options.durationMillis
+  if (timeout) {
+    captureInterval = setInterval(rotateProfile, timeout)
+    captureInterval.unref()
+  }
 }
 
 function stopProfiling () {
+  if (!isCapturing) {
+    throw new ProfilingNotStartedError()
+  }
   isCapturing = false
-  if (captureInterval) {
-    clearInterval(captureInterval)
-    captureInterval = null
-  }
-}
 
-async function updateProfile ({ timeout }) {
-  // Prevent concurrent profiling calls
-  if (isProfilingInProgress) {
-    return
-  }
+  clearInterval(captureInterval)
+  captureInterval = null
 
-  try {
-    isProfilingInProgress = true
-    latestProfile = await pprof.time.profile({ durationMillis: timeout })
-  } catch (err) {
-    // Log error but continue capturing
-    if (globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.error({ err }, 'Failed to capture profile')
-    }
-  } finally {
-    isProfilingInProgress = false
-  }
+  latestProfile = pprof.time.stop()
+  return latestProfile.encode()
 }
 
 function getLastProfile () {
+  // TODO: Should it be allowed to get last profile after stopping?
   if (!isCapturing) {
     throw new ProfilingNotStartedError()
   }
@@ -87,19 +69,11 @@ function getLastProfile () {
     throw new NoProfileAvailableError()
   }
 
-  const encoded = latestProfile.encode()
-  // Convert Uint8Array to Buffer for better ITC compatibility
-  return Buffer.from(encoded)
-}
-
-// Register handlers immediately
-registerHandler()
-
-if (!process.env.PLT_DISABLE_FLAMEGRAPHS) {
-  startProfiling({ timeout })
+  return latestProfile.encode()
 }
 
 module.exports = {
   startProfiling,
-  stopProfiling
+  stopProfiling,
+  getLastProfile
 }

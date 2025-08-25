@@ -15,9 +15,6 @@ import {
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('can properly show the logs the output', async t => {
   const { root, config } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
     await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {

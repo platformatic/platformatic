@@ -8,9 +8,6 @@ import { request } from 'undici'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Disable profiling to avoid conflicts in tests
-process.env.PLT_DISABLE_FLAMEGRAPHS = '1'
-
 test('should run the service with custom logger options on json', async t => {
   const { root, config } = await prepareRuntime(t, 'logger-custom-options-json', false, null)
 
