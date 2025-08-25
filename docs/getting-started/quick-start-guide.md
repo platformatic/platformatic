@@ -6,7 +6,7 @@ import SetupWatt from './setup-watt.md';
 
 # Fullstack Guide
 
-Welcome to your next steps with Platformatic applications such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../reference/client/overview.md) and the [Platformatic Composer](../reference/composer/overview.md).
+Welcome to your next steps with Platformatic applications such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../reference/client/overview.md) and the [Platformatic Gateway](../reference/gateway/overview.md).
 
 In this tutorial, you will build a movie quotes application, where users can add, like and delete quotes from popular movies. This guide will help you setup and run your first full-stack Platformatic application.
 
@@ -144,11 +144,11 @@ Run the command below for database migrations
 npx wattpm db:migrations:apply
 ```
 
-## Add a Composer application
+## Add a Gateway application
 
-[Platformatic Composer](../reference/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB application, and your frontend application.
+[Platformatic Gateway](../reference/gateway/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic gateway to aggregate the DB application, and your frontend application.
 
-Inside `web` folder, let's create a new Platformatic Composer
+Inside `web` folder, let's create a new Platformatic Gateway
 
 ```bash
 npm create wattpm
@@ -159,32 +159,32 @@ This will output:
 ```
 Hello Fortune Ikechi, welcome to Platformatic 2.64.0
 Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/composer
-? What is the name of the application? composer
+? Which kind of application do you want to create? @platformatic/gateway
+? What is the name of the application? gateway
 ? Do you want to create another application? no
-? Which application should be exposed? composer
+? Which application should be exposed? gateway
 ? Do you want to use TypeScript? no
 [16:06:50] INFO: /Users/tmp/my-app/.env written!
 [16:06:50] INFO: /Users/tmp/my-app/.env.sample written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/package.json written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/platformatic.json written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/plt-env.d.ts written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
+[16:06:50] INFO: /Users/tmp/my-app/web/gateway/package.json written!
+[16:06:50] INFO: /Users/tmp/my-app/web/gateway/platformatic.json written!
+[16:06:50] INFO: /Users/tmp/my-app/web/gateway/.gitignore written!
+[16:06:50] INFO: /Users/tmp/my-app/web/gateway/plt-env.d.ts written!
+[16:06:50] INFO: /Users/tmp/my-app/web/gateway/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the application composer using npm ...
+[16:06:50] INFO: Installing dependencies for the application gateway using npm ...
 [16:06:52] INFO: Project created successfully, executing post-install actions...
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
 
-### Add applications to composer
+### Add applications to gateway
 
-In your `web/composer` directory, select the `platformatic.json` file and add the DB application to your composer:
+In your `web/gateway` directory, select the `platformatic.json` file and add the DB application to your gateway:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.5.json",
+  "gateway": {
     "applications": [
       {
         "id": "db",
@@ -232,7 +232,7 @@ To kickstart the project, in your `web/frontend/src` directory, run the command 
 npx --package @platformatic/client-cli plt-client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
 ```
 
-This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer application.
+This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and gateway application.
 
 ### Installed Required Packages
 
@@ -433,14 +433,14 @@ function App () {
 export default App
 ```
 
-#### Add frontend to Composer
+#### Add frontend to Gateway
 
-In your `web/composer` directory, add the frontend `id` to your composer `platformatic.json` file, update it as shown below:
+In your `web/gateway` directory, add the frontend `id` to your gateway `platformatic.json` file, update it as shown below:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.5.json",
+  "gateway": {
     "applications": [
       {
         "id": "db",
@@ -469,7 +469,7 @@ npm run dev
 
 This will:
 
-- Automatically map your SQL database and React frontend to REST using the composer
+- Automatically map your SQL database and React frontend to REST using the gateway
 - Start the Platformatic Watt server.
 
 Your Platformatic application is now up and running! 🌟

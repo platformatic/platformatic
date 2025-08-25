@@ -184,7 +184,7 @@ async function main () {
 
   if (application.entrypoint && config.basePath) {
     const meta = await app.capability.getMeta()
-    if (!meta.composer.wantsAbsoluteUrls) {
+    if (!meta.gateway.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
     }
   }

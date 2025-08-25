@@ -145,14 +145,14 @@ export class NextCapability extends BaseCapability {
   }
 
   getMeta () {
-    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
+    const gateway = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
 
     if (this.url) {
-      composer.tcp = true
-      composer.url = this.url
+      gateway.tcp = true
+      gateway.url = this.url
     }
 
-    return { composer }
+    return { gateway }
   }
 
   async #startDevelopment () {

@@ -125,7 +125,7 @@ export class AstroCapability extends BaseCapability {
   getMeta () {
     const config = this.subprocessConfig ?? this.#app?.config
 
-    const composer = {
+    const gateway = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
@@ -134,7 +134,7 @@ export class AstroCapability extends BaseCapability {
       needsRefererBasedRedirect: !this.isProduction
     }
 
-    return { composer }
+    return { gateway }
   }
 
   // This is only used in non SSR production mode as in other modes a TCP server is started

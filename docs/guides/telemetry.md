@@ -18,8 +18,8 @@ Check that the server is running by opening [http://localhost:16686/](http://loc
 
 ## Platformatic setup
 
-We'll test this with a Platformatic Composer that proxies requests to a Platformatic Application, which in turn invokes a Platformatic DB Application.
-In this way we show that the telemetry is propagated from the Composer throughout the applications and the collected correctly.
+We'll test this with a Platformatic Gateway that proxies requests to a Platformatic Application, which in turn invokes a Platformatic DB Application.
+In this way we show that the telemetry is propagated from the Gateway throughout the applications and the collected correctly.
 Let's setup all these components:
 
 ### Platformatic DB Application
@@ -191,35 +191,35 @@ Finally, start the application:
 npm run start
 ```
 
-### Platformatic Composer
-Create at the same level of `test-db` and `test-service` another folder for Composer and cd into it:
+### Platformatic Gateway
+Create at the same level of `test-db` and `test-service` another folder for Gateway and cd into it:
 
 
 ```bash
-mkdir test-composer
-cd test-composer
+mkdir test-gateway
+cd test-gateway
 npm create wattpm
 ```
 
 ```bash
 Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/composer
+? Which kind of application do you want to create? @platformatic/gateway
 ? What is the name of the application? main
 ? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5044
-[12:19:25.784] INFO (3205): /work/test-composer/package.json written!
-[12:19:25.790] INFO (3205): /work/test-composer/watt.json written!
-[12:19:25.791] INFO (3205): /work/test-composer/.env written!
-[12:19:25.792] INFO (3205): /work/test-composer/.env.sample written!
-[12:19:25.793] INFO (3205): /work/test-composer/.gitignore written!
-[12:19:25.793] INFO (3205): /work/test-composer/README.md written!
-[12:19:25.794] INFO (3205): /work/test-composer/web/main/package.json written!
-[12:19:25.795] INFO (3205): /work/test-composer/web/main/platformatic.json written!
-[12:19:25.796] INFO (3205): /work/test-composer/web/main/.gitignore written!
-[12:19:25.797] INFO (3205): /work/test-composer/web/main/plt-env.d.ts written!
-[12:19:25.798] INFO (3205): /work/test-composer/web/main/README.md written!
+[12:19:25.784] INFO (3205): /work/test-gateway/package.json written!
+[12:19:25.790] INFO (3205): /work/test-gateway/watt.json written!
+[12:19:25.791] INFO (3205): /work/test-gateway/.env written!
+[12:19:25.792] INFO (3205): /work/test-gateway/.env.sample written!
+[12:19:25.793] INFO (3205): /work/test-gateway/.gitignore written!
+[12:19:25.793] INFO (3205): /work/test-gateway/README.md written!
+[12:19:25.794] INFO (3205): /work/test-gateway/web/main/package.json written!
+[12:19:25.795] INFO (3205): /work/test-gateway/web/main/platformatic.json written!
+[12:19:25.796] INFO (3205): /work/test-gateway/web/main/.gitignore written!
+[12:19:25.797] INFO (3205): /work/test-gateway/web/main/plt-env.d.ts written!
+[12:19:25.798] INFO (3205): /work/test-gateway/web/main/README.md written!
 ? Do you want to init the git repository? no
 [12:19:26.820] INFO (3205): Installing dependencies for the application using npm ...
 [12:19:57.209] INFO (3205): Installing dependencies for the service main using npm ...
@@ -231,8 +231,8 @@ Open `web/main/platformatic.json` and change it to the following:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.64.0.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.64.0.json",
+  "gateway": {
     "services": [
       {
         "id": "example",
@@ -245,7 +245,7 @@ Open `web/main/platformatic.json` and change it to the following:
     "refreshTimeout": 3000
   },
   "telemetry": {
-    "applicationName": "test-composer",
+    "applicationName": "test-gateway",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -259,7 +259,7 @@ Open `web/main/platformatic.json` and change it to the following:
 
 Note that we just added `test-service` as `origin` of the proxied application and added the usual `telemetry` configuration, with a different `applicationName`.
 
-Finally, start the composer:
+Finally, start the gateway:
 
 ```bash
 npm run start
@@ -267,7 +267,7 @@ npm run start
 
 ## Run the Test
 
-Check that the composer is exposing `movies-length` opening: http://127.0.0.1:5044/documentation/
+Check that the gateway is exposing `movies-length` opening: http://127.0.0.1:5044/documentation/
 
 You should see:
 ![image](./telemetry-images/compose-openapi.png)
@@ -278,12 +278,12 @@ To add some data, we can POST directly to the DB application (port `5042`):
 curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix"}' http://127.0.0.1:5042/movies 
 curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix Reloaded"}'  http://127.0.0.1:5042/movies 
 ```
-Now, let's check that the composer (port 5044) is working:
+Now, let's check that the gateway (port 5044) is working:
 
 ```bash
 curl http://127.0.0.1:5044/movies-length
 ```
-If the composer is working correctly, you should see:
+If the gateway is working correctly, you should see:
 
 ```json
 {"length":2}
@@ -293,7 +293,7 @@ Open the Jaeger UI at [http://localhost:16686/](http://localhost:16686/) and you
 
 ![image](./telemetry-images/jaeger-1.png)
 
-Select on the left the `test-composer` service and the `GET /movies-length` operation, click on "Find traces" and you should see something like this:
+Select on the left the `test-gateway` service and the `GET /movies-length` operation, click on "Find traces" and you should see something like this:
 
 ![image](./telemetry-images/jaeger-2.png)
 
@@ -302,7 +302,7 @@ You can then click on the trace and see the details:
 ![image](./telemetry-images/jaeger-3.png)
 
 Note that every time a request is received or client call is done, a new span is started. So we have:
-- One span for the request received by the `test-composer` 
+- One span for the request received by the `test-gateway` 
 - One span for the client call to `test-service`
 - One span for the request received by `test-service`
 - One span for the client call to `test-db`

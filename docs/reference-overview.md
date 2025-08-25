@@ -21,7 +21,7 @@ Applications that run within Watt to handle different aspects of your applicatio
 
 - **Database Application** - Auto-generated APIs from your database schema
 - **HTTP Application** - Custom application logic and APIs  
-- **API Gateway (Composer)** - Aggregate multiple applications into unified APIs
+- **API Gateway (Gateway)** - Aggregate multiple applications into unified APIs
 - **Client SDK** - Generated clients for consuming APIs
 
 ### 🎨 Framework Integrations (Capabilities)

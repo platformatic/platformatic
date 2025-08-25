@@ -89,8 +89,8 @@ Configure your `watt.json` to include applications from multiple repositories:
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.21.0.json",
   "web": [
     {
-      "id": "composer",
-      "path": "web/composer"
+      "id": "gateway",
+      "path": "web/gateway"
     },
     {
       "id": "user-application",
@@ -112,7 +112,7 @@ Configure your `watt.json` to include applications from multiple repositories:
 ```
 
 **Configuration explanation:**
-- **Local applications** (like `composer`) use direct paths
+- **Local applications** (like `gateway`) use direct paths
 - **Remote applications** use environment variables for paths + Git URLs
 - **Environment variables** allow flexible local vs. remote resolution
 - **Git URLs** define where to fetch applications when not available locally

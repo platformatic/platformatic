@@ -31,7 +31,7 @@
     "@fastify/compress": "^8.0.0",
     "@fastify/express": "^4.0.0",
     "@fastify/formbody": "^8.0.0",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/node": "workspace:*",
     "@platformatic/service": "workspace:*",

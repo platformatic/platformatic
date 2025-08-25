@@ -1,6 +1,6 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.5.json",
+  "gateway": {
     "services": [
       {
         "id": "node",

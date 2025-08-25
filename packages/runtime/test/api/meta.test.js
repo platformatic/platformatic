@@ -18,7 +18,7 @@ test('should get meta for db applications in runtime schema', async t => {
   const dbMeta = await app.getApplicationMeta('db-app')
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
   deepStrictEqual(dbMeta, {
-    composer: {
+    gateway: {
       needsRootTrailingSlash: false,
       prefix: '/db-app/',
       wantsAbsoluteUrls: false,

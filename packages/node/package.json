@@ -30,7 +30,7 @@
     "light-my-request": "^6.0.0"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",

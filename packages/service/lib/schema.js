@@ -1178,7 +1178,7 @@ export const openapi = {
   ]
 }
 
-// same as composer/proxy
+// same as gateway/proxy
 export const proxy = {
   anyOf: [
     { type: 'boolean', const: false },

@@ -23,7 +23,7 @@ export async function moveToTmpdir (teardown) {
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  if (!process.env.SKIP_RM_TMP) {
+  if (!process.env.PLT_TESTS_SKIP_REMOVE_TEMPORARY) {
     teardown(() => safeRemove(dir))
   }
   return dir

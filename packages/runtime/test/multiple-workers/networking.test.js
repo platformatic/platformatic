@@ -54,7 +54,7 @@ test('the mesh network works with the HTTP applications when using ITC', async t
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
       const meta = await app.getApplicationMeta(`service:${worker}`)
-      return new URL(meta.composer.url).port
+      return new URL(meta.gateway.url).port
     })
   )
 
@@ -109,7 +109,7 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
       const meta = await app.getApplicationMeta(`service:${worker}`)
-      return new URL(meta.composer.url).port
+      return new URL(meta.gateway.url).port
     })
   )
 

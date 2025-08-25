@@ -14,7 +14,7 @@ Platformatic Remix uses this property instead of `application.outputDirectory` (
 :::
 
 :::warn
-To properly work when using with in application where the entrypoint is a Platformatic Composer, you need to adjust your `vite.config.js` file to
+To properly work when using with in application where the entrypoint is a Platformatic Gateway, you need to adjust your `vite.config.js` file to
 properly set the Vite's `base` property and the `remix.basename` property as follows:
 
 ```js

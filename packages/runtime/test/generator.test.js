@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import test from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { Generator as ComposerGenerator } from '../../composer/lib/generator.js'
+import { Generator as GatewayGenerator } from '../../gateway/lib/generator.js'
 import { Generator as ApplicationGenerator } from '../../service/lib/generator.js'
 import { RuntimeGenerator, WrappedGenerator } from '../lib/generator.js'
 
@@ -205,7 +205,7 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
   )
 })
 
-test('RuntimeGenerator - should create a runtime with 2 applications and 2 composers', async () => {
+test('RuntimeGenerator - should create a runtime with 2 applications and 2 gateways', async () => {
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
@@ -218,11 +218,11 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 compo
   const secondApplication = new ApplicationGenerator()
   rg.addApplication(secondApplication, 'second-service')
 
-  // adding composers
-  const firstComposer = new ComposerGenerator()
-  rg.addApplication(firstComposer, 'first-composer')
-  const secondComposer = new ComposerGenerator()
-  rg.addApplication(secondComposer, 'second-composer')
+  // adding gateways
+  const firstGateway = new GatewayGenerator()
+  rg.addApplication(firstGateway, 'first-gateway')
+  const secondGateway = new GatewayGenerator()
+  rg.addApplication(secondGateway, 'second-gateway')
 
   rg.setEntryPoint('first-service')
 
@@ -233,9 +233,9 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 compo
   await rg.prepare()
 
   // double check config files
-  const firstComposerConfigFile = firstComposer.getFileObject('platformatic.json')
-  const firstComposerConfigFileJson = JSON.parse(firstComposerConfigFile.contents)
-  assert.deepEqual(firstComposerConfigFileJson.composer.applications, [
+  const firstGatewayConfigFile = firstGateway.getFileObject('platformatic.json')
+  const firstGatewayConfigFileJson = JSON.parse(firstGatewayConfigFile.contents)
+  assert.deepEqual(firstGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service',
       openapi: {
@@ -252,9 +252,9 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 compo
     }
   ])
 
-  const secondComposerConfigFile = secondComposer.getFileObject('platformatic.json')
-  const secondComposerConfigFileJson = JSON.parse(secondComposerConfigFile.contents)
-  assert.deepEqual(secondComposerConfigFileJson.composer.applications, [
+  const secondGatewayConfigFile = secondGateway.getFileObject('platformatic.json')
+  const secondGatewayConfigFileJson = JSON.parse(secondGatewayConfigFile.contents)
+  assert.deepEqual(secondGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service',
       openapi: {

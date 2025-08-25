@@ -2,11 +2,11 @@ import Issues from '../../getting-started/issues.md';
 
 # Programmatic API
 
-Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `composer`, and `runtime`, simplifying operations across different applications.
+Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `gateway`, and `runtime`, simplifying operations across different applications.
 
 ## `create()`
 
-`create` function initializes a server based on a configuration object or file. It supports configurations for Platformatic Service, Platformatic DB, Platformatic Composer, and any other applications developed on top of [Platformatic Service](../service/programmatic.md).
+`create` function initializes a server based on a configuration object or file. It supports configurations for Platformatic Service, Platformatic DB, Platformatic Gateway, and any other applications developed on top of [Platformatic Service](../service/programmatic.md).
 
 ```js
 import { create } from '@platformatic/runtime'
@@ -35,7 +35,7 @@ const config = {
   // $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json',
   // $schema: 'https://schemas.platformatic.dev/@platformatic/service/3.0.0.json',
   // $schema: 'https://schemas.platformatic.dev/@platformatic/db/3.0.0.json',
-  // $schema: 'https://schemas.platformatic.dev/@platformatic/composer/3.0.0.json'
+  // $schema: 'https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json'
   ...
 }
 const app = await create(config)

@@ -22,11 +22,11 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import resolveModule from 'resolve'
 import { createGitRepository } from './git.js'
-import { findComposerConfigFile, getUsername, getVersion, say } from './utils.js'
+import { findGatewayConfigFile, getUsername, getVersion, say } from './utils.js'
 
 const defaultCapabilities = [
   '@platformatic/node',
-  '@platformatic/composer',
+  '@platformatic/gateway',
   '@platformatic/next',
   '@platformatic/vite',
   '@platformatic/astro',
@@ -259,7 +259,7 @@ export async function createApplication (
 
       if (!existingRuntime) {
         // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
-        const existingApplication = await findComposerConfigFile(projectDir)
+        const existingApplication = await findGatewayConfigFile(projectDir)
 
         if (existingApplication) {
           const applicationConfig = await loadConfigurationFile(existingApplication)

@@ -430,7 +430,7 @@ export interface PlatformaticNodeJsConfig {
   node?: {
     main?: string;
     /**
-     * This Node.js application requires the Absolute URL from the Composer
+     * This Node.js application requires the Absolute URL from the Gateway
      */
     absoluteUrl?: boolean;
     dispatchViaHttp?: boolean;

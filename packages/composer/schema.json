@@ -538,583 +538,6 @@
       },
       "additionalProperties": false
     },
-    "composer": {
-      "type": "object",
-      "properties": {
-        "applications": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "origin": {
-                "type": "string"
-              },
-              "openapi": {
-                "type": "object",
-                "properties": {
-                  "url": {
-                    "type": "string"
-                  },
-                  "file": {
-                    "type": "string",
-                    "resolvePath": true
-                  },
-                  "prefix": {
-                    "type": "string"
-                  },
-                  "config": {
-                    "type": "string",
-                    "resolvePath": true
-                  }
-                },
-                "anyOf": [
-                  {
-                    "required": [
-                      "url"
-                    ]
-                  },
-                  {
-                    "required": [
-                      "file"
-                    ]
-                  }
-                ],
-                "additionalProperties": false
-              },
-              "graphql": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "host": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "graphqlEndpoint": {
-                        "type": "string",
-                        "default": "/graphql"
-                      },
-                      "composeEndpoint": {
-                        "type": "string",
-                        "default": "/.well-known/graphql-composition"
-                      },
-                      "entities": {
-                        "type": "object",
-                        "patternProperties": {
-                          "^.*$": {
-                            "type": "object",
-                            "properties": {
-                              "pkey": {
-                                "type": "string"
-                              },
-                              "resolver": {
-                                "type": "object",
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "argsAdapter": {
-                                    "anyOf": [
-                                      {
-                                        "typeof": "function"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "partialResults": {
-                                    "anyOf": [
-                                      {
-                                        "typeof": "function"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "additionalProperties": false
-                              },
-                              "fkeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string"
-                                    },
-                                    "field": {
-                                      "type": "string"
-                                    },
-                                    "as": {
-                                      "type": "string"
-                                    },
-                                    "pkey": {
-                                      "type": "string"
-                                    },
-                                    "subgraph": {
-                                      "type": "string"
-                                    },
-                                    "resolver": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string"
-                                        },
-                                        "argsAdapter": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        },
-                                        "partialResults": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "name"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ]
-                                }
-                              },
-                              "many": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string"
-                                    },
-                                    "fkey": {
-                                      "type": "string"
-                                    },
-                                    "as": {
-                                      "type": "string"
-                                    },
-                                    "pkey": {
-                                      "type": "string"
-                                    },
-                                    "subgraph": {
-                                      "type": "string"
-                                    },
-                                    "resolver": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string"
-                                        },
-                                        "argsAdapter": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        },
-                                        "partialResults": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "name"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fkey",
-                                    "resolver"
-                                  ]
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "proxy": {
-                "anyOf": [
-                  {
-                    "type": "boolean",
-                    "const": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "upstream": {
-                        "type": "string"
-                      },
-                      "prefix": {
-                        "type": "string"
-                      },
-                      "hostname": {
-                        "type": "string"
-                      },
-                      "ws": {
-                        "type": "object",
-                        "properties": {
-                          "upstream": {
-                            "type": "string"
-                          },
-                          "reconnect": {
-                            "type": "object",
-                            "properties": {
-                              "pingInterval": {
-                                "type": "number"
-                              },
-                              "maxReconnectionRetries": {
-                                "type": "number"
-                              },
-                              "reconnectInterval": {
-                                "type": "number"
-                              },
-                              "reconnectDecay": {
-                                "type": "number"
-                              },
-                              "connectionTimeout": {
-                                "type": "number"
-                              },
-                              "reconnectOnClose": {
-                                "type": "boolean"
-                              },
-                              "logs": {
-                                "type": "boolean"
-                              }
-                            }
-                          },
-                          "hooks": {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "path"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [],
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [],
-                    "additionalProperties": false
-                  }
-                ]
-              }
-            },
-            "required": [
-              "id"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "openapi": {
-          "type": "object",
-          "properties": {
-            "info": {
-              "$ref": "#/$defs/info"
-            },
-            "jsonSchemaDialect": {
-              "type": "string",
-              "default": "https://spec.openapis.org/oas/3.1/dialect/base"
-            },
-            "servers": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/server"
-              },
-              "default": [
-                {
-                  "url": "/"
-                }
-              ]
-            },
-            "paths": {
-              "$ref": "#/$defs/paths"
-            },
-            "webhooks": {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/$defs/path-item-or-reference"
-              }
-            },
-            "components": {
-              "$ref": "#/$defs/components"
-            },
-            "security": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/security-requirement"
-              }
-            },
-            "tags": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/tag"
-              }
-            },
-            "externalDocs": {
-              "$ref": "#/$defs/external-documentation"
-            },
-            "swaggerPrefix": {
-              "type": "string",
-              "description": "Base URL for the OpenAPI Swagger Documentation"
-            },
-            "path": {
-              "type": "string",
-              "description": "Path to an OpenAPI spec file",
-              "resolvePath": true
-            }
-          }
-        },
-        "graphql": {
-          "type": "object",
-          "properties": {
-            "graphiql": {
-              "type": "boolean"
-            },
-            "onSubgraphError": {
-              "typeof": "function"
-            },
-            "defaultArgsAdapter": {
-              "oneOf": [
-                {
-                  "typeof": "function"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "entities": {
-              "type": "object",
-              "patternProperties": {
-                "^.*$": {
-                  "type": "object",
-                  "properties": {
-                    "pkey": {
-                      "type": "string"
-                    },
-                    "resolver": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "argsAdapter": {
-                          "anyOf": [
-                            {
-                              "typeof": "function"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "partialResults": {
-                          "anyOf": [
-                            {
-                              "typeof": "function"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "fkeys": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          },
-                          "field": {
-                            "type": "string"
-                          },
-                          "as": {
-                            "type": "string"
-                          },
-                          "pkey": {
-                            "type": "string"
-                          },
-                          "subgraph": {
-                            "type": "string"
-                          },
-                          "resolver": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "argsAdapter": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "partialResults": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      }
-                    },
-                    "many": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          },
-                          "fkey": {
-                            "type": "string"
-                          },
-                          "as": {
-                            "type": "string"
-                          },
-                          "pkey": {
-                            "type": "string"
-                          },
-                          "subgraph": {
-                            "type": "string"
-                          },
-                          "resolver": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "argsAdapter": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "partialResults": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "fkey",
-                          "resolver"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "addEntitiesResolvers": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          "additionalProperties": false
-        },
-        "addEmptySchema": {
-          "type": "boolean",
-          "default": false
-        },
-        "refreshTimeout": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 1000
-        }
-      },
-      "required": [],
-      "default": {},
-      "additionalProperties": false
-    },
     "types": {
       "type": "object",
       "properties": {
@@ -2671,6 +2094,583 @@
     },
     "module": {
       "type": "string"
+    },
+    "composer": {
+      "type": "object",
+      "properties": {
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string"
+              },
+              "openapi": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  "prefix": {
+                    "type": "string"
+                  },
+                  "config": {
+                    "type": "string",
+                    "resolvePath": true
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "url"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "file"
+                    ]
+                  }
+                ],
+                "additionalProperties": false
+              },
+              "graphql": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "host": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "graphqlEndpoint": {
+                        "type": "string",
+                        "default": "/graphql"
+                      },
+                      "composeEndpoint": {
+                        "type": "string",
+                        "default": "/.well-known/graphql-composition"
+                      },
+                      "entities": {
+                        "type": "object",
+                        "patternProperties": {
+                          "^.*$": {
+                            "type": "object",
+                            "properties": {
+                              "pkey": {
+                                "type": "string"
+                              },
+                              "resolver": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "argsAdapter": {
+                                    "anyOf": [
+                                      {
+                                        "typeof": "function"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "partialResults": {
+                                    "anyOf": [
+                                      {
+                                        "typeof": "function"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "fkeys": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "field": {
+                                      "type": "string"
+                                    },
+                                    "as": {
+                                      "type": "string"
+                                    },
+                                    "pkey": {
+                                      "type": "string"
+                                    },
+                                    "subgraph": {
+                                      "type": "string"
+                                    },
+                                    "resolver": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "argsAdapter": {
+                                          "anyOf": [
+                                            {
+                                              "typeof": "function"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "partialResults": {
+                                          "anyOf": [
+                                            {
+                                              "typeof": "function"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "name"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ]
+                                }
+                              },
+                              "many": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "fkey": {
+                                      "type": "string"
+                                    },
+                                    "as": {
+                                      "type": "string"
+                                    },
+                                    "pkey": {
+                                      "type": "string"
+                                    },
+                                    "subgraph": {
+                                      "type": "string"
+                                    },
+                                    "resolver": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "argsAdapter": {
+                                          "anyOf": [
+                                            {
+                                              "typeof": "function"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "partialResults": {
+                                          "anyOf": [
+                                            {
+                                              "typeof": "function"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "name"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fkey",
+                                    "resolver"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "proxy": {
+                "anyOf": [
+                  {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "upstream": {
+                        "type": "string"
+                      },
+                      "prefix": {
+                        "type": "string"
+                      },
+                      "hostname": {
+                        "type": "string"
+                      },
+                      "ws": {
+                        "type": "object",
+                        "properties": {
+                          "upstream": {
+                            "type": "string"
+                          },
+                          "reconnect": {
+                            "type": "object",
+                            "properties": {
+                              "pingInterval": {
+                                "type": "number"
+                              },
+                              "maxReconnectionRetries": {
+                                "type": "number"
+                              },
+                              "reconnectInterval": {
+                                "type": "number"
+                              },
+                              "reconnectDecay": {
+                                "type": "number"
+                              },
+                              "connectionTimeout": {
+                                "type": "number"
+                              },
+                              "reconnectOnClose": {
+                                "type": "boolean"
+                              },
+                              "logs": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "hooks": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "openapi": {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/info"
+            },
+            "jsonSchemaDialect": {
+              "type": "string",
+              "default": "https://spec.openapis.org/oas/3.1/dialect/base"
+            },
+            "servers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/server"
+              },
+              "default": [
+                {
+                  "url": "/"
+                }
+              ]
+            },
+            "paths": {
+              "$ref": "#/$defs/paths"
+            },
+            "webhooks": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/path-item-or-reference"
+              }
+            },
+            "components": {
+              "$ref": "#/$defs/components"
+            },
+            "security": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/security-requirement"
+              }
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/tag"
+              }
+            },
+            "externalDocs": {
+              "$ref": "#/$defs/external-documentation"
+            },
+            "swaggerPrefix": {
+              "type": "string",
+              "description": "Base URL for the OpenAPI Swagger Documentation"
+            },
+            "path": {
+              "type": "string",
+              "description": "Path to an OpenAPI spec file",
+              "resolvePath": true
+            }
+          }
+        },
+        "graphql": {
+          "type": "object",
+          "properties": {
+            "graphiql": {
+              "type": "boolean"
+            },
+            "onSubgraphError": {
+              "typeof": "function"
+            },
+            "defaultArgsAdapter": {
+              "oneOf": [
+                {
+                  "typeof": "function"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "entities": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "object",
+                  "properties": {
+                    "pkey": {
+                      "type": "string"
+                    },
+                    "resolver": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "argsAdapter": {
+                          "anyOf": [
+                            {
+                              "typeof": "function"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "partialResults": {
+                          "anyOf": [
+                            {
+                              "typeof": "function"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "fkeys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "type": "string"
+                          },
+                          "as": {
+                            "type": "string"
+                          },
+                          "pkey": {
+                            "type": "string"
+                          },
+                          "subgraph": {
+                            "type": "string"
+                          },
+                          "resolver": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "argsAdapter": {
+                                "anyOf": [
+                                  {
+                                    "typeof": "function"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "partialResults": {
+                                "anyOf": [
+                                  {
+                                    "typeof": "function"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      }
+                    },
+                    "many": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "fkey": {
+                            "type": "string"
+                          },
+                          "as": {
+                            "type": "string"
+                          },
+                          "pkey": {
+                            "type": "string"
+                          },
+                          "subgraph": {
+                            "type": "string"
+                          },
+                          "resolver": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "argsAdapter": {
+                                "anyOf": [
+                                  {
+                                    "typeof": "function"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "partialResults": {
+                                "anyOf": [
+                                  {
+                                    "typeof": "function"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "fkey",
+                          "resolver"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "addEntitiesResolvers": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "addEmptySchema": {
+          "type": "boolean",
+          "default": false
+        },
+        "refreshTimeout": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1000
+        }
+      },
+      "required": [],
+      "default": {},
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

@@ -106,7 +106,7 @@ async function verifyComposerWithoutPrefix (
     async root => {
       await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
         const json = JSON.parse(contents)
-        json.composer.applications[1].proxy = { prefix: '' }
+        json.gateway.applications[1].proxy = { prefix: '' }
         return JSON.stringify(json, null, 2)
       })
     }

@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@astrojs/node": "^9.2.0",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "astro": "^5.7.1",
     "cleaner-spec-reporter": "^0.5.0",

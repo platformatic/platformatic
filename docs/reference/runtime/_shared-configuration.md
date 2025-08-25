@@ -56,7 +56,7 @@ the app worker thread.
 runtime. Each application object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the microservice.
-  When working with the Platformatic Composer, this value corresponds to the `id`
+  When working with the Platformatic Gateway, this value corresponds to the `id`
   property of each object in the `applications` section of the config file. When
   working with client objects, this corresponds to the optional `applicationId`
   property or the `name` field in the client's `package.json` file if a

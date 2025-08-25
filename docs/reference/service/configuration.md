@@ -21,7 +21,7 @@ Configuration settings containing sensitive data, such as database connection UR
 
 ### `basePath`
 
-Application proxy base path when exposing this application in a [composer](../composer/configuration.md) when setting the `proxy` property.
+Application proxy base path when exposing this application in a [gateway](../gateway/configuration.md) when setting the `proxy` property.
 
 If not specified, the application will be exposed on the application or a value specified in the application code via `platformatic.setBasePath()`.
 

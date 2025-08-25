@@ -137,7 +137,7 @@ export class ViteCapability extends BaseCapability {
   getMeta () {
     const config = this.subprocessConfig ?? this.#app?.config
 
-    const composer = {
+    const gateway = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
@@ -145,7 +145,7 @@ export class ViteCapability extends BaseCapability {
       needsRootTrailingSlash: true
     }
 
-    return { composer }
+    return { gateway }
   }
 
   _getVite () {
@@ -388,7 +388,7 @@ export class ViteSSRCapability extends NodeCapability {
     const config = vite?.devServer?.config ?? vite?.config.vite
     const applicationBasePath = config?.base
 
-    const composer = {
+    const gateway = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
       prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
@@ -396,7 +396,7 @@ export class ViteSSRCapability extends NodeCapability {
       needsRootTrailingSlash: true
     }
 
-    return { composer }
+    return { gateway }
   }
 
   _findEntrypoint () {

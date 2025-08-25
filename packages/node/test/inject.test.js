@@ -41,7 +41,7 @@ test('should inject request via IPC even if a server is started', async t => {
   )
 
   const info = await runtime.getApplicationMeta('frontend')
-  ok(info.composer.url)
+  ok(info.gateway.url)
 
   // Close the server so that we can verify the IPC injection
   await runtime.sendCommandToApplication('frontend', 'closeServer')
@@ -91,7 +91,7 @@ test('should inject request via the HTTP port if asked to', async t => {
   )
 
   const info = await runtime.getApplicationMeta('frontend')
-  ok(info.composer.url)
+  ok(info.gateway.url)
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: true })
 

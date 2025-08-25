@@ -4,11 +4,11 @@ import Issues from '../../getting-started/issues.md';
 
 During application execution some APIs are made available in the `globalThis.platformatic` object.
 
-- **`globalThis.platformatic.setBasePath(path)`**: This function can be use to override the base path for the application. If not properly configure in the composer, this can make your application unaccessible.
+- **`globalThis.platformatic.setBasePath(path)`**: This function can be use to override the base path for the application. If not properly configure in the gateway, this can make your application unaccessible.
 - **`globalThis.platformatic.applicationId`**: The id of the application.
 - **`globalThis.platformatic.workerId`**: The id of the application worker.
 - **`globalThis.platformatic.root`**: The root directory of the application.
-- **`globalThis.platformatic.basePath`**: The base path of the application in the composer.
+- **`globalThis.platformatic.basePath`**: The base path of the application in the gateway.
 - **`globalThis.platformatic.logLevel`**: The log level configured for the application.
 - **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
 - **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the application. The function should return a boolean value, or an object with the following properties:

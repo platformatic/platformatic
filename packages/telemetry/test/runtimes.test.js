@@ -86,7 +86,7 @@ test('configure telemetry correctly with a express app', async t => {
   deepEqual(resourceAttributes['service.name'], 'test-service-api')
 })
 
-test('configure telemetry correctly with a composer + node app', async t => {
+test('configure telemetry correctly with a gateway + node app', async t => {
   const app = await createRuntime(t, 'composer-node', false, false, 'platformatic.json')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
@@ -101,14 +101,14 @@ test('configure telemetry correctly with a composer + node app', async t => {
 
   // We can have spurious span (like the one from the composr to applications) so we need to filter
   // the one for the actual call
-  const spanComposerServer = spans.find(span => {
+  const spanGatewayServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
       return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer')
     }
     return false
   })
 
-  const spanComposerClient = spans.find(span => {
+  const spanGatewayClient = spans.find(span => {
     if (span.kind === SpanKind.CLIENT) {
       return (
         containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer') &&
@@ -117,7 +117,6 @@ test('configure telemetry correctly with a composer + node app', async t => {
     }
     return false
   })
-  console.log(spanComposerClient)
 
   const spanNodeServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
@@ -127,17 +126,17 @@ test('configure telemetry correctly with a composer + node app', async t => {
   })
 
   // They have to share the same traceId
-  const traceId = spanComposerServer.traceId
-  equal(spanComposerClient.traceId, traceId)
+  const traceId = spanGatewayServer.traceId
+  equal(spanGatewayClient.traceId, traceId)
   equal(spanNodeServer.traceId, traceId)
 
   // The parent-child relationships are correct
-  equal(spanComposerServer.id, spanComposerClient.parentSpanContext.spanId)
-  equal(spanComposerClient.id, spanNodeServer.parentSpanContext.spanId)
+  equal(spanGatewayServer.id, spanGatewayClient.parentSpanContext.spanId)
+  equal(spanGatewayClient.id, spanNodeServer.parentSpanContext.spanId)
 })
 
-test('configure telemetry correctly with a composer + node + fastify', async t => {
-  // composer -> fastify -> node
+test('configure telemetry correctly with a gateway + node + fastify', async t => {
+  // gateway -> fastify -> node
   const app = await createRuntime(t, 'composer-node-fastify', false, true, 'platformatic.json')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
@@ -150,16 +149,16 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   await sleep(500)
   const spans = await getSpans(spansPath)
 
-  const spanComposerServer = spans.find(span => {
+  const spanGatewayServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
       return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer')
     }
     return false
   })
 
-  const traceId = spanComposerServer.traceId
+  const traceId = spanGatewayServer.traceId
 
-  const spanComposerClient = spans.find(span => {
+  const spanGatewayClient = spans.find(span => {
     if (span.kind === SpanKind.CLIENT) {
       return (
         containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer') &&
@@ -198,11 +197,11 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   })
 
   // check the spans chain
-  equal(spanComposerClient.traceId, traceId)
-  equal(spanComposerClient.parentSpanContext.spanId, spanComposerServer.id)
+  equal(spanGatewayClient.traceId, traceId)
+  equal(spanGatewayClient.parentSpanContext.spanId, spanGatewayServer.id)
 
   equal(spanFastifyServer.traceId, traceId)
-  equal(spanFastifyServer.parentSpanContext.spanId, spanComposerClient.id)
+  equal(spanFastifyServer.parentSpanContext.spanId, spanGatewayClient.id)
 
   equal(spanFastifyClient.traceId, traceId)
   equal(spanFastifyClient.parentSpanContext.spanId, spanFastifyServer.id)
@@ -211,8 +210,8 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   equal(spanNodeServer.parentSpanContext.spanId, spanFastifyClient.id)
 })
 
-test('configure telemetry correctly with a composer + next', async t => {
-  // composer -> next -> fastify
+test('configure telemetry correctly with a gateway + next', async t => {
+  // gateway -> next -> fastify
   //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
@@ -243,14 +242,14 @@ test('configure telemetry correctly with a composer + next', async t => {
     equal(span.traceId, traceId)
   }
 
-  const spanComposerServer = spans.find(span => {
+  const spanGatewayServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
       return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer')
     }
     return false
   })
 
-  const spanComposerClient = spans.find(span => {
+  const spanGatewayClient = spans.find(span => {
     if (span.kind === SpanKind.CLIENT) {
       return (
         containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-composer') &&
@@ -263,7 +262,7 @@ test('configure telemetry correctly with a composer + next', async t => {
 
   // Next also produces some "type 0" internal spans, that are not relevant for this test
   // so we start from the last ones (node and fastify server span) and go backward
-  // back to the composer one
+  // back to the gateway one
   const spanNodeServer = spans.find(span => {
     if (span.kind === SpanKind.SERVER) {
       return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-node') && span.traceId === traceId
@@ -272,7 +271,7 @@ test('configure telemetry correctly with a composer + next', async t => {
   })
   const spanNextClientNode = findParentSpan(spans, spanNodeServer, SpanKind.CLIENT, 'GET http://node.plt.local/')
   ok(!!spanNextClientNode)
-  const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanComposerClient.id)
+  const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanGatewayClient.id)
   equal(spanNextClientNode.traceId, traceId)
   equal(spanNextServer.traceId, traceId)
 
@@ -290,15 +289,15 @@ test('configure telemetry correctly with a composer + next', async t => {
     SpanKind.CLIENT,
     'GET http://fastify.plt.local/'
   )
-  const spanNextServer2 = findSpanWithParentWithId(spans, spanNextClientFastify, spanComposerClient.id)
+  const spanNextServer2 = findSpanWithParentWithId(spans, spanNextClientFastify, spanGatewayClient.id)
   equal(spanNextServer.id, spanNextServer2.id) // Must be the same span
   equal(spanNextClientNode.traceId, traceId)
   equal(spanNextServer.traceId, traceId)
 
-  // check the spans chain back from next to composer call
-  equal(spanNextServer.parentSpanContext.spanId, spanComposerClient.id)
-  equal(spanComposerClient.parentSpanContext.spanId, spanComposerServer.id)
-  equal(spanComposerClient.traceId, traceId)
+  // check the spans chain back from next to gateway call
+  equal(spanNextServer.parentSpanContext.spanId, spanGatewayClient.id)
+  equal(spanGatewayClient.parentSpanContext.spanId, spanGatewayServer.id)
+  equal(spanGatewayClient.traceId, traceId)
 })
 
 test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
@@ -342,7 +341,6 @@ test('configure telemetry correctly with a ESM express app and additional expres
   await sleep(500)
 
   const spans = await getSpans(spansPath)
-  console.log(spans)
   const expressSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-express')
   const httpSpans = spans.filter(span => span.instrumentationScope.name === '@opentelemetry/instrumentation-http')
 

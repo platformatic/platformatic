@@ -151,7 +151,7 @@ test('update - should update version in package.json files', async t => {
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
-    '@platformatic/composer': '^99.0.0'
+    '@platformatic/gateway': '^99.0.0'
   })
 
   ok(
@@ -208,7 +208,7 @@ test('update - should work when executed inside an application folder', async t 
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
-    '@platformatic/composer': '^99.0.0'
+    '@platformatic/gateway': '^99.0.0'
   })
 
   ok(
@@ -258,7 +258,7 @@ test('update - should work when loaded from an application file', async t => {
     '@platformatic/service': '^2.0.0',
     '@platformatic/db': '^1.0.0',
     '@platformatic/db-dashboard': '^0.1.0',
-    '@platformatic/composer': '^99.0.0'
+    '@platformatic/gateway': '^99.0.0'
   })
 
   ok(
@@ -307,7 +307,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
-    '@platformatic/composer': '^99.0.0'
+    '@platformatic/gateway': '^99.0.0'
   })
 
   ok(

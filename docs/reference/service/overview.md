@@ -61,7 +61,7 @@ For application-specific configuration and advanced usage, see the [Configuratio
 HTTP Services work seamlessly with other service types in your Watt application:
 
 - **Database Services**: Access auto-generated database APIs
-- **Composer Services**: Expose your HTTP service through an API gateway
+- **Gateway Services**: Expose your HTTP service through an API gateway
 - **Frontend Capabilities**: Serve frontend applications alongside your APIs
 
 <Issues />

@@ -139,7 +139,7 @@ export class ServiceCapability extends BaseCapability {
 
   getMeta () {
     return {
-      composer: {
+      gateway: {
         tcp: typeof this.url !== 'undefined',
         url: this.url,
         prefix: this.basePath ?? this.#basePath,

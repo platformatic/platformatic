@@ -2,14 +2,14 @@
 
 ## Introduction
 
-In this guide we'll create a "modular monolith" Library application. It will be a Platformatic Runtime app which contains multiple Platformatic DB and Composer applications. We'll learn how to:
+In this guide we'll create a "modular monolith" Library application. It will be a Platformatic Runtime app which contains multiple Platformatic DB and Gateway applications. We'll learn how to:
 
 - Create and configure a [Platformatic Runtime](https://docs.platformatic.dev/docs/reference/runtime/introduction) app with multiple applications
   - Three [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) applications, each with their own databases
-  - A [Platformatic Composer](https://docs.platformatic.dev/docs/reference/composer/introduction) application which aggregates multiple application's REST APIs into a composed API
-- Customise the composed API that's automatically generated in a Composer application
+  - A [Platformatic Gateway](https://docs.platformatic.dev/docs/reference/gateway/introduction) application which aggregates multiple application's REST APIs into a composed API
+- Customise the composed API that's automatically generated in a Gateway application
 - Generate a client for an application's REST API and use it in a Platformatic application to make API requests
-- Add custom functionality to a Composer application's composed API by modifying its routes and responses
+- Add custom functionality to a Gateway application's composed API by modifying its routes and responses
 
 The architecture for our Library application will look like this:
 
@@ -538,9 +538,9 @@ If we open up the Swagger UI documentation at http://127.0.0.1:3042/documentatio
 <!-- SCREENSHOT: test-the-movies-service-api-01.png -->
 ![Test the Movies application API - 01](./build-modular-monolith-images/test-the-movies-service-api-01.png)
 
-## Create a Composer application: Media application
+## Create a Gateway application: Media application
 
-We're now going to use Platformatic Composer to create a Media application. This application will compose the `books-application` and `movies-application` APIs into a single REST API.
+We're now going to use Platformatic Gateway to create a Media application. This application will compose the `books-application` and `movies-application` APIs into a single REST API.
 
 In the root directory of our Runtime project (`library-app`), let's create the Media application by running:
 
@@ -551,13 +551,13 @@ npm create wattpm
 And then let's enter the following settings:
 
 ``` bash
-? Which kind of application do you want to create? @platformatic/composer
+? Which kind of application do you want to create? @platformatic/gateway
 ? What is the name of the application? media-application
 ? Do you want to create another application? no
 ? Do you want to use TypeScript? no
 ```
 
-Once the command has finished, we'll see that our Platformatic Composer application has been created in the `web/media-application` directory.
+Once the command has finished, we'll see that our Platformatic Gateway application has been created in the `web/media-application` directory.
 
 ### Configure the composed applications
 
@@ -569,9 +569,9 @@ Let's open up `web/media-application/platformatic.json` and replace the `service
 // web/media-application/platformatic.json
 
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.64.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.64.0.json",
   ...,
-  "composer": {
+  "gateway": {
     "services": [
       {
         "id": "books-application",
@@ -594,9 +594,9 @@ Let's open up `web/media-application/platformatic.json` and replace the `service
 
 Let's take a look at the settings we've added here:
 
-- `composer.services[].id` — The `id` values are the identifiers for our Books and Movies applications. These are derived from the applications' directory names.
-- `composer.services[].openapi.url` — This is the URL that Composer will automatically call to retrieve the application's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media application's composed API.
-- `composer.refreshTimeout` — This configures Composer to retrieve the OpenAPI schema for each application every 1 second (1000 milliseconds = 1 second). This is a good value during development, but should be longer in production. If Composer detects that the OpenAPI schema for an application has changed, it will rebuild the composed API.
+- `gateway.services[].id` — The `id` values are the identifiers for our Books and Movies applications. These are derived from the applications' directory names.
+- `gateway.services[].openapi.url` — This is the URL that Gateway will automatically call to retrieve the application's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media application's composed API.
+- `gateway.refreshTimeout` — This configures Gateway to retrieve the OpenAPI schema for each application every 1 second (1000 milliseconds = 1 second). This is a good value during development, but should be longer in production. If Gateway detects that the OpenAPI schema for an application has changed, it will rebuild the composed API.
 
 ### Test the composed Media application API
 
@@ -647,11 +647,11 @@ We should receive a response like this:
 [{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687895004362","updatedAt":"1687895004362"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687895004369","updatedAt":"1687895004369"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687895004372","updatedAt":"1687895004372"}]
 ```
 
-> If Composer has already generated a composed API, but later is unable to retrieve the OpenAPI schema for a service, it will remove the routes for that service from the composed API. Those routes will then return a 404 error response.
+> If Gateway has already generated a composed API, but later is unable to retrieve the OpenAPI schema for a service, it will remove the routes for that service from the composed API. Those routes will then return a 404 error response.
 
 ### Make the composed Media application API read-only
 
-Platformatic Composer allows us to customise the composed API that it generates for us. We can do this by creating an OpenAPI configuration file for each application, and then configuring our Composer application to load it.
+Platformatic Gateway allows us to customise the composed API that it generates for us. We can do this by creating an OpenAPI configuration file for each application, and then configuring our Gateway application to load it.
 
 Our Books and Movies databases are already populated with data, and we don't want anyone to be able to add to, edit or delete that data. We're now going to configure the Media application to ignore `POST`, `PUT` and `DELETE` routes for the Books and Movies APIs. This will effectively make our Media application's composed API read-only.
 
@@ -704,7 +704,7 @@ Now let's open up `web/media-application/platformatic.json` and configure the Me
 
   {
     ...,
-    "composer": {
+    "gateway": {
       "services": [
         {
           "id": "books-application",
@@ -734,7 +734,7 @@ If we open up the API documentation for our Media application at http://127.0.0.
 <!-- SCREENSHOT: make-the-composed-media-service-api-read-only-01.png -->
 ![Make the Composed Media Application API Read Only - 01](./build-modular-monolith-images/make-the-composed-media-service-api-read-only-01.png)
 
-> As well as allowing us to ignore specific routes, Platformatic Composer also supports aliasing for route paths and the renaming of route response fields. See the [Composer OpenAPI](https://docs.platformatic.dev/docs/reference/composer/configuration?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#openapi-configuration) documentation to learn more.
+> As well as allowing us to ignore specific routes, Platformatic Gateway also supports aliasing for route paths and the renaming of route response fields. See the [Gateway OpenAPI](https://docs.platformatic.dev/docs/reference/gateway/configuration?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#openapi-configuration) documentation to learn more.
 
 ### Add People data to Media application responses
 
@@ -764,7 +764,7 @@ We'll see that this has generated a new directory, `clients/people/`, which cont
 // web/media-application/platformatic.json
 
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
   ...,
   "clients": [
     {
@@ -801,26 +801,26 @@ module.exports = async function peopleDataPlugin (app) {
 
 The code we've just added is the skeleton structure for our plugin. A `@platformatic/client` is instantiated out of the OpenAPI specification.
 
-To be able to modify the responses that are sent from one of our Media application's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
+To be able to modify the responses that are sent from one of our Media application's composed API routes, we need to add a Gateway `onRoute` hook for the route, and then set an `onGatewayResponse` callback function inside it, for example:
 
 ```javascript
-app.platformatic.addComposerOnRouteHook('/books/', ['GET'], function (routeOptions) {
-  routeOptions.config.onComposerResponse = function (request, reply, body) {
+app.platformatic.addGatewayOnRouteHook('/books/', ['GET'], function (routeOptions) {
+  routeOptions.config.onGatewayResponse = function (request, reply, body) {
     // ...
   }
 })
 ```
 
-With the code above, when Composer registers the `GET` route for `/books/` in the composed API, it will call the `onRoute` hook function. Then when the Media application receives a response for that route from the downstream application, it will run our `onComposerResponse` callback function. We can add code inside the `onComposerResponse` which modifies the response that is returned back to the client that made the original request.
+With the code above, when Gateway registers the `GET` route for `/books/` in the composed API, it will call the `onRoute` hook function. Then when the Media application receives a response for that route from the downstream application, it will run our `onGatewayResponse` callback function. We can add code inside the `onGatewayResponse` which modifies the response that is returned back to the client that made the original request.
 
-> To get a clearer picture of how this works, take a look at our [Composer API modification](https://docs.platformatic.dev/docs/reference/composer/api-modification/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) documentation.
+> To get a clearer picture of how this works, take a look at our [Gateway API modification](https://docs.platformatic.dev/docs/reference/gateway/api-modification/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) documentation.
 
-Let's now apply what we've just learnt about Composer hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `web/media-application/plugin.js`:
+Let's now apply what we've just learnt about Gateway hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `web/media-application/plugin.js`:
 
 ```javascript
 // web/media-application/plugin.js
 
-function buildOnComposerResponseCallback (peopleProps) {
+function buildOnGatewayResponseCallback (peopleProps) {
   return async function addPeopleToResponse (request, reply, body) {
     let entities = await body.json()
 
@@ -854,7 +854,7 @@ function buildOnComposerResponseCallback (peopleProps) {
 }
 ```
 
-There are a few moving parts in the code above, so let's break down what's happening. The `buildOnComposerResponseCallback` function returns a function, which when called will:
+There are a few moving parts in the code above, so let's break down what's happening. The `buildOnGatewayResponseCallback` function returns a function, which when called will:
 
 - Parse the JSON response body
 - Handle single or multiple entities
@@ -862,7 +862,7 @@ There are a few moving parts in the code above, so let's break down what's happe
 - Use the People client to retrieve people matching those IDs from the People service
 - Loop through each entity and adds new properties with the names for any people referenced by that entity
 
-Now, let's add this function after the `buildOnComposerResponseCallback` function:
+Now, let's add this function after the `buildOnGatewayResponseCallback` function:
 
 ```javascript
 // web/media-application/plugin.js
@@ -874,7 +874,7 @@ function booksOnRouteHook (routeOptions) {
   entitySchema.required ??= []
   entitySchema.required.push('authorName')
 
-  routeOptions.config.onComposerResponse = buildOnComposerResponseCallback([
+  routeOptions.config.onGatewayResponse = buildOnGatewayResponseCallback([
     { idProp: 'authorId', nameProp: 'authorName' }
   ])
 }
@@ -882,20 +882,20 @@ function booksOnRouteHook (routeOptions) {
 
 In the code above we're modifying the response schema for the route which the `routeOptions` have been passed for. This ensures that the `authorName` will be correctly serialized in the response from our Media application's `/books/` routes.
 
-Then, we're registering an `onComposerResponse` callback, which is the function that's returned by the `buildOnComposerResponseCallback` that we added a little earlier. The `peopleProps` array that we're passing to `buildOnComposerResponseCallback` tells it to look for a person ID in the `authorId` property for any book entity, and then to set the name that it retrieves for the person matching that ID to a property named `authorName`.
+Then, we're registering an `onGatewayResponse` callback, which is the function that's returned by the `buildOnGatewayResponseCallback` that we added a little earlier. The `peopleProps` array that we're passing to `buildOnGatewayResponseCallback` tells it to look for a person ID in the `authorId` property for any book entity, and then to set the name that it retrieves for the person matching that ID to a property named `authorName`.
 
 Finally, let's add this code after the `booksOnRouteHook` function to wire everything up:
 
 ```javascript
-app.platformatic.addComposerOnRouteHook('/books/', ['GET'], booksOnRouteHook)
-app.platformatic.addComposerOnRouteHook('/books/{id}', ['GET'], booksOnRouteHook)
+app.platformatic.addGatewayOnRouteHook('/books/', ['GET'], booksOnRouteHook)
+app.platformatic.addGatewayOnRouteHook('/books/{id}', ['GET'], booksOnRouteHook)
 ```
 
 Now we can configure the Media application to load our new plugin. Let's open up `platformatic.json` and add a `plugins` object to the application configuration:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
   ...,
   "plugins": {
     "paths": [
@@ -934,22 +934,22 @@ function moviesOnRouteHook (routeOptions) {
   entitySchema.required ??= []
   entitySchema.required.push('directorName', 'producerName')
 
-  routeOptions.config.onComposerResponse = buildOnComposerResponseCallback([
+  routeOptions.config.onGatewayResponse = buildOnGatewayResponseCallback([
     { idProp: 'directorId', nameProp: 'directorName' },
     { idProp: 'producerId', nameProp: 'producerName' }
   ])
 }
 ```
 
-Similarly to the `booksOnRouteHook` function, the code above is modifying the response schema for the `/movies/` routes to allow for two new properties: `directorName` and `producerName`. It's then registering an `onComposerResponse` callback. That callback will pluck person IDs from the `directorId` and `producerId` properties in any movie entity, and then set the names for the corresponding people in the `directorName` and `producerName` properties.
+Similarly to the `booksOnRouteHook` function, the code above is modifying the response schema for the `/movies/` routes to allow for two new properties: `directorName` and `producerName`. It's then registering an `onGatewayResponse` callback. That callback will pluck person IDs from the `directorId` and `producerId` properties in any movie entity, and then set the names for the corresponding people in the `directorName` and `producerName` properties.
 
 Finally, let's wire up the `moviesOnRouteHook` to our `/movies/` routes:
 
 ```javascript
 // web/media-application/plugin.js
 
-app.platformatic.addComposerOnRouteHook('/movies/', ['GET'], moviesOnRouteHook)
-app.platformatic.addComposerOnRouteHook('/movies/{id}', ['GET'], moviesOnRouteHook)
+app.platformatic.addGatewayOnRouteHook('/movies/', ['GET'], moviesOnRouteHook)
+app.platformatic.addGatewayOnRouteHook('/movies/{id}', ['GET'], moviesOnRouteHook)
 ```
 
 Now we can test our `/movies/` routes to confirm that the people data is being added to the responses:
@@ -968,7 +968,7 @@ curl localhost:3042/movies/3 | grep 'Name'
 
 ### Configure a service proxy to debug the People application API
 
-Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Composer provides a service proxy feature ([`services[].proxy`](https://docs.platformatic.dev/docs/reference/composer/configuration#composer)) which we can use to help us do this.
+Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`services[].proxy`](https://docs.platformatic.dev/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
 
 Let's try this out by adding another service to the `services` in `platformatic.json`:
 
@@ -976,9 +976,9 @@ Let's try this out by adding another service to the `services` in `platformatic.
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
     ...,
-    "composer": {
+    "gateway": {
       "services": [
         ...,
         {
@@ -1016,15 +1016,15 @@ We should receive a response like this from the People application's `/people` r
 [{"id":1,"name":"Stephen King","createdAt":"1687891503369","updatedAt":"1687891503369"},{"id":2,"name":"Miranda July","createdAt":"1687891503375","updatedAt":"1687891503375"},{"id":3,"name":"Lewis Carroll","createdAt":"1687891503377","updatedAt":"1687891503377"},{"id":4,"name":"Martha Schumacher","createdAt":"1687891503379","updatedAt":"1687891503379"},{"id":5,"name":"Mick Garris","createdAt":"1687891503381","updatedAt":"1687891503381"},{"id":6,"name":"Dede Gardner","createdAt":"1687891503383","updatedAt":"1687891503383"}]
 ```
 
-Although the Composer service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.json`:
+Although the Gateway service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.json`:
 
 ```diff
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
     ...,
-    "composer": {
+    "gateway": {
       "services": [
         ...,
         {
@@ -1054,7 +1054,7 @@ Although the Composer service proxy is a helpful feature, we don't want to use t
 
 If you have existing services that aren't built with Platformatic or Fastify, there are two ways you can integrate them with the applications in a Platformatic Runtime application:
 
-1. If the existing service provides an OpenAPI schema (via a URL or a file), you can create a Platformatic Composer application inside the Runtime application and configure it to add the API for the existing service into a composed API.
+1. If the existing service provides an OpenAPI schema (via a URL or a file), you can create a Platformatic Gateway application inside the Runtime application and configure it to add the API for the existing service into a composed API.
 2. If the existing service provides an OpenAPI or GraphQL schema, you can generate a Platformatic Client for the existing service. The generated client can then be integrated with one of the Runtime applications.
 
 ### Building Platformatic Runtime applications in a monorepo
@@ -1074,10 +1074,10 @@ This allows you to then run scripts for all applications, for example `pnpm run 
 
 If you've followed this tutorial step-by-step, you should now have a Platformatic Runtime app with four separate applications that work together to provide a unified API. You can find the full application code [on GitHub](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
 
-You can watch Platformatic Runtime and Composer in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created for our [Papilio Launch](https://papilio.platformatic.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog):
+You can watch Platformatic Runtime and Gateway in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created for our [Papilio Launch](https://papilio.platformatic.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog):
 
 - [Introducing: Platformatic Runtime](https://www.youtube.com/watch?v=KGzAURD8mcc&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=2?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
-- [Introducing: Platformatic Composer](https://www.youtube.com/watch?v=0DeNIeSnH0E&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=3?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
+- [Introducing: Platformatic Gateway](https://www.youtube.com/watch?v=0DeNIeSnH0E&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=3?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 - [Introducing: Client & Taxonomy](https://www.youtube.com/watch?v=W_bXefh-j4A&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=4?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 
 ### Get started with Platformatic

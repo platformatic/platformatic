@@ -23,7 +23,7 @@ test('should allow to setup connection string', async t => {
   assert.strictEqual(meta.connectionStrings[0], 'TEST_CONNECTION_STRING')
   assert.strictEqual(openapiSchema, 'TEST_OPEN_API_SCHEMA')
   assert.strictEqual(graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
-  assert.strictEqual(meta.composer.prefix, 'TEST_BASE_PATH')
+  assert.strictEqual(meta.gateway.prefix, 'TEST_BASE_PATH')
 })
 
 test('should not have any connections string set', async t => {

@@ -5,7 +5,7 @@ import { createRuntime, readLogs } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('parses composer and client dependencies', async t => {
+test('parses gateway and client dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-dependencies.json')
   const runtime = await createRuntime(configFile)
 

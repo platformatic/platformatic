@@ -1,9 +1,9 @@
 
-import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+import { PlatformaticApp, PlatformaticGatewayConfig } from '@platformatic/gateway'
+import 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+    platformatic: PlatformaticApp<PlatformaticGatewayConfig>
   }
 }

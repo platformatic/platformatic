@@ -1371,7 +1371,7 @@ export class Runtime extends EventEmitter {
       // Handle applications changes
       // This is not purposely activated on when this.#config.watch === true
       // so that applications can eventually manually trigger a restart. This mechanism is current
-      // used by the composer.
+      // used by the gateway.
       worker[kITC].on('changed', async () => {
         this.emit('application:worker:changed', eventPayload)
 

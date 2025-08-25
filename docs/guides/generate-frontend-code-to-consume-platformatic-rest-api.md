@@ -81,12 +81,12 @@ Once done, run the command below to add `watt.json` file to your frontend applic
 npx wattpm import web/frontend
 ```
 
-Add your frontend `id` and DB application to your `platformatic.json` file in your `web/composer` application:
+Add your frontend `id` and DB application to your `platformatic.json` file in your `web/gateway` application:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.15.0.json",
-  "composer": {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.15.0.json",
+  "gateway": {
     "applications": [
       {
         "id": "db",

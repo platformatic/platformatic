@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@fastify/reply-from": "^12.0.0",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
     "cleaner-spec-reporter": "^0.5.0",

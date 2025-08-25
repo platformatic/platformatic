@@ -11,7 +11,7 @@ import {
   verifyFrontendOnAutodetectedPrefix,
   verifyFrontendOnPrefix,
   verifyFrontendOnRoot,
-  verifyPlatformaticComposer,
+  verifyPlatformaticGateway,
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 import { additionalDependencies } from './helper.js'
@@ -36,7 +36,7 @@ const configurations = [
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
   },
@@ -44,7 +44,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'Remix (in composer without prefix)',
     files,
-    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -55,7 +55,7 @@ const configurations = [
     checks: [
       verifyFrontendOnAutodetectedPrefix,
       verifyFrontendAPIOnAutodetectedPrefix,
-      verifyPlatformaticComposer,
+      verifyPlatformaticGateway,
       verifyPlatformaticService
     ],
     language: 'js',
@@ -65,7 +65,7 @@ const configurations = [
     id: 'composer-custom-commands',
     name: 'Remix (in composer with prefix using custom commands)',
     files,
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   }

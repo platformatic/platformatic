@@ -46,7 +46,7 @@
     "yaml": "^2.4.1"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/runtime": "workspace:*",

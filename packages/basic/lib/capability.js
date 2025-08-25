@@ -158,7 +158,7 @@ export class BaseCapability extends EventEmitter {
 
   getMeta () {
     return {
-      composer: {
+      gateway: {
         wantsAbsoluteUrls: false
       }
     }
@@ -388,7 +388,7 @@ export class BaseCapability extends EventEmitter {
       logLevel: this.logger.level,
       isEntrypoint: this.isEntrypoint,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
+      wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,

@@ -6,7 +6,7 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('composer', async t => {
+test('gateway', async t => {
   const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
   await app.init()

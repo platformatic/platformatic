@@ -143,7 +143,7 @@ export class NestCapability extends BaseCapability {
     const hasBasePath = this.basePath || this.#basePath
 
     return {
-      composer: {
+      gateway: {
         tcp: typeof this.url !== 'undefined',
         url: this.url,
         prefix: this.basePath ?? this.#basePath,
