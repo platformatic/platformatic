@@ -81,8 +81,10 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
               statusCode: reply.statusCode,
               headers: res.headers
             })
-            if (req.routeOptions.config?.onGatewayResponse) {
-              req.routeOptions.config?.onGatewayResponse(request, reply, res.stream)
+
+            const onResponse = req.routeOptions.config?.onGatewayResponse ?? req.routeOptions.config?.onComposerResponse
+            if (onResponse) {
+              onResponse(request, reply, res.stream)
             } else {
               reply.send(res.stream)
             }

@@ -107,7 +107,7 @@ export function modifyOpenApiSchema (app, schema, config) {
 
       const modificationRules = getModificationRules(modificationResponseSchema)
 
-      app.platformatic.addGatewayOnRouteHook(path, [method], routeOptions => {
+      function onRouteHook (routeOptions) {
         const routeSchema = routeOptions.schema
         const responseSchema = routeSchema.response?.['200']
         modifySchema(responseSchema, modificationRules)
@@ -118,7 +118,10 @@ export function modifyOpenApiSchema (app, schema, config) {
           reply.send(payload)
         }
         routeOptions.config.onGatewayResponse = onGatewayResponse
-      })
+      }
+
+      app.platformatic.addGatewayOnRouteHook(path, [method], onRouteHook)
+      app.platformatic.addComposerOnRouteHook(path, [method], onRouteHook)
     }
     if (Object.keys(pathSchema).length === 0) continue
     newSchemaPaths[path] = pathSchema

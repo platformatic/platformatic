@@ -17,6 +17,11 @@ export async function graphqlPlugin (app, opts) {
       return opts
     }
   })
+  app.decorate('graphqlComposerOptions', {
+    getter () {
+      return opts
+    }
+  })
 
   app.graphqlSupergraph = createSupergraph()
 }
