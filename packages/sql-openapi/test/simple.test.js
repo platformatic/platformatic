@@ -189,14 +189,29 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages?fields=id',
       body: {
-        title: 'Hello return only title',
+        title: 'Hello return only id',
       },
     })
     equal(res.statusCode, 200, 'POST /pages?fields=id status code')
-    equal(res.headers.location, '/pages/2', 'POST /api/pages?fields=id location')
+    equal(res.headers.location, '/pages/2', 'POST /pages?fields=id location')
     same(res.json(), {
       id: 2,
-    }, 'POST /pages response')
+    }, 'POST /pages?fields=id response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pages?fields=title',
+      body: {
+        title: 'Hello return only title',
+      },
+    })
+    equal(res.statusCode, 200, 'POST /pages?fields=title status code')
+    equal(res.headers.location, '/pages/3', 'POST /pages?fields=title location')
+    same(res.json(), {
+      title: 'Hello return only title',
+    }, 'POST /pages?fields=title response')
   }
 })
 test('swagger prefix', async (t) => {
