@@ -222,8 +222,29 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     }, async function (request, reply) {
       const { fields } = request.query
       const ctx = { app: this, reply }
-      const res = await entity.save({ input: request.body, ctx, fields })
-      reply.header('location', `${app.prefix}/${res.id}`)
+
+      let queryFields
+      if (fields) {
+        queryFields = [...fields]
+        for (const key of entity.primaryKeys.values()) {
+          if (!fields.includes(key)) {
+            queryFields.push(key)
+          }
+        }
+      }
+
+      const res = await entity.save({ input: request.body, ctx, fields: queryFields })
+
+      reply.header('location', `${app.prefix}/${res[[...entity.primaryKeys][0]]}`)
+
+      if (fields) {
+        for (const key of entity.primaryKeys.values()) {
+          if (!fields.includes(key)) {
+            delete res[key]
+          }
+        }
+      }
+
       return res
     })
   }
