@@ -55,6 +55,12 @@ async function gatewayHookPlugin (app) {
     writable: false,
     configurable: false
   })
+
+  Object.defineProperty(app.platformatic, 'addComposerOnRouteHook', {
+    value: addGatewayOnRouteHook,
+    writable: false,
+    configurable: false
+  })
 }
 
 export const gatewayHook = fp(gatewayHookPlugin)
