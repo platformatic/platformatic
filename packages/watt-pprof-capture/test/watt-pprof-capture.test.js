@@ -204,3 +204,43 @@ test('getLastProfile should return same profile until next rotation', async (t) 
 
   await app.sendCommandToService('service', 'stopProfiling')
 })
+
+test('should generate and return a profile', async (t) => {
+  const { app } = await createApp(t)
+
+  // Start profiling without durationMillis (no rotation)
+  const profile = await app.sendCommandToService('service', 'generateProfile', { durationMillis: 500 })
+  assert.ok(profile instanceof Uint8Array, 'Should get Uint8Array from ITC')
+  assert.ok(profile.length > 0, 'Profile should have content')
+})
+
+test('should return a profile while capturing', async (t) => {
+  const { app } = await createApp(t)
+
+  await app.sendCommandToService('service', 'startProfiling', { durationMillis: 500 })
+
+  // Wait for first rotation
+  await new Promise(resolve => setTimeout(resolve, 600))
+
+  // Multiple getLastProfile calls should return the same profile
+  const profile1 = await app.sendCommandToService('service', 'getLastProfile')
+  assert.ok(profile1 instanceof Uint8Array)
+  assert.ok(profile1.length > 0, 'Profile should have content')
+
+  const profile2 = await app.sendCommandToService('service', 'generateProfile', { durationMillis: 100 })
+  assert.ok(profile2 instanceof Uint8Array)
+  assert.ok(profile2.length > 0, 'Profile should have content')
+
+  assert.notDeepStrictEqual(profile1, profile2, 'Should return different profile')
+
+  await new Promise(resolve => setTimeout(resolve, 600))
+
+  const profile3 = await app.sendCommandToService('service', 'getLastProfile')
+  assert.ok(profile3 instanceof Uint8Array)
+  assert.ok(profile3.length > 0, 'Profile should have content')
+
+  assert.notDeepStrictEqual(profile1, profile3, 'Should return different profile')
+  assert.notDeepStrictEqual(profile2, profile3, 'Should return different profile')
+
+  await app.sendCommandToService('service', 'stopProfiling')
+})
