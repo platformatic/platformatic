@@ -438,4 +438,19 @@ export interface PlatformaticViteStackable {
         }
       | boolean;
   };
+  on404?:
+    | {
+        enabled: boolean;
+        path?: string;
+        type?: string;
+        code?: number;
+      }
+    | {
+        enabled?: boolean;
+        path: string;
+        type?: string;
+        code?: number;
+      }
+    | string
+    | boolean;
 }
