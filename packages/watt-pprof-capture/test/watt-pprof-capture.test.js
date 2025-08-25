@@ -244,3 +244,21 @@ test('should return a profile while capturing', async (t) => {
 
   await app.sendCommandToService('service', 'stopProfiling')
 })
+
+test('should fail to generate a profile if it is already profiling', async (t) => {
+  const { app } = await createApp(t)
+
+  // Start profiling without durationMillis (no rotation)
+  const profilePromise = app.sendCommandToService('service', 'generateProfile', { durationMillis: 500 })
+
+  await assert.rejects(
+    () => app.sendCommandToService('service', 'generateProfile', { durationMillis: 500 }),
+    { code: 'PLT_PPROF_MANUAL_PROFILING_IS_ALREADY_STARTED' },
+    'Should throw ManualProfilingIsAlreadyStartedError'
+  )
+
+  const profile = await profilePromise
+
+  assert.ok(profile instanceof Uint8Array, 'Should get Uint8Array from ITC')
+  assert.ok(profile.length > 0, 'Profile should have content')
+})
