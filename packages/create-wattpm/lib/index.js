@@ -406,21 +406,21 @@ export async function createApplication (
 
     const capabilityGenerator = capability.Generator
       ? new capability.Generator({
-          logger,
-          inquirer,
-          applicationName,
-          parent: generator,
-          ...additionalGeneratorOptions
-        })
+        logger,
+        inquirer,
+        applicationName,
+        parent: generator,
+        ...additionalGeneratorOptions
+      })
       : new ImportGenerator({
-          logger,
-          inquirer,
-          applicationName,
-          module: capabilityName,
-          version: await getPackageVersion(capabilityName, projectDir),
-          parent: generator,
-          ...additionalGeneratorOptions
-        })
+        logger,
+        inquirer,
+        applicationName,
+        module: capabilityName,
+        version: await getPackageVersion(capabilityName, projectDir),
+        parent: generator,
+        ...additionalGeneratorOptions
+      })
 
     capabilityGenerator.setConfig({
       ...capabilityGenerator.config,

@@ -504,10 +504,10 @@ jobs:
           cd packages/service
           pnpm run test
 
-  composer:
-    name: 'composer - ${{ matrix.label }}'
+  gateway:
+    name: 'gateway - ${{ matrix.label }}'
     needs: setup
-    if: ${{ !inputs.job || inputs.job == 'composer' }}
+    if: ${{ !inputs.job || inputs.job == 'gateway' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
@@ -534,7 +534,7 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite with code coverage
-        run: cd packages/composer && pnpm run test
+        run: cd packages/gateway && pnpm run test
 
   db:
     name: 'db - ${{ matrix.label }}'
