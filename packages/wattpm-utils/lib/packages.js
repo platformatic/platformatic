@@ -4,6 +4,7 @@ export const packages = [
   '@platformatic/basic',
   '@platformatic/client',
   '@platformatic/client-cli',
+  '@platformatic/composer',
   '@platformatic/control',
   '@platformatic/db',
   '@platformatic/db-authorization',
