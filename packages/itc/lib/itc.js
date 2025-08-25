@@ -87,7 +87,7 @@ function sanitize (data, transferList) {
 
   let sanitized
 
-  if (Buffer.isBuffer(data)) {
+  if (Buffer.isBuffer(data) || data instanceof Uint8Array) {
     // This will convert as Uint8Array
     return data
   } else if (Array.isArray(data)) {
