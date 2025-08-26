@@ -4,6 +4,7 @@ import { once } from 'node:events'
 import { symlink } from 'node:fs/promises'
 import { resolve as resolvePath } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createGatewayInRuntime, REFRESH_TIMEOUT } from './helper.js'
 
@@ -105,6 +106,13 @@ test('should properly report as failed on the health check route when all depend
   })
 
   const url = await runtime.start()
+
+  /*
+    Waiting for the runtime to start is not enought.
+    Given parallel startup, just an application worker is enough to unlock the composer.
+    Wait for the health check to refresh
+  */
+  await sleep(500)
 
   // Right away, the health check and all applications should be successful.
   {

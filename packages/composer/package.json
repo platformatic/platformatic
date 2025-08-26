@@ -7,9 +7,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "prebuild": "cd ../gateway && pnpm run build",
+    "prebuild": "cd ../gateway && npm run build",
     "build": "node scripts/schema.js",
-    "prepublishOnly": "pnpm run build",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

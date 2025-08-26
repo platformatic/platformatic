@@ -159,7 +159,7 @@ test('returns application statuses', async t => {
   strictEqual(app.getStatus(), 'starting')
   notStrictEqual(app.capability, null)
 
-  await once(app, 'start')
+  await once(app, 'started')
 
   strictEqual(app.getStatus(), 'started')
   notStrictEqual(app.capability, null)
@@ -169,7 +169,7 @@ test('returns application statuses', async t => {
   strictEqual(app.getStatus(), 'started')
   notStrictEqual(app.capability, null)
 
-  await once(app, 'stop')
+  await once(app, 'stopped')
 
   strictEqual(app.getStatus(), 'stopped')
   notStrictEqual(app.capability, null)

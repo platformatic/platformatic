@@ -81,6 +81,16 @@ test('should get applications topology (gateway)', async t => {
     production: false,
     applications: [
       {
+        id: 'composerApp',
+        type: 'gateway',
+        status: 'started',
+        version,
+        localUrl: 'http://composerApp.plt.local',
+        entrypoint: true,
+        dependencies: ['with-logger', 'multi-plugin-service', 'serviceApp'],
+        url: entrypointDetails.url
+      },
+      {
         id: 'dbApp',
         type: 'db',
         status: 'started',
@@ -115,37 +125,6 @@ test('should get applications topology (gateway)', async t => {
         localUrl: 'http://multi-plugin-service.plt.local',
         entrypoint: false,
         dependencies: []
-      },
-      {
-        id: 'composerApp',
-        type: 'gateway',
-        status: 'started',
-        version,
-        localUrl: 'http://composerApp.plt.local',
-        entrypoint: true,
-        dependencies: [
-          {
-            id: 'with-logger',
-            url: 'http://with-logger.plt.local',
-            local: true
-          },
-          {
-            id: 'multi-plugin-service',
-            url: 'http://multi-plugin-service.plt.local',
-            local: true
-          },
-          {
-            id: 'serviceApp',
-            url: 'http://serviceApp.plt.local',
-            local: true
-          },
-          {
-            id: 'external-service',
-            url: 'https://external-service.com',
-            local: false
-          }
-        ],
-        url: entrypointDetails.url
       }
     ],
     entrypoint: 'composerApp'

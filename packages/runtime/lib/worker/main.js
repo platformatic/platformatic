@@ -166,7 +166,7 @@ async function main () {
   }
 
   // Create the application
-  const app = new Controller(
+  const controller = new Controller(
     application,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
     application.telemetry,
@@ -177,13 +177,13 @@ async function main () {
     !!config.watch
   )
 
-  process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
-  process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
+  process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
+  process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
 
-  await app.init()
+  await controller.init()
 
   if (application.entrypoint && config.basePath) {
-    const meta = await app.capability.getMeta()
+    const meta = await controller.capability.getMeta()
     if (!meta.gateway.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
     }
@@ -197,12 +197,10 @@ async function main () {
   }
 
   // Setup interaction with parent port
-  const itc = setupITC(app, application, threadDispatcher, sharedContext)
+  const itc = setupITC(controller, application, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
 
-  // Get the dependencies
-  const dependencies = await app.getBootstrapDependencies()
-  itc.notify('init', { dependencies })
+  itc.notify('init')
 }
 
 function stripBasePath (basePath) {

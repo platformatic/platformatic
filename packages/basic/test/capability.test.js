@@ -72,7 +72,7 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(capability.getUrl(), 'URL')
   deepStrictEqual(await capability.getConfig(), { key1: 'value1' })
   deepStrictEqual(await capability.getEnv(), { key2: 'value2' })
-  deepStrictEqual(await capability.getInfo(), { type: 'base', version: '1.0.0' })
+  deepStrictEqual(await capability.getInfo(), { dependencies: [], type: 'base', version: '1.0.0' })
   deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 

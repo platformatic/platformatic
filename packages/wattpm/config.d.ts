@@ -32,6 +32,7 @@ export type PlatformaticRuntimeConfig = {
           maxYoungGeneration?: number | string;
         };
         preload?: string | string[];
+        dependencies?: string[];
         arguments?: string[];
         nodeOptions?: string;
       };

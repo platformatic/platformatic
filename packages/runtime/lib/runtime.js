@@ -2,6 +2,7 @@ import {
   deepmerge,
   ensureError,
   ensureLoggableError,
+  executeInParallel,
   executeWithTimeout,
   features,
   kMetadata,
@@ -22,7 +23,6 @@ import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { checkDependencies, topologicalSort } from './dependencies.js'
 import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
@@ -59,18 +59,20 @@ import {
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
-const kForwardEvents = Symbol('plt.runtime.worker.forwardEvents')
 
 const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
 const COLLECT_METRICS_TIMEOUT = 1000
 
+const MAX_CONCURRENCY = 5
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
 
 export class Runtime extends EventEmitter {
   logger
+  error
+
   #loggerDestination
   #stdio
 
@@ -81,6 +83,7 @@ export class Runtime extends EventEmitter {
   #context
   #sharedContext
   #isProduction
+  #concurrency
   #entrypointId
   #url
 
@@ -112,6 +115,7 @@ export class Runtime extends EventEmitter {
     this.#env = config[kMetadata].env
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
+    this.#concurrency = this.#context.concurrency ?? MAX_CONCURRENCY
     this.#workers = new RoundRobinMap()
     this.#url = undefined
     this.#meshInterceptor = createThreadInterceptor({ domain: '.plt.local', timeout: this.#config.applicationTimeout })
@@ -150,7 +154,6 @@ export class Runtime extends EventEmitter {
     }
 
     const config = this.#config
-    const autoloadEnabled = config.autoload
 
     if (config.managementApi) {
       this.#managementApi = await startManagementApi(this, this.#root)
@@ -190,61 +193,7 @@ export class Runtime extends EventEmitter {
       this.#env['PLT_ENVIRONMENT'] = 'development'
     }
 
-    // Create all applications, each in is own worker thread
-    for (const applicationConfig of config.applications) {
-      // If there is no application path, check if the application was resolved
-      if (!applicationConfig.path) {
-        if (applicationConfig.url) {
-          // Try to backfill the path for external applications
-          applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, applicationConfig.id)
-
-          if (!existsSync(applicationConfig.path)) {
-            const executable = globalThis.platformatic?.executable ?? 'platformatic'
-            this.logger.error(
-              `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
-              applicationConfig.id
-            )
-
-            await this.closeAndThrow(new RuntimeAbortedError())
-          }
-        } else {
-          this.logger.error(
-            'The application "%s" has no path defined. Please check your configuration and try again.',
-            applicationConfig.id
-          )
-
-          await this.closeAndThrow(new RuntimeAbortedError())
-        }
-      }
-
-      await this.#setupApplication(applicationConfig)
-    }
-
-    try {
-      checkDependencies(config.applications)
-
-      // Make sure the list exists before computing the dependencies, otherwise some applications might not be stopped
-      if (autoloadEnabled) {
-        this.#workers = topologicalSort(this.#workers, config)
-      }
-
-      // When autoloading is disabled, add a warning if an application is defined before its dependencies
-      if (!autoloadEnabled) {
-        for (let i = 0; i < config.applications.length; i++) {
-          const current = config.applications[i]
-
-          for (const dep of current.dependencies ?? []) {
-            if (config.applications.findIndex(s => s.id === dep.id) > i) {
-              this.logger.warn(
-                `Application "${current.id}" depends on application "${dep.id}", but it is defined and it will be started before it. Please check your configuration file.`
-              )
-            }
-          }
-        }
-      }
-    } catch (e) {
-      await this.closeAndThrow(e)
-    }
+    await this.#setupApplications()
 
     await this.#setDispatcher(config.undici)
 
@@ -266,11 +215,13 @@ export class Runtime extends EventEmitter {
     this.#updateStatus('starting')
     this.#createWorkersBroadcastChannel()
 
-    // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
+      const startInvocations = []
       for (const application of this.getApplicationsIds()) {
-        await this.startApplication(application, silent)
+        startInvocations.push([application, silent])
       }
+
+      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
 
       if (this.#config.inspectorOptions) {
         const { port } = this.#config.inspectorOptions
@@ -340,15 +291,34 @@ export class Runtime extends EventEmitter {
       await this.stopApplication(this.#entrypointId, silent)
     }
 
-    // Stop applications in reverse order to ensure applications which depend on others are stopped first
-    for (const application of this.getApplicationsIds().reverse()) {
+    const stopInvocations = []
+
+    const allApplications = await this.getApplications(true)
+
+    // Construct the reverse dependency graph
+    const dependents = {}
+    for (const application of allApplications.applications) {
+      for (const dependency of application.dependencies ?? []) {
+        let applicationDependents = dependents[dependency]
+        if (!applicationDependents) {
+          applicationDependents = new Set()
+          dependents[dependency] = applicationDependents
+        }
+
+        applicationDependents.add(application.id)
+      }
+    }
+
+    for (const application of this.getApplicationsIds()) {
       // The entrypoint has been stopped above
       if (application === this.#entrypointId) {
         continue
       }
 
-      await this.stopApplication(application, silent)
+      stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
     }
+
+    await executeInParallel(this.stopApplication.bind(this), stopInvocations, this.#concurrency)
 
     await this.#meshInterceptor.close()
     this.#workersBroadcastChannel?.close()
@@ -397,6 +367,7 @@ export class Runtime extends EventEmitter {
 
   async closeAndThrow (error) {
     this.#updateStatus('errored', error)
+    this.error = error
 
     // Wait for the next tick so that any pending logging is properly flushed
     await sleep(1)
@@ -452,9 +423,7 @@ export class Runtime extends EventEmitter {
 
   emit (event, payload) {
     for (const worker of this.#workers.values()) {
-      if (worker[kForwardEvents]) {
-        worker[kITC].notify('runtime:event', { event, payload })
-      }
+      worker[kITC].notify('runtime:event', { event, payload })
     }
 
     this.logger.trace({ event, payload }, 'Runtime event')
@@ -502,7 +471,7 @@ export class Runtime extends EventEmitter {
     this.emit('application:started', id)
   }
 
-  async stopApplication (id, silent = false) {
+  async stopApplication (id, silent = false, dependents = []) {
     const config = this.#config
     const applicationConfig = config.applications.find(s => s.id === id)
 
@@ -515,9 +484,12 @@ export class Runtime extends EventEmitter {
     this.emit('application:stopping', id)
 
     if (typeof workersCount === 'number') {
+      const stopInvocations = []
       for (let i = 0; i < workersCount; i++) {
-        await this.#stopWorker(workersCount, id, i, silent)
+        stopInvocations.push([workersCount, id, i, silent, undefined, dependents])
       }
+
+      await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
 
     this.emit('application:stopped', id)
@@ -752,6 +724,10 @@ export class Runtime extends EventEmitter {
     }
 
     return report
+  }
+
+  setConcurrency (concurrency) {
+    this.#concurrency = concurrency
   }
 
   async getUrl () {
@@ -1014,11 +990,13 @@ export class Runtime extends EventEmitter {
     return this.#config.applications.map(application => application.id)
   }
 
-  async getApplications () {
+  async getApplications (allowUnloaded = false) {
     return {
       entrypoint: this.#entrypointId,
       production: this.#isProduction,
-      applications: await Promise.all(this.getApplicationsIds().map(id => this.getApplicationDetails(id)))
+      applications: await Promise.all(
+        this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
+      )
     }
   }
 
@@ -1070,19 +1048,19 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { entrypoint, dependencies, localUrl } = application[kConfig]
+    const { entrypoint, localUrl } = application[kConfig]
 
     const status = await sendViaITC(application, 'getStatus')
-    const { type, version } = await sendViaITC(application, 'getApplicationInfo')
+    const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')
 
     const applicationDetails = {
       id,
       type,
       status,
+      dependencies,
       version,
       localUrl,
-      entrypoint,
-      dependencies
+      entrypoint
     }
 
     if (this.#isProduction) {
@@ -1175,16 +1153,58 @@ export class Runtime extends EventEmitter {
     this.logger.info(`Platformatic is now listening at ${this.#url}`)
   }
 
+  async #setupApplications () {
+    const config = this.#config
+    const setupInvocations = []
+
+    // Parse all applications and verify we're not missing any path or resolved application
+    for (const applicationConfig of config.applications) {
+      // If there is no application path, check if the application was resolved
+      if (!applicationConfig.path) {
+        if (applicationConfig.url) {
+          // Try to backfill the path for external applications
+          applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, applicationConfig.id)
+
+          if (!existsSync(applicationConfig.path)) {
+            const executable = globalThis.platformatic?.executable ?? 'platformatic'
+            this.logger.error(
+              `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+              applicationConfig.id
+            )
+
+            await this.closeAndThrow(new RuntimeAbortedError())
+          }
+        } else {
+          this.logger.error(
+            'The application "%s" has no path defined. Please check your configuration and try again.',
+            applicationConfig.id
+          )
+
+          await this.closeAndThrow(new RuntimeAbortedError())
+        }
+      }
+
+      setupInvocations.push([applicationConfig])
+    }
+
+    await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
+  }
+
   async #setupApplication (applicationConfig) {
-    if (this.#status === 'stopping' || this.#status === 'closed') return
+    if (this.#status === 'stopping' || this.#status === 'closed') {
+      return
+    }
 
     const config = this.#config
     const workersCount = await this.#workers.getCount(applicationConfig.id)
     const id = applicationConfig.id
+    const setupInvocations = []
 
     for (let i = 0; i < workersCount; i++) {
-      await this.#setupWorker(config, applicationConfig, workersCount, id, i)
+      setupInvocations.push([config, applicationConfig, workersCount, id, i])
     }
+
+    await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
 
     this.emit('application:init', id)
   }
@@ -1287,6 +1307,7 @@ export class Runtime extends EventEmitter {
 
     // Track application exiting
     const eventPayload = { application: applicationId, worker: index, workersCount }
+
     worker.once('exit', code => {
       if (worker[kWorkerStatus] === 'exited') {
         return
@@ -1338,7 +1359,6 @@ export class Runtime extends EventEmitter {
     worker[kApplicationId] = applicationId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
     worker[kWorkerStatus] = 'boot'
-    worker[kForwardEvents] = false
 
     if (inspectorOptions) {
       worker[kInspectorOptions] = {
@@ -1352,12 +1372,7 @@ export class Runtime extends EventEmitter {
     worker[kITC] = new ITC({
       name: workerId + '-runtime',
       port: worker,
-      handlers: {
-        ...this.#workerITCHandlers,
-        setEventsForwarding (value) {
-          worker[kForwardEvents] = value
-        }
-      }
+      handlers: this.#workerITCHandlers
     })
     worker[kITC].listen()
 
@@ -1403,15 +1418,13 @@ export class Runtime extends EventEmitter {
       this.#meshInterceptor.route(applicationId, worker)
     }
 
-    // Store dependencies
-    const [{ dependencies }] = await waitEventFromITC(worker, 'init')
-    applicationConfig.dependencies = dependencies
+    // Wait for initialization
+    await waitEventFromITC(worker, 'init')
 
     if (applicationConfig.entrypoint) {
       this.#entrypointId = applicationId
     }
 
-    // This must be done here as the dependencies are filled above
     worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
     this.emit('application:worker:init', eventPayload)
@@ -1587,6 +1600,7 @@ export class Runtime extends EventEmitter {
       }
     } catch (err) {
       const error = ensureError(err)
+      worker[kITC].notify('application:worker:start:processed')
 
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
@@ -1608,7 +1622,7 @@ export class Runtime extends EventEmitter {
       this.emit('application:worker:start:error', { ...eventPayload, error })
 
       if (error.code !== 'PLT_RUNTIME_APPLICATION_START_TIMEOUT') {
-        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}: ${error.message}`)
       }
 
       const restartOnError = config.restartOnError
@@ -1619,6 +1633,7 @@ export class Runtime extends EventEmitter {
 
       if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
         this.logger.error(`Failed to start ${label} after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
+        this.emit('application:worker:start:failed', { ...eventPayload, error })
         throw error
       }
 
@@ -1636,7 +1651,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async #stopWorker (workersCount, id, index, silent, worker = undefined) {
+  async #stopWorker (workersCount, id, index, silent, worker, dependents) {
     if (!worker) {
       worker = await this.#getWorkerById(id, index, false, false)
     }
@@ -1667,11 +1682,15 @@ export class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
+      await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
     } catch (error) {
-      this.emit('application:worker:stop:timeout', eventPayload)
+      this.emit('application:worker:stop:error', eventPayload)
       this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
+      worker[kITC].notify('application:worker:stop:processed')
+      // Wait for the processed message to be received
+      await sleep(1)
+
       worker[kITC].close()
     }
 
@@ -1800,7 +1819,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    await this.#stopWorker(workersCount, applicationId, index, false, worker)
+    await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
   }
 
   async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {
@@ -2323,7 +2342,7 @@ export class Runtime extends EventEmitter {
         for (let i = currentWorkers - 1; i >= workers; i--) {
           const worker = await this.#getWorkerById(applicationId, i, false, false)
           await sendViaITC(worker, 'removeFromMesh')
-          await this.#stopWorker(currentWorkers, applicationId, i, false, worker)
+          await this.#stopWorker(currentWorkers, applicationId, i, false, worker, [])
           report.stopped.push(i)
         }
         await this.#updateApplicationConfigWorkers(applicationId, workers)

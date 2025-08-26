@@ -3,8 +3,14 @@ import { JSONSchemaType } from 'ajv'
 import { EventEmitter } from 'node:events'
 import { Logger } from 'pino'
 
-// Configuration types
+// Symbols
+export declare const kCanceled: unique symbol
+export declare const kFailedImport: unique symbol
+export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
+export declare const kTimeout: unique symbol
+
+// Configuration types
 export declare const envVariablePattern: RegExp
 export declare const knownConfigurationFilesExtensions: string[]
 export declare const knownConfigurationFilesSchemas: RegExp[]
@@ -117,8 +123,13 @@ export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
 
 // Execution types
-export declare const kTimeout: unique symbol
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
+export declare function executeInParallel<T, Args extends any[]> (
+  fn: (...args: Args) => Promise<T>,
+  args: Args[],
+  concurrency?: number,
+  throwOnRejections?: boolean
+): Promise<T[]>
 
 // File system types
 export declare function removeDotSlash (path: string): string
@@ -185,7 +196,6 @@ export declare const stdTimeFunctions: {
 }
 
 // Module types
-export declare const kFailedImport: unique symbol
 export declare const defaultPackageManager: string
 
 export declare function getLatestNpmVersion (pkg: string): Promise<string | null>

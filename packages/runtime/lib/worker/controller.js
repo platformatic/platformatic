@@ -1,6 +1,7 @@
 import {
   ensureLoggableError,
   FileWatcher,
+  kHandledError,
   listRecognizedConfigurationFiles,
   loadConfiguration,
   loadConfigurationModule
@@ -55,9 +56,11 @@ export class Controller extends EventEmitter {
     this.#lastELU = performance.eventLoopUtilization()
 
     this.#context = {
+      controller: this,
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.appConfig.path,
+      dependencies: this.appConfig.dependencies,
       isEntrypoint: this.appConfig.entrypoint,
       isProduction: this.appConfig.isProduction,
       telemetryConfig,
@@ -83,10 +86,7 @@ export class Controller extends EventEmitter {
     }
   }
 
-  async getBootstrapDependencies () {
-    return this.capability.getBootstrapDependencies?.() ?? []
-  }
-
+  // Note: capability's init() is executed within start
   async init () {
     try {
       const appConfig = this.appConfig
@@ -142,8 +142,15 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.init?.()
+      this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
+    }
+
+    this.emit('starting')
+
+    if (this.capability.status === 'stopped') {
+      return
     }
 
     if (this.#watch) {
@@ -174,21 +181,23 @@ export class Controller extends EventEmitter {
 
     this.#started = true
     this.#starting = false
-    this.emit('start')
+    this.emit('started')
   }
 
-  async stop (force = false) {
+  async stop (force = false, dependents = []) {
     if (!force && (!this.#started || this.#starting)) {
       throw new RuntimeNotStartedError()
     }
 
+    this.emit('stopping')
     await this.#stopFileWatching()
+    await this.capability.waitForDependentsStop(dependents)
     await this.capability.stop()
 
     this.#started = false
     this.#starting = false
     this.#listening = false
-    this.emit('stop')
+    this.emit('stopped')
   }
 
   async listen () {
@@ -260,7 +269,11 @@ export class Controller extends EventEmitter {
   }
 
   #logAndThrow (err) {
-    globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, 'The application threw an error.')
+    globalThis.platformatic.logger.error(
+      { err: ensureLoggableError(err) },
+      err[kHandledError] ? err.message : 'The application threw an error.'
+    )
+
     throw err
   }
 

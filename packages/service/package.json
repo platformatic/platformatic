@@ -9,8 +9,8 @@
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

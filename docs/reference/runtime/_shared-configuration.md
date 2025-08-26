@@ -42,6 +42,7 @@ The `autoload` configuration is intended to be used with monorepo applications.
   - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
   - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
   - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
+  - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 
 ### `preload`
 
@@ -78,11 +79,7 @@ runtime. Each application object supports the following settings:
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `plt` or `wattpm`. Default is to autodetect it, unless it is specified via command line.
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
 - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
-
-If this property is present, then the applications will not be reordered according to the
-`getBootstrapDependencies` function and they will be started in the order they are defined in
-the configuration file.
-
+- **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
   intrumentations per application, e.g.:
 

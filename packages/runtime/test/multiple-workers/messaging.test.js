@@ -45,7 +45,7 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await createRuntime(configFile)
+  const app = await createRuntime(configFile, null, { concurrency: 1 })
   const eventsPromise = waitBroadcastedWorkers(t)
 
   t.after(async () => {
@@ -83,19 +83,19 @@ test('should post updated workers list via broadcast channel', async t => {
   delete expected.composer
   deepStrictEqual(events[7], new Map(Object.entries(expected)))
 
-  expected.second.shift()
+  expected.first.shift()
   deepStrictEqual(events[8], new Map(Object.entries(expected)))
 
-  expected.second.shift()
+  expected.first.shift()
   deepStrictEqual(events[9], new Map(Object.entries(expected)))
 
-  delete expected.second
+  delete expected.first
   deepStrictEqual(events[10], new Map(Object.entries(expected)))
 
-  expected.first.shift()
+  expected.second.shift()
   deepStrictEqual(events[11], new Map(Object.entries(expected)))
 
-  expected.first.shift()
+  expected.second.shift()
   deepStrictEqual(events[12], new Map(Object.entries(expected)))
 
   deepStrictEqual(events[13], new Map())

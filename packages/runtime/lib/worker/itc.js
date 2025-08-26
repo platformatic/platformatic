@@ -69,8 +69,8 @@ export async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-export function setupITC (instance, application, dispatcher, sharedContext) {
-  const messaging = new MessagingITC(instance.appConfig.id, workerData.config)
+export function setupITC (controller, application, dispatcher, sharedContext) {
+  const messaging = new MessagingITC(controller.appConfig.id, workerData.config)
 
   Object.assign(globalThis.platformatic ?? {}, {
     messaging: {
@@ -80,55 +80,61 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
   })
 
   const itc = new ITC({
-    name: instance.appConfig.id + '-worker',
+    name: controller.appConfig.id + '-worker',
     port: parentPort,
     handlers: {
       async start () {
-        const status = instance.getStatus()
+        const status = controller.getStatus()
 
         if (status === 'starting') {
-          await once(instance, 'start')
+          await once(controller, 'start')
         } else {
           // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('start')
 
           try {
-            await instance.start()
+            await controller.start()
           } catch (e) {
-            await instance.stop(true)
-            await closeITC(dispatcher, itc, messaging)
+            await controller.stop(true)
+
+            // Reply to the runtime that the start failed, so it can cleanup
+            once(itc, 'application:worker:start:processed').then(() => {
+              closeITC(dispatcher, itc, messaging).catch(() => {})
+            })
 
             throw ensureLoggableError(e)
           }
         }
 
         if (application.entrypoint) {
-          await instance.listen()
+          await controller.listen()
         }
 
-        dispatcher.replaceServer(await instance.capability.getDispatchTarget())
-        return application.entrypoint ? instance.capability.getUrl() : null
+        dispatcher.replaceServer(await controller.capability.getDispatchTarget())
+        return application.entrypoint ? controller.capability.getUrl() : null
       },
 
-      async stop () {
-        const status = instance.getStatus()
+      async stop ({ force, dependents }) {
+        const status = controller.getStatus()
 
-        if (status === 'starting') {
-          await once(instance, 'start')
+        if (!force && status === 'starting') {
+          await once(controller, 'start')
         }
 
-        if (status.startsWith('start')) {
+        if (force || status.startsWith('start')) {
           // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('stop')
 
-          await instance.stop()
+          await controller.stop(force, dependents)
         }
 
-        await closeITC(dispatcher, itc, messaging)
+        once(itc, 'application:worker:stop:processed').then(() => {
+          closeITC(dispatcher, itc, messaging).catch(() => {})
+        })
       },
 
       async build () {
-        return instance.capability.build()
+        return controller.capability.build()
       },
 
       async removeFromMesh () {
@@ -136,7 +142,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
       },
 
       inject (injectParams) {
-        return instance.capability.inject(injectParams)
+        return controller.capability.inject(injectParams)
       },
 
       async updateUndiciInterceptors (undiciConfig) {
@@ -150,27 +156,27 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
       },
 
       getStatus () {
-        return instance.getStatus()
+        return controller.getStatus()
       },
 
       getApplicationInfo () {
-        return instance.capability.getInfo()
+        return controller.capability.getInfo()
       },
 
       async getApplicationConfig () {
-        const current = await instance.capability.getConfig()
+        const current = await controller.capability.getConfig()
         // Remove all undefined keys from the config
         return JSON.parse(JSON.stringify(current))
       },
 
       async getApplicationEnv () {
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify({ ...process.env, ...(await instance.capability.getEnv()) }))
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await controller.capability.getEnv()) }))
       },
 
       async getApplicationOpenAPISchema () {
         try {
-          return await instance.capability.getOpenapiSchema()
+          return await controller.capability.getOpenapiSchema()
         } catch (err) {
           throw new FailedToRetrieveOpenAPISchemaError(application.id, err.message)
         }
@@ -178,7 +184,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getApplicationGraphQLSchema () {
         try {
-          return await instance.capability.getGraphqlSchema()
+          return await controller.capability.getGraphqlSchema()
         } catch (err) {
           throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
@@ -186,7 +192,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getApplicationMeta () {
         try {
-          return await instance.capability.getMeta()
+          return await controller.capability.getMeta()
         } catch (err) {
           throw new FailedToRetrieveMetaError(application.id, err.message)
         }
@@ -194,7 +200,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getMetrics (format) {
         try {
-          return await instance.getMetrics({ format })
+          return await controller.getMetrics({ format })
         } catch (err) {
           throw new FailedToRetrieveMetricsError(application.id, err.message)
         }
@@ -202,7 +208,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getHealth () {
         try {
-          return await instance.getHealth()
+          return await controller.getHealth()
         } catch (err) {
           throw new FailedToRetrieveHealthError(application.id, err.message)
         }
@@ -210,7 +216,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getCustomHealthCheck () {
         try {
-          return await instance.capability.getCustomHealthCheck()
+          return await controller.capability.getCustomHealthCheck()
         } catch (err) {
           throw new FailedToPerformCustomHealthCheckError(application.id, err.message)
         }
@@ -218,7 +224,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
 
       async getCustomReadinessCheck () {
         try {
-          return await instance.capability.getCustomReadinessCheck()
+          return await controller.capability.getCustomReadinessCheck()
         } catch (err) {
           throw new FailedToPerformCustomReadinessCheckError(application.id, err.message)
         }
@@ -234,7 +240,7 @@ export function setupITC (instance, application, dispatcher, sharedContext) {
     }
   })
 
-  instance.on('changed', () => {
+  controller.on('changed', () => {
     itc.notify('changed')
   })
 

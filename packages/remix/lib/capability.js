@@ -71,15 +71,17 @@ export class RemixCapability extends ViteCapability {
   }
 
   async stop () {
+    await super.stop()
+
     if (this.childManager) {
       return this.stopCommand()
     }
 
     if (this.isProduction) {
       return this.#stopProduction()
+    } else {
+      return this.#app.close()
     }
-
-    return super.stop()
   }
 
   async build () {

@@ -31,6 +31,7 @@ test('get application info via capability api', async t => {
 
   const capabilityInfo = await capability.getInfo()
   assert.deepStrictEqual(capabilityInfo, {
+    dependencies: [],
     type: 'db',
     version: pltVersion
   })

@@ -9,8 +9,7 @@ import {
   setupUserInputHandler
 } from './helper.js'
 
-// TODO@ShogunPanda:This test can be restored once a alpha of @platformatic/gateway is released
-test.skip('Creates a Platformatic Gateway', async t => {
+test('Creates a Platformatic Gateway', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
 
   // The actions must match IN ORDER
@@ -42,8 +41,7 @@ test.skip('Creates a Platformatic Gateway', async t => {
   equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.js')), false)
 })
 
-// TODO@ShogunPanda:This test can be restored once a alpha of @platformatic/gateway is released
-test.skip('Creates a Platformatic Gateway (TypeScript)', async t => {
+test('Creates a Platformatic Gateway (TypeScript)', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
 
   // The actions must match IN ORDER
