@@ -1,5 +1,0 @@
-test/e2e/server/db.sqlite
-test/e2e/client/build
-test/e2e/client/src/generated
-playwright-report
-test-results

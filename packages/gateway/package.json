@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@platformatic/client": "workspace:*",
     "@platformatic/db": "workspace:*",
     "c8": "^10.0.0",
     "cleaner-spec-reporter": "^0.5.0",
