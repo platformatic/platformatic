@@ -1086,6 +1086,12 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.17.1
+      '@types/react':
+        specifier: ^19.1.11
+        version: 19.1.11
+      '@types/react-dom':
+        specifier: ^19.1.7
+        version: 19.1.7(@types/react@19.1.11)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0

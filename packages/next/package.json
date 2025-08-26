@@ -39,6 +39,8 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "execa": "^9.5.1",
