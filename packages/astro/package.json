@@ -34,6 +34,8 @@
     "@astrojs/node": "^9.2.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
     "astro": "^5.7.1",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
