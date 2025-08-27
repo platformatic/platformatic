@@ -1,5 +1,6 @@
 'use strict'
 
+const { getActiveResourcesInfo } = require('node:process')
 const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
 const { resolve } = require('node:path')
@@ -219,6 +220,7 @@ class PlatformaticApp extends EventEmitter {
         globalThis.platformatic.onHttpStatsSize(url, size || 0)
       }
     }
+    globalThis.platformatic.onActiveResourcesEventLoop(getActiveResourcesInfo().length)
     return this.stackable.getMetrics({ format })
   }
 

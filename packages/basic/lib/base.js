@@ -506,6 +506,13 @@ export class BaseStackable extends EventEmitter {
     globalThis.platformatic.onHttpStatsSize = (url, val) => {
       httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
     }
+
+    const activeResourcesEventLoopMetric = new client.Gauge({
+      name: 'active_resources_event_loop',
+      help: 'Number of active resources keeping the event loop alive',
+      registers: [registry]
+    })
+    globalThis.platformatic.onActiveResourcesEventLoop = (val) => activeResourcesEventLoopMetric.set(val)
   }
 
   async #invalidateHttpCache (opts = {}) {

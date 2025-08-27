@@ -85,7 +85,8 @@ test('should get runtime metrics in a json format', async t => {
     'http_client_stats_pending',
     'http_client_stats_queued',
     'http_client_stats_running',
-    'http_client_stats_size'
+    'http_client_stats_size',
+    'active_resources_event_loop'
   ]
 
   const services = ['service-1', 'service-2', 'service-db']
@@ -175,7 +176,8 @@ test('should get runtime metrics in a text format', async t => {
     'http_client_stats_pending',
     'http_client_stats_queued',
     'http_client_stats_running',
-    'http_client_stats_size'
+    'http_client_stats_size',
+    'active_resources_event_loop'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
@@ -436,39 +438,40 @@ test('should get runtime metrics in a json format without a service call', async
   const summaryMetric = metrics.find(
     (metric) => metric.name === 'http_request_all_summary_seconds'
   )
-  assert.strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
   assert.strictEqual(summaryMetric.type, 'summary')
   assert.strictEqual(summaryMetric.aggregator, 'sum')
 
   const freeMetric = metrics.find(({ name }) => name === 'http_client_stats_free')
-  assert.strictEqual(freeMetric.name, 'http_client_stats_free')
   assert.strictEqual(freeMetric.type, 'gauge')
   assert.strictEqual(freeMetric.aggregator, 'sum')
 
   const connectedMetric = metrics.find(({ name }) => name === 'http_client_stats_connected')
-  assert.strictEqual(connectedMetric.name, 'http_client_stats_connected')
   assert.strictEqual(connectedMetric.type, 'gauge')
   assert.strictEqual(connectedMetric.aggregator, 'sum')
 
   const pendingMetric = metrics.find(({ name }) => name === 'http_client_stats_pending')
-  assert.strictEqual(pendingMetric.name, 'http_client_stats_pending')
   assert.strictEqual(pendingMetric.type, 'gauge')
   assert.strictEqual(pendingMetric.aggregator, 'sum')
 
   const queuedMetric = metrics.find(({ name }) => name === 'http_client_stats_queued')
-  assert.strictEqual(queuedMetric.name, 'http_client_stats_queued')
   assert.strictEqual(queuedMetric.type, 'gauge')
   assert.strictEqual(queuedMetric.aggregator, 'sum')
 
   const runningMetric = metrics.find(({ name }) => name === 'http_client_stats_running')
-  assert.strictEqual(runningMetric.name, 'http_client_stats_running')
   assert.strictEqual(runningMetric.type, 'gauge')
   assert.strictEqual(runningMetric.aggregator, 'sum')
 
   const sizeMetric = metrics.find(({ name }) => name === 'http_client_stats_size')
-  assert.strictEqual(sizeMetric.name, 'http_client_stats_size')
   assert.strictEqual(sizeMetric.type, 'gauge')
   assert.strictEqual(sizeMetric.aggregator, 'sum')
+
+  const activeMetric = metrics.find(({ name }) => name === 'active_resources_event_loop')
+  assert.strictEqual(activeMetric.type, 'gauge')
+  assert.strictEqual(activeMetric.aggregator, 'sum')
+  const [{ labels: { serviceId, custom_label: label }, value }] = activeMetric.values
+  assert.strictEqual(serviceId, 'service-1')
+  assert.strictEqual(label, 'custom-value')
+  assert.ok(value > 0)
 
   const summaryValues = summaryMetric.values
 
