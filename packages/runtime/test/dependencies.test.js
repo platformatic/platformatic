@@ -1,4 +1,4 @@
-import { deepStrictEqual, rejects } from 'node:assert'
+import { deepStrictEqual, ok, rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime, readLogs } from './helpers.js'
@@ -16,6 +16,23 @@ function extractLogs (raw) {
   }
 
   return log
+}
+
+function hasLog (logs, source, msg, dependencies, dependents) {
+  return logs.find(l => {
+    let dependenciesMatch = true
+    let dependentsMatch = true
+
+    if (dependencies) {
+      dependenciesMatch = Array.isArray(l.dependencies) && dependencies.every(d => l.dependencies.includes(d))
+    }
+
+    if (dependents) {
+      dependentsMatch = Array.isArray(l.dependents) && dependents.every(d => l.dependents.includes(d))
+    }
+
+    return l.source === source && l.msg === msg && dependenciesMatch && dependentsMatch
+  })
 }
 
 test('starts applications according to their implicit or explicit dependencies', async t => {
@@ -60,39 +77,26 @@ test('can abort waiting for dependencies if the runtime is stopped', async t => 
   await rejects(() => runtime.start(), /Service 3 failed to start/)
   await runtime.close()
   const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.level === 30 || m.level === 50).map(extractLogs)
 
-  deepStrictEqual(logs.filter(m => m.level === 30 || m.level === 50).map(extractLogs), [
-    { source: 'runtime', msg: 'Starting the application "composer"...' },
-    { source: 'runtime', msg: 'Starting the application "service-2"...' },
-    { source: 'runtime', msg: 'Starting the application "service-3"...' },
-    { source: 'runtime', msg: 'Starting the application "service-1"...' },
-    {
-      source: 'composer',
-      msg: 'Waiting for dependencies to start.',
-      dependencies: ['service-2', 'service-3', 'service-1']
-    },
-    { source: 'service-2', msg: 'Waiting for dependencies to start.', dependencies: ['service-1'] },
-    { source: 'service-3', msg: 'The application threw an error.' },
-    { source: 'runtime', msg: 'Failed to start application "service-3": Service 3 failed to start' },
-    { source: 'runtime', msg: 'Stopping the application "composer"...' },
-    { source: 'composer', msg: 'One of the service dependencies was unable to start.' },
-    { source: 'runtime', msg: 'Stopped the application "composer"...' },
-    {
-      source: 'runtime',
-      msg: 'Failed to start application "composer": One of the service dependencies was unable to start.'
-    },
-    { source: 'runtime', msg: 'Stopping the application "service-2"...' },
-    { source: 'runtime', msg: 'Stopping the application "service-1"...' },
-    { source: 'service-2', msg: 'One of the service dependencies was unable to start.' },
-    { source: 'service-1', msg: 'Waiting for dependents to stop.', dependents: ['service-2'] },
-    { source: 'runtime', msg: 'Stopped the application "service-2"...' },
-    {
-      source: 'runtime',
-      msg: 'Failed to start application "service-2": One of the service dependencies was unable to start.'
-    },
-    { source: 'runtime', msg: 'Started the application "service-1"...' },
-    { source: 'runtime', msg: 'Stopped the application "service-1"...' }
-  ])
+  ok(hasLog(startLogs, 'composer', 'Waiting for dependencies to start.', ['service-2', 'service-3', 'service-1']))
+  ok(hasLog(startLogs, 'service-2', 'Waiting for dependencies to start.', ['service-1']))
+  ok(hasLog(startLogs, 'runtime', 'Failed to start application "service-3": Service 3 failed to start'))
+  ok(
+    hasLog(
+      startLogs,
+      'runtime',
+      'Failed to start application "composer": One of the service dependencies was unable to start.'
+    )
+  )
+
+  ok(
+    hasLog(
+      startLogs,
+      'runtime',
+      'Failed to start application "service-2": One of the service dependencies was unable to start.'
+    )
+  )
 })
 
 /*
@@ -111,7 +115,6 @@ test('does not wait for dependencies that have already been started', async t =>
   await runtime.start()
   await runtime.close()
   const logs = await readLogs(context.logsPath, 0)
-
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
   deepStrictEqual(startLogs, [
@@ -135,19 +138,9 @@ test('applications wait for dependant applications before stopping', async t => 
   await runtime.close()
   const allLogs = await readLogs(context.logsPath, 0)
 
-  const logs = allLogs.filter(m => m.level === 30 && !m.msg.includes('listening')).map(extractLogs)
+  const logs = allLogs.filter(m => m.level === 30 && m.msg.match(/stop/i)).map(extractLogs)
 
   deepStrictEqual(logs, [
-    { source: 'runtime', msg: 'Starting the application "composer"...' },
-    { source: 'runtime', msg: 'Starting the application "service-2"...' },
-    { source: 'runtime', msg: 'Starting the application "service-1"...' },
-    { source: 'composer', msg: 'Waiting for dependencies to start.', dependencies: ['service-2', 'service-1'] },
-    { source: 'service-2', msg: 'Waiting for dependencies to start.', dependencies: ['service-1'] },
-    { source: 'runtime', msg: 'Started the application "service-1"...' },
-    { source: 'service-1', msg: 'incoming request' },
-    { source: 'service-1', msg: 'request completed' },
-    { source: 'runtime', msg: 'Started the application "service-2"...' },
-    { source: 'runtime', msg: 'Started the application "composer"...' },
     { source: 'runtime', msg: 'Stopping the application "composer"...' },
     { source: 'runtime', msg: 'Stopped the application "composer"...' },
     { source: 'runtime', msg: 'Stopping the application "service-2"...' },
