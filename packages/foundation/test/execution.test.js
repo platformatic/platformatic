@@ -396,7 +396,7 @@ test('executeInParallel - should maintain result order with varying execution ti
   const results = await executeInParallel(fn, args, 5)
   equal(results.length, 5)
   equal(results[0], 'result-1')
-  equal(results[1], 'result-2') 
+  equal(results[1], 'result-2')
   equal(results[2], 'result-3')
   equal(results[3], 'result-4')
   equal(results[4], 'result-5')
@@ -477,7 +477,7 @@ test('executeInParallel - should handle edge case where error happens after all 
   }
   const args = [[1], [2], [3]]
   await rejects(
-    async () => await executeInParallel(fn, args, 3), // All tasks start simultaneously  
+    async () => await executeInParallel(fn, args, 3), // All tasks start simultaneously
     err => {
       strictEqual(err instanceof Error, true)
       equal(err.message, 'Error for 3')
