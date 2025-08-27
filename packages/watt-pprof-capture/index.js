@@ -35,7 +35,7 @@ const registerInterval = setInterval(() => {
   }
 }, 10)
 
-function startProfiling (options = {}) {
+function startProfiling () {
   if (isProfiling) {
     throw new ProfilingAlreadyStartedError()
   }
@@ -45,16 +45,12 @@ function startProfiling (options = {}) {
     pauseProfilingJob()
   }
 
-  try {
-    pprof.time.start(options)
-  } catch (err) {
-    if (isProfilingJobPaused) {
-      resumeProfilingJob()
-    }
-    isProfiling = false
+  pprof.time.start()
 
-    throw err
+  if (isProfilingJobPaused) {
+    resumeProfilingJob()
   }
+  isProfiling = false
 }
 
 function stopProfiling () {
