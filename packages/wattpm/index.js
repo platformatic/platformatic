@@ -10,6 +10,7 @@ import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
+import { pprofCommand } from './lib/commands/pprof.js'
 import { version } from './lib/schema.js'
 import { createLogger, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
 
@@ -109,6 +110,9 @@ export async function main () {
       break
     case 'metrics':
       command = metricsCommand
+      break
+    case 'pprof':
+      command = pprofCommand
       break
     /* c8 ignore next - Just an alias */
     case 'init':

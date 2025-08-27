@@ -201,6 +201,79 @@ class RuntimeApiClient {
     return serviceConfig
   }
 
+  async startServiceProfiling (pid, serviceId, options = {}) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/services/${serviceId}/pprof/start`,
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(options)
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      const message = jsonError?.message || error
+      const code = jsonError?.code
+
+      if (code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
+        throw new errors.ServiceNotFound(message)
+      }
+
+      if (code === 'PLT_PPROF_PROFILING_ALREADY_STARTED') {
+        throw new errors.ProfilingAlreadyStarted(serviceId)
+      }
+
+      throw new errors.FailedToStartProfiling(serviceId, message)
+    }
+
+    return await body.json()
+  }
+
+  async stopServiceProfiling (pid, serviceId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/services/${serviceId}/pprof/stop`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      const message = jsonError?.message || error
+      const code = jsonError?.code
+
+      if (code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
+        throw new errors.ServiceNotFound(message)
+      }
+
+      if (code === 'PLT_PPROF_PROFILING_NOT_STARTED') {
+        throw new errors.ProfilingNotStarted(serviceId)
+      }
+
+      throw new errors.FailedToStopProfiling(serviceId, message)
+    }
+
+    // Return the binary profile data as ArrayBuffer
+    return await body.arrayBuffer()
+  }
+
   async reloadRuntime (pid, options = {}) {
     const runtime = await this.getMatchingRuntime({ pid })
 

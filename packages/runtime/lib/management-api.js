@@ -90,6 +90,23 @@ async function managementApiPlugin (app, opts) {
     await runtime.stopService(id)
   })
 
+  app.post('/services/:id/pprof/start', async (request, reply) => {
+    const { id } = request.params
+    app.log.debug('start profiling', { id })
+
+    const options = request.body || {}
+    await runtime.startServiceProfiling(id, options)
+    reply.code(200).send({})
+  })
+
+  app.post('/services/:id/pprof/stop', async (request, reply) => {
+    const { id } = request.params
+    app.log.debug('stop profiling', { id })
+
+    const profileData = await runtime.stopServiceProfiling(id)
+    reply.type('application/octet-stream').code(200).send(profileData)
+  })
+
   app.all('/services/:id/proxy/*', async (request, reply) => {
     const { id, '*': requestUrl } = request.params
     app.log.debug('proxy request', { id, requestUrl })
