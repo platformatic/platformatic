@@ -62,19 +62,16 @@ function stopProfiling () {
     throw new ProfilingNotStartedError()
   }
 
-  let profile = null
+  const profile = pprof.time.stop()
+  const encoded = profile.encode()
 
-  try {
-    profile = pprof.time.stop().encode()
-  } finally {
-    isProfiling = false
+  isProfiling = false
 
-    if (isProfilingJobPaused) {
-      resumeProfilingJob()
-    }
+  if (isProfilingJobPaused) {
+    resumeProfilingJob()
   }
 
-  return profile
+  return encoded
 }
 
 function startProfilingJob (options = {}) {
