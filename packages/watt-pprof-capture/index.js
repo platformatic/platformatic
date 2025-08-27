@@ -4,14 +4,22 @@ const pprof = require('@datadog/pprof')
 const {
   ProfilingAlreadyStartedError,
   ProfilingNotStartedError,
+  ProfilingJobAlreadyStartedError,
+  ProfilingJobNotStartedError,
+  ProfilingJobAlreadyPausedError,
+  ProfilingJobMissingOptionError,
   NoProfileAvailableError,
 } = require('./lib/errors')
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-let isCapturing = false
 let latestProfile = null
-let captureInterval = null
+
+let isProfiling = false
+let isProfilingJobStarted = false
+let isProfilingJobPaused = false
+let profilingJobOptions = null
+let profilingJobInterval = null
 
 // Keep trying until ITC is available. This is needed because preloads run
 // before the app thread initialization, so globalThis.platformatic.messaging
@@ -19,50 +27,135 @@ let captureInterval = null
 const registerInterval = setInterval(() => {
   if (globalThis[kITC]) {
     globalThis[kITC].handle('getLastProfile', getLastProfile)
+    globalThis[kITC].handle('startProfilingJob', startProfilingJob)
+    globalThis[kITC].handle('stopProfilingJob', stopProfilingJob)
     globalThis[kITC].handle('startProfiling', startProfiling)
     globalThis[kITC].handle('stopProfiling', stopProfiling)
     clearInterval(registerInterval)
   }
 }, 10)
 
+function startProfiling (options = {}) {
+  if (isProfiling) {
+    throw new ProfilingAlreadyStartedError()
+  }
+  isProfiling = true
+
+  if (isProfilingJobStarted) {
+    pauseProfilingJob()
+  }
+
+  try {
+    pprof.time.start(options)
+  } catch (err) {
+    if (isProfilingJobPaused) {
+      resumeProfilingJob()
+    }
+    isProfiling = false
+
+    throw err
+  }
+}
+
+function stopProfiling () {
+  if (!isProfiling) {
+    throw new ProfilingNotStartedError()
+  }
+
+  let profile = null
+
+  try {
+    profile = pprof.time.stop().encode()
+  } finally {
+    isProfiling = false
+
+    if (isProfilingJobPaused) {
+      resumeProfilingJob()
+    }
+  }
+
+  return profile
+}
+
+function startProfilingJob (options = {}) {
+  const timeout = options.durationMillis
+
+  if (isProfilingJobStarted && !isProfilingJobPaused) {
+    throw new ProfilingJobAlreadyStartedError()
+  }
+
+  if (timeout === undefined) {
+    throw new ProfilingJobMissingOptionError('durationMillis')
+  }
+
+  isProfilingJobStarted = true
+  profilingJobOptions = options
+
+  if (isProfiling) {
+    isProfilingJobPaused = true
+    return
+  }
+
+  pprof.time.start(options)
+
+  profilingJobInterval = setInterval(rotateProfile, timeout)
+  profilingJobInterval.unref()
+}
+
 function rotateProfile () {
   // `true` immediately restarts profiling after stopping
   latestProfile = pprof.time.stop(true)
 }
 
-function startProfiling (options = {}) {
-  if (isCapturing) {
-    throw new ProfilingAlreadyStartedError()
+function stopProfilingJob () {
+  if (!isProfilingJobStarted) {
+    throw new ProfilingJobNotStartedError()
   }
-  isCapturing = true
 
-  pprof.time.start(options)
+  isProfilingJobStarted = false
+  isProfilingJobPaused = false
 
-  // Set up profile window rotation if durationMillis is provided
-  const timeout = options.durationMillis
-  if (timeout) {
-    captureInterval = setInterval(rotateProfile, timeout)
-    captureInterval.unref()
-  }
+  const profile = pprof.time.stop()
+  const encoded = profile.encode()
+
+  clearInterval(profilingJobInterval)
+  profilingJobInterval = null
+
+  return encoded
 }
 
-function stopProfiling () {
-  if (!isCapturing) {
-    throw new ProfilingNotStartedError()
+function pauseProfilingJob () {
+  if (!isProfilingJobStarted) {
+    throw new ProfilingJobNotStartedError()
   }
-  isCapturing = false
+  if (isProfilingJobPaused) {
+    throw new ProfilingJobAlreadyPausedError()
+  }
 
-  clearInterval(captureInterval)
-  captureInterval = null
+  isProfilingJobPaused = true
 
-  latestProfile = pprof.time.stop()
-  return latestProfile.encode()
+  pprof.time.stop()
+
+  clearInterval(profilingJobInterval)
+  profilingJobInterval = null
+}
+
+function resumeProfilingJob () {
+  if (!isProfilingJobStarted) {
+    throw new ProfilingJobNotStartedError()
+  }
+  if (!isProfilingJobPaused) {
+    throw new ProfilingJobAlreadyStartedError()
+  }
+
+  startProfilingJob(profilingJobOptions)
+  isProfilingJobPaused = false
 }
 
 function getLastProfile () {
   // TODO: Should it be allowed to get last profile after stopping?
-  if (!isCapturing) {
-    throw new ProfilingNotStartedError()
+  if (!isProfilingJobStarted) {
+    throw new ProfilingJobNotStartedError()
   }
 
   if (latestProfile == null) {
@@ -73,6 +166,8 @@ function getLastProfile () {
 }
 
 module.exports = {
+  startProfilingJob,
+  stopProfilingJob,
   startProfiling,
   stopProfiling,
   getLastProfile
