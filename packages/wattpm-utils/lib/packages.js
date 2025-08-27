@@ -2,8 +2,6 @@
 export const packages = [
   '@platformatic/astro',
   '@platformatic/basic',
-  '@platformatic/client',
-  '@platformatic/client-cli',
   '@platformatic/composer',
   '@platformatic/control',
   '@platformatic/db',

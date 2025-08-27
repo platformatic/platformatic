@@ -37,12 +37,14 @@ wattpm init  # creates in current directory
 ```
 
 **Options:**
+
 - `-c, --config <name>` - Configuration file name (default: `watt.json`)
 - `-s, --skip-dependencies` - Don't install dependencies after creating files
 - `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
 - `-M, --module <name>` - Additional application generator modules (can be used multiple times)
 
 **Example:**
+
 ```bash
 wattpm create my-api
 wattpm init --skip-dependencies --package-manager pnpm
@@ -57,9 +59,11 @@ wattpm dev [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Path to configuration file (auto-detected by default)
 
 **Example:**
+
 ```bash
 wattpm dev
 wattpm dev ./my-app --config custom-watt.json
@@ -74,10 +78,12 @@ wattpm start [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Path to configuration file (auto-detected by default)
 - `-i, --inspect` - Start Node.js inspector for debugging
 
 **Example:**
+
 ```bash
 wattpm start
 wattpm start ./dist --inspect
@@ -92,9 +98,11 @@ wattpm build [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Path to configuration file (auto-detected by default)
 
 **Example:**
+
 ```bash
 wattpm build
 wattpm build ./src --config watt.production.json
@@ -109,11 +117,13 @@ wattpm install [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Path to configuration file
 - `-p, --production` - Install only production dependencies
 - `-P, --package-manager <manager>` - Use specific package manager
 
 **Example:**
+
 ```bash
 wattpm install --production
 wattpm install --package-manager yarn
@@ -128,10 +138,12 @@ wattpm update [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Path to configuration file
 - `-f, --force` - Force updates even if they violate package.json version ranges
 
 **Example:**
+
 ```bash
 wattpm update
 wattpm update --force
@@ -158,6 +170,7 @@ wattpm stop [id]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 
 ### `wattpm restart`
@@ -169,6 +182,7 @@ wattpm restart [id]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 
 ### `wattpm reload`
@@ -180,6 +194,7 @@ wattpm reload [id]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 
 ## Application Management Commands
@@ -193,6 +208,7 @@ wattpm applications [id]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 
 ### `wattpm import`
@@ -204,10 +220,12 @@ wattpm import [directory] [url]
 ```
 
 **Arguments:**
+
 - `directory` - Application directory (default: current directory)
 - `url` - URL or GitHub repository to import (format: `user/repo` for GitHub)
 
 **Options:**
+
 - `-c, --config <path>` - Configuration file path
 - `-i, --id <name>` - Service ID (default: repository basename)
 - `-p, --path <path>` - Local path for the application (default: application ID)
@@ -217,6 +235,7 @@ wattpm import [directory] [url]
 - `-P, --package-manager <manager>` - Package manager to use
 
 **Examples:**
+
 ```bash
 wattpm import platformatic/hello-world
 wattpm import https://github.com/user/my-application.git --id my-application
@@ -232,6 +251,7 @@ wattpm resolve [directory]
 ```
 
 **Options:**
+
 - `-c, --config <path>` - Configuration file path
 - `-u, --username <name>` - Username for private repositories
 - `-p, --password <token>` - Password/token for private repositories
@@ -239,6 +259,7 @@ wattpm resolve [directory]
 - `-P, --package-manager <manager>` - Package manager to use
 
 **Example:**
+
 ```bash
 wattpm resolve --username myuser --password $GITHUB_TOKEN
 ```
@@ -254,10 +275,12 @@ wattpm logs [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Specific application name (optional, streams from all applications if omitted)
 
 **Example:**
+
 ```bash
 wattpm logs
 wattpm logs my-app api-application
@@ -272,10 +295,12 @@ wattpm inject [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Service name (optional, uses entrypoint if omitted)
 
 **Options:**
+
 - `-m, --method <verb>` - HTTP method (default: `GET`)
 - `-p, --path <path>` - Request path (default: `/`)
 - `-H, --header <header>` - Request headers (can be used multiple times)
@@ -285,6 +310,7 @@ wattpm inject [id] [application]
 - `-f, --full-output` - Include response headers in output
 
 **Examples:**
+
 ```bash
 wattpm inject --path /api/health
 wattpm inject --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
@@ -300,13 +326,16 @@ wattpm env [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Service name (optional, shows app-level env if omitted)
 
 **Options:**
+
 - `-t, --table` - Display variables in table format
 
 **Example:**
+
 ```bash
 wattpm env --table
 wattpm env my-app database-application
@@ -321,10 +350,12 @@ wattpm config [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Service name (optional, shows app config if omitted)
 
 **Example:**
+
 ```bash
 wattpm config
 wattpm config my-app api-application
@@ -341,24 +372,32 @@ wattpm patch-config [directory] <patch-file>
 ```
 
 **Arguments:**
+
 - `directory` - Application directory (default: current directory)
 - `patch-file` - JavaScript file that exports a patch function
 
 **Options:**
+
 - `-c, --config <path>` - Configuration file path
 
 **Patch file format:**
+
 ```javascript
 // patch.js
-module.exports = function(runtime, applications) {
+module.exports = function (runtime, applications) {
   return {
-    runtime: [/* JSON Patch operations for runtime config */],
-    applications: [/* JSON Patch operations for application configs */]
-  }
-}
+    runtime: [
+      /* JSON Patch operations for runtime config */
+    ],
+    applications: [
+      /* JSON Patch operations for application configs */
+    ],
+  };
+};
 ```
 
 **Example:**
+
 ```bash
 wattpm patch-config ./patches/production.js
 ```
@@ -372,12 +411,15 @@ wattpm admin [latest]
 ```
 
 **Arguments:**
+
 - `latest` - Use the latest version of watt-admin
 
 **Options:**
+
 - `-P, --package-manager <manager>` - Package manager for installing watt-admin
 
 **Example:**
+
 ```bash
 wattpm admin latest
 ```
@@ -393,9 +435,11 @@ wattpm help [command]
 ```
 
 **Arguments:**
+
 - `command` - Show help for a specific command
 
 **Example:**
+
 ```bash
 wattpm help
 wattpm help create
@@ -419,11 +463,6 @@ For backwards compatibility, these commands are available via `platformatic` or 
 - `platformatic node <command>` - HTTP application commands (create, start, compile, etc.)
 - `platformatic gateway <command>` - API gateway application commands (create, start, schema fetch, etc.)
 - `platformatic runtime <command>` - Runtime commands (start, compile, etc.)
-
-### Client Generation
-
-- `platformatic client <url>` - Generate API clients from OpenAPI/GraphQL schemas
-- `platformatic frontend <url> <language>` - Generate frontend code for consuming APIs
 
 ### Management Commands
 

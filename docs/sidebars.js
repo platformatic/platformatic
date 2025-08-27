@@ -134,12 +134,6 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'Client SDK',
-              collapsed: true,
-              items: ['reference/client/overview', 'reference/client/programmatic', 'reference/client/frontend']
-            },
-            {
-              type: 'category',
               label: 'Database Service',
               collapsed: true,
               items: [
