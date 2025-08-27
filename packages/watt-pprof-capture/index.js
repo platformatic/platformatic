@@ -46,11 +46,6 @@ function startProfiling () {
   }
 
   pprof.time.start()
-
-  if (isProfilingJobPaused) {
-    resumeProfilingJob()
-  }
-  isProfiling = false
 }
 
 function stopProfiling () {
