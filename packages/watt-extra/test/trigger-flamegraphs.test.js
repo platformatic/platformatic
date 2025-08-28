@@ -1,4 +1,3 @@
-
 import { test } from 'node:test'
 import { equal } from 'node:assert'
 import { once } from 'node:events'
@@ -95,7 +94,7 @@ test('should handle trigger-flamegraph command and upload flamegraphs from servi
 
   const app = createMockApp(port)
 
-  app.wattpro.runtime.sendCommandToService = async (serviceId, command, options) => {
+  app.wattpro.runtime.sendCommandToApplication = async (serviceId, command, options) => {
     if (command === 'sendFlamegraph' && options.url && options.headers) {
       uploadedFlamegraphs.push({
         serviceId,
@@ -178,7 +177,7 @@ test('should handle trigger-flamegraph when flamegraph upload fails', async (t) 
 
   const app = createMockApp(port + 2)
 
-  app.wattpro.runtime.sendCommandToService = async (serviceId, command, options) => {
+  app.wattpro.runtime.sendCommandToApplicaiton = async (serviceId, command, options) => {
     if (command === 'sendFlamegraph' && options.url && options.headers) {
       throw new Error('Flamegraph upload failed')
     }

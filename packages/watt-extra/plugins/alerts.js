@@ -2,8 +2,10 @@ import { request } from 'undici'
 
 async function alerts (app, _opts) {
   const healthCache = [] // It's OK to have this in memory, this is per-pod.
-  const podHealthWindow = app.instanceConfig?.config?.scaler?.podHealthWindow || 60 * 1000
-  const alertRetentionWindow = app.instanceConfig?.config?.scaler?.alertRetentionWindow || 30 * 1000
+  const podHealthWindow =
+    app.instanceConfig?.config?.scaler?.podHealthWindow || 60 * 1000
+  const alertRetentionWindow =
+    app.instanceConfig?.config?.scaler?.alertRetentionWindow || 30 * 1000
   const isFlamegraphsDisabled = app.env.PLT_DISABLE_FLAMEGRAPHS
 
   let lastAlertTime = 0
@@ -18,7 +20,9 @@ async function alerts (app, _opts) {
     const runtime = app.wattpro.runtime
 
     if (!scalerUrl) {
-      app.log.warn('No scaler URL found in ICC services, health alerts disabled')
+      app.log.warn(
+        'No scaler URL found in ICC services, health alerts disabled'
+      )
       return
     }
 
@@ -35,7 +39,9 @@ async function alerts (app, _opts) {
       healthCache.push(healthWithTimestamp)
 
       const cutoffTime = timestamp - podHealthWindow
-      const validIndex = healthCache.findIndex(entry => entry.timestamp >= cutoffTime)
+      const validIndex = healthCache.findIndex(
+        (entry) => entry.timestamp >= cutoffTime
+      )
       if (validIndex > 0) {
         healthCache.splice(0, validIndex)
       }
@@ -75,13 +81,13 @@ async function alerts (app, _opts) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...authHeaders
+            ...authHeaders,
           },
           body: JSON.stringify({
             applicationId: app.instanceConfig?.applicationId,
             alert: healthInfo,
-            healthHistory: healthCache
-          })
+            healthHistory: healthCache,
+          }),
         })
 
         if (statusCode !== 200) {
@@ -95,12 +101,15 @@ async function alerts (app, _opts) {
         const podId = app.instanceId
 
         if (!isFlamegraphsDisabled) {
-          await runtime.sendCommandToService(serviceId, 'sendFlamegraph', {
-            url: `${scalerUrl}/pods/${podId}/services/${serviceId}/flamegraph`,
-            headers: authHeaders,
-            alertId: alert.id
-          })
-            .catch(() => { app.log.error('Failed to send a flamegraph') })
+          await runtime
+            .sendCommandToApplication(serviceId, 'sendFlamegraph', {
+              url: `${scalerUrl}/pods/${podId}/services/${serviceId}/flamegraph`,
+              headers: authHeaders,
+              alertId: alert.id,
+            })
+            .catch(() => {
+              app.log.error('Failed to send a flamegraph')
+            })
         }
       }
     })

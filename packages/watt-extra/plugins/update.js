@@ -143,7 +143,7 @@ async function updatePlugin (app) {
       // Trigger flamegraphs upload from all services in parallel
       const uploadPromises = (config.services || []).map(async (service) => {
         try {
-          await runtime.sendCommandToService(service.id, 'sendFlamegraph', {
+          await runtime.sendCommandToApplication(service.id, 'sendFlamegraph', {
             url: `${scalerUrl}/pods/${podId}/services/${service.id}/flamegraph`,
             headers: authHeaders
           })

@@ -1,13 +1,9 @@
-
 import { test } from 'node:test'
 import { equal } from 'node:assert'
 import fastify from 'fastify'
 import { request } from 'undici'
-import * as fsPromises from 'node:fs/promises'
 import { setUpEnvironment, createJwtToken } from './helper.js'
 import authPlugin from '../plugins/auth.js'
-
-const K8S_TOKEN_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/token'
 
 const createMockApp = () => {
   return {
@@ -21,26 +17,13 @@ const createMockApp = () => {
 
 test('auth plugin sets authorization header with token', async (t) => {
   const originalEnv = { ...process.env }
-  const originalStat = fsPromises.stat
-  const originalReadFile = fsPromises.readFile
 
   t.after(() => {
     process.env = originalEnv
-    fsPromises.stat = originalStat
-    fsPromises.readFile = originalReadFile
   })
 
   const testToken = 'test-env-token-5678'
   setUpEnvironment({ PLT_TEST_TOKEN: testToken })
-
-  fsPromises.stat = async (path) => {
-    if (path === '/var/run/secrets/kubernetes.io/serviceaccount/token') {
-      const error = new Error('ENOENT: no such file or directory')
-      error.code = 'ENOENT'
-      throw error
-    }
-    return originalStat(path)
-  }
 
   const server = fastify()
   server.get('/', async (request) => {
@@ -64,24 +47,13 @@ test('auth plugin sets authorization header with token', async (t) => {
 
 test('auth plugin falls back to env variable when k8s token is not available', async (t) => {
   const originalEnv = { ...process.env }
-  const originalStat = fsPromises.stat
 
   t.after(() => {
     process.env = originalEnv
-    fsPromises.stat = originalStat
   })
 
   const testToken = 'test-env-token-5678'
   setUpEnvironment({ PLT_TEST_TOKEN: testToken })
-
-  fsPromises.stat = async (path) => {
-    if (path === '/var/run/secrets/kubernetes.io/serviceaccount/token') {
-      const error = new Error('ENOENT: no such file or directory')
-      error.code = 'ENOENT'
-      throw error
-    }
-    return originalStat(path)
-  }
 
   const server = fastify()
   server.get('/', async (request) => {
@@ -106,13 +78,9 @@ test('auth plugin falls back to env variable when k8s token is not available', a
 
 test('auth plugin reloads expired token', async (t) => {
   const originalEnv = { ...process.env }
-  const originalStat = fsPromises.stat
-  const originalReadFile = fsPromises.readFile
 
   t.after(() => {
     process.env = originalEnv
-    fsPromises.stat = originalStat
-    fsPromises.readFile = originalReadFile
   })
 
   const expiredToken = createJwtToken(-10) // Already expired (by 10 seconds)
@@ -142,15 +110,6 @@ test('auth plugin reloads expired token', async (t) => {
   const url = `http://localhost:${server.server.address().port}`
 
   t.after(async () => server.close())
-
-  fsPromises.stat = async (path) => {
-    if (path === K8S_TOKEN_PATH) {
-      const error = new Error('ENOENT: no such file or directory')
-      error.code = 'ENOENT'
-      throw error
-    }
-    return originalStat(path)
-  }
 
   await authPlugin(app)
 

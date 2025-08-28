@@ -10,12 +10,12 @@ async function getApplicationDependencies (config) {
   const runtimeDependencies = { runtime: {}, services: {} }
 
   const runtimeConfig = runtime.getRuntimeConfig()
-  const services = runtimeConfig.services || []
+  const applications = runtimeConfig.applications || []
 
   await Promise.all(
-    services.map(async (service) => {
-      const serviceDependencies = await getServiceDependencies(service.path)
-      runtimeDependencies.services[service.id] = serviceDependencies
+    applications.map(async (application) => {
+      const serviceDependencies = await getServiceDependencies(application.path)
+      runtimeDependencies.services[application.id] = serviceDependencies
     })
   )
 
