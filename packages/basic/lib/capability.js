@@ -1,4 +1,11 @@
-import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/foundation'
+import {
+  buildPinoOptions,
+  deepmerge,
+  executeWithTimeout,
+  kHandledError,
+  kMetadata,
+  kTimeout
+} from '@platformatic/foundation'
 import { client, collectMetrics, ensureMetricsGroup } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
@@ -14,16 +21,44 @@ import { ChildManager } from './worker/child-manager.js'
 const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseCapability extends EventEmitter {
-  childManager
-  subprocess
+  status
+  type
+  version
+  root
+  config
+  context
+  standardStreams
+
+  applicationId
+  workerId
+  telemetryConfig
+  serverConfig
+  openapiSchema
+  graphqlSchema
+  connectionString
+  basePath
+  isEntrypoint
+  isProduction
+  dependencies
+  customHealthCheck
+  customReadinessCheck
+  clientWs
+  runtimeConfig
+  stdout
+  stderr
   subprocessForceClose
   subprocessTerminationSignal
+  logger
+  metricsRegistr
+
   #subprocessStarted
   #metricsCollected
+  #pendingDependenciesWaits
 
   constructor (type, version, root, config, context, standardStreams = {}) {
     super()
 
+    this.status = ''
     this.type = type
     this.version = version
     this.root = root
@@ -42,7 +77,7 @@ export class BaseCapability extends EventEmitter {
     this.basePath = null
     this.isEntrypoint = this.context.isEntrypoint
     this.isProduction = this.context.isProduction
-    this.#metricsCollected = false
+    this.dependencies = this.context.dependencies ?? []
     this.customHealthCheck = null
     this.customReadinessCheck = null
     this.clientWs = null
@@ -51,11 +86,11 @@ export class BaseCapability extends EventEmitter {
     this.stderr = standardStreams?.stderr ?? process.stderr
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
-
     this.logger = this._initializeLogger()
 
     // Setup globals
     this.registerGlobals({
+      capability: this,
       applicationId: this.applicationId,
       workerId: this.workerId,
       logLevel: this.logger.level,
@@ -79,10 +114,25 @@ export class BaseCapability extends EventEmitter {
       this.metricsRegistry = new client.Registry()
       this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
     }
+
+    this.#metricsCollected = false
+    this.#pendingDependenciesWaits = new Set()
   }
 
-  init () {
-    return this.updateContext()
+  async init () {
+    if (this.status) {
+      return
+    }
+
+    // Wait for explicit dependencies to start
+    await this.waitForDependenciesStart(this.dependencies)
+
+    if (this.status === 'stopped') {
+      return
+    }
+
+    await this.updateContext()
+    this.status = 'init'
   }
 
   updateContext (_context) {
@@ -93,8 +143,12 @@ export class BaseCapability extends EventEmitter {
     throw new Error('BaseCapability.start must be overriden by the subclasses')
   }
 
-  stop () {
-    throw new Error('BaseCapability.stop must be overriden by the subclasses')
+  async stop () {
+    if (this.#pendingDependenciesWaits.size > 0) {
+      await Promise.allSettled(this.#pendingDependenciesWaits)
+    }
+
+    this.status = 'stopped'
   }
 
   build () {
@@ -108,6 +162,106 @@ export class BaseCapability extends EventEmitter {
 
   inject () {
     throw new Error('BaseCapability.inject must be overriden by the subclasses')
+  }
+
+  async waitForDependenciesStart (dependencies = []) {
+    if (!globalThis[kITC]) {
+      return
+    }
+
+    const pending = new Set(dependencies)
+
+    // Ask the runtime the status of the dependencies and don't wait if they are already started
+    const workers = await globalThis[kITC].send('getWorkers')
+
+    for (const worker of Object.values(workers)) {
+      if (this.dependencies.includes(worker.application) && worker.status === 'started') {
+        pending.delete(worker.application)
+      }
+    }
+
+    if (!pending.size) {
+      return
+    }
+
+    this.logger.info({ dependencies: Array.from(pending) }, 'Waiting for dependencies to start.')
+
+    const { promise, resolve, reject } = Promise.withResolvers()
+
+    function runtimeEventHandler ({ event, payload }) {
+      if (event !== 'application:worker:started') {
+        return
+      }
+
+      pending.delete(payload.application)
+
+      if (pending.size === 0) {
+        cleanupEvents()
+        resolve()
+      }
+    }
+
+    function stopHandler () {
+      cleanupEvents()
+
+      const error = new Error('One of the service dependencies was unable to start.')
+      error.dependencies = dependencies
+      error[kHandledError] = true
+      reject(error)
+    }
+
+    const cleanupEvents = () => {
+      globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+      this.context.controller.removeListener('stopping', stopHandler)
+      this.#pendingDependenciesWaits.delete(promise)
+    }
+
+    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    this.context.controller.on('stopping', stopHandler)
+    this.#pendingDependenciesWaits.add(promise)
+
+    return promise
+  }
+
+  async waitForDependentsStop (dependents = []) {
+    if (!globalThis[kITC]) {
+      return
+    }
+
+    const pending = new Set(dependents)
+
+    // Ask the runtime the status of the dependencies and don't wait if they are already stopped
+    const workers = await globalThis[kITC].send('getWorkers')
+
+    for (const worker of Object.values(workers)) {
+      if (this.dependencies.includes(worker.application) && worker.status === 'started') {
+        pending.delete(worker.application)
+      }
+    }
+
+    if (!pending.size) {
+      return
+    }
+
+    this.logger.info({ dependents: Array.from(pending) }, 'Waiting for dependents to stop.')
+
+    const { promise, resolve } = Promise.withResolvers()
+
+    function runtimeEventHandler ({ event, payload }) {
+      if (event !== 'application:worker:stopped') {
+        return
+      }
+
+      pending.delete(payload.application)
+
+      if (pending.size === 0) {
+        globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+        resolve()
+      }
+    }
+
+    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    return promise
   }
 
   getUrl () {
@@ -145,7 +299,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async getInfo () {
-    return { type: this.type, version: this.version }
+    return { type: this.type, version: this.version, dependencies: this.dependencies }
   }
 
   getDispatchFunc () {

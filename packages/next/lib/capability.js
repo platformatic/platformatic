@@ -75,6 +75,8 @@ export class NextCapability extends BaseCapability {
   }
 
   async stop () {
+    await super.stop()
+
     if (this.subprocess) {
       return this.stopCommand()
     }

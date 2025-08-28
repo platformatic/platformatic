@@ -84,7 +84,8 @@ export class ServiceCapability extends BaseCapability {
   }
 
   async stop () {
-    return this.#app?.close()
+    await super.stop()
+    await this.#app?.close()
   }
 
   async inject (injectParams, onInject) {

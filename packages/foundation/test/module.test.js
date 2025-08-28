@@ -1,4 +1,4 @@
-import { equal, ok, rejects, strictEqual } from 'node:assert'
+import { equal, ok, rejects } from 'node:assert'
 import { mkdir, mkdtemp, readFile, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -32,11 +32,6 @@ test('getPlatformaticVersion - should return cached version on second call', asy
   const firstCall = await getPlatformaticVersion()
   const secondCall = await getPlatformaticVersion()
   equal(firstCall, secondCall)
-})
-
-test('kFailedImport - should be a symbol', () => {
-  strictEqual(typeof kFailedImport, 'symbol')
-  strictEqual(kFailedImport.description, 'plt.utils.failedImport')
 })
 
 test('hasDependency', async t => {

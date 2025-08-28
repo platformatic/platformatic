@@ -61,6 +61,8 @@ export class ViteCapability extends BaseCapability {
   }
 
   async stop () {
+    await super.stop()
+
     if (this.childManager) {
       return this.stopCommand()
     }

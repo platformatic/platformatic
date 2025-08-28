@@ -66,6 +66,7 @@ test('emits an exhaustive list of events', async t => {
     { event: 'application:worker:init', payload: basePayload },
     { event: 'application:worker:starting', payload: basePayload },
     { event: 'application:worker:start:error', payload: errorPayload },
+    { event: 'application:worker:start:failed', payload: errorPayload },
     { event: 'errored', message: 'boom' },
     { event: 'stopping', payload: undefined },
     { event: 'application:stopping', payload: 'serviceThrowsOnStart' },

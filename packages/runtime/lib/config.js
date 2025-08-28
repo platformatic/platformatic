@@ -145,7 +145,14 @@ export async function transform (config, _, context) {
         config = join(entryPath, configFilename)
       }
 
-      const application = { id, config, path: entryPath, useHttp: !!mapping.useHttp, health: mapping.health }
+      const application = {
+        id,
+        config,
+        path: entryPath,
+        useHttp: !!mapping.useHttp,
+        health: mapping.health,
+        dependencies: mapping.dependencies
+      }
       const existingApplicationId = applications.findIndex(application => application.id === id)
 
       if (existingApplicationId !== -1) {
@@ -208,7 +215,7 @@ export async function transform (config, _, context) {
     }
 
     application.entrypoint = application.id === config.entrypoint
-    application.dependencies = []
+    application.dependencies ??= []
     application.localUrl = `http://${application.id}.plt.local`
 
     if (typeof application.watch === 'undefined') {

@@ -689,6 +689,13 @@ export const applications = {
       },
       workers,
       health: { ...healthWithoutDefaults },
+      dependencies: {
+        type: 'array',
+        items: {
+          type: 'string'
+        },
+        default: []
+      },
       arguments: {
         type: 'array',
         items: {
@@ -803,6 +810,12 @@ export const runtimeProperties = {
             workers,
             health: { ...healthWithoutDefaults },
             preload,
+            dependencies: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
             arguments: {
               type: 'array',
               items: {

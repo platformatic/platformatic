@@ -4,6 +4,7 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -152,40 +153,53 @@ export async function managementApiPlugin (app, opts) {
   })
 }
 
-export async function startManagementApi (runtime, root) {
+export async function startManagementApi (runtime) {
   const runtimePID = process.pid
 
-  try {
-    const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
-    if (platform() !== 'win32') {
-      await createDirectory(runtimePIDDir, true)
-    }
-
-    let socketPath = null
-    if (platform() === 'win32') {
-      socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
-    } else {
-      socketPath = join(runtimePIDDir, 'socket')
-    }
-
-    const managementApi = fastify()
-    managementApi.register(fastifyWebsocket)
-    managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
-
-    managementApi.addHook('onClose', async () => {
-      if (platform() !== 'win32') {
-        await safeRemove(runtimePIDDir)
-      }
-    })
-
-    // When the runtime closes, close the management API as well
-    runtime.on('closed', managementApi.close.bind(managementApi))
-
-    await managementApi.listen({ path: socketPath })
-    return managementApi
-    /* c8 ignore next 4 */
-  } catch (err) {
-    console.error(err)
-    process.exit(1)
+  const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
+  if (platform() !== 'win32') {
+    await createDirectory(runtimePIDDir, true)
   }
+
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
+  } else {
+    socketPath = join(runtimePIDDir, 'socket')
+  }
+
+  const managementApi = fastify()
+  managementApi.register(fastifyWebsocket)
+  managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
+
+  managementApi.addHook('onClose', async () => {
+    if (platform() !== 'win32') {
+      await safeRemove(runtimePIDDir)
+    }
+  })
+
+  // When the runtime closes, close the management API as well
+  runtime.on('closed', managementApi.close.bind(managementApi))
+
+  /*
+    If runtime are started multiple times in a short
+    period of time (like in tests), there is a chance that the pipe is still in use
+    as the manament API server is closed after the runtime is closed (see event handler above).
+
+    Since it's a very rare case, we simply retry couple of times.
+  */
+  for (let i = 0; i < 5; i++) {
+    try {
+      await managementApi.listen({ path: socketPath })
+      break
+    } catch (e) {
+      if (i === 5) {
+        throw e
+      }
+
+      await sleep(100)
+    }
+  }
+
+  return managementApi
 }

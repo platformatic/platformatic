@@ -16,41 +16,6 @@ test('throws if no entrypoint is found', async t => {
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
-test('dependencies are not considered if applications are specified manually', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-  const { applications } = await runtime.getApplications()
-
-  deepStrictEqual(
-    applications.map(application => application.id),
-    ['with-logger', 'db-app', 'composerApp', 'multi-plugin-service', 'serviceApp']
-  )
-})
-
-test('dependencies are resolved if applications are not specified manually', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const runtime = await createRuntime(configFile)
-
-  await runtime.init()
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  const { applications } = await runtime.getApplications()
-
-  deepStrictEqual(
-    applications.map(application => application.id),
-    ['dbApp', 'serviceApp', 'with-logger', 'multi-plugin-service', 'composerApp']
-  )
-})
-
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   throws(() => {
     parseInspectorOptions({}, 'true', 'true')

@@ -2,12 +2,6 @@ export interface StartOptions {
   listen?: boolean
 }
 
-export interface Dependency {
-  id: string
-  url?: string
-  local: boolean
-}
-
 export type BaseContext = Partial<{
   applicationId: string
   isEntrypoint: boolean
@@ -75,7 +69,6 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
     body: object
   }>
   log (options: { message: string; level: string }): Promise<void>
-  getBootstrapDependencies (): Promise<Dependency[]>
   getWatchConfig (): Promise<{
     enabled: boolean
     path: string

@@ -41,7 +41,7 @@ class MockedWritable extends Writable {
   constructor () {
     super()
 
-    this.verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+    this.verbose = process.env.PLT_TESTS_DEBUG === 'true'
     this.messages = []
   }
 
@@ -298,13 +298,14 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
       config.logger ??= {}
 
-      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
-        config.logger.transport ??= {
-          target: 'pino/file',
-          options: { destination: resolve(root, 'logs.txt') }
-        }
-      } else {
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
         config.logger.level = 'trace'
+        process._rawDebug('Runtime logs:', resolve(root, 'logs.txt'))
+      }
+
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: resolve(root, 'logs.txt') }
       }
 
       return config
@@ -322,7 +323,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     process.chdir(originalCwd)
     await runtime.close()
 
-    if (!process.env.PLT_TESTS_SKIP_REMOVE_TEMPORARY) {
+    if (process.env.PLT_TESTS_DEBUG !== 'true') {
       await safeRemove(root)
     }
   })

@@ -76,7 +76,7 @@ export async function waitForStart (startProcess) {
 
   startProcess.stderr?.pipe(startProcess.stdout)
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    if (process.env.PLT_TESTS_VERBOSE === 'true') {
+    if (process.env.PLT_TESTS_DEBUG === 'true') {
       process._rawDebug(log.toString())
     }
 

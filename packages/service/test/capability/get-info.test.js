@@ -9,5 +9,5 @@ test('get service info via capability api', async t => {
   await capability.start({ listen: true })
 
   const capabilityInfo = await capability.getInfo()
-  assert.deepStrictEqual(capabilityInfo, { type: 'service', version })
+  assert.deepStrictEqual(capabilityInfo, { dependencies: [], type: 'service', version })
 })

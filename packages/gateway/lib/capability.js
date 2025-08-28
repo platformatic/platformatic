@@ -8,7 +8,6 @@ const kITC = Symbol.for('plt.runtime.itc')
 
 export class GatewayCapability extends ServiceCapability {
   #meta
-  #dependencies
 
   constructor (root, config, context) {
     super(root, config, context)
@@ -21,24 +20,19 @@ export class GatewayCapability extends ServiceCapability {
     this.fastifyOptions.routerOptions.constraints = { notHost: notHostConstraints }
   }
 
-  async getBootstrapDependencies () {
-    await ensureApplications(this.applicationId, this.config)
-
-    const composedApplications = this.config.gateway?.applications
-    const dependencies = []
-
-    if (Array.isArray(composedApplications)) {
-      dependencies.push(
-        ...(await Promise.all(
-          composedApplications.map(async application => {
-            return this.#parseDependency(application.id, application.origin)
-          })
-        ))
-      )
+  async init () {
+    if (this.status) {
+      return
     }
 
-    this.#dependencies = dependencies
-    return this.#dependencies
+    await ensureApplications(this.applicationId, this.config)
+    const composedApplications = this.config.gateway?.applications
+      .filter(this.#isLocalApplication.bind(this))
+      .map(a => a.id)
+
+    this.dependencies = Array.from(new Set([...this.dependencies, ...composedApplications]))
+
+    await super.init()
   }
 
   registerMeta (meta) {
@@ -57,12 +51,18 @@ export class GatewayCapability extends ServiceCapability {
 
   async isHealthy () {
     // If no dependencies (still booting), assume healthy
-    if (this.#dependencies) {
-      const composedApplications = this.#dependencies.map(dep => dep.id)
+    if (this.dependencies) {
       const workers = await globalThis[kITC].send('getWorkers')
 
+      const started = new Set()
       for (const worker of Object.values(workers)) {
-        if (composedApplications.includes(worker.application) && !worker.status.startsWith('start')) {
+        if (worker.status === 'started') {
+          started.add(worker.application)
+        }
+      }
+
+      for (const dependency of this.dependencies) {
+        if (!started.has(dependency)) {
           globalThis[kITC].notify('event', { event: 'unhealthy' })
           return false
         }
@@ -73,17 +73,11 @@ export class GatewayCapability extends ServiceCapability {
     return true
   }
 
-  async #parseDependency (id, urlString) {
-    let url = `http://${id}.plt.local`
-
-    if (urlString) {
-      const remoteUrl = await replaceEnv(urlString, this.config[kMetadata].env)
-
-      if (remoteUrl) {
-        url = remoteUrl
-      }
+  #isLocalApplication (application) {
+    if (!application.origin) {
+      return true
     }
 
-    return { id, url, local: url.endsWith('.plt.local') }
+    return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
   }
 }

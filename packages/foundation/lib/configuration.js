@@ -17,13 +17,13 @@ import {
 } from './errors.js'
 import { isFileAccessible } from './file-system.js'
 import { loadModule, splitModuleFromVersion } from './module.js'
+import { kMetadata } from './symbols.js'
 
 const { parse: parseJSON5, stringify: rawStringifyJSON5 } = JSON5
 const { parse: parseTOML, stringify: stringifyTOML } = toml
 
 const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 
-export const kMetadata = Symbol('plt.foundation.metadata')
 export const envVariablePattern = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/i
 
 export const knownConfigurationFilesExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']

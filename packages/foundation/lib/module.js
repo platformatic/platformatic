@@ -4,10 +4,9 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { request } from 'undici'
 import { hasJavascriptFiles } from './file-system.js'
+import { kFailedImport } from './symbols.js'
 
 let platformaticPackageVersion
-
-export const kFailedImport = Symbol('plt.utils.failedImport')
 
 export const defaultPackageManager = 'npm'
 

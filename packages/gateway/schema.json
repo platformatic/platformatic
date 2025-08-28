@@ -1412,6 +1412,13 @@
                 },
                 "additionalProperties": false
               },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
               "arguments": {
                 "type": "array",
                 "items": {

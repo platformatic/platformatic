@@ -186,6 +186,12 @@
                   }
                 ]
               },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "arguments": {
                 "type": "array",
                 "items": {
@@ -346,6 +352,13 @@
               }
             },
             "additionalProperties": false
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
           },
           "arguments": {
             "type": "array",
@@ -576,6 +589,13 @@
             },
             "additionalProperties": false
           },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
           "arguments": {
             "type": "array",
             "items": {
@@ -804,6 +824,13 @@
               }
             },
             "additionalProperties": false
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
           },
           "arguments": {
             "type": "array",

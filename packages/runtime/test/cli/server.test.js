@@ -122,7 +122,6 @@ test('starts the inspector', async t => {
     env: { PLT_USE_PLAIN_CREATE: 'true' }
   })
   let stderr = ''
-  let port = 0
   let found = false
 
   const startPromise = new Promise(resolve => {
@@ -136,16 +135,20 @@ test('starts the inspector', async t => {
     child.stdout.on('data', listener)
   })
 
+  const pattern = /Debugger listening on ws:\/\/127\.0\.0\.1:(\d+)/g
+  const ports = new Set([9230, 9231, 9232, 9233])
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
       stderr += message
 
-      if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {
-        port++
-        if (port === 4) {
-          found = true
-          break
-        }
+      const matches = stderr.matchAll(pattern)
+      for (const match of matches) {
+        ports.delete(Number(match[1]))
+      }
+
+      if (ports.size === 0) {
+        found = true
+        break
       }
     }
 

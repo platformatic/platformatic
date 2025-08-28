@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "composer",
+  "applications": [
+    {
+      "id": "service-1",
+      "path": "./services/service-1"
+    },
+    {
+      "id": "composer",
+      "path": "./services/composer"
+    }
+  ],
+  "restartOnError": false
+}

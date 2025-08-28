@@ -32,12 +32,15 @@ test('return workers information in the management API when starting in producti
   const res = await client.request({ method: 'GET', path: '/api/v1/applications' })
   const json = await res.body.json()
 
-  deepStrictEqual(json.applications[0].id, 'node')
-  deepStrictEqual(json.applications[0].workers, 5)
-  deepStrictEqual(json.applications[1].id, 'service')
-  deepStrictEqual(json.applications[1].workers, 3)
-  deepStrictEqual(json.applications[2].id, 'composer')
-  deepStrictEqual(json.applications[2].workers, features.node.reusePort ? 3 : 1)
+  // Sort for consistent order
+  json.applications.sort((a, b) => a.id.localeCompare(b.id))
+
+  deepStrictEqual(json.applications[0].id, 'composer')
+  deepStrictEqual(json.applications[0].workers, features.node.reusePort ? 3 : 1)
+  deepStrictEqual(json.applications[1].id, 'node')
+  deepStrictEqual(json.applications[1].workers, 5)
+  deepStrictEqual(json.applications[2].id, 'service')
+  deepStrictEqual(json.applications[2].workers, 3)
 })
 
 test('return no workers information in the management API when starting in development mode', async t => {
@@ -66,10 +69,13 @@ test('return no workers information in the management API when starting in devel
   const res = await client.request({ method: 'GET', path: '/api/v1/applications' })
   const json = await res.body.json()
 
-  deepStrictEqual(json.applications[0].id, 'node')
+  // Sort for consistent order
+  json.applications.sort((a, b) => a.id.localeCompare(b.id))
+
+  deepStrictEqual(json.applications[0].id, 'composer')
+  ok(!('workers' in json.applications[0]))
+  deepStrictEqual(json.applications[1].id, 'node')
   ok(!('workers' in json.applications[1]))
-  deepStrictEqual(json.applications[1].id, 'service')
-  ok(!('workers' in json.applications[1]))
-  deepStrictEqual(json.applications[2].id, 'composer')
+  deepStrictEqual(json.applications[2].id, 'service')
   ok(!('workers' in json.applications[2]))
 })
