@@ -331,6 +331,50 @@ wattpm config
 wattpm config my-app api-service
 ```
 
+## Performance Profiling Commands
+
+### `wattpm pprof start`
+
+Starts CPU profiling for services in a running application.
+
+```bash
+wattpm pprof start [id] [service]
+```
+
+**Arguments:**
+- `id` - Process ID or application name (optional if only one app is running)
+- `service` - Service name (optional, profiles all services if omitted)
+
+**Example:**
+```bash
+wattpm pprof start                      # Start profiling all services (auto-detect runtime)
+wattpm pprof start api-service          # Start profiling specific service (auto-detect runtime)
+wattpm pprof start my-app               # Start profiling all services in specific app
+wattpm pprof start my-app api-service   # Start profiling specific service in specific app
+wattpm pprof start 12345 api-service    # Start profiling specific service using PID
+```
+
+### `wattpm pprof stop`
+
+Stops CPU profiling and saves profile data as `pprof-{service}-{timestamp}.pb` files.
+
+```bash
+wattpm pprof stop [id] [service]
+```
+
+**Arguments:**
+- `id` - Process ID or application name (optional if only one app is running)
+- `service` - Service name (optional, stops profiling all services if omitted)
+
+**Example:**
+```bash
+wattpm pprof stop                      # Stop profiling all services (auto-detect runtime)
+wattpm pprof stop api-service          # Stop profiling specific service (auto-detect runtime)
+wattpm pprof stop my-app               # Stop profiling all services in specific app
+wattpm pprof stop my-app api-service   # Stop profiling specific service in specific app
+wattpm pprof stop 12345 api-service    # Stop profiling specific service using PID
+```
+
 ## Advanced Commands
 
 ### `wattpm patch-config`

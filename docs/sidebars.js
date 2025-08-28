@@ -23,7 +23,7 @@ const sidebars = {
         'Overview'
       ]
     },
-    
+
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
     {
       type: 'category',
@@ -83,7 +83,8 @@ const sidebars = {
             'guides/monitoring-and-observability',
             'guides/monitoring',
             'guides/telemetry',
-            'guides/logging-to-elasticsearch'
+            'guides/logging-to-elasticsearch',
+            'guides/profiling-with-watt'
           ]
         }
       ]
@@ -210,7 +211,7 @@ const sidebars = {
               label: 'Next.js',
               collapsed: true,
               items: [
-                'reference/next/overview', 
+                'reference/next/overview',
                 'reference/next/configuration'
               ]
             },
@@ -238,7 +239,7 @@ const sidebars = {
               label: 'Remix',
               collapsed: true,
               items: [
-                'reference/remix/overview', 
+                'reference/remix/overview',
                 'reference/remix/configuration',
                 'reference/remix/caching'
               ]
@@ -248,7 +249,7 @@ const sidebars = {
               label: 'Vite',
               collapsed: true,
               items: [
-                'reference/vite/overview', 
+                'reference/vite/overview',
                 'reference/vite/configuration'
               ]
             }
