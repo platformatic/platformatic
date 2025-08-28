@@ -1,10 +1,10 @@
 # Introducing Watt 3: Faster, Simpler, and More Powerful Than Ever
 
-Today, we're excited to announce the release of **Watt 3** (`wattpm` v3.0.0), a major evolution of the Platformatic platform that brings significant performance improvements, architectural simplifications, and modernization upgrades that will transform how you build and deploy Node.js applications.
+Today, we're excited to announce the release of **Watt 3** (`wattpm` v3.0.0), a major evolution of the Watt Node.js Application Server that brings significant performance improvements, architectural simplifications, and modernization upgrades that will transform how you build and deploy Node.js applications.
 
 ## What's New in Watt 3
 
-Watt 3 isn't just an incremental update—it's a complete reimagining of how Platformatic applications start, scale, and operate. With 18 commits and 15 major breaking changes, this release represents the most significant evolution in Platformatic's history. Here are the key transformations:
+Watt 3 isn't just an incremental update—it's a complete reimagining of how applications start, scale, and operate on the Watt application server. With 18 commits and 15 major breaking changes, this release represents the most significant evolution in Watt's history. Here are the key transformations:
 
 ### 🚀 Parallel Application Startup and Shutdown
 
@@ -26,16 +26,22 @@ Service B ├─→ All services ready! (12 seconds)
 Service C ┘
 ```
 
-### 💻 Native TypeScript Support
+### 💻 Native TypeScript Support Powered by Type Stripping
 
-**Direct TypeScript execution without compilation overhead.** Watt 3 removes the separate `@platformatic/ts-compiler` package and implements native TypeScript support:
+**Revolutionary TypeScript execution without compilation overhead.** Watt 3 leverages Node.js's groundbreaking **type stripping** technology to execute TypeScript directly:
 
-- **No more build steps:** TypeScript files run directly using Node.js modern loaders
-- **Faster development:** Eliminate intermediate compilation for quicker iterations
-- **Simplified configuration:** Remove `typescript.outDir` and compilation flags
-- **Better DX:** Native Node.js TypeScript support with zero configuration
+- **Instant execution:** TypeScript files run immediately without compilation delays
+- **Native performance:** Types stripped at parse-time, code runs at JavaScript speeds  
+- **Zero build complexity:** No more transpilation, watch processes, or build tooling
+- **Better development experience:** Edit TypeScript, run immediately—no compilation step
+- **Simplified deployment:** Ship .ts files directly, let Node.js handle the rest
 
-Your TypeScript applications now run as smoothly as JavaScript, with no translation layers or build complexity.
+**How Type Stripping Works:**
+Instead of traditional transpilation that rewrites your code, Node.js type stripping simply removes type annotations during parsing—like erasing pencil marks from a drawing. Your logic stays identical, but types disappear at runtime, delivering instant startup and native JavaScript performance.
+
+*Learn more about this revolutionary approach: [Everything You Need to Know About Node.js Type Stripping](https://satanacchio.hashnode.dev/everything-you-need-to-know-about-nodejs-type-stripping)*
+
+This represents the future of TypeScript development—all the type safety benefits during development, with zero runtime overhead.
 
 ### 🏗️ Composer → Gateway: A More Powerful API Gateway
 
@@ -49,13 +55,15 @@ The transition is seamless with full backward compatibility, but the new gateway
 
 ### 🧪 Modern Testing with Node.js Native Runner
 
-**Goodbye external dependencies, hello native performance.** We've removed `borp` and embraced Node.js's built-in `--test` runner:
+**Mission accomplished: From playground to production.** We've successfully migrated from `borp` to Node.js's built-in `--test` runner, completing a journey that helped shape Node.js testing itself:
 
-- **Fewer dependencies:** One less external testing framework to manage
-- **Better performance:** Native Node.js testing is faster and more reliable
-- **Future-proof:** Aligned with Node.js's testing roadmap and innovations
+- **Strategic innovation:** Borp served as our testing playground when Node.js `--test` was missing critical features
+- **Community contribution:** The gaps we identified in borp were contributed back to Node.js core
+- **Feature parity achieved:** Node.js 22.18+ now includes all the essential testing capabilities we needed
+- **Reduced dependencies:** One less external framework to manage and maintain
+- **Native performance:** Tests run directly on the Node.js engine with zero overhead
 
-Your tests now run on the same engine that powers your applications—no translation layers, no extra overhead.
+This migration represents more than a dependency change—it's proof that thoughtful experimentation can drive improvements in Node.js itself. Your tests now run on the same battle-tested engine that powers your applications.
 
 ### 🚀 Massimo: From Integrated Tool to Standalone Powerhouse
 
@@ -67,21 +75,21 @@ Your tests now run on the same engine that powers your applications—no transla
 - **Better performance:** Optimized for both server-side (Undici) and browser (fetch) environments
 - **Active development:** Dedicated project with community contributions
 
-This extraction allows Massimo to evolve independently while Watt 3 focuses on its core application platform strengths.
+This extraction allows Massimo to evolve independently while Watt 3 focuses on its core application server strengths.
 
 ### 🧹 Streamlined Architecture  
 
 **Simpler is better.** With Massimo now independent, we've streamlined Watt 3 by removing the integrated client generation:
 
-- **Reduce complexity:** 25,000+ lines of code removed for a leaner, more focused platform
+- **Reduce complexity:** 25,000+ lines of code removed for a leaner, more focused application server
 - **Improve maintainability:** Fewer moving parts means more reliable core functionality  
-- **Clear separation:** Client generation and application platform concerns properly separated
+- **Clear separation:** Client generation and application server concerns properly separated
 
-This change creates a cleaner architecture where each tool excels in its domain—Watt 3 for application platforms, Massimo for API clients.
+This change creates a cleaner architecture where each tool excels in its domain—Watt 3 as a Node.js application server, Massimo for API clients.
 
 ### 🏷️ Clearer Terminology: From Stackables to Capabilities
 
-**Better names for better understanding.** We've renamed "stackables" to "capabilities" throughout the platform, along with a complete architectural overhaul:
+**Better names for better understanding.** We've renamed "stackables" to "capabilities" throughout the application server, along with a complete architectural overhaul:
 
 - **Intuitive naming:** "Capabilities" better describes what these components do
 - **Consistent terminology:** Unified language across docs, APIs, and code
@@ -93,7 +101,7 @@ The new capability format provides a much cleaner development experience with be
 
 ### 📱 Services Become Applications
 
-**Broader scope, better naming.** The platform now uses "applications" instead of "services":
+**Broader scope, better naming.** The application server now uses "applications" instead of "services":
 
 - **Accurate representation:** Reflects the full range of what you can deploy
 - **Modern terminology:** Aligns with current cloud-native conventions
@@ -130,10 +138,11 @@ The new capability format provides a much cleaner development experience with be
 
 ### For Developers
 
-- **Faster feedback loops:** Parallel startup and native TypeScript reduce development cycle time
-- **Simplified debugging:** Fewer abstraction layers and unified CLI mean clearer error messages
-- **Modern toolchain:** Native Node.js testing, ESM modules, and latest Node.js features
-- **Better performance:** Direct TypeScript execution, parallel operations, and reduced overhead
+- **Faster feedback loops:** Parallel startup and instant TypeScript execution reduce development cycle time
+- **Revolutionary TypeScript DX:** Type stripping eliminates compilation delays—write TypeScript, run immediately
+- **Simplified debugging:** Fewer abstraction layers, unified CLI, and direct source mapping mean clearer error messages
+- **Modern toolchain:** Native Node.js testing, ESM modules, type stripping, and latest Node.js features
+- **Better performance:** Zero-overhead TypeScript, parallel operations, and reduced build complexity
 - **Clearer mental models:** Intuitive terminology (capabilities, applications, gateway)
 - **Unified workflows:** Single CLI for all operations reduces context switching
 
@@ -147,7 +156,7 @@ The new capability format provides a much cleaner development experience with be
 - **Simplified log management:** External log rotation encourages better ops practices
 - **Unified tooling:** Single CLI reduces operational complexity
 
-### For Platform Architects
+### For Application Architects
 
 - **Cleaner abstractions:** Gateway, applications, and capabilities provide intuitive concepts
 - **Better scaling patterns:** Parallel execution enables more efficient horizontal scaling
@@ -158,7 +167,7 @@ The new capability format provides a much cleaner development experience with be
 
 ## Migration Path
 
-While Watt 3 introduces breaking changes, we've designed the migration to be as smooth as possible:
+While Watt 3 introduces breaking changes, most applications will upgrade automatically. Here's what you need to know:
 
 ### 1. Upgrade Node.js First
 ```bash
@@ -181,22 +190,33 @@ node --version  # Should be 22.18.0+
 ```
 
 ### 3. Update Configuration Files
-```yaml
-# platformatic.yml
-applications:
-  - id: my-api
--   type: service
-+   type: application
--   type: composer
-+   type: gateway
+```json
+// watt.json
+{
+  "applications": [
+    {
+      "id": "my-api",
+-     "type": "service"
++     "type": "application"
+    },
+    {
+      "id": "my-gateway", 
+-     "type": "composer"
++     "type": "gateway"
+    }
+  ]
+}
 
-# Remove old configuration sections
--clients:
--  frontend: true
--typescript:
--  outDir: dist
--marketplace:
--  autoInstall: true
+// Remove old configuration sections
+-  "clients": {
+-    "frontend": true
+-  },
+-  "typescript": {
+-    "outDir": "dist"
+-  },
+-  "marketplace": {
+-    "autoInstall": true
+-  }
 ```
 
 ### 4. Replace Client Generation
@@ -226,7 +246,7 @@ Alternatively, use other tools:
 
 ### 6. Update Import Statements and Capability Format
 ```javascript
-// Update ESM imports
+// Update ESM imports for Watt packages (your app can still use CommonJS)
 -const { service } = require('@platformatic/service')
 +import { application } from '@platformatic/service'
 
@@ -284,16 +304,23 @@ npm start
 ```
 
 ### Existing Projects
-1. **Upgrade Node.js** to 22.18.0+ before anything else
-2. **Review our [migration guide](SUMMARY.md)** for detailed upgrade instructions
-3. **Test in staging** - this release has 15 breaking changes
-4. **Update CLI usage** from individual CLIs to unified `wattpm`
-5. **Migrate to ESM** - update all imports/exports
-6. **Update dependencies** and configuration files
-7. **Replace client generation** tooling
-8. **Update test scripts** to use Node.js native testing
-9. **Remove deprecated configs** (TypeScript outDir, marketplace, log rolling)
-10. **Update terminology** in your codebase (services→applications, stackables→capabilities)
+Most applications will upgrade automatically thanks to Watt's built-in migration mechanisms, but some manual changes may be required:
+
+**Automatic Migration:**
+- Configuration terminology updates (services→applications, composer→gateway, stackables→capabilities)
+- Package dependency updates and renames
+- Schema and API endpoint migrations
+
+**Manual Intervention Required:**
+1. **Upgrade Node.js** to 22.18.0+ before upgrading Watt
+2. **Update CLI usage** from individual CLIs to unified `wattpm` in scripts
+3. **Replace client generation** - migrate from `@platformatic/client` to [Massimo](https://massimohttp.dev/)
+4. **Update custom capabilities** to use new `applicationFactory` format
+5. **Remove deprecated configs** (TypeScript outDir, marketplace, log rolling)
+
+**Testing:**
+- Review our [migration guide](SUMMARY.md) for detailed upgrade instructions
+- Test in staging environment to verify automatic migrations worked correctly
 
 ### Community and Support
 
@@ -321,21 +348,13 @@ Watt 3 includes these 15 major breaking changes:
 13. **Composer→Gateway rename** - Better reflects API gateway capabilities
 14. **Client packages removed** - `@platformatic/client` packages eliminated
 15. **Parallel startup behavior** - Applications start concurrently
-16. **Complete ESM migration** - All packages converted to ES modules
-
-## Performance Improvements
-
-Benchmarks show impressive improvements:
-- **Startup time:** 60-75% faster for multi-application projects
-- **Memory usage:** 15-20% reduction in baseline consumption
-- **Test execution:** 25-40% faster with native Node.js testing
-- **Bundle size:** 12% smaller after removing 25,000+ lines of code
+16. **Complete ESM migration** - All core packages converted to ES modules (applications can still use CommonJS or ESM)
 
 ## Thank You
 
 Watt 3 represents months of careful planning, development, and testing. We're grateful to our community for feedback, bug reports, and contributions that made this release possible.
 
-The changes in Watt 3 position Platformatic as a more performant, maintainable, and future-ready platform for building Node.js applications at scale.
+The changes in Watt 3 position it as a more performant, maintainable, and future-ready Node.js application server for building applications at scale.
 
 **Ready to experience Watt 3?** Download the alpha release and let us know what you think!
 

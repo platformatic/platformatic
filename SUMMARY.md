@@ -4,7 +4,7 @@ This document provides a comprehensive summary of the key changes and commits th
 
 ## Overview
 
-Watt 3 represents a major architectural evolution of the Platformatic platform, introducing significant performance improvements, API redesigns, and modernization efforts. This release includes 18 commits with 15 major breaking changes that enhance scalability, simplify the codebase, and align with modern Node.js best practices.
+Watt 3 represents a major architectural evolution of the Watt Node.js Application Server, introducing significant performance improvements, API redesigns, and modernization efforts. This release includes 18 commits with 15 major breaking changes that enhance scalability, simplify the codebase, and align with modern Node.js best practices.
 
 ## Detailed Commit Analysis
 
@@ -88,13 +88,24 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 3. Direct TypeScript Support (ae2fab511)
 **[PR #4162](https://github.com/platformatic/platformatic/pull/4162)** | **[Commit](https://github.com/platformatic/platformatic/commit/ae2fab5114e343d948dae85258587e6a3db41381)** | **Merged:** August 4, 2025
 
-**Summary:** This change removes the separate `@platformatic/ts-compiler` package and implements native TypeScript support through direct execution without intermediate compilation steps, leveraging Node.js modern TypeScript loaders.
+**Summary:** This change removes the separate `@platformatic/ts-compiler` package and implements native TypeScript support through direct execution using Node.js's new **type stripping** feature, eliminating intermediate compilation steps entirely.
 
 **Technical Impact:**
 - Removed `@platformatic/ts-compiler` package entirely
-- Implemented native TypeScript support with direct execution
-- Simplified build process by eliminating intermediate compilation
-- Updated generator templates for TypeScript projects
+- **Leverages Node.js type stripping:** Uses Node.js's built-in type stripping feature (available with `--experimental-strip-types`) to execute TypeScript directly
+- **Zero-overhead execution:** TypeScript types are stripped at parse time without compilation, providing near-native JavaScript performance
+- **Simplified build process:** Eliminated intermediate compilation steps and build tooling complexity
+- **Direct .ts file execution:** TypeScript files run directly as modules without transpilation
+- Updated generator templates to use native TypeScript execution patterns
+
+**Type Stripping Technology:**
+Node.js type stripping is a performance-focused feature that removes TypeScript type annotations at the syntax level during parsing, rather than through traditional transpilation. This enables:
+- **Instant startup:** No compilation delay, TypeScript files execute immediately
+- **Native performance:** Stripped code runs at JavaScript speeds with minimal overhead
+- **Simplified toolchain:** No need for separate build steps or watch processes
+- **Better debugging:** Direct source mapping without transpilation artifacts
+
+*Learn more: [Everything You Need to Know About Node.js Type Stripping](https://satanacchio.hashnode.dev/everything-you-need-to-know-about-nodejs-type-stripping)*
 
 **Breaking Changes:**
 - `typescript.outDir` configuration option removed
@@ -102,7 +113,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 - Build process for TypeScript projects changed to direct execution
 
 **Migration Notes:**
-- Remove `typescript` configuration blocks from platformatic config files
+- Remove `typescript` configuration blocks from Watt config files
 - Update TypeScript projects to use direct execution
 - Remove build scripts that relied on separate compilation
 - Use native Node.js TypeScript support with modern loaders
@@ -198,7 +209,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 
 **Migration Notes:**
 - Implement external log rotation (e.g., logrotate on Linux)
-- Remove log rolling configuration from platformatic configs
+- Remove log rolling configuration from Watt configs
 - Update log monitoring systems for new logging behavior
 - Set up external log aggregation if needed
 
@@ -207,7 +218,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 8. Stackables to Capabilities Rename (8e9db53d8)
 **[PR #4205](https://github.com/platformatic/platformatic/pull/4205)** | **[Commit](https://github.com/platformatic/platformatic/commit/8e9db53d8b9f71ccf8c7cc0703dbaf6cc8f6bf13)** | **Merged:** August 19, 2025
 
-**Summary:** This refactoring renames "stackables" to "capabilities" throughout the platform, providing clearer terminology for the plugin system that extends Platformatic's functionality.
+**Summary:** This refactoring renames "stackables" to "capabilities" throughout the application server, providing clearer terminology for the plugin system that extends Watt's functionality.
 
 **Technical Impact:**
 - Updated all references from "stackables" to "capabilities"
@@ -240,7 +251,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 9. Services to Applications Rename (ad35181c5)
 **[PR #4208](https://github.com/platformatic/platformatic/pull/4208)** | **[Commit](https://github.com/platformatic/platformatic/commit/ad35181c565b847a6081797a41c3c317ff9ea0fc)** | **Merged:** August 21, 2025
 
-**Summary:** This refactoring renames the concept of "services" to "applications" throughout the codebase, API, and documentation to better reflect the broader scope of what can be deployed and managed by Platformatic.
+**Summary:** This refactoring renames the concept of "services" to "applications" throughout the codebase, API, and documentation to better reflect the broader scope of what can be deployed and managed by the Watt application server.
 
 **Technical Impact:**
 - Updated terminology across all packages and documentation
@@ -266,7 +277,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 10. Borp to Node.js Native Testing (4b417a293)
 **[PR #4213](https://github.com/platformatic/platformatic/pull/4213)** | **[Commit](https://github.com/platformatic/platformatic/commit/4b417a2935d09b9f95c92ec109fac36721f21991)** | **Merged:** August 22, 2025
 
-**Summary:** This change removes the `borp` testing framework dependency across all packages and replaces it with Node.js's built-in `--test` runner. This modernizes the testing infrastructure and reduces external dependencies while leveraging Node.js native testing capabilities.
+**Summary:** This change removes the `borp` testing framework dependency across all packages and replaces it with Node.js's built-in `--test` runner. Originally, borp was adopted because Node.js `--test` was missing critical features. Borp served as a testing playground that helped identify and contribute missing functionality back to Node.js itself. With Node.js 22.18+, all essential testing features are now native, making this migration possible.
 
 **Technical Impact:**
 - Removed `borp` dependency from 126 package.json files
@@ -274,6 +285,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 - Modified CI/CD workflows to use native Node.js testing
 - Updated package configurations and removed borp-specific test setups
 - Added coverage script enhancements for the new test runner
+- **Successful feature migration:** All borp innovations (parallel test execution, advanced reporting, watch mode improvements) now available natively in Node.js 22.18+
 
 **Breaking Changes:**
 - `borp` no longer available as a testing dependency
@@ -292,7 +304,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 11. Marketplace Removal (5c345265b)
 **[PR #4209](https://github.com/platformatic/platformatic/pull/4209)** | **[Commit](https://github.com/platformatic/platformatic/commit/5c345265b40388fab5d3c4da87aca44a3a2fd2d8)** | **Merged:** August 22, 2025
 
-**Summary:** This breaking change removes the marketplace functionality from Platformatic, eliminating the ability to discover and install community-contributed plugins and templates through the marketplace system.
+**Summary:** This breaking change removes the marketplace functionality from Watt, eliminating the ability to discover and install community-contributed plugins and templates through the marketplace system.
 
 **Technical Impact:**
 - Removed `@platformatic/marketplace` package entirely
@@ -368,7 +380,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 14. Parallel Application Startup/Shutdown (5ecdd5c06)
 **[PR #4229](https://github.com/platformatic/platformatic/pull/4229)** | **[Commit](https://github.com/platformatic/platformatic/commit/5ecdd5c069eef5206eb02367f9bec122e0380375)** | **Merged:** August 28, 2025
 
-**Summary:** This major change modifies the Platformatic runtime to start and stop applications in parallel instead of serially, significantly improving performance. The change introduces parallel startup configurations, enhanced dependency management, and better error handling during service lifecycle operations.
+**Summary:** This major change modifies the Watt application server runtime to start and stop applications in parallel instead of serially, significantly improving performance. The change introduces parallel startup configurations, enhanced dependency management, and better error handling during service lifecycle operations.
 
 **Technical Impact:**
 - Added parallel execution support for all capability types (Astro, Next, Nest, Remix, Vite, etc.)
@@ -392,7 +404,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 ### 15. Node.js 20 Support Drop (467311c39)
 **[PR #4105](https://github.com/platformatic/platformatic/pull/4105)** | **[Commit](https://github.com/platformatic/platformatic/commit/467311c395e2fc964e2129ce038e8d525884555b)** | **Merged:** June 24, 2025
 
-**Summary:** This major breaking change removes support for Node.js 20 and raises the minimum Node.js version requirement to 22.18.0 across all packages. This modernization effort enables the platform to leverage newer Node.js features and improved performance characteristics.
+**Summary:** This major breaking change removes support for Node.js 20 and raises the minimum Node.js version requirement to 22.18.0 across all packages. This modernization effort enables the application server to leverage newer Node.js features and improved performance characteristics.
 
 **Technical Impact:**
 - Updated engine requirements in all 36 package.json files to require Node.js 22.18.0+
@@ -446,13 +458,14 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 - Fixed dynamic imports and module resolution issues
 
 **Breaking Changes:**
-- All packages now use ESM instead of CommonJS
-- `require()` statements replaced with `import` statements
-- Module resolution behavior changed to ESM semantics
+- All Watt packages now use ESM instead of CommonJS
+- Core framework `require()` statements replaced with `import` statements
+- Module resolution behavior changed to ESM semantics for internal modules
 - Some dynamic loading patterns may need adjustment
 
 **Migration Notes:**
-- Update consuming applications to use ESM imports
+- **Note:** Watt applications can still use both CommonJS and ESM - this change only affects the core framework
+- Update direct imports of Watt packages to use ESM syntax
 - Ensure Node.js version supports ESM (Node.js 14+)
 - Review dynamic import usage in applications
 - Update build tools and configurations for ESM compatibility
@@ -490,7 +503,7 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 
 This release contains significant breaking changes that require careful migration planning:
 
-1. **Node.js Version:** Upgrade to Node.js 22.18.0+ in all environments before upgrading Platformatic
+1. **Node.js Version:** Upgrade to Node.js 22.18.0+ in all environments before upgrading Watt
 2. **CLI Consolidation:** Replace individual CLI commands with unified `wattpm` CLI
 3. **TypeScript Support:** Remove ts-compiler configurations and use native TypeScript support
 4. **ESM Migration:** Update all imports/exports to use ESM syntax instead of CommonJS
@@ -512,6 +525,6 @@ This release contains significant breaking changes that require careful migratio
 
 - Review the [Migration Guide](#) for detailed upgrade instructions
 - Test applications thoroughly in a staging environment
+- Most applications will auto-update thanks to built-in migration mechanisms
+- Manual intervention required only for specific code-level changes (custom capabilities, CLI usage, client generation)
 - Update CI/CD pipelines to accommodate the new testing framework and CLI changes
-- Plan for comprehensive migration including Node.js upgrade, ESM conversion, and package updates
-- Consider gradual migration approach for large applications with extensive Platformatic integration
