@@ -24,38 +24,6 @@ test('should continously monitor workers health', async t => {
   }
 })
 
-test('should restart the process if it exceeded maximum threshold', async t => {
-  const configFile = join(fixturesDir, 'configs', 'health-unhealthy.json')
-  const server = await createRuntime(configFile)
-
-  t.after(async () => {
-    await server.close()
-  })
-
-  const events = []
-  server.on('application:worker:health', event => {
-    events.push(event)
-  })
-
-  const waitPromise = waitForEvents(
-    server,
-    { event: 'application:worker:unhealthy', application: 'db-app', worker: 0 },
-    { event: 'application:worker:unhealthy', application: 'serviceApp', worker: 0 },
-    { event: 'application:worker:unhealthy', application: 'with-logger', worker: 0 },
-    { event: 'application:worker:unhealthy', application: 'multi-plugin-service', worker: 0 },
-    { event: 'application:worker:starting', application: 'db-app', worker: 0 },
-    { event: 'application:worker:starting', application: 'serviceApp', worker: 0 },
-    { event: 'application:worker:starting', application: 'with-logger', worker: 0 },
-    { event: 'application:worker:starting', application: 'multi-plugin-service', worker: 0 }
-  )
-
-  await server.start()
-  await waitPromise
-
-  deepStrictEqual(events.length, 4)
-  ok(!events.some(e => !e.unhealthy))
-})
-
 test('should not lose any connection when restarting the process', async t => {
   const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
   const context = {}

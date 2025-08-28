@@ -229,6 +229,13 @@ export function rootEntityRoutes (
           description: `Add new ${entity.singularName} to the database.`,
           body: entitySchemaInput,
           tags: [entity.table],
+          querystring: {
+            type: 'object',
+            properties: {
+              fields
+            },
+            additionalProperties: false
+          },
           response: {
             200: entitySchema
           }
@@ -238,9 +245,31 @@ export function rootEntityRoutes (
         }
       },
       async function (request, reply) {
+        const { fields } = request.query
         const ctx = { app: this, reply }
-        const res = await entity.save({ input: request.body, ctx })
-        reply.header('location', `${app.prefix}/${res.id}`)
+
+        let queryFields
+        if (fields) {
+          queryFields = [...fields]
+          for (const key of entity.primaryKeys.values()) {
+            if (!fields.includes(key)) {
+              queryFields.push(key)
+            }
+          }
+        }
+
+        const res = await entity.save({ input: request.body, ctx, fields: queryFields })
+
+        reply.header('location', `${app.prefix}/${res[[...entity.primaryKeys][0]]}`)
+
+        if (fields) {
+          for (const key of entity.primaryKeys.values()) {
+            if (!fields.includes(key)) {
+              delete res[key]
+            }
+          }
+        }
+
         return res
       }
     )

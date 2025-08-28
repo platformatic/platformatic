@@ -9,7 +9,7 @@ function sanitizeHelp (raw) {
 async function loadCommands () {
   const commands = {}
 
-  for (const file of ['build', 'create', 'execution', 'management', 'admin', 'logs', 'inject', 'metrics']) {
+  for (const file of ['build', 'create', 'execution', 'management', 'admin', 'logs', 'inject', 'metrics', 'pprof']) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
   }

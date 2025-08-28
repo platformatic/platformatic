@@ -3,6 +3,8 @@ import { type EventEmitter } from 'node:events'
 import { type Level, type Logger } from 'pino'
 import * as Client from 'prom-client'
 
+type Optional<T> = T | undefined;
+
 export type Handler = ((data: any) => any) | ((data: any) => Promise<any>)
 
 export interface InvalidateHttpCacheOptions {

@@ -452,6 +452,23 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Owner",
@@ -1706,6 +1723,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "counter",
+                  "id",
+                  "longText",
+                  "ownerId",
+                  "title"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Post",

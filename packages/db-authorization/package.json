@@ -27,7 +27,7 @@
     "fastify": "^5.0.0",
     "get-jwks": "^11.0.0",
     "neostandard": "^0.12.0",
-    "tsd": "^0.32.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"

@@ -524,6 +524,24 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "id",
+                  "name",
+                  "parentId"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Person",

@@ -647,6 +647,25 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "counter",
+                  "id",
+                  "longText",
+                  "title"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Post",

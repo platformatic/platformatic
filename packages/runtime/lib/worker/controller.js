@@ -222,6 +222,7 @@ export class Controller extends EventEmitter {
         globalThis.platformatic.onHttpStatsSize(url, size || 0)
       }
     }
+    globalThis.platformatic.onActiveResourcesEventLoop(getActiveResourcesInfo().length)
     return this.capability.getMetrics({ format })
   }
 

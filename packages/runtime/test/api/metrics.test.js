@@ -81,7 +81,8 @@ test('should get runtime metrics in a json format', async t => {
     'http_client_stats_pending',
     'http_client_stats_queued',
     'http_client_stats_running',
-    'http_client_stats_size'
+    'http_client_stats_size',
+    'active_resources_event_loop'
   ]
 
   const applications = ['service-1', 'service-2', 'service-db']
@@ -170,7 +171,8 @@ test('should get runtime metrics in a text format', async t => {
     'http_client_stats_pending',
     'http_client_stats_queued',
     'http_client_stats_running',
-    'http_client_stats_size'
+    'http_client_stats_size',
+    'active_resources_event_loop'
   ]
   for (const metricName of expectedMetricNames) {
     ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
@@ -428,6 +430,19 @@ test('should get runtime metrics in a json format without a application call', a
   strictEqual(sizeMetric.name, 'http_client_stats_size')
   strictEqual(sizeMetric.type, 'gauge')
   strictEqual(sizeMetric.aggregator, 'sum')
+
+  const activeMetric = metrics.find(({ name }) => name === 'active_resources_event_loop')
+  strictEqual(activeMetric.type, 'gauge')
+  strictEqual(activeMetric.aggregator, 'sum')
+  const [
+    {
+      labels: { serviceId, custom_label: label },
+      value
+    }
+  ] = activeMetric.values
+  strictEqual(serviceId, 'service-1')
+  strictEqual(label, 'custom-value')
+  ok(value > 0)
 
   const summaryValues = summaryMetric.values
 

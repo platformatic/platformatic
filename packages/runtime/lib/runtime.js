@@ -512,6 +512,18 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  async startApplicationProfiling (id, options = {}, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(service, 'startProfiling', options)
+  }
+
+  async stopApplicationProfiling (id, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(service, 'stopProfiling')
+  }
+
   async updateUndiciInterceptors (undiciConfig) {
     this.#config.undici = undiciConfig
 

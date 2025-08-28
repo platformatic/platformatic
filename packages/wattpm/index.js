@@ -11,6 +11,7 @@ import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
 import { applicationsCommand, configCommand, envCommand, psCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
+import { pprofCommand } from './lib/commands/pprof.js'
 import { version } from './lib/schema.js'
 
 export * from './lib/schema.js'
@@ -96,6 +97,9 @@ export async function main () {
       break
     case 'metrics':
       command = metricsCommand
+      break
+    case 'pprof':
+      command = pprofCommand
       break
     case 'admin':
       command = adminCommand

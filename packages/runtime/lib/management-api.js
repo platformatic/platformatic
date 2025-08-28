@@ -112,6 +112,23 @@ export async function managementApiPlugin (app, opts) {
     reply.code(res.statusCode).headers(res.headers).send(res.body)
   })
 
+  app.post('/services/:id/pprof/start', async (request, reply) => {
+    const { id } = request.params
+    app.log.debug('start profiling', { id })
+
+    const options = request.body || {}
+    await runtime.startApplicationProfiling(id, options)
+    reply.code(200).send({})
+  })
+
+  app.post('/services/:id/pprof/stop', async (request, reply) => {
+    const { id } = request.params
+    app.log.debug('stop profiling', { id })
+
+    const profileData = await runtime.stopApplicationProfiling(id)
+    reply.type('application/octet-stream').code(200).send(profileData)
+  })
+
   app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
     const accepts = req.accepts()
 

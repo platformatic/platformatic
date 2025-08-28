@@ -77,3 +77,23 @@ export const FailedToGetRuntimeMetrics = createError(
   `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METRICS`,
   'Failed to get runtime metrics %s.'
 )
+
+export const ProfilingAlreadyStarted = createError(
+  `${ERROR_PREFIX}_PROFILING_ALREADY_STARTED`,
+  'Profiling is already started for service "%s".'
+)
+
+export const ProfilingNotStarted = createError(
+  `${ERROR_PREFIX}_PROFILING_NOT_STARTED`,
+  'Profiling not started for service "%s".'
+)
+
+export const FailedToStartProfiling = createError(
+  `${ERROR_PREFIX}_FAILED_TO_START_PROFILING`,
+  'Failed to start profiling for service "%s": %s'
+)
+
+export const FailedToStopProfiling = createError(
+  `${ERROR_PREFIX}_FAILED_TO_STOP_PROFILING`,
+  'Failed to stop profiling for service "%s": %s'
+)

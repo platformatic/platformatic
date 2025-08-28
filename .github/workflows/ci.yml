@@ -8,24 +8,24 @@ on:
       - v2.x
       - v3-alpha-2
     paths-ignore:
-      - "docs/**"
-      - "**.md"
-      - "signatures/**"
+      - 'docs/**'
+      - '**.md'
+      - 'signatures/**'
   pull_request:
     paths-ignore:
-      - "docs/**"
-      - "**.md"
-      - "signatures/**"
+      - 'docs/**'
+      - '**.md'
+      - 'signatures/**'
   workflow_dispatch:
     inputs:
       job:
-        description: "Run a single job"
+        description: 'Run a single job'
         required: false
-        default: ""
+        default: ''
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
-  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 
 env:
@@ -34,7 +34,7 @@ env:
 
 jobs:
   setup:
-    name: "setup - ${{ matrix.label }}"
+    name: 'setup - ${{ matrix.label }}'
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
@@ -45,13 +45,13 @@ jobs:
           - label: Win
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node: 22.18.0
-          cache: "pnpm"
-      - uses: "nick-fields/retry@v3.0.2"
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -59,7 +59,7 @@ jobs:
           command: pnpm fetch --ignore-scripts
 
   dependency-check:
-    name: "dependency-check - ${{ matrix.label }}"
+    name: 'dependency-check - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
     runs-on: ${{ matrix.os }}
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         id: install
         run: |
@@ -100,7 +100,7 @@ jobs:
         run: exit 1
 
   runtime-lint:
-    name: "runtime-lint"
+    name: 'runtime-lint'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
     runs-on: ubuntu-24.04
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node: 22.18.0
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -123,7 +123,7 @@ jobs:
         run: cd packages/runtime && pnpm run lint
 
   db-lint:
-    name: "db-lint"
+    name: 'db-lint'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-lint' }}
     runs-on: ubuntu-24.04
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node: 22
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         run: pnpm install --frozen-lockfile
       - name: pnpm install
@@ -166,7 +166,7 @@ jobs:
           pnpm --filter="@platformatic/sql-events" run test:typescript
 
   cli:
-    name: "cli - ${{ matrix.label }}"
+    name: 'cli - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'cli' }}
     runs-on: ${{ matrix.os }}
@@ -187,12 +187,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -207,7 +207,7 @@ jobs:
         run: cd packages/cli && pnpm run license
 
   foundation:
-    name: "foundation - ${{ matrix.label }}"
+    name: 'foundation - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'utils' }}
     runs-on: ${{matrix.os}}
@@ -228,12 +228,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -245,7 +245,7 @@ jobs:
         run: cd packages/foundation && pnpm test && pnpm run lint
 
   basic:
-    name: "basic - ${{ matrix.label }}"
+    name: 'basic - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'basic' }}
     runs-on: ${{matrix.os}}
@@ -266,12 +266,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -283,7 +283,7 @@ jobs:
         run: cd packages/basic && pnpm test && pnpm run lint
 
   itc:
-    name: "itc - ${{ matrix.label }}"
+    name: 'itc - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'itc' }}
     runs-on: ${{matrix.os}}
@@ -304,12 +304,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -321,7 +321,7 @@ jobs:
         run: cd packages/itc && pnpm test && pnpm run lint
 
   globals:
-    name: "globals - ${{ matrix.label }}"
+    name: 'globals - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'globals' }}
     runs-on: ${{matrix.os}}
@@ -342,12 +342,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -359,7 +359,7 @@ jobs:
         run: cd packages/globals && pnpm test && pnpm run lint
 
   runtime:
-    name: "runtime - ${{ matrix.label }}"
+    name: 'runtime - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'runtime' }}
     runs-on: ${{matrix.os}}
@@ -448,12 +448,12 @@ jobs:
             os: windows-2025
             suite: multiple-workers
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -465,7 +465,7 @@ jobs:
         run: cd packages/runtime && pnpm run test:${{ matrix.suite }}
 
   service:
-    name: "service - ${{ matrix.label }}"
+    name: 'service - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'service' }}
     runs-on: ${{ matrix.os }}
@@ -486,12 +486,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -505,7 +505,7 @@ jobs:
           pnpm run test
 
   gateway:
-    name: "gateway - ${{ matrix.label }}"
+    name: 'gateway - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'gateway' }}
     runs-on: ${{matrix.os}}
@@ -520,12 +520,12 @@ jobs:
             node: 24.5.0
             os: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -537,7 +537,7 @@ jobs:
         run: cd packages/gateway && pnpm run test
 
   composer:
-    name: "composer - ${{ matrix.label }}"
+    name: 'composer - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'composer' }}
     runs-on: ${{matrix.os}}
@@ -552,12 +552,12 @@ jobs:
             node: 24.5.0
             os: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -569,7 +569,7 @@ jobs:
         run: cd packages/composer && pnpm run test
 
   db:
-    name: "db - ${{ matrix.label }}"
+    name: 'db - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db' }}
     runs-on: ${{matrix.os}}
@@ -590,13 +590,13 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -612,7 +612,7 @@ jobs:
         run: cd packages/db && pnpm test && pnpm run lint
 
   db-authorization:
-    name: "db-authorization - ${{ matrix.label }}"
+    name: 'db-authorization - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
     runs-on: ${{matrix.os}}
@@ -627,12 +627,12 @@ jobs:
             node: 24.5.0
             os: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
       - name: pnpm install
@@ -646,7 +646,7 @@ jobs:
         run: cd packages/db-authorization && pnpm test && pnpm run lint
 
   db-core-test:
-    name: "db-core-test - ${{ matrix.label }}"
+    name: 'db-core-test - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
     runs-on: ubuntu-24.04
@@ -685,12 +685,12 @@ jobs:
             db: sqlite
             node: 24.5.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d ${{ matrix.db }}
         if: ${{ matrix.db != 'sqlite' }}
@@ -714,7 +714,7 @@ jobs:
         run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }} && cd ..
 
   sql-events:
-    name: "sql-events - ${{ matrix.label }}"
+    name: 'sql-events - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'sql-events' }}
     runs-on: ${{matrix.os}}
@@ -753,12 +753,12 @@ jobs:
             db: sqlite
             node: 24.5.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d ${{ matrix.db }}
         if: ${{ matrix.db != 'sqlite' }}
@@ -778,7 +778,7 @@ jobs:
         run: cd packages/sql-events && pnpm run test:${{ matrix.db }}
 
   wattpm:
-    name: "wattpm - ${{ matrix.label }}"
+    name: 'wattpm - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'wattpm' }}
     runs-on: ${{matrix.os}}
@@ -799,12 +799,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -816,7 +816,7 @@ jobs:
         run: cd packages/wattpm && pnpm test && pnpm run lint
 
   wattpm-utils:
-    name: "wattpm-utils - ${{ matrix.label }}"
+    name: 'wattpm-utils - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'wattpm-utils' }}
     runs-on: ${{matrix.os}}
@@ -837,12 +837,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -854,7 +854,7 @@ jobs:
         run: cd packages/wattpm-utils && pnpm test && pnpm run lint
 
   create-wattpm:
-    name: "create-wattpm - ${{ matrix.label }}"
+    name: 'create-wattpm - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'create-wattpm' }}
     runs-on: ${{ matrix.os }}
@@ -875,12 +875,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -898,7 +898,7 @@ jobs:
         run: cd packages/create-wattpm && pnpm test && pnpm run lint
 
   create-platformatic:
-    name: "create-platformatic - ${{ matrix.label }}"
+    name: 'create-platformatic - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
     runs-on: ${{ matrix.os }}
@@ -919,12 +919,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -942,7 +942,7 @@ jobs:
         run: cd packages/create-platformatic && pnpm test && pnpm run lint
 
   control:
-    name: "control - ${{ matrix.label }}"
+    name: 'control - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'control' }}
     runs-on: ${{matrix.os}}
@@ -963,12 +963,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -980,7 +980,7 @@ jobs:
         run: cd packages/control && pnpm test && pnpm run lint
 
   metrics:
-    name: "metrics - ${{ matrix.label }}"
+    name: 'metrics - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'metrics' }}
     runs-on: ${{ matrix.os }}
@@ -1001,13 +1001,13 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
-      - uses: "nick-fields/retry@v3.0.2"
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -1017,7 +1017,7 @@ jobs:
         run: cd packages/metrics && pnpm test && pnpm run lint
 
   telemetry:
-    name: "telemetry - ${{ matrix.label }}"
+    name: 'telemetry - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'telemetry' }}
     runs-on: ${{matrix.os}}
@@ -1032,14 +1032,14 @@ jobs:
             node: 24.5.0
             os: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
-      - uses: "nick-fields/retry@v3.0.2"
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -1049,7 +1049,7 @@ jobs:
         run: cd packages/telemetry && pnpm test && pnpm run lint
 
   generators:
-    name: "generators - ${{ matrix.label }}"
+    name: 'generators - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'generators' }}
     runs-on: ${{matrix.os}}
@@ -1070,12 +1070,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1087,7 +1087,7 @@ jobs:
         run: cd packages/generators && pnpm test && pnpm run lint
 
   node:
-    name: "node - ${{ matrix.label }}"
+    name: 'node - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'node' }}
     runs-on: ${{matrix.os}}
@@ -1108,12 +1108,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1125,7 +1125,7 @@ jobs:
         run: cd packages/node && pnpm test && pnpm run lint
 
   next:
-    name: "next - ${{ matrix.label }}"
+    name: 'next - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ${{matrix.os}}
@@ -1143,12 +1143,12 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1163,7 +1163,7 @@ jobs:
         run: cd packages/next && pnpm test && pnpm run lint
 
   vite:
-    name: "vite - ${{ matrix.label }}"
+    name: 'vite - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'vite' }}
     runs-on: ${{matrix.os}}
@@ -1184,12 +1184,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1201,7 +1201,7 @@ jobs:
         run: cd packages/vite && pnpm test && pnpm run lint
 
   astro:
-    name: "astro - ${{ matrix.label }}"
+    name: 'astro - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'astro' }}
     runs-on: ${{matrix.os}}
@@ -1222,12 +1222,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1239,7 +1239,7 @@ jobs:
         run: cd packages/astro && pnpm test && pnpm run lint
 
   remix:
-    name: "remix - ${{ matrix.label }}"
+    name: 'remix - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'remix' }}
     runs-on: ${{matrix.os}}
@@ -1260,12 +1260,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
@@ -1277,7 +1277,7 @@ jobs:
         run: cd packages/remix && pnpm test && pnpm run lint
 
   nest:
-    name: "nest - ${{ matrix.label }}"
+    name: 'nest - ${{ matrix.label }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'nest' }}
     runs-on: ${{matrix.os}}
@@ -1298,12 +1298,12 @@ jobs:
             node: 24.5.0
             os: windows-2025
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:

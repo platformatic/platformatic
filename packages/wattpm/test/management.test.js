@@ -194,6 +194,7 @@ test('config - should list configuration for an application', async t => {
     startTimeout: 30000,
     messagingTimeout: 30000,
     managementApi: true,
+    preload: [resolve('../watt-pprof-capture/index.js')],
     applications: [
       {
         id: 'alternative',
