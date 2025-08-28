@@ -40,11 +40,11 @@ export async function start (...args) {
     split(
       function (line) {
         try {
-          const message = JSON.parse(line)
-
-          if (process.env.PLT_TESTS_VERBOSE === 'true') {
-            process._rawDebug(message)
+          if (process.env.PLT_TESTS_DEBUG === 'true') {
+            process._rawDebug(line)
           }
+
+          const message = JSON.parse(line)
 
           const mo = message.msg?.match(/server listening at (.+)/i)
 

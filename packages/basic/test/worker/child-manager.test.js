@@ -7,7 +7,7 @@ import { ChildManager } from '../../lib/worker/child-manager.js'
 
 function createLogger () {
   const messages = []
-  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+  const verbose = process.env.PLT_TESTS_DEBUG === 'true'
 
   const logger = {
     debug (message) {

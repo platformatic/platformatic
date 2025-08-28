@@ -23,7 +23,7 @@ export async function moveToTmpdir (teardown) {
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  if (!process.env.PLT_TESTS_SKIP_REMOVE_TEMPORARY) {
+  if (process.env.PLT_TESTS_DEBUG !== 'true') {
     teardown(() => safeRemove(dir))
   }
   return dir
@@ -81,13 +81,14 @@ export async function createRuntime (configOrRoot, sourceOrConfig, context) {
 
       config.logger ??= {}
 
-      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
-        config.logger.transport ??= {
-          target: 'pino/file',
-          options: { destination: context.logsPath }
-        }
-      } else {
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
         config.logger.level = 'trace'
+        process._rawDebug('Runtime logs:', context.logsPath)
+      }
+
+      config.logger.transport ??= {
+        target: 'pino/file',
+        options: { destination: context.logsPath }
       }
 
       return config

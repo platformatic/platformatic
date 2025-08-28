@@ -35,11 +35,11 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
 
   try {
     for await (const log of on(stream.pipe(split2()), 'data', { signal: ac.signal })) {
-      const parsed = JSON.parse(log.toString())
-
-      if (process.env.PLT_TESTS_VERBOSE === 'true') {
-        process._rawDebug(parsed)
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
+        process._rawDebug(log.toString())
       }
+
+      const parsed = JSON.parse(log.toString())
 
       messages.push(parsed)
 
