@@ -307,6 +307,8 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
         target: 'pino/file',
         options: { destination: resolve(root, 'logs.txt') }
       }
+
+      return config
     }
   })
 
