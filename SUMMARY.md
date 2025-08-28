@@ -4,7 +4,7 @@ This document provides a comprehensive summary of the key changes and commits th
 
 ## Overview
 
-Watt 3 represents a major architectural evolution of the Platformatic platform, introducing significant performance improvements, API redesigns, and modernization efforts. This release includes 10 commits with 8 major breaking changes that enhance scalability, simplify the codebase, and align with modern Node.js best practices.
+Watt 3 represents a major architectural evolution of the Platformatic platform, introducing significant performance improvements, API redesigns, and modernization efforts. This release includes 11 commits with 9 major breaking changes that enhance scalability, simplify the codebase, and align with modern Node.js best practices.
 
 ## Detailed Commit Analysis
 
@@ -229,7 +229,34 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 
 ---
 
-### 10. Version Bump (9bd48fbc5)
+### 10. Node.js 20 Support Drop (467311c39)
+**[PR #4105](https://github.com/platformatic/platformatic/pull/4105)** | **[Commit](https://github.com/platformatic/platformatic/commit/467311c395e2fc964e2129ce038e8d525884555b)** | **Merged:** June 24, 2025
+
+**Summary:** This major breaking change removes support for Node.js 20 and raises the minimum Node.js version requirement to 22.18.0 across all packages. This modernization effort enables the platform to leverage newer Node.js features and improved performance characteristics.
+
+**Technical Impact:**
+- Updated engine requirements in all 36 package.json files to require Node.js 22.18.0+
+- Simplified version checking logic by removing Node.js 20 compatibility code
+- Removed Node.js 20 from CI/CD test matrices and workflows
+- Updated documentation and deployment guides to reflect new requirements
+- Cleaned up dependencies that were needed for Node.js 20 compatibility (minimatch, glob)
+
+**Breaking Changes:**
+- **Minimum Node.js version:** Now requires Node.js 22.18.0 or higher
+- **Runtime incompatibility:** Applications running on Node.js 20 will no longer work
+- **Development environment:** Developers must upgrade to Node.js 22.18.0+
+- **Deployment impact:** Production environments must be updated before upgrading
+
+**Migration Notes:**
+- Upgrade Node.js runtime to version 22.18.0 or higher in all environments
+- Update Docker base images and container configurations
+- Verify compatibility of existing Node.js tooling and dependencies
+- Test applications thoroughly with Node.js 22 before production deployment
+- Update CI/CD pipelines to use Node.js 22+ for builds and testing
+
+---
+
+### 11. Version Bump (9bd48fbc5)
 **[Commit](https://github.com/platformatic/platformatic/commit/9bd48fbc5b06b749760c0e4e7cf7be2e8a0be577)** | **Merged:** August 25, 2025
 
 **Summary:** Official version bump to v3.0.0-alpha.6, marking the release of all the above changes as a cohesive alpha release.
@@ -245,11 +272,11 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 
 ## Release Statistics
 
-- **Total Commits:** 10 commits (8 breaking changes + 1 enhancement + 1 version bump)
+- **Total Commits:** 11 commits (9 breaking changes + 1 enhancement + 1 version bump)
 - **Files Changed:** 1000+ files across all packages
 - **Lines Changed:** 30,000+ lines of code
 - **Packages Affected:** All 36 packages in the monorepo
-- **Breaking Changes:** 8 major breaking changes
+- **Breaking Changes:** 9 major breaking changes
 - **Performance Improvements:** Parallel startup/shutdown implementation
 - **Major Removals:** Client packages, marketplace, borp testing framework
 - **Major Renames:** Composer→Gateway, Services→Applications, Stackables→Capabilities
@@ -259,14 +286,15 @@ Watt 3 represents a major architectural evolution of the Platformatic platform, 
 
 This release contains significant breaking changes that require careful migration planning:
 
-1. **Parallel Startup:** Test applications for timing dependencies and concurrent operations
-2. **Client Removal:** Implement alternative client generation strategies using external tools
-3. **Gateway Rename:** Update package dependencies from composer to gateway
-4. **Testing Framework:** Migrate from borp to native Node.js `--test` runner
-5. **ESM Migration:** Update all imports/exports to use ESM syntax
-6. **Marketplace Removal:** Use manual plugin installation methods
-7. **Terminology Updates:** Update configurations to use new naming (applications, capabilities, gateway)
-8. **API Changes:** Update API calls to use new endpoint terminology
+1. **Node.js Version:** Upgrade to Node.js 22.18.0+ in all environments before upgrading Platformatic
+2. **Parallel Startup:** Test applications for timing dependencies and concurrent operations
+3. **Client Removal:** Implement alternative client generation strategies using external tools
+4. **Gateway Rename:** Update package dependencies from composer to gateway
+5. **Testing Framework:** Migrate from borp to native Node.js `--test` runner
+6. **ESM Migration:** Update all imports/exports to use ESM syntax
+7. **Marketplace Removal:** Use manual plugin installation methods
+8. **Terminology Updates:** Update configurations to use new naming (applications, capabilities, gateway)
+9. **API Changes:** Update API calls to use new endpoint terminology
 
 ## Next Steps
 

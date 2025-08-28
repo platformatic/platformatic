@@ -1,8 +1,6 @@
 # Introducing Watt 3: Faster, Simpler, and More Powerful Than Ever
 
-*August 28, 2025*
-
-Today, we're excited to announce the release of **Watt 3** (v3.0.0-alpha.6), a major evolution of the Platformatic platform that brings significant performance improvements, architectural simplifications, and modernization upgrades that will transform how you build and deploy Node.js applications.
+Today, we're excited to announce the release of **Watt 3** (`wattpm` v3.0.0), a major evolution of the Platformatic platform that brings significant performance improvements, architectural simplifications, and modernization upgrades that will transform how you build and deploy Node.js applications.
 
 ## What's New in Watt 3
 
@@ -28,9 +26,13 @@ Service B ├─→ All services ready! (12 seconds)
 Service C ┘
 ```
 
+### Native TypeScript Support
+
+Thanks to type stripping..
+
 ### 🏗️ Composer → Gateway: A More Powerful API Gateway
 
-**From simple composition to full-featured gateway.** We've renamed the `composer` to `gateway` to better reflect its evolved capabilities:
+**From simple composition to full-feattured gateway.** We've renamed the `composer` to `gateway` to better reflect its evolved capabilities:
 
 - **Enhanced routing:** More sophisticated request routing and load balancing
 - **Better proxy capabilities:** Improved upstream service integration
@@ -57,6 +59,16 @@ Your tests now run on the same engine that powers your applications—no transla
 - **Encourage best practices:** Use standard OpenAPI/GraphQL tooling for client generation
 
 This change pushes client generation to the edges where it belongs, using industry-standard tools rather than maintaining our own implementation.
+
+TODO: mention massimo
+
+### Stackable -> Capabilities
+
+FILLME
+
+### Services -> Applications
+
+FILLME
 
 ## Why These Changes Matter
 
@@ -109,6 +121,8 @@ If you were using `@platformatic/client`, consider these alternatives:
 - **GraphQL clients:** Use `graphql-code-generator`
 - **Custom solutions:** Write lightweight client wrappers for your specific needs
 
+TODO: mention massimo
+
 ### 4. Update Test Scripts
 ```json
 {
@@ -118,15 +132,6 @@ If you were using `@platformatic/client`, consider these alternatives:
   }
 }
 ```
-
-## Performance Benchmarks
-
-Our internal testing shows impressive improvements:
-
-- **Startup time:** 60-75% faster for multi-service applications
-- **Memory usage:** 15-20% reduction in baseline memory consumption
-- **Test execution:** 25-40% faster test suite completion
-- **Bundle size:** 12% smaller distribution packages
 
 ## What's Next
 
@@ -182,4 +187,4 @@ The changes in Watt 3 position Platformatic as a more performant, maintainable, 
 
 ---
 
-*Watt 3 (v3.0.0-alpha.6) is now available. For technical details, see our [commit summary](SUMMARY.md) and [migration guide](#).*
+*Wattpm 3 (v3.0.0) is now available. For technical details, see our [commit summary](SUMMARY.md) and [migration guide](#).*
