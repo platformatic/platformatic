@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import { createRuntime, readLogs } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+process.env.PLT_TESTS_VERBOSE = 'true'
 function extractLogs (raw) {
   const log = { source: raw.name ?? 'runtime', msg: raw.msg }
 
