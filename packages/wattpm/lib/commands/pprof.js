@@ -9,11 +9,11 @@ export async function pprofStartCommand (logger, args) {
     const { positionals } = parseArgs(args, {}, false)
 
     const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { services: runtimeServices } = await client.getRuntimeServices(runtime.pid)
 
-    // Get service ID from positional argument or use all services
-    const serviceId = positionals[0]
+    // Get service ID from remaining positional arguments or use all services
+    const serviceId = remainingPositionals[0]
 
     if (serviceId) {
       // Start profiling for specific service
@@ -54,11 +54,11 @@ export async function pprofStopCommand (logger, args) {
     const { positionals } = parseArgs(args, {}, false)
 
     const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { services: runtimeServices } = await client.getRuntimeServices(runtime.pid)
 
-    // Get service ID from positional argument or use all services
-    const serviceId = positionals[0]
+    // Get service ID from remaining positional arguments or use all services
+    const serviceId = remainingPositionals[0]
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-')
 
     if (serviceId) {
@@ -103,8 +103,8 @@ export async function pprofCommand (logger, args) {
   if (args.length === 0) {
     // Show help when no subcommand is provided
     logger.info('Available pprof commands:')
-    logger.info('  pprof start [service] - Start profiling')
-    logger.info('  pprof stop [service]  - Stop profiling and save profile')
+    logger.info('  pprof start [id] [service] - Start profiling')
+    logger.info('  pprof stop [id] [service]  - Stop profiling and save profile')
     process.exit(1)
   }
 
@@ -118,15 +118,15 @@ export async function pprofCommand (logger, args) {
     default:
       logger.error(`Unknown pprof subcommand: ${subcommand}`)
       logger.info('Available pprof commands:')
-      logger.info('  pprof start [service] - Start profiling')
-      logger.info('  pprof stop [service]  - Stop profiling and save profile')
+      logger.info('  pprof start [id] [service] - Start profiling')
+      logger.info('  pprof stop [id] [service]  - Stop profiling and save profile')
       process.exit(1)
   }
 }
 
 export const help = {
   pprof: {
-    usage: 'pprof <start|stop> [service]',
+    usage: 'pprof <start|stop> [id] [service]',
     description: 'Profile CPU usage of running services',
     options: [],
     args: [
@@ -135,10 +135,14 @@ export const help = {
         description: 'The pprof command to run: start or stop'
       },
       {
+        name: 'id',
+        description: 'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+      },
+      {
         name: 'service',
         description: 'The service ID to profile (if omitted, profiles all services)'
       }
     ],
-    footer: 'Use "pprof start [service]" to start profiling and "pprof stop [service]" to stop and save profile data.'
+    footer: 'Use "pprof start [id] [service]" to start profiling and "pprof stop [id] [service]" to stop and save profile data.'
   }
 }
