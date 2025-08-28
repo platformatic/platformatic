@@ -1,10 +1,8 @@
-
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { randomUUID } from 'node:crypto'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
 
 import {
   setUpEnvironment,

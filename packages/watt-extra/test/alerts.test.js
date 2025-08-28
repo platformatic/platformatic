@@ -1,16 +1,15 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { randomUUID } from 'node:crypto'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 import { setTimeout as sleep } from 'node:timers/promises'
 import { Profile } from 'pprof-format'
 import { setUpEnvironment, startICC } from './helper.js'
 import { start } from '../index.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 test('should send alert when service becomes unhealthy', async (t) => {
   const applicationName = 'test-app'

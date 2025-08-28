@@ -1,4 +1,3 @@
-
 import { test } from 'node:test'
 import { equal } from 'node:assert'
 import { hostname } from 'node:os'

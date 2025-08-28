@@ -1,19 +1,17 @@
-
 import { readFileSync } from 'node:fs'
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { hostname } from 'node:os'
 import { randomUUID } from 'node:crypto'
 import { request } from 'undici'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 import { setTimeout as sleep } from 'node:timers/promises'
 import { setUpEnvironment, startICC } from './helper.js'
 import { start } from '../index.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 const platformaticVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
 test('should spawn a service app sending the state', async (t) => {

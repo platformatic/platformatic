@@ -1,15 +1,14 @@
 import { Agent, setGlobalDispatcher } from 'undici'
 import { mkdir, symlink, writeFile, rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 import fastify from 'fastify'
 import fp from 'fastify-plugin'
 import why from 'why-is-node-running'
 import fastifyWebsocket from '@fastify/websocket'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 setInterval(why, 120000).unref()
 

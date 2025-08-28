@@ -114,9 +114,9 @@ class WattPro {
 
   async #loadAppConfig () {
     this.#logger.info('Loading app config')
-    try{
+    try {
       const config = await loadConfiguration(this.#appDir)
-      return config 
+      return config
     } catch (err) {
       this.#logger.error(err, 'Failed to load app config')
       throw new Error('Failed to load app config.', { cause: err })
@@ -127,7 +127,7 @@ class WattPro {
     this.#logger.info('Creating runtime')
     const { Runtime } = this.#require('@platformatic/runtime')
 
-    this.#config  = await this.#loadAppConfig()
+    this.#config = await this.#loadAppConfig()
 
     this.#logger.info('Patching runtime config')
 
