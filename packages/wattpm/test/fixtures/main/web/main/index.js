@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 
 // This is needed in some tests to allow another process to start tailing logs
 if (process.env.PLT_TESTS_DELAY_START) {
-  await sleep(1000)
+  await sleep(parseInt(process.env.PLT_TESTS_DELAY_START))
 }
 
 const app = fastify({

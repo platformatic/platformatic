@@ -77,7 +77,7 @@ test('inject - should stream runtime logs', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
@@ -106,7 +106,7 @@ test('logs - should stream runtime logs filtering by application', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
@@ -136,7 +136,7 @@ test('logs - should stream runtime logs filtering by level', async t => {
     Promise.all([startProcess.catch(() => {}), logsProcess.catch(() => {})])
   })
 
-  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: true } })
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
