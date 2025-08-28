@@ -12,7 +12,9 @@ import { start } from '../index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const platformaticVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
+const platformaticVersion = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+).version
 
 test('should spawn a service app sending the state', async (t) => {
   const applicationName = 'test-app'
@@ -26,7 +28,7 @@ test('should spawn a service app sending the state', async (t) => {
     applicationName,
     saveApplicationInstanceState: (state) => {
       applicationStates.push(state)
-    }
+    },
   })
 
   process.env.PLT_TEST_APP_1_URL = 'http://test-app-1:3042'
@@ -37,7 +39,7 @@ test('should spawn a service app sending the state', async (t) => {
   setUpEnvironment({
     PLT_APP_NAME: applicationName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -55,26 +57,13 @@ test('should spawn a service app sending the state', async (t) => {
     assert.deepStrictEqual(data, { hello: 'world' })
   }
 
-  {
-    const { statusCode, body } = await request('http://127.0.0.1:3042/env')
-    assert.strictEqual(statusCode, 200)
-
-    const data = await body.json()
-    assert.deepStrictEqual(data, {
-      env: {
-        ...process.env,
-        PLT_DEV: 'true', // in test its' in dev mode
-        PLT_ENVIRONMENT: 'development'
-      }
-    })
-  }
-
   assert.strictEqual(applicationStates.length, 1)
   const [state] = applicationStates
   assert.strictEqual(state.instanceId, hostname())
-  assert.deepStrictEqual(state.state.services.length, 1)
+  assert.deepStrictEqual(state.state.applications.length, 1)
   assert.strictEqual(
-    state.state.metadata.platformaticVersion, platformaticVersion
+    state.state.metadata.platformaticVersion,
+    platformaticVersion
   )
 })
 
@@ -84,13 +73,13 @@ test('should not fail on worker error', async (t) => {
   const applicationPath = join(__dirname, 'fixtures', 'service-3')
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: applicationName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()

@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@platformatic/composer": "^2.70.0"    
+    "@platformatic/composer": "workspace:*"
   }
 }

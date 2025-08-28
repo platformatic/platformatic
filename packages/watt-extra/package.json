@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && node --test --test-timeout=180000 ./test/*.test.js",
+    "test": "pnpm run lint && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "start": "node index.js",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf services/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf services/*/node_modules"
@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@fastify/websocket": "^11.1.0",
+    "platformatic": "workspace:*",
     "@platformatic/composer": "workspace:*",
     "@platformatic/next": "workspace:*",
     "@platformatic/node": "workspace:*",

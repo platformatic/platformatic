@@ -11,7 +11,7 @@ import {
   logFatalError,
   parseArgs,
   safeRemove,
-  saveConfigurationFile
+  saveConfigurationFile,
 } from '@platformatic/foundation'
 import { create } from '@platformatic/runtime'
 import jsonPatch from 'fast-json-patch'
@@ -41,7 +41,10 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     const mod = extractModuleFromSchemaUrl(config)
     const isApplication = mod.module !== '@platformatic/runtime'
 
-    const patchFunction = await loadModule(createRequire(configurationFile), patchPath)
+    const patchFunction = await loadModule(
+      createRequire(configurationFile),
+      patchPath
+    )
 
     if (typeof patchFunction !== 'function') {
       throw new Error('Patch file must export a function.')
@@ -53,7 +56,11 @@ export async function patchConfig (logger, configurationFile, patchPath) {
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {
-      logFatalError(logger, { err: ensureLoggableError(error) }, `Cannot load the runtime: ${error.message}`)
+      logFatalError(
+        logger,
+        { err: ensureLoggableError(error) },
+        `Cannot load the runtime: ${error.message}`
+      )
       return
     }
 
@@ -61,20 +68,27 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     const parser = getParser(configurationFile)
     const original = {
       runtime: parser(await readFile(configurationFile, 'utf-8')),
-      applications: {}
+      applications: {},
     }
 
     const loaded = {
-      runtime: runtime.getRuntimeConfig(),
-      applications: {}
+      runtime: runtime.getRuntimeConfig(true),
+      applications: {},
     }
 
-    const applications = Object.fromEntries(loaded.runtime.applications.map(application => [application.id, application]))
+    const applications = Object.fromEntries(
+      loaded.runtime.applications.map((application) => [
+        application.id,
+        application,
+      ])
+    )
 
     // Load configuration for all applications
     for (const application of loaded.runtime.applications) {
       if (!application.config) {
-        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(application.path, f)))
+        const candidate = listRecognizedConfigurationFiles().find((f) =>
+          existsSync(resolve(application.path, f))
+        )
 
         if (candidate) {
           application.config = resolve(application.path, candidate)
@@ -84,12 +98,19 @@ export async function patchConfig (logger, configurationFile, patchPath) {
       const { id, config } = application
       const parser = getParser(config)
 
-      original.applications[id] = parser(await readFile(configurationFile, 'utf-8'))
+      original.applications[id] = parser(
+        await readFile(configurationFile, 'utf-8')
+      )
       loaded.applications[id] = await runtime.getApplicationConfig(id, false)
     }
 
     // Execute the patch function
-    const patches = await patchFunction(runtime, applications, loaded, original)
+    const patches = await patchFunction(
+      runtime,
+      applications,
+      loaded,
+      original
+    )
 
     // Apply patches
     if (typeof patches !== 'object') {
@@ -104,10 +125,17 @@ export async function patchConfig (logger, configurationFile, patchPath) {
 
         try {
           /* c8 ignore next - else */
-          await saveConfigurationFile(temporaryFile, original.runtime.runtime ?? {})
+          await saveConfigurationFile(
+            temporaryFile,
+            original.runtime.runtime ?? {}
+          )
           await patchFile(temporaryFile, patches.runtime)
           await patchFile(configurationFile, [
-            { op: 'replace', path: '/runtime', value: await loadConfigurationFile(temporaryFile) }
+            {
+              op: 'replace',
+              path: '/runtime',
+              value: await loadConfigurationFile(temporaryFile),
+            },
           ])
         } finally {
           await safeRemove(temporaryDir)
@@ -136,14 +164,14 @@ export async function patchConfig (logger, configurationFile, patchPath) {
 export async function patchConfigCommand (logger, args) {
   const {
     values: { config },
-    positionals
+    positionals,
   } = parseArgs(
     args,
     {
       config: {
         type: 'string',
-        short: 'c'
-      }
+        short: 'c',
+      },
     },
     false
   )
@@ -165,7 +193,11 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config
+  )
 
   /* c8 ignore next 3 */
   if (!configurationFile) {
@@ -190,23 +222,25 @@ export async function patchConfigCommand (logger, args) {
 export const help = {
   'patch-config': {
     usage: 'patch-config [root] [patch]',
-    description: 'Applies a patch file to the runtime and applications configurations',
+    description:
+      'Applies a patch file to the runtime and applications configurations',
     args: [
       {
         name: 'root',
         description:
-          'The process ID of the application (it can be omitted only if there is a single application running)'
+          'The process ID of the application (it can be omitted only if there is a single application running)',
       },
       {
         name: 'patch',
-        description: 'The file containing the patch to execute.'
-      }
+        description: 'The file containing the patch to execute.',
+      },
     ],
     options: [
       {
         usage: '-c, --config <config>',
-        description: 'Name of the configuration file to use (the default is watt.json)'
-      }
-    ]
-  }
+        description:
+          'Name of the configuration file to use (the default is watt.json)',
+      },
+    ],
+  },
 }

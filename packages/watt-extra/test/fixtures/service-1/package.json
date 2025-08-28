@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@platformatic/runtime": "^2.58.0",
+    "@platformatic/runtime": "workspace:*",
     "@foo/bar-1": "^1.0.0",
     "missing": "^1.33.3"
   }

@@ -11,12 +11,13 @@ import alert from './plugins/alerts.js'
 
 async function buildApp (logger) {
   const app = {
-    log: logger
+    log: logger,
   }
 
   avvio(app)
 
-  app.use(env)
+  app
+    .use(env)
     .use(auth)
     .use(init)
     .use(alert)
@@ -28,7 +29,7 @@ async function buildApp (logger) {
   await app.ready()
 
   app.startRuntime = async function startRuntime () {
-    app.log.info('Starting Runtime')
+    app.log.info('Starting Runtime -app')
     try {
       app.log.info('Spawning the app')
       await app.wattpro.spawn()
@@ -76,7 +77,8 @@ async function buildApp (logger) {
     let retries = 0
     let capReached = false
 
-    while (true) { // Continue indefinitely
+    while (true) {
+      // Continue indefinitely
       retries++
 
       try {
@@ -93,11 +95,14 @@ async function buildApp (logger) {
             currentRetryInterval = waitFor
           }
         }
-        logger.error({
-          err: err.message,
-          attemptNumber: retries,
-          nextRetryMs: currentRetryInterval
-        }, `Failed to send info to ICC, retrying in ${currentRetryInterval}ms`)
+        logger.error(
+          {
+            err: err.message,
+            attemptNumber: retries,
+            nextRetryMs: currentRetryInterval,
+          },
+          `Failed to send info to ICC, retrying in ${currentRetryInterval}ms`
+        )
         await setTimeout(currentRetryInterval)
       }
     }

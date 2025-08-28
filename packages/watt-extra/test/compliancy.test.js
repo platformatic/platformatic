@@ -64,7 +64,7 @@ test('should retrieve and send compliancy metadata', async (t) => {
           '@foo/bar-1': '1.2.3'
         },
         dependencies: {
-          '@platformatic/runtime': '^2.58.0',
+          '@platformatic/runtime': 'workspace:*',
           '@foo/bar-1': '^1.0.0',
           missing: '^1.33.3'
         }
@@ -76,7 +76,7 @@ test('should retrieve and send compliancy metadata', async (t) => {
             '@foo/bar-1': '1.2.3'
           },
           dependencies: {
-            '@platformatic/runtime': '^2.58.0',
+            '@platformatic/runtime': 'workspace:*',
             '@foo/bar-1': '^1.0.0',
             missing: '^1.33.3'
           }

@@ -21,7 +21,10 @@ async function restartRuntime (runtime) {
   try {
     await runtime.restart()
   } catch (err) {
-    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+    runtime.logger.error(
+      { err: ensureLoggableError(err) },
+      'Failed to restart services.'
+    )
   }
 }
 
@@ -52,12 +55,15 @@ class WattPro {
   async spawn () {
     try {
       this.runtime = await this.#createRuntime()
-      this.#logger.info('Starting runtime')
+      this.#logger.info('Starting runtime -WATT')
       await this.runtime.start()
       await this.updateSharedContext(this.#sharedContext)
       this.#logger.info('Runtime started')
     } catch (err) {
-      this.#logger.error({ err: ensureLoggableError(err) }, 'Failed to start runtime')
+      this.#logger.error(
+        { err: ensureLoggableError(err) },
+        'Failed to start runtime'
+      )
       throw err
     }
   }
@@ -90,19 +96,25 @@ class WattPro {
     }
 
     if (config.resources?.services && config.resources.services.length > 0) {
-      const resourceUpdates = config.resources.services.map(service => ({
+      const resourceUpdates = config.resources.services.map((service) => ({
         service: service.name,
         workers: service.threads,
         health: {
-          maxHeapTotal: `${service.heap}MB`
-        }
+          maxHeapTotal: `${service.heap}MB`,
+        },
       }))
 
       try {
         await this.runtime.updateServicesResources(resourceUpdates)
-        this.#logger.info({ resourceUpdates }, 'Successfully updated service resources')
+        this.#logger.info(
+          { resourceUpdates },
+          'Successfully updated service resources'
+        )
       } catch (err) {
-        this.#logger.error({ err, resourceUpdates }, 'Failed to update service resources')
+        this.#logger.error(
+          { err, resourceUpdates },
+          'Failed to update service resources'
+        )
       }
     }
   }
@@ -139,7 +151,7 @@ class WattPro {
 
     this.#logger.info('Building runtime')
 
-    const runtime = new Runtime(this.#config)
+    const runtime = new Runtime(this.#config, { isProduction: true })
 
     /* c8 ignore next 3 */
     const restartListener = restartRuntime.bind(null, runtime)
@@ -174,18 +186,23 @@ class WattPro {
     config.server = {
       ...serverConfig,
       hostname: this.#env.PLT_APP_HOSTNAME || serverConfig.hostname,
-      port: this.#env.PLT_APP_PORT || serverConfig.port
+      port: this.#env.PLT_APP_PORT || serverConfig.port,
     }
 
     config.hotReload = false
     config.restartOnError = 1000
     config.metrics = {
-      hostname: this.#env.PLT_APP_HOSTNAME,
-      port: this.#env.PLT_METRICS_PORT,
+      server: 'hide',
+      defaultMetrics: {
+        enabled: true,
+      },
+      hostname: this.#env.PLT_APP_HOSTNAME || '127.0.0.1',
+      port: this.#env.PLT_METRICS_PORT || 9090,
       labels: {
+        serviceId: 'main',
         applicationId: this.#instanceConfig.applicationId,
-        instanceId: this.#instanceId
-      }
+        instanceId: this.#instanceId,
+      },
     }
 
     if (this.#env.PLT_DISABLE_FLAMEGRAPHS !== true) {
@@ -202,15 +219,14 @@ class WattPro {
   #getUndiciConfig () {
     const config = this.#config
 
-    const undiciConfig = structuredClone(
-      this.#originalConfig.undici ?? {}
-    )
+    const undiciConfig = structuredClone(this.#originalConfig.undici ?? {})
 
     if (undiciConfig.interceptors === undefined) {
       undiciConfig.interceptors = []
     }
 
-    const enableSlicerInterceptor = this.#instanceConfig?.enableSlicerInterceptor ?? false
+    const enableSlicerInterceptor =
+      this.#instanceConfig?.enableSlicerInterceptor ?? false
     if (enableSlicerInterceptor) {
       const slicerInterceptorConfig = this.#getSlicerInterceptorConfig(config)
       if (slicerInterceptorConfig) {
@@ -218,9 +234,11 @@ class WattPro {
       }
     }
 
-    const enableTrafficanteInterceptor = this.#instanceConfig?.enableTrafficanteInterceptor ?? false
+    const enableTrafficanteInterceptor =
+      this.#instanceConfig?.enableTrafficanteInterceptor ?? false
     if (enableTrafficanteInterceptor) {
-      const trafficanteInterceptorConfig = this.#getTrafficanteInterceptorConfig()
+      const trafficanteInterceptorConfig =
+        this.#getTrafficanteInterceptorConfig()
       if (trafficanteInterceptorConfig) {
         undiciConfig.interceptors.push(trafficanteInterceptorConfig)
       }
@@ -237,28 +255,29 @@ class WattPro {
     if (!this.#instanceConfig?.iccServices?.trafficante?.url) {
       return
     }
-    const {
-      origin: trafficanteOrigin,
-      pathname: trafficantePath
-    } = new URL(this.#instanceConfig.iccServices.trafficante.url)
+    const { origin: trafficanteOrigin, pathname: trafficantePath } = new URL(
+      this.#instanceConfig.iccServices.trafficante.url
+    )
     return {
-      module: this.#require.resolve('@platformatic/undici-trafficante-interceptor'),
+      module: this.#require.resolve(
+        '@platformatic/undici-trafficante-interceptor'
+      ),
       options: {
         labels: {
-          applicationId: this.#instanceConfig.applicationId
+          applicationId: this.#instanceConfig.applicationId,
         },
         bloomFilter: {
           size: 100000,
-          errorRate: 0.01
+          errorRate: 0.01,
         },
         maxResponseSize: 5 * 1024 * 1024, // 5MB
         trafficante: {
           url: trafficanteOrigin,
           pathSendBody: join(trafficantePath, '/requests'),
-          pathSendMeta: join(trafficantePath, '/requests/hash')
+          pathSendMeta: join(trafficantePath, '/requests/hash'),
         },
-        matchingDomains: [this.#env.PLT_APP_INTERNAL_SUB_DOMAIN]
-      }
+        matchingDomains: [this.#env.PLT_APP_INTERNAL_SUB_DOMAIN],
+      },
     }
   }
 
@@ -266,14 +285,17 @@ class WattPro {
     // We need to initialize the slicer interceptor even if there is no cache config
     // to be able to update the onfiguration at runtime
     const defaultCacheConfig = {
-      rules: [{
-        routeToMatch: 'http://plt.slicer.default/',
-        headers: {}
-      }]
+      rules: [
+        {
+          routeToMatch: 'http://plt.slicer.default/',
+          headers: {},
+        },
+      ],
     }
 
     // This is the cache config from ICC
-    const httpCacheConfig = this.#instanceConfig?.config?.httpCacheConfig ?? defaultCacheConfig
+    const httpCacheConfig =
+      this.#instanceConfig?.config?.httpCacheConfig ?? defaultCacheConfig
     let autoGeneratedConfig = null
     if (httpCacheConfig) {
       try {
@@ -320,7 +342,7 @@ class WattPro {
 
     return {
       module: this.#require.resolve('@platformatic/slicer-interceptor'),
-      options: cacheConfig
+      options: cacheConfig,
     }
   }
 
@@ -329,7 +351,7 @@ class WattPro {
 
     for (const rule of autoGeneratedConfig.rules ?? []) {
       const ruleIndex = mergedConfig.rules.findIndex(
-        r => r.routeToMatch === rule.routeToMatch
+        (r) => r.routeToMatch === rule.routeToMatch
       )
 
       if (ruleIndex === -1) {
@@ -346,27 +368,28 @@ class WattPro {
       !!this.#instanceConfig?.iccServices?.riskEngine?.url
 
     // We need to always set an opentelemetry config to pass a telemetry
-    // serviceName to render a taxonomy diagram
+    // applicationName to render a taxonomy diagram
     config.telemetry = config.telemetry ?? {
       enabled: enableOpenTelemetry,
-      serviceName: this.#applicationName,
+      applicationName: `${this.#applicationName}`,
       skip: [
         { method: 'GET', path: '/documentation' },
-        { method: 'GET', path: '/documentation/json' }
+        { method: 'GET', path: '/documentation/json' },
       ],
       exporter: {
         type: 'otlp',
         options: {
-          url: this.#instanceConfig?.iccServices?.riskEngine?.url + '/v1/traces',
+          url:
+            this.#instanceConfig?.iccServices?.riskEngine?.url + '/v1/traces',
           headers: {
-            'x-platformatic-application-id': this.#instanceConfig.applicationId
+            'x-platformatic-application-id': this.#instanceConfig.applicationId,
           },
           keepAlive: true,
           httpAgentOptions: {
-            rejectUnauthorized: false
-          }
-        }
-      }
+            rejectUnauthorized: false,
+          },
+        },
+      },
     }
   }
 
@@ -375,7 +398,9 @@ class WattPro {
     const httpCache = this.#instanceConfig?.httpCache?.clientOpts
 
     if (!httpCache?.host) {
-      this.#logger.warn('Missing required environment variables for Redis cache, not setting up HTTP cache')
+      this.#logger.warn(
+        'Missing required environment variables for Redis cache, not setting up HTTP cache'
+      )
       return
     }
 
@@ -383,7 +408,7 @@ class WattPro {
       ...config.httpCache,
       cacheTagsHeader,
       store: this.#require.resolve('@platformatic/undici-cache-redis'),
-      clientOpts: httpCache
+      clientOpts: httpCache,
     }
   }
 
@@ -392,7 +417,7 @@ class WattPro {
       ...config.health,
       enabled: true,
       interval: 1000,
-      maxUnhealthyChecks: 30
+      maxUnhealthyChecks: 30,
     }
   }
 
@@ -400,9 +425,9 @@ class WattPro {
     // Disable all watt schedules. We do that because
     // we will create/update them in ICC, not on watt in memory
     if (config.scheduler) {
-      config.scheduler = config.scheduler.map(scheduler => ({
+      config.scheduler = config.scheduler.map((scheduler) => ({
         ...scheduler,
-        enabled: false
+        enabled: false,
       }))
     }
   }
@@ -417,10 +442,7 @@ class WattPro {
       return
     }
 
-    const {
-      threads,
-      heap
-    } = resources
+    const { threads, heap } = resources
 
     if (threads > 0) {
       config.workers = threads
@@ -431,34 +453,43 @@ class WattPro {
       config.health.maxHeapTotal = heap * 1024 * 1024
     }
 
-    // Set services resources
-    for (const service of config.services ?? []) {
-      let serviceResources = resources.services?.find(s => s.name === service.id)
+    // In v3 we renamed services to applications, so we support both (note that this is coming from icc)
+    const res = resources.services || resources.applications
 
-      if (!serviceResources) {
-        serviceResources = {
+    // Set services resources
+    for (const application of config.applications ?? []) {
+      let applicationResources = res?.find((s) => s.name === application.id)
+
+      if (!applicationResources) {
+        applicationResources = {
           threads,
-          heap
+          heap,
         }
       }
-      service.workers = serviceResources.threads
-      service.health ??= {}
-      service.health.maxHeapTotal = serviceResources.heap * 1024 * 1024
+      application.workers = applicationResources.threads
+      application.health ??= {}
+      application.health.maxHeapTotal = applicationResources.heap * 1024 * 1024
     }
   }
 
   async #configureServices (runtime) {
-    if (typeof runtime.setServiceConfigPatch !== 'function') {
+    if (typeof runtime.setApplicationConfigPatch !== 'function') {
       return
     }
 
-    const config = runtime.getRuntimeConfig()
+    const config = runtime.getRuntimeConfig(true)
 
-    for (const service of config.services) {
-      if (service.type === 'next') {
-        await this.#configureNextService(runtime, service)
-      } else if (service.isPLTService && ['service', 'composer', 'db'].includes(service.type)) {
-        await this.#configurePlatformaticServices(runtime, service, config)
+    for (const app of config.applications ?? []) {
+      if (app.type === 'next') {
+        await this.#configureNextService(runtime, app)
+      } else if (
+        [
+          '@platformatic/service',
+          '@platformatic/composer',
+          '@platformatic/db',
+        ].includes(app.type)
+      ) {
+        await this.#configurePlatformaticServices(runtime, app)
       }
     }
   }
@@ -467,10 +498,17 @@ class WattPro {
     let nextSchema
 
     try {
-      const nextPackage = createRequire(resolve(service.path, 'index.js')).resolve('@platformatic/next')
-      nextSchema = JSON.parse(await readFile(resolve(nextPackage, '../schema.json'), 'utf8'))
+      const nextPackage = createRequire(
+        resolve(service.path, 'index.js')
+      ).resolve('@platformatic/next')
+      nextSchema = JSON.parse(
+        await readFile(resolve(nextPackage, '../schema.json'), 'utf8')
+      )
     } catch (e) {
-      this.#logger.error({ err: ensureLoggableError(e) }, `Failed to load @platformatic/next schema for service ${service.id}`)
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        `Failed to load @platformatic/next schema for service ${service.id}`
+      )
       throw e
     }
 
@@ -478,16 +516,12 @@ class WattPro {
 
     if ('cache' in nextSchema.properties) {
       const httpCache = this.#instanceConfig?.httpCache?.clientOpts || {}
-      const {
-        keyPrefix,
-        host,
-        port,
-        username,
-        password
-      } = httpCache
+      const { keyPrefix, host, port, username, password } = httpCache
 
       if (!keyPrefix || !host || !port) {
-        this.#logger.warn('Missing required environment variables for Redis cache, not setting up HTTP next cache')
+        this.#logger.warn(
+          'Missing required environment variables for Redis cache, not setting up HTTP next cache'
+        )
       } else {
         patches.push({
           op: 'add',
@@ -496,8 +530,8 @@ class WattPro {
             adapter: 'valkey',
             url: `valkey://${username}:${password}@${host}:${port}`,
             prefix: keyPrefix,
-            maxTTL: 604800 // 86400 * 7
-          }
+            maxTTL: 604800, // 86400 * 7
+          },
         })
       }
     }
@@ -505,7 +539,10 @@ class WattPro {
     // Add trailingSlash true to Next entrypoints that support it
     // This is technically useless as Next.js will manage it at build time, but we keep it
     // in case in the future they compare build and production next.config.js
-    if (service.entrypoint && nextSchema.properties.next?.properties.trailingSlash?.type === 'boolean') {
+    if (
+      service.entrypoint &&
+      nextSchema.properties.next?.properties.trailingSlash?.type === 'boolean'
+    ) {
       patches.push({ op: 'add', path: '/next/trailingSlash', value: true })
     }
 
@@ -514,9 +551,9 @@ class WattPro {
     }
   }
 
-  async #configurePlatformaticServices (runtime, service) {
-    if (service.entrypoint) {
-      const config = await this.#loadServiceConfiguration(service)
+  async #configurePlatformaticServices (runtime, app) {
+    if (app.entrypoint) {
+      const config = app
       const patches = [{ op: 'add', path: '/server/trustProxy', value: true }]
 
       if (!config.server) {
@@ -525,25 +562,13 @@ class WattPro {
 
       patches.push({ op: 'remove', path: '/server/https' })
 
-      this.#patchService(runtime, service.id, patches)
+      this.#patchService(runtime, app.id, patches)
     }
   }
 
   async #patchService (runtime, id, patches) {
     this.#logger.info({ patches }, `Applying patches to service ${id} ...`)
-    runtime.setServiceConfigPatch(id, patches)
-  }
-
-  async #loadServiceConfiguration (service) {
-    const { ConfigManager, getParser } = this.#require('@platformatic/config')
-    let configPath = service.config
-
-    if (!configPath) {
-      configPath = resolve(service.path, await ConfigManager.findConfigFile(service.path))
-    }
-
-    const parser = getParser(configPath)
-    return parser(await readFile(resolve(service.path, configPath), 'utf8'))
+    runtime.setApplicationConfigPatch(id, patches)
   }
 
   #getCacheTagsHeader (config) {

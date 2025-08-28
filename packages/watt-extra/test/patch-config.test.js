@@ -5,11 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 import { randomUUID } from 'node:crypto'
 import { request } from 'undici'
-import {
-  setUpEnvironment,
-  startICC,
-  installDeps
-} from './helper.js'
+import { setUpEnvironment, startICC, installDeps } from './helper.js'
 import { start } from '../index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -23,13 +19,13 @@ test('should spawn a service app settings labels for metrics', async (t) => {
   const icc = await startICC(t, {
     applicationId,
     applicationName,
-    enableOpenTelemetry: true
+    enableOpenTelemetry: true,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: applicationName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -39,56 +35,51 @@ test('should spawn a service app settings labels for metrics', async (t) => {
     await icc.close()
   })
 
-  // main config
-  const { statusCode, body } = await request('http://127.0.0.1:3042/config')
-  assert.strictEqual(statusCode, 200)
-
-  const mainConfig = await body.json()
+  const mainConfig = app.wattpro.runtime.getRuntimeConfig(true)
 
   const { metrics, telemetry } = mainConfig
 
   const expectedTelemetry = {
     enabled: true,
-    serviceName: 'test-application-main',
+    applicationName: 'test-application',
     skip: [
       {
         method: 'GET',
-        path: '/documentation'
+        path: '/documentation',
       },
       {
         method: 'GET',
-        path: '/documentation/json'
-      }
+        path: '/documentation/json',
+      },
     ],
     exporter: {
       type: 'otlp',
       options: {
         url: 'http://127.0.0.1:3000/risk-service/v1/traces',
         headers: {
-          'x-platformatic-application-id': applicationId
+          'x-platformatic-application-id': applicationId,
         },
         keepAlive: true,
         httpAgentOptions: {
-          keepAlive: true,
-          rejectUnauthorized: false
-        }
-      }
-    }
+          rejectUnauthorized: false,
+        },
+      },
+    },
   }
   assert.deepStrictEqual(telemetry, expectedTelemetry)
 
   const expectedMetrics = {
     server: 'hide',
     defaultMetrics: {
-      enabled: true
+      enabled: true,
     },
     hostname: '127.0.0.1',
     port: 9090,
     labels: {
       serviceId: 'main',
       instanceId: app.instanceId,
-      applicationId
-    }
+      applicationId,
+    },
   }
   assert.deepStrictEqual(metrics, expectedMetrics)
 })
@@ -100,28 +91,29 @@ test('should configure system resources', async (t) => {
 
   await installDeps(t, applicationPath, ['@platformatic/next', 'next'])
   const { execa } = await import('execa')
-  await execa(join(__dirname, '../node_modules/.bin/plt'), ['build'], { cwd: applicationPath })
+  await execa(join(__dirname, '../node_modules/.bin/plt'), ['build'], {
+    cwd: applicationPath,
+  })
 
   const iccConfig = {
     resources: {
-      threads: 2,
+      threads: 1,
       heap: 256,
       services: [
         {
           name: 'next',
           threads: 3,
-          heap: 200
-        }
-      ]
-    }
-
+          heap: 200,
+        },
+      ],
+    },
   }
   const icc = await startICC(t, { applicationId, applicationName, iccConfig })
 
   setUpEnvironment({
     PLT_APP_NAME: applicationName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -130,16 +122,18 @@ test('should configure system resources', async (t) => {
     await app.close()
     await icc.close()
   })
-
-  const config = await app.wattpro.runtime.getRuntimeConfig()
+  const config = await app.wattpro.runtime.getRuntimeConfig(true)
 
   // Check generic resources
-  assert.strictEqual(config.workers, 2)
+  assert.strictEqual(config.workers, 1)
   assert.strictEqual(config.health.maxHeapTotal, 256 * Math.pow(1024, 2))
 
   // Check system resources
-  assert.strictEqual(config.services[0].workers, 3)
-  assert.strictEqual(config.services[0].health.maxHeapTotal, 200 * Math.pow(1024, 2))
+  assert.strictEqual(config.applications[0].workers, 3)
+  assert.strictEqual(
+    config.applications[0].health.maxHeapTotal,
+    200 * Math.pow(1024, 2)
+  )
 })
 
 test('should remove server https configs', async (t) => {
@@ -150,14 +144,14 @@ test('should remove server https configs', async (t) => {
   await installDeps(t, applicationPath)
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: appName,
     PLT_APP_DIR: applicationPath,
     PLT_ICC_URL: 'http://127.0.0.1:3000',
-    PLT_CONTROL_PLANE_URL: 'http://127.0.0.1:3002'
+    PLT_CONTROL_PLANE_URL: 'http://127.0.0.1:3002',
   })
 
   const app = await start()
@@ -168,17 +162,13 @@ test('should remove server https configs', async (t) => {
   })
 
   {
-    const { statusCode, body } = await request('http://127.0.0.1:3042/config')
-    assert.strictEqual(statusCode, 200)
-
-    const serviceConfig = await body.json()
-
-    const { server } = serviceConfig
+    const mainConfig = app.wattpro.runtime.getRuntimeConfig(true)
+    const { server } = mainConfig
     assert.strictEqual(server.https, undefined)
   }
 
   {
-    const runtimeConfig = await app.wattpro.runtime.getRuntimeConfig()
+    const runtimeConfig = await app.wattpro.runtime.getRuntimeConfig(true)
 
     const { server } = runtimeConfig
     assert.strictEqual(server.https, undefined)
@@ -193,13 +183,13 @@ test('should configure health options', async (t) => {
   await installDeps(t, applicationPath)
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: appName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -209,7 +199,7 @@ test('should configure health options', async (t) => {
     await icc.close()
   })
 
-  const runtimeConfig = await app.wattpro.runtime.getRuntimeConfig()
+  const runtimeConfig = await app.wattpro.runtime.getRuntimeConfig(true)
 
   const { health } = runtimeConfig
   assert.strictEqual(health.enabled, true)
@@ -225,13 +215,13 @@ test('should call updateServicesResources with maxHeapTotal', async (t) => {
   await installDeps(t, applicationPath)
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: appName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -242,11 +232,15 @@ test('should call updateServicesResources with maxHeapTotal', async (t) => {
   })
 
   const updateCalls = []
-  const originalUpdateServicesResources = app.wattpro.runtime.updateServicesResources
+  const originalUpdateServicesResources =
+    app.wattpro.runtime.updateServicesResources
   app.wattpro.runtime.updateServicesResources = async (resourceUpdates) => {
     updateCalls.push(resourceUpdates)
     if (originalUpdateServicesResources) {
-      return originalUpdateServicesResources.call(app.wattpro.runtime, resourceUpdates)
+      return originalUpdateServicesResources.call(
+        app.wattpro.runtime,
+        resourceUpdates
+      )
     }
   }
 
@@ -254,17 +248,25 @@ test('should call updateServicesResources with maxHeapTotal', async (t) => {
     resources: {
       services: [
         { name: 'main', threads: 2, heap: 512 },
-        { name: 'service-1', threads: 1, heap: 256 }
-      ]
-    }
+        { name: 'service-1', threads: 1, heap: 256 },
+      ],
+    },
   }
 
   await app.wattpro.applyIccConfigUpdates(config)
 
-  assert.strictEqual(updateCalls.length, 1, 'updateServicesResources should be called once')
+  assert.strictEqual(
+    updateCalls.length,
+    1,
+    'updateServicesResources should be called once'
+  )
 
   const resourceUpdates = updateCalls[0]
-  assert.strictEqual(resourceUpdates.length, 2, 'Should have updates for 2 services')
+  assert.strictEqual(
+    resourceUpdates.length,
+    2,
+    'Should have updates for 2 services'
+  )
 
   assert.strictEqual(resourceUpdates[0].service, 'main')
   assert.strictEqual(resourceUpdates[0].workers, 2)
@@ -283,13 +285,13 @@ test('should handle updateServicesResources with different heap sizes', async (t
   await installDeps(t, applicationPath)
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: appName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -309,10 +311,10 @@ test('should handle updateServicesResources with different heap sizes', async (t
       resources: {
         services: [
           { name: 'small-service', threads: 1, heap: 128 },
-          { name: 'large-service', threads: 4, heap: 2048 }
-        ]
-      }
-    }
+          { name: 'large-service', threads: 4, heap: 2048 },
+        ],
+      },
+    },
   ]
 
   for (const config of configs) {
@@ -334,13 +336,13 @@ test('should handle updateServicesResources error gracefully', async (t) => {
   await installDeps(t, applicationPath)
 
   const icc = await startICC(t, {
-    applicationId
+    applicationId,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: appName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -359,15 +361,17 @@ test('should handle updateServicesResources error gracefully', async (t) => {
 
   const config = {
     resources: {
-      services: [
-        { name: 'test-service', threads: 1, heap: 256 }
-      ]
-    }
+      services: [{ name: 'test-service', threads: 1, heap: 256 }],
+    },
   }
 
   await app.wattpro.applyIccConfigUpdates(config)
 
-  assert.strictEqual(errorThrown, true, 'updateServicesResources should have been called and thrown an error')
+  assert.strictEqual(
+    errorThrown,
+    true,
+    'updateServicesResources should have been called and thrown an error'
+  )
 })
 
 test('should not set opentelemetry if it is disabled', async (t) => {
@@ -378,13 +382,13 @@ test('should not set opentelemetry if it is disabled', async (t) => {
   const icc = await startICC(t, {
     applicationId,
     applicationName,
-    enableOpenTelemetry: false
+    enableOpenTelemetry: false,
   })
 
   setUpEnvironment({
     PLT_APP_NAME: applicationName,
     PLT_APP_DIR: applicationPath,
-    PLT_ICC_URL: 'http://127.0.0.1:3000'
+    PLT_ICC_URL: 'http://127.0.0.1:3000',
   })
 
   const app = await start()
@@ -400,30 +404,30 @@ test('should not set opentelemetry if it is disabled', async (t) => {
 
   const expectedTelemetry = {
     enabled: false,
-    serviceName: 'test-application-main',
+    applicationName: 'test-application-main',
     skip: [
       {
         method: 'GET',
-        path: '/documentation'
+        path: '/documentation',
       },
       {
         method: 'GET',
-        path: '/documentation/json'
-      }
+        path: '/documentation/json',
+      },
     ],
     exporter: {
       type: 'otlp',
       options: {
         url: 'http://127.0.0.1:3000/risk-service/v1/traces',
         headers: {
-          'x-platformatic-application-id': applicationId
+          'x-platformatic-application-id': applicationId,
         },
         keepAlive: true,
         httpAgentOptions: {
-          rejectUnauthorized: false
-        }
-      }
-    }
+          rejectUnauthorized: false,
+        },
+      },
+    },
   }
   const mainConfig = await body.json()
   assert.deepStrictEqual(mainConfig.telemetry, expectedTelemetry)
