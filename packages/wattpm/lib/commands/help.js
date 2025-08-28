@@ -15,7 +15,8 @@ async function loadCommands () {
     'inject',
     'external',
     'patch-config',
-    'metrics'
+    'metrics',
+    'pprof'
   ]) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)

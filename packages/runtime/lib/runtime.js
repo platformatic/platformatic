@@ -795,6 +795,18 @@ class Runtime extends EventEmitter {
     return sendViaITC(service, 'getServiceEnv')
   }
 
+  async startServiceProfiling (id, options = {}, ensureStarted = true) {
+    const service = await this.#getServiceById(id, ensureStarted)
+
+    return sendViaITC(service, 'startProfiling', options)
+  }
+
+  async stopServiceProfiling (id, ensureStarted = true) {
+    const service = await this.#getServiceById(id, ensureStarted)
+
+    return sendViaITC(service, 'stopProfiling')
+  }
+
   async getServiceOpenapiSchema (id) {
     const service = await this.#getServiceById(id, true)
 

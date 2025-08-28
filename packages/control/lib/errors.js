@@ -22,4 +22,8 @@ module.exports = {
   FailedToGetRuntimeAllLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ALL_LOGS`, 'Failed to get runtime all logs %s.'),
   FailedToGetRuntimeLogIndexes: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS_COUNT`, 'Failed to get history logs count %s.'),
   FailedToGetRuntimeMetrics: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METRICS`, 'Failed to get runtime metrics %s.'),
+  ProfilingAlreadyStarted: createError(`${ERROR_PREFIX}_PROFILING_ALREADY_STARTED`, 'Profiling is already started for service "%s".'),
+  ProfilingNotStarted: createError(`${ERROR_PREFIX}_PROFILING_NOT_STARTED`, 'Profiling not started for service "%s".'),
+  FailedToStartProfiling: createError(`${ERROR_PREFIX}_FAILED_TO_START_PROFILING`, 'Failed to start profiling for service "%s": %s'),
+  FailedToStopProfiling: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_PROFILING`, 'Failed to stop profiling for service "%s": %s'),
 }
