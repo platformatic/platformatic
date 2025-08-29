@@ -1,12 +1,10 @@
-'use strict'
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 const expectedMetricNames = [
   'nodejs_active_handles',
@@ -56,18 +54,21 @@ const expectedMetricNames = [
 test('should get prom metrics from the management api', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
     await client.close()
@@ -78,7 +79,7 @@ test('should get prom metrics from the management api', async t => {
     method: 'GET',
     path: '/api/v1/metrics'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.text()
   const metricsNames = metrics
@@ -87,25 +88,28 @@ test('should get prom metrics from the management api', async t => {
     .map(line => line.split(' ')[2])
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+    ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
 })
 
 test('should get prom metrics from the management api in the json format', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
     await client.close()
@@ -119,12 +123,12 @@ test('should get prom metrics from the management api in the json format', async
       Accept: 'application/json'
     }
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.json()
   const metricsNames = metrics.map(metric => metric.name)
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+    ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
 })

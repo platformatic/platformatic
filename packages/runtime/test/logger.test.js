@@ -1,13 +1,113 @@
-'use strict'
+import { execa } from 'execa'
+import { ok } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { startPath } from './cli/helper.js'
 
-const assert = require('node:assert')
-const path = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { execRuntime, stdioOutputToLogs } = require('./helpers')
+function stdioOutputToLogs (data) {
+  const logs = data
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch {
+        return line
+          .trim()
+          .split('\n')
+          .map(l => {
+            try {
+              return JSON.parse(l)
+            } catch {}
+            return null
+          })
+          .filter(log => log)
+      }
+    })
+    .filter(log => log)
+
+  return logs.flat()
+}
+
+function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
+  return new Promise((resolve, reject) => {
+    if (!done) {
+      reject(new Error('done fn is required'))
+    }
+
+    const result = {
+      stdout: [],
+      stderr: [],
+      url: null
+    }
+    let ready = false
+    let teardownCalled = false
+
+    async function teardown () {
+      if (teardownCalled) {
+        return
+      }
+      teardownCalled = true
+
+      timeoutId && clearTimeout(timeoutId)
+
+      if (!child) {
+        return
+      }
+      child.kill('SIGKILL')
+      child.catch(() => {})
+      child = null
+    }
+
+    let child = execa(process.execPath, [startPath, configPath], {
+      encoding: 'utf8',
+      env: { PLT_USE_PLAIN_CREATE: true }
+    })
+
+    const timeoutId = setTimeout(async () => {
+      clearTimeout(timeoutId)
+
+      await teardown()
+      reject(new Error('Timeout'))
+    }, timeout)
+
+    child.stdout.on('data', message => {
+      const m = message.toString()
+      result.stdout.push(m)
+
+      if (done(m)) {
+        teardown().then(() => {
+          resolve(result)
+        })
+        return
+      }
+
+      if (ready) {
+        return
+      }
+
+      const match = m.match(/Platformatic is now listening at (http:\/\/127\.0\.0\.1:\d+)/)
+      if (match) {
+        result.url = match[1]
+        try {
+          onReady?.({ url: result.url })
+        } catch (err) {
+          teardown().then(() => {
+            reject(new Error('Error calling onReady', { cause: err }))
+          })
+        }
+        ready = true
+      }
+    })
+
+    child.stderr.on('data', message => {
+      const msg = message.toString()
+      result.stderr.push(msg)
+    })
+  })
+}
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -16,28 +116,43 @@ test('should use full logger options - formatters, timestamp, redaction', async 
       await request(url, { path: '/logs' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       return requested
     }
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg === 'Starting the service "app"...'))
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg === 'Started the service "app"...'))
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')))
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg === 'Starting the application "app"...'
+    )
+  )
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg === 'Started the application "app"...'
+    )
+  )
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')
+    )
+  )
 })
 
-test('should inherit full logger options from runtime to a platformatic/service', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+test('should inherit full logger options from runtime to a platformatic/application', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -46,48 +161,74 @@ test('should inherit full logger options from runtime to a platformatic/service'
       await request(url, { path: '/logs' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       return requested && message.includes('call route /logs')
     }
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.find(log => log.stdout.level === 'DEBUG' &&
-    log.stdout.time.length === 24 && // isotime
-    log.stdout.name === 'service' &&
-    log.stdout.msg === 'Loading envfile...'))
-
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg === 'Starting the service "app"...'))
-
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg === 'Started the service "app"...'))
-
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')))
-
-  assert.ok(logs.find(log => {
-    if (log.level === 'INFO' &&
-      log.time.length === 24 && // isotime
-      log.name === 'app') {
-      return log.stdout.level === 'DEBUG' &&
+  ok(
+    logs.find(
+      log =>
+        log.stdout.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
-        log.stdout.secret === '***HIDDEN***' &&
-        log.stdout.msg === 'call route /logs'
-    }
-    return false
-  }))
+        log.stdout.msg === 'Loading envfile...'
+    )
+  )
+
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg === 'Starting the application "app"...'
+    )
+  )
+
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg === 'Started the application "app"...'
+    )
+  )
+
+  ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')
+    )
+  )
+
+  ok(
+    logs.find(log => {
+      if (
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'app'
+      ) {
+        return (
+          log.stdout.level === 'DEBUG' &&
+          log.stdout.time.length === 24 && // isotime
+          log.stdout.name === 'service' &&
+          log.stdout.secret === '***HIDDEN***' &&
+          log.stdout.msg === 'call route /logs'
+        )
+      }
+      return false
+    })
+  )
 })
 
-test('should inherit full logger options from runtime to different services', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+test('should inherit full logger options from runtime to different applications', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -96,22 +237,27 @@ test('should inherit full logger options from runtime to different services', as
       await request(url, { path: '/logs' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       return requested
     }
   })
   const logs = stdioOutputToLogs(stdout)
 
   for (const t of ['composer', 'service', 'node']) {
-    assert.ok(logs.find(log => log.level === 'INFO' &&
-      log.time.length === 24 && // isotime
-      log.name === 'service' &&
-      log.msg === `Started the service "${t}"...`))
+    ok(
+      logs.find(
+        log =>
+          log.level === 'INFO' &&
+          log.time.length === 24 && // isotime
+          log.name === 'service' &&
+          log.msg === `Started the application "${t}"...`
+      )
+    )
   }
 })
 
-test('should get json logs from thread services when they are not pino default config', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+test('should get json logs from thread applications when they are not pino default config', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -120,30 +266,37 @@ test('should get json logs from thread services when they are not pino default c
       await request(url, { path: '/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       return requested
     }
   })
-  const logs = stdioOutputToLogs(stdout)
-    .filter(log => log.caller === 'STDOUT')
+  const logs = stdioOutputToLogs(stdout).filter(log => log.caller === 'STDOUT')
 
-  assert.ok(logs.find(log => {
-    return log.stdout.level === 'INFO' &&
-      log.stdout.time.length === 24 && // isotime
-      log.stdout.name === 'service' &&
-      log.stdout.msg === 'incoming request'
-  }))
+  ok(
+    logs.find(log => {
+      return (
+        log.stdout.level === 'INFO' &&
+        log.stdout.time.length === 24 && // isotime
+        log.stdout.name === 'service' &&
+        log.stdout.msg === 'incoming request'
+      )
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.stdout.level === 'INFO' &&
-      log.stdout.time.length === 24 && // isotime
-      log.stdout.name === 'service' &&
-      log.stdout.msg === 'request completed'
-  }))
+  ok(
+    logs.find(log => {
+      return (
+        log.stdout.level === 'INFO' &&
+        log.stdout.time.length === 24 && // isotime
+        log.stdout.name === 'service' &&
+        log.stdout.msg === 'request completed'
+      )
+    })
+  )
 })
 
-test('should handle logs from thread services as they are with captureStdio: false', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
+test('should handle logs from thread applications as they are with captureStdio: false', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -154,7 +307,7 @@ test('should handle logs from thread services as they are with captureStdio: fal
       await request(url, { path: '/node/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       if (message.includes('call route / on service')) {
         responses++
       } else if (message.includes('call route / on node')) {
@@ -165,36 +318,39 @@ test('should handle logs from thread services as they are with captureStdio: fal
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.find(log => {
-    return log.nodeLevel === 'debug' &&
-      log.name === 'node' &&
-      log.msg === 'call route / on node'
-  }))
+  ok(
+    logs.find(log => {
+      return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.serviceLevel === 'debug' &&
-      log.name === 'service' &&
-      log.msg === 'call route / on service'
-  }))
+  ok(
+    logs.find(log => {
+      return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "node"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "service"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "composer"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
+    })
+  )
 })
 
-test('should handle logs from thread services as they are with captureStdio: false and managementApi: false', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
+test('should handle logs from thread applications as they are with captureStdio: false and managementApi: false', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -205,7 +361,7 @@ test('should handle logs from thread services as they are with captureStdio: fal
       await request(url, { path: '/node/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       if (message.includes('call route / on service')) {
         responses++
       } else if (message.includes('call route / on node')) {
@@ -216,36 +372,39 @@ test('should handle logs from thread services as they are with captureStdio: fal
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.find(log => {
-    return log.nodeLevel === 'debug' &&
-      log.name === 'node' &&
-      log.msg === 'call route / on node'
-  }))
+  ok(
+    logs.find(log => {
+      return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.serviceLevel === 'debug' &&
-      log.name === 'service' &&
-      log.msg === 'call route / on service'
-  }))
+  ok(
+    logs.find(log => {
+      return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "node"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "service"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
+    })
+  )
 
-  assert.ok(logs.find(log => {
-    return log.customLevelName === 'info' &&
-      log.msg === 'Starting the service "composer"...'
-  }))
+  ok(
+    logs.find(log => {
+      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
+    })
+  )
 })
 
 test('should use base and messageKey options', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -256,7 +415,7 @@ test('should use base and messageKey options', async t => {
       await request(url, { path: '/node/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       if (message.includes('call route / on service')) {
         responses++
       } else if (message.includes('call route / on node')) {
@@ -267,16 +426,20 @@ test('should use base and messageKey options', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.every(log => {
-    return log.customBaseName === 'a' &&
-      log.customBaseItem === 'b' &&
-      (log.theMessage ? log.theMessage.length > 0 : true) &&
-      (log.stdout ? log.stdout.theMessage.length > 0 : true)
-  }))
+  ok(
+    logs.every(log => {
+      return (
+        log.customBaseName === 'a' &&
+        log.customBaseItem === 'b' &&
+        (log.theMessage ? log.theMessage.length > 0 : true) &&
+        (log.stdout ? log.stdout.theMessage.length > 0 : true)
+      )
+    })
+  )
 })
 
 test('should use null base in options', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -287,7 +450,7 @@ test('should use null base in options', async t => {
       await request(url, { path: '/node/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       if (message.includes('call route / on service')) {
         responses++
       } else if (message.includes('call route / on node')) {
@@ -298,15 +461,16 @@ test('should use null base in options', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.every(log => {
-    const keys = Object.keys(log)
-    return !keys.includes('pid') &&
-      !keys.includes('hostname')
-  }))
+  ok(
+    logs.every(log => {
+      const keys = Object.keys(log)
+      return !keys.includes('pid') && !keys.includes('hostname')
+    })
+  )
 })
 
 test('should use custom config', async t => {
-  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
 
   let responses = 0
   let requested = false
@@ -317,7 +481,7 @@ test('should use custom config', async t => {
       await request(url, { path: '/node/' })
       requested = true
     },
-    done: (message) => {
+    done: message => {
       if (message.includes('request completed')) {
         responses++
       }
@@ -326,11 +490,10 @@ test('should use custom config', async t => {
   })
   const logs = stdioOutputToLogs(stdout)
 
-  assert.ok(logs.every(log => {
-    const keys = Object.keys(log)
-    return log.severity === 'INFO' &&
-      log.message.length > 0 &&
-      !keys.includes('pid') &&
-      !keys.includes('hostname')
-  }))
+  ok(
+    logs.every(log => {
+      const keys = Object.keys(log)
+      return log.severity === 'INFO' && log.message.length > 0 && !keys.includes('pid') && !keys.includes('hostname')
+    })
+  )
 })

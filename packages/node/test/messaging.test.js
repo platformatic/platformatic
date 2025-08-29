@@ -5,9 +5,9 @@ import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/h
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('supports pure IPC services', async t => {
-  const { root, config } = await prepareRuntime(t, 'messaging')
-  const { url } = await startRuntime(t, root, config)
+test('supports pure IPC applications', async t => {
+  const { runtime } = await prepareRuntime(t, 'messaging')
+  const url = await startRuntime(t, runtime)
 
   const res = await fetch(`${url}/abcde`)
 

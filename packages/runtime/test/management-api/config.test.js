@@ -1,29 +1,27 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get runtime config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -33,19 +31,19 @@ test('should get runtime config', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/config',
+    path: '/api/v1/config'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const runtimeConfig = await body.json()
-  assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.watch, false)
-  assert.deepStrictEqual(runtimeConfig.autoload, {
+  strictEqual(runtimeConfig.entrypoint, 'service-1')
+  strictEqual(runtimeConfig.watch, false)
+  deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: [],
+    exclude: []
   })
-  assert.deepStrictEqual(runtimeConfig.managementApi, {
-    logs: { maxSize: 6 },
+  deepStrictEqual(runtimeConfig.managementApi, {
+    logs: { maxSize: 6 }
   })
 })

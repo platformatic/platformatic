@@ -1,0 +1,61 @@
+import assert from 'assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
+
+test('should compose openapi with prefixes', async t => {
+  const api1 = await createOpenApiApplication(t, ['users'])
+
+  const api1Origin = await api1.listen({ host: '127.0.0.1', port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api1',
+          origin: `${api1Origin}`,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api1'
+          }
+        }
+      ]
+    },
+    telemetry: {
+      applicationName: 'test-gateway',
+      version: '1.0.0',
+      exporter: {
+        type: 'memory'
+      }
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  const res = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api1/users',
+    headers: {
+      'content-type': 'application/json'
+    }
+  })
+  const statusCode = res.statusCode
+  assert.equal(statusCode, 200)
+
+  // Check that the client span is correctly set
+  const { exporters } = gateway.getApplication().openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
+  assert.equal(finishedSpans.length, 2)
+  const proxyCallSpan = finishedSpans[0]
+  const gatewayCallSpan = finishedSpans[1]
+  assert.equal(proxyCallSpan.name, `GET ${api1Origin}/api1/users`)
+  assert.equal(proxyCallSpan.attributes['url.full'], `${api1Origin}/api1/users`)
+  assert.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
+  assert.equal(proxyCallSpan.parentSpanContext.spanId, gatewayCallSpan.spanContext().spanId)
+  assert.equal(proxyCallSpan.traceId, gatewayCallSpan.traceId)
+})

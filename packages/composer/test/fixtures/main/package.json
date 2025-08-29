@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@platformatic/composer": "3.0.0",
+    "@platformatic/service": "3.0.0"
+  }
+}

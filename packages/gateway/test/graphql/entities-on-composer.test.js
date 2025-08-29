@@ -1,0 +1,273 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { createFromConfig, graphqlRequest, startDatabaseApplications } from '../helper.js'
+
+function toGatewayConfig (applications, entities = {}) {
+  return {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      graphql: {
+        entities,
+        addEntitiesResolvers: true
+      },
+      applications: applications.map(s => {
+        const config = {
+          id: s.name,
+          origin: s.host,
+          graphql: true
+        }
+        return config
+      })
+    }
+  }
+}
+
+const defaultArgsAdapter = partialResults => {
+  return { where: { id: { in: partialResults.map(r => r?.id) } }, limit: 99 }
+}
+
+const entities = {
+  Artist: {
+    subgraph: 'artists',
+    resolver: { name: 'artists' },
+    pkey: 'id',
+    many: [
+      {
+        type: 'Movie',
+        as: 'movies',
+        pkey: 'id',
+        fkey: 'directorId',
+        subgraph: 'movies',
+        resolver: {
+          name: 'movies',
+          argsAdapter: artistIds => {
+            return { where: { directorId: { in: artistIds } }, limit: 99 }
+          },
+          partialResults: artists => {
+            return artists.map(r => r.id)
+          }
+        }
+      },
+      {
+        type: 'Song',
+        as: 'songs',
+        pkey: 'id',
+        fkey: 'singerId',
+        subgraph: 'songs',
+        resolver: {
+          name: 'songs',
+          argsAdapter: artistIds => {
+            return { where: { singerId: { in: artistIds } } }
+          },
+          partialResults: artists => {
+            return artists.map(r => r.id)
+          }
+        }
+      }
+    ]
+  },
+  Movie: {
+    subgraph: 'movies',
+    resolver: { name: 'movies' },
+    pkey: 'id',
+    fkeys: [
+      {
+        type: 'Artist',
+        as: 'director',
+        field: 'directorId',
+        subgraph: 'artists',
+        pkey: 'id',
+        resolver: {
+          name: 'artists',
+          partialResults: movies => {
+            return movies.map(r => ({ id: r.directorId }))
+          }
+        }
+      }
+    ]
+  },
+  Song: {
+    subgraph: 'songs',
+    resolver: { name: 'songs' },
+    pkey: 'id',
+    fkeys: [
+      {
+        type: 'Artist',
+        as: 'singer',
+        field: 'singerId',
+        subgraph: 'artists',
+        pkey: 'id',
+        resolver: {
+          name: 'artists',
+          partialResults: songs => {
+            return songs.map(r => ({ id: r.singerId }))
+          }
+        }
+      }
+    ]
+  }
+}
+
+test('should use queries and mutations on multiple @platformatic/db applications', async t => {
+  const requests = [
+    // query multiple applications
+    {
+      query:
+        '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
+      expected: {
+        songs: [
+          { title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko', profession: 'Singer' } }
+        ]
+      }
+    },
+
+    // get all songs by singer
+    {
+      query: '{ artists (where: { profession: { eq: "Singer" }}) { lastName, songs { title, year } } }',
+      expected: {
+        artists: [
+          {
+            lastName: 'Pavarotti',
+            songs: [{ title: 'Nessun dorma', year: 1992 }]
+          },
+          {
+            lastName: 'Molko',
+            songs: [
+              { title: 'Every you every me', year: 1998 },
+              { title: 'The bitter end', year: 2003 }
+            ]
+          },
+          {
+            lastName: 'Dickinson',
+            songs: [
+              { title: 'Fear of the dark', year: 1992 },
+              { title: 'The trooper', year: 1983 }
+            ]
+          }
+        ]
+      }
+    },
+
+    // query more subgraph on same node
+    {
+      query: '{ artists (where: { profession: { eq: "Director" }}) { lastName, songs { title }, movies { title } } }',
+      expected: {
+        artists: [
+          {
+            lastName: 'Nolan',
+            movies: [
+              { title: 'Following' },
+              { title: 'Memento' },
+              { title: 'Insomnia' },
+              { title: 'Batman Begins' },
+              { title: 'The Prestige' },
+              { title: 'The Dark Knight' },
+              { title: 'Inception' },
+              { title: 'The Dark Knight Rises' },
+              { title: 'Interstellar' },
+              { title: 'Dunkirk' },
+              { title: 'Tenet' },
+              { title: 'Oppenheimer' }
+            ],
+            songs: []
+          },
+          {
+            lastName: 'Benigni',
+            movies: [{ title: 'La vita é bella' }],
+            songs: [{ title: 'Vieni via con me' }]
+          }
+        ]
+      }
+    },
+
+    // double nested
+    {
+      query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { title, singer { firstName, lastName } } } }',
+      expected: {
+        artists: [
+          {
+            songs: [
+              { title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko' } },
+              { title: 'The bitter end', singer: { firstName: 'Brian', lastName: 'Molko' } }
+            ]
+          }
+        ]
+      }
+    },
+
+    // nested many times
+    {
+      query:
+        '{ artists (where: { firstName: { eq: "Brian" } }) { songs { singer { songs { singer { songs { title } }} } } } }',
+      expected: {
+        artists: [
+          {
+            songs: [
+              {
+                singer: {
+                  songs: [
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } },
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }
+                  ]
+                }
+              },
+              {
+                singer: {
+                  songs: [
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } },
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    // mutation: create
+    {
+      query: 'mutation { saveMovie (input: { id: "a-new-movie", title: "A new movie" }) { id, title } }',
+      expected: { saveMovie: { id: 'a-new-movie', title: 'A new movie' } }
+    },
+    {
+      query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
+      variables: { movie: { id: 'a-wonderful-movie', title: 'A wonderful movie' } },
+      expected: { saveMovie: { title: 'A wonderful movie' } }
+    }
+  ]
+
+  const applications = await startDatabaseApplications(t, [
+    { name: 'movies', jsonFile: 'bare-db.json' },
+    { name: 'songs', jsonFile: 'bare-db.json' },
+    { name: 'artists', jsonFile: 'bare-db.json' }
+  ])
+
+  const gatewayConfig = toGatewayConfig(applications, entities)
+
+  gatewayConfig.gateway.graphql.defaultArgsAdapter = defaultArgsAdapter
+  gatewayConfig.gateway.graphql.graphiql = true
+  gatewayConfig.gateway.refreshTimeout = 0
+
+  const gateway = await createFromConfig(t, gatewayConfig)
+  const gatewayHost = await gateway.start({ listen: true })
+
+  for (const request of requests) {
+    const response = await graphqlRequest({ query: request.query, variables: request.variables, host: gatewayHost })
+
+    assert.deepStrictEqual(
+      response,
+      request.expected,
+      'should get expected result from gateway application for query\n' +
+        request.query +
+        '\nresponse' +
+        JSON.stringify(response)
+    )
+  }
+
+  await gateway.stop()
+})

@@ -1,8 +1,6 @@
-'use strict'
+import { tableName } from '../utils.js'
 
-const { tableName } = require('../utils')
-
-async function listTables (db, sql, schemas) {
+export async function listTables (db, sql, schemas) {
   if (schemas) {
     const schemaList = sql.__dangerous__rawValue(schemas.map(s => `'${s}'`))
     const res = await db.query(sql`
@@ -21,7 +19,7 @@ async function listTables (db, sql, schemas) {
   }
 }
 
-async function listColumns (db, sql, table, schema) {
+export async function listColumns (db, sql, table, schema) {
   const query = sql`
     SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type, extra as is_generated
     FROM information_schema.columns
@@ -31,7 +29,7 @@ async function listColumns (db, sql, table, schema) {
   return db.query(query)
 }
 
-async function listConstraints (db, sql, table, schema) {
+export async function listConstraints (db, sql, table, schema) {
   const query = sql`
     SELECT TABLE_NAME as table_name, TABLE_SCHEMA as table_schema, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_table_schema AS foreign_table_schema, referenced_column_name AS foreign_column_name
     FROM information_schema.table_constraints t
@@ -43,8 +41,8 @@ async function listConstraints (db, sql, table, schema) {
   return db.query(query)
 }
 
-async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     let value = input[key]
     /* istanbul ignore next */
     if (value && typeof value === 'object' && !(value instanceof Date)) {
@@ -73,8 +71,8 @@ async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   return res[0]
 }
 
-async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
-  const pairs = Object.keys(input).map((key) => {
+export async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map(key => {
     let value = input[key]
     /* istanbul ignore next */
     if (value && typeof value === 'object' && !(value instanceof Date)) {
@@ -108,12 +106,4 @@ async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetr
   return res
 }
 
-module.exports = {
-  listTables,
-  listColumns,
-  listConstraints,
-  updateOne,
-  updateMany,
-}
-
-module.exports.hasILIKE = false
+export const hasILIKE = false

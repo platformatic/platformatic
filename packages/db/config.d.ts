@@ -22,7 +22,7 @@ export type CrudOperationAuth =
     }
   | boolean;
 
-export interface PlatformaticDB {
+export interface PlatformaticDatabaseConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -387,24 +387,6 @@ export interface PlatformaticDB {
      */
     currentSchema?: string;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   types?: {
     /**
      * Should types be auto generated.
@@ -418,14 +400,15 @@ export interface PlatformaticDB {
   plugins?: {
     [k: string]: unknown;
   };
+  application?: {};
   telemetry?: {
     enabled?: boolean | string;
     /**
-     * The name of the service. Defaults to the folder name if not specified.
+     * The name of the application. Defaults to the folder name if not specified.
      */
-    serviceName: string;
+    applicationName: string;
     /**
-     * The version of the service (optional)
+     * The version of the application (optional)
      */
     version?: string;
     /**
@@ -494,20 +477,12 @@ export interface PlatformaticDB {
           [k: string]: unknown;
         };
   };
-  clients?: {
-    serviceId?: string;
-    name?: string;
-    type?: "openapi" | "graphql";
-    path?: string;
-    schema?: string;
-    url?: string;
-    fullResponse?: boolean;
-    fullRequest?: boolean;
-    validateResponse?: boolean;
-  }[];
   runtime?: {
     preload?: string | string[];
     basePath?: string;
+    services?: {
+      [k: string]: unknown;
+    }[];
     workers?: number | string;
     logger?: {
       level: (
@@ -595,7 +570,7 @@ export interface PlatformaticDB {
     restartOnError?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
-      service: number | string;
+      application: number | string;
     };
     health?: {
       enabled?: boolean | string;
@@ -714,11 +689,11 @@ export interface PlatformaticDB {
     telemetry?: {
       enabled?: boolean | string;
       /**
-       * The name of the service. Defaults to the folder name if not specified.
+       * The name of the application. Defaults to the folder name if not specified.
        */
-      serviceName: string;
+      applicationName: string;
       /**
-       * The version of the service (optional)
+       * The version of the application (optional)
        */
       version?: string;
       /**
@@ -794,7 +769,7 @@ export interface PlatformaticDB {
       watchDisabled?: boolean;
       [k: string]: unknown;
     };
-    serviceTimeout?: number | string;
+    applicationTimeout?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;

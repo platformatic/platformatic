@@ -1,11 +1,9 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isMariaDB, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-const { mapSQLEntityToJSONSchema } = require('..')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import { mapSQLEntityToJSONSchema } from '../index.js'
+import { clear, connInfo, isMariaDB, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -67,7 +65,7 @@ async function createBasicGeneratedTests (db, sql) {
   }
 }
 
-test('simple db, simple rest API', async (t) => {
+test('simple db, simple rest API', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -76,7 +74,7 @@ test('simple db, simple rest API', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -109,7 +107,7 @@ test('simple db, simple rest API', async (t) => {
   }
 })
 
-test('noRequired = true', async (t) => {
+test('noRequired = true', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -118,7 +116,7 @@ test('noRequired = true', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -151,7 +149,7 @@ test('noRequired = true', async (t) => {
   }
 })
 
-test('ignore one field', async (t) => {
+test('ignore one field', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -160,7 +158,7 @@ test('ignore one field', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -169,7 +167,7 @@ test('ignore one field', async (t) => {
   {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page, {
-      title: true,
+      title: true
     })
 
     equal(pageJsonSchema.$id, 'Page')
@@ -194,7 +192,7 @@ test('ignore one field', async (t) => {
   }
 })
 
-test('stored and virtual generated columns should be read only', async (t) => {
+test('stored and virtual generated columns should be read only', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -203,7 +201,7 @@ test('stored and virtual generated columns should be read only', async (t) => {
 
       await clear(db, sql)
       await createBasicGeneratedTests(db, sql)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -223,7 +221,7 @@ test('stored and virtual generated columns should be read only', async (t) => {
   }
 })
 
-test('PG Arrays', { skip: !isPg }, async (t) => {
+test('PG Arrays', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -236,7 +234,7 @@ test('PG Arrays', { skip: !isPg }, async (t) => {
       title VARCHAR(42) NOT NULL,
       tags VARCHAR(42)[] NOT NULL
     );`)
-    },
+    }
   })
   t.after(() => app.close())
 

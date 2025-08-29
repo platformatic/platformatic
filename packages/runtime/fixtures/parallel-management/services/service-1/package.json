@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@platformatic/composer": "3.0.0"
+  }
+}

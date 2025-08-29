@@ -1,16 +1,15 @@
-'use strict'
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import fastify from 'fastify'
+import { equal } from 'node:assert'
+import { mkdir, rmdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import telemetryPlugin from '../lib/telemetry.js'
+import { parseNDJson } from './helper.js'
 
-const { test } = require('node:test')
-const { equal } = require('node:assert')
-const fastify = require('fastify')
-const { tmpdir } = require('node:os')
-const { join, dirname } = require('node:path')
-const { mkdir, unlink, rmdir } = require('node:fs/promises')
 const pid = process.pid
-const telemetryPlugin = require('../lib/telemetry')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { parseNDJson } = require('./helper')
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
   const app = fastify()
@@ -21,9 +20,7 @@ async function setupApp (pluginOpts, routeHandler, teardown) {
     await app.close()
     const { exporters } = app.openTelemetry
     exporters.forEach(exporter => {
-      if (
-        exporter.constructor.name === 'InMemorySpanExporter'
-      ) {
+      if (exporter.constructor.name === 'InMemorySpanExporter') {
         exporter.reset()
       }
     })
@@ -35,8 +32,8 @@ const injectArgs = {
   method: 'GET',
   url: '/test',
   headers: {
-    host: 'test',
-  },
+    host: 'test'
+  }
 }
 
 test('should trace a request with file exporter', async () => {
@@ -48,16 +45,21 @@ test('should trace a request with file exporter', async () => {
     return { foo: 'bar' }
   }
 
-  const app = await setupApp({
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'file',
-      options: {
-        path: filePath
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'file',
+        options: {
+          path: filePath
+        }
       }
     },
-  }, handler, test.after, filePath)
+    handler,
+    test.after,
+    filePath
+  )
 
   app.inject(injectArgs, async () => {
     await sleep(500)

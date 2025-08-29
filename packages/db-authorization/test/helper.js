@@ -1,6 +1,4 @@
-'use strict'
-
-const why = require('why-is-node-running')
+import why from 'why-is-node-running'
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -17,29 +15,34 @@ process.env.TZ = 'UTC'
 
 const connInfo = {}
 
+export let isSQLite = false
+export let isMysql = false
+export let isPg = false
+
 if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  module.exports.isPg = true
+  isPg = true
 } else if (process.env.DB === 'mariadb') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'mysql8') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
+  isMysql = true
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
-  module.exports.isSQLite = true
+  isSQLite = true
 }
 
-module.exports.connInfo = connInfo
+const _connInfo = connInfo
+export { _connInfo as connInfo }
 
-module.exports.clear = async function (db, sql) {
+export async function clear (db, sql) {
   try {
     await db.query(sql`DROP TABLE IF EXISTS pages CASCADE`)
   } catch (err) {}
@@ -48,8 +51,8 @@ module.exports.clear = async function (db, sql) {
   } catch (err) {}
 }
 
-async function createBasicPages (db, sql) {
-  if (module.exports.isSQLite) {
+export async function createBasicPages (db, sql) {
+  if (isSQLite) {
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42),
@@ -63,5 +66,3 @@ async function createBasicPages (db, sql) {
     );`)
   }
 }
-
-module.exports.createBasicPages = createBasicPages

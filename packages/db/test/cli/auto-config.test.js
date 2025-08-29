@@ -1,16 +1,13 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { getConnectionInfo } = require('../helper')
-const { start, connectDB } = require('./helper.js')
-const { safeKill } = require('./helper.js')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { getConnectionInfo } from '../helper.js'
+import { connectDB, safeKill, start } from './helper.js'
 
 const fileTypes = ['yaml', 'yml', 'toml', 'tml', 'json', 'json5']
 for (const fileType of fileTypes) {
-  test(`auto config - ${fileType}`, async (t) => {
+  test(`auto config - ${fileType}`, async t => {
     const { connectionInfo, dropTestDB } = await getConnectionInfo()
     const db = await connectDB(connectionInfo)
 
@@ -22,13 +19,14 @@ for (const fileType of fileTypes) {
       title VARCHAR(42)
     );`)
 
-    const { child, url } = await start([
-      '-c', join(__dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType),
-    ], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
-    })
+    const { child, url } = await start(
+      ['-c', join(import.meta.dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType)],
+      {
+        env: {
+          DATABASE_URL: connectionInfo.connectionString
+        }
+      }
+    )
 
     let id
     {
@@ -43,8 +41,8 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `,
-        }),
+              `
+        })
       })
       assert.equal(res.statusCode, 200, 'savePage status code')
       const body = await res.body.json()
@@ -64,18 +62,22 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `,
-        }),
+              `
+        })
       })
       assert.equal(res.statusCode, 200, 'pages status code')
-      assert.deepEqual(await res.body.json(), {
-        data: {
-          getPageById: {
-            id,
-            title: 'Hello',
-          },
+      assert.deepEqual(
+        await res.body.json(),
+        {
+          data: {
+            getPageById: {
+              id,
+              title: 'Hello'
+            }
+          }
         },
-      }, 'pages response')
+        'pages response'
+      )
     }
 
     {
@@ -90,18 +92,22 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `,
-        }),
+              `
+        })
       })
       assert.equal(res.statusCode, 200, 'savePage status code')
-      assert.deepEqual(await res.body.json(), {
-        data: {
-          savePage: {
-            id,
-            title: 'Hello World',
-          },
+      assert.deepEqual(
+        await res.body.json(),
+        {
+          data: {
+            savePage: {
+              id,
+              title: 'Hello World'
+            }
+          }
         },
-      }, 'savePage response')
+        'savePage response'
+      )
     }
 
     {
@@ -116,18 +122,22 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `,
-        }),
+              `
+        })
       })
       assert.equal(res.statusCode, 200, 'pages status code')
-      assert.deepEqual(await res.body.json(), {
-        data: {
-          getPageById: {
-            id,
-            title: 'Hello World',
-          },
+      assert.deepEqual(
+        await res.body.json(),
+        {
+          data: {
+            getPageById: {
+              id,
+              title: 'Hello World'
+            }
+          }
         },
-      }, 'pages response')
+        'pages response'
+      )
     }
 
     await safeKill(child)

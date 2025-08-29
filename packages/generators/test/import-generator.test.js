@@ -1,19 +1,17 @@
-'use strict'
-
-const { safeRemove } = require('@platformatic/utils')
-const { spawnSync } = require('node:child_process')
-const { readFile, writeFile, mkdir } = require('node:fs/promises')
-const { existsSync } = require('node:fs')
-const { test } = require('node:test')
-const { deepStrictEqual, ok } = require('node:assert')
-const { join } = require('node:path')
-const { fakeLogger, getTempDir } = require('./helpers')
-const { ImportGenerator } = require('../lib/import-generator')
+import { safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual, ok } from 'node:assert'
+import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { ImportGenerator } from '../lib/import-generator.js'
+import { fakeLogger, getTempDir } from './helpers.js'
 
 function createGenerator (runtime, opts) {
   return new ImportGenerator({
     logger: fakeLogger,
-    serviceName: 'test-service',
+    applicationName: 'test-application',
     module: '@platformatic/service',
     version: '1.0.0',
     parent: runtime,
@@ -34,7 +32,7 @@ function createMockedRuntimeGenerator (opts) {
     updateRuntimeEnv (env) {
       runtime.env = env
     },
-    servicesFolder: 'web',
+    applicationsFolder: 'web',
     config: {},
     env: '',
     ...opts
@@ -53,24 +51,24 @@ test('should create ImportGenerator instance', async t => {
   const runtime = createMockedRuntimeGenerator()
   const gen = createGenerator(runtime)
 
-  deepStrictEqual(gen.config.serviceName, 'test-service')
+  deepStrictEqual(gen.config.applicationName, 'test-application')
   deepStrictEqual(gen.config.module, '@platformatic/service')
   deepStrictEqual(gen.config.version, '1.0.0')
-  deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_PATH')
+  deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_PATH')
   deepStrictEqual(gen.runtime, runtime)
 })
 
-test('should sanitize service name for environment variable', async t => {
+test('should sanitize application name for environment variable', async t => {
   const runtime = createMockedRuntimeGenerator()
 
   {
-    const gen = createGenerator(runtime, { serviceName: 'test-service-123' })
-    deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_123_PATH')
+    const gen = createGenerator(runtime, { applicationName: 'test-application-123' })
+    deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_123_PATH')
   }
 
   {
-    const gen = createGenerator(runtime, { serviceName: 'test@service.name' })
-    deepStrictEqual(gen.config.servicePathEnvName, 'PLT_SERVICE_TEST_SERVICE_NAME_PATH')
+    const gen = createGenerator(runtime, { applicationName: 'test@application.name' })
+    deepStrictEqual(gen.config.applicationPathEnvName, 'PLT_APPLICATION_TEST_APPLICATION_NAME_PATH')
   }
 })
 
@@ -79,7 +77,7 @@ test('should prepare questions for user input', async t => {
   const gen = createGenerator(runtime)
 
   await gen.prepareQuestions()
-  deepStrictEqual(gen.questions.length, 5)
+  deepStrictEqual(gen.questions.length, 4)
 
   const pathQuestion = gen.questions.at(-2)
   deepStrictEqual(pathQuestion.type, 'input')
@@ -118,7 +116,7 @@ test('should validate application path', async t => {
   }
 
   {
-    const result = await pathQuestion.validate(__filename)
+    const result = await pathQuestion.validate(import.meta.filename)
     deepStrictEqual(result, 'Please enter a valid path')
   }
 })
@@ -133,8 +131,10 @@ test('copy - should copy application', async t => {
   await writeFile(join(sourceDir, '.env'), 'A=B')
   await mkdir(join(sourceDir, 'src'))
   await mkdir(join(sourceDir, 'node_modules'))
-  await writeFile(join(sourceDir, 'src', 'app.js'), 'module.exports = {}')
   await writeFile(join(sourceDir, 'src', 'fake.js'), 'module.exports = {}')
+  await writeFile(join(sourceDir, 'src', 'app.js'), 'module.exports = {}')
+  await writeFile(join(sourceDir, 'src', '.env'), 'C=D')
+  await writeFile(join(sourceDir, 'node_modules', 'fake.js'), 'module.exports = {}')
   await writeFile(join(sourceDir, 'pnpm-lock.yaml'), '---')
   await writeFile(join(sourceDir, 'package-lock.json'), '{}')
   await writeFile(join(sourceDir, 'yarn.lock'), '{}')
@@ -159,6 +159,9 @@ test('copy - should copy application', async t => {
 
   const appJs = await readFile(join(targetDir, 'src', 'app.js'), 'utf-8')
   deepStrictEqual(appJs, 'module.exports = {}')
+
+  const srcEnvFile = await readFile(join(targetDir, 'src/.env'), 'utf-8')
+  deepStrictEqual(srcEnvFile, 'C=D')
 
   ok(!existsSync(join(targetDir, 'node_modules', 'fake.js')))
   ok(!existsSync(join(targetDir, 'pnpm-lock.yaml')))
@@ -302,24 +305,24 @@ test('import - should import application', async t => {
 
   // Check that runtime config was updated
   ok(Array.isArray(runtime.config.web))
-  deepStrictEqual(runtime.config.web[0].id, 'test-service')
-  deepStrictEqual(runtime.config.web[0].path, '{PLT_SERVICE_TEST_SERVICE_PATH}')
+  deepStrictEqual(runtime.config.web[0].id, 'test-application')
+  deepStrictEqual(runtime.config.web[0].path, '{PLT_APPLICATION_TEST_APPLICATION_PATH}')
   deepStrictEqual(runtime.config.web[0].url, 'git@github.com:hello/world.git')
 
   // Check that runtime env was updated
-  ok(runtime.env.includes('PLT_SERVICE_TEST_SERVICE_PATH=' + sourceDir))
+  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
 })
 
-test('import - should handle runtime with existing services', async t => {
+test('import - should handle runtime with existing applications', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    servicesBasePath: '/nonexistent/services',
+    applicationsBasePath: '/nonexistent/applications',
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          web: [{ id: 'existing-service', path: '/existing/path' }]
+          web: [{ id: 'existing-application', path: '/existing/path' }]
         })
       }
     },
@@ -335,13 +338,13 @@ test('import - should handle runtime with existing services', async t => {
   await gen._afterWriteFiles(runtime)
 
   deepStrictEqual(runtime.config.web.length, 2)
-  deepStrictEqual(runtime.config.web[0].id, 'existing-service')
-  deepStrictEqual(runtime.config.web[1].id, 'test-service')
+  deepStrictEqual(runtime.config.web[0].id, 'existing-application')
+  deepStrictEqual(runtime.config.web[1].id, 'test-application')
   ok(runtime.env.includes('EXISTING_VAR=value'))
-  ok(runtime.env.includes('PLT_SERVICE_TEST_SERVICE_PATH=' + sourceDir))
+  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
 })
 
-test('import - should not duplicate services in runtime config', async t => {
+test('import - should not duplicate applications in runtime config', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
@@ -349,7 +352,7 @@ test('import - should not duplicate services in runtime config', async t => {
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          services: [{ id: 'test-service', path: '/existing/path' }]
+          applications: [{ id: 'test-application', path: '/existing/path' }]
         })
       }
     },
@@ -363,11 +366,11 @@ test('import - should not duplicate services in runtime config', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  deepStrictEqual(runtime.config.services.length, 1)
-  deepStrictEqual(runtime.config.services[0].id, 'test-service')
+  deepStrictEqual(runtime.config.applications.length, 1)
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
 
-test('import - should use different services keys', async t => {
+test('import - should use different applications keys', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
@@ -375,7 +378,7 @@ test('import - should use different services keys', async t => {
     getRuntimeConfigFileObject () {
       return {
         contents: JSON.stringify({
-          services: []
+          applications: []
         })
       }
     },
@@ -389,6 +392,6 @@ test('import - should use different services keys', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  ok(Array.isArray(runtime.config.services))
-  deepStrictEqual(runtime.config.services[0].id, 'test-service')
+  ok(Array.isArray(runtime.config.applications))
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })

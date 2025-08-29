@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const fastify = require('fastify')
-const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite } = require('./helper')
-const sqlOpenAPI = require('..')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { strictEqual } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -29,20 +27,20 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('ignore a root entity route', async (t) => {
+test('ignore a root entity route', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     ignoreRoutes: [
       { path: '/pages', method: 'GET' },
-      { path: '/pages', method: 'PUT' },
-    ],
+      { path: '/pages', method: 'PUT' }
+    ]
   })
   t.after(() => app.close())
 
@@ -50,36 +48,36 @@ test('ignore a root entity route', async (t) => {
 
   {
     const res = await app.inject({ method: 'GET', url: '/pages' })
-    assert.strictEqual(res.statusCode, 404)
+    strictEqual(res.statusCode, 404)
   }
   {
     const res = await app.inject({ method: 'PUT', url: '/pages' })
-    assert.strictEqual(res.statusCode, 404)
+    strictEqual(res.statusCode, 404)
   }
   {
     const res = await app.inject({
       method: 'POST',
       url: '/pages',
-      body: { title: 'hello' },
+      body: { title: 'hello' }
     })
-    assert.strictEqual(res.statusCode, 200, res.body)
+    strictEqual(res.statusCode, 200, res.body)
   }
 })
 
-test('ignore a parametric entity route', async (t) => {
+test('ignore a parametric entity route', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlOpenAPI, {
     ignoreRoutes: [
       { path: '/pages/{id}', method: 'GET' },
-      { path: '/pages/{id}', method: 'PUT' },
-    ],
+      { path: '/pages/{id}', method: 'PUT' }
+    ]
   })
   t.after(() => app.close())
 
@@ -89,16 +87,16 @@ test('ignore a parametric entity route', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/pages',
-      body: { title: 'hello' },
+      body: { title: 'hello' }
     })
-    assert.strictEqual(res.statusCode, 200, res.body)
+    strictEqual(res.statusCode, 200, res.body)
   }
   {
     const res = await app.inject({ method: 'GET', url: '/pages' })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
   {
     const res = await app.inject({ method: 'GET', url: '/pages/1' })
-    assert.strictEqual(res.statusCode, 404)
+    strictEqual(res.statusCode, 404)
   }
 })

@@ -1,14 +1,10 @@
-'use strict'
-
-const { loadConfig } = require('@platformatic/config')
-const { deepStrictEqual } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
-const { kWorkersBroadcast } = require('../../lib/worker/symbols')
-const { prepareRuntime } = require('./helper')
-const { openLogsWebsocket, waitForLogs, waitForStart, updateFile } = require('../helpers')
+import { deepStrictEqual } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
+import { createRuntime, updateFile } from '../helpers.js'
+import { prepareRuntime, waitForEvents } from './helper.js'
 
 function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = false) {
   const threads = {}
@@ -49,14 +45,11 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile, null, { concurrency: 1 })
   const eventsPromise = waitBroadcastedWorkers(t)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -66,43 +59,43 @@ test('should post updated workers list via broadcast channel', async t => {
 
   // Verify that the broadcast happened in the right order
 
-  const expected = { first: [{ id: 'first:0', service: 'first', thread: threads['first:0'], worker: 0 }] }
+  const expected = { first: [{ id: 'first:0', application: 'first', thread: threads['first:0'], worker: 0 }] }
   deepStrictEqual(events[0], new Map(Object.entries(expected)))
 
-  expected.first.push({ id: 'first:1', service: 'first', thread: threads['first:1'], worker: 1 })
+  expected.first.push({ id: 'first:1', application: 'first', thread: threads['first:1'], worker: 1 })
   deepStrictEqual(events[1], new Map(Object.entries(expected)))
 
-  expected.first.push({ id: 'first:2', service: 'first', thread: threads['first:2'], worker: 2 })
+  expected.first.push({ id: 'first:2', application: 'first', thread: threads['first:2'], worker: 2 })
   deepStrictEqual(events[2], new Map(Object.entries(expected)))
 
-  expected.second = [{ id: 'second:0', service: 'second', thread: threads['second:0'], worker: 0 }]
+  expected.second = [{ id: 'second:0', application: 'second', thread: threads['second:0'], worker: 0 }]
   deepStrictEqual(events[3], new Map(Object.entries(expected)))
 
-  expected.second.push({ id: 'second:1', service: 'second', thread: threads['second:1'], worker: 1 })
+  expected.second.push({ id: 'second:1', application: 'second', thread: threads['second:1'], worker: 1 })
   deepStrictEqual(events[4], new Map(Object.entries(expected)))
 
-  expected.second.push({ id: 'second:2', service: 'second', thread: threads['second:2'], worker: 2 })
+  expected.second.push({ id: 'second:2', application: 'second', thread: threads['second:2'], worker: 2 })
   deepStrictEqual(events[5], new Map(Object.entries(expected)))
 
-  expected.composer = [{ id: 'composer', service: 'composer', thread: threads['composer'], worker: undefined }]
+  expected.composer = [{ id: 'composer', application: 'composer', thread: threads['composer'], worker: undefined }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
   delete expected.composer
   deepStrictEqual(events[7], new Map(Object.entries(expected)))
 
-  expected.second.shift()
+  expected.first.shift()
   deepStrictEqual(events[8], new Map(Object.entries(expected)))
 
-  expected.second.shift()
+  expected.first.shift()
   deepStrictEqual(events[9], new Map(Object.entries(expected)))
 
-  delete expected.second
+  delete expected.first
   deepStrictEqual(events[10], new Map(Object.entries(expected)))
 
-  expected.first.shift()
+  expected.second.shift()
   deepStrictEqual(events[11], new Map(Object.entries(expected)))
 
-  expected.first.shift()
+  expected.second.shift()
   deepStrictEqual(events[12], new Map(Object.entries(expected)))
 
   deepStrictEqual(events[13], new Map())
@@ -111,25 +104,19 @@ test('should post updated workers list via broadcast channel', async t => {
 test('should post updated workers when something crashed', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   const url = await app.start()
 
-  // Wait for the application to start
-  await waitForStart(managementApiWebsocket)
-
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'The service "first" unexpectedly exited with code 1.',
-    'Started the service "first"'
+  const waitPromise = waitForEvents(
+    app,
+    { event: 'application:worker:error', application: 'first', worker: 0 },
+    { event: 'application:worker:started', application: 'first', worker: 0 }
   )
 
   // Fetch the entrypoint to induce the crash
@@ -146,29 +133,26 @@ test('should post updated workers when something crashed', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
     new Map()
   ])
 })
 
-test('should post updated workers when the service is updated', async t => {
+test('should post updated workers when the application is updated', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
 
-  const waitPromise = waitForLogs(managementApiWebsocket, 'The service "first" has been successfully reloaded ...')
+  const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'first', worker: 0 })
 
   await updateFile(resolve(root, './first/index.mjs'), contents => {
     contents = contents.replace('function create', 'function main').replace('return app', 'app.listen({ port: 0 })')
@@ -183,9 +167,9 @@ test('should post updated workers when the service is updated', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', service: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
     new Map()
   ])
 })
@@ -193,8 +177,7 @@ test('should post updated workers when the service is updated', async t => {
 test('should get information from other workers via ITC using a round robin approach', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   const threads = {}
   const broadcast = new BroadcastChannel(kWorkersBroadcast)
@@ -262,8 +245,7 @@ test('should get information from other workers via ITC using a round robin appr
 test('should return an error if the target worker throws an error', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -287,8 +269,7 @@ test('should return an error if the target worker throws an error', async t => {
 test('should return an error if the target worker times out', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -311,15 +292,17 @@ test('should return an error if the target worker times out', async t => {
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
-    deepStrictEqual(error.message, 'Cannot send a message to service "second": Timeout while waiting for a response.')
+    deepStrictEqual(
+      error.message,
+      'Cannot send a message to application "second": Timeout while waiting for a response.'
+    )
   }
 })
 
 test('should return an error if the target worker exits before returning a response', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -338,7 +321,7 @@ test('should return an error if the target worker exits before returning a respo
 
     deepStrictEqual(
       error.message,
-      'Cannot send a message to service "second": The communication channel was closed before receiving a response.'
+      'Cannot send a message to application "second": The communication channel was closed before receiving a response.'
     )
   }
 })
@@ -346,8 +329,7 @@ test('should return an error if the target worker exits before returning a respo
 test('should return an error if the target worker throws an error while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -380,8 +362,7 @@ test('should return an error if the target worker throws an error while saving t
 test('should return an error if the target worker times out while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -412,7 +393,7 @@ test('should return an error if the target worker times out while saving the cha
 
     deepStrictEqual(
       error.message,
-      'Handler failed with error: Cannot send a message to service "second": Timeout while establishing a communication channel.'
+      'Handler failed with error: Cannot send a message to application "second": Timeout while establishing a communication channel.'
     )
   }
 })
@@ -420,17 +401,14 @@ test('should return an error if the target worker times out while saving the cha
 test('should reuse channels when the worker are restarted', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.with-watch.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   let createdChannels = 0
-  app.on('service:worker:messagingChannel', () => createdChannels++)
+  app.on('application:worker:messagingChannel', () => createdChannels++)
 
   const url = await app.start()
 
@@ -443,9 +421,9 @@ test('should reuse channels when the worker are restarted', async t => {
   deepStrictEqual(createdChannels, 3)
 
   // Get all the logs so far
-  const waitPromise = waitForLogs(managementApiWebsocket, 'The service "third" has been successfully reloaded ...')
+  const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'third', worker: 0 })
 
-  // Now restart the third service, it should result in workers configuration being broadcasted
+  // Now restart the third application, it should result in workers configuration being broadcasted
   await updateFile(resolve(root, './third/index.mjs'), contents => {
     return contents.replace("{ hello: 'world' }", "{ from: 'third' }")
   })

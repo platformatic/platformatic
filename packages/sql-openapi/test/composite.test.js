@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal } = require('node:assert/strict')
-const fastify = require('fastify')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlOpenAPI = require('..')
-
-test('composite primary keys', async (t) => {
+test('composite primary keys', async t => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -75,7 +73,7 @@ test('composite primary keys', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -87,14 +85,18 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        theTitle: 'foobar',
-      },
+        theTitle: 'foobar'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
-      id: 1,
-      theTitle: 'foobar',
-    }, 'POST /pages response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        theTitle: 'foobar'
+      },
+      'POST /pages response'
+    )
   }
 
   {
@@ -102,14 +104,18 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/users',
       body: {
-        username: 'mcollina',
-      },
+        username: 'mcollina'
+      }
     })
     equal(res.statusCode, 200, 'POST /users status code')
-    same(res.json(), {
-      id: 1,
-      username: 'mcollina',
-    }, 'POST /users response')
+    same(
+      res.json(),
+      {
+        id: 1,
+        username: 'mcollina'
+      },
+      'POST /users response'
+    )
   }
 
   {
@@ -117,14 +123,18 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/users',
       body: {
-        username: 'lucamaraschi',
-      },
+        username: 'lucamaraschi'
+      }
     })
     equal(res.statusCode, 200, 'POST /users status code')
-    same(res.json(), {
-      id: 2,
-      username: 'lucamaraschi',
-    }, 'POST /users response')
+    same(
+      res.json(),
+      {
+        id: 2,
+        username: 'lucamaraschi'
+      },
+      'POST /users response'
+    )
   }
 
   {
@@ -132,15 +142,19 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/editors/page/1/user/1',
       body: {
-        role: 'admin',
-      },
+        role: 'admin'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/page/1/user/1 status code')
-    same(res.json(), {
-      userId: 1,
-      pageId: 1,
-      role: 'admin',
-    }, 'POST /editors/page/1/user/1 response')
+    same(
+      res.json(),
+      {
+        userId: 1,
+        pageId: 1,
+        role: 'admin'
+      },
+      'POST /editors/page/1/user/1 response'
+    )
   }
 
   {
@@ -148,35 +162,43 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/editors/page/1/user/2',
       body: {
-        role: 'author',
-      },
+        role: 'author'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/page/1/user/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'POST /editors/page/1/user/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'POST /editors/page/1/user/2 response'
+    )
     equal(res.headers.location, '/editors/page/1/user/2', 'POST /editors/page/1/user/2 location header')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/page/1/user/2',
+      url: '/editors/page/1/user/2'
     })
     equal(res.statusCode, 200, 'GET /editors/page/1/user/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'GET /editors/page/1/user/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'GET /editors/page/1/user/2 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/page/1/user/3',
+      url: '/editors/page/1/user/3'
     })
     equal(res.statusCode, 404, 'GET /editors/page/1/user/3 status code')
   }
@@ -186,64 +208,85 @@ test('composite primary keys', async (t) => {
       method: 'POST',
       url: '/editors/page/1/user/1',
       body: {
-        role: 'captain',
-      },
+        role: 'captain'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/page/1/user/1 status code')
-    same(res.json(), {
-      userId: 1,
-      pageId: 1,
-      role: 'captain',
-    }, 'POST /editors/page/1/user/1 response')
+    same(
+      res.json(),
+      {
+        userId: 1,
+        pageId: 1,
+        role: 'captain'
+      },
+      'POST /editors/page/1/user/1 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors?orderby.role=desc',
+      url: '/editors?orderby.role=desc'
     })
     equal(res.statusCode, 200, 'GET /editors status code')
-    same(res.json(), [{
-      userId: 1,
-      pageId: 1,
-      role: 'captain',
-    }, {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }], 'GET /editors response')
+    same(
+      res.json(),
+      [
+        {
+          userId: 1,
+          pageId: 1,
+          role: 'captain'
+        },
+        {
+          userId: 2,
+          pageId: 1,
+          role: 'author'
+        }
+      ],
+      'GET /editors response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors?where.role.eq=author',
+      url: '/editors?where.role.eq=author'
     })
     equal(res.statusCode, 200, 'GET /editors status code')
-    same(res.json(), [{
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }], 'GET /editors response')
+    same(
+      res.json(),
+      [
+        {
+          userId: 2,
+          pageId: 1,
+          role: 'author'
+        }
+      ],
+      'GET /editors response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/editors/page/1/user/2',
+      url: '/editors/page/1/user/2'
     })
     equal(res.statusCode, 200, 'DELETE /editors/page/1/user/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'DELETE /editors/page/1/user/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'DELETE /editors/page/1/user/2 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/page/1/user/2',
+      url: '/editors/page/1/user/2'
     })
     equal(res.statusCode, 404, 'GET /editors/page/1/user/2 status code')
   }
@@ -251,13 +294,13 @@ test('composite primary keys', async (t) => {
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/editors/page/1/user/2',
+      url: '/editors/page/1/user/2'
     })
     equal(res.statusCode, 404, 'DELETE /editors/page/1/user/2 status code')
   }
 })
 
-test('composite primary keys withour relations', async (t) => {
+test('composite primary keys withour relations', async t => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -289,7 +332,7 @@ test('composite primary keys withour relations', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -301,15 +344,19 @@ test('composite primary keys withour relations', async (t) => {
       method: 'POST',
       url: '/editors/pageId/1/userId/1',
       body: {
-        role: 'admin',
-      },
+        role: 'admin'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/1 status code')
-    same(res.json(), {
-      userId: 1,
-      pageId: 1,
-      role: 'admin',
-    }, 'POST /editors/pageId/1/userId/1 response')
+    same(
+      res.json(),
+      {
+        userId: 1,
+        pageId: 1,
+        role: 'admin'
+      },
+      'POST /editors/pageId/1/userId/1 response'
+    )
   }
 
   {
@@ -317,35 +364,43 @@ test('composite primary keys withour relations', async (t) => {
       method: 'POST',
       url: '/editors/pageId/1/userId/2',
       body: {
-        role: 'author',
-      },
+        role: 'author'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'POST /editors/pageId/1/userId/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'POST /editors/pageId/1/userId/2 response'
+    )
     equal(res.headers.location, '/editors/pageId/1/userId/2', 'POST /editors/page/1/user/2 location header')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/pageId/1/userId/2',
+      url: '/editors/pageId/1/userId/2'
     })
     equal(res.statusCode, 200, 'GET /editors/pageId/1/userId/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'GET /editors/pageId/1/userId/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'GET /editors/pageId/1/userId/2 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/pageId/1/userId/3',
+      url: '/editors/pageId/1/userId/3'
     })
     equal(res.statusCode, 404, 'GET /editors/pageId/1/userId/3 status code')
   }
@@ -355,64 +410,85 @@ test('composite primary keys withour relations', async (t) => {
       method: 'POST',
       url: '/editors/pageId/1/userId/1',
       body: {
-        role: 'captain',
-      },
+        role: 'captain'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/1 status code')
-    same(res.json(), {
-      userId: 1,
-      pageId: 1,
-      role: 'captain',
-    }, 'POST /editors/pageId/1/userId/1 response')
+    same(
+      res.json(),
+      {
+        userId: 1,
+        pageId: 1,
+        role: 'captain'
+      },
+      'POST /editors/pageId/1/userId/1 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors?orderby.role=desc',
+      url: '/editors?orderby.role=desc'
     })
     equal(res.statusCode, 200, 'GET /editors status code')
-    same(res.json(), [{
-      userId: 1,
-      pageId: 1,
-      role: 'captain',
-    }, {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }], 'GET /editors response')
+    same(
+      res.json(),
+      [
+        {
+          userId: 1,
+          pageId: 1,
+          role: 'captain'
+        },
+        {
+          userId: 2,
+          pageId: 1,
+          role: 'author'
+        }
+      ],
+      'GET /editors response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors?where.role.eq=author',
+      url: '/editors?where.role.eq=author'
     })
     equal(res.statusCode, 200, 'GET /editors status code')
-    same(res.json(), [{
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }], 'GET /editors response')
+    same(
+      res.json(),
+      [
+        {
+          userId: 2,
+          pageId: 1,
+          role: 'author'
+        }
+      ],
+      'GET /editors response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/editors/pageId/1/userId/2',
+      url: '/editors/pageId/1/userId/2'
     })
     equal(res.statusCode, 200, 'DELETE /editors/pageId/1/userId/2 status code')
-    same(res.json(), {
-      userId: 2,
-      pageId: 1,
-      role: 'author',
-    }, 'DELETE /editors/pageId/1/userId/2 response')
+    same(
+      res.json(),
+      {
+        userId: 2,
+        pageId: 1,
+        role: 'author'
+      },
+      'DELETE /editors/pageId/1/userId/2 response'
+    )
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/pageId/1/userId/2',
+      url: '/editors/pageId/1/userId/2'
     })
     equal(res.statusCode, 404, 'GET /editors/pageId/1/userId/2 status code')
   }
@@ -420,7 +496,7 @@ test('composite primary keys withour relations', async (t) => {
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/editors/pageId/1/userId/2',
+      url: '/editors/pageId/1/userId/2'
     })
     equal(res.statusCode, 404, 'DELETE /editors/pageId/1/userId/2 status code')
   }

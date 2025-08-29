@@ -1,12 +1,11 @@
-'use strict'
+import { deepEqual, ok } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
-const { test } = require('node:test')
-const { ok, deepEqual } = require('node:assert')
-const { connect } = require('..')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const fakeLogger = {
-  trace: () => { },
-  error: () => { },
+  trace: () => {},
+  error: () => {}
 }
 
 test('where clause with or operation', async () => {
@@ -45,31 +44,36 @@ test('where clause with or operation', async () => {
           counter INTEGER
         );`)
       }
-    },
+    }
   })
 
   const entity = mapper.entities.post
 
-  const posts = [{
-    title: 'Dog',
-    longText: 'Foo',
-    counter: 10,
-  }, {
-    title: 'Cat',
-    longText: 'Bar',
-    counter: 20,
-  }, {
-    title: 'Mouse',
-    longText: 'Baz',
-    counter: 30,
-  }, {
-    title: 'Duck',
-    longText: 'A duck tale',
-    counter: 40,
-  }]
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'Foo',
+      counter: 10
+    },
+    {
+      title: 'Cat',
+      longText: 'Bar',
+      counter: 20
+    },
+    {
+      title: 'Mouse',
+      longText: 'Baz',
+      counter: 30
+    },
+    {
+      title: 'Duck',
+      longText: 'A duck tale',
+      counter: 40
+    }
+  ]
 
   await entity.insert({
-    inputs: posts,
+    inputs: posts
   })
 
   {
@@ -78,21 +82,21 @@ test('where clause with or operation', async () => {
         or: [
           {
             counter: {
-              eq: 10,
-            },
+              eq: 10
+            }
           },
           {
             counter: {
-              eq: 20,
-            },
-          },
-        ],
-      },
+              eq: 20
+            }
+          }
+        ]
+      }
     })
 
     deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
-      { id: '2', title: 'Cat', longText: 'Bar', counter: 20 },
+      { id: '2', title: 'Cat', longText: 'Bar', counter: 20 }
     ])
   }
 
@@ -102,22 +106,22 @@ test('where clause with or operation', async () => {
         or: [
           {
             counter: {
-              eq: 20,
-            },
+              eq: 20
+            }
           },
           {
             counter: {
-              gte: 30,
-            },
-          },
-        ],
-      },
+              gte: 30
+            }
+          }
+        ]
+      }
     })
 
     deepEqual(data, [
       { id: '2', title: 'Cat', longText: 'Bar', counter: 20 },
       { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 },
-      { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 },
+      { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 }
     ])
   }
 
@@ -127,21 +131,21 @@ test('where clause with or operation', async () => {
         or: [
           {
             title: {
-              eq: 'Dog',
-            },
+              eq: 'Dog'
+            }
           },
           {
             title: {
-              eq: 'Duck',
-            },
-          },
-        ],
-      },
+              eq: 'Duck'
+            }
+          }
+        ]
+      }
     })
 
     deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
-      { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 },
+      { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 }
     ])
   }
 
@@ -151,21 +155,21 @@ test('where clause with or operation', async () => {
         or: [
           {
             title: {
-              eq: 'Dog',
-            },
+              eq: 'Dog'
+            }
           },
           {
             longText: {
-              eq: 'Baz',
-            },
-          },
-        ],
-      },
+              eq: 'Baz'
+            }
+          }
+        ]
+      }
     })
 
     deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
-      { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 },
+      { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 }
     ])
   }
 
@@ -173,25 +177,23 @@ test('where clause with or operation', async () => {
     const data = await entity.find({
       where: {
         counter: {
-          in: [10, 20],
+          in: [10, 20]
         },
         or: [
           {
             title: {
-              eq: 'Dog',
-            },
+              eq: 'Dog'
+            }
           },
           {
             longText: {
-              eq: 'Baz',
-            },
-          },
-        ],
-      },
+              eq: 'Baz'
+            }
+          }
+        ]
+      }
     })
 
-    deepEqual(data, [
-      { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
-    ])
+    deepEqual(data, [{ id: '1', title: 'Dog', longText: 'Foo', counter: 10 }])
   }
 })

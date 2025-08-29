@@ -11,6 +11,7 @@
     "@fastify/oauth2": "8.1.2"
   },
   "engines": {
-    "node": ">=20.16.0"
-  }
+    "node": ">=22.18.0"
+  },
+  "type": "commonjs"
 }

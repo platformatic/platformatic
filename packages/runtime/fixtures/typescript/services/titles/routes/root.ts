@@ -1,6 +1,6 @@
 /// <reference types="@platformatic/service" />
 /// <reference types="../client" />
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -20,7 +20,7 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 
   fastify.get('/titles', async (request, reply) => {
     const movies = await fastify.client.getMovies({})
-    const titles = movies.map((movie) => movie.title)
+    const titles = movies.map(movie => movie.title)
     return { titles }
   })
 }

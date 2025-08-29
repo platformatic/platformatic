@@ -1,22 +1,25 @@
+import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
+import { loadApplicationsCommands } from '@platformatic/runtime'
+import * as colorette from 'colorette'
 import { bold } from 'colorette'
 import { adminCommand } from './lib/commands/admin.js'
-import { buildCommand, installCommand, updateCommand } from './lib/commands/build.js'
+import { buildCommand } from './lib/commands/build.js'
 import { createCommand } from './lib/commands/create.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
-import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
-import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
+import { applicationsCommand, configCommand, envCommand, psCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
-import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { version } from './lib/schema.js'
-import { createLogger, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
+
+export * from './lib/schema.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: 'watt' }
-  const logger = createLogger('info')
+  globalThis.platformatic = { executable: getExecutableId() }
+
+  const logger = createCliLogger('info')
 
   const options = {
     verbose: {
@@ -53,7 +56,9 @@ export async function main () {
   }
 
   let command
-  switch (unparsed[0] || 'help') {
+  const requestedCommand = unparsed[0] || 'help'
+  let applicationCommandContext
+  switch (requestedCommand) {
     case 'build':
       command = buildCommand
       break
@@ -75,8 +80,8 @@ export async function main () {
     case 'ps':
       command = psCommand
       break
-    case 'services':
-      command = servicesCommand
+    case 'applications':
+      command = applicationsCommand
       break
     case 'config':
       command = configCommand
@@ -90,51 +95,51 @@ export async function main () {
     case 'inject':
       command = injectCommand
       break
-    case 'import':
-      command = importCommand
-      break
-    case 'resolve':
-      command = resolveCommand
-      break
-    case 'patch-config':
-      command = patchConfigCommand
-      break
-    case 'install':
-      command = installCommand
-      break
-    case 'update':
-      command = updateCommand
-      break
-    case 'help':
-      command = helpCommand
-      break
     case 'metrics':
       command = metricsCommand
       break
     case 'pprof':
       command = pprofCommand
       break
-    /* c8 ignore next - Just an alias */
-    case 'init':
-    case 'create':
-      command = createCommand
-      break
     case 'admin':
       command = adminCommand
       break
+    /* c8 ignore next 2 - aliases */
+    case 'init':
+    case 'add':
+    case 'create':
+      command = createCommand
+      break
+    case 'help':
+      command = helpCommand
+      break
     default:
-      logFatalError(
-        logger,
-        `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
-      )
+      if (requestedCommand) {
+        const applicationsCommands = await loadApplicationsCommands()
+        const applicationCommand = applicationsCommands.commands[requestedCommand]
+
+        if (applicationCommand) {
+          applicationCommandContext = applicationsCommands.applications[requestedCommand]
+          command = applicationCommand
+        }
+      }
 
       break
   }
 
-  await command(logger, unparsed.slice(1))
+  if (!command) {
+    logFatalError(
+      logger,
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+    )
+
+    return
+  }
+
+  if (applicationCommandContext) {
+    process.chdir(applicationCommandContext.path)
+    return command(logger, applicationCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
+  } else {
+    await command(logger, unparsed.slice(1))
+  }
 }
-
-export * from './lib/schema.js'
-
-export { resolveServices } from './lib/commands/external.js'
-export { patchConfig } from './lib/commands/patch-config.js'

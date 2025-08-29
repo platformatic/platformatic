@@ -1,13 +1,11 @@
-'use strict'
+import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 function findPrometheusLinesForMetric (metric, output) {
   const ret = []
@@ -24,8 +22,7 @@ function findPrometheusLinesForMetric (metric, output) {
 test('should get runtime metrics in a json format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -40,7 +37,6 @@ test('should get runtime metrics in a json format', async t => {
       url: '/service-2/hello',
       headers: { 'x-plt-telemetry-id': 'service-2-client' }
     })
-
   ])
 
   t.after(async () => {
@@ -89,30 +85,30 @@ test('should get runtime metrics in a json format', async t => {
     'active_resources_event_loop'
   ]
 
-  const services = ['service-1', 'service-2', 'service-db']
+  const applications = ['service-1', 'service-2', 'service-db']
 
   for (const metricName of expectedMetricNames) {
     const foundMetrics = metrics.filter(m => m.name === metricName)
-    assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
-    assert.strictEqual(foundMetrics.length, services.length)
+    ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
+    strictEqual(foundMetrics.length, applications.length)
 
     const hasValues = foundMetrics.every(m => m.values.length > 0)
     if (!hasValues) continue
 
-    for (const serviceId of services) {
-      const foundMetric = foundMetrics.find(m => m.values[0].labels.serviceId === serviceId)
-      assert.ok(foundMetric, `Missing metric for service "${serviceId}"`)
+    for (const applicationId of applications) {
+      const foundMetric = foundMetrics.find(m => m.values[0].labels.applicationId === applicationId)
+      ok(foundMetric, `Missing metric for application "${applicationId}"`)
 
       for (const { labels } of foundMetric.values) {
         if (labels.route === '/__empty_metrics') {
           continue
         }
 
-        assert.strictEqual(labels.serviceId, serviceId)
-        assert.strictEqual(labels.custom_label, 'custom-value')
+        strictEqual(labels.applicationId, applicationId)
+        strictEqual(labels.custom_label, 'custom-value')
 
         if (metricName.startsWith('http_request')) {
-          assert.strictEqual(labels.telemetry_id, `${serviceId}-client`)
+          strictEqual(labels.telemetry_id, `${applicationId}-client`)
         }
       }
     }
@@ -122,8 +118,7 @@ test('should get runtime metrics in a json format', async t => {
 test('should get runtime metrics in a text format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
@@ -180,27 +175,27 @@ test('should get runtime metrics in a text format', async t => {
     'active_resources_event_loop'
   ]
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
+    ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
   }
 
-  // Check that the serviceId labels are present in the metrics
+  // Check that the applicationId labels are present in the metrics
   const httpRequestsSummary = findPrometheusLinesForMetric('http_request_all_summary_seconds', metrics.metrics)
   const httpRequestsSummaryLabels = httpRequestsSummary.map(line => line.split('{')[1].split('}')[0].split(','))
-  const services = httpRequestsSummaryLabels
+  const applications = httpRequestsSummaryLabels
     .flat()
-    .filter(label => label.startsWith('serviceId='))
+    .filter(label => label.startsWith('applicationId='))
     .reduce((acc, label) => {
-      const service = label.split('"')[1]
-      if (service) {
-        acc.push(service)
+      const application = label.split('"')[1]
+      if (application) {
+        acc.push(application)
       }
       return acc
     }, [])
 
-  const serviceIds = [...new Set(services)].sort()
+  const applicationIds = [...new Set(applications)].sort()
 
   // We call service-1 and service-2, so we expect metrcis for these
-  assert.deepEqual(serviceIds, ['service-1', 'service-2'])
+  deepEqual(applicationIds, ['service-1', 'service-2'])
 })
 
 function getMetricsLines (metrics) {
@@ -222,8 +217,7 @@ function parseLabels (line) {
 test('should get runtime metrics in a text format with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -236,15 +230,14 @@ test('should get runtime metrics in a text format with custom labels', async t =
 
   // Ensure that the custom labels are present in the metrics
   for (const lineLabel of labels) {
-    assert.ok(lineLabel.foo === 'bar')
+    ok(lineLabel.foo === 'bar')
   }
 })
 
 test('should get json runtime metrics with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -256,7 +249,7 @@ test('should get json runtime metrics with custom labels', async t => {
 
   for (const metric of metrics) {
     for (const value of metric.values) {
-      assert.ok(value.labels.foo === 'bar')
+      ok(value.labels.foo === 'bar')
     }
   }
 })
@@ -264,8 +257,7 @@ test('should get json runtime metrics with custom labels', async t => {
 test('should get formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -273,36 +265,26 @@ test('should get formatted runtime metrics', async t => {
     await app.close()
   })
 
-  const { services } = await app.getFormattedMetrics()
+  const { applications } = await app.getFormattedMetrics()
 
-  assert.deepStrictEqual(
-    Object.keys(services).sort(),
-    ['service-1', 'service-2', 'service-db'].sort()
-  )
+  deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-  for (const serviceMetrics of Object.values(services)) {
-    assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-      'cpu',
-      'elu',
-      'newSpaceSize',
-      'oldSpaceSize',
-      'rss',
-      'totalHeapSize',
-      'usedHeapSize',
-      'latency',
-    ].sort())
+  for (const applicationMetrics of Object.values(applications)) {
+    deepStrictEqual(
+      Object.keys(applicationMetrics).sort(),
+      ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+    )
 
-    const latencyMetrics = serviceMetrics.latency
+    const latencyMetrics = applicationMetrics.latency
     const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
   }
 })
 
 test('should get cached formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   const appUrl = await app.start()
 
@@ -312,7 +294,7 @@ test('should get cached formatted runtime metrics', async t => {
 
   for (let i = 0; i < 10; i++) {
     const { statusCode } = await request(appUrl + '/hello')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
   }
 
   // wait for the metrics to be cached
@@ -320,36 +302,26 @@ test('should get cached formatted runtime metrics', async t => {
 
   const metricsHistory = await app.getCachedMetrics()
 
-  for (const { services } of metricsHistory) {
-    assert.deepStrictEqual(
-      Object.keys(services).sort(),
-      ['service-1', 'service-2', 'service-db'].sort()
-    )
+  for (const { applications } of metricsHistory) {
+    deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
-    for (const serviceMetrics of Object.values(services)) {
-      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-        'cpu',
-        'elu',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'latency',
-      ].sort())
+    for (const applicationMetrics of Object.values(applications)) {
+      deepStrictEqual(
+        Object.keys(applicationMetrics).sort(),
+        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+      )
 
-      const latencyMetrics = serviceMetrics.latency
+      const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
 
-test('should get metrics after reloading one of the services', async t => {
+test('should get metrics after reloading one of the applications', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -357,42 +329,35 @@ test('should get metrics after reloading one of the services', async t => {
     await app.close()
   })
 
-  await app.stopService('service-2')
-  await app.startService('service-2')
+  await app.stopApplication('service-2')
+  await app.startApplication('service-2')
 
   await sleep(5000)
 
   const metricsHistory = await app.getCachedMetrics()
 
-  for (const { services } of metricsHistory) {
-    const servicesNames = Object.keys(services)
-    assert.ok(servicesNames.includes('service-1'))
-    assert.ok(servicesNames.includes('service-db'))
+  for (const { applications } of metricsHistory) {
+    const applicationsNames = Object.keys(applications)
+    ok(applicationsNames.includes('service-1'))
+    ok(applicationsNames.includes('service-db'))
 
-    for (const serviceMetrics of Object.values(services)) {
-      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-        'cpu',
-        'elu',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'latency',
-      ].sort())
+    for (const applicationMetrics of Object.values(applications)) {
+      deepStrictEqual(
+        Object.keys(applicationMetrics).sort(),
+        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+      )
 
-      const latencyMetrics = serviceMetrics.latency
+      const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
     }
   }
 })
 
-test('should get runtime metrics in a json format without a service call', async t => {
+test('should get runtime metrics in a json format without a application call', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
@@ -405,9 +370,7 @@ test('should get runtime metrics in a json format without a service call', async
 
   const { metrics } = await app.getMetrics()
 
-  const histogramMetric = metrics.find(
-    (metric) => metric.name === 'http_request_all_duration_seconds'
-  )
+  const histogramMetric = metrics.find(metric => metric.name === 'http_request_all_duration_seconds')
 
   const histogramValues = histogramMetric.values
 
@@ -415,7 +378,7 @@ test('should get runtime metrics in a json format without a service call', async
     const histogramCount = histogramValues.find(
       ({ metricName }) => metricName === 'http_request_all_duration_seconds_count'
     )
-    assert.strictEqual(histogramCount.value, 2)
+    strictEqual(histogramCount.value, 2)
   }
 
   {
@@ -423,72 +386,74 @@ test('should get runtime metrics in a json format without a service call', async
       ({ metricName }) => metricName === 'http_request_all_duration_seconds_sum'
     )
     const value = histogramSum.value
-    assert.ok(
-      value < 0.1
-    )
+    ok(value < 0.1)
   }
 
   for (const { metricName, labels } of histogramValues) {
-    assert.strictEqual(labels.method, 'GET')
-    assert.strictEqual(labels.status_code, 200)
+    strictEqual(labels.method, 'GET')
+    strictEqual(labels.status_code, 200)
 
     if (metricName !== 'http_request_all_duration_seconds_bucket') continue
   }
 
-  const summaryMetric = metrics.find(
-    (metric) => metric.name === 'http_request_all_summary_seconds'
-  )
-  assert.strictEqual(summaryMetric.type, 'summary')
-  assert.strictEqual(summaryMetric.aggregator, 'sum')
+  const summaryMetric = metrics.find(metric => metric.name === 'http_request_all_summary_seconds')
+  strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
+  strictEqual(summaryMetric.type, 'summary')
+  strictEqual(summaryMetric.aggregator, 'sum')
 
   const freeMetric = metrics.find(({ name }) => name === 'http_client_stats_free')
-  assert.strictEqual(freeMetric.type, 'gauge')
-  assert.strictEqual(freeMetric.aggregator, 'sum')
+  strictEqual(freeMetric.name, 'http_client_stats_free')
+  strictEqual(freeMetric.type, 'gauge')
+  strictEqual(freeMetric.aggregator, 'sum')
 
   const connectedMetric = metrics.find(({ name }) => name === 'http_client_stats_connected')
-  assert.strictEqual(connectedMetric.type, 'gauge')
-  assert.strictEqual(connectedMetric.aggregator, 'sum')
+  strictEqual(connectedMetric.name, 'http_client_stats_connected')
+  strictEqual(connectedMetric.type, 'gauge')
+  strictEqual(connectedMetric.aggregator, 'sum')
 
   const pendingMetric = metrics.find(({ name }) => name === 'http_client_stats_pending')
-  assert.strictEqual(pendingMetric.type, 'gauge')
-  assert.strictEqual(pendingMetric.aggregator, 'sum')
+  strictEqual(pendingMetric.name, 'http_client_stats_pending')
+  strictEqual(pendingMetric.type, 'gauge')
+  strictEqual(pendingMetric.aggregator, 'sum')
 
   const queuedMetric = metrics.find(({ name }) => name === 'http_client_stats_queued')
-  assert.strictEqual(queuedMetric.type, 'gauge')
-  assert.strictEqual(queuedMetric.aggregator, 'sum')
+  strictEqual(queuedMetric.name, 'http_client_stats_queued')
+  strictEqual(queuedMetric.type, 'gauge')
+  strictEqual(queuedMetric.aggregator, 'sum')
 
   const runningMetric = metrics.find(({ name }) => name === 'http_client_stats_running')
-  assert.strictEqual(runningMetric.type, 'gauge')
-  assert.strictEqual(runningMetric.aggregator, 'sum')
+  strictEqual(runningMetric.name, 'http_client_stats_running')
+  strictEqual(runningMetric.type, 'gauge')
+  strictEqual(runningMetric.aggregator, 'sum')
 
   const sizeMetric = metrics.find(({ name }) => name === 'http_client_stats_size')
-  assert.strictEqual(sizeMetric.type, 'gauge')
-  assert.strictEqual(sizeMetric.aggregator, 'sum')
+  strictEqual(sizeMetric.name, 'http_client_stats_size')
+  strictEqual(sizeMetric.type, 'gauge')
+  strictEqual(sizeMetric.aggregator, 'sum')
 
   const activeMetric = metrics.find(({ name }) => name === 'active_resources_event_loop')
-  assert.strictEqual(activeMetric.type, 'gauge')
-  assert.strictEqual(activeMetric.aggregator, 'sum')
-  const [{ labels: { serviceId, custom_label: label }, value }] = activeMetric.values
-  assert.strictEqual(serviceId, 'service-1')
-  assert.strictEqual(label, 'custom-value')
-  assert.ok(value > 0)
+  strictEqual(activeMetric.type, 'gauge')
+  strictEqual(activeMetric.aggregator, 'sum')
+  const [
+    {
+      labels: { applicationId, custom_label: label },
+      value
+    }
+  ] = activeMetric.values
+  strictEqual(applicationId, 'service-1')
+  strictEqual(label, 'custom-value')
+  ok(value > 0)
 
   const summaryValues = summaryMetric.values
 
   {
-    const summaryCount = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_all_summary_seconds_count'
-    )
-    assert.strictEqual(summaryCount.value, 2)
+    const summaryCount = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_count')
+    strictEqual(summaryCount.value, 2)
   }
 
   {
-    const summarySum = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_all_summary_seconds_sum'
-    )
+    const summarySum = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_sum')
     const value = summarySum.value
-    assert.ok(
-      value < 0.1
-    )
+    ok(value < 0.1)
   }
 })

@@ -5,7 +5,7 @@ import { setFixturesDir, verifyReusePort } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
+test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   await verifyReusePort(t, 'express-standalone', async res => {
     const json = await res.body.json()
 

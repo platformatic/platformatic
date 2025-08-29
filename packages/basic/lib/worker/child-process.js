@@ -1,13 +1,12 @@
-import { ITC } from '@platformatic/itc'
-import { client, collectMetrics } from '@platformatic/metrics'
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
   ensureLoggableError,
   features
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc/lib/index.js'
+import { client, collectMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -83,7 +82,7 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close: (signal) => {
+        close: signal => {
           let handled = false
 
           try {
@@ -197,8 +196,8 @@ export class ChildProcess extends ITC {
     this.#socket.close()
   }
 
-  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
-    await collectMetrics(serviceId, workerId, metricsConfig, this.#metricsRegistry)
+  async #collectMetrics ({ applicationId, workerId, metricsConfig }) {
+    await collectMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
     this.#setHttpCacheMetrics()
   }
 
@@ -301,15 +300,14 @@ export class ChildProcess extends ITC {
 
   #setupLogger () {
     disablePinoDirectWrite()
-    ensureFlushedWorkerStdio()
 
     // Since this is executed by user code, make sure we only override this in the main thread
-    // The rest will be intercepted by the BaseStackable.
+    // The rest will be intercepted by the BaseCapability.
     const loggerOptions = globalThis.platformatic?.config?.logger ?? {}
     const pinoOptions = {
       ...loggerOptions,
       level: loggerOptions.level ?? 'info',
-      name: globalThis.platformatic.serviceId
+      name: globalThis.platformatic.applicationId
     }
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
@@ -394,8 +392,8 @@ export class ChildProcess extends ITC {
   #setupHandlers () {
     const errorLabel =
       typeof globalThis.platformatic.workerId !== 'undefined'
-        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
-        : `service "${globalThis.platformatic.serviceId}"`
+        ? `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
+        : `application "${globalThis.platformatic.applicationId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)

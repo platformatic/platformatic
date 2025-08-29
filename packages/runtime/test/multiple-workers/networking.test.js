@@ -1,20 +1,14 @@
-'use strict'
-
-const { deepStrictEqual } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const { updateConfigFile } = require('../helpers')
-const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
-const { openLogsWebsocket } = require('../helpers')
+import { deepStrictEqual } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime, updateConfigFile } from '../helpers.js'
+import { prepareRuntime, verifyInject, verifyResponse } from './helper.js'
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -40,7 +34,7 @@ test('the mesh network works with the internal dispatcher', async t => {
   await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
 })
 
-test('the mesh network works with the HTTP services when using ITC', async t => {
+test('the mesh network works with the HTTP applications when using ITC', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -55,13 +49,12 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
     })
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
-      const meta = await app.getServiceMeta(`service:${worker}`)
-      return new URL(meta.composer.url).port
+      const meta = await app.getApplicationMeta(`service:${worker}`)
+      return new URL(meta.gateway.url).port
     })
   )
 
@@ -92,7 +85,7 @@ test('the mesh network works with the HTTP services when using ITC', async t => 
   await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
 })
 
-test('the mesh network works with the HTTP services when using HTTP', async t => {
+test('the mesh network works with the HTTP applications when using HTTP', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -111,13 +104,12 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
     contents.node = { dispatchViaHttp: true }
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
   const entryUrl = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
-      const meta = await app.getServiceMeta(`service:${worker}`)
-      return new URL(meta.composer.url).port
+      const meta = await app.getApplicationMeta(`service:${worker}`)
+      return new URL(meta.gateway.url).port
     })
   )
 
@@ -151,13 +143,10 @@ test('the mesh network works with the HTTP services when using HTTP', async t =>
 test('can inject on a worker', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -177,7 +166,7 @@ test('can inject on a worker', async t => {
   let nextWorker
 
   {
-    const res = await client.request({ method: 'GET', path: '/api/v1/services/node/proxy/hello' })
+    const res = await client.request({ method: 'GET', path: '/api/v1/applications/node/proxy/hello' })
     nextWorker = parseInt(res.headers['x-plt-worker-id']) + 1
   }
 

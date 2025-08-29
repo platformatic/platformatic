@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, deepEqual as same } from 'node:assert/strict'
+import { test } from 'node:test'
+import sqlOpenAPI from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isPg, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal } = require('node:assert/strict')
-const fastify = require('fastify')
-const sqlMapper = require('@platformatic/sql-mapper')
-const sqlOpenAPI = require('..')
-
-test('multiple foreign keys pointing the same table', { skip: isSQLite }, async (t) => {
+test('multiple foreign keys pointing the same table', { skip: isSQLite }, async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -43,7 +41,7 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -55,13 +53,17 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'maccio',
-      },
+        id: 'maccio'
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 'maccio',
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 'maccio'
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -69,13 +71,17 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'pino',
-      },
+        id: 'pino'
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 'pino',
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 'pino'
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -83,13 +89,17 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'herbert',
-      },
+        id: 'herbert'
+      }
     })
     equal(res.statusCode, 200, 'POST /owners status code')
-    same(res.json(), {
-      id: 'herbert',
-    }, 'POST /owners response')
+    same(
+      res.json(),
+      {
+        id: 'herbert'
+      },
+      'POST /owners response'
+    )
   }
 
   {
@@ -99,15 +109,19 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'IL LIBRO',
         fkId: 'maccio',
-        customId: 'pino',
-      },
+        customId: 'pino'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 'IL LIBRO',
-      fkId: 'maccio',
-      customId: 'pino',
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 'IL LIBRO',
+        fkId: 'maccio',
+        customId: 'pino'
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -117,15 +131,19 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'IL LIBRO 2!',
         fkId: 'herbert',
-        customId: 'maccio',
-      },
+        customId: 'maccio'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 'IL LIBRO 2!',
-      fkId: 'herbert',
-      customId: 'maccio',
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 'IL LIBRO 2!',
+        fkId: 'herbert',
+        customId: 'maccio'
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -135,15 +153,19 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'capatonda',
         fkId: 'maccio',
-        customId: 'maccio',
-      },
+        customId: 'maccio'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 'capatonda',
-      fkId: 'maccio',
-      customId: 'maccio',
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 'capatonda',
+        fkId: 'maccio',
+        customId: 'maccio'
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -153,15 +175,19 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'cammino',
         fkId: 'pino',
-        customId: 'pino',
-      },
+        customId: 'pino'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 'cammino',
-      fkId: 'pino',
-      customId: 'pino',
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 'cammino',
+        fkId: 'pino',
+        customId: 'pino'
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -171,15 +197,19 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'ballerina',
         fkId: 'herbert',
-        customId: 'herbert',
-      },
+        customId: 'herbert'
+      }
     })
     equal(res.statusCode, 200, 'POST /editors status code')
-    same(res.json(), {
-      id: 'ballerina',
-      fkId: 'herbert',
-      customId: 'herbert',
-    }, 'POST /editors response')
+    same(
+      res.json(),
+      {
+        id: 'ballerina',
+        fkId: 'herbert',
+        customId: 'herbert'
+      },
+      'POST /editors response'
+    )
   }
 
   {
@@ -189,8 +219,8 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'following-not-existing-fk-id',
         fkId: 'ERROREEEEE!',
-        customId: 'maccio',
-      },
+        customId: 'maccio'
+      }
     })
     equal(res.statusCode, 500, 'POST /editors status code')
   }

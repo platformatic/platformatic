@@ -1,15 +1,12 @@
-'use strict'
+import { safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { request } = require('undici')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { readFile, writeFile } = require('node:fs/promises')
-const { loadConfig } = require('@platformatic/config')
-const { safeRemove } = require('@platformatic/utils')
-const { platformaticRuntime } = require('..')
-const { buildRuntime } = require('../lib/start')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   const configFile = join(fixturesDir, fixture, 'platformatic-with-entrypoint.json')
@@ -17,27 +14,27 @@ async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   config.entrypoint = entrypoint
   await writeFile(configFile, JSON.stringify(config, null, 2))
 
-  const appConfig = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(appConfig.configManager)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await safeRemove(configFile)
     await app.close()
   })
 
+  await app.init()
   return app.start()
 }
 
-test('should strip the runtime base path for a service as an entrypoint', async t => {
+test('should strip the runtime base path for an application as an entrypoint', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'service')
 
   {
     // Send a request without the base path
     const { statusCode, body } = await request(entryUrl, { path: '/hello' })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -45,10 +42,10 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -56,10 +53,10 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     const { statusCode, headers } = await request(entryUrl, {
       path: '/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/hello')
+    strictEqual(location, '/hello')
   }
 
   {
@@ -67,10 +64,10 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/hello')
+    strictEqual(location, '/base-path/hello')
   }
 
   {
@@ -78,23 +75,23 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/documentation/json'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const openapi = await body.json()
-    assert.deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
+    deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
   }
 })
 
-test('should strip the runtime base path for a composer as an entrypoint', async t => {
+test('should strip the runtime base path for a gateway as an entrypoint', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'composer')
 
   {
     // Send a request without the base path
     const { statusCode, body } = await request(entryUrl, { path: '/service/hello' })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -102,10 +99,10 @@ test('should strip the runtime base path for a composer as an entrypoint', async
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/service/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'service' })
+    deepStrictEqual(response, { capability: 'service' })
   }
 
   {
@@ -113,10 +110,10 @@ test('should strip the runtime base path for a composer as an entrypoint', async
     const { statusCode, headers } = await request(entryUrl, {
       path: '/service/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/service/hello')
+    strictEqual(location, '/service/hello')
   }
 
   {
@@ -124,21 +121,21 @@ test('should strip the runtime base path for a composer as an entrypoint', async
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/service/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/service/hello')
+    strictEqual(location, '/base-path/service/hello')
   }
 
   {
-    // Check the composer openapi base path
+    // Check the gateway openapi base path
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/documentation/json'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const openapi = await body.json()
-    assert.deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
+    deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
   }
 })
 
@@ -148,10 +145,10 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
   {
     // Send a request without the base path
     const { statusCode, body } = await request(entryUrl, { path: '/hello' })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {
@@ -159,10 +156,10 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {
@@ -170,10 +167,10 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     const { statusCode, headers } = await request(entryUrl, {
       path: '/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/hello')
+    strictEqual(location, '/hello')
   }
 
   {
@@ -181,10 +178,10 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/hello')
+    strictEqual(location, '/base-path/hello')
   }
 })
 
@@ -194,10 +191,10 @@ test('should strip the runtime base path for an express as an entrypoint', async
   {
     // Send a request without the base path
     const { statusCode, body } = await request(entryUrl, { path: '/hello' })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'express' })
+    deepStrictEqual(response, { capability: 'express' })
   }
 
   {
@@ -205,10 +202,10 @@ test('should strip the runtime base path for an express as an entrypoint', async
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'express' })
+    deepStrictEqual(response, { capability: 'express' })
   }
 
   {
@@ -216,10 +213,10 @@ test('should strip the runtime base path for an express as an entrypoint', async
     const { statusCode, headers } = await request(entryUrl, {
       path: '/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/hello')
+    strictEqual(location, '/hello')
   }
 
   {
@@ -227,10 +224,10 @@ test('should strip the runtime base path for an express as an entrypoint', async
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/hello')
+    strictEqual(location, '/base-path/hello')
   }
 })
 
@@ -240,10 +237,10 @@ test('should strip the runtime base path for a nodejs in a child process as an e
   {
     // Send a request without the base path
     const { statusCode, body } = await request(entryUrl, { path: '/hello' })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'node-child-process' })
+    deepStrictEqual(response, { capability: 'node-child-process' })
   }
 
   {
@@ -251,10 +248,10 @@ test('should strip the runtime base path for a nodejs in a child process as an e
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'node-child-process' })
+    deepStrictEqual(response, { capability: 'node-child-process' })
   }
 
   {
@@ -262,10 +259,10 @@ test('should strip the runtime base path for a nodejs in a child process as an e
     const { statusCode, headers } = await request(entryUrl, {
       path: '/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/hello')
+    strictEqual(location, '/hello')
   }
 
   {
@@ -273,33 +270,33 @@ test('should strip the runtime base path for a nodejs in a child process as an e
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/hello')
+    strictEqual(location, '/base-path/hello')
   }
 })
 
-test('should not strip the runtime base path for a stackable that opted-out', async t => {
+test('should not strip the runtime base path for a capability that opted-out', async t => {
   const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-no-strip')
 
   {
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/hello'
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const response = await body.json()
-    assert.deepStrictEqual(response, { stackable: 'nodejs' })
+    deepStrictEqual(response, { capability: 'nodejs' })
   }
 
   {
     const { statusCode, headers } = await request(entryUrl, {
       path: '/base-path/redirect'
     })
-    assert.strictEqual(statusCode, 302)
+    strictEqual(statusCode, 302)
 
     const location = headers.location
-    assert.strictEqual(location, '/base-path/hello')
+    strictEqual(location, '/base-path/hello')
   }
 })

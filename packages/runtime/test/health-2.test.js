@@ -1,50 +1,39 @@
-'use strict'
+import { deepStrictEqual, ok } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from './helpers.js'
+import { waitForEvents } from './multiple-workers/helper.js'
 
-const { ok } = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { buildServer, loadConfig } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-const { openLogsWebsocket, waitForLogs } = require('./helpers')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should restart the process if it exceeded maximum threshold', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-unhealthy.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
-
-  const managementApiWebsocket = await openLogsWebsocket(server)
+  const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
-    managementApiWebsocket.terminate()
   })
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'Platformatic is now listening',
-    'The service "db-app" is unhealthy. Replacing it ...',
-    'The service "serviceApp" is unhealthy. Replacing it ...',
-    'The service "with-logger" is unhealthy. Replacing it ...',
-    'The service "multi-plugin-service" is unhealthy. Replacing it ...'
+  const events = []
+  server.on('application:worker:health', event => {
+    events.push(event)
+  })
+
+  const waitPromise = waitForEvents(
+    server,
+    { event: 'application:worker:unhealthy', application: 'db-app', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'serviceApp', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'with-logger', worker: 0 },
+    { event: 'application:worker:unhealthy', application: 'multi-plugin-service', worker: 0 },
+    { event: 'application:worker:starting', application: 'db-app', worker: 0 },
+    { event: 'application:worker:starting', application: 'serviceApp', worker: 0 },
+    { event: 'application:worker:starting', application: 'with-logger', worker: 0 },
+    { event: 'application:worker:starting', application: 'multi-plugin-service', worker: 0 }
   )
+
   await server.start()
+  await waitPromise
 
-  const messages = (await waitPromise).map(m => m.msg)
-
-  for (const service of ['db-app', 'serviceApp', 'with-logger', 'multi-plugin-service']) {
-    const eluMatcher = new RegExp(
-      `The service "${service}" has an ELU of \\d+\\.\\d+ %, above the maximum allowed usage of \\d+\\.\\d+ %\\.`
-    )
-    const memoryMatcher = new RegExp(
-      `The service "${service}" is using \\d+\\.\\d+ % of the memory, above the maximum allowed usage of \\d+\\.\\d+ %\\.`
-    )
-
-    ok(messages.some(m => eluMatcher.test(m)))
-    ok(messages.some(m => memoryMatcher.test(m)))
-    ok(messages.includes(`The service "${service}" is unhealthy. Replacing it ...`))
-  }
+  deepStrictEqual(events.length, 4)
+  ok(!events.some(e => !e.unhealthy))
 })

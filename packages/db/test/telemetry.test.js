@@ -1,22 +1,19 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { buildServer } = require('..')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const {
-  buildConfigManager,
-  getConnectionInfo,
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import {
   createBasicPages,
-  expectedTelemetryPrefix,
+  createFromConfig,
   expectedPort,
-  isPg,
+  expectedTelemetryPrefix,
+  getConnectionInfo,
+  isMariaDB,
   isMysql,
   isMysql8,
-  isMariaDB,
-  isSQLite,
-} = require('./helper')
+  isPg,
+  isSQLite
+} from './helper.js'
 
 const getSpansPerType = (spans, type = 'http') => {
   let attibuteToLookFor
@@ -32,62 +29,58 @@ const getSpansPerType = (spans, type = 'http') => {
   return spans.filter(span => span.attributes[attibuteToLookFor])
 }
 
-test('should not configure telemetry if not configured', async (t) => {
+test('should not configure telemetry if not configured', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const config = {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
-      ...connectionInfo,
-    },
-  }
-
-  const configManager = await buildConfigManager(config)
-  const app = await buildServer({ configManager })
+      ...connectionInfo
+    }
+  })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
     await dropTestDB()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  assert.equal(app.openTelemetry, undefined)
+  assert.equal(app.getApplication().openTelemetry, undefined)
 })
 
-test('should setup telemetry if configured', async (t) => {
+test('should setup telemetry if configured', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const config = {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      },
+      }
     },
     telemetry: {
-      serviceName: 'test-service',
+      applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
-        type: 'memory',
-      },
-    },
-  }
-
-  const configManager = await buildConfigManager(config)
-  const app = await buildServer({ configManager })
+        type: 'memory'
+      }
+    }
+  })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
     await dropTestDB()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   const query = `
     mutation {
@@ -101,14 +94,14 @@ test('should setup telemetry if configured', async (t) => {
   const res = await request(`${app.url}/graphql`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      query,
-    }),
+      query
+    })
   })
   assert.equal(res.statusCode, 200, 'savePage status code')
-  const { exporters } = app.openTelemetry
+  const { exporters } = app.getApplication().openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
   const graphqlSpans = getSpansPerType(finishedSpans, 'graphql')
   const dbSpans = getSpansPerType(finishedSpans, 'db')
@@ -136,7 +129,10 @@ test('should setup telemetry if configured', async (t) => {
     assert.equal(dbSpan.attributes['db.name'], dbname)
     assert.equal(dbSpan.attributes['net.peer.name'], '127.0.0.1')
     assert.equal(dbSpan.attributes['net.peer.port'], expectedPort)
-    assert.equal(dbSpan.attributes['db.statement'], 'INSERT INTO public.pages (title)\nVALUES ($1)\nRETURNING id, title')
+    assert.equal(
+      dbSpan.attributes['db.statement'],
+      'INSERT INTO public.pages (title)\nVALUES ($1)\nRETURNING id, title'
+    )
   } else if (isMysql || isMysql8 || isMariaDB) {
     // Mysql-like do 2 queries, one for the insert and one for the select
     assert.equal(dbSpans.length, 2)
@@ -168,37 +164,41 @@ test('should setup telemetry if configured', async (t) => {
   }
 })
 
-async function setupDBAppWithTelemetry (telemetryOpts, onDatabaseLoad, plugins, teardown) {
+async function setupDBAppWithTelemetry (t, telemetryOpts, plugins) {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const config = {
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
+  const app = await createFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      },
+      db: {
+        ...connectionInfo,
+        onDatabaseLoad
+      },
+      telemetry: telemetryOpts
     },
-    db: {
-      ...connectionInfo,
-      onDatabaseLoad,
-    },
-    telemetry: telemetryOpts,
-  }
+    null,
+    { skipInit: true }
+  )
 
-  const configManager = await buildConfigManager(config)
-  const app = await buildServer({ configManager })
-  for (const plugin of plugins) {
-    await app.register(plugin)
-  }
+  app.context.fastifyPlugins = plugins
 
-  teardown(async () => {
-    await app.close()
+  t.after(async () => {
+    await app.stop()
     await dropTestDB()
-    const { exporters } = app.openTelemetry
-    exporters.forEach((exporter) => {
+    const { exporters } = app.getApplication().openTelemetry
+    exporters.forEach(exporter => {
       if (exporter.constructor.name === 'InMemorySpanExporter') {
         exporter.reset()
       }
     })
   })
+
+  await app.start({ listen: true })
   return app
 }
 
@@ -206,27 +206,22 @@ async function onDatabaseLoad (db, sql) {
   await createBasicPages(db, sql)
 }
 
-test('should trace a request in a platformatic DB app', async () => {
-  const app = await setupDBAppWithTelemetry(
-    {
-      serviceName: 'test-service',
-      version: '1.0.0',
-      exporter: {
-        type: 'memory',
-      },
-    },
-    onDatabaseLoad,
-    [],
-    test.after
-  )
+test('should trace a request in a platformatic DB app', async t => {
+  const app = await setupDBAppWithTelemetry(t, {
+    applicationName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'memory'
+    }
+  })
 
-  const { exporters } = app.openTelemetry
+  const { exporters } = app.getApplication().openTelemetry
   const exporter = exporters[0]
   exporter.reset() //  we reset to avoid the queies to load all the metadata
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages',
+    url: '/pages'
   })
   assert.equal(res.statusCode, 200, '/pages status code')
 
@@ -241,15 +236,12 @@ test('should trace a request in a platformatic DB app', async () => {
     const expectedName = `${expectedTelemetryPrefix}.query:`
     const expectedNameRE = new RegExp(`^${expectedName}`)
     assert.match(span.name, expectedNameRE)
-    assert.match(
-      span.attributes['db.statement'],
-      /^SELECT id, title/
-    )
+    assert.match(span.attributes['db.statement'], /^SELECT id, title/)
     const resource = span.resource
     assert.deepEqual(resource.attributes['service.name'], 'test-service')
     assert.deepEqual(resource.attributes['service.version'], '1.0.0')
     dbTraceId = span.spanContext().traceId
-    dbParentSpanId = span.parentSpanId
+    dbParentSpanId = span.parentSpanContext.spanId
   }
   {
     // HTTP request span
@@ -267,7 +259,7 @@ test('should trace a request in a platformatic DB app', async () => {
 
     const spanId = span._spanContext.spanId
     const traceId = span._spanContext.traceId
-    const parentSpanId = span.parentSpanId
+    const parentSpanId = span.parentSpanContext?.spanId
 
     // Check that the traceId is the same and the http span is the parent of the db span
     assert.equal(traceId, dbTraceId)
@@ -276,8 +268,8 @@ test('should trace a request in a platformatic DB app', async () => {
   }
 })
 
-test('should trace a request getting DB from the request and running the query manually', async () => {
-  const plugin = async (app) => {
+test('should trace a request getting DB from the request and running the query manually', async t => {
+  const plugin = async app => {
     app.get('/custom-pages', async (request, _reply) => {
       const db = request.getDB()
       const { sql } = app.platformatic
@@ -285,25 +277,25 @@ test('should trace a request getting DB from the request and running the query m
       return pages
     })
   }
+
   const app = await setupDBAppWithTelemetry(
+    t,
     {
-      serviceName: 'test-service',
+      applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
-        type: 'memory',
-      },
+        type: 'memory'
+      }
     },
-    onDatabaseLoad,
-    [plugin],
-    test.after
+    [plugin]
   )
-  const { exporters } = app.openTelemetry
+  const { exporters } = app.getApplication().openTelemetry
   const exporter = exporters[0]
   exporter.reset() //  we reset to avoid the queies to load all the metadata
 
   const res = await app.inject({
     method: 'GET',
-    url: '/custom-pages',
+    url: '/custom-pages'
   })
   assert.equal(res.statusCode, 200, '/custom-pages status code')
 
@@ -318,15 +310,12 @@ test('should trace a request getting DB from the request and running the query m
     const expectedName = `${expectedTelemetryPrefix}.query:`
     const expectedNameRE = new RegExp(`^${expectedName}`)
     assert.match(span.name, expectedNameRE)
-    assert.match(
-      span.attributes['db.statement'],
-      /^SELECT id, title/
-    )
+    assert.match(span.attributes['db.statement'], /^SELECT id, title/)
     const resource = span.resource
     assert.deepEqual(resource.attributes['service.name'], 'test-service')
     assert.deepEqual(resource.attributes['service.version'], '1.0.0')
     dbTraceId = span.spanContext().traceId
-    dbParentSpanId = span.parentSpanId
+    dbParentSpanId = span.parentSpanContext.spanId
   }
   {
     // HTTP request span
@@ -344,7 +333,7 @@ test('should trace a request getting DB from the request and running the query m
 
     const spanId = span._spanContext.spanId
     const traceId = span._spanContext.traceId
-    const parentSpanId = span.parentSpanId
+    const parentSpanId = span.parentSpanContext?.spanId
 
     // Check that the traceId is the same and the http span is the parent of the db span
     assert.equal(traceId, dbTraceId)

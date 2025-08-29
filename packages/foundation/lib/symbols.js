@@ -1,0 +1,5 @@
+export const kCanceled = Symbol('plt.foundation.canceled')
+export const kFailedImport = Symbol('plt.foundation.failedImport')
+export const kHandledError = Symbol('plt.foundation.handledError')
+export const kMetadata = Symbol('plt.foundation.metadata')
+export const kTimeout = Symbol('plt.foundation.timeout')

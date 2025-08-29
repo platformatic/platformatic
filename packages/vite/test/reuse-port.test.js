@@ -5,7 +5,7 @@ import { isWindows, setFixturesDir, verifyReusePort } from '../../basic/test/hel
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
+test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   await verifyReusePort(t, 'standalone', async res => {
     const text = await res.body.text()
 
@@ -15,7 +15,7 @@ test('services are started with multiple workers even for the entrypoint when No
 })
 
 test(
-  'services are started with multiple workers even for the entrypoint when Node.js supports reusePort in SSR mode',
+  'applications are started with multiple workers even for the entrypoint when Node.js supports reusePort in SSR mode',
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows

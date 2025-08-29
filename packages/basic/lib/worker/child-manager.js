@@ -1,5 +1,5 @@
-import { ITC } from '@platformatic/itc'
-import { createDirectory, ensureLoggableError } from '@platformatic/utils'
+import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc/lib/index.js'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
@@ -137,7 +137,7 @@ export class ChildManager extends ITC {
   async inject () {
     await this.listen()
 
-    // Serialize data into a JSON file for the stackable to use
+    // Serialize data into a JSON file for the capability to use
     this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
     await createDirectory(dirname(this.#dataPath))
 

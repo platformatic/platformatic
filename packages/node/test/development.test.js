@@ -1,9 +1,11 @@
-import { ok } from 'node:assert'
+import { kMetadata } from '@platformatic/foundation'
+import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
   createRuntime,
-  getLogs,
-  prepareRuntimeWithServices,
+  getLogsFromFile,
+  isCIOnWindows,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyDevelopmentMode,
@@ -51,7 +53,7 @@ async function verifyComposerWithPrefix (
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -94,13 +96,21 @@ async function verifyComposerWithoutPrefix (
   pauseTimeout,
   additionalCheck
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '', pauseTimeout, async root => {
-    await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-      const json = JSON.parse(contents)
-      json.composer.services[1].proxy = { prefix: '' }
-      return JSON.stringify(json, null, 2)
-    })
-  })
+  const { runtime, url } = await prepareRuntimeWithApplications(
+    t,
+    id,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    async root => {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.gateway.applications[1].proxy = { prefix: '' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
+  )
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -132,7 +142,7 @@ async function verifyComposerAutodetectPrefix (
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { runtime, url } = await prepareRuntimeWithApplications(
     t,
     id,
     false,
@@ -167,10 +177,19 @@ async function verifyComposerAutodetectPrefix (
 
 async function verifyMissingConfigurationMessage (runtime) {
   const missingConfigurationMessage =
-    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The application "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
-  const logs = await getLogs(runtime)
+  const config = await runtime.getRuntimeConfig(true)
+  await runtime.close()
+  const logs = await getLogsFromFile(config[kMetadata].root)
+
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
+}
+
+async function verifyFilename (runtime) {
+  const { statusCode, body } = await runtime.inject('frontend', { url: '/frontend/filename' })
+  deepStrictEqual(statusCode, 200)
+  ok(body.endsWith('index.ts'))
 }
 
 const configurations = [
@@ -178,7 +197,8 @@ const configurations = [
     id: 'node-no-configuration-standalone',
     name: 'Node.js application (with no configuration files in development mode when standalone)',
     async check (...args) {
-      await verifyStandalone(...args, verifyMissingConfigurationMessage)
+      args[8] = verifyMissingConfigurationMessage
+      await verifyStandalone(...args)
     },
     language: 'js'
   },
@@ -186,32 +206,28 @@ const configurations = [
     id: 'node-no-configuration-composer-with-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer with a prefix)',
     async check (...args) {
-      await verifyComposerWithPrefix(...args, false, verifyMissingConfigurationMessage)
+      await verifyComposerWithPrefix(...args, false)
     },
     language: 'ts'
   },
   {
     id: 'node-no-configuration-composer-without-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer without a prefix)',
-    async check (...args) {
-      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
-    },
+    check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'node-no-configuration-composer-autodetect-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
     async check (...args) {
-      await verifyComposerAutodetectPrefix(...args, false, verifyMissingConfigurationMessage)
+      await verifyComposerAutodetectPrefix(...args, false)
     },
     language: 'js'
   },
   {
     id: 'node-no-configuration-composer-no-services',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no services)',
-    async check (...args) {
-      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
-    },
+    check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
@@ -225,6 +241,14 @@ const configurations = [
     name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
+  },
+  {
+    id: 'node-no-build-composer-with-prefix-ts',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix in TypeScript)',
+    async check (...args) {
+      await verifyComposerWithPrefix(...args, true, verifyFilename)
+    },
+    language: 'ts'
   },
   {
     id: 'node-no-build-composer-without-prefix',
@@ -245,6 +269,7 @@ const configurations = [
     language: 'js'
   },
   {
+    only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -293,6 +318,7 @@ const configurations = [
     language: 'js'
   },
   {
+    only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -341,6 +367,7 @@ const configurations = [
     language: 'js'
   },
   {
+    only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -389,6 +416,7 @@ const configurations = [
     language: 'js'
   },
   {
+    only: isCIOnWindows,
     id: 'koa-with-build-composer-with-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,

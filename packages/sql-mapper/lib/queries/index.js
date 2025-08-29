@@ -1,23 +1,4 @@
-'use strict'
-
-/* istanbul ignore file */
-
-const obj = {}
-
-Object.defineProperty(obj, 'pg', {
-  get: () => require('./pg'),
-})
-
-Object.defineProperty(obj, 'mysql', {
-  get: () => require('./mysql'),
-})
-
-Object.defineProperty(obj, 'mariadb', {
-  get: () => require('./mariadb'),
-})
-
-Object.defineProperty(obj, 'sqlite', {
-  get: () => require('./sqlite'),
-})
-
-module.exports = obj
+export * as mariadb from './mariadb.js'
+export * as mysql from './mysql.js'
+export * as pg from './pg.js'
+export * as sqlite from './sqlite.js'

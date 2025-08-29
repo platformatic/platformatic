@@ -1,7 +1,7 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/db/2.74.3.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/db/3.0.0-alpha.8.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Platformatic DB",
+  "title": "Platformatic Database Config",
   "type": "object",
   "properties": {
     "basePath": {
@@ -1038,77 +1038,6 @@
         "dir"
       ]
     },
-    "metrics": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "port": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "hostname": {
-              "type": "string"
-            },
-            "endpoint": {
-              "type": "string"
-            },
-            "server": {
-              "type": "string",
-              "enum": [
-                "own",
-                "parent",
-                "hide"
-              ]
-            },
-            "defaultMetrics": {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "additionalProperties": false
-            },
-            "auth": {
-              "type": "object",
-              "properties": {
-                "username": {
-                  "type": "string"
-                },
-                "password": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "required": [
-                "username",
-                "password"
-              ]
-            },
-            "labels": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
     "types": {
       "type": "object",
       "properties": {
@@ -1222,45 +1151,6 @@
               }
             ]
           }
-        },
-        "typescript": {
-          "anyOf": [
-            {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "tsConfig": {
-                  "type": "string",
-                  "resolvePath": true
-                },
-                "outDir": {
-                  "type": "string",
-                  "resolvePath": true
-                },
-                "flags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string"
-            }
-          ]
         }
       },
       "additionalProperties": false,
@@ -1277,6 +1167,13 @@
         }
       ]
     },
+    "application": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "required": [],
+      "default": {}
+    },
     "telemetry": {
       "type": "object",
       "properties": {
@@ -1290,13 +1187,13 @@
             }
           ]
         },
-        "serviceName": {
+        "applicationName": {
           "type": "string",
-          "description": "The name of the service. Defaults to the folder name if not specified."
+          "description": "The name of the application. Defaults to the folder name if not specified."
         },
         "version": {
           "type": "string",
-          "description": "The version of the service (optional)"
+          "description": "The version of the application (optional)"
         },
         "skip": {
           "type": "array",
@@ -1403,51 +1300,9 @@
         }
       },
       "required": [
-        "serviceName"
+        "applicationName"
       ],
       "additionalProperties": false
-    },
-    "clients": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "serviceId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "openapi",
-              "graphql"
-            ]
-          },
-          "path": {
-            "type": "string",
-            "resolvePath": true
-          },
-          "schema": {
-            "type": "string",
-            "resolvePath": true
-          },
-          "url": {
-            "type": "string"
-          },
-          "fullResponse": {
-            "type": "boolean"
-          },
-          "fullRequest": {
-            "type": "boolean"
-          },
-          "validateResponse": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      }
     },
     "runtime": {
       "type": "object",
@@ -1469,6 +1324,242 @@
         },
         "basePath": {
           "type": "string"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "anyOf": [
+              {
+                "required": [
+                  "id",
+                  "path"
+                ]
+              },
+              {
+                "required": [
+                  "id",
+                  "url"
+                ]
+              }
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string",
+                "allowEmptyPaths": true,
+                "resolvePath": true
+              },
+              "config": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "gitBranch": {
+                "type": "string",
+                "default": "main"
+              },
+              "useHttp": {
+                "type": "boolean"
+              },
+              "workers": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "health": {
+                "type": "object",
+                "default": {},
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "interval": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "gracePeriod": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxUnhealthyChecks": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxELU": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsed": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapTotal": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxYoungGeneration": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "envfile": {
+                "type": "string"
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "default": false
+              },
+              "packageManager": {
+                "type": "string",
+                "enum": [
+                  "npm",
+                  "pnpm",
+                  "yarn"
+                ]
+              },
+              "preload": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  }
+                ]
+              },
+              "nodeOptions": {
+                "type": "string"
+              },
+              "telemetry": {
+                "type": "object",
+                "properties": {
+                  "instrumentations": {
+                    "type": "array",
+                    "description": "An array of instrumentations loaded if telemetry is enabled",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "package": {
+                              "type": "string"
+                            },
+                            "exportName": {
+                              "type": "string"
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          },
+                          "required": [
+                            "package"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         "workers": {
           "anyOf": [
@@ -1784,7 +1875,7 @@
               ],
               "default": 10000
             },
-            "service": {
+            "application": {
               "anyOf": [
                 {
                   "type": "number",
@@ -1800,7 +1891,7 @@
           "default": {},
           "required": [
             "runtime",
-            "service"
+            "application"
           ],
           "additionalProperties": false
         },
@@ -2231,13 +2322,13 @@
                 }
               ]
             },
-            "serviceName": {
+            "applicationName": {
               "type": "string",
-              "description": "The name of the service. Defaults to the folder name if not specified."
+              "description": "The name of the application. Defaults to the folder name if not specified."
             },
             "version": {
               "type": "string",
-              "description": "The version of the service (optional)"
+              "description": "The version of the application (optional)"
             },
             "skip": {
               "type": "array",
@@ -2344,7 +2435,7 @@
             }
           },
           "required": [
-            "serviceName"
+            "applicationName"
           ],
           "additionalProperties": false
         },
@@ -2365,7 +2456,7 @@
             }
           }
         },
-        "serviceTimeout": {
+        "applicationTimeout": {
           "anyOf": [
             {
               "type": "number",

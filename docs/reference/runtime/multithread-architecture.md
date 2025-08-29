@@ -1,18 +1,18 @@
 # Platformatic Runtime Multithread Architecture
 
-This document describes the multithread system architecture in Platformatic Runtime, which enables horizontal scaling of services through worker threads.
+This document describes the multithread system architecture in Platformatic Runtime, which enables horizontal scaling of applications through worker threads.
 
 ## Overview
 
-Platformatic Runtime implements a sophisticated multithread architecture that allows services to be scaled horizontally by running multiple worker instances. This system is built on Node.js Worker Threads and provides automatic load balancing, health monitoring, and fault tolerance.
+Platformatic Runtime implements a sophisticated multithread architecture that allows applications to be scaled horizontally by running multiple worker instances. This system is built on Node.js Worker Threads and provides automatic load balancing, health monitoring, and fault tolerance.
 
 ### Key Components
 
 - **Runtime Manager** (`lib/runtime.js`): Main orchestrator managing worker lifecycle
-- **Worker Threads** (`lib/worker/main.js`): Individual service instances running in isolated threads
+- **Worker Threads** (`lib/worker/main.js`): Individual application instances running in isolated threads
 - **Round Robin Load Balancer** (`lib/worker/round-robin-map.js`): Distributes requests across workers
 - **Inter-Thread Communication (ITC)** (`lib/worker/itc.js`): Message passing between runtime and workers
-- **Thread Interceptor**: Network routing and service mesh capabilities
+- **Thread Interceptor**: Network routing and application mesh capabilities
 
 ## Thread Management Architecture
 
@@ -28,14 +28,14 @@ Runtime Manager
 
 #### Worker Thread Creation Process
 
-1. **Configuration**: Each service can specify worker count via `workers` property
+1. **Configuration**: Each application can specify worker count via `workers` property
 2. **Thread Spawning**: Workers are created using `new Worker(kWorkerFile, options)`
 3. **Resource Limits**: Memory and CPU constraints applied per worker
 4. **Environment Setup**: Each worker gets isolated environment and dependencies
 
 #### Key Configuration Options
 
-- **Global Workers**: Default worker count for all services (`config.workers`)
+- **Global Workers**: Default worker count for all applications (`config.workers`)
 - **Service-Specific**: Override via `service.workers` property
 - **Production Mode**: Multiple workers enabled only in production
 - **Entrypoint Services**: Always use single worker for entrypoints (unless `reusePort` supported)
@@ -44,9 +44,9 @@ Runtime Manager
 
 Each worker thread (`lib/worker/main.js`) contains:
 
-- **Isolated Application Instance**: Complete service instance
+- **Isolated Application Instance**: Complete application instance
 - **ITC Communication**: Bidirectional message channel with runtime
-- **Network Interceptor**: Handles service mesh routing
+- **Network Interceptor**: Handles application mesh routing
 - **Telemetry**: Independent monitoring and metrics collection
 - **Resource Monitoring**: Health checks and memory/CPU tracking
 
@@ -58,11 +58,11 @@ The `RoundRobinMap` class manages worker selection:
 
 ```javascript
 class RoundRobinMap {
-  configure(services, defaultInstances, production) {
-    // Set up worker counts per service
+  configure(applications, defaultInstances, production) {
+    // Set up worker counts per application
   }
   
-  next(service) {
+  next(application) {
     // Return next available worker in round-robin fashion
   }
 }
@@ -77,7 +77,7 @@ class RoundRobinMap {
 
 ### Network Mesh Integration
 
-The system uses `undici-thread-interceptor` for service mesh:
+The system uses `undici-thread-interceptor` for application mesh:
 
 - **Domain-based Routing**: Services accessible via `.plt.local` domain
 - **Worker Registration**: Each worker registers with mesh interceptor
@@ -92,12 +92,12 @@ The ITC system enables bidirectional communication between runtime and workers:
 
 #### Runtime → Worker Commands
 
-- `start`: Initialize and start service
+- `start`: Initialize and start application
 - `stop`: Graceful shutdown
 - `getStatus`: Service status query
 - `getMetrics`: Performance metrics collection
 - `getHealth`: Health check data
-- `build`: Trigger service build process
+- `build`: Trigger application build process
 
 #### Worker → Runtime Events
 
@@ -115,7 +115,7 @@ const itc = new ITC({
   handlers: {
     async start() {
       await app.start()
-      return service.entrypoint ? app.getUrl() : null
+      return application.entrypoint ? app.getUrl() : null
     },
     
     async stop() {
@@ -191,14 +191,14 @@ Each worker receives:
 
 - **Isolated Environment**: Separate `process.env` per worker
 - **Service Configuration**: Specific config patches and overrides
-- **Worker Identity**: Unique worker ID and service binding
+- **Worker Identity**: Unique worker ID and application binding
 - **Telemetry Setup**: Independent monitoring configuration
 
 ## Development vs Production Behavior
 
 ### Development Mode
 
-- **Single Worker**: All services run with 1 worker
+- **Single Worker**: All applications run with 1 worker
 - **File Watching**: Automatic reload on file changes
 - **Debug Support**: Inspector integration for debugging
 - **Simplified Logging**: Reduced complexity for development
@@ -216,7 +216,7 @@ Each worker receives:
 
 - **CPU Utilization**: Better multi-core CPU usage
 - **Request Throughput**: Higher concurrent request handling
-- **Fault Isolation**: Worker failures don't affect entire service
+- **Fault Isolation**: Worker failures don't affect entire application
 - **Memory Efficiency**: Shared code with isolated heaps
 
 ### Operational Advantages
@@ -230,11 +230,11 @@ Each worker receives:
 
 ### Service Mesh
 
-The multithread system integrates with Platformatic's service mesh:
+The multithread system integrates with Platformatic's application mesh:
 
 - **Automatic Registration**: Workers register with mesh on startup
 - **Load Distribution**: Mesh-aware load balancing
-- **Service Discovery**: Transparent inter-service communication
+- **Service Discovery**: Transparent inter-application communication
 - **Health Propagation**: Health status reflected in mesh
 
 ### Management API

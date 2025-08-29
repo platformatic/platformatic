@@ -1,5 +1,6 @@
 {
-  "name": "composer-next-node-fastify",
+  "name": "gateway-next-node-fastify",
+  "type": "commonjs",
   "private": true,
   "scripts": {
     "dev": "wattpm dev",

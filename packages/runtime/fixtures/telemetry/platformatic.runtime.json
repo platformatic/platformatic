@@ -4,12 +4,10 @@
   "watch": true,
   "autoload": {
     "path": "services",
-    "exclude": [
-      "docs"
-    ]
+    "exclude": ["docs"]
   },
   "telemetry": {
-    "serviceName": "test-runtime",
+    "applicationName": "test-runtime",
     "version": "1.0.0",
     "exporter": {
       "type": "memory"

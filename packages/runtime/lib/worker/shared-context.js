@@ -1,8 +1,6 @@
-'use strict'
+import { kITC } from './symbols.js'
 
-const { kITC } = require('./symbols')
-
-class SharedContext {
+export class SharedContext {
   constructor () {
     this.sharedContext = null
   }
@@ -22,5 +20,3 @@ class SharedContext {
     this.sharedContext = context
   }
 }
-
-module.exports = { SharedContext }

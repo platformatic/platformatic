@@ -1,16 +1,15 @@
 {
   "name": "@platformatic/remix",
-  "version": "2.74.3",
-  "description": "Platformatic Remix Stackable",
+  "version": "3.0.0-alpha.8",
+  "description": "Platformatic Remix Capability",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "repository": {
@@ -25,8 +24,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "@remix-run/express": "^2.16.8",
     "express": "^4.19.2",
@@ -35,12 +33,14 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@remix-run/dev": "^2.16.8",
     "@remix-run/node": "^2.16.8",
     "@remix-run/react": "^2.16.8",
-    "borp": "^0.20.0",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "isbot": "^5.1.17",
@@ -51,5 +51,8 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

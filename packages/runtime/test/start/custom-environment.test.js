@@ -1,18 +1,14 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('../..')
-const { buildRuntime } = require('../../lib/start')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('can start with a custom environment', async (t) => {
+test('can start with a custom environment', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager, { A_CUSTOM_ENV_VAR: 'foobar' })
+  const app = await createRuntime(configFile, null, { env: { A_CUSTOM_ENV_VAR: 'foobar' }, ignoreProcessEnv: true })
 
   t.after(async () => {
     await app.close()
@@ -21,19 +17,19 @@ test('can start with a custom environment', async (t) => {
   const entryUrl = await app.start()
   const res = await request(entryUrl + '/env')
 
-  assert.strictEqual(res.statusCode, 200)
-  assert.deepStrictEqual(await res.body.json(), {
+  strictEqual(res.statusCode, 200)
+  deepStrictEqual(await res.body.json(), {
     A_CUSTOM_ENV_VAR: 'foobar',
     PLT_ENVIRONMENT: 'development',
-    PLT_DEV: 'true'
+    PLT_DEV: 'true',
+    PLT_ROOT: join(fixturesDir, 'configs')
   })
   process.exitCode = 0
 })
 
 test('should pass global .env data to workers', async t => {
   const configFile = join(fixturesDir, 'env', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -47,7 +43,7 @@ test('should pass global .env data to workers', async t => {
   })
   const data = JSON.parse(payload)
 
-  assert.deepStrictEqual(data, {
+  deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
     FROM_SERVICE_CONFIG_FILE: 'true',

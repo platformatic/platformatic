@@ -1,11 +1,9 @@
-'use strict'
-
-const { connInfo, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { connInfo, isPg } from './helper.js'
 
 async function runMigrations (db, sql) {
   await db.query(sql`
@@ -38,7 +36,7 @@ drop table if exists social_medias;
   `)
 }
 
-test('do not crash', { skip: !isPg }, async (t) => {
+test('do not crash', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -50,7 +48,7 @@ test('do not crash', { skip: !isPg }, async (t) => {
       t.after(() => async () => {
         await clean(db, sql)
       })
-    },
+    }
   })
   await app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -69,18 +67,22 @@ test('do not crash', { skip: !isPg }, async (t) => {
               name
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveCompany status code')
-    same(res.json(), {
-      data: {
-        saveCompany: {
-          id: 1,
-          name: 'Platformatic',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveCompany: {
+            id: 1,
+            name: 'Platformatic'
+          }
+        }
       },
-    }, 'saveCompany response')
+      'saveCompany response'
+    )
   }
 
   {
@@ -95,18 +97,22 @@ test('do not crash', { skip: !isPg }, async (t) => {
               name
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveSocialMedia status code')
-    same(res.json(), {
-      data: {
-        saveSocialMedia: {
-          id: 1,
-          name: 'Twitter',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveSocialMedia: {
+            id: 1,
+            name: 'Twitter'
+          }
+        }
       },
-    }, 'saveSocialMedia response')
+      'saveSocialMedia response'
+    )
   }
 
   {
@@ -121,18 +127,22 @@ test('do not crash', { skip: !isPg }, async (t) => {
               username
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveCompanySocialMedia status code')
-    same(res.json(), {
-      data: {
-        saveCompanySocialMedia: {
-          id: 1,
-          username: 'platformatic',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveCompanySocialMedia: {
+            id: 1,
+            username: 'platformatic'
+          }
+        }
       },
-    }, 'saveCompanySocialMedia response')
+      'saveCompanySocialMedia response'
+    )
   }
 
   {
@@ -152,22 +162,30 @@ test('do not crash', { skip: !isPg }, async (t) => {
               }
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'complex status code')
-    same(res.json(), {
-      data: {
-        company: [{
-          name: 'Platformatic',
-          companySocialMedias: [{
-            username: 'platformatic',
-            socialMedias: {
-              name: 'Twitter',
-            },
-          }],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          company: [
+            {
+              name: 'Platformatic',
+              companySocialMedias: [
+                {
+                  username: 'platformatic',
+                  socialMedias: {
+                    name: 'Twitter'
+                  }
+                }
+              ]
+            }
+          ]
+        }
       },
-    }, 'complex response')
+      'complex response'
+    )
   }
 })

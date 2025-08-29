@@ -1,5 +1,3 @@
-'use strict'
-
 const openApiPathItemNonOperationKeys = ['summary', 'description', 'servers', 'parameters']
 
 function removeOperationPropertiesFromOpenApiPathItem (pathItem) {
@@ -13,7 +11,7 @@ function removeOperationPropertiesFromOpenApiPathItem (pathItem) {
   }, {})
 }
 
-function getSchemaOverrideFromOpenApiPathItem (pathItem, method) {
+export function getSchemaOverrideFromOpenApiPathItem (pathItem, method) {
   method = method?.toLowerCase()
 
   const schemaOverride = removeOperationPropertiesFromOpenApiPathItem(pathItem)
@@ -22,12 +20,8 @@ function getSchemaOverrideFromOpenApiPathItem (pathItem, method) {
     return schemaOverride
   }
 
-  Object.keys(pathItem[method]).forEach((key) => {
+  Object.keys(pathItem[method]).forEach(key => {
     schemaOverride[key] = pathItem[method][key]
   })
   return schemaOverride
-}
-
-module.exports = {
-  getSchemaOverrideFromOpenApiPathItem,
 }

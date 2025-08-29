@@ -1,21 +1,19 @@
-'use strict'
-
-const { isSQLite } = require('./helper')
-const fastify = require('fastify')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const { test, skip } = require('node:test')
-const { equal, ok: pass, deepEqual: same } = require('node:assert')
-const { tmpdir } = require('os')
-const { join } = require('path')
-const { randomUUID } = require('crypto')
+import sqlMapper from '@platformatic/sql-mapper'
+import { randomUUID } from 'crypto'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { skip, test } from 'node:test'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import sqlGraphQL from '../index.js'
+import { isSQLite } from './helper.js'
 
 if (!isSQLite) {
   skip('The db is not SQLite')
   process.exit(0)
 }
 
-test('store, close and load', async (t) => {
+test('store, close and load', async t => {
   const file = join(tmpdir(), randomUUID())
   {
     const app = fastify()
@@ -28,7 +26,7 @@ test('store, close and load', async (t) => {
           id INTEGER PRIMARY KEY,
           title VARCHAR(42)
         );`)
-      },
+      }
     })
     app.register(sqlGraphQL)
 
@@ -43,18 +41,22 @@ test('store, close and load', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
 
     await app.close()
   }
@@ -62,7 +64,7 @@ test('store, close and load', async (t) => {
   {
     const app = fastify()
     app.register(sqlMapper, {
-      connectionString: `sqlite://${file}`,
+      connectionString: `sqlite://${file}`
     })
     app.register(sqlGraphQL)
     const res = await app.inject({
@@ -76,23 +78,27 @@ test('store, close and load', async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
     await app.close()
   }
 })
 
-test('demo', async (t) => {
+test('demo', async t => {
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -114,7 +120,7 @@ test('demo', async (t) => {
             category_id INTEGER,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
           );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -131,18 +137,22 @@ test('demo', async (t) => {
                 name
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'saveCategory status code')
-    same(res.json(), {
-      data: {
-        saveCategory: {
-          id: 1,
-          name: 'pets',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveCategory: {
+            id: 1,
+            name: 'pets'
+          }
+        }
       },
-    }, 'saveCategory response')
+      'saveCategory response'
+    )
   }
 
   {
@@ -161,22 +171,26 @@ test('demo', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Dogs',
-          category: {
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
             id: 1,
-            name: 'pets',
-          },
-        },
+            title: 'Dogs',
+            category: {
+              id: 1,
+              name: 'pets'
+            }
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -195,22 +209,26 @@ test('demo', async (t) => {
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'getPageById status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Dogs',
-          category: {
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
             id: 1,
-            name: 'pets',
-          },
-        },
+            title: 'Dogs',
+            category: {
+              id: 1,
+              name: 'pets'
+            }
+          }
+        }
       },
-    }, 'saveCategory response')
+      'saveCategory response'
+    )
   }
 
   {
@@ -227,20 +245,26 @@ test('demo', async (t) => {
               }
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        pages: [{
-          title: 'Dogs',
-          category: {
-            name: 'pets',
-          },
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          pages: [
+            {
+              title: 'Dogs',
+              category: {
+                name: 'pets'
+              }
+            }
+          ]
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -257,19 +281,27 @@ test('demo', async (t) => {
               }
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'categories status code')
-    same(res.json(), {
-      data: {
-        categories: [{
-          name: 'pets',
-          pages: [{
-            title: 'Dogs',
-          }],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          categories: [
+            {
+              name: 'pets',
+              pages: [
+                {
+                  title: 'Dogs'
+                }
+              ]
+            }
+          ]
+        }
       },
-    }, 'categories response')
+      'categories response'
+    )
   }
 })

@@ -25,7 +25,7 @@
     }
   },
   "telemetry": {
-    "serviceName": "test-telemetry",
+    "applicationName": "test-telemetry",
     "exporter": {
       "type": "otlp",
       "options": {

@@ -1,12 +1,9 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { mkdtemp, writeFile } = require('node:fs/promises')
-const { join } = require('node:path')
-const { tmpdir } = require('node:os')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('../lib/config')
+import { rejects, strictEqual } from 'node:assert'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { loadConfiguration, schema } from '../index.js'
 
 async function writeJSON (path, data) {
   const content = JSON.stringify(data, null, 2)
@@ -39,21 +36,25 @@ test('root workers: missing PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
-    $schema: platformaticRuntime.schema.$id,
+    $schema: schema.$id,
     workers: '{PLT_WORKERS}',
     entrypoint: 'svc',
-    services: [
-      { id: 'svc', path: '.' }
-    ]
+    services: [{ id: 'svc', path: '.' }]
   })
 
   await withEnv({ PLT_WORKERS: undefined }, async () => {
-    await assert.rejects(async () => {
-      await loadConfig({}, ['-c', cfgPath], platformaticRuntime)
-    }, (err) => {
-      // Either our custom error or schema validation (AJV) kicks in first
-      return /Runtime workers must be a positive integer/.test(err?.message || '') || err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
-    })
+    await rejects(
+      async () => {
+        await loadConfiguration(cfgPath)
+      },
+      err => {
+        // Either our custom error or schema validation (AJV) kicks in first
+        return (
+          /Runtime workers must be a positive integer/.test(err?.message || '') ||
+          err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
+        )
+      }
+    )
   })
 })
 
@@ -61,20 +62,24 @@ test('root workers: invalid PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
-    $schema: platformaticRuntime.schema.$id,
+    $schema: schema.$id,
     workers: '{PLT_WORKERS}',
     entrypoint: 'svc',
-    services: [
-      { id: 'svc', path: '.' }
-    ]
+    services: [{ id: 'svc', path: '.' }]
   })
 
   await withEnv({ PLT_WORKERS: 'foobar' }, async () => {
-    await assert.rejects(async () => {
-      await loadConfig({}, ['-c', cfgPath], platformaticRuntime)
-    }, (err) => {
-      return /Runtime workers must be a positive integer/.test(err?.message || '') || err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
-    })
+    await rejects(
+      async () => {
+        await loadConfiguration(cfgPath)
+      },
+      err => {
+        return (
+          /Runtime workers must be a positive integer/.test(err?.message || '') ||
+          err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
+        )
+      }
+    )
   })
 })
 
@@ -82,17 +87,15 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
-    $schema: platformaticRuntime.schema.$id,
+    $schema: schema.$id,
     workers: '{PLT_WORKERS}',
     entrypoint: 'svc',
-    services: [
-      { id: 'svc', path: '.' }
-    ]
+    services: [{ id: 'svc', path: '.' }]
   })
 
   await withEnv({ PLT_WORKERS: '2' }, async () => {
-    const loaded = await loadConfig({}, ['-c', cfgPath], platformaticRuntime)
-    assert.strictEqual(loaded.configManager.current.workers, 2)
+    const loaded = await loadConfiguration(cfgPath)
+    strictEqual(loaded.workers, 2)
   })
 })
 
@@ -100,7 +103,7 @@ test('service workers: missing PLT_WORKERS fails fast with service context', asy
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
-    $schema: platformaticRuntime.schema.$id,
+    $schema: schema.$id,
     entrypoint: 'svc',
     services: [
       {
@@ -112,10 +115,7 @@ test('service workers: missing PLT_WORKERS fails fast with service context', asy
   })
 
   await withEnv({ PLT_WORKERS: undefined }, async () => {
-    await assert.rejects(
-      () => loadConfig({}, ['-c', cfgPath], platformaticRuntime),
-      /Service "svc" workers must be a positive integer/
-    )
+    await rejects(() => loadConfiguration(cfgPath), /Service "svc" workers must be a positive integer/)
   })
 })
 
@@ -123,7 +123,7 @@ test('service workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
-    $schema: platformaticRuntime.schema.$id,
+    $schema: schema.$id,
     entrypoint: 'svc',
     services: [
       {
@@ -135,8 +135,8 @@ test('service workers: valid PLT_WORKERS coerces to number', async () => {
   })
 
   await withEnv({ PLT_WORKERS: '3' }, async () => {
-    const loaded = await loadConfig({}, ['-c', cfgPath], platformaticRuntime)
-    const svc = loaded.configManager.current.services.find(s => s.id === 'svc')
-    assert.strictEqual(svc.workers, 3)
+    const loaded = await loadConfiguration(cfgPath)
+    const svc = loaded.applications.find(s => s.id === 'svc')
+    strictEqual(svc.workers, 3)
   })
 })

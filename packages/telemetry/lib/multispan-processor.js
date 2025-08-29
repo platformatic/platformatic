@@ -1,8 +1,6 @@
-'use strict'
-
 // This implements the SpanProcessor interface:
 // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/SpanProcessor.ts
-class MultiSpanProcessor {
+export class MultiSpanProcessor {
   constructor (_spanProcessors = []) {
     this._spanProcessors = _spanProcessors
   }
@@ -35,5 +33,3 @@ class MultiSpanProcessor {
     return Promise.all(promises)
   }
 }
-
-module.exports = { MultiSpanProcessor }

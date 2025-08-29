@@ -1,4 +1,5 @@
 {
-  "name": "test-composer-proxy-runtime",
-  "version": "1.0.42"
+  "name": "test-gateway-proxy-runtime",
+  "version": "1.0.42",
+  "type": "commonjs"
 }

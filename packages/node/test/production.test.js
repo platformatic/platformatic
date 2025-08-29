@@ -1,12 +1,12 @@
-import { ok } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
+  internalApplicationsFiles,
   isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
   verifyJSONViaHTTP,
-  verifyPlatformaticComposer,
+  verifyPlatformaticGateway,
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
@@ -42,6 +42,12 @@ async function verifyApplicationOnAutodetectedPrefix (t, url) {
   await verifyJSONViaHTTP(url, '/nested/base/dir/time', 200, isTime)
 }
 
+async function verifyFilename (t, url) {
+  const response = await fetch(url + '/frontend/filename')
+  deepStrictEqual(response.status, 200)
+  ok((await response.text()).endsWith('index.ts'))
+}
+
 const configurations = [
   {
     id: 'node-no-configuration-standalone',
@@ -54,8 +60,8 @@ const configurations = [
   {
     id: 'node-no-configuration-composer-with-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer with a prefix)',
-    files: [...filesESM, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    files: [...filesESM, ...internalApplicationsFiles],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
   },
@@ -63,7 +69,7 @@ const configurations = [
     id: 'node-no-configuration-composer-without-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer without a prefix)',
     files: filesESM,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -71,15 +77,15 @@ const configurations = [
     id: 'node-no-configuration-composer-autodetect-prefix',
     name: 'Node.js application (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
     files: filesESM,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
   {
     id: 'node-no-configuration-composer-no-services',
-    name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no services)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no applications)',
     files: filesESM,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -95,15 +101,23 @@ const configurations = [
     id: 'node-no-build-composer-with-prefix',
     name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
+    prefix: '/frontend'
+  },
+  {
+    id: 'node-no-build-composer-with-prefix-ts',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix in TypeScript)',
+    files: ['services/frontend/index.ts'],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService, verifyFilename],
+    language: 'ts',
     prefix: '/frontend'
   },
   {
     id: 'node-no-build-composer-without-prefix',
     name: 'Node.js application (with no build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -111,7 +125,7 @@ const configurations = [
     id: 'node-no-build-composer-autodetect-prefix',
     name: 'Node.js application (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -136,7 +150,7 @@ const configurations = [
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -144,7 +158,7 @@ const configurations = [
     id: 'node-with-build-composer-without-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -152,7 +166,7 @@ const configurations = [
     id: 'node-with-build-composer-autodetect-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -168,7 +182,7 @@ const configurations = [
     id: 'express-no-build-composer-with-prefix',
     name: 'Express (with no build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -176,7 +190,7 @@ const configurations = [
     id: 'express-no-build-composer-without-prefix',
     name: 'Express (with no build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -184,7 +198,7 @@ const configurations = [
     id: 'express-no-build-composer-autodetect-prefix',
     name: 'Express (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -201,7 +215,7 @@ const configurations = [
     id: 'express-with-build-composer-with-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -209,7 +223,7 @@ const configurations = [
     id: 'express-with-build-composer-without-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -217,7 +231,7 @@ const configurations = [
     id: 'express-with-build-composer-autodetect-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -233,7 +247,7 @@ const configurations = [
     id: 'fastify-no-build-composer-with-prefix',
     name: 'Fastify (with no build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -241,7 +255,7 @@ const configurations = [
     id: 'fastify-no-build-composer-without-prefix',
     name: 'Fastify (with no build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -249,7 +263,7 @@ const configurations = [
     id: 'fastify-no-build-composer-autodetect-prefix',
     name: 'Fastify (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -266,7 +280,7 @@ const configurations = [
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -274,7 +288,7 @@ const configurations = [
     id: 'fastify-with-build-composer-without-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -282,7 +296,7 @@ const configurations = [
     id: 'fastify-with-build-composer-autodetect-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -298,7 +312,7 @@ const configurations = [
     id: 'koa-no-build-composer-with-prefix',
     name: 'Koa (with no build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -306,7 +320,7 @@ const configurations = [
     id: 'koa-no-build-composer-without-prefix',
     name: 'Koa (with no build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -314,7 +328,7 @@ const configurations = [
     id: 'koa-no-build-composer-autodetect-prefix',
     name: 'Koa (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -331,7 +345,7 @@ const configurations = [
     id: 'koa-with-build-composer-with-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer with a prefix)',
     files,
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -339,7 +353,7 @@ const configurations = [
     id: 'koa-with-build-composer-without-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer without a prefix)',
     files,
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -347,7 +361,7 @@ const configurations = [
     id: 'koa-with-build-composer-autodetect-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     files,
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   }

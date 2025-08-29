@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('should handle relationships with different schemas', { skip: isSQLite }, async (t) => {
+test('should handle relationships with different schemas', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -46,23 +44,27 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   await app.ready()
 
-  const authors = [{
-    id: 1,
-    name: 'Mark',
-  }]
+  const authors = [
+    {
+      id: 1,
+      name: 'Mark'
+    }
+  ]
 
-  const books = [{
-    id: 1,
-    title: 'Harry',
-    authorId: 1,
-  }]
+  const books = [
+    {
+      id: 1,
+      title: 'Harry',
+      authorId: 1
+    }
+  ]
 
   {
     const res = await app.inject({
@@ -78,9 +80,9 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
             }
           `,
         variables: {
-          inputs: authors,
-        },
-      },
+          inputs: authors
+        }
+      }
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -99,9 +101,9 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
             }
           `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -120,20 +122,26 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
                 } 
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query books')
-    same(res.json(), {
-      data: {
-        test2Books: [{
-          id: 1,
-          author: {
-            id: 1,
-          },
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          test2Books: [
+            {
+              id: 1,
+              author: {
+                id: 1
+              }
+            }
+          ]
+        }
       },
-    }, 'query book response')
+      'query book response'
+    )
   }
 
   {
@@ -150,38 +158,49 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
                 }
               }
             }
-          `,
-      },
+          `
+      }
     })
     equal(res.statusCode, 200, 'query authors')
-    same(res.json(), {
-      data: {
-        test1Authors: [{
-          id: 1,
-          test2Books: [{
-            id: 1,
-          }],
-        }],
+    same(
+      res.json(),
+      {
+        data: {
+          test1Authors: [
+            {
+              id: 1,
+              test2Books: [
+                {
+                  id: 1
+                }
+              ]
+            }
+          ]
+        }
       },
-    }, 'query authors response')
+      'query authors response'
+    )
   }
 })
 
-test('should not throw if all of the schema with contraint references are loaded on the config', { skip: !isPg }, async (t) => {
-  const app = fastify()
-  app.register(sqlMapper, {
-    ...connInfo,
-    schema: ['test1', 'test2', 'test3', 'test4'],
-    async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+test(
+  'should not throw if all of the schema with contraint references are loaded on the config',
+  { skip: !isPg },
+  async t => {
+    const app = fastify()
+    app.register(sqlMapper, {
+      ...connInfo,
+      schema: ['test1', 'test2', 'test3', 'test4'],
+      async onDatabaseLoad (db, sql) {
+        pass('onDatabaseLoad called')
 
-      await clear(db, sql)
+        await clear(db, sql)
 
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
-      await db.query(sql`
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
+        await db.query(sql`
         CREATE TABLE test1.authors (
           id INTEGER PRIMARY KEY,
           name VARCHAR(42)
@@ -210,33 +229,37 @@ test('should not throw if all of the schema with contraint references are loaded
         ALTER TABLE ONLY test4.books
           ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
       `)
-    },
-  })
-  app.register(sqlGraphQL)
-  t.after(() => app.close())
+      }
+    })
+    app.register(sqlGraphQL)
+    t.after(() => app.close())
 
-  try {
-    await app.ready()
-  } catch (error) {
-    same(true, false, 'app should not throw')
+    try {
+      await app.ready()
+    } catch (error) {
+      same(true, false, 'app should not throw')
+    }
   }
-})
+)
 
-test('should not throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async (t) => {
-  const app = fastify()
-  app.register(sqlMapper, {
-    ...connInfo,
-    schema: ['test1', 'test2'],
-    async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+test(
+  'should not throw if some of the schema with contraint references are not passed to the config',
+  { skip: !isPg },
+  async t => {
+    const app = fastify()
+    app.register(sqlMapper, {
+      ...connInfo,
+      schema: ['test1', 'test2'],
+      async onDatabaseLoad (db, sql) {
+        pass('onDatabaseLoad called')
 
-      await clear(db, sql)
+        await clear(db, sql)
 
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
-      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
-      await db.query(sql`
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
+        await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
+        await db.query(sql`
         CREATE TABLE test1.authors (
           id INTEGER PRIMARY KEY,
           name VARCHAR(42)
@@ -265,14 +288,15 @@ test('should not throw if some of the schema with contraint references are not p
         ALTER TABLE ONLY test4.books
           ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
       `)
-    },
-  })
-  app.register(sqlGraphQL)
-  t.after(() => app.close())
+      }
+    })
+    app.register(sqlGraphQL)
+    t.after(() => app.close())
 
-  try {
-    await app.ready()
-  } catch (error) {
-    same(true, false, 'we expect the app to not throw')
+    try {
+      await app.ready()
+    } catch (error) {
+      same(true, false, 'we expect the app to not throw')
+    }
   }
-})
+)

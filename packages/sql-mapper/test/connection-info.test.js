@@ -1,10 +1,8 @@
-'use strict'
+import { equal } from 'node:assert'
+import { test } from 'node:test'
+import { getConnectionInfo } from '../lib/connection-info.js'
 
-const { test } = require('node:test')
-const { getConnectionInfo } = require('../lib/connection-info')
-const { equal } = require('node:assert')
-
-test('get connection info for postgres', async (t) => {
+test('get connection info for postgres', async t => {
   const db = {
     isPg: true,
     _pool: {
@@ -15,13 +13,13 @@ test('get connection info for postgres', async (t) => {
               host: 'localhost',
               port: 5432,
               database: 'database',
-              user: 'user',
-            },
-          },
+              user: 'user'
+            }
+          }
         },
-        release: () => {},
-      }),
-    },
+        release: () => {}
+      })
+    }
   }
   const connectionInfo = await getConnectionInfo(db)
   equal(connectionInfo.dbSystem, 'postgresql')
@@ -34,7 +32,7 @@ test('get connection info for postgres', async (t) => {
   equal(connectionInfo.isSQLite, false)
 })
 
-test('get connection info for mysql', async (t) => {
+test('get connection info for mysql', async t => {
   const db = {
     isMySql: true,
     _pool: {
@@ -45,13 +43,13 @@ test('get connection info for mysql', async (t) => {
               host: 'localhost',
               port: 3306,
               database: 'database',
-              user: 'user',
-            },
-          },
+              user: 'user'
+            }
+          }
         },
-        release: () => {},
-      }),
-    },
+        release: () => {}
+      })
+    }
   }
   const connectionInfo = await getConnectionInfo(db)
   equal(connectionInfo.dbSystem, 'mysql')
@@ -64,9 +62,9 @@ test('get connection info for mysql', async (t) => {
   equal(connectionInfo.isSQLite, false)
 })
 
-test('get connection info for sqlite', async (t) => {
+test('get connection info for sqlite', async t => {
   const db = {
-    isSQLite: true,
+    isSQLite: true
   }
   const connectionInfo = await getConnectionInfo(db, 'sqlite://database')
   equal(connectionInfo.dbSystem, 'sqlite')
@@ -79,7 +77,7 @@ test('get connection info for sqlite', async (t) => {
   equal(connectionInfo.isSQLite, true)
 })
 
-test('get connection info for unknown', async (t) => {
+test('get connection info for unknown', async t => {
   const db = {}
   const connectionInfo = await getConnectionInfo(db)
   equal(connectionInfo.dbSystem, 'unknown')

@@ -1,31 +1,24 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual } = require('node:assert')
-const { join } = require('path')
-const { platformaticDB } = require('../../index.js')
-const { ConfigManager } = require('@platformatic/config')
-const { version } = require('../../package.json')
+import { loadConfiguration } from '@platformatic/foundation'
+import { deepEqual, equal } from 'node:assert'
+import test from 'node:test'
+import { join } from 'path'
+import { transform } from '../../index.js'
+import { version } from '../../lib/schema.js'
+import { upgrade } from '../../lib/upgrade.js'
 
 test('remove hotReload', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'platformatic.db.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticDB.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    join(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'platformatic.db.json'),
+    null,
+    {
+      transform,
+      upgrade
+    }
+  )
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.watch, {
-    ignore: ['*.sqlite', '*.sqlite-journal'],
+    ignore: ['*.sqlite', '*.sqlite-journal']
   })
 })

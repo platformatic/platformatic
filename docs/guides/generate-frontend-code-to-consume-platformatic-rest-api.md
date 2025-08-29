@@ -17,15 +17,15 @@ In this guide, you will learn how to create a new Platformatic guide with Watt, 
 <SetupWatt />
 
 
-### Add a Platformatic DB service
+### Add a Platformatic DB application
 
 
 <NewApiProjectInstructions/>
 
 
-### Add a new Platformatic service
+### Add a new Platformatic application
 
-Every Platformatic service uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
+Every Platformatic application uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
 
 Launch your application with the command below:
 
@@ -81,13 +81,13 @@ Once done, run the command below to add `watt.json` file to your frontend applic
 npx wattpm import web/frontend
 ```
 
-Add your frontend `id` and DB service to your `platformatic.json` file in your `web/composer` application:
+Add your frontend `id` and DB application to your `platformatic.json` file in your `web/gateway` application:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.15.0.json",
-  "composer": {
-    "services": [
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.15.0.json",
+  "gateway": {
+    "applications": [
       {
         "id": "db",
         "openapi": {
@@ -112,7 +112,7 @@ To consume REST APIs in your Platformatic application. run the command to use Pl
 
 ```bash
 cd rest-api-frontend/src
-npx platformatic client http://127.0.0.1:3042 --frontend --name frontend-client
+npx --package @platformatic/client-cli plt-client http://127.0.0.1:3042 --frontend --name frontend-client
 ```
 
 Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend) documentation to know about the available options.

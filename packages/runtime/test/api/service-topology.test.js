@@ -1,19 +1,14 @@
-'use strict'
+import { deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
-
-test('should get services topology', async t => {
+test('should get applications topology', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -22,17 +17,17 @@ test('should get services topology', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
-  assert.deepStrictEqual(topology, {
+  deepStrictEqual(topology, {
     entrypoint: 'serviceApp',
     production: false,
-    services: [
+    applications: [
       {
         id: 'db-app',
         type: 'db',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
         dependencies: []
@@ -41,7 +36,7 @@ test('should get services topology', async t => {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
@@ -51,7 +46,7 @@ test('should get services topology', async t => {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
         dependencies: []
@@ -60,7 +55,7 @@ test('should get services topology', async t => {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
         dependencies: []
@@ -69,10 +64,9 @@ test('should get services topology', async t => {
   })
 })
 
-test('should get services topology (composer)', async t => {
+test('should get applications topology (gateway)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -81,16 +75,26 @@ test('should get services topology (composer)', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
-  assert.deepStrictEqual(topology, {
+  deepStrictEqual(topology, {
     production: false,
-    services: [
+    applications: [
+      {
+        id: 'composerApp',
+        type: 'gateway',
+        status: 'started',
+        version,
+        localUrl: 'http://composerApp.plt.local',
+        entrypoint: true,
+        dependencies: ['with-logger', 'multi-plugin-service', 'serviceApp'],
+        url: entrypointDetails.url
+      },
       {
         id: 'dbApp',
         type: 'db',
         status: 'started',
-        version: platformaticVersion,
+        version,
         localUrl: 'http://dbApp.plt.local',
         entrypoint: false,
         dependencies: []
@@ -99,7 +103,7 @@ test('should get services topology (composer)', async t => {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         localUrl: 'http://serviceApp.plt.local',
         entrypoint: false,
         dependencies: []
@@ -108,7 +112,7 @@ test('should get services topology (composer)', async t => {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         localUrl: 'http://with-logger.plt.local',
         entrypoint: false,
         dependencies: []
@@ -117,41 +121,10 @@ test('should get services topology (composer)', async t => {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        version,
         localUrl: 'http://multi-plugin-service.plt.local',
         entrypoint: false,
         dependencies: []
-      },
-      {
-        id: 'composerApp',
-        type: 'composer',
-        status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://composerApp.plt.local',
-        entrypoint: true,
-        dependencies: [
-          {
-            id: 'with-logger',
-            url: 'http://with-logger.plt.local',
-            local: true
-          },
-          {
-            id: 'multi-plugin-service',
-            url: 'http://multi-plugin-service.plt.local',
-            local: true
-          },
-          {
-            id: 'serviceApp',
-            url: 'http://serviceApp.plt.local',
-            local: true
-          },
-          {
-            id: 'external-service',
-            url: 'https://external-service.com',
-            local: false
-          }
-        ],
-        url: entrypointDetails.url
       }
     ],
     entrypoint: 'composerApp'

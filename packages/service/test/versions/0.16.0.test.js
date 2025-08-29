@@ -1,184 +1,124 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual } = require('node:assert')
-const { join } = require('path')
-const platformaticService = require('../../index.js')
-const { ConfigManager } = require('@platformatic/config')
-const { version } = require('../../package.json')
+import { loadConfiguration } from '@platformatic/foundation'
+import { deepEqual, equal } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { transform } from '../../index.js'
+import { version } from '../../lib/schema.js'
+import { upgrade } from '../../lib/upgrade.js'
 
 test('upgrade from v0.16.0', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'platformatic.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'platformatic.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js'],
+    paths: ['plugin.js']
   })
 })
 
 test('array of plugins', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'array.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'array.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 
   deepEqual(config.plugins, {
-    paths: ['./plugins/index.js', './routes/'],
+    paths: ['./plugins/index.js', './routes/']
   })
 })
 
 test('array of plugins (strings)', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'array-string.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'array-string.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 
   deepEqual(config.plugins, {
-    paths: ['./plugins/index.js', './routes/'],
+    paths: ['./plugins/index.js', './routes/']
   })
   equal(config.plugin, undefined)
 })
 
 test('single string', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'single-string.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'single-string.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js'],
+    paths: ['plugin.js']
   })
   equal(config.plugin, undefined)
 })
 
 test('plugin options', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'options.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'options.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   deepEqual(config.plugins, {
-    paths: [{
-      path: 'plugin.js',
-      options: {
-        something: 'else',
-      },
-    }],
-    stopTimeout: 10000,
+    paths: [
+      {
+        path: 'plugin.js',
+        options: {
+          something: 'else'
+        }
+      }
+    ],
+    stopTimeout: 10000
   })
   equal(config.plugin, undefined)
 })
 
 test('plugin options (array)', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'options-array.service.json')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'options-array.service.json'),
+    null,
+    { transform, upgrade }
+  )
 
   deepEqual(config.plugins, {
-    paths: [{
-      path: 'plugin.ts',
-      options: {
-        something: 'else',
+    paths: [
+      {
+        path: 'plugin.ts',
+        options: {
+          something: 'else'
+        }
       },
-    }, {
-      path: 'other.js',
-      options: {
-        foo: 'bar',
-      },
-    }],
-    stopTimeout: 10000,
-    typescript: true,
+      {
+        path: 'other.js',
+        options: {
+          foo: 'bar'
+        }
+      }
+    ],
+    stopTimeout: 10000
   })
   equal(config.plugin, undefined)
 })
 
 test('yaml loading', async () => {
-  const file = join(__dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'single-string.service.yaml')
-
-  const configManager = new ConfigManager({
-    ...(platformaticService.configManagerConfig),
-    source: file,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    },
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'single-string.service.yaml'),
+    null,
+    { transform, upgrade }
+  )
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js'],
+    paths: ['plugin.js']
   })
   equal(config.plugin, undefined)
 })

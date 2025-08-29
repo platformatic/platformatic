@@ -1,11 +1,11 @@
 {
   "name": "@platformatic/metrics",
-  "version": "2.74.3",
-  "description": "Platformatic Stackable Metrics",
+  "version": "3.0.0-alpha.8",
+  "description": "Platformatic Capability Metrics",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "test": "npm run lint && borp",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "lint": "eslint"
   },
   "repository": {
@@ -26,8 +26,11 @@
     "thread-cpu-usage": "^0.2.0"
   },
   "devDependencies": {
-    "borp": "^0.20.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

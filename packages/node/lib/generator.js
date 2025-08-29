@@ -45,7 +45,7 @@ export class Generator extends BaseGenerator {
       file: 'package.json',
       contents: JSON.stringify(
         {
-          name: `${this.config.serviceName}`,
+          name: `${this.config.applicationName}`,
           main,
           type: 'module',
           scripts: {

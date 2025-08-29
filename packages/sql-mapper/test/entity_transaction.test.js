@@ -1,13 +1,11 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual } = require('node:assert')
-const { clear, connInfo, isSQLite } = require('./helper')
-const { connect } = require('..')
+import { deepEqual } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {},
+  error: () => {}
 }
 
 test('entity transactions', async () => {
@@ -36,7 +34,7 @@ test('entity transactions', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
 
@@ -47,11 +45,14 @@ test('entity transactions', async () => {
 
     try {
       await mapper.db.tx(async tx => {
-        deepEqual(await pageEntity.save({
-          input: { title: 'new page' },
-          fields: ['title'],
-          tx,
-        }), { title: 'new page' })
+        deepEqual(
+          await pageEntity.save({
+            input: { title: 'new page' },
+            fields: ['title'],
+            tx
+          }),
+          { title: 'new page' }
+        )
         const findResult = await pageEntity.find({ fields: ['title'], tx })
         deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }, { title: 'new page' }])
         throw new Error('rollback')
@@ -71,11 +72,14 @@ test('entity transactions', async () => {
 
     try {
       await mapper.db.tx(async tx => {
-        deepEqual(await pageEntity.save({
-          input: { id: 1, title: 'changed' },
-          fields: ['id', 'title'],
-          tx,
-        }), { id: 1, title: 'changed' })
+        deepEqual(
+          await pageEntity.save({
+            input: { id: 1, title: 'changed' },
+            fields: ['id', 'title'],
+            tx
+          }),
+          { id: 1, title: 'changed' }
+        )
         const findResult = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } }, tx })
         deepEqual(findResult, [{ id: 1, title: 'changed' }])
         throw new Error('rollback')
@@ -94,12 +98,15 @@ test('entity transactions', async () => {
 
     try {
       await mapper.db.tx(async tx => {
-        deepEqual(await pageEntity.delete({
-          where: {
-            id: { eq: 1 },
-          },
-          tx,
-        }), [{ id: 1, title: 'foo' }])
+        deepEqual(
+          await pageEntity.delete({
+            where: {
+              id: { eq: 1 }
+            },
+            tx
+          }),
+          [{ id: 1, title: 'foo' }]
+        )
         const findResult = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } }, tx })
         deepEqual(findResult, [])
         throw new Error('rollback')
@@ -117,11 +124,14 @@ test('entity transactions', async () => {
     deepEqual(countResult, 2)
     try {
       await mapper.db.tx(async tx => {
-        deepEqual(await pageEntity.save({
-          input: { title: 'new page' },
-          fields: ['title'],
-          tx,
-        }), { title: 'new page' })
+        deepEqual(
+          await pageEntity.save({
+            input: { title: 'new page' },
+            fields: ['title'],
+            tx
+          }),
+          { title: 'new page' }
+        )
         const countResult = await pageEntity.count({ tx })
         deepEqual(countResult, 3)
         throw new Error('rollback')

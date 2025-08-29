@@ -1,17 +1,15 @@
-'use strict'
-const { deepStrictEqual, notStrictEqual, ok, strictEqual } = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
+import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from './helpers.js'
+
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('node-options on worker threads', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => {
@@ -42,8 +40,7 @@ test('node-options on worker threads', async t => {
 test('node-options on separate processes', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => {

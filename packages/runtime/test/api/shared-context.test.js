@@ -1,18 +1,14 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should update shared context via runtime API', async (t) => {
+test('should update shared context via runtime API', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
 
@@ -23,14 +19,14 @@ test('should update shared context via runtime API', async (t) => {
   // Check the initial state of the shared context
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, {})
+    deepStrictEqual(sharedContext, {})
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, {})
+    deepStrictEqual(sharedContext, {})
   }
 
   const contextUpdate1 = { foo: 'bar' }
@@ -39,14 +35,14 @@ test('should update shared context via runtime API', async (t) => {
   // Check that the shared context with a first update
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, contextUpdate1)
+    deepStrictEqual(sharedContext, contextUpdate1)
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, contextUpdate1)
+    deepStrictEqual(sharedContext, contextUpdate1)
   }
 
   const contextUpdate2 = { bar: 'baz' }
@@ -55,14 +51,14 @@ test('should update shared context via runtime API', async (t) => {
   // Check that the shared context with a second update
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
+    deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
+    deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
 
   const contextUpdate3 = { baz: 'qux' }
@@ -71,21 +67,20 @@ test('should update shared context via runtime API', async (t) => {
   // Check that the shared after an overwrite
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, contextUpdate3)
+    deepStrictEqual(sharedContext, contextUpdate3)
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, contextUpdate3)
+    deepStrictEqual(sharedContext, contextUpdate3)
   }
 })
 
-test('should update shared context from one of the services', async (t) => {
+test('should update shared context from one of the applications', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   const url = await app.start()
 
@@ -96,14 +91,14 @@ test('should update shared context from one of the services', async (t) => {
   // Check the initial state of the shared context
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, {})
+    deepStrictEqual(sharedContext, {})
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, {})
+    deepStrictEqual(sharedContext, {})
   }
 
   // Update the shared context
@@ -112,24 +107,24 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ context: contextUpdate1 })
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
   }
 
   // Check that the shared context with a first update
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, contextUpdate1)
+    deepStrictEqual(sharedContext, contextUpdate1)
   }
   {
     const { statusCode, body } = await request(url + '/proxy/with-logger/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, contextUpdate1)
+    deepStrictEqual(sharedContext, contextUpdate1)
   }
 
   // Update shared context
@@ -138,24 +133,24 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/with-logger/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ context: contextUpdate2 }),
+      body: JSON.stringify({ context: contextUpdate2 })
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
   }
 
   // Check that the shared context with a second update
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
+    deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
   {
     const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
+    deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
 
   // Overwrite shared context
@@ -164,23 +159,23 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ context: contextUpdate3, overwrite: true }),
+      body: JSON.stringify({ context: contextUpdate3, overwrite: true })
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
   }
 
   // Check that the shared after an overwrite
   {
     const sharedContext = await app.getSharedContext()
-    assert.deepStrictEqual(sharedContext, contextUpdate3)
+    deepStrictEqual(sharedContext, contextUpdate3)
   }
   {
     const { statusCode, body } = await request(url + '/proxy/with-logger/shared-context')
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
-    assert.deepStrictEqual(sharedContext, contextUpdate3)
+    deepStrictEqual(sharedContext, contextUpdate3)
   }
 })

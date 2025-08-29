@@ -63,11 +63,11 @@ Examples:
 
 See [crontab.guru](https://crontab.guru/) for more examples.
 
-## Example: call service in the mesh network
+## Example: call application in the mesh network
 
-It is possible (and useful) to call also services in the platformatic mesh network.
+It is possible (and useful) to call also applications in the platformatic mesh network.
 Here's an example configuring a job that sends a POST request every minute to an
-internal `notification` service (so exposed as `http://notification.plt.local` in the mesh network).
+internal `notification` application (so exposed as `http://notification.plt.local` in the mesh network).
 
 ```json
 //...

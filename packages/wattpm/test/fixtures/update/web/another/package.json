@@ -3,6 +3,6 @@
     "@platformatic/service": "^2.0.0",
     "@platformatic/db": "^1.0.0",
     "@platformatic/db-dashboard": "^0.1.0",
-    "@platformatic/composer": "^99.0.0"
+    "@platformatic/gateway": "^99.0.0"
   }
 }

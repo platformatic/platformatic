@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/v3.0.0.json",
+  "entrypoint": "composer",
+  "autoload": {
+    "path": "services"
+  }
+}

@@ -1,38 +1,33 @@
-'use strict'
-
-const { EventEmitter } = require('node:events')
-const { hostname } = require('node:os')
-const { resolve } = require('node:path')
-const { workerData, threadId } = require('node:worker_threads')
-const { pathToFileURL } = require('node:url')
-const inspector = require('node:inspector')
-const diagnosticChannel = require('node:diagnostics_channel')
-const { ServerResponse } = require('node:http')
-
-const {
-  disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
-  executeWithTimeout,
-  ensureLoggableError,
-  getPrivateSymbol,
+import {
   buildPinoFormatters,
-  buildPinoTimestamp
-} = require('@platformatic/utils')
-const dotenv = require('dotenv')
-const pino = require('pino')
-const { fetch } = require('undici')
-
-const { PlatformaticApp } = require('./app')
-const { SharedContext } = require('./shared-context')
-const { setupITC } = require('./itc')
-const { setDispatcher } = require('./interceptors')
-const { kId, kITC, kStderrMarker } = require('./symbols')
+  buildPinoTimestamp,
+  disablePinoDirectWrite,
+  ensureLoggableError,
+  executeWithTimeout,
+  getPrivateSymbol
+} from '@platformatic/foundation'
+import dotenv from 'dotenv'
+import { subscribe } from 'node:diagnostics_channel'
+import { EventEmitter } from 'node:events'
+import { ServerResponse } from 'node:http'
+import inspector from 'node:inspector'
+import { hostname } from 'node:os'
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { threadId, workerData } from 'node:worker_threads'
+import pino from 'pino'
+import { fetch } from 'undici'
+import { Controller } from './controller.js'
+import { setDispatcher } from './interceptors.js'
+import { setupITC } from './itc.js'
+import { SharedContext } from './shared-context.js'
+import { kId, kITC, kStderrMarker } from './symbols.js'
 
 function handleUnhandled (app, type, err) {
   const label =
     workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the service "${workerData.serviceConfig.id}"`
-      : `service "${workerData.serviceConfig.id}"`
+      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
+      : `application "${workerData.applicationConfig.id}"`
 
   globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
 
@@ -45,7 +40,6 @@ function handleUnhandled (app, type, err) {
 
 function patchLogging () {
   disablePinoDirectWrite()
-  ensureFlushedWorkerStdio()
 
   const kFormatForStderr = getPrivateSymbol(console, 'kFormatForStderr')
 
@@ -67,9 +61,14 @@ function patchLogging () {
 }
 
 function createLogger () {
+  // Do not propagate runtime transports to the worker
+  if (workerData.config.logger) {
+    delete workerData.config.logger.transport
+  }
+
   const pinoOptions = {
     level: 'trace',
-    name: workerData.serviceConfig.id,
+    name: workerData.applicationConfig.id,
     ...workerData.config.logger
   }
 
@@ -109,16 +108,16 @@ async function main () {
 
   const config = workerData.config
 
-  await performPreloading(config, workerData.serviceConfig)
+  await performPreloading(config, workerData.applicationConfig)
 
-  const service = workerData.serviceConfig
+  const application = workerData.applicationConfig
 
-  // Load env file and mixin env vars from service config
+  // Load env file and mixin env vars from application config
   let envfile
-  if (service.envfile) {
-    envfile = resolve(workerData.dirname, service.envfile)
+  if (application.envfile) {
+    envfile = resolve(workerData.dirname, application.envfile)
   } else {
-    envfile = resolve(workerData.serviceConfig.path, '.env')
+    envfile = resolve(workerData.applicationConfig.path, '.env')
   }
 
   globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
@@ -130,17 +129,17 @@ async function main () {
   if (config.env) {
     Object.assign(process.env, config.env)
   }
-  if (service.env) {
-    Object.assign(process.env, service.env)
+  if (application.env) {
+    Object.assign(process.env, application.env)
   }
 
   const { threadDispatcher } = await setDispatcher(config)
 
-  // If the service is an entrypoint and runtime server config is defined, use it.
+  // If the application is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
-  if (config.server && service.entrypoint) {
+  if (config.server && application.entrypoint) {
     serverConfig = config.server
-  } else if (service.useHttp) {
+  } else if (application.useHttp) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
@@ -163,14 +162,14 @@ async function main () {
     const res = await fetch(url)
     const [{ devtoolsFrontendUrl }] = await res.json()
 
-    console.log(`For ${service.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
+    console.log(`For ${application.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
   }
 
   // Create the application
-  const app = new PlatformaticApp(
-    service,
+  const controller = new Controller(
+    application,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
-    service.telemetry,
+    application.telemetry,
     config.logger,
     serverConfig,
     config.metrics,
@@ -178,14 +177,14 @@ async function main () {
     !!config.watch
   )
 
-  process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
-  process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
+  process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
+  process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
 
-  await app.init()
+  await controller.init()
 
-  if (service.entrypoint && config.basePath) {
-    const meta = await app.stackable.getMeta()
-    if (!meta.composer.wantsAbsoluteUrls) {
+  if (application.entrypoint && config.basePath) {
+    const meta = await controller.capability.getMeta()
+    if (!meta.gateway.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
     }
   }
@@ -198,18 +197,16 @@ async function main () {
   }
 
   // Setup interaction with parent port
-  const itc = setupITC(app, service, threadDispatcher, sharedContext)
+  const itc = setupITC(controller, application, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
 
-  // Get the dependencies
-  const dependencies = await app.getBootstrapDependencies()
-  itc.notify('init', { dependencies })
+  itc.notify('init')
 }
 
 function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
 
-  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+  subscribe('http.server.request.start', ({ request, response }) => {
     if (request.url.startsWith(basePath)) {
       request.url = request.url.slice(basePath.length)
 

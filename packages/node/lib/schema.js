@@ -1,9 +1,9 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
-
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
 const node = {
@@ -13,7 +13,7 @@ const node = {
       type: 'string'
     },
     absoluteUrl: {
-      description: 'This Node.js application requires the Absolute URL from the Composer',
+      description: 'This Node.js application requires the Absolute URL from the Gateway',
       type: 'boolean',
       default: false
     },
@@ -39,7 +39,7 @@ export const schemaComponents = { node }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Node.js Stackable',
+  title: 'Platformatic Node.js Config',
   type: 'object',
   properties: {
     $schema: {
@@ -48,7 +48,7 @@ export const schema = {
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
-    application: basicSchemaComponents.application,
+    application: basicSchemaComponents.buildableApplication,
     runtime: utilsSchemaComponents.wrappedRuntime,
     node
   },

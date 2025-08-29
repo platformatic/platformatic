@@ -21,9 +21,9 @@ Configuration settings containing sensitive data, such as database connection UR
 
 ### `basePath`
 
-Service proxy base path when exposing this service in a [composer](../composer/configuration.md) when setting the `proxy` property.
+Application proxy base path when exposing this application in a [gateway](../gateway/configuration.md) when setting the `proxy` property.
 
-If not specified, the service will be exposed on the service or a value specified in the service code via `platformatic.setBasePath()`.
+If not specified, the application will be exposed on the application or a value specified in the application code via `platformatic.setBasePath()`.
 
 ### `server`
 
@@ -32,7 +32,6 @@ An object with the following settings:
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
 - **`port`** — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
-
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
 
@@ -81,39 +80,6 @@ An object with the following settings:
 See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for more details.
 
 :::
-
-### `metrics`
-
-Configuration for a [Prometheus](https://prometheus.io/) server that will export monitoring metrics
-for the current server instance. It uses [`fastify-metrics`](https://github.com/SkeLLLa/fastify-metrics)
-under the hood.
-
-This setting can be a `boolean` or an `object`. If set to `true` the Prometheus server will listen on `http://0.0.0.0:9090`.
-
-Supported object properties:
-
-- **`server`** (`enum`) — Can be set to "own", "parent" or "hide" to determine if metrics will be served on a different server, the same server as the Platformatic application, or hidden entirely.
-- **`hostname`** (`string`, default: `0.0.0.0`) — The hostname where the Prometheus server will listen for connections. This should be used only if `server` is set to "own".
-- **`port`** (`number` or `string`, default: `9090`) — The port where the Prometheus server will listen for connections. This should be used only if `server` is set to "own".
-- **`endpoint`** (`string`, default: `/metrics`) — The endpoint on which metrics will be served.
-- **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here (use [environment variables](#environment-variables)).
-- **`labels`** (`object`) — `{ key : value }` Map of labels that are applied to metrics.
-- **`readiness`** (`object` or `boolean`, default: `true`) — Configuration for readiness checks. If set to `true`, default readiness checks are enabled. If an object is provided, it can include:
-  - **`endpoint`** (`string`, default: `/ready`) — The endpoint for readiness checks.
-  - **`success`** (`object`) — Defines the success criteria for readiness checks.
-    - **`statusCode`** (`number`, default: `200`) — The HTTP status code indicating success.
-    - **`body`** (`string`, default: `OK`) — The response body indicating success.
-  - **`fail`** (`object`) — Defines the failure criteria for readiness checks.
-    - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
-    - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
-- **`liveness`** (`object` or `boolean`, default: `true`) — Configuration for liveness checks. If set to `true`, default liveness checks are enabled. If an object is provided, it can include:
-  - **`endpoint`** (`string`, default: `/status`) — The endpoint for liveness checks.
-  - **`success`** (`object`) — Defines the success criteria for liveness checks.
-    - **`statusCode`** (`number`, default: `200`) — The HTTP status code indicating success.
-    - **`body`** (`string`, default: `OK`) — The response body indicating success.
-  - **`fail`** (`object`) — Defines the failure criteria for liveness checks.
-    - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
-    - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
 
 ### `plugins`
 
@@ -166,41 +132,9 @@ _Example_
 }
 ```
 
-#### `typescript` compilation options
-
-The `typescript` can also be an object to customize the compilation. Here are the supported options:
-
-- `enabled` (`boolean` or `string`): enables compilation
-- `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
-- `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
-  and `enabled` is set to `false` (production build)
-- `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
-
-Example:
-
-```json
-{
-  "plugins": {
-    "paths": [
-      {
-        "path": "./my-plugin.js",
-        "options": {
-          "foo": "bar"
-        }
-      }
-    ],
-    "typescript": {
-      "enabled": false,
-      "tsConfig": "./path/to/tsconfig.json",
-      "outDir": "dist"
-    }
-  }
-}
-```
-
 ### `watch`
 
-Enables watching for file changes if set to `true` or `"true"`. When changes are detected, then the service will be restarted after loading changed files.
+Enables watching for file changes if set to `true` or `"true"`. When changes are detected, then the application will be restarted after loading changed files.
 
 This is only available when executing within a Platformatic Runtime and if the runtime `watch` configuration is enabled.
 
@@ -253,7 +187,6 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   ```
 
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
-
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
@@ -301,7 +234,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
-- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
+- **`applicationName`** (**required**, `string`) — Name of the application as will be reported in open telemetry.
 - **`version`** (`string`) — Optional version (free form)
 - **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
@@ -319,7 +252,7 @@ _Example_
 ```json
 {
   "telemetry": {
-    "serviceName": "test-service",
+    "applicationName": "test-application",
     "exporter": {
       "type": "otlp",
       "options": {
@@ -329,17 +262,6 @@ _Example_
   }
 }
 ```
-
-### `clients`
-
-An array of [Platformatic Client](../client/overview.md) configurations that will be loaded by Platformatic Service.
-
-- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
-- **`name`** (`string`) - The name of the client.
-- **`type`** (`string`) - The type of the client. Supported values are `graphql` and `openapi`.
-- **`schema`** (`string`) - Path to the generated client schema file.
-- **`path`** (`string`) - Path to the generated client folder.
-- **`url`** (`string`) - The URL of the service that the client will connect to.
 
 ## Environment variable placeholders
 
@@ -380,7 +302,7 @@ file or in the current working directory.
 Environment variables can also be set directly on the command line, for example:
 
 ```bash
-PLT_SERVER_LOGGER_LEVEL=debug npx platformatic service
+PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 ```
 
 ### PLT_ROOT
