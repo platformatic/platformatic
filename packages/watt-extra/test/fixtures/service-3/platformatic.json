@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.54.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "logger": {
+      "level": "silent"
+    },
+    "keepAliveTimeout": 1
+  },
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      "./routes"
+    ],
+    "typescript": false
+  },
+  "watch": true
+}

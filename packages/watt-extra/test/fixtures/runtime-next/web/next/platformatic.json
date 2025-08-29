@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.58.0.json",
+  "application": {
+    "basePath": "~PLT_BASE_PATH"
+  },
+  "next": {
+    "trailingSlash": true
+  }
+}

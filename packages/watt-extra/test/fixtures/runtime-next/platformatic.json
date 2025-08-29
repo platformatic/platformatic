@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.58.0.json",
+  "autoload": {
+    "path": "web"
+  },
+  "logger": {
+    "level": "error"
+  }
+}
