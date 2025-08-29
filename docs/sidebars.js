@@ -79,7 +79,8 @@ const sidebars = {
             'guides/monitoring-and-observability',
             'guides/monitoring',
             'guides/telemetry',
-            'guides/logging-to-elasticsearch'
+            'guides/logging-to-elasticsearch',
+            'guides/profiling-with-watt'
           ]
         }
       ]
@@ -185,7 +186,19 @@ const sidebars = {
               type: 'category',
               label: 'Next.js',
               collapsed: true,
+<<<<<<< HEAD
               items: ['reference/next/overview', 'reference/next/configuration']
+||||||| 7e3152363
+              items: [
+                'reference/next/overview', 
+                'reference/next/configuration'
+              ]
+=======
+              items: [
+                'reference/next/overview',
+                'reference/next/configuration'
+              ]
+>>>>>>> main
             },
             {
               type: 'category',
@@ -203,13 +216,39 @@ const sidebars = {
               type: 'category',
               label: 'Remix',
               collapsed: true,
+<<<<<<< HEAD
               items: ['reference/remix/overview', 'reference/remix/configuration', 'reference/remix/caching']
+||||||| 7e3152363
+              items: [
+                'reference/remix/overview', 
+                'reference/remix/configuration',
+                'reference/remix/caching'
+              ]
+=======
+              items: [
+                'reference/remix/overview',
+                'reference/remix/configuration',
+                'reference/remix/caching'
+              ]
+>>>>>>> main
             },
             {
               type: 'category',
               label: 'Vite',
               collapsed: true,
+<<<<<<< HEAD
               items: ['reference/vite/overview', 'reference/vite/configuration']
+||||||| 7e3152363
+              items: [
+                'reference/vite/overview', 
+                'reference/vite/configuration'
+              ]
+=======
+              items: [
+                'reference/vite/overview',
+                'reference/vite/configuration'
+              ]
+>>>>>>> main
             }
           ]
         },

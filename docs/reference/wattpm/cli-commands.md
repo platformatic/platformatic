@@ -297,7 +297,7 @@ wattpm inject [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Service name (optional, uses entrypoint if omitted)
+- `application` - Application name (optional, uses entrypoint if omitted)
 
 **Options:**
 
@@ -328,7 +328,7 @@ wattpm env [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Service name (optional, shows app-level env if omitted)
+- `application` - Application name (optional, shows app-level env if omitted)
 
 **Options:**
 
@@ -352,13 +352,57 @@ wattpm config [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Service name (optional, shows app config if omitted)
+- `application` - Application name (optional, shows app config if omitted)
 
 **Example:**
 
 ```bash
 wattpm config
 wattpm config my-app api-application
+```
+
+## Performance Profiling Commands
+
+### `wattpm pprof start`
+
+Starts CPU profiling for applications in a running application.
+
+```bash
+wattpm pprof start [id] [application]
+```
+
+**Arguments:**
+- `id` - Process ID or application name (optional if only one app is running)
+- `application` - Application name (optional, profiles all applications if omitted)
+
+**Example:**
+```bash
+wattpm pprof start                      # Start profiling all applications (auto-detect runtime)
+wattpm pprof start api-application          # Start profiling specific application (auto-detect runtime)
+wattpm pprof start my-app               # Start profiling all applications in specific app
+wattpm pprof start my-app api-application   # Start profiling specific application in specific app
+wattpm pprof start 12345 api-application    # Start profiling specific application using PID
+```
+
+### `wattpm pprof stop`
+
+Stops CPU profiling and saves profile data as `pprof-{application}-{timestamp}.pb` files.
+
+```bash
+wattpm pprof stop [id] [application]
+```
+
+**Arguments:**
+- `id` - Process ID or application name (optional if only one app is running)
+- `application` - Application name (optional, stops profiling all applications if omitted)
+
+**Example:**
+```bash
+wattpm pprof stop                      # Stop profiling all applications (auto-detect runtime)
+wattpm pprof stop api-application          # Stop profiling specific application (auto-detect runtime)
+wattpm pprof stop my-app               # Stop profiling all applications in specific app
+wattpm pprof stop my-app api-application   # Stop profiling specific application in specific app
+wattpm pprof stop 12345 api-application    # Stop profiling specific application using PID
 ```
 
 ## Advanced Commands

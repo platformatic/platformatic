@@ -8,11 +8,11 @@ export async function pprofStartCommand (logger, args) {
     const { positionals } = parseArgs(args, {}, false)
 
     const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { applications: runtimeApplications } = await client.getRuntimeApplications(runtime.pid)
 
-    // Get application ID from positional argument or use all applications
-    const applicationId = positionals[0]
+    // Get application ID from positional arguments or use all applications
+    const applicationId = remainingPositionals[0]
 
     if (applicationId) {
       // Start profiling for specific application
@@ -53,11 +53,11 @@ export async function pprofStopCommand (logger, args) {
     const { positionals } = parseArgs(args, {}, false)
 
     const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { applications: runtimeApplications } = await client.getRuntimeApplications(runtime.pid)
 
-    // Get application ID from positional argument or use all applications
-    const applicationId = positionals[0]
+    // Get application ID from remaining positional arguments or use all applications
+    const applicationId = remainingPositionals[0]
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-')
 
     if (applicationId) {
@@ -113,13 +113,23 @@ export async function pprofCommand (logger, args) {
 
 export const help = {
   pprof: {
-    usage: 'pprof <start|stop> [application]',
-    description: 'Profile CPU usage of running applications',
+    usage: 'pprof <start|stop> [id] [service]',
+    description: 'Profile CPU usage of running services',
     options: [],
     args: [
       {
         name: 'command',
         description: 'The pprof command to run: start or stop'
+      },
+      {
+        name: 'id',
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+      },
+      {
+        name: 'id',
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
         name: 'application',
