@@ -48,27 +48,22 @@ function raiseInvalidWorkersError (location, received, hint) {
 export function autoDetectPprofCapture (config) {
   const require = createRequire(import.meta.url)
 
-  // Check if package is installed
+  let pprofCapturePath
   try {
-    let pprofCapturePath
-    try {
-      pprofCapturePath = require.resolve('@platformatic/watt-pprof-capture')
-    } catch (err) {
-      pprofCapturePath = require.resolve('../../watt-pprof-capture/index.js')
-    }
-
-    // Add to preload if not already present
-    if (!config.preload) {
-      config.preload = []
-    } else if (typeof config.preload === 'string') {
-      config.preload = [config.preload]
-    }
-
-    if (!config.preload.includes(pprofCapturePath)) {
-      config.preload.push(pprofCapturePath)
-    }
+    pprofCapturePath = require.resolve('@platformatic/wattpm-pprof-capture')
   } catch (err) {
-    // Package not installed, skip silently
+    // No-op
+  }
+
+  // Add to preload if not already present
+  if (!config.preload) {
+    config.preload = []
+  } else if (typeof config.preload === 'string') {
+    config.preload = [config.preload]
+  }
+
+  if (pprofCapturePath && !config.preload.includes(pprofCapturePath)) {
+    config.preload.push(pprofCapturePath)
   }
 
   return config

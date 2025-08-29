@@ -1,11 +1,5 @@
-'use strict'
-
-const pprof = require('@datadog/pprof')
-const {
-  ProfilingAlreadyStartedError,
-  ProfilingNotStartedError,
-  NoProfileAvailableError,
-} = require('./lib/errors')
+import { time } from '@datadog/pprof'
+import { NoProfileAvailableError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
@@ -27,16 +21,16 @@ const registerInterval = setInterval(() => {
 
 function rotateProfile () {
   // `true` immediately restarts profiling after stopping
-  latestProfile = pprof.time.stop(true)
+  latestProfile = time.stop(true)
 }
 
-function startProfiling (options = {}) {
+export function startProfiling (options = {}) {
   if (isCapturing) {
     throw new ProfilingAlreadyStartedError()
   }
   isCapturing = true
 
-  pprof.time.start(options)
+  time.start(options)
 
   // Set up profile window rotation if durationMillis is provided
   const timeout = options.durationMillis
@@ -46,7 +40,7 @@ function startProfiling (options = {}) {
   }
 }
 
-function stopProfiling () {
+export function stopProfiling () {
   if (!isCapturing) {
     throw new ProfilingNotStartedError()
   }
@@ -55,11 +49,11 @@ function stopProfiling () {
   clearInterval(captureInterval)
   captureInterval = null
 
-  latestProfile = pprof.time.stop()
+  latestProfile = time.stop()
   return latestProfile.encode()
 }
 
-function getLastProfile () {
+export function getLastProfile () {
   // TODO: Should it be allowed to get last profile after stopping?
   if (!isCapturing) {
     throw new ProfilingNotStartedError()
@@ -72,8 +66,4 @@ function getLastProfile () {
   return latestProfile.encode()
 }
 
-module.exports = {
-  startProfiling,
-  stopProfiling,
-  getLastProfile
-}
+export * as errors from './lib/errors.js'

@@ -15,11 +15,11 @@ test('should start profiling for a service', async t => {
     await app.close()
   })
 
-  // Test starting profiling on a service
+  // Test starting profiling on a application
   const result = await app.startApplicationProfiling('with-logger', { intervalMicros: 1000 })
 
   // Should not throw and complete successfully
-  // The actual ITC handler in watt-pprof-capture will handle the profiling logic
+  // The actual ITC handler in wattpm-pprof-capture will handle the profiling logic
   ok(typeof result === 'undefined' || result === null, 'startApplicationProfiling should not return a value')
 })
 
