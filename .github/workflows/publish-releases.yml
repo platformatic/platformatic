@@ -22,6 +22,7 @@ jobs:
     environment: main
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -56,10 +57,7 @@ jobs:
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped v${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
-        # TODO(mcollina): make the following work for both releases
       - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
         run: |
           pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}
