@@ -72,7 +72,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     }
 
     const loaded = {
-      runtime: runtime.getRuntimeConfig(true),
+      runtime: runtime.getRuntimeConfig(),
       applications: {},
     }
 
