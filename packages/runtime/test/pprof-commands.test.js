@@ -1,17 +1,13 @@
-'use strict'
+import { ok, rejects } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
-const fixturesDir = join(__dirname, '..', 'fixtures')
-
-test('should start profiling for a service', async (t) => {
+test('should start profiling for a service', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -20,17 +16,16 @@ test('should start profiling for a service', async (t) => {
   })
 
   // Test starting profiling on a service
-  const result = await app.startServiceProfiling('with-logger', { intervalMicros: 1000 })
+  const result = await app.startApplicationProfiling('with-logger', { intervalMicros: 1000 })
 
   // Should not throw and complete successfully
   // The actual ITC handler in watt-pprof-capture will handle the profiling logic
-  assert.ok(typeof result === 'undefined' || result === null, 'startServiceProfiling should not return a value')
+  ok(typeof result === 'undefined' || result === null, 'startApplicationProfiling should not return a value')
 })
 
-test('should stop profiling for a service and return profile data', async (t) => {
+test('should stop profiling for a service and return profile data', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -39,23 +34,25 @@ test('should stop profiling for a service and return profile data', async (t) =>
   })
 
   // Start profiling first
-  await app.startServiceProfiling('with-logger', { intervalMicros: 1000 })
+  await app.startApplicationProfiling('with-logger', { intervalMicros: 1000 })
 
   // Wait a bit for some profile data to be collected
   await new Promise(resolve => setTimeout(resolve, 100))
 
   // Stop profiling and get the profile data
-  const profileData = await app.stopServiceProfiling('with-logger')
+  const profileData = await app.stopApplicationProfiling('with-logger')
 
   // Should return binary profile data (Buffer or Uint8Array)
-  assert.ok(Buffer.isBuffer(profileData) || profileData instanceof Uint8Array, 'stopServiceProfiling should return a Buffer or Uint8Array')
-  assert.ok(profileData.length > 0, 'Profile data should not be empty')
+  ok(
+    Buffer.isBuffer(profileData) || profileData instanceof Uint8Array,
+    'stopApplicationProfiling should return a Buffer or Uint8Array'
+  )
+  ok(profileData.length > 0, 'Profile data should not be empty')
 })
 
-test('should throw error when starting profiling on non-existent service', async (t) => {
+test('should throw error when starting profiling on non-existent service', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -64,20 +61,19 @@ test('should throw error when starting profiling on non-existent service', async
   })
 
   // Try to start profiling on a service that doesn't exist
-  await assert.rejects(
-    () => app.startServiceProfiling('non-existent-service', {}),
-    (err) => {
-      assert.ok(err.message.includes('Service not found') || err.message.includes('non-existent-service'))
+  await rejects(
+    () => app.startApplicationProfiling('non-existent-service', {}),
+    err => {
+      ok(err.message.includes('Service not found') || err.message.includes('non-existent-service'))
       return true
     },
     'Should throw error for non-existent service'
   )
 })
 
-test('should throw error when stopping profiling on non-existent service', async (t) => {
+test('should throw error when stopping profiling on non-existent service', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -86,20 +82,19 @@ test('should throw error when stopping profiling on non-existent service', async
   })
 
   // Try to stop profiling on a service that doesn't exist
-  await assert.rejects(
-    () => app.stopServiceProfiling('non-existent-service'),
-    (err) => {
-      assert.ok(err.message.includes('Service not found') || err.message.includes('non-existent-service'))
+  await rejects(
+    () => app.stopApplicationProfiling('non-existent-service'),
+    err => {
+      ok(err.message.includes('Service not found') || err.message.includes('non-existent-service'))
       return true
     },
     'Should throw error for non-existent service'
   )
 })
 
-test('should handle profiling already started error', async (t) => {
+test('should handle profiling already started error', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -108,27 +103,26 @@ test('should handle profiling already started error', async (t) => {
   })
 
   // Start profiling
-  await app.startServiceProfiling('with-logger', { intervalMicros: 1000 })
+  await app.startApplicationProfiling('with-logger', { intervalMicros: 1000 })
 
   // Try to start profiling again - should throw an error
-  await assert.rejects(
-    () => app.startServiceProfiling('with-logger', { intervalMicros: 1000 }),
-    (err) => {
+  await rejects(
+    () => app.startApplicationProfiling('with-logger', { intervalMicros: 1000 }),
+    err => {
       // The error should indicate profiling is already started
-      assert.ok(err.message.includes('already') || err.message.includes('started'))
+      ok(err.message.includes('already') || err.message.includes('started'))
       return true
     },
     'Should throw error when profiling is already started'
   )
 
   // Clean up - stop profiling
-  await app.stopServiceProfiling('with-logger')
+  await app.stopApplicationProfiling('with-logger')
 })
 
-test('should handle profiling not started error', async (t) => {
+test('should handle profiling not started error', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -137,11 +131,11 @@ test('should handle profiling not started error', async (t) => {
   })
 
   // Try to stop profiling when it's not started
-  await assert.rejects(
-    () => app.stopServiceProfiling('with-logger'),
-    (err) => {
+  await rejects(
+    () => app.stopApplicationProfiling('with-logger'),
+    err => {
       // The error should indicate profiling is not started
-      assert.ok(err.message.includes('not started') || err.message.includes('not running'))
+      ok(err.message.includes('not started') || err.message.includes('not running'))
       return true
     },
     'Should throw error when profiling is not started'

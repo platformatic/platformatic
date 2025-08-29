@@ -112,7 +112,7 @@ export async function managementApiPlugin (app, opts) {
     reply.code(res.statusCode).headers(res.headers).send(res.body)
   })
 
-  app.post('/services/:id/pprof/start', async (request, reply) => {
+  app.post('/applications/:id/pprof/start', async (request, reply) => {
     const { id } = request.params
     app.log.debug('start profiling', { id })
 
@@ -121,7 +121,7 @@ export async function managementApiPlugin (app, opts) {
     reply.code(200).send({})
   })
 
-  app.post('/services/:id/pprof/stop', async (request, reply) => {
+  app.post('/applications/:id/pprof/stop', async (request, reply) => {
     const { id } = request.params
     app.log.debug('stop profiling', { id })
 

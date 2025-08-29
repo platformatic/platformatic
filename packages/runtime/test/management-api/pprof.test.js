@@ -1,17 +1,17 @@
 'use strict'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should start profiling via management API', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -34,24 +34,24 @@ test('should start profiling via management API', async t => {
   // Start profiling on service-1
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/start',
+    path: '/api/v1/applications/service-1/pprof/start',
     headers: {
       'content-type': 'application/json'
     },
     body: JSON.stringify({ intervalMicros: 1000 })
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const response = await body.json()
   // The response might be empty or contain a status message
-  assert.ok(typeof response === 'object' || response === null)
+  ok(typeof response === 'object' || response === null)
 })
 
 test('should stop profiling and return profile data via management API', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -74,7 +74,7 @@ test('should stop profiling and return profile data via management API', async t
   // Start profiling first
   await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/start',
+    path: '/api/v1/applications/service-1/pprof/start',
     headers: {
       'content-type': 'application/json'
     },
@@ -87,22 +87,22 @@ test('should stop profiling and return profile data via management API', async t
   // Stop profiling and get profile data
   const { statusCode, body, headers } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/stop'
+    path: '/api/v1/applications/service-1/pprof/stop'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   // Should return binary profile data
-  assert.strictEqual(headers['content-type'], 'application/octet-stream')
+  strictEqual(headers['content-type'], 'application/octet-stream')
 
   const profileData = await body.arrayBuffer()
-  assert.ok(profileData.byteLength > 0, 'Profile data should not be empty')
+  ok(profileData.byteLength > 0, 'Profile data should not be empty')
 })
 
 test('should handle service not found error when starting profiling', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -125,7 +125,7 @@ test('should handle service not found error when starting profiling', async t =>
   // Try to start profiling on non-existent service
   const { body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/non-existent/pprof/start',
+    path: '/api/v1/applications/non-existent/pprof/start',
     headers: {
       'content-type': 'application/json'
     },
@@ -133,13 +133,13 @@ test('should handle service not found error when starting profiling', async t =>
   })
 
   const response = await body.json()
-  assert.ok(response.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND')
+  ok(response.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND')
 })
 
 test('should handle service not found error when stopping profiling', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -162,17 +162,17 @@ test('should handle service not found error when stopping profiling', async t =>
   // Try to stop profiling on non-existent service
   const { body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/non-existent/pprof/stop'
+    path: '/api/v1/applications/non-existent/pprof/stop'
   })
 
   const response = await body.json()
-  assert.ok(response.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND')
+  ok(response.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND')
 })
 
 test('should handle profiling already started error', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -195,7 +195,7 @@ test('should handle profiling already started error', async t => {
   // Start profiling
   await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/start',
+    path: '/api/v1/applications/service-1/pprof/start',
     headers: {
       'content-type': 'application/json'
     },
@@ -205,7 +205,7 @@ test('should handle profiling already started error', async t => {
   // Try to start profiling again
   const { body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/start',
+    path: '/api/v1/applications/service-1/pprof/start',
     headers: {
       'content-type': 'application/json'
     },
@@ -213,19 +213,19 @@ test('should handle profiling already started error', async t => {
   })
 
   const response = await body.json()
-  assert.ok(response.code === 'PLT_PPROF_PROFILING_ALREADY_STARTED')
+  ok(response.code === 'PLT_PPROF_PROFILING_ALREADY_STARTED')
 
   // Clean up - stop profiling
   await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/stop'
+    path: '/api/v1/applications/service-1/pprof/stop'
   })
 })
 
 test('should handle profiling not started error', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -248,9 +248,9 @@ test('should handle profiling not started error', async t => {
   // Try to stop profiling when it's not started
   const { body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/pprof/stop'
+    path: '/api/v1/applications/service-1/pprof/stop'
   })
 
   const response = await body.json()
-  assert.ok(response.code === 'PLT_PPROF_PROFILING_NOT_STARTED')
+  ok(response.code === 'PLT_PPROF_PROFILING_NOT_STARTED')
 })

@@ -20,8 +20,12 @@ import {
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
   FailedToReloadRuntime,
+  FailedToStartProfiling,
+  FailedToStopProfiling,
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
+  ProfilingAlreadyStarted,
+  ProfilingNotStarted,
   RuntimeNotFound
 } from './errors.js'
 
@@ -276,11 +280,11 @@ export class RuntimeApiClient {
     return applicationConfig
   }
 
-  async startServiceProfiling (pid, serviceId, options = {}) {
+  async startApplicationProfiling (pid, applicationId, options = {}) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/pprof/start`,
+      path: `/api/v1/applications/${applicationId}/pprof/start`,
       method: 'POST',
       headers: {
         'content-type': 'application/json'
@@ -300,25 +304,25 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
-        throw new errors.ServiceNotFound(message)
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+        throw new ApplicationNotFound(message)
       }
 
       if (code === 'PLT_PPROF_PROFILING_ALREADY_STARTED') {
-        throw new errors.ProfilingAlreadyStarted(serviceId)
+        throw new ProfilingAlreadyStarted(applicationId)
       }
 
-      throw new errors.FailedToStartProfiling(serviceId, message)
+      throw new FailedToStartProfiling(applicationId, message)
     }
 
     return await body.json()
   }
 
-  async stopServiceProfiling (pid, serviceId) {
+  async stopApplicationProfiling (pid, applicationId) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/pprof/stop`,
+      path: `/api/v1/applications/${applicationId}/pprof/stop`,
       method: 'POST'
     })
 
@@ -334,15 +338,15 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
-        throw new errors.ServiceNotFound(message)
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+        throw new ApplicationNotFound(message)
       }
 
       if (code === 'PLT_PPROF_PROFILING_NOT_STARTED') {
-        throw new errors.ProfilingNotStarted(serviceId)
+        throw new ProfilingNotStarted(applicationId)
       }
 
-      throw new errors.FailedToStopProfiling(serviceId, message)
+      throw new FailedToStopProfiling(applicationId, message)
     }
 
     // Return the binary profile data as ArrayBuffer

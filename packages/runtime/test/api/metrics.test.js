@@ -436,11 +436,11 @@ test('should get runtime metrics in a json format without a application call', a
   strictEqual(activeMetric.aggregator, 'sum')
   const [
     {
-      labels: { serviceId, custom_label: label },
+      labels: { applicationId, custom_label: label },
       value
     }
   ] = activeMetric.values
-  strictEqual(serviceId, 'service-1')
+  strictEqual(applicationId, 'service-1')
   strictEqual(label, 'custom-value')
   ok(value > 0)
 

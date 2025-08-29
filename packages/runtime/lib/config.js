@@ -23,7 +23,29 @@ import {
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
 
-function autoDetectPprofCapture (config) {
+// Validate and coerce workers values early to avoid runtime hangs when invalid
+function coercePositiveInteger (value) {
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value) || value < 1) return null
+    return value
+  }
+  if (typeof value === 'string') {
+    // Trim to handle accidental spaces
+    const trimmed = value.trim()
+    if (trimmed.length === 0) return null
+    const num = Number(trimmed)
+    if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) return null
+    return num
+  }
+  return null
+}
+
+function raiseInvalidWorkersError (location, received, hint) {
+  const extra = hint ? ` (${hint})` : ''
+  throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
+}
+
+export function autoDetectPprofCapture (config) {
   const require = createRequire(import.meta.url)
 
   // Check if package is installed
@@ -50,28 +72,6 @@ function autoDetectPprofCapture (config) {
   }
 
   return config
-}
-
-// Validate and coerce workers values early to avoid runtime hangs when invalid
-function coercePositiveInteger (value) {
-  if (typeof value === 'number') {
-    if (!Number.isInteger(value) || value < 1) return null
-    return value
-  }
-  if (typeof value === 'string') {
-    // Trim to handle accidental spaces
-    const trimmed = value.trim()
-    if (trimmed.length === 0) return null
-    const num = Number(trimmed)
-    if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) return null
-    return num
-  }
-  return null
-}
-
-function raiseInvalidWorkersError (location, received, hint) {
-  const extra = hint ? ` (${hint})` : ''
-  throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
 export async function wrapInRuntimeConfig (config, context) {

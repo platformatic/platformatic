@@ -1,6 +1,6 @@
 import { ok, strictEqual } from 'node:assert'
-import { readdir, stat } from 'node:fs/promises'
 import { on } from 'node:events'
+import { readdir, stat } from 'node:fs/promises'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -26,7 +26,10 @@ test('pprof start - should start profiling on specific service', async t => {
 
   const pprofStartProcess = await wattpm('pprof', 'start', 'main')
 
-  ok(pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0, 'Should start profiling successfully')
+  ok(
+    pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start profiling successfully'
+  )
   strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
 
   // Clean up
@@ -93,7 +96,10 @@ test('pprof start - should start profiling on all services when no service speci
 
   const pprofStartProcess = await wattpm('pprof', 'start')
 
-  ok(pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0, 'Should start profiling on all services')
+  ok(
+    pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start profiling on all services'
+  )
   strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
 
   // Clean up
@@ -135,7 +141,7 @@ test('pprof stop - should stop profiling on all services and create multiple pro
   ok(profileFiles.length > 0, 'Should create at least one profile file')
 })
 
-test('pprof - should handle service not found error', async t => {
+test('pprof - should handle application not found error', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
@@ -162,22 +168,28 @@ test('pprof - should handle service not found error', async t => {
 
   ok(error, 'Should throw an error')
   const errorText = error.stdout + error.stderr
-  ok(errorText.includes('Service not found') || errorText.includes('non-existent-service'), 'Should indicate service not found')
+  ok(
+    errorText.includes('Application not found') || errorText.includes('non-existent-service'),
+    'Should indicate application not found'
+  )
 })
 
 test('pprof - should handle no matching runtime error', async t => {
   let error
   try {
-    await wattpm('pprof', 'start')
+    await wattpm('pprof', 'start', 'whatever')
   } catch (e) {
     error = e
   }
 
   ok(error, 'Should throw an error')
-  ok(error.stdout.includes('Cannot find a matching runtime') || error.stderr.includes('Cannot find a matching runtime'), 'Should indicate no runtime found')
+  ok(
+    error.stdout.includes('Cannot find a matching runtime') || error.stderr.includes('Cannot find a matching runtime'),
+    'Should indicate no runtime found'
+  )
 })
 
-test('pprof - should show help when no subcommand specified', async t => {
+test('pprof - should show error when no subcommand specified', async () => {
   let error
   try {
     await wattpm('pprof')
@@ -185,6 +197,16 @@ test('pprof - should show help when no subcommand specified', async t => {
     error = e
   }
 
-  ok(error, 'Should show help and exit with error')
-  ok(error.stdout.includes('pprof start') || error.stdout.includes('pprof stop'), 'Should show pprof help')
+  ok(error.stdout.includes('Please provide a pprof subcommand'))
+})
+
+test('pprof - should show error when an invalid command is specified', async () => {
+  let error
+  try {
+    await wattpm('pprof', 'whatever')
+  } catch (e) {
+    error = e
+  }
+
+  ok(error.stdout.includes('Please provide a pprof subcommand'))
 })
