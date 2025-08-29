@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/node",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "description": "Platformatic Node.js Capability",
   "main": "index.js",
   "type": "module",

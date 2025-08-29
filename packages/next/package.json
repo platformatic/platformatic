@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "description": "Platformatic Next.js Capability",
   "main": "index.js",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/remix",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "description": "Platformatic Remix Capability",
   "main": "index.js",
   "type": "module",
