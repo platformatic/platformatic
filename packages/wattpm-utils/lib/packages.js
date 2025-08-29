@@ -27,6 +27,7 @@ export const packages = [
   '@platformatic/sql-openapi',
   '@platformatic/telemetry',
   '@platformatic/vite',
+  '@platformatic/wattpm-pprof-capture',
   'create-platformatic',
   'create-wattpm',
   'platformatic',
