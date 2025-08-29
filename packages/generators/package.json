@@ -5,14 +5,22 @@
   "main": "index.js",
   "type": "module",
   "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start-watt",
   "scripts": {
     "lint": "eslint",
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "posttest": "tsd"
   },
   "keywords": [],
-  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
-  "license": "Apache-2.0",
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@platformatic/foundation": "workspace:*",
