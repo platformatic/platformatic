@@ -2,6 +2,18 @@
 
 Today, we're excited to announce the release of **Watt 3** (`wattpm` v3.0.0), a major evolution of the Watt Node.js Application Server that brings significant performance improvements, architectural simplifications, and modernization upgrades that will transform how you build and deploy Node.js applications.
 
+## Why Watt?
+
+Watt is an extensible Node.js application server that transforms how you build, deploy, and scale applications. Whether you're building a simple API, orchestrating microservices, or creating full-stack applications with modern frontend frameworks, Watt provides:
+
+- **Zero-configuration deployment:** Get applications running instantly without complex setup
+- **Multi-threading support:** Leverage Node.js worker threads for better performance
+- **Production-ready:** Built-in monitoring, logging, and operational best practices
+- **Service orchestration:** Seamlessly coordinate multiple applications and services
+- **Extensible architecture:** Built-in capabilities for databases, APIs, gateways, and frontend frameworks
+
+Watt eliminates the complexity of modern application development while maintaining the flexibility developers need. From rapid prototypes to production-scale deployments, Watt adapts to your requirements without imposing rigid constraints.
+
 ## What's New in Watt 3
 
 Watt 3 isn't just an incremental update—it's a complete reimagining of how applications start, scale, and operate on the Watt application server. With 15 major breaking changes, this release represents the most significant evolution in Watt's history. Here are the key transformations:
@@ -48,15 +60,17 @@ The transition is seamless with full backward compatibility, but the new gateway
 
 This extraction allows Massimo to evolve independently while Watt 3 focuses on its core application server strengths.
 
-### 🔧 Introducing Watt Package Utilities (`@platformatic/wattpm-utils`)
+### 🔧 Introducing Watt Utilities (`@platformatic/wattpm-utils`)
 
 **Modular utilities for enhanced extensibility.** As part of our architectural modernization, we've extracted shared utility functions into a dedicated `wattpm-utils` CLI:
 
+- **Clear separation of concerns:** All main commands like `dev`, `start` and `build` remain in `wattpm`, while utility commands are now in `wattpm-utils`
+- **Enhanced security:** No command in `wattpm` performs installation or downloading operations, simplifying auditing and hardening of projects.
 - **Modular design:** Common utility functions separated from core application server logic
 - **Enhanced reusability:** Shared utilities available across the entire Watt ecosystem
 - **Better maintainability:** Focused packages with clear separation of concerns
 
-This restructuring creates a cleaner architecture where utility functions are properly modularized, making it easier for developers to build custom capabilities and extensions that integrate seamlessly with the Watt ecosystem.
+This restructuring creates a cleaner architecture where the main `wattpm` CLI focuses on essential application lifecycle operations, while `wattpm-utils` handles auxiliary utilities. This separation makes it easier for developers to build custom capabilities and extensions that integrate seamlessly with the Watt ecosystem.
 
 ### 💻 Native TypeScript Support Powered by Type Stripping
 
@@ -75,32 +89,27 @@ _Learn more about this revolutionary approach: [Everything You Need to Know Abou
 
 This represents the future of TypeScript development—all the type safety benefits during development, with zero runtime overhead.
 
-### 📱 Services Become Applications
+### 🏷️ Clearer Terminology: From Stackables and Services to Capabilities and Applications
 
-**Broader scope, better naming.** The application server now uses "applications" instead of "services":
+**Better names for better understanding.** The application server now runs "applications" instead of "services". We also have renamed "stackables" to "capabilities" throughout the application server, along with a complete architectural overhaul:
 
-- **Accurate representation:** Reflects the full range of what you can deploy
+- **Extensible application server clarity:** The terminology now clearly reflects that Watt is an extensible application server where capabilities enhance and extend functionality
 - **Modern terminology:** Aligns with current cloud-native conventions
+- **Accurate representation:** "Applications" reflects the full range of what you can deploy and build, while "capabilities" accurately describes the extensible components that add functionality
+- **Intuitive naming:** "Capabilities" better describes what these extensible components do within the application server
+- **Consistent terminology:** Unified language across docs, APIs, and code
+- **Developer clarity:** Easier onboarding and understanding for new users of the extensible platform
+- **Modern architecture:** New `applicationFactory` for `@platformatic/service` pattern with cleaner separation of concerns
+- **Modular exports:** Structured exports for better composability and testing
 - **Backward compatibility:** Existing configurations continue to work during migration
 
-### 🏷️ Clearer Terminology: From Stackables to Capabilities
+This terminology shift is important for users because it accurately communicates Watt's nature as an extensible application server—capabilities are the building blocks that extend the server's functionality, while applications are the complete deployable units that leverage these capabilities.
 
-**Better names for better understanding.** We've renamed "stackables" to "capabilities" throughout the application server, along with a complete architectural overhaul:
+All documentations have been updated to reflect the new terminology.
 
-- **Intuitive naming:** "Capabilities" better describes what these components do
-- **Consistent terminology:** Unified language across docs, APIs, and code
-- **Developer clarity:** Easier onboarding and understanding for new users
-- **Modern architecture:** New `applicationFactory` pattern with cleaner separation of concerns
-- **Modular exports:** Structured exports for better composability and testing
+### 🧹 Logs Rolling Removal
 
-The new capability format provides a much cleaner development experience with better separation between configuration, transformation, and application logic.
-
-### 🧹 Feature Cleanup
-
-**Focus on what matters.** We've removed underutilized features to improve maintainability:
-
-- **Marketplace removal:** Use standard package managers instead
-- **Log rolling removal:** External log rotation for better ops practices
+We have removed log rotation to improve maintainability. Log rotation can be handled by external tools like [logrotate](https://linux.die.net/man/8/logrotate) for better operational practices.
 
 ### ⚡ Unified CLI Experience
 
@@ -109,6 +118,13 @@ The new capability format provides a much cleaner development experience with be
 - **Simplified workflows:** Single command interface for all operations
 - **Reduced complexity:** Fewer tools to learn and manage
 - **Consistent experience:** Same patterns across different application types
+
+If you were using one of the legacy CLIs above, here's a quick migration guide:
+
+- **`plt-runtime`:** You can directly run `wattpm`
+- **`plt-service`:** You can directly run `wattpm` in any folder containing a `@platformatic/service` `watt.json` file
+- **`plt-control`:** All commands are directly available in `wattpm`
+- **`plt-db` and `plt-composer`:** Commands are now integrated into `wattpm`, prefixed by the application name (for instance: `wattpm my-db-app:seed`).
 
 ### 🏗️ Architectural Modernization
 
@@ -149,6 +165,44 @@ The new capability format provides a much cleaner development experience with be
 - **Modular design:** Split packages allow for more flexible composition
 - **Reduced technical debt:** Major cleanup removes legacy code and patterns
 
+## What's Next
+
+Watt 3 lays the foundation for exciting features coming in future releases:
+
+- **Enhanced observability:** Better metrics and tracing for parallel applications
+- **Advanced gateway features:** Traffic splitting, circuit breakers, and rate limiting
+- **Improved developer experience:** Enhanced CLI tools and debugging capabilities
+- **Cloud-native integrations:** Better Kubernetes and container orchestration support
+
+## Getting Started with Watt 3
+
+Ready to experience the performance and simplicity improvements? Here's how to get started:
+
+### New Projects
+
+```bash
+# Use the new create command
+npx create-wattpm@latest my-app
+cd my-app
+npm install
+npm start
+```
+
+### Existing Node.js Projects
+
+For existing Node.js applications that aren't using Watt yet, Watt 3 makes it easier than ever to get started. Simply run `wattpm create` in your project directory to automatically generate the necessary configuration files (`watt.json`, `.env`, `.env.sample`) and update your `package.json`. Then use `wattpm dev` for development and `wattpm build && wattpm start` for production.
+
+This process wraps your existing application with Watt's powerful features including multi-threading support, standardized environment configuration, service orchestration, and built-in logging and monitoring.
+
+For detailed step-by-step instructions on porting existing Node.js applications, see our comprehensive [migration guide](https://docs.platformatic.dev/docs/getting-started/port-your-app).
+
+### Community and Support
+
+- **Documentation:** Updated guides and examples are available in our docs
+- **Community:** Join discussions in our GitHub Discussions
+- **Issues:** Report bugs or request features on GitHub
+- **Examples:** Check out sample applications showcasing Watt 3 features
+
 ## Migration Path
 
 While Watt 3 introduces breaking changes, most applications will upgrade automatically. Here's what you need to know:
@@ -187,9 +241,6 @@ Note that in Watt 3 still ships `@platformatic/composer@3.0.0` as an alias of `@
 -  },
 -  "typescript": {
 -    "outDir": "dist"
--  },
--  "marketplace": {
--    "autoInstall": true
 -  }
 ```
 
@@ -201,11 +252,6 @@ If you were using `@platformatic/client`, we've got great news! It lives on as *
 - **Same powerful features:** All the type-safe client generation you loved, now as a standalone project
 - **Production proven:** Used by companies like Spendesk in production environments
 - **Enhanced capabilities:** Dual architecture with both runtime library and code generator options
-
-Alternatively, use other tools:
-
-- **OpenAPI clients:** Use `openapi-generator` or `swagger-codegen`
-- **GraphQL clients:** Use `graphql-code-generator`
 
 ### 5. Update CLI Commands and Scripts
 
@@ -222,7 +268,11 @@ Alternatively, use other tools:
 }
 ```
 
-### 6. Update capabilities which extend @platformatic/service.
+### 6. Migrate stackables to capabilities.
+
+**This section only applies if you have created custom stackables on top of `@platformatic/service`.** Most users can skip this step as it only affects those who have built custom extensions to the service capability.
+
+This update is necessary due to the terminology restructuring and API simplification introduced in Watt 3.
 
 Consider the following custom stackable for Watt 2:
 
@@ -308,51 +358,6 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 ```
 
 As you can see, the API is much shorter and straightforward.
-
-## What's Next
-
-Watt 3 lays the foundation for exciting features coming in future releases:
-
-- **Enhanced observability:** Better metrics and tracing for parallel applications
-- **Advanced gateway features:** Traffic splitting, circuit breakers, and rate limiting
-- **Improved developer experience:** Enhanced CLI tools and debugging capabilities
-- **Cloud-native integrations:** Better Kubernetes and container orchestration support
-
-## Getting Started with Watt 3
-
-Ready to experience the performance and simplicity improvements? Here's how to get started:
-
-### New Projects
-
-```bash
-# Use the new create command
-npx create-wattpm@latest my-app
-cd my-app
-npm install
-npm start
-```
-
-### Existing Projects
-
-Configurations files will be upgraded automatically at runtime thanks to Watt's built-in migration mechanisms, but some manual changes may be required:
-
-1. **Upgrade Node.js** to 22.18.0+ before upgrading Watt
-2. **Upgrade dependencies** to 3.0.0. It can be executed via `wattpm-utils update`
-3. **Update CLI usage** from individual CLIs to unified `wattpm` in scripts
-4. **Replace client generation** - migrate from `@platformatic/client` to [Massimo](https://massimohttp.dev/)
-5. **Update custom capabilities** to use new `applicationFactory` format
-6. **Remove deprecated configs** (TypeScript outDir, marketplace, log rolling)
-
-**Testing:**
-
-- Test in staging environment to verify automatic migrations worked correctly
-
-### Community and Support
-
-- **Documentation:** Updated guides and examples are available in our docs
-- **Community:** Join discussions in our GitHub Discussions
-- **Issues:** Report bugs or request features on GitHub
-- **Examples:** Check out sample applications showcasing Watt 3 features
 
 ## Thank You
 
