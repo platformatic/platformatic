@@ -7,6 +7,10 @@ module.exports = async function (app, options) {
   })
 
   app.get('/crash', async () => {
-    process.exit(1)
+    setTimeout(() => {
+      process.exit(1)
+    }, 1000)
+
+    return { ok: true }
   })
 }

@@ -373,7 +373,7 @@ test('readiness - should expose readiness and get a fail response when not all s
   assert.strictEqual(await body.text(), 'ERR')
 })
 
-test.only('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
+test('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -387,6 +387,7 @@ test.only('readiness - should expose readiness and get a success response when a
   // Make a worker fail
   await request(url + '/service-2/crash')
   await once(app, 'service:worker:error')
+  const restartPromise = once(app, 'service:worker:started')
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {
@@ -397,8 +398,9 @@ test.only('readiness - should expose readiness and get a success response when a
     assert.strictEqual(statusCode, 200)
     assert.strictEqual(await body.text(), 'OK')
   }
+
   // Wait for the worker to restart
-  await once(app, 'service:worker:started')
+  await restartPromise
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {
