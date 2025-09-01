@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
+const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
@@ -31,10 +32,13 @@ test('Hello', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
 The readiness endpoint is available at /ready.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without readiness', async t => {
@@ -59,9 +63,12 @@ test('Hello without readiness', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without liveness', async t => {
@@ -86,9 +93,12 @@ test('Hello without liveness', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The readiness endpoint is available at /ready.`)
+The readiness endpoint is available at /ready.`
+  )
 })
 
 test('should start a prometheus server on port 9090', async t => {
@@ -225,7 +235,7 @@ test('should support custom metrics', async t => {
   assert.ok(metrics.includes('custom_external_2{serviceId="external"} 456'))
 })
 
-test('should track http cache hits/misses', async (t) => {
+test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -290,10 +300,12 @@ test('metrics can be disabled', async t => {
   // Wait for the prometheus server to start
   await sleep(2000)
 
-  await t.assert.rejects(request('http://127.0.0.1:9090', {
-    method: 'GET',
-    path: '/metrics'
-  }))
+  await t.assert.rejects(
+    request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/metrics'
+    })
+  )
 })
 
 test('readiness - should get 404 if readiness is not enabled', async t => {
@@ -359,6 +371,46 @@ test('readiness - should expose readiness and get a fail response when not all s
   })
   assert.strictEqual(statusCode, 500)
   assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const url = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Make a worker fail
+  await request(url + '/service-2/crash')
+  await once(app, 'service:worker:error')
+  const restartPromise = once(app, 'service:worker:started')
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+
+    assert.strictEqual(statusCode, 200)
+    assert.strictEqual(await body.text(), 'OK')
+  }
+
+  // Wait for the worker to restart
+  await restartPromise
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+
+    assert.strictEqual(statusCode, 200)
+    assert.strictEqual(await body.text(), 'OK')
+  }
 })
 
 test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {

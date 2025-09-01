@@ -718,7 +718,9 @@ class Runtime extends EventEmitter {
         const label = `${service}:${i}`
         const worker = this.#workers.get(label)
 
-        status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+        if (worker) {
+          status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+        }
       }
     }
 
@@ -733,7 +735,9 @@ class Runtime extends EventEmitter {
         const label = `${service}:${i}`
         const worker = this.#workers.get(label)
 
-        status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
+        if (worker) {
+          status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
+        }
       }
     }
 

@@ -69,16 +69,16 @@ class ComposerStackable extends ServiceStackable {
       return true
     }
 
-    const composedServices = this.#dependencies.map(dep => dep.id)
+    const unstarted = new Set(this.#dependencies.map(dep => dep.id))
     const workers = await globalThis[kITC].send('getWorkers')
 
     for (const worker of Object.values(workers)) {
-      if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
-        return false
+      if (worker.status === 'started') {
+        unstarted.delete(worker.service)
       }
     }
 
-    return true
+    return unstarted.size === 0
   }
 
   async #parseDependency (id, urlString) {
