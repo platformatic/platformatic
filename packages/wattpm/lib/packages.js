@@ -34,6 +34,7 @@ export const packages = [
   '@platformatic/ts-compiler',
   '@platformatic/utils',
   '@platformatic/vite',
+  '@platformatic/watt-pprof-capture',
   'create-platformatic',
   'platformatic',
   'wattpm'
