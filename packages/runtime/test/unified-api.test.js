@@ -4,13 +4,10 @@ const { spawn } = require('node:child_process')
 const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const {
-  buildServer,
-  loadConfig,
-} = require('..')
+const { buildServer, loadConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('loadConfig()', async (t) => {
+test('loadConfig()', async t => {
   await t.test('can explicitly provide config type', async () => {
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const config = await loadConfig({}, ['-c', configFile], undefined, 'service')
@@ -59,13 +56,13 @@ test('loadConfig()', async (t) => {
   })
 })
 
-test('buildServer()', async (t) => {
-  await t.test('can build a service server', async (t) => {
+test('buildServer()', async t => {
+  await t.test('can build a service server', async t => {
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current,
+      ...config.configManager.current
     })
 
     t.after(async () => {
@@ -77,12 +74,12 @@ test('buildServer()', async (t) => {
     new URL(address) // eslint-disable-line no-new
   })
 
-  await t.test('can build a db server', async (t) => {
+  await t.test('can build a db server', async t => {
     const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current,
+      ...config.configManager.current
     })
 
     t.after(async () => {
@@ -94,12 +91,12 @@ test('buildServer()', async (t) => {
     new URL(address) // eslint-disable-line no-new
   })
 
-  await t.test('can build a composer server', async (t) => {
+  await t.test('can build a composer server', async t => {
     const configFile = join(fixturesDir, 'composerApp', 'platformatic.composer.json')
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current,
+      ...config.configManager.current
     })
 
     t.after(async () => {
@@ -111,12 +108,12 @@ test('buildServer()', async (t) => {
     new URL(address) // eslint-disable-line no-new
   })
 
-  await t.test('can build a runtime application', async (t) => {
+  await t.test('can build a runtime application', async t => {
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const config = await loadConfig({}, ['-c', configFile])
     const runtime = await buildServer({
       app: config.app,
-      ...config.configManager.current,
+      ...config.configManager.current
     })
 
     t.after(async () => {
@@ -128,7 +125,7 @@ test('buildServer()', async (t) => {
     new URL(address) // eslint-disable-line no-new
   })
 
-  await t.test('input can be a filename', async (t) => {
+  await t.test('input can be a filename', async t => {
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const server = await buildServer(configFile)
 
@@ -145,8 +142,8 @@ test('buildServer()', async (t) => {
   })
 })
 
-test('start()', async (t) => {
-  await t.test('can start a service server', async (t) => {
+test('start()', async t => {
+  await t.test('can start a service server', async t => {
     const scriptFile = join(fixturesDir, 'starter.js')
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -155,7 +152,7 @@ test('start()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('can start a db server', async (t) => {
+  await t.test('can start a db server', async t => {
     const scriptFile = join(fixturesDir, 'starter.js')
     const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -183,8 +180,8 @@ test('start()', async (t) => {
   })
 })
 
-test('startCommand()', async (t) => {
-  await t.test('can start a server', async (t) => {
+test('startCommand()', async t => {
+  await t.test('can start a server', async t => {
     const scriptFile = join(fixturesDir, 'start-command.js')
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -194,7 +191,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('exits on error', async (t) => {
+  await t.test('exits on error', async t => {
     const scriptFile = join(fixturesDir, 'start-command.js')
     const configFile = join(fixturesDir, 'serviceApp', 'platformatic.not-found.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -203,7 +200,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 1)
   })
 
-  await t.test('can start a runtime application', async (t) => {
+  await t.test('can start a runtime application', async t => {
     const scriptFile = join(fixturesDir, 'start-command.js')
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -213,7 +210,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('can start a non-runtime application', async (t) => {
+  await t.test('can start a non-runtime application', async t => {
     const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -223,7 +220,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('can start a runtime application', async (t) => {
+  await t.test('can start a runtime application', async t => {
     const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -233,7 +230,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('exits on error', async (t) => {
+  await t.test('exits on error', async t => {
     const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
     const configFile = join(fixturesDir, 'serviceApp', 'platformatic.not-found.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -242,7 +239,7 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 1)
   })
 
-  await t.test('can start an application with external clients', async (t) => {
+  await t.test('can start an application with external clients', async t => {
     const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
     const configFile = join(fixturesDir, 'external-client', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
@@ -250,5 +247,22 @@ test('startCommand()', async (t) => {
     const [exitCode] = await once(child, 'exit')
 
     assert.strictEqual(exitCode, 42)
+  })
+
+  await t.test('correctly applies the runtime graceful shutdown timeout', async () => {
+    const scriptFile = join(fixturesDir, 'delayed-shutdown', 'start-and-stop.js')
+    const configFile = join(fixturesDir, 'delayed-shutdown', 'platformatic.runtime.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+
+    let stderr = ''
+    child.stderr.setEncoding('utf8')
+    child.stderr.on('data', data => {
+      stderr += data
+    })
+
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 1)
+    assert.ok(stderr.trim().endsWith('killed by timeout (1000ms)'))
   })
 })

@@ -150,7 +150,7 @@ async function startCommand (args, throwAllErrors = false, returnRuntime = false
     const runtime = startResult.runtime
     const res = startResult.address
 
-    closeWithGrace(async event => {
+    closeWithGrace({ delay: config.configManager.current.gracefulShutdown?.runtime ?? 10000 }, async event => {
       if (event.err instanceof Error) {
         console.error(event.err)
       }
