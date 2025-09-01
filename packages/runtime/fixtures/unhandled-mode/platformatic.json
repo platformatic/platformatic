@@ -18,5 +18,5 @@
   "logger": {
     "level": "fatal"
   },
-  "handleUnhandledErrors": false
+  "exitOnUnhandledErrors": false
 }

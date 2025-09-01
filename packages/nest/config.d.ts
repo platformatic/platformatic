@@ -199,7 +199,7 @@ export interface PlatformaticNestJSStackable {
     };
     startTimeout?: number;
     restartOnError?: boolean | number;
-    handleUnhandledErrors?: boolean;
+    exitOnUnhandledErrors?: boolean;
     gracefulShutdown?: {
       runtime: number | string;
       service: number | string;

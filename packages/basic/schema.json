@@ -327,7 +327,7 @@
             }
           ]
         },
-        "handleUnhandledErrors": {
+        "exitOnUnhandledErrors": {
           "default": true,
           "type": "boolean"
         },

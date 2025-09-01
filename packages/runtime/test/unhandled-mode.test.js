@@ -64,7 +64,7 @@ test('should allow application to self-manage unhandled rejections', async t => 
   ok(!exited)
 })
 
-test('should show warnings when installing a uncaughtException or unhandledRejection handler when handleUnhandledErrors is true', async t => {
+test('should show warnings when installing a uncaughtException or unhandledRejection handler when exitOnUnhandledErrors is true', async t => {
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const logsPath = join(await getTempDir(), 'logs.txt')
 

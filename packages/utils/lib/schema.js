@@ -838,7 +838,7 @@ const runtimeProperties = {
       }
     ]
   },
-  handleUnhandledErrors: {
+  exitOnUnhandledErrors: {
     default: true,
     type: 'boolean'
   },

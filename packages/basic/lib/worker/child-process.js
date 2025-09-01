@@ -114,7 +114,7 @@ export class ChildProcess extends ITC {
     this.listen()
     this.#setupLogger()
 
-    if (globalThis.platformatic.handleUnhandledErrors) {
+    if (globalThis.platformatic.exitOnUnhandledErrors) {
       this.#setupHandlers()
     }
 
@@ -414,7 +414,7 @@ export class ChildProcess extends ITC {
     process.on('newListener', event => {
       if (event === 'uncaughtException' || event === 'unhandledRejection') {
         this.#logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "handleUnhandledErrors" to false in the runtime config.`
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
         )
       }
     })
