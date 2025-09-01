@@ -27,5 +27,5 @@ test('should kill the thread even if stop fails', async t => {
   const elapsed = Number(process.hrtime.bigint() - start) / 1e6
 
   // We are satisfied if killing took less that twice of the allowed timeout
-  assert.ok(elapsed < config.configManager.current.gracefulShutdown.runtime * 2)
+  assert.ok(elapsed < config.configManager.current.gracefulShutdown.service * 2)
 })
