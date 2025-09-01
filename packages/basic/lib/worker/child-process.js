@@ -83,7 +83,7 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close: (signal) => {
+        close: signal => {
           let handled = false
 
           try {
@@ -113,7 +113,11 @@ export class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
-    this.#setupHandlers()
+
+    if (globalThis.platformatic.handleUnhandledErrors) {
+      this.#setupHandlers()
+    }
+
     this.#setupServer()
     this.#setupInterceptors()
 
@@ -289,7 +293,7 @@ export class ChildProcess extends ITC {
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = (val) => activeResourcesEventLoopMetric.set(val)
+    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
   }
 
   async #getMetrics ({ format } = {}) {

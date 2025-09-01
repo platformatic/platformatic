@@ -352,6 +352,7 @@ export class BaseStackable extends EventEmitter {
       isEntrypoint: this.isEntrypoint,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
+      handleUnhandledErrors: this.runtimeConfig.handleUnhandledErrors ?? true,
       /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
@@ -416,12 +417,7 @@ export class BaseStackable extends EventEmitter {
         return
       }
 
-      await collectMetrics(
-        this.serviceId,
-        this.workerId,
-        metricsConfig,
-        this.metricsRegistry
-      )
+      await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
     }
   }
 
@@ -512,7 +508,7 @@ export class BaseStackable extends EventEmitter {
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = (val) => activeResourcesEventLoopMetric.set(val)
+    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
   }
 
   async #invalidateHttpCache (opts = {}) {

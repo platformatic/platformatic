@@ -178,8 +178,10 @@ async function main () {
     !!config.watch
   )
 
-  process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
-  process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
+  if (config.handleUnhandledErrors) {
+    process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
+    process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
+  }
 
   await app.init()
 

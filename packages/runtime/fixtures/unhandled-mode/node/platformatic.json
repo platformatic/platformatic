@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.66.0.json",
+  "application": {
+    "commands": {
+      "development": "node index.js"
+    }
+  }
+}

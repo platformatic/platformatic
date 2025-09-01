@@ -494,6 +494,7 @@ export interface PlatformaticComposer {
     };
     startTimeout?: number;
     restartOnError?: boolean | number;
+    handleUnhandledErrors?: boolean;
     gracefulShutdown?: {
       runtime: number | string;
       service: number | string;

@@ -838,6 +838,10 @@ const runtimeProperties = {
       }
     ]
   },
+  handleUnhandledErrors: {
+    default: true,
+    type: 'boolean'
+  },
   gracefulShutdown: {
     type: 'object',
     properties: {
