@@ -1,8 +1,10 @@
 'use strict'
+
 const assert = require('node:assert')
 const { spawn } = require('node:child_process')
 const { once } = require('node:events')
 const { join } = require('node:path')
+const { platform } = require('node:os')
 const { test } = require('node:test')
 const { buildServer, loadConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -249,20 +251,25 @@ test('startCommand()', async t => {
     assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('correctly applies the runtime graceful shutdown timeout', async () => {
-    const scriptFile = join(fixturesDir, 'delayed-shutdown', 'start-and-stop.js')
-    const configFile = join(fixturesDir, 'delayed-shutdown', 'platformatic.runtime.json')
-    const child = spawn(process.execPath, [scriptFile, configFile])
+  // This test is skipped on Windows because close-with-grace does not support Windows
+  await t.test(
+    'correctly applies the runtime graceful shutdown timeout',
+    { skip: platform() === 'win32' },
+    async () => {
+      const scriptFile = join(fixturesDir, 'delayed-shutdown', 'start-and-stop.js')
+      const configFile = join(fixturesDir, 'delayed-shutdown', 'platformatic.runtime.json')
+      const child = spawn(process.execPath, [scriptFile, configFile])
 
-    let stderr = ''
-    child.stderr.setEncoding('utf8')
-    child.stderr.on('data', data => {
-      stderr += data
-    })
+      let stderr = ''
+      child.stderr.setEncoding('utf8')
+      child.stderr.on('data', data => {
+        stderr += data
+      })
 
-    const [exitCode] = await once(child, 'exit')
+      const [exitCode] = await once(child, 'exit')
 
-    assert.strictEqual(exitCode, 1)
-    assert.ok(stderr.trim().endsWith('killed by timeout (1000ms)'))
-  })
+      assert.strictEqual(exitCode, 1)
+      assert.ok(stderr.trim().endsWith('killed by timeout (1000ms)'))
+    }
+  )
 })
