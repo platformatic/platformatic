@@ -129,6 +129,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2750Alpha0Json = {
   };
   startTimeout?: number;
   restartOnError?: boolean | number;
+  exitOnUnhandledErrors?: boolean;
   gracefulShutdown?: {
     runtime: number | string;
     service: number | string;

@@ -83,7 +83,7 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close: (signal) => {
+        close: signal => {
           let handled = false
 
           try {
@@ -113,7 +113,11 @@ export class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
-    this.#setupHandlers()
+
+    if (globalThis.platformatic.exitOnUnhandledErrors) {
+      this.#setupHandlers()
+    }
+
     this.#setupServer()
     this.#setupInterceptors()
 
@@ -289,7 +293,7 @@ export class ChildProcess extends ITC {
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = (val) => activeResourcesEventLoopMetric.set(val)
+    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
   }
 
   async #getMetrics ({ format } = {}) {
@@ -406,6 +410,14 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+
+    process.on('newListener', event => {
+      if (event === 'uncaughtException' || event === 'unhandledRejection') {
+        this.#logger.warn(
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
+        )
+      }
+    })
   }
 
   #notifyConfig (config) {

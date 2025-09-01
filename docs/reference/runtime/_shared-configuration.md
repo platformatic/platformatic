@@ -201,6 +201,12 @@ Any value smaller than `10` will cause immediate restart of the service.
 
 This setting is ignored in production, where services are always restarted immediately.
 
+### `exitOnUnhandledErrors`
+
+When enabled (default), Platformatic automatically installs error handlers for [`uncaughtException`](https://nodejs.org/api/process.html#event-uncaughtexception) and [`unhandledRejection`](https://nodejs.org/api/process.html#event-unhandledrejection) events on each worker process. These handlers will automatically restart the affected worker when such errors occur.
+
+Setting this to `false` disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
+
 ### `health`
 
 Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero.
