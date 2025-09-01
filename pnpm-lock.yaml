@@ -1793,6 +1793,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      '@platformatic/watt-pprof-capture':
+        specifier: workspace:*
+        version: link:../watt-pprof-capture
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2

@@ -73,6 +73,7 @@
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/undici-cache-memory": "^0.8.1",
+    "@platformatic/watt-pprof-capture": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "change-case-all": "^2.1.0",

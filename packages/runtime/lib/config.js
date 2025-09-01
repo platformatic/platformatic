@@ -19,12 +19,7 @@ const { parseArgs } = require('node:util')
 function autoDetectPprofCapture (config) {
   // Check if package is installed
   try {
-    let pprofCapturePath
-    try {
-      pprofCapturePath = require.resolve('@platformatic/watt-pprof-capture')
-    } catch (err) {
-      pprofCapturePath = require.resolve('../../watt-pprof-capture/index.js')
-    }
+    const pprofCapturePath = require.resolve('@platformatic/watt-pprof-capture')
 
     // Add to preload if not already present
     if (!config.preload) {
