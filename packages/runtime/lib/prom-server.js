@@ -19,11 +19,19 @@ const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 async function checkReadiness (runtime) {
   const workers = await runtime.getWorkers()
 
-  // check if all workers are started
+  // Make sure there is at least one started worker
+  const services = new Set()
+  const started = new Set()
   for (const worker of Object.values(workers)) {
-    if (worker.status !== 'started') {
-      return { status: false }
+    services.add(worker.service)
+
+    if (worker.status === 'started') {
+      started.add(worker.service)
     }
+  }
+
+  if (started.size !== services.size) {
+    return { status: false }
   }
 
   // perform custom readiness checks, get custom response content if any
@@ -89,7 +97,7 @@ async function startPrometheusServer (runtime, opts) {
           return reply.code(401).send({ message: 'Unauthorized' })
         }
         return done()
-      },
+      }
     })
     onRequestHook = promServer.basicAuth
   }
@@ -129,7 +137,7 @@ async function startPrometheusServer (runtime, opts) {
         reply.type('text/plain')
       }
       return (await runtime.getMetrics(reqType)).metrics
-    },
+    }
   })
 
   if (opts.readiness !== false) {
@@ -167,7 +175,7 @@ async function startPrometheusServer (runtime, opts) {
             reply.status(failStatusCode).send(failBody)
           }
         }
-      },
+      }
     })
   }
 
@@ -206,7 +214,7 @@ async function startPrometheusServer (runtime, opts) {
             reply.status(failStatusCode).send(readiness?.body || failBody)
           }
         }
-      },
+      }
     })
   }
 
@@ -215,5 +223,5 @@ async function startPrometheusServer (runtime, opts) {
 }
 
 module.exports = {
-  startPrometheusServer,
+  startPrometheusServer
 }
