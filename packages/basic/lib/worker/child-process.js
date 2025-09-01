@@ -410,6 +410,14 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+
+    process.on('newListener', event => {
+      if (event === 'uncaughtException' || event === 'unhandledRejection') {
+        this.#logger.warn(
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "handleUnhandledErrors" to false in the runtime config.`
+        )
+      }
+    })
   }
 
   #notifyConfig (config) {

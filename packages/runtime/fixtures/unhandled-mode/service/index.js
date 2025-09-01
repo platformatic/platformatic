@@ -1,8 +1,6 @@
 'use strict'
 
-process.on('uncaughtException', error => {
-  globalThis[Symbol.for('plt.runtime.itc')].notify('event', { event: 'uncaughtException', payload: error })
-})
+process.on('uncaughtException', () => {})
 
 module.exports = async function (fastify) {
   fastify.get('/trigger', async () => {
