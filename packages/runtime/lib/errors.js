@@ -122,3 +122,8 @@ export const MessagingError = createError(
   `${ERROR_PREFIX}_MESSAGING_ERROR`,
   'Cannot send a message to application "%s": %s'
 )
+
+export const MissingPprofCapture = createError(
+  `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
+  'Please install @platformatic/wattpm-pprof-capture'
+)

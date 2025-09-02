@@ -31,6 +31,7 @@ import {
   InvalidArgumentError,
   MessagingError,
   MissingEntrypointError,
+  MissingPprofCapture,
   RuntimeAbortedError,
   RuntimeExitedError,
   WorkerNotFoundError
@@ -514,12 +515,14 @@ export class Runtime extends EventEmitter {
 
   async startApplicationProfiling (id, options = {}, ensureStarted = true) {
     const service = await this.#getApplicationById(id, ensureStarted)
+    this.#validatePprofCapturePreload()
 
     return sendViaITC(service, 'startProfiling', options)
   }
 
   async stopApplicationProfiling (id, ensureStarted = true) {
     const service = await this.#getApplicationById(id, ensureStarted)
+    this.#validatePprofCapturePreload()
 
     return sendViaITC(service, 'stopProfiling')
   }
@@ -2377,5 +2380,13 @@ export class Runtime extends EventEmitter {
       }
     }
     return report
+  }
+
+  #validatePprofCapturePreload () {
+    const found = this.#config.preload?.some(p => p.includes('wattpm-pprof-capture'))
+
+    if (!found) {
+      throw new MissingPprofCapture()
+    }
   }
 }
