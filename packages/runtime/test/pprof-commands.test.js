@@ -9,7 +9,7 @@ const { buildServer, platformaticRuntime, Runtime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { getRuntimeLogsDir } = require('../lib/utils')
 const { MissingPprofCapture } = require('../lib/errors')
-const { safeRemove } = require('@platformatic/utils')
+const { createDirectory } = require('@platformatic/utils')
 
 test('should start profiling for a service', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
