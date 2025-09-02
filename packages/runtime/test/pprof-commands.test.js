@@ -9,7 +9,6 @@ const { buildServer, platformaticRuntime, Runtime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { getRuntimeLogsDir } = require('../lib/utils')
 const { MissingPprofCapture } = require('../lib/errors')
-const { createDirectory } = require('@platformatic/utils')
 
 test('should start profiling for a service', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -168,4 +167,23 @@ test('runtime errors if watt-pprof-capture is not loaded', async (t) => {
   await runtime.start()
 
   await assert.rejects(runtime.startServiceProfiling('with-logger'), new MissingPprofCapture())
+})
+
+test('runtime errors if watt-pprof-capture is not loaded (stop)', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  assert.equal(config.configManager.current.preload.includes('@platformatic/watt-pprof-capture') || config.configManager.current.preload.some(p => p.includes('watt-pprof-capture')), true, 'pprof capture should be in preload')
+  config.configManager.current.preload = [] // Remove pprof capture to simulate user error
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+
+  await runtime.start()
+
+  await assert.rejects(runtime.stopServiceProfiling('with-logger'), new MissingPprofCapture())
 })
