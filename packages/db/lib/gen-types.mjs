@@ -51,7 +51,7 @@ async function generateEntityType (entity) {
   )
   const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions)
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
-  return tsCode + `\nexport { ${entity.name} };\n`
+  return `${tsCode}\ndeclare const ${entity.name}: ${JSON.stringify(jsonSchema, undefined, 2)}\nexport { ${entity.name} };\n`
 }
 
 async function generateEntityGroupExport (entities) {
