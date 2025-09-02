@@ -1,15 +1,16 @@
 import { ok, strictEqual } from 'node:assert'
-import { readdir, stat, mkdtemp, rm } from 'node:fs/promises'
+import { readdir, stat, mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
+import { safeRemove } from '@platformatic/utils'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm, executeCommand, cliPath } from './helper.js'
 
 // Custom wattpm function that accepts cwd option
-function wattpmInDir(cwd, ...args) {
+function wattpmInDir (cwd, ...args) {
   return executeCommand(process.argv[0], cliPath, ...args, { cwd })
 }
 
@@ -20,7 +21,7 @@ test('pprof start - should start profiling on specific service', async t => {
   t.after(async () => {
     startProcess.kill('SIGINT')
     startProcess.catch(() => {})
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -49,7 +50,7 @@ test('pprof stop - should stop profiling and create profile file', async t => {
   t.after(async () => {
     startProcess.kill('SIGINT')
     startProcess.catch(() => {})
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -188,7 +189,7 @@ test('pprof - should handle no matching runtime error', async t => {
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   let error
@@ -206,7 +207,7 @@ test('pprof - should show help when no subcommand specified', async t => {
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   let error
@@ -227,7 +228,7 @@ test('pprof start - should start profiling with explicit runtime id and service'
   t.after(async () => {
     startProcess.kill('SIGINT')
     startProcess.catch(() => {})
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -265,7 +266,7 @@ test('pprof stop - should stop profiling with explicit runtime id and service', 
   t.after(async () => {
     startProcess.kill('SIGINT')
     startProcess.catch(() => {})
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -313,7 +314,7 @@ test('pprof - should handle invalid runtime id error', async t => {
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   let error
@@ -334,7 +335,7 @@ test('pprof - should handle service not found with explicit runtime id', async t
   t.after(async () => {
     startProcess.kill('SIGINT')
     startProcess.catch(() => {})
-    await rm(tempDir, { recursive: true, force: true })
+    await safeRemove(tempDir)
   })
 
   const startProcess = wattpm('start', rootDir)
