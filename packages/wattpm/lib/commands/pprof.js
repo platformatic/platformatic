@@ -3,6 +3,7 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
 import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
+import { createRequire } from 'node:module'
 
 export async function pprofStartCommand (logger, args) {
   try {
@@ -31,8 +32,16 @@ export async function pprofStartCommand (logger, args) {
         try {
           await client.startServiceProfiling(runtime.pid, service.id, { intervalMicros: 1000 })
           logger.info(`Profiling started for service ${bold(service.id)}`)
-        } catch (error) {
-          logger.warn(`Failed to start profiling for service ${service.id}: ${error.message}`)
+        } catch (err) {
+          const cwd = runtime.cwd
+          const require = createRequire(cwd)
+          try {
+            require.resolve('@platoformatic/wattp-pprof-capture')
+          } catch {
+            logger.warn('To enable profiling, please install the @platformatic/watt-pprof-capture package in your project and restart: npm install @platformatic/watt-pprof-capture')
+            break
+          }
+          logger.warn({ err }, `Failed to start profiling for service ${service.id}`)
         }
       }
     }

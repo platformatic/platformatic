@@ -9,7 +9,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm, executeCommand, cliPath } from './helper.js'
 
 // Custom wattpm function that accepts cwd option
-function wattpmInDir(cwd, ...args) {
+function wattpmInDir (cwd, ...args) {
   return executeCommand(process.argv[0], cliPath, ...args, { cwd })
 }
 
