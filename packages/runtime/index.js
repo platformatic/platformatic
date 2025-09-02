@@ -8,6 +8,7 @@ import {
   loadConfigurationModule,
   loadConfiguration as utilsLoadConfiguration
 } from '@platformatic/foundation'
+import closeWithGrace from 'close-with-grace'
 import inspector from 'node:inspector'
 import { transform, wrapInRuntimeConfig } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
@@ -25,12 +26,33 @@ async function restartRuntime (runtime) {
   }
 }
 
-function handleSignal (runtime) {
+function handleSignal (runtime, config) {
+  // The very first time we add a listener for SIGUSR2,
+  // ignore it since it comes from close-with-grace and we want to use to restart the runtime
+  function filterCloseWithGraceSIGUSR2 (event, listener) {
+    if (event === 'SIGUSR2') {
+      process._rawDebug(event, listener)
+      process.removeListener('SIGUSR2', listener)
+      process.removeListener('newListener', filterCloseWithGraceSIGUSR2)
+    }
+  }
+
+  process.on('newListener', filterCloseWithGraceSIGUSR2)
+
+  const cwg = closeWithGrace({ delay: config.gracefulShutdown.runtime ?? 10000 }, async event => {
+    if (event.err instanceof Error) {
+      console.error(event.err)
+    }
+    await runtime.close()
+  })
+
   /* c8 ignore next 3 */
   const restartListener = restartRuntime.bind(null, runtime)
   process.on('SIGUSR2', restartListener)
+
   runtime.on('closed', () => {
     process.removeListener('SIGUSR2', restartListener)
+    cwg.uninstall()
   })
 }
 
@@ -109,7 +131,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   }
 
   let runtime = new Runtime(config, context)
-  handleSignal(runtime)
+  handleSignal(runtime, config)
 
   // Handle port handling
   if (context?.start) {

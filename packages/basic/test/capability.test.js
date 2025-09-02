@@ -275,6 +275,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
       logger: expectedLogger
     })
   }
@@ -358,6 +359,7 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
       isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
       logger: expectedLogger
     })
   }
@@ -452,6 +454,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       events: undefined,
+      exitOnUnhandledErrors: true,
       logger: expectedLogger
     })
   }

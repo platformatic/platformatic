@@ -458,6 +458,11 @@ export class BaseCapability extends EventEmitter {
       this.basePath = path
     })
 
+    this.childManager.on('event', event => {
+      globalThis[kITC].notify('event', event)
+      this.emit('application:worker:event', config)
+    })
+
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     this.childManager.on('url', (url, clientWs) => {
@@ -543,6 +548,7 @@ export class BaseCapability extends EventEmitter {
       isEntrypoint: this.isEntrypoint,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
+      exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
       /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
@@ -719,7 +725,7 @@ export class BaseCapability extends EventEmitter {
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = (val) => activeResourcesEventLoopMetric.set(val)
+    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
   }
 
   async #invalidateHttpCache (opts = {}) {

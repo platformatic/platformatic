@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@platformatic/node": "^2.70.0"
+  }
+}

@@ -54,18 +54,16 @@ export class GatewayCapability extends ServiceCapability {
     if (this.dependencies) {
       const workers = await globalThis[kITC].send('getWorkers')
 
-      const started = new Set()
+      const unstarted = new Set(this.dependencies)
       for (const worker of Object.values(workers)) {
         if (worker.status === 'started') {
-          started.add(worker.application)
+          unstarted.delete(worker.application)
         }
       }
 
-      for (const dependency of this.dependencies) {
-        if (!started.has(dependency)) {
-          globalThis[kITC].notify('event', { event: 'unhealthy' })
-          return false
-        }
+      if (unstarted.size > 0) {
+        globalThis[kITC].notify('event', { event: 'unhealthy' })
+        return false
       }
     }
 

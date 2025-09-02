@@ -810,7 +810,9 @@ export class Runtime extends EventEmitter {
         const label = `${application}:${i}`
         const worker = this.#workers.get(label)
 
-        status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+        if (worker) {
+          status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+        }
       }
     }
 
@@ -825,7 +827,9 @@ export class Runtime extends EventEmitter {
         const label = `${application}:${i}`
         const worker = this.#workers.get(label)
 
-        status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
+        if (worker) {
+          status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
+        }
       }
     }
 
@@ -1689,7 +1693,7 @@ export class Runtime extends EventEmitter {
       this.logger.info(`Stopping the ${label}...`)
     }
 
-    const exitTimeout = this.#config.gracefulShutdown.runtime
+    const exitTimeout = this.#config.gracefulShutdown.application
     const exitPromise = once(worker, 'exit')
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup

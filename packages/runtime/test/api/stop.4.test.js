@@ -24,5 +24,5 @@ test('should kill the thread even if stop fails', async t => {
 
   // We are satisfied if killing took less that twice of the allowed timeout
   const config = await app.getRuntimeConfig()
-  ok(elapsed < config.gracefulShutdown.runtime * 2)
+  ok(elapsed < config.gracefulShutdown.application * 2)
 })

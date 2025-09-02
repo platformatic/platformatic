@@ -1,4 +1,5 @@
-import { ok, strictEqual } from 'node:assert'
+import { ok, rejects, strictEqual } from 'node:assert'
+import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -297,7 +298,7 @@ test('metrics can be disabled', async t => {
   // Wait for the prometheus server to start
   await sleep(2000)
 
-  await t.assert.rejects(
+  await rejects(
     request('http://127.0.0.1:9090', {
       method: 'GET',
       path: '/metrics'
@@ -368,6 +369,46 @@ test('readiness - should expose readiness and get a fail response when not all a
   })
   strictEqual(statusCode, 500)
   strictEqual(await body.text(), 'ERR')
+})
+
+test('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  const url = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Make a worker fail
+  await request(url + '/service-2/crash')
+  await once(app, 'application:worker:error')
+  const restartPromise = once(app, 'application:worker:started')
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  // Wait for the worker to restart
+  await restartPromise
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
 })
 
 test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {

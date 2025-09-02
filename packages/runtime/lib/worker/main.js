@@ -177,8 +177,18 @@ async function main () {
     !!config.watch
   )
 
-  process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
-  process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
+  if (config.exitOnUnhandledErrors) {
+    process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
+    process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
+
+    process.on('newListener', event => {
+      if (event === 'uncaughtException' || event === 'unhandledRejection') {
+        globalThis.platformatic.logger.warn(
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
+        )
+      }
+    })
+  }
 
   await controller.init()
 

@@ -202,6 +202,7 @@ export interface PlatformaticNestJSConfig {
     };
     startTimeout?: number;
     restartOnError?: boolean | number;
+    exitOnUnhandledErrors?: boolean;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;
