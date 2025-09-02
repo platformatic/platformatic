@@ -808,6 +808,11 @@ class Runtime extends EventEmitter {
 
   async startServiceProfiling (id, options = {}, ensureStarted = true) {
     const service = await this.#getServiceById(id, ensureStarted)
+    const found = this.#configManager.current.preload?.some(p => p.includes('watt-pprof-capture'))
+
+    if (!found) {
+      throw new errors.MissingPprofCapture()
+    }
 
     return sendViaITC(service, 'startProfiling', options)
   }

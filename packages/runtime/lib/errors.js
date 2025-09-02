@@ -112,5 +112,7 @@ module.exports = {
   CannotRemoveServiceOnUpdateError: createError(
     `${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`,
     'Cannot remove service "%s" when updating a Runtime'
-  )
+  ),
+
+  MissingPprofCapture: createError(`${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`, 'Please install @platformatic/watt-pprof-capture')
 }
