@@ -31,7 +31,6 @@ function handleSignal (runtime, config) {
   // ignore it since it comes from close-with-grace and we want to use to restart the runtime
   function filterCloseWithGraceSIGUSR2 (event, listener) {
     if (event === 'SIGUSR2') {
-      process._rawDebug(event, listener)
       process.removeListener('SIGUSR2', listener)
       process.removeListener('newListener', filterCloseWithGraceSIGUSR2)
     }
@@ -157,7 +156,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 
         config.server.port = ++port
         runtime = new Runtime(config, context)
-        handleSignal(runtime)
+        handleSignal(runtime, config)
       }
     }
   }
