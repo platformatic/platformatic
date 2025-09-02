@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/ts-compiler",
-  "version": "2.75.0-alpha.1",
+  "version": "2.75.0",
   "description": "Compiles TypeScript to JavaScript, Platformatic Edition",
   "main": "compile.js",
   "scripts": {

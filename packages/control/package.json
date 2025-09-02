@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/control",
-  "version": "2.75.0-alpha.1",
+  "version": "2.75.0",
   "description": "Platformatic Control",
   "main": "index.js",
   "bin": {

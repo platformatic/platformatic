@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "2.75.0-alpha.1",
+  "version": "2.75.0",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",
