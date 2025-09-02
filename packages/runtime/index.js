@@ -39,7 +39,7 @@ function handleSignal (runtime, config) {
 
   process.on('newListener', filterCloseWithGraceSIGUSR2)
 
-  const cwg = closeWithGrace({ delay: config.gracefulShutdown.runtime ?? 10000 }, async event => {
+  const cwg = closeWithGrace({ delay: config.gracefulShutdown?.runtime ?? 10000 }, async event => {
     if (event.err instanceof Error) {
       console.error(event.err)
     }
