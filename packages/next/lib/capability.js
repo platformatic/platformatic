@@ -157,6 +157,14 @@ export class NextCapability extends BaseCapability {
     return { gateway }
   }
 
+  async getChildManagerContext (basePath) {
+    const context = await super.getChildManagerContext(basePath)
+
+    context.exitOnUnhandledErrors = false
+
+    return context
+  }
+
   async #startDevelopment () {
     const config = this.config
     const loaderUrl = new URL('./loader.js', import.meta.url)
