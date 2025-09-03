@@ -619,9 +619,10 @@ export async function verifyDevelopmentFrontendStandalone (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
-  const { url } = await createRuntime(t, configuration, pauseTimeout)
+  const { url } = await createRuntime(t, configuration, pauseTimeout, false, null, additionalSetup)
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
   await verifyHMR(url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
@@ -761,7 +762,11 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
       async t => {
         let args
         const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
-          t.after(() => safeRemove(root))
+          t.after(async () => {
+            if (process.env.PLT_TESTS_DEBUG !== 'true') {
+              await safeRemove(root)
+            }
+          })
 
           for (const type of ['backend', 'composer']) {
             await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
@@ -824,14 +829,16 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   }
 }
 
-export async function verifyReusePort (t, configuration, integrityCheck) {
+export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup) {
   const port = await getPort.default()
 
   // Create the runtime
-  const { runtime, root } = await prepareRuntime(t, configuration, true, null, (_, config) => {
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
     config.server = { port }
     config.applications[0].workers = 5
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
+
+    await additionalSetup?.(root, config)
   })
 
   // Build

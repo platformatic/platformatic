@@ -198,9 +198,12 @@ export class NodeCapability extends BaseCapability {
 
     if (this.childManager) {
       return this.stopCommand()
+      // This is needed if the capability was subclassed
+    } else if (!this.#server) {
+      return
     }
 
-    if (this.#isFastify) {
+    if (this.#isFastify && this.#app) {
       return this.#app.close()
     }
 
@@ -299,6 +302,12 @@ export class NodeCapability extends BaseCapability {
   }
 
   async _listen () {
+    // Make this idempotent
+    /* c8 ignore next 3 */
+    if (this.url) {
+      return this.url
+    }
+
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
 

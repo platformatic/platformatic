@@ -65,6 +65,8 @@ export class AstroCapability extends BaseCapability {
 
     if (this.childManager) {
       return this.stopCommand()
+    } else if (!this.#app) {
+      return
     }
 
     return this.isProduction ? this.#app.close() : this.#app.stop()

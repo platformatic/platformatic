@@ -14,6 +14,7 @@ import {
   verifyPlatformaticGateway,
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
+import { copyServerEntrypoint } from './helper.js'
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -99,7 +100,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot],
     language: 'js',
-    prefix: ''
+    prefix: '',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -109,7 +111,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/frontend'
+    prefix: '/frontend',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -119,7 +122,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: ''
+    prefix: '',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -129,7 +133,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/nested/base/dir'
+    prefix: '/nested/base/dir',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -139,7 +144,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/frontend'
+    prefix: '/frontend',
+    additionalSetup: copyServerEntrypoint
   }
 ]
 

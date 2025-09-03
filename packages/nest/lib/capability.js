@@ -90,7 +90,7 @@ export class NestCapability extends BaseCapability {
       return this.stopCommand()
     }
 
-    if (this.#isFastify) {
+    if (this.#isFastify && this.#server) {
       return this.#server.close()
     }
 

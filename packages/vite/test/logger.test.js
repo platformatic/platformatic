@@ -1,30 +1,24 @@
 import { strict as assert } from 'node:assert'
-import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as wait } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, isCIOnWindows } from '../../basic/test/helper.js'
+import { createRuntime, getLogsFromFile, isCIOnWindows } from '../../basic/test/helper.js'
+import { copyServerEntrypoint } from './helper.js'
 
 // TODO: fix this test on windows
 test('logger options', { skip: isCIOnWindows }, async t => {
-  const { root, url } = await createRuntime({
+  const { runtime, root, url } = await createRuntime({
     t,
     root: resolve(import.meta.dirname, './fixtures/logger'),
     build: true,
-    production: true
+    production: true,
+    additionalSetup: copyServerEntrypoint
   })
 
   await request(`${url}/`)
+  await runtime.close()
 
-  // wait for logger flush
-  await wait(500)
-
-  const content = readFileSync(resolve(root, 'logs.txt'), 'utf8')
-  const logs = content
-    .split('\n')
-    .filter(line => line.trim() !== '')
-    .map(line => JSON.parse(line))
+  const logs = await getLogsFromFile(root)
 
   assert.ok(
     logs.find(log => {
