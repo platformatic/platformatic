@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "3.0.0-rc.2",
+  "version": "3.0.0",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "type": "module",
