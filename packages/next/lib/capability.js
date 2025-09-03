@@ -83,7 +83,7 @@ export class NextCapability extends BaseCapability {
 
     globalThis.platformatic.events.emit('plt:next:close')
 
-    if (this.isProduction) {
+    if (this.isProduction && this.#server) {
       await new Promise((resolve, reject) => {
         this.#server.close(error => {
           /* c8 ignore next 3 */
@@ -96,7 +96,7 @@ export class NextCapability extends BaseCapability {
       })
 
       await this.childManager.close()
-    } else {
+    } else if (this.#child) {
       const exitPromise = once(this.#child, 'exit')
       await this.childManager.close()
       process.kill(this.#child.pid, 'SIGKILL')
