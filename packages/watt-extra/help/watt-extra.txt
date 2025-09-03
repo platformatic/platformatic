@@ -1,0 +1,12 @@
+WattExtra - The Platformatic Runtime Manager
+
+Usage: watt-extra <command> [options]
+
+Commands:
+  start                Start WattExtra runtime manager
+                       See 'watt-extra start --help' for options
+
+  version              Show the version of WattExtra
+
+General options:
+  --help, -h          Show this help message
