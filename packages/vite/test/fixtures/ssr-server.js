@@ -24,7 +24,7 @@ async function serve (vite, clientModule, req, res, next) {
     res
       .status(200)
       .set({ 'Content-Type': 'text/html' })
-      .end(template.replace(`<!-- element -->`, await generate(url)))
+      .end(template.replace('<!-- element -->', await generate(url)))
   } catch (e) {
     vite.ssrFixStacktrace(e)
     next(e)
