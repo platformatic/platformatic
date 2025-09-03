@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@fastify/accepts": "^5.0.0",
+    "@fastify/basic-auth": "^6.0.0",
     "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^11.0.0",
     "@opentelemetry/api": "^1.9.0",
