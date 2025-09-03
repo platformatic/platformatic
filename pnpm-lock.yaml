@@ -1259,6 +1259,9 @@ importers:
       '@fastify/accepts':
         specifier: ^5.0.0
         version: 5.0.2
+      '@fastify/basic-auth':
+        specifier: ^6.0.0
+        version: 6.2.0
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
