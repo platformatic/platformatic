@@ -2,6 +2,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { isWindows, setFixturesDir, verifyReusePort } from '../../basic/test/helper.js'
+import { copyServerEntrypoint } from './helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -21,11 +22,18 @@ test(
     skip: isWindows
   },
   async t => {
-    await verifyReusePort(t, 'ssr-standalone', async res => {
-      const text = await res.body.text()
+    await verifyReusePort(
+      t,
+      'ssr-standalone',
+      async res => {
+        const text = await res.body.text()
 
-      deepStrictEqual(res.statusCode, 200)
-      ok(/<div id="app"><div>Hello from v\d+ t\d+<\/div><\/div>/i.test(text))
-    })
+        deepStrictEqual(res.statusCode, 200)
+        ok(/<div id="app"><div>Hello from v\d+ t\d+<\/div><\/div>/i.test(text))
+      },
+      root => {
+        return copyServerEntrypoint(root)
+      }
+    )
   }
 )

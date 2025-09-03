@@ -1,7 +1,7 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { symlink, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { before } from 'node:test'
 import {
   setFixturesDir,
@@ -29,30 +29,35 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
 }
 
 async function linkAstro (version, root) {
-  const modulesFolder = resolve(root, 'services/frontend/node_modules/astro')
+  for (const mod of ['astro', 'vite']) {
+    const modulesFolder = resolve(root, `services/frontend/node_modules/${mod}`)
 
-  await safeRemove(modulesFolder)
-  await symlink(resolve(temporaryFolder, `astro-${version}/node_modules/astro`), modulesFolder, 'dir')
+    await safeRemove(modulesFolder)
+    await createDirectory(dirname(modulesFolder))
+    await symlink(resolve(temporaryFolder, `astro-${version}/node_modules/${mod}`), modulesFolder, 'dir')
+  }
 }
 
-function boundLinkAstro (version) {
-  const fn = linkAstro.bind(null, version)
+function boundLinkAstro (astroVersion, viteVersion) {
+  const fn = linkAstro.bind(null, astroVersion, viteVersion)
   fn.runAfterPrepare = true
   return fn
 }
 
 const versions = {
-  5.7: '5.7.2',
-  4.16: '4.16.18',
+  5.7: ['5.7.2', '6.3.5'],
+  4.16: ['4.16.18', '5.4.0']
 }
 
 before(async () => {
-  for (const [tag, version] of Object.entries(versions)) {
+  for (const [tag, [astroVersion, viteVersion]] of Object.entries(versions)) {
     const base = resolve(temporaryFolder, `astro-${tag}`)
     await safeRemove(base)
     await createDirectory(base)
     await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-    await execa('pnpm', ['add', '-D', '--ignore-workspace', `astro@${version}`], { cwd: base })
+    await execa('pnpm', ['add', '-D', '--ignore-workspace', `astro@${astroVersion}`, `vite@${viteVersion}`], {
+      cwd: base
+    })
   }
 })
 
@@ -65,7 +70,7 @@ const developmentConfigurations = [
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('4.16')
+    additionalSetup: boundLinkAstro('4.16', '5.4.0')
   },
   {
     id: 'compatibility',
@@ -75,7 +80,7 @@ const developmentConfigurations = [
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('5.7')
+    additionalSetup: boundLinkAstro('5.7', '6.3.5')
   },
   {
     id: 'ssr-standalone',
@@ -85,7 +90,7 @@ const developmentConfigurations = [
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('4.16')
+    additionalSetup: boundLinkAstro('4.16', '5.4.0')
   },
   {
     id: 'ssr-standalone',
@@ -95,7 +100,7 @@ const developmentConfigurations = [
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('5.7')
+    additionalSetup: boundLinkAstro('5.7', '6.3.5')
   }
 ]
 
@@ -110,7 +115,7 @@ const productionConfigurations = [
     checks: [verifyFrontendOnRoot],
     language: 'js',
     prefix: '',
-    additionalSetup: boundLinkAstro('4.16')
+    additionalSetup: boundLinkAstro('4.16', '5.4.0')
   },
   {
     id: 'standalone',
@@ -120,7 +125,7 @@ const productionConfigurations = [
     checks: [verifyFrontendOnRoot],
     language: 'js',
     prefix: '',
-    additionalSetup: boundLinkAstro('5.7')
+    additionalSetup: boundLinkAstro('5.7', '6.3.5')
   }
 ]
 

@@ -79,7 +79,7 @@ export class RemixCapability extends ViteCapability {
 
     if (this.isProduction) {
       return this.#stopProduction()
-    } else {
+    } else if (this.#app) {
       return this.#app.close()
     }
   }

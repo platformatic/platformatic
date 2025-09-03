@@ -15,13 +15,14 @@ import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { satisfies } from 'semver'
+import { parse, satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = '^5.0.0'
+const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0']
 
 export class ViteCapability extends BaseCapability {
   #vite
+  #viteVersion
   #app
   #server
   #basePath
@@ -38,9 +39,16 @@ export class ViteCapability extends BaseCapability {
     }
 
     this.#vite = dirname(resolvePackage(this.root, 'vite'))
-    const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
 
-    if (!satisfies(vitePackage.version, supportedVersions)) {
+    // In Vite 6, module resolving changed, adjust it
+    if (!existsSync(resolve(this.#vite, 'dist/node/index.js'))) {
+      this.#vite = resolve(this.#vite, '../..')
+    }
+
+    const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
+    this.#viteVersion = parse(vitePackage.version)
+
+    if (!supportedVersions.some(v => satisfies(vitePackage.version, v))) {
       throw new errors.UnsupportedVersion('vite', vitePackage.version, supportedVersions)
     }
   }
@@ -65,9 +73,10 @@ export class ViteCapability extends BaseCapability {
 
     if (this.childManager) {
       return this.stopCommand()
+    } else if (this.#app) {
+      // This is needed if the capability was subclassed
+      return this.#app.close()
     }
-
-    return this.#app.close()
   }
 
   async build () {
@@ -338,7 +347,13 @@ export class ViteSSRCapability extends NodeCapability {
     let clientOutDir = resolve(this.root, clientDirectory, config.application.outputDirectory, clientDirectory)
 
     await this.init()
-    const vite = dirname(resolvePackage(this.root, 'vite'))
+
+    let vite = dirname(resolvePackage(this.root, 'vite'))
+    // In Vite 6, module resolving changed, adjust it
+    if (!existsSync(resolve(vite, 'dist/node/index.js'))) {
+      vite = resolve(vite, '../..')
+    }
+
     const { build } = await importFile(resolve(vite, 'dist/node/index.js'))
 
     // Build the client
@@ -387,8 +402,7 @@ export class ViteSSRCapability extends NodeCapability {
 
   getMeta () {
     const vite = this._getApplication()?.vite
-    const config = vite?.devServer?.config ?? vite?.config.vite
-    const applicationBasePath = config?.base
+    const applicationBasePath = vite?.config?.base
 
     const gateway = {
       tcp: typeof this.url !== 'undefined',
