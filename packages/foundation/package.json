@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@iarna/toml": "^2.2.5",
     "@watchable/unpromise": "^1.0.2",
