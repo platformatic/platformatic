@@ -639,6 +639,9 @@ importers:
 
   packages/foundation:
     dependencies:
+      '@fastify/deepmerge':
+        specifier: ^2.0.0
+        version: 2.0.2
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
