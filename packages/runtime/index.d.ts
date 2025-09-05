@@ -89,6 +89,6 @@ export function create (
   context?: ConfigurationOptions
 ): Promise<Runtime>
 
-export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration> | RuntimeConfiguration
+export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration>
 
 export declare function loadApplicationsCommands (): Promise<ApplicationsCommands>

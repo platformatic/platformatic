@@ -20,9 +20,9 @@ export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyI
   platformatic: PlatformaticApplication<Configuration>
 }
 
-export type ServiceConfiguration<T = {}> = Promise<Configuration<PlatformaticServiceConfig & T>>
+export type ServiceConfiguration<T = {}> = Configuration<PlatformaticServiceConfig & T>
 
-export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration> | ServiceConfiguration
+export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticServiceConfig,

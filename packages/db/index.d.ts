@@ -5,7 +5,6 @@ import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
-
 import type { PlatformaticDatabaseConfig } from './config.d.ts'
 
 export { PlatformaticApplication } from '@platformatic/service'
@@ -24,9 +23,7 @@ export type ServerInstance<T = {}> = FastifyInstance & {
 
 export type DatabaseConfiguration = Configuration<PlatformaticDatabaseConfig>
 
-export declare function transform (
-  config: DatabaseConfiguration
-): Promise<DatabaseConfiguration> | DatabaseConfiguration
+export declare function transform (config: DatabaseConfiguration): Promise<DatabaseConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticDatabaseConfig,
