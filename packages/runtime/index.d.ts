@@ -62,9 +62,9 @@ export module symbols {
   export declare const kWorkersBroadcast: unique symbol
 }
 
-export class Generator extends BaseGenerator.BaseGenerator {}
+export class Generator extends BaseGenerator {}
 
-export class WrappedGenerator extends BaseGenerator.BaseGenerator {}
+export class WrappedGenerator extends BaseGenerator {}
 
 export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 

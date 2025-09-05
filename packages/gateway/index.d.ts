@@ -1,21 +1,21 @@
 import { BaseCapability } from '@platformatic/basic'
-import { BaseGenerator } from '@platformatic/generators'
+import { ConfigurationOptions } from '@platformatic/foundation'
 import {
-  ApplicationCapability,
-  ServerInstance as ApplicationInstance,
   Configuration,
-  ConfigurationOptions
+  ServiceCapability,
+  Generator as ServiceGenerator,
+  ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
-import { PlatformaticGatewayConfig } from './config'
+import type { PlatformaticGatewayConfig } from './config.d.ts'
 
 export { PlatformaticService } from '@platformatic/service'
-export { PlatformaticGatewayConfig } from './config'
+export type { PlatformaticGatewayConfig } from './config.d.ts'
 
-export type GatewayCapability = ApplicationCapability<PlatformaticGatewayConfig>
+export type GatewayCapability = ServiceCapability<PlatformaticGatewayConfig>
 
-export type ServerInstance = ApplicationInstance<PlatformaticGatewayConfig>
+export type ServerInstance = ServiceServerInstance<PlatformaticGatewayConfig>
 
 type GatewayConfiguration = Configuration<PlatformaticGatewayConfig>
 
@@ -33,7 +33,7 @@ export function create (
 
 export declare function platformaticGateway (app: FastifyInstance, capability: BaseCapability): Promise<void>
 
-export class Generator extends BaseGenerator.BaseGenerator {}
+export class Generator extends ServiceGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 

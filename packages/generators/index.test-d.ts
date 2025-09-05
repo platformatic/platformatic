@@ -1,7 +1,7 @@
 import { expectAssignable } from 'tsd'
-import { BaseGenerator } from './lib/base-generator'
+import { ConfigField, ConfigFieldDefinition } from './index.js'
 
-expectAssignable<BaseGenerator.ConfigFieldDefinition>({
+expectAssignable<ConfigFieldDefinition>({
   label: 'PLT_TESTING',
   var: 'testing',
   default: 'hello world',
@@ -9,7 +9,7 @@ expectAssignable<BaseGenerator.ConfigFieldDefinition>({
   configValue: 'someConfigValue'
 })
 
-expectAssignable<BaseGenerator.ConfigField>({
+expectAssignable<ConfigField>({
   var: 'testing',
   configValue: 'someConfigValue',
   value: 'asd123'

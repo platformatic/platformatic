@@ -3,9 +3,9 @@ import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
-import { PlatformaticServiceConfig } from './config'
+import type { PlatformaticServiceConfig } from './config.d.ts'
 
-export { PlatformaticServiceConfig } from './config'
+export type { PlatformaticServiceConfig } from './config.d.ts'
 
 export interface ServiceContext extends BaseContext {
   applicationFactory?: typeof platformaticService
@@ -40,7 +40,7 @@ export declare const skipTelemetryHooks: boolean
 
 export declare function platformaticService (app: FastifyInstance, capability: ServiceCapability): Promise<void>
 
-export declare class Generator extends BaseGenerator.BaseGenerator {}
+export declare class Generator extends BaseGenerator {}
 export declare function applyTestHelperCustomizations (
   helper: string,
   mod: string,
