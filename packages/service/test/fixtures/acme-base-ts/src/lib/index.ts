@@ -1,4 +1,4 @@
-import { kMetadata } from '@platformatic/foundation'
+import { Configuration, kMetadata } from '@platformatic/foundation'
 import { lstat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
@@ -37,9 +37,11 @@ export default async function acmeBase (
 
 Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
-export async function transform (config: ServiceConfig & AcmeBaseConfig): ServiceConfig & AcmeBaseConfig {
+export async function transform (
+  config: Configuration<ServiceConfig & AcmeBaseConfig>
+): Promise<Configuration<ServiceConfig & AcmeBaseConfig>> {
   // Call the transformConfig method from the base capability
-  config = await serviceTransform(config)
+  config = (await serviceTransform(config)) as Configuration<ServiceConfig & AcmeBaseConfig>
 
   // In this method you can alter the configuration before the application
   // is started. It's useful to apply some defaults that cannot be derived

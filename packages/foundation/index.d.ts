@@ -22,10 +22,10 @@ export interface ValidationError {
   message: string
 }
 
-export type ConfigurationOptions = Partial<{
+export type ConfigurationOptions<T = {}> = Partial<{
   validate: boolean
   validationOptions: object
-  transform: (config: RawConfiguration) => Promise<RawConfiguration> | RawConfiguration
+  transform: (config: Configuration<T>) => Promise<Configuration<T>> | Configuration<T>
   upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
   ignoreProcessEnv: boolean

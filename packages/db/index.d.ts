@@ -1,16 +1,15 @@
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
-import { BaseGenerator } from '@platformatic/generators'
-import { PlatformaticApplication, ServiceCapability } from '@platformatic/service'
+import { PlatformaticApplication, ServiceCapability, Generator as ServiceGenerator } from '@platformatic/service'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
-import { PlatformaticDatabaseConfig } from './config'
+import type { PlatformaticDatabaseConfig } from './config.d.ts'
 
 export { PlatformaticApplication } from '@platformatic/service'
 export { createConnectionPool, Entities, Entity, EntityHooks } from '@platformatic/sql-mapper'
-export { PlatformaticDatabaseConfig } from './config'
+export type { PlatformaticDatabaseConfig } from './config.d.ts'
 
 export type PlatformaticDatabaseMixin<T extends Entities> = SQLMapperPluginInterface<T> &
   SQLEventsPluginInterface &
@@ -24,9 +23,7 @@ export type ServerInstance<T = {}> = FastifyInstance & {
 
 export type DatabaseConfiguration = Configuration<PlatformaticDatabaseConfig>
 
-export declare function transform (
-  config: DatabaseConfiguration
-): Promise<DatabaseConfiguration> | DatabaseConfiguration
+export declare function transform (config: DatabaseConfiguration): Promise<DatabaseConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticDatabaseConfig,
@@ -44,7 +41,7 @@ export declare const skipTelemetryHooks: boolean
 
 export declare function platformaticDatabase (app: FastifyInstance, capability: DatabaseCapability): Promise<void>
 
-export declare class Generator extends BaseGenerator.BaseGenerator {}
+export declare class Generator extends ServiceGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 

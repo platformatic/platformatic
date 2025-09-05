@@ -57,7 +57,6 @@
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/foundation": "workspace:*",
-    "@platformatic/generators": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",

@@ -390,9 +390,6 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
-      '@platformatic/generators':
-        specifier: workspace:*
-        version: link:../generators
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
