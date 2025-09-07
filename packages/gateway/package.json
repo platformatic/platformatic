@@ -56,7 +56,7 @@
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@scalar/fastify-api-reference": "1.33.0",
+    "@scalar/fastify-api-reference": "1.34.6",
     "ajv": "^8.12.0",
     "console-table-printer": "^2.12.0",
     "execa": "^9.0.0",
