@@ -47,6 +47,7 @@ export interface Runtime {
   packageVersion: string | null
   url: string | null
   platformaticVersion: string
+  startTime?: number
 }
 
 export interface RuntimeApplications {
@@ -97,7 +98,7 @@ export class RuntimeApiClient {
   getRuntimes (): Promise<Runtime[]>
   getRuntimeMetadata (pid: number): Promise<Runtime>
   getRuntimeApplications (pid: number): Promise<RuntimeApplications>
-  getRuntimeConfig (pid: number): Promise<Record<string, unknown>>
+  getRuntimeConfig (pid: number): Promise<Record<string, unknown> & { path?: string, configFile?: string, configPath?: string, server?: { path?: string } }>
   getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
