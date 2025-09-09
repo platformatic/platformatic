@@ -24,7 +24,7 @@ import resolveModule from 'resolve'
 import { createGitRepository } from './git.js'
 import { findGatewayConfigFile, getUsername, getVersion, say } from './utils.js'
 
-const defaultCapabilities = [
+const internalCapabilities = [
   '@platformatic/node',
   '@platformatic/gateway',
   '@platformatic/next',
@@ -33,7 +33,10 @@ const defaultCapabilities = [
   '@platformatic/remix',
   '@platformatic/nest',
   '@platformatic/service',
-  '@platformatic/db',
+  '@platformatic/db'
+]
+
+const externalCapabilities = [
   '@platformatic/php',
   '@platformatic/ai-warp',
   '@platformatic/pg-hooks',
@@ -95,7 +98,7 @@ async function importOrLocal ({ pkgManager, projectDir, pkg }) {
 
     let version = ''
 
-    if (defaultCapabilities.includes(pkg) || pkg === '@platformatic/runtime') {
+    if (internalCapabilities.includes(pkg) || pkg === '@platformatic/runtime') {
       // Let's find if we are using one of the default capabilities
       // If we are, we have to use the "local" version of the package
 
@@ -365,7 +368,7 @@ export async function createApplication (
     await say('Using existing configuration ...')
   }
 
-  const capabilities = Array.from(new Set([...modules, ...defaultCapabilities]))
+  const capabilities = Array.from(new Set([...modules, ...internalCapabilities, ...externalCapabilities]))
 
   const names = generator.existingApplications ?? []
 

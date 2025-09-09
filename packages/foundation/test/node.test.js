@@ -1,4 +1,4 @@
-import { equal, throws } from 'node:assert'
+import { ok, throws } from 'node:assert'
 import test from 'node:test'
 import { checkNodeVersionForApplications, features } from '../index.js'
 
@@ -30,14 +30,6 @@ test('checkNodeVersionForApplications - should throw for old Node.js version', t
 })
 
 test('features - should have node features object', () => {
-  equal(typeof features.node.reusePort, 'boolean')
-  equal(typeof features.node.worker.getHeapStatistics, 'boolean')
-})
-
-test('features - node.reusePort should be boolean', () => {
-  equal(typeof features.node.reusePort, 'boolean')
-})
-
-test('features - node.worker.getHeapStatistics should be boolean', () => {
-  equal(typeof features.node.worker.getHeapStatistics, 'boolean')
+  ok(typeof features.node.reusePort)
+  ok(typeof features.node.worker.getHeapStatistics)
 })
