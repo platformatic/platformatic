@@ -1,11 +1,12 @@
 import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { ImportGenerator } from '@platformatic/generators'
 import {
-  getPackageManager, DEFAULT_PACKAGE_MANAGER,
+  DEFAULT_PACKAGE_MANAGER,
   createDirectory,
   detectApplicationType,
   executeWithTimeout,
   generateDashedName,
+  getPackageManager,
   getPkgManager,
   searchJavascriptFiles
 } from '@platformatic/utils'
@@ -27,6 +28,7 @@ import { getUsername, getVersion, say } from './utils.mjs'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
+const internalStackables = ['@platformatic/node', '@platformatic/next', '@platformatic/vite', '@platformatic/astro', '@platformatic/remix', '@platformatic/nest']
 
 export async function fetchStackables (marketplaceHost, modules = []) {
   const stackables = new Set([...modules, ...defaultStackables])
@@ -106,7 +108,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
 
     let version = ''
 
-    if (defaultStackables.includes(pkg) || pkg === '@platformatic/runtime') {
+    if (defaultStackables.includes(pkg) || internalStackables.includes(pkg) || pkg === '@platformatic/runtime') {
       // Let's find if we are using one of the default stackables
       // If we are, we have to use the "local" version of the package
 
