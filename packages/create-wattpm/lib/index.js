@@ -24,22 +24,25 @@ import resolveModule from 'resolve'
 import { createGitRepository } from './git.js'
 import { findGatewayConfigFile, getUsername, getVersion, say } from './utils.js'
 
-const defaultCapabilities = [
-  '@platformatic/node',
-  '@platformatic/gateway',
-  '@platformatic/next',
-  '@platformatic/vite',
-  '@platformatic/astro',
-  '@platformatic/remix',
-  '@platformatic/nest',
-  '@platformatic/service',
-  '@platformatic/db',
-  '@platformatic/php',
-  '@platformatic/ai-warp',
-  '@platformatic/pg-hooks',
-  '@platformatic/rabbitmq-hooks',
-  '@platformatic/kafka-hooks'
-]
+export const defaultCapabilities = {
+  '@platformatic/node': { id: '@platformatic/node', external: false },
+  '@platformatic/gateway': { id: '@platformatic/gateway', external: false },
+  '@platformatic/next': { id: '@platformatic/next', external: false },
+  '@platformatic/vite': { id: '@platformatic/vite', external: false },
+  '@platformatic/astro': { id: '@platformatic/astro', external: false },
+  '@platformatic/remix': { id: '@platformatic/remix', external: false },
+  '@platformatic/nest': { id: '@platformatic/nest', external: false },
+  '@platformatic/service': { id: '@platformatic/service', external: false },
+  '@platformatic/db': { id: '@platformatic/db', external: false },
+  '@platformatic/php': { id: '@platformatic/php', external: true },
+  '@platformatic/ai-warp': { id: '@platformatic/ai-warp', external: true },
+  '@platformatic/pg-hooks': { id: '@platformatic/pg-hooks', external: true },
+  '@platformatic/rabbitmq-hooks': { id: '@platformatic/rabbitmq-hooks', external: true },
+  '@platformatic/kafka-hooks': { id: '@platformatic/kafka-hooks', external: true }
+}
+
+// Legacy array for backward compatibility - derived from the object above
+export const defaultCapabilitiesList = Object.keys(defaultCapabilities)
 
 export * from './git.js'
 export * from './utils.js'
@@ -95,8 +98,8 @@ async function importOrLocal ({ pkgManager, projectDir, pkg }) {
 
     let version = ''
 
-    if (defaultCapabilities.includes(pkg) || pkg === '@platformatic/runtime') {
-      // Let's find if we are using one of the default capabilities
+    if ((defaultCapabilities[pkg] && !defaultCapabilities[pkg].external) || pkg === '@platformatic/runtime') {
+      // Let's find if we are using one of the internal capabilities
       // If we are, we have to use the "local" version of the package
 
       const meta = await JSON.parse(await readFile(join(import.meta.dirname, '..', 'package.json'), 'utf-8'))
@@ -365,7 +368,7 @@ export async function createApplication (
     await say('Using existing configuration ...')
   }
 
-  const capabilities = Array.from(new Set([...modules, ...defaultCapabilities]))
+  const capabilities = Array.from(new Set([...modules, ...defaultCapabilitiesList]))
 
   const names = generator.existingApplications ?? []
 
