@@ -19,7 +19,7 @@ const sidebars = {
       type: 'category',
       label: 'Overview',
       collapsed: false,
-      items: ['overview']
+      items: ['Overview']
     },
 
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
@@ -65,11 +65,7 @@ const sidebars = {
           type: 'category',
           label: 'Deployment & Operations',
           collapsed: true,
-          items: [
-            'guides/deployment/dockerize-a-watt-app',
-            'guides/deployment/compiling-typescript',
-            'guides/deployment/k8s-readiness-liveness'
-          ]
+          items: ['guides/deployment/dockerize-a-watt-app', 'guides/deployment/k8s-readiness-liveness']
         },
         {
           type: 'category',
@@ -103,7 +99,7 @@ const sidebars = {
           type: 'category',
           label: 'Legacy CLI Tools',
           collapsed: true,
-          items: ['reference/platformatic/cli', 'file-formats']
+          items: ['file-formats']
         },
         {
           type: 'category',
