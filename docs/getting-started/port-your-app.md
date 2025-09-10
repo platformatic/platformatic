@@ -28,7 +28,7 @@ Follow these steps to make your project run in Watt:
 
 Before we begin, make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
+- [Node.js](https://nodejs.org/) (v22.18.0)
 - A Node.js application to run. These steps have been tested on the official Fastify [demo](https://github.com/fastify/demo).
 
 ### 1. Clone your Project
@@ -46,21 +46,21 @@ cd demo
 npm install
 ```
 
-### 2. Use `pnpm create wattpm`
+### 2. Use `npm create wattpm`
 
-Use `pnpm create wattpm` to wrap your application inside Watt.
+Use `npm create wattpm` to wrap your application inside Watt.
 
 ```bash
-$ pnpm create wattpm
-Hello User, welcome to Watt 2.66.1!
+$ npm create wattpm
+Hello YOURNAME, welcome to Watt 3.0.0!
 ? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
 ? What port do you want to use? 3042
 [15:59:20.315] INFO (53128): /home/user/work/demo/.env written!
 [15:59:20.319] INFO (53128): /home/user/work/demo/.env.sample written!
 [15:59:20.319] INFO (53128): /home/user/work/demo/package.json written!
 [15:59:20.320] INFO (53128): /home/user/work/demo/watt.json written!
-[15:59:20.320] INFO (53128): Installing dependencies for the application using pnpm ...
-[15:59:37.237] INFO (53128): You are all set! Run `pnpm start` to start your project.
+[15:59:20.320] INFO (53128): Installing dependencies for the application using npm ...
+[15:59:37.237] INFO (53128): You are all set! Run `npm start` to start your project.
 ```
 
 ### 3. Setup application commands (optional)
@@ -69,12 +69,12 @@ If your application is using custom commands to start, you must set them in your
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.67.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
   "application": {
     "commands": {
       "development": "npm run dev",
       "build": "npm run build",
-      "start": "npm run start"
+      "production": "npm run start"
     }
   },
   "runtime": {
@@ -108,7 +108,7 @@ wattpm start
 ## Common Issues and Solutions
 
 - **Port conflicts**: If the specified port is already in use, Watt will try the next one.
-- **Missing scripts**: If you use a custom start script, insert into the `watt.json` file in the section `application.commands.start`. See the step 3 above for more informations.
+- **Missing scripts**: If you use a custom start script, insert into the `watt.json` file in the section `application.commands.production`. See the step 3 above for more informations.
 - **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `wattpm build` to compile your TypeScript files.
 - **Environment variables**: Confirm that all required environment variables are available.
 

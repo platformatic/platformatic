@@ -38,7 +38,7 @@ In any Watt configuration file, you can interpolate environment variables using 
 ```
 
 **How it works:**
-- The replacement happens via [`pupa`](http://npm.im/pupa) after JSON parsing
+- The replacement happens after JSON parsing
 - All Watt configuration files support this syntax
 - Variables are resolved at startup time
 

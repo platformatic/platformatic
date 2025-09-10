@@ -1,29 +1,19 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
-import SetupWatt from '../getting-started/setup-watt.md';
 
 # Build Front-end for Platformatic REST API
 
 Platformatic apps expose REST APIs that provide provide CRUD (Create, Read,
 Update, Delete) functionality for each entity (see the
-[Introduction to the REST API](https://docs.platformatic.dev/docs/reference/sql-openapi/introduction)
+[Introduction to the REST API](https://docs.platformatic.dev/docs/reference/sql-openapi/overview)
 documentation for more information on the REST API) by default.
 
 In this guide, you will learn how to create a new Platformatic guide with Watt, Frontend Client, add a frontend to consume your Platformatic REST API.
 
-## Create a Watt Application
-
-<SetupWatt />
-
-
-### Add a Platformatic DB application
-
+## Create a Platformatic DB Application
 
 <NewApiProjectInstructions/>
-
-
-### Add a new Platformatic application
 
 Every Platformatic application uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
 
@@ -35,6 +25,26 @@ npm run dev
 
 Your Platformatic app should be at the `http://127.0.0.1:3042/` URL.
 
+## Create a Gateway Application
+
+We're now going to use Platformatic Gateway compose our database and our frontend applications:
+
+```bash
+npm create wattpm
+```
+
+And then let's enter the following settings:
+
+```bash
+Hello YOURNAME, welcome to Watt 3.0.0!
+Using existing configuration ...
+? Which kind of application do you want to create? @platformatic/gateway
+? What is the name of the application? gateway
+? Do you want to use TypeScript? no
+? Do you want to create another application? no
+? Which application should be exposed? gateway
+```
+
 ## Create a Front-end Application
 
 Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) documentation to create a new front-end application, and call it "rest-api-frontend".
@@ -43,49 +53,46 @@ Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#sca
 Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js and Vite frameworks.
 :::
 
-In the `web` directory of your application, run the command:
-
+Run the command:
 
 <Tabs groupId="import-new-component">
 <TabItem value="react" label="React">
 
 ```bash
-npm create vite@latest rest-api-frontend -- --template react
+npm create vite@latest -- web/frontend --template react
 ```
 
 </TabItem>
 <TabItem value="vue" label="Vue.js">
 
 ```bash
-npm create vite@latest rest-api-frontend -- --template vue-ts
+npm create vite@latest -- web/frontend --template vue-ts
 ```
 
 </TabItem>
 </Tabs>
 
-and then follow the Vite's instructions
+Run the command below to add `watt.json` file to your frontend application:
 
 ```bash
-Scaffolding project in /Users/noriste/Sites/temp/platformatic/rest-api-frontend...
-
-Done. Now run:
-
-  cd rest-api-frontend
-  npm install
-  npm run dev
+npx wattpm-utils import
 ```
 
-Once done, run the command below to add `watt.json` file to your frontend application:
+This will also install the required dependencies. The command will output:
 
-```sh
-npx wattpm import web/frontend
+```
+[13:06:10.996] INFO (42432): Application next is using Next.js. Adding @platformatic/next to its package.json dependencies.
+[13:06:10.998] INFO (42432): Installing dependencies for the project using npm ...
+[13:06:12.119] INFO (42432): Installing dependencies for the application gateway using npm ...
+[13:06:13.092] INFO (42432): Installing dependencies for the application node using npm ...
+[13:06:14.310] INFO (42432): Installing dependencies for the application next using npm ...
 ```
 
-Add your frontend `id` and DB application to your `platformatic.json` file in your `web/gateway` application:
+Add your frontend `id` and DB application to your `watt.json` file in your `web/gateway` application:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.15.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -96,7 +103,7 @@ Add your frontend `id` and DB application to your `platformatic.json` file in yo
         }
       },
       {
-        "id":"frontend" // Frontend ID for Vite applications
+        "id": "frontend" // Frontend ID for Vite applications
       }
     ],
     "refreshTimeout": 1000
@@ -105,96 +112,92 @@ Add your frontend `id` and DB application to your `platformatic.json` file in yo
 }
 ```
 
+### Add a Frontend Client for REST API
 
-### Add a Frontend Client for REST API 
-
-To consume REST APIs in your Platformatic application. run the command to use Platformatic [frontend client](https://docs.platformatic.dev/docs/client/frontend) for exposing a client for your remote OpenAPI server, the client uses fetch and runs on the browser. 
+To consume REST APIs in your Platformatic application. run the command to use [massimo](https://massimohttp.dev) for exposing a client for your remote OpenAPI server, the client uses fetch and runs on the browser.
 
 ```bash
-cd rest-api-frontend/src
-npx --package @platformatic/client-cli plt-client http://127.0.0.1:3042 --frontend --name frontend-client
+npx massimo-cli --frontend http://0.0.0.0:3042 --no-full --name client -f web/frontend/src/client
 ```
 
-Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend) documentation to know about the available options.
+The Massimo CLI will generate `client.mjs`, `client-types.d.ts`, `client.openapi.json`. Refer to the [massimo documentation](https://docs.platformatic.dev/) to learn more about the [Client](https://massimohttp.dev/reference/frontend/) and [CLI](https://massimohttp.dev/reference/cli-reference/).
 
-The Platformatic CLI will generate `frontend-client.mjs`, `frontend-client-types.d.ts`, `frontend-client.openapi.json`. Refer to the [frontend client documentation](https://docs.platformatic.dev/docs/client/frontend) to learn more about the [Client](https://docs.platformatic.dev/docs/client/frontend) and [CLI](https://docs.platformatic.dev/docs/cli).  
-
-
-### React component for CRUD operations 
+### React component for CRUD operations
 
 In this section, you’ll build a React component for CRUD operations using the autogenerated client code provided by Platformatic. The code showcases a `MovieManager.jsx` file that manages movies in a database. You will implement features to create, read, update, and delete movies.
 
-
 ```js
-import { useState, useEffect } from 'react';
-import { setBaseUrl, dbGetMovies, dbCreateMovie, dbUpdateMovie, dbDeleteMovies } from './frontend-client/frontend-client.mjs';
+// web/frontend/src/MoviesManager.jsx
+
+import { useState, useEffect } from 'react'
+import { setBaseUrl, dbGetMovies, dbCreateMovie, dbUpdateMovie, dbDeleteMovies } from './client/client.mjs'
 
 // Set the base URL for the API client
-setBaseUrl(window.location.origin); // Or your specific API base URL
+setBaseUrl(window.location.origin) // Or your specific API base URL
 
-export default function MovieManager() {
-  const [movies, setMovies] = useState([]);
-  const [newMovie, setNewMovie] = useState({ title: '' });
-  const [editMovie, setEditMovie] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+export default function MovieManager () {
+  const [movies, setMovies] = useState([])
+  const [newMovie, setNewMovie] = useState({ title: '' })
+  const [editMovie, setEditMovie] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
-    fetchMovies();
-  }, []);
+    fetchMovies()
+  }, [])
 
   const fetchMovies = async () => {
     try {
-      const response = await dbGetMovies({});
-      setMovies(response);
+      const response = await dbGetMovies({})
+      setMovies(response)
     } catch (error) {
-      console.error('Error fetching movies:', error);
+      console.error('Error fetching movies:', error)
     }
-  };
+  }
 
-  const handleCreateMovie = async (e) => {
-    e.preventDefault();
+  const handleCreateMovie = async e => {
+    e.preventDefault()
     try {
-      await dbCreateMovie(newMovie);
-      setNewMovie({ title: '' });
-      fetchMovies();
+      await dbCreateMovie(newMovie)
+      setNewMovie({ title: '' })
+      fetchMovies()
     } catch (error) {
-      console.error('Error creating movie:', error);
+      console.error('Error creating movie:', error)
     }
-  };
+  }
 
-  const handleEditMovie = async (e) => {
-    e.preventDefault();
+  const handleEditMovie = async e => {
+    e.preventDefault()
     try {
-      await dbUpdateMovie(editMovie);
-      setShowEditModal(false);
-      setEditMovie(null);
-      fetchMovies();
+      await dbUpdateMovie(editMovie)
+      setShowEditModal(false)
+      setEditMovie(null)
+      fetchMovies()
     } catch (error) {
-      console.error('Error updating movie:', error);
+      console.error('Error updating movie:', error)
     }
-  };
+  }
 
-  const handleDeleteMovie = async (id) => {
+  const handleDeleteMovie = async id => {
     try {
-      await dbDeleteMovies({ id });
-      fetchMovies();
+      await dbDeleteMovies({ id })
+      fetchMovies()
     } catch (error) {
-      console.error('Error deleting movie:', error);
+      console.error('Error deleting movie:', error)
     }
-  };
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-6">Movie Management</h1>
-        
+
         {/* Create Movie Form */}
         <form onSubmit={handleCreateMovie} className="mb-8 flex gap-4">
           <input
             type="text"
             placeholder="Enter movie title"
             value={newMovie.title}
-            onChange={(e) => setNewMovie({ title: e.target.value })}
+            onChange={e => setNewMovie({ title: e.target.value })}
             className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
@@ -211,29 +214,30 @@ export default function MovieManager() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {movies.map((movie) => (
+              {movies.map(movie => (
                 <tr key={movie.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{movie.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{movie.title}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => {
-                        setEditMovie(movie);
-                        setShowEditModal(true);
+                        setEditMovie(movie)
+                        setShowEditModal(true)
                       }}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleDeleteMovie(movie.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
+                    <button onClick={() => handleDeleteMovie(movie.id)} className="text-red-600 hover:text-red-900">
                       Delete
                     </button>
                   </td>
@@ -252,7 +256,7 @@ export default function MovieManager() {
                 <input
                   type="text"
                   value={editMovie?.title || ''}
-                  onChange={(e) => setEditMovie({ ...editMovie, title: e.target.value })}
+                  onChange={e => setEditMovie({ ...editMovie, title: e.target.value })}
                   className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <div className="flex justify-end gap-4">
@@ -263,10 +267,7 @@ export default function MovieManager() {
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                  >
+                  <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                     Save Changes
                   </button>
                 </div>
@@ -276,7 +277,7 @@ export default function MovieManager() {
         )}
       </div>
     </div>
-  );
+  )
 }
 ```
 
@@ -286,24 +287,22 @@ This component handles all the CRUD operations for managing movies by interactin
 
 To include this component in your app, import it into your `App.jsx` file:
 
-```js 
-import MovieManager from './MovieManager';
+```js
+import MoviesManager from './MoviesManager'
 import './App.css'
 
-function App() {
+export default function App () {
   return (
     <div>
-      <MovieManager />
+      <MoviesManager />
     </div>
-  );
+  )
 }
-
-export default App;
 ```
 
-The styling for the `MovieManager.jsx` file uses Tailwind CSS.  See the [tailwind documentation](https://tailwindcss.com/docs/installation) on how to install and set it up. 
+The styling for the `MoviesManager.jsx` file uses Tailwind CSS. See the [tailwind documentation](https://tailwindcss.com/docs/installation) on how to install and set it up.
 
-### Start your Server 
+### Start your Server
 
 In the root of your project directory, run the command:
 

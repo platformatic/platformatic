@@ -189,7 +189,7 @@ export async function wrapApplication (
   await generator.writeFiles()
 
   if (install) {
-    logger.info(`Installing dependencies for the application using ${packageManager} ...`)
+    logger.info(`Installing dependencies for the project using ${packageManager} ...`)
     await execa(packageManager, ['install'], {
       cwd: projectDir,
       stdio: 'inherit',
@@ -213,7 +213,7 @@ export async function createPlatformatic (argv) {
   const username = await getUsername()
   const version = await getVersion()
   const greeting = username ? `Hello ${username},` : 'Hello,'
-  await say(`${greeting} welcome to ${version ? `Platformatic ${version}!` : 'Platformatic!'}`)
+  await say(`${greeting} welcome to ${version ? `Watt ${version}!` : 'Watt!'}`)
 
   const logger = pino(
     pretty({
@@ -224,7 +224,10 @@ export async function createPlatformatic (argv) {
 
   const pkgManager = getPkgManager()
   const modules = Array.isArray(args.module) ? args.module : [args.module]
-  await createApplication(logger, pkgManager, modules, args['install'])
+  await createApplication(logger, pkgManager, modules, args['install'], {
+    runtimeConfig: 'watt.json',
+    applicationsFolder: 'web'
+  })
 }
 
 export async function createApplication (
@@ -248,6 +251,7 @@ export async function createApplication (
   if (runtimeConfigFile) {
     shouldChooseProjectDir = false
     projectDir = dirname(runtimeConfigFile)
+    additionalGeneratorOptions.runtimeConfig = basename(runtimeConfigFile)
   } else {
     // Check the current directory for suitable config files
     const applicationRoot = await findApplicationRoot(projectDir)
@@ -503,7 +507,7 @@ export async function createApplication (
     // add pnpm-workspace.yaml file if needed
     const content = `packages:
 # all packages in direct subdirs of packages/
-- 'services/*'
+- 'applications/*'
 - 'services/*'
 - 'web/*'`
     await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)

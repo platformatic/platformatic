@@ -135,7 +135,6 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
 
     if (!packageJson.dependencies[capability]) {
       packageJson.dependencies[capability] = `^${version}`
-      process._rawDebug(packageJson)
       packageJson.devDependencies ??= {}
       packageJson.devDependencies[capability] = undefined
 

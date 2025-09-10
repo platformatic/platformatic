@@ -17,9 +17,7 @@ Observability is crucial for production applications. Watt provides built-in sup
 The fastest way to enable monitoring is during Watt application creation:
 
 ```bash
-wattpm create my-app
-# Select monitoring options during setup
-
+npm create wattpm
 cd my-app
 wattpm dev
 ```
@@ -129,18 +127,22 @@ Add custom metrics to your applications:
 ```javascript
 // applications/api/plugin.js
 module.exports = async function (app) {
+  const { registry, client } = globalThis.platformatic.prometheus
+
   // Counter for API calls
-  const apiCallsCounter = app.metrics.counter({
+  const apiCallsCounter = new Client.Counter({
     name: 'api_calls_total',
     help: 'Total number of API calls',
-    labelNames: ['method', 'endpoint', 'status']
+    labelNames: ['method', 'endpoint', 'status'],
+    registers: [registry]
   })
 
   // Histogram for response times
-  const responseTimeHistogram = app.metrics.histogram({
+  const responseTimeHistogram = new Client.Histogram({
     name: 'api_response_time_seconds',
     help: 'API response time in seconds',
-    buckets: [0.1, 0.5, 1.0, 2.0, 5.0]
+    buckets: [0.1, 0.5, 1.0, 2.0, 5.0],
+    registers: [registry]
   })
 
   app.addHook('onRequest', async (request, reply) => {

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-In this guide we'll create a "modular monolith" Library application. It will be a Platformatic Runtime app which contains multiple Platformatic DB and Gateway applications. We'll learn how to:
+In this guide we'll create a "modular monolith" Library application. It will be a Watt project which contains multiple Platformatic DB and Gateway applications. We'll learn how to:
 
 - Create and configure a [Platformatic Runtime](https://docs.platformatic.dev/docs/reference/runtime/introduction) app with multiple applications
   - Three [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) applications, each with their own databases
@@ -14,6 +14,7 @@ In this guide we'll create a "modular monolith" Library application. It will be 
 The architecture for our Library application will look like this:
 
 <!-- SCREENSHOT: architecture-diagram.png -->
+
 ![Library app architecture diagram](./build-modular-monolith-images/architecture-diagram.png)
 
 The complete code for this tutorial is [available on GitHub](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic).
@@ -39,17 +40,18 @@ npm create wattpm
 And then let's enter the following settings:
 
 ```
+Hello YOURNAME, welcome to Watt 3.0.0!
 ? Where would you like to create your project? library-app
 ? Which kind of application do you want to create? @platformatic/db
 ? What is the name of the application? people-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ? What port do you want to use? 3042
 ```
 
-After answering these questions, the creator will create all the files for the `people-application`. 
+After answering these questions, the creator will create all the files for the `people-application`.
 
 Once the creator has finished, our `library-app` directory should look like this:
 
@@ -87,6 +89,7 @@ We'll see a warning message displayed like this in our terminal:
 ```
 
 <!-- SCREENSHOT: start-the-runtime-app-01.png -->
+
 ![Start the Runtime app - 01](./build-modular-monolith-images/start-the-runtime-app-01.png)
 
 If we open up the API documentation for our People application at http://127.0.0.1:3042/documentation/ we will just see the `/example` route.
@@ -124,13 +127,7 @@ Then, let's create `web/people-application/migrations/001.undo.sql` with the fol
 DROP TABLE people;
 ```
 
-Now in another terminal, let's change into the `people-application` directory:
-
-```bash
-cd web/people-application
-```
-
-And apply our migration:
+Now in another terminal, let's apply our migration:
 
 ```bash
 npx wattpm people-application:migrations:apply
@@ -145,14 +142,7 @@ Let's create a new file, `web/people-application/seed.js`, and add this code to 
 
 'use strict'
 
-const people = [
-  'Stephen King',
-  'Miranda July',
-  'Lewis Carroll',
-  'Martha Schumacher',
-  'Mick Garris',
-  'Dede Gardner'
-]
+const people = ['Stephen King', 'Miranda July', 'Lewis Carroll', 'Martha Schumacher', 'Mick Garris', 'Dede Gardner']
 
 module.exports = async function ({ entities, logger }) {
   for (const name of people) {
@@ -191,13 +181,14 @@ Created person: {
 [18:06:05] INFO: seeding complete
 ```
 
-> You can learn more about seeding the database for a Platformatic DB app [in this guide](https://docs.platformatic.dev/docs/guides/seed-a-database?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
+> You can learn more about seeding the database for a Platformatic DB app [in this guide](https://docs.platformatic.dev/docs/reference/db/seed).
 
 ### Test the People application
 
 Let's refresh the API documentation page for our People application (http://127.0.0.1:3042/documentation/). We should now see all the `/people` API routes that Platformatic DB has automatically generated based on our database schema.
 
 <!-- SCREENSHOT: test-the-people-service-01.png -->
+
 ![Test the People application - 01](./build-modular-monolith-images/test-the-people-service-01.png)
 
 Now we can test our People application API by making a request to it with cURL:
@@ -209,7 +200,14 @@ curl localhost:3042/people/
 We should receive a response like this:
 
 ```json
-[{"id":1,"name":"Stephen King","createdAt":"1687827965773","updatedAt":"1687827965773"},{"id":2,"name":"Miranda July","createdAt":"1687827965778","updatedAt":"1687827965778"},{"id":3,"name":"Lewis Carroll","createdAt":"1687827965780","updatedAt":"1687827965780"},{"id":4,"name":"Martha Schumacher","createdAt":"1687827965782","updatedAt":"1687827965782"},{"id":5,"name":"Mick Garris","createdAt":"1687827965784","updatedAt":"1687827965784"},{"id":6,"name":"Dede Gardner","createdAt":"1687827965786","updatedAt":"1687827965786"}]
+[
+  { "id": 1, "name": "Stephen King", "createdAt": "1687827965773", "updatedAt": "1687827965773" },
+  { "id": 2, "name": "Miranda July", "createdAt": "1687827965778", "updatedAt": "1687827965778" },
+  { "id": 3, "name": "Lewis Carroll", "createdAt": "1687827965780", "updatedAt": "1687827965780" },
+  { "id": 4, "name": "Martha Schumacher", "createdAt": "1687827965782", "updatedAt": "1687827965782" },
+  { "id": 5, "name": "Mick Garris", "createdAt": "1687827965784", "updatedAt": "1687827965784" },
+  { "id": 6, "name": "Dede Gardner", "createdAt": "1687827965786", "updatedAt": "1687827965786" }
+]
 ```
 
 ## Create a Platformatic DB application: Books application
@@ -225,13 +223,15 @@ npm create wattpm
 And then let's enter the following settings:
 
 ```
+Hello YOURNAME, welcome to Watt 3.0.0!
+Using existing configuration ...
 ? Which kind of application do you want to create? @platformatic/db
 ? What is the name of the application? books-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
+? Do you want to use TypeScript? no
 ? Do you want to create another application? no
 ? Which application should be exposed? books-application
-? Do you want to use TypeScript? no
 ```
 
 Once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/books-application/` directory.
@@ -263,13 +263,7 @@ Then, let's create `web/books-application/migrations/001.undo.sql` with the foll
 DROP TABLE books;
 ```
 
-Now we'll change into the `books-application` directory:
-
-```bash
-cd web/books-application
-```
-
-And apply our migration:
+Now let's apply our migration:
 
 ```bash
 npx wattpm books-application:migrations:apply
@@ -296,7 +290,7 @@ const books = [
     publishedYear: 2007
   },
   {
-    title: 'Alice\'s Adventures in Wonderland',
+    title: "Alice's Adventures in Wonderland",
     authorId: 3, // Lewis Carroll
     publishedYear: 1865
   }
@@ -310,7 +304,6 @@ module.exports = async function ({ entities, logger }) {
   }
 }
 ```
-
 
 Now let's populate the database
 
@@ -365,12 +358,38 @@ curl localhost:3042/books/
 The response should look like this:
 
 ```json
-[{"id":1,"title":"Fairy Tale","authorId":1,"publishedYear":2022,"createdAt":"1687893211326","updatedAt":"1687893211326"},{"id":2,"title":"No One Belongs Here More Than You","authorId":2,"publishedYear":2007,"createdAt":"1687893211333","updatedAt":"1687893211333"},{"id":3,"title":"Alice's Adventures in Wonderland","authorId":3,"publishedYear":1865,"createdAt":"1687893211336","updatedAt":"1687893211336"}]
+[
+  {
+    "id": 1,
+    "title": "Fairy Tale",
+    "authorId": 1,
+    "publishedYear": 2022,
+    "createdAt": "1687893211326",
+    "updatedAt": "1687893211326"
+  },
+  {
+    "id": 2,
+    "title": "No One Belongs Here More Than You",
+    "authorId": 2,
+    "publishedYear": 2007,
+    "createdAt": "1687893211333",
+    "updatedAt": "1687893211333"
+  },
+  {
+    "id": 3,
+    "title": "Alice's Adventures in Wonderland",
+    "authorId": 3,
+    "publishedYear": 1865,
+    "createdAt": "1687893211336",
+    "updatedAt": "1687893211336"
+  }
+]
 ```
 
 If we open up the API documentation for our Books application at http://127.0.0.1:3042/documentation/, we can see all of its routes:
 
 <!-- SCREENSHOT: test-the-books-service-api-01.png -->
+
 ![Test the Books Application API 01](./build-modular-monolith-images/test-the-books-service-api-01.png)
 
 ## Create a Platformatic DB application: Movies application
@@ -386,12 +405,14 @@ npm create wattpm
 And then let's enter the following settings:
 
 ```bash
+Hello YOURNAME, welcome to Watt 3.0.0!
+Using existing configuration ...
 ? Which kind of application do you want to create? @platformatic/db
 ? What is the name of the application? movies-application
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? no
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ```
 
 Similarly to before, once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/movies-application/` directory.
@@ -424,13 +445,7 @@ Then, let's create `web/movies-application/migrations/001.undo.sql` with the fol
 DROP TABLE movies;
 ```
 
-Now we'll change into the `movies-application` directory:
-
-```bash
-cd web/movies-application
-```
-
-And apply our migration:
+Now let's apply our migration:
 
 ```bash
 npx wattpm movies-application:migrations:apply
@@ -474,7 +489,6 @@ module.exports = async function ({ entities, logger }) {
   }
 }
 ```
-
 
 Now let's populate the database
 
@@ -530,12 +544,41 @@ curl localhost:3042/movies/
 And we should then receive a response like this:
 
 ```json
-[{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687895004362","updatedAt":"1687895004362"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687895004369","updatedAt":"1687895004369"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687895004372","updatedAt":"1687895004372"}]
+[
+  {
+    "id": 1,
+    "title": "Maximum Overdrive",
+    "directorId": 1,
+    "producerId": 4,
+    "releasedYear": 1986,
+    "createdAt": "1687895004362",
+    "updatedAt": "1687895004362"
+  },
+  {
+    "id": 2,
+    "title": "The Shining",
+    "directorId": 5,
+    "producerId": 1,
+    "releasedYear": 1980,
+    "createdAt": "1687895004369",
+    "updatedAt": "1687895004369"
+  },
+  {
+    "id": 3,
+    "title": "Kajillionaire",
+    "directorId": 2,
+    "producerId": 6,
+    "releasedYear": 2020,
+    "createdAt": "1687895004372",
+    "updatedAt": "1687895004372"
+  }
+]
 ```
 
 If we open up the Swagger UI documentation at http://127.0.0.1:3042/documentation/, we can see all of our Movie application's API routes:
 
 <!-- SCREENSHOT: test-the-movies-service-api-01.png -->
+
 ![Test the Movies application API - 01](./build-modular-monolith-images/test-the-movies-service-api-01.png)
 
 ## Create a Gateway application: Media application
@@ -550,11 +593,13 @@ npm create wattpm
 
 And then let's enter the following settings:
 
-``` bash
+```bash
+Hello YOURNAME, welcome to Watt 3.0.0!
+Using existing configuration ...
 ? Which kind of application do you want to create? @platformatic/gateway
 ? What is the name of the application? media-application
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ```
 
 Once the command has finished, we'll see that our Platformatic Gateway application has been created in the `web/media-application` directory.
@@ -569,10 +614,10 @@ Let's open up `web/media-application/platformatic.json` and replace the `service
 // web/media-application/platformatic.json
 
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.64.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   ...,
   "gateway": {
-    "services": [
+    "applications": [
       {
         "id": "books-application",
         "openapi": {
@@ -612,6 +657,12 @@ To expose our Media application, we need to change the `entrypoint` in `watt.jso
 }
 ```
 
+We now have to remove sample route in the books and media services to make sure they don't conflict.
+
+```bash
+rm web/movies-application/routes/root.js web/books-application/routes/root.js
+```
+
 And then stop (`CTRL+C`) and start our Library app:
 
 ```bash
@@ -621,6 +672,7 @@ npm start
 Now let's open up the Media application's API documentation at http://127.0.0.1:3042/documentation/. Here we can see that our Media application is composing all of our Books and Movie applications' API routes into a single REST API:
 
 <!-- SCREENSHOT: test-the-composed-media-service-api-01.png -->
+
 ![Test the Composed Media Application API - 01](./build-modular-monolith-images/test-the-composed-media-service-api-01.png)
 
 Now let's test our composed Media application API by making a request to retrieve books:
@@ -632,7 +684,32 @@ curl localhost:3042/books/
 We should receive a response like this:
 
 ```json
-[{"id":1,"title":"Fairy Tale","authorId":1,"publishedYear":2022,"createdAt":"1687893211326","updatedAt":"1687893211326"},{"id":2,"title":"No One Belongs Here More Than You","authorId":2,"publishedYear":2007,"createdAt":"1687893211333","updatedAt":"1687893211333"},{"id":3,"title":"Alice's Adventures in Wonderland","authorId":3,"publishedYear":1865,"createdAt":"1687893211336","updatedAt":"1687893211336"}]
+[
+  {
+    "id": 1,
+    "title": "Fairy Tale",
+    "authorId": 1,
+    "publishedYear": 2022,
+    "createdAt": "1687893211326",
+    "updatedAt": "1687893211326"
+  },
+  {
+    "id": 2,
+    "title": "No One Belongs Here More Than You",
+    "authorId": 2,
+    "publishedYear": 2007,
+    "createdAt": "1687893211333",
+    "updatedAt": "1687893211333"
+  },
+  {
+    "id": 3,
+    "title": "Alice's Adventures in Wonderland",
+    "authorId": 3,
+    "publishedYear": 1865,
+    "createdAt": "1687893211336",
+    "updatedAt": "1687893211336"
+  }
+]
 ```
 
 And then we can make a request to retrieve movies through the Media application API:
@@ -644,7 +721,35 @@ curl localhost:3042/movies/
 We should receive a response like this:
 
 ```json
-[{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687895004362","updatedAt":"1687895004362"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687895004369","updatedAt":"1687895004369"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687895004372","updatedAt":"1687895004372"}]
+[
+  {
+    "id": 1,
+    "title": "Maximum Overdrive",
+    "directorId": 1,
+    "producerId": 4,
+    "releasedYear": 1986,
+    "createdAt": "1687895004362",
+    "updatedAt": "1687895004362"
+  },
+  {
+    "id": 2,
+    "title": "The Shining",
+    "directorId": 5,
+    "producerId": 1,
+    "releasedYear": 1980,
+    "createdAt": "1687895004369",
+    "updatedAt": "1687895004369"
+  },
+  {
+    "id": 3,
+    "title": "Kajillionaire",
+    "directorId": 2,
+    "producerId": 6,
+    "releasedYear": 2020,
+    "createdAt": "1687895004372",
+    "updatedAt": "1687895004372"
+  }
+]
 ```
 
 > If Gateway has already generated a composed API, but later is unable to retrieve the OpenAPI schema for a service, it will remove the routes for that service from the composed API. Those routes will then return a 404 error response.
@@ -732,6 +837,7 @@ Now let's open up `web/media-application/platformatic.json` and configure the Me
 If we open up the API documentation for our Media application at http://127.0.0.1:3042/documentation/, we should now see that only the composed `GET` routes are available:
 
 <!-- SCREENSHOT: make-the-composed-media-service-api-read-only-01.png -->
+
 ![Make the Composed Media Application API Read Only - 01](./build-modular-monolith-images/make-the-composed-media-service-api-read-only-01.png)
 
 > As well as allowing us to ignore specific routes, Platformatic Gateway also supports aliasing for route paths and the renaming of route response fields. See the [Gateway OpenAPI](https://docs.platformatic.dev/docs/reference/gateway/configuration?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#openapi-configuration) documentation to learn more.
@@ -746,60 +852,42 @@ First, let's change into the directory for our Media application:
 cd web/media-application/
 ```
 
-And then let's install [`@platformatic/client`](https://www.npmjs.com/package/@platformatic/client?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) as a dependency:
+And then let's install [`massimo`](https://massimohttp.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) as a dependency:
 
 ```bash
-npm install @platformatic/client
+npm install massimo
 ```
 
-Now we can generate a client for the People application:
+Now we can generate a client for the People application. We will use Watt to export the schema to a JSON as the service is not currently exposed.
 
 ```bash
-npx --package @platformatic/client-cli plt-client --name people --runtime people-application --folder clients/people/
+mkdir -p clients/people
+npx wattpm people-application:schema openapi > clients/people/people.openapi.json
+npx massimo-cli --name people --folder clients/people clients/people/people.openapi.json
 ```
 
-We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People application's OpenAPI schema and types that we can use when we integrate the client with our Media application. If we open up `platformatic.json`, we'll also see that a `clients` block like this has been added:
+We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People application's OpenAPI schema and types that we can use when we integrate the client with our Media application.
 
-```json
-// web/media-application/platformatic.json
-
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
-  ...,
-  "clients": [
-    {
-      "schema": "clients/people/people.openapi.json",
-      "name": "people",
-      "type": "openapi",
-      "serviceId": "people-application"
-    }
-  ],
-  ...
-}
-```
-
-This configuration will make the People application client available as `app.people` inside any plugins that we create for our Media application.
-
-To create the skeleton structure for our plugin, let's create a new file, `web/media-application/plugin.js`, and add the following code:
+Now we can create a plugin that uses the client. Let's create a new file, `web/media-application/plugin.js`, and add the following code:
 
 ```javascript
 // web/media-application/plugin.js
 
 'use strict'
 
-const { buildOpenAPIClient } = require("@platformatic/client");
-const { resolve } = require("node:path");
+const { buildOpenAPIClient } = require('massimo')
+const { resolve } = require('node:path')
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function peopleDataPlugin (app) {
   const client = await buildOpenAPIClient({
-    url: "http://people-application.plt.local",
-    path: resolve(__dirname, "clients/people/people.openapi.json"),
-  });
+    url: 'http://people-application.plt.local',
+    path: resolve(__dirname, 'clients/people/people.openapi.json')
+  })
 }
 ```
 
-The code we've just added is the skeleton structure for our plugin. A `@platformatic/client` is instantiated out of the OpenAPI specification.
+The code we've just added is the skeleton structure for our plugin. A `massimo` is instantiated out of the OpenAPI specification.
 
 To be able to modify the responses that are sent from one of our Media application's composed API routes, we need to add a Gateway `onRoute` hook for the route, and then set an `onGatewayResponse` callback function inside it, for example:
 
@@ -836,11 +924,11 @@ function buildOnGatewayResponseCallback (peopleProps) {
       }
     }
 
-    const people = await client.getPeople({ "where.id.in": peopleIds.join(',') })
+    const people = await client.getPeople({ 'where.id.in': peopleIds.join(',') })
 
-    const getPersonNameById = (id) => {
+    const getPersonNameById = id => {
       const person = people.find(person => person.id === id)
-      return (person) ? person.name : null
+      return person ? person.name : null
     }
 
     for (let entity of entities) {
@@ -869,7 +957,7 @@ Now, let's add this function after the `buildOnGatewayResponseCallback` function
 
 function booksOnRouteHook (routeOptions) {
   const responseSchema = routeOptions.schema.response[200]
-  const entitySchema = (responseSchema.items) ? responseSchema.items : responseSchema
+  const entitySchema = responseSchema.items ? responseSchema.items : responseSchema
   entitySchema.properties.authorName = { type: 'string' }
   entitySchema.required ??= []
   entitySchema.required.push('authorName')
@@ -895,7 +983,7 @@ Now we can configure the Media application to load our new plugin. Let's open up
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   ...,
   "plugins": {
     "paths": [
@@ -928,7 +1016,7 @@ First, let's add this function inside the `peopleDataPlugin`, after the other co
 
 function moviesOnRouteHook (routeOptions) {
   const responseSchema = routeOptions.schema.response[200]
-  const entitySchema = (responseSchema.items) ? responseSchema.items : responseSchema
+  const entitySchema = responseSchema.items ? responseSchema.items : responseSchema
   entitySchema.properties.directorName = { type: 'string' }
   entitySchema.properties.producerName = { type: 'string' }
   entitySchema.required ??= []
@@ -968,7 +1056,7 @@ curl localhost:3042/movies/3 | grep 'Name'
 
 ### Configure a service proxy to debug the People application API
 
-Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`services[].proxy`](https://docs.platformatic.dev/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
+Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`applications[].proxy`](https://docs.platformatic.dev/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
 
 Let's try this out by adding another service to the `services` in `platformatic.json`:
 
@@ -979,7 +1067,7 @@ Let's try this out by adding another service to the `services` in `platformatic.
     "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
     ...,
     "gateway": {
-      "services": [
+      "applications": [
         ...,
         {
           "id": "movies-application",
@@ -1013,7 +1101,14 @@ curl localhost:3042/people-application/people/
 We should receive a response like this from the People application's `/people` route:
 
 ```json
-[{"id":1,"name":"Stephen King","createdAt":"1687891503369","updatedAt":"1687891503369"},{"id":2,"name":"Miranda July","createdAt":"1687891503375","updatedAt":"1687891503375"},{"id":3,"name":"Lewis Carroll","createdAt":"1687891503377","updatedAt":"1687891503377"},{"id":4,"name":"Martha Schumacher","createdAt":"1687891503379","updatedAt":"1687891503379"},{"id":5,"name":"Mick Garris","createdAt":"1687891503381","updatedAt":"1687891503381"},{"id":6,"name":"Dede Gardner","createdAt":"1687891503383","updatedAt":"1687891503383"}]
+[
+  { "id": 1, "name": "Stephen King", "createdAt": "1687891503369", "updatedAt": "1687891503369" },
+  { "id": 2, "name": "Miranda July", "createdAt": "1687891503375", "updatedAt": "1687891503375" },
+  { "id": 3, "name": "Lewis Carroll", "createdAt": "1687891503377", "updatedAt": "1687891503377" },
+  { "id": 4, "name": "Martha Schumacher", "createdAt": "1687891503379", "updatedAt": "1687891503379" },
+  { "id": 5, "name": "Mick Garris", "createdAt": "1687891503381", "updatedAt": "1687891503381" },
+  { "id": 6, "name": "Dede Gardner", "createdAt": "1687891503383", "updatedAt": "1687891503383" }
+]
 ```
 
 Although the Gateway service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.json`:
@@ -1074,7 +1169,7 @@ This allows you to then run scripts for all applications, for example `pnpm run 
 
 If you've followed this tutorial step-by-step, you should now have a Platformatic Runtime app with four separate applications that work together to provide a unified API. You can find the full application code [on GitHub](https://github.com/platformatic/examples/tree/main/applications/build-modular-monolith-with-platformatic?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
 
-You can watch Platformatic Runtime and Gateway in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created for our [Papilio Launch](https://papilio.platformatic.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog):
+You can watch Platformatic Runtime and Gateway in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created:
 
 - [Introducing: Platformatic Runtime](https://www.youtube.com/watch?v=KGzAURD8mcc&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=2?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 - [Introducing: Platformatic Gateway](https://www.youtube.com/watch?v=0DeNIeSnH0E&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=3?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)

@@ -1,10 +1,12 @@
 # Telemetry with Jaeger
 
 ## Introduction
+
 Platformatic supports Open Telemetry integration. This allows you to send telemetry data to one of the OTLP compatible servers ([see here](https://opentelemetry.io/ecosystem/vendors/)) or to a Zipkin server. Let's show this with [Jaeger](https://www.jaegertracing.io/).
 
 ## Jaeger setup
-The quickest way is to use docker: 
+
+The quickest way is to use docker:
 
 ```bash
 docker run -d --name jaeger \
@@ -14,6 +16,7 @@ docker run -d --name jaeger \
   -p 4318:4318 \
   jaegertracing/all-in-one:latest
 ```
+
 Check that the server is running by opening [http://localhost:16686/](http://localhost:16686/) in your browser.
 
 ## Platformatic setup
@@ -34,40 +37,16 @@ npm create wattpm
 
 To make it simple, use `sqlite` and create/apply the default migrations. This DB Application is exposed on port `5042`:
 
-```bash 
-Hello User, welcome to Watt 2.64.0!
+```bash
+Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? Where would you like to create your project? .
 ? Which kind of application do you want to create? @platformatic/db
 ? What is the name of the application? main
 ? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? yes
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ? What port do you want to use? 5042
-[12:11:45.131] INFO (504): /work/package.json written!
-[12:11:45.135] INFO (504): /work/watt.json written!
-[12:11:45.137] INFO (504): /work/.env written!
-[12:11:45.138] INFO (504): /work/.env.sample written!
-[12:11:45.138] INFO (504): /work/.gitignore written!
-[12:11:45.139] INFO (504): /work/README.md written!
-[12:11:45.140] INFO (504): /work/web/main/package.json written!
-[12:11:45.141] INFO (504): /work/web/main/platformatic.json written!
-[12:11:45.142] INFO (504): /work/web/main/plugins/example.js written!
-[12:11:45.144] INFO (504): /work/web/main/routes/root.js written!
-[12:11:45.144] INFO (504): /work/web/main/test/helper.js written!
-[12:11:45.145] INFO (504): /work/web/main/test/plugins/example.test.js written!
-[12:11:45.146] INFO (504): /work/web/main/test/routes/root.test.js written!
-[12:11:45.146] INFO (504): /work/web/main/.gitignore written!
-[12:11:45.147] INFO (504): /work/web/main/migrations/001.do.sql written!
-[12:11:45.148] INFO (504): /work/web/main/migrations/001.undo.sql written!
-[12:11:45.148] INFO (504): /work/web/main/README.md written!
-[12:11:45.149] INFO (504): /work/web/main/test/routes/movies.test.js written!
-[12:11:45.149] INFO (504): /work/web/main/plt-env.d.ts written!
-? Do you want to init the git repository? no
-[12:11:46.798] INFO (504): Installing dependencies for the application using npm ...
-[12:11:51.343] INFO (504): Installing dependencies for the application db using npm ...
-[12:11:52.165] INFO (504): Project created successfully, executing post-install actions...
-[12:11:52.166] INFO (504): You are all set! Run `npm start` to start your project.
 ```
 
 Open the `web/main/platformatic.json` file and add the telemetry configuration:
@@ -103,34 +82,13 @@ npm create wattpm
 Then create a `service` on the `5043` port in the folder using `npm create wattpm`:
 
 ```bash
-Hello User, welcome to Watt 2.64.0!
+Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? Where would you like to create your project? .
 ? Which kind of application do you want to create? @platformatic/service
 ? What is the name of the application? main
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ? What port do you want to use? 5043
-[12:14:16.552] INFO (1819): /work/test-service/package.json written!
-[12:14:16.557] INFO (1819): /work/test-service/watt.json written!
-[12:14:16.558] INFO (1819): /work/test-service/.env written!
-[12:14:16.559] INFO (1819): /work/test-service/.env.sample written!
-[12:14:16.560] INFO (1819): /work/test-service/.gitignore written!
-[12:14:16.560] INFO (1819): /work/test-service/README.md written!
-[12:14:16.562] INFO (1819): /work/test-service/web/main/package.json written!
-[12:14:16.563] INFO (1819): /work/test-service/web/main/platformatic.json written!
-[12:14:16.564] INFO (1819): /work/test-service/web/main/plugins/example.js written!
-[12:14:16.566] INFO (1819): /work/test-service/web/main/routes/root.js written!
-[12:14:16.566] INFO (1819): /work/test-service/web/main/test/helper.js written!
-[12:14:16.567] INFO (1819): /work/test-service/web/main/test/plugins/example.test.js written!
-[12:14:16.567] INFO (1819): /work/test-service/web/main/test/routes/root.test.js written!
-[12:14:16.567] INFO (1819): /work/test-service/web/main/.gitignore written!
-[12:14:16.568] INFO (1819): /work/test-service/web/main/plt-env.d.ts written!
-[12:14:16.568] INFO (1819): /work/test-service/web/main/README.md written!
-? Do you want to init the git repository? no
-[12:14:17.793] INFO (1819): Installing dependencies for the application using npm ...
-[12:14:45.663] INFO (1819): Installing dependencies for the service service using npm ...
-[12:14:46.568] INFO (1819): Project created successfully, executing post-install actions...
-[12:14:46.568] INFO (1819): You are all set! Run `npm start` to start your project.
 ```
 
 Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `applicationName`)
@@ -146,15 +104,16 @@ Open the `web/main/platformatic.json` file and add the following telemetry confi
     }
   }
 ```
-We want this application to invoke the DB application, so we need to add a client for `test-db` to it:
+
+We want this application to invoke the DB application, so we need to add a [Massimo client](https://massimohttp.dev/) for `test-db` to it:
 
 ```bash
 cd web/main
-npm install @platformatic/client
-npx --package @platformatic/client-cli plt-client http://127.0.0.1:5042 js --name movies
+npm install massimo
+npx massimo-cli http://127.0.0.1:5042 --name movies
 ```
 
-Then add the url to `web/main.env`:
+Then add the url to `.env`:
 
 ```
 PLT_MOVIES_URL=http://127.0.0.1:5042/
@@ -163,18 +122,17 @@ PLT_MOVIES_URL=http://127.0.0.1:5042/
 Now open `routes/root.js` and changes as follows:
 
 ```javascript
-/// <reference path="../global.d.ts" />
-
 'use strict'
 
-const { buildOpenAPIClient } = require('@platformatic/client')
+const { buildOpenAPIClient } = require('massimo')
 const { resolve } = require('node:path')
 
 module.exports = async function (fastify, opts) {
   const client = await buildOpenAPIClient({
     url: process.env.PLT_MOVIES_URL,
-    path: resolve(__dirname, "../movies/movies.openapi.json"),
-  });
+    path: resolve(__dirname, '../movies/movies.openapi.json'),
+    fullResponse: false
+  })
 
   fastify.get('/movies-length', async (request, reply) => {
     const movies = await client.getMovies()
@@ -192,8 +150,8 @@ npm run start
 ```
 
 ### Platformatic Gateway
-Create at the same level of `test-db` and `test-service` another folder for Gateway and cd into it:
 
+Create at the same level of `test-db` and `test-service` another folder for Gateway and cd into it:
 
 ```bash
 mkdir test-gateway
@@ -202,38 +160,22 @@ npm create wattpm
 ```
 
 ```bash
-Hello User, welcome to Watt 2.64.0!
+Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? Where would you like to create your project? .
 ? Which kind of application do you want to create? @platformatic/gateway
 ? What is the name of the application? main
-? Do you want to create another application? no
 ? Do you want to use TypeScript? no
+? Do you want to create another application? no
 ? What port do you want to use? 5044
-[12:19:25.784] INFO (3205): /work/test-gateway/package.json written!
-[12:19:25.790] INFO (3205): /work/test-gateway/watt.json written!
-[12:19:25.791] INFO (3205): /work/test-gateway/.env written!
-[12:19:25.792] INFO (3205): /work/test-gateway/.env.sample written!
-[12:19:25.793] INFO (3205): /work/test-gateway/.gitignore written!
-[12:19:25.793] INFO (3205): /work/test-gateway/README.md written!
-[12:19:25.794] INFO (3205): /work/test-gateway/web/main/package.json written!
-[12:19:25.795] INFO (3205): /work/test-gateway/web/main/platformatic.json written!
-[12:19:25.796] INFO (3205): /work/test-gateway/web/main/.gitignore written!
-[12:19:25.797] INFO (3205): /work/test-gateway/web/main/plt-env.d.ts written!
-[12:19:25.798] INFO (3205): /work/test-gateway/web/main/README.md written!
-? Do you want to init the git repository? no
-[12:19:26.820] INFO (3205): Installing dependencies for the application using npm ...
-[12:19:57.209] INFO (3205): Installing dependencies for the service main using npm ...
-[12:19:58.573] INFO (3205): Project created successfully, executing post-install actions...
-[12:19:58.573] INFO (3205): You are all set! Run `npm start` to start your project.
 ```
 
 Open `web/main/platformatic.json` and change it to the following:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.64.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   "gateway": {
-    "services": [
+    "applications": [
       {
         "id": "example",
         "origin": "http://127.0.0.1:5043",
@@ -274,21 +216,24 @@ You should see:
 
 To add some data, we can POST directly to the DB application (port `5042`):
 
-```bash 
-curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix"}' http://127.0.0.1:5042/movies 
-curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix Reloaded"}'  http://127.0.0.1:5042/movies 
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix"}' http://127.0.0.1:5042/movies
+curl -X POST -H "Content-Type: application/json" -d '{"title":"The Matrix Reloaded"}'  http://127.0.0.1:5042/movies
 ```
+
 Now, let's check that the gateway (port 5044) is working:
 
 ```bash
 curl http://127.0.0.1:5044/movies-length
 ```
+
 If the gateway is working correctly, you should see:
 
 ```json
-{"length":2}
+{ "length": 2 }
 ```
-However, the main interest of this example is to show how to use the Platformatic Telemetry, so let's check it. 
+
+However, the main interest of this example is to show how to use the Platformatic Telemetry, so let's check it.
 Open the Jaeger UI at [http://localhost:16686/](http://localhost:16686/) and you should see something like this:
 
 ![image](./telemetry-images/jaeger-1.png)
@@ -302,7 +247,8 @@ You can then click on the trace and see the details:
 ![image](./telemetry-images/jaeger-3.png)
 
 Note that every time a request is received or client call is done, a new span is started. So we have:
-- One span for the request received by the `test-gateway` 
+
+- One span for the request received by the `test-gateway`
 - One span for the client call to `test-service`
 - One span for the request received by `test-service`
 - One span for the client call to `test-db`
@@ -311,13 +257,14 @@ Note that every time a request is received or client call is done, a new span is
 All these spans are linked together, so you can see the whole trace.
 
 ## What if you want to use Zipkin?
+
 Starting from this example, it's also possible to run the same test using Zipkin. To do so, you need to start the Zipkin server:
 
 ```bash
 docker run -d -p 9411:9411 openzipkin/zipkin
 ```
 
-Then, you need to change the `telemetry` configuration in all the  `platformatic.*.json` to the following (only the `exporter` object is different`)
+Then, you need to change the `telemetry` configuration in all the `platformatic.*.json` to the following (only the `exporter` object is different`)
 
 ```json
   "telemetry": {
@@ -330,4 +277,5 @@ Then, you need to change the `telemetry` configuration in all the  `platformatic
     }
   }
 ```
+
 The zipkin ui is available at [http://localhost:9411/](http://localhost:9411/)

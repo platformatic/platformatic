@@ -24,7 +24,7 @@ test('install - should install dependencies of autoloaded applications', async t
 
   const installProcess = await wattpmUtils('install', rootDir)
 
-  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the project using npm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application alternative using npm ...'))
 })
@@ -42,7 +42,7 @@ test('install - should install dependencies when loaded vian application file', 
 
   const installProcess = await wattpmUtils('install', resolve(rootDir, 'web/main'))
 
-  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the project using npm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
   ok(!installProcess.stdout.includes('Installing dependencies for the application alternative using npm ...'))
 })
@@ -55,7 +55,7 @@ test('install - should install dependencies of application and its applications 
 
   const installProcess = await wattpmUtils('install', rootDir)
 
-  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the project using npm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
 })
 
@@ -67,7 +67,7 @@ test('install - should install dependencies of application and its applications 
 
   const installProcess = await wattpmUtils('install', rootDir, '-p')
 
-  ok(installProcess.stdout.includes('Installing production dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the project using npm ...'))
   ok(installProcess.stdout.includes('Installing production dependencies for the application main using npm ...'))
 })
 
@@ -79,7 +79,7 @@ test('install - should install dependencies of application and its applications 
 
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'pnpm')
 
-  ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the project using pnpm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application main using pnpm ...'))
 })
 
@@ -102,7 +102,7 @@ test('install - should respect the application package manager, if any', async t
 
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'pnpm')
 
-  ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the project using pnpm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the application main using npm ...'))
 })
 
@@ -114,7 +114,7 @@ test('install - should install production dependencies only', async t => {
 
   const installProcess = await wattpmUtils('install', rootDir, '-p', '-P', 'pnpm')
 
-  ok(installProcess.stdout.includes('Installing production dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the project using pnpm ...'))
   ok(installProcess.stdout.includes('Installing production dependencies for the application main using pnpm ...'))
 })
 

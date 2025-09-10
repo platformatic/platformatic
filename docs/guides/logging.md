@@ -2,11 +2,11 @@
 
 ## Problem
 
-You need to customize logging behavior in your Platformatic application for different environments (development, staging, production) or integrate with external logging systems.
+You need to customize logging behavior in your Watt application for different environments (development, staging, production) or integrate with external logging systems.
 
 ## Solution Overview
 
-Platformatic uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
+Watt uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
 - Set consistent logging across all applications via Watt configuration
 - Override logging for specific applications
 - Integrate with external systems (Elasticsearch, files, etc.)
@@ -394,7 +394,7 @@ A `platformatic.json` configuration file contains the following logger options w
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.60.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
   "logger": {
     "level": "debug",
     "formatters": {
@@ -459,7 +459,7 @@ Watt has a shared logger configuration that is used by all the applications, it 
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.61.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
   "server": {
     "hostname": "{HOSTNAME}",
     "port": "{PORT}"
@@ -480,7 +480,7 @@ The other applications have their own logger configuration, for example the `bac
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.61.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
   "logger": {
     "level": "debug",
     "redact": {
@@ -512,7 +512,7 @@ The `next` application has a custom formatter that adds the `application` proper
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.60.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
   "application": {
     "basePath": "/next"    
   },

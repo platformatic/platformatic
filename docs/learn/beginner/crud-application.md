@@ -4,7 +4,6 @@ label: Build Your First Todo API with Watt
 ---
 
 import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
-import SetupWatt from '../../getting-started/setup-watt.md';
 
 # Build Your First Watt Application
 
@@ -40,18 +39,14 @@ This means you can focus on building features instead of managing infrastructure
 
 Before starting, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
+- [Node.js](https://nodejs.org/) (v22.18.0+)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - A code editor (like VS Code)
 - Basic familiarity with the command line
 
 You'll install the Platformatic CLI during the tutorial.
 
-## Step 1: Create Your Watt Application Server
-
-Let's start by creating a new Watt application. Unlike traditional Node.js development where you might run separate servers for your API, database, and frontend, Watt provides a unified application server that orchestrates all your applications.
-
-### Understanding Watt's Architecture
+## Understanding Watt's Architecture
 
 Watt acts as your **application server** that can host multiple **applications**:
 
@@ -62,13 +57,7 @@ Watt acts as your **application server** that can host multiple **applications**
 
 All applications share the same configuration, logging, and deployment - giving you a unified development experience.
 
-<SetupWatt />
-
-**✓ Success Check:** You should see a `web/` directory created with configuration files inside.
-
-### Experience Watt's Unified Configuration
-
-Take a moment to examine the files Watt created:
+These are the main files used by Watt:
 
 1. **`watt.json`** - Your application server configuration
 2. **`.env`** - Environment variables shared across all applications
@@ -76,7 +65,9 @@ Take a moment to examine the files Watt created:
 
 Notice how Watt uses **one configuration file** and **shared environment variables** for your entire application. This is different from managing separate configurations for each application.
 
-## Step 2: Add Your First Service to Watt
+## Step 1: Create Your Watt Application Server and Add Your First Application
+
+Let's start by creating a new Watt application. Unlike traditional Node.js development where you might run separate servers for your API, database, and frontend, Watt provides a unified application server that orchestrates all your applications.
 
 Now we'll add our first application to the Watt application server - a database application that will automatically create REST and GraphQL APIs from our schema.
 
@@ -90,6 +81,8 @@ Instead of running a separate database server, API server, and frontend server, 
 - **Service communication** - applications can talk to each other seamlessly
 
 Navigate to your web directory and add a database application:
+
+### Run `create-wattpm`
 
 <NewApiProjectInstructions />
 
@@ -214,7 +207,7 @@ npx wattpm db:migrations:apply
 
 **✓ Success Check:** You should see output confirming the migrations were applied. Also notice:
 
-- A `global.d.ts` file was created with TypeScript types
+- A `plt-env.d.ts` file was created with TypeScript types
 - A `types/` folder contains detailed type definitions for your tables
 
 ### Why Auto-Generated Types?

@@ -2,7 +2,6 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 import NewApiProjectInstructions from './new-api-project-instructions.md';
-import SetupWatt from './setup-watt.md';
 
 # Fullstack Guide
 
@@ -20,15 +19,11 @@ While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also su
 
 Before starting, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
-- [npm](https://docs.npmjs.com/cli/) (v7 or higher)
+- [Node.js](https://nodejs.org/) (v22.18.0+)
+- [npm](https://docs.npmjs.com/cli/) (comes wit Node.js)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 
-## Create a Platformatic Watt Application
-
-<SetupWatt />
-
-## Add Platformatic DB application
+## Create a Watt Project with a Platformatic DB application
 
 <NewApiProjectInstructions />
 
@@ -65,12 +60,12 @@ Your API server is now live! 🌟 It will automatically serve REST and GraphQL i
 
 ### Create a Database Schema
 
-Navigate to the `migrations` directory within the `applications` folder of your project directory. This folder contains your database migration files:
+Navigate to the `migrations` directory within the `web/db` folder of your project directory. This folder contains your database migration files:
 
 - `001.do.sql`: contains the SQL statements for creating database objects.
 - `001.undo.sql`: contains the SQL statements to remove database objects.
 
-For the movie quote application, you will need a schema configuration for the movie table and likes. Add the schema configuration below in the `001.do.sql` file to do this:
+For the quote application, you will need a schema configuration for the quotes table and likes. Add the schema configuration below in the `001.do.sql` file to do this:
 
 ```sql
 CREATE TABLE quotes (
@@ -86,20 +81,15 @@ This SQL query creates a database table called "quotes" that stores: a unique ID
 Create a new file `002.do.sql` in the same folder directory and add a schema below:
 
 ```sql
-CREATE TABLE movies (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE
-);
-
-ALTER TABLE quotes ADD COLUMN movie_id INTEGER DEFAULT 0 REFERENCES movies(id);
+ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
 ```
 
-This schema stores the movie `IDs` and the movie `names`, adds a new column that links each movie quote to a specific `movie` in the movies table.
+This schema adds the likes column.
 
-Now create a `003.do.sql` and add the schema configuration below:
+Finally, execute your migrations by running:
 
-```sql
-ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
+```sh
+wattpm db:migrations:apply
 ```
 
 ### Create a Like Quotes Plugin
@@ -107,12 +97,7 @@ ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
 You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB applications.
 
 ```js
-'use strict'
-
-const S = require('fluent-json-schema')
-
-/** @param {import('fastify').FastifyInstance} app */
-module.exports = async function plugin (app) {
+export default async function plugin (app) {
   async function incrementQuoteLikes (id) {
     const { db, sql } = app.platformatic
     const result = await db.query(sql`
@@ -122,19 +107,26 @@ module.exports = async function plugin (app) {
   }
 
   const schema = {
-    params: S.object().prop('id', app.getSchema('Quote').properties.id)
+    params: {
+      type: 'object',
+      properties: {
+        id: app.getSchema('Quote').properties.id
+      },
+      required: ['id'],
+      additionalProperties: false
+    }
   }
 
   // Check if the route already exists
   if (!app.hasRoute({ method: 'POST', url: '/quotes/:id/like' })) {
-    app.post('/quotes/:id/like', { schema }, async function (request, reply) {
+    app.post('/quotes/:id/like', { schema }, async function (request) {
       return { likes: await incrementQuoteLikes(request.params.id) }
     })
   }
 }
 ```
 
-Here, you've created a API endpoint that lets users like a quote in the database. `incrementQuoteLikes` function updates the database by adding 1 to the `quote`'s `likes` count. The `fluent-json-schema` checks that the quote `ID` is valid.
+Here, you've created a API endpoint that lets users like a quote in the database. `incrementQuoteLikes` function updates the database by adding 1 to the `quote`'s `likes` count. The schema checks that the quote `ID` is valid.
 
 ### Apply Schema Migrations
 
@@ -148,7 +140,7 @@ npx wattpm db:migrations:apply
 
 [Platformatic Gateway](../reference/gateway/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic gateway to aggregate the DB application, and your frontend application.
 
-Inside `web` folder, let's create a new Platformatic Gateway
+Let's create a new Platformatic Gateway
 
 ```bash
 npm create wattpm
@@ -157,24 +149,13 @@ npm create wattpm
 This will output:
 
 ```
-Hello Fortune Ikechi, welcome to Platformatic 2.64.0
+Hello YOURNAME, welcome to Watt 3.0.0!
 Using existing configuration ...
 ? Which kind of application do you want to create? @platformatic/gateway
 ? What is the name of the application? gateway
+? Do you want to use TypeScript? no
 ? Do you want to create another application? no
 ? Which application should be exposed? gateway
-? Do you want to use TypeScript? no
-[16:06:50] INFO: /Users/tmp/my-app/.env written!
-[16:06:50] INFO: /Users/tmp/my-app/.env.sample written!
-[16:06:50] INFO: /Users/tmp/my-app/web/gateway/package.json written!
-[16:06:50] INFO: /Users/tmp/my-app/web/gateway/platformatic.json written!
-[16:06:50] INFO: /Users/tmp/my-app/web/gateway/.gitignore written!
-[16:06:50] INFO: /Users/tmp/my-app/web/gateway/plt-env.d.ts written!
-[16:06:50] INFO: /Users/tmp/my-app/web/gateway/README.md written!
-[16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the application gateway using npm ...
-[16:06:52] INFO: Project created successfully, executing post-install actions...
-[16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
 
 ### Add applications to gateway
@@ -183,7 +164,7 @@ In your `web/gateway` directory, select the `platformatic.json` file and add the
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.5.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -195,7 +176,6 @@ In your `web/gateway` directory, select the `platformatic.json` file and add the
     ],
     "refreshTimeout": 1000
   },
-
   "watch": true
 }
 ```
@@ -205,31 +185,25 @@ In your `web/gateway` directory, select the `platformatic.json` file and add the
 Next steps is to add a React (vite) frontend for the movie quotes app. Run the command to create a React.js application:
 
 ```sh
-npm create vite@latest frontend -- --template react
+npm create vite@latest -- web/frontend --template react
 ```
 
-which will output:
+Now run `wattpm-utils` to import the frontend into Watt. The command will output:
 
-```sh
-> npx
-> create-vite frontend --template react
-
-
-Scaffolding project in /Users/fortuneikechi/Desktop/frontend...
-
-Done. Now run:
-
-  cd frontend
-  npm install
-  npm run dev
+```
+[15:19:48.110] INFO (54409): Application frontend is using Vite. Adding @platformatic/vite to its package.json dependencies.
+[15:19:48.132] INFO (54409): Installing dependencies for the project using npm ...
+[15:19:56.608] INFO (54409): Installing dependencies for the application db using npm ...
+[15:20:00.643] INFO (54409): Installing dependencies for the application frontend using npm ...
+[15:20:01.257] INFO (54409): Installing dependencies for the application gateway using npm ...
 ```
 
-### Setting Up the Platformatic Frontend Client
+### Setting Up the Frontend Client
 
-To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server:
+To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Massimo client](https://massimohttp.dev/) for your remote server:
 
 ```sh
-npx --package @platformatic/client-cli plt-client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
+npx massimo-cli --frontend http://0.0.0.0:3042 --name client -f web/frontend/src/client
 ```
 
 This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and gateway application.
@@ -245,13 +219,13 @@ npm install tailwindcss postcss autoprefixer
 Set up **Tailwind CSS** by creating the necessary configuration files:
 
 ```sh
-npx tailwindcss init -p
+npm create tailwindcss
 ```
 
 Ensure your `tailwind.config.js` points to the correct paths for your components:
 
 ```js
-module.exports = {
+export default {
   content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
   theme: {
     extend: {}
@@ -274,18 +248,12 @@ Here’s the complete `QuoteList` component:
 
 ```js
 import { useState, useEffect } from 'react'
-import {
-  setBaseUrl,
-  dbGetQuotes,
-  dbCreateQuote,
-  dbDeleteQuotes,
-  postQuotesIdLike
-} from '../frontend-client/frontend-client.mjs'
+import { setBaseUrl, dbGetQuotes, dbCreateQuote, dbDeleteQuotes, postQuotesIdLike } from '../client/client.mjs'
 
 // Set the base URL for the API client
 setBaseUrl(window.location.origin) // Or your specific API base URL
 
-const QuoteList = () => {
+export default function QuoteList () {
   const [quotes, setQuotes] = useState([])
   const [error, setError] = useState(null)
   const [newQuote, setNewQuote] = useState({ quote: '', saidBy: '' })
@@ -411,8 +379,6 @@ const QuoteList = () => {
     </div>
   )
 }
-
-export default QuoteList
 ```
 
 ### Integrating the `QuoteList` Component
@@ -422,15 +388,13 @@ Update your main app file `src/App.jsx` to include the QuoteList component:
 ```js
 import QuoteList from './components/QuoteList'
 
-function App () {
+export default function App () {
   return (
     <div className="App">
       <QuoteList />
     </div>
   )
 }
-
-export default App
 ```
 
 #### Add frontend to Gateway
@@ -439,7 +403,7 @@ In your `web/gateway` directory, add the frontend `id` to your gateway `platform
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.5.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -454,7 +418,6 @@ In your `web/gateway` directory, add the frontend `id` to your gateway `platform
     ],
     "refreshTimeout": 1000
   },
-
   "watch": true
 }
 ```

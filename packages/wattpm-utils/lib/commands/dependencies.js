@@ -57,9 +57,7 @@ export async function installDependencies (logger, root, applications, productio
 
   // Install dependencies of the application
   try {
-    logger.info(
-      `Installing ${production ? 'production ' : ''}dependencies for the application using ${packageManager} ...`
-    )
+    logger.info(`Installing ${production ? 'production ' : ''}dependencies for the project using ${packageManager} ...`)
 
     await executeCommand(root, packageManager, args, {
       cwd: root,
@@ -265,7 +263,14 @@ export async function updateCommand (logger, args) {
 
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
-    await updateDependencies(logger, latest, availableVersions, application.path, `the application ${bold(application.id)}`, force)
+    await updateDependencies(
+      logger,
+      latest,
+      availableVersions,
+      application.path,
+      `the application ${bold(application.id)}`,
+      force
+    )
   }
 
   logger.done('All dependencies have been updated.')

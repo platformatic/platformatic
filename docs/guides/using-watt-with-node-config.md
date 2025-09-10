@@ -3,12 +3,14 @@
 ## Problem
 
 You need sophisticated configuration management for your Watt application that:
+
 - Organizes settings across multiple environments (dev, staging, production)
 - Supports complex configuration hierarchies and inheritance
 - Validates configuration values at startup
 - Allows per-application configuration in multi-application applications
 
 **When to use this solution:**
+
 - Applications with complex configuration requirements
 - Multi-environment deployments with different settings
 - Team environments where configuration consistency is critical
@@ -17,12 +19,11 @@ You need sophisticated configuration management for your Watt application that:
 ## Solution Overview
 
 [Node-config](https://www.npmjs.com/package/config) provides hierarchical configuration management that works seamlessly with Watt. This guide shows you how to:
+
 1. Set up node-config in your Watt application
 2. Create environment-specific configurations
 3. Configure individual applications with their own settings
 4. Validate and access configuration values safely
-
-
 
 ## Installation and Setup
 
@@ -47,7 +48,7 @@ In `{application}/config/default.json`, add your base configuration:
 }
 ```
 
-## Environment-specific configuration 
+## Environment-specific configuration
 
 For development-specific settings, create a separate configuration file:
 
@@ -85,12 +86,12 @@ Instead of using simple key-value pairs, consider organizing your configurations
 ```
 
 :::important
-It's important to note that for a secure configuration, use your environment variables for your application  secrets and validate your configuration values when you run your application. 
+It's important to note that for a secure configuration, use your environment variables for your application secrets and validate your configuration values when you run your application.
 :::
 
-## Application-Specific Configuration 
+## Application-Specific Configuration
 
-You can configure each [application](https://platformatic.dev/docs/service/overview) environment variables in your Watt configuration file:
+You can configure each application's environment variables in your Watt configuration file:
 
 ```json
 {
@@ -117,7 +118,7 @@ You can configure each [application](https://platformatic.dev/docs/service/overv
 
 Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `application-a` directory:
 
-1.  Set your application-specific environment variable: 
+1.  Set your application-specific environment variable:
 
 ```sh
 APPLICATION_A_NODE_ENV=development
@@ -187,16 +188,17 @@ When you start your application, `node-config` automatically loads the appropria
 For production mode:
 
 ```sh
-npm start 
+wattpm start
 ```
 
 For development mode:
 
 ```sh
-NODE_ENV=development npm start
+wattpm dev
 ```
 
 ## **Advanced Usage Tips**
+
 `node-config` follows this loading order:
 
 1. `default.json` (base configuration)
@@ -227,6 +229,7 @@ We recommend using schema validation libraries like [TypeBox](https://github.com
 ### Test Configuration Loading
 
 **1. Create a test script to verify configuration:**
+
 ```js
 // test-config.js
 import config from 'config'
@@ -248,6 +251,7 @@ try {
 ```
 
 **2. Test different environments:**
+
 ```bash
 # Test default configuration
 node test-config.js
@@ -255,16 +259,17 @@ node test-config.js
 # Test development environment
 NODE_ENV=development node test-config.js
 
-# Test production environment  
+# Test production environment
 NODE_ENV=production node test-config.js
 ```
 
 ### Verify Service-Specific Configuration
 
 **Test that each application loads its own configuration:**
+
 ```bash
 # Start your Watt application
-npm run dev
+wattpm dev
 
 # Check application logs for configuration loading
 # Each application should show its specific config values
@@ -277,6 +282,7 @@ npm run dev
 **Problem:** Config values are undefined or using defaults
 
 **Solutions:**
+
 - Verify `NODE_CONFIG_DIR` points to correct directory
 - Check configuration file naming (`default.json`, `development.json`, etc.)
 - Ensure JSON syntax is valid
@@ -287,6 +293,7 @@ npm run dev
 **Problem:** Services are using wrong configuration
 
 **Solutions:**
+
 - Check that each application has its own `NODE_CONFIG_DIR` environment variable
 - Verify application-specific configuration files exist
 - Ensure no configuration file naming conflicts
@@ -297,6 +304,7 @@ npm run dev
 **Problem:** Environment variables not being interpolated
 
 **Solutions:**
+
 - Verify environment variables are set before starting application
 - Check interpolation syntax: `${VARIABLE_NAME}`
 - Ensure variables exist in current shell environment

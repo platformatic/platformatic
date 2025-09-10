@@ -31,13 +31,13 @@ test('Creates a Platformatic DB application with no migrations', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'applications'))
+  const applications = await getApplications(join(baseProjectDir, 'web'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'platformatic.json')), true)
+  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   // This is accessible only because is a folder with a .gitkeep file only
   equal(await isFileAccessible(join(baseApplicationDir, 'migrations')), true)
