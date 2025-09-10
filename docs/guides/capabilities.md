@@ -46,7 +46,7 @@ This configuration-first approach ensures predictable behavior and allows develo
 - **Use Case**: For standard Node.js applications that need integration with the Watt runtime
 - **Features**: Basic HTTP server functionality, environment variable management, process management
 
-##### [`@platformatic/composer`](../reference/composer/overview.md)
+##### [`@platformatic/gateway`](../reference/gateway/overview.md)
 
 - **Description**: API gateway for aggregating services
 - **Use Case**: Composing multiple services into a unified API, routing, and service orchestration

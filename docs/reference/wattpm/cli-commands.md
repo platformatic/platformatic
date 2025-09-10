@@ -372,10 +372,12 @@ wattpm pprof start [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, profiles all applications if omitted)
 
 **Example:**
+
 ```bash
 wattpm pprof start                      # Start profiling all applications (auto-detect runtime)
 wattpm pprof start api-application          # Start profiling specific application (auto-detect runtime)
@@ -393,10 +395,12 @@ wattpm pprof stop [id] [application]
 ```
 
 **Arguments:**
+
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, stops profiling all applications if omitted)
 
 **Example:**
+
 ```bash
 wattpm pprof stop                      # Stop profiling all applications (auto-detect runtime)
 wattpm pprof stop api-application          # Stop profiling specific application (auto-detect runtime)
@@ -435,9 +439,9 @@ module.exports = function (runtime, applications) {
     ],
     applications: [
       /* JSON Patch operations for application configs */
-    ],
-  };
-};
+    ]
+  }
+}
 ```
 
 **Example:**
@@ -496,25 +500,6 @@ Displays the current Watt version.
 ```bash
 wattpm version
 ```
-
-## Legacy Platformatic Commands
-
-For backwards compatibility, these commands are available via `platformatic` or `npx platformatic`:
-
-### Application-Specific Commands
-
-- `platformatic db <command>` - Database application commands (create, start, migrations, seed, etc.)
-- `platformatic node <command>` - HTTP application commands (create, start, compile, etc.)
-- `platformatic gateway <command>` - API gateway application commands (create, start, schema fetch, etc.)
-- `platformatic runtime <command>` - Runtime commands (start, compile, etc.)
-
-### Management Commands
-
-- `platformatic ctl <command>` - Control running applications (ps, stop, restart, etc.)
-- `platformatic start` - Generic start command
-- `platformatic upgrade` - Upgrade configuration schemas
-
-For detailed information about these legacy commands, see the [complete CLI reference](../platformatic/cli.md).
 
 ## Configuration Files
 
