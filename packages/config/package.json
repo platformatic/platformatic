@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/config",
-  "version": "2.75.1",
+  "version": "2.75.2",
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {

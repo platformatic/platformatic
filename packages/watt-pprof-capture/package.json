@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/watt-pprof-capture",
-  "version": "2.75.1",
+  "version": "2.75.2",
   "description": "pprof profiling capture for watt",
   "main": "index.js",
   "type": "commonjs",
