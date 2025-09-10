@@ -17,7 +17,7 @@ npm install --save-dev @platformatic/rpc-cli
 ## Usage
 
 1. Register an RPC plugin in your Fastify typescript application.
-See the [Platformatic RPC](https://github.com/platformatic/platformatic/tree/main/packages/rpc#usage) documentation for more information.
+See the [Platformatic RPC](https://github.com/platformatic/platformatic/tree/v2.x/packages/rpc#usage) documentation for more information.
 
 3. Run the CLI command to generate the OpenAPI schema.
 
