@@ -24,7 +24,6 @@ npm start
 ```
 
 ### Explore
+
 - ⚡ The Platformatic Gateway server is running at http://localhost:3042/
 - 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation/
-
-

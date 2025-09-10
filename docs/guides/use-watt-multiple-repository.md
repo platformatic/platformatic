@@ -32,7 +32,7 @@ This guide shows you how to set up and manage a Watt application with multi-repo
 Before starting, ensure you have:
 
 - [Node.js](https://nodejs.org/en) (v22.18.0+)
-- [npm](https://www.npmjs.com/package/npm) (comes wit Node.js)
+- [npm](https://www.npmjs.com/package/npm) (comes with Node.js)
 - Git access to your application repositories
 - A code editor (e.g., [Visual Studio Code](https://code.visualstudio.com))
 

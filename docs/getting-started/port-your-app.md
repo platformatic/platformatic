@@ -28,7 +28,7 @@ Follow these steps to make your project run in Watt:
 
 Before we begin, make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v22.18.0)
+- [Node.js](https://nodejs.org/) (v22.18.0+)
 - A Node.js application to run. These steps have been tested on the official Fastify [demo](https://github.com/fastify/demo).
 
 ### 1. Clone your Project
