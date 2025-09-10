@@ -3,6 +3,7 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createRuntime, readLogs } from './helpers.js'
 import { waitForEvents } from './multiple-workers/helper.js'
@@ -92,4 +93,35 @@ test('set the spaces memory correctly when maxHeapTotal is a string', async t =>
     strictEqual(resourceLimits.maxOldGenerationSizeMb, 192)
     strictEqual(resourceLimits.maxYoungGenerationSizeMb, 64)
   }
+})
+
+test('should continously monitor workers health', async t => {
+  const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
+  const server = await createRuntime(configFile)
+
+  await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  const start = Date.now()
+
+  // Wait for the first health check
+  await once(server, 'application:worker:health')
+
+  const firstAlertTime = Date.now()
+
+  const gracePeriodMs = firstAlertTime - start
+  ok(gracePeriodMs > 4000, `Expected the grace period to be greater than 4000ms, got ${gracePeriodMs}`)
+
+  const events = []
+  server.on('application:worker:health', event => {
+    events.push(event)
+  })
+
+  await sleep(5000)
+
+  const applicationEvents = events.filter(e => e.application === 'serviceApp')
+  ok(applicationEvents.length > 8, `Expected more than 8 events, got ${applicationEvents.length}`)
 })

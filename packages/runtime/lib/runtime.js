@@ -1464,7 +1464,7 @@ export class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel, timeout) {
+  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1538,7 +1538,7 @@ export class Runtime extends EventEmitter {
       } else {
         worker[kHealthCheckTimer].refresh()
       }
-    }, timeout ?? interval)
+    }, interval)
   }
 
   async #startWorker (
@@ -1606,16 +1606,17 @@ export class Runtime extends EventEmitter {
       if (enabled && config.restartOnError > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
-        this.#setupHealthCheck(
-          config,
-          applicationConfig,
-          workersCount,
-          id,
-          index,
-          worker,
-          label,
-          gracePeriod > 0 ? gracePeriod : 1
-        )
+        setTimeout(() => {
+          this.#setupHealthCheck(
+            config,
+            applicationConfig,
+            workersCount,
+            id,
+            index,
+            worker,
+            label
+          )
+        }, gracePeriod > 0 ? gracePeriod : 1).unref()
       }
     } catch (err) {
       const error = ensureError(err)
