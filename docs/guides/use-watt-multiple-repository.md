@@ -20,7 +20,7 @@ You need to build a microservices application where:
 
 Watt's multi-repository application resolution allows you to:
 
-1. Define applications from different Git repositories in your project
+1. Define applications from different Git repositories in your main application
 2. Automatically resolve and integrate applications from remote repositories
 3. Override application locations for local development
 4. Build and deploy unified applications from distributed applications
@@ -38,30 +38,36 @@ Before starting, ensure you have:
 
 ## Step 1: Create Your Project
 
-**1. Configure application resolution in package.json:**
+**1. Prepare your project:**
+
+```bash
+mkdir my-microapplications-app
+cd my-microapplications-app
+```
+
+**2. Configure application resolution in package.json:**
 
 ```json
 {
-  "name": "my-microservices-app",
+  "name": "my-microapplications-app",
   "private": true,
   "scripts": {
     "dev": "wattpm dev",
-    "resolve": "wattpm-utils resolve",
+    "resolve": "wattpm resolve",
     "build": "wattpm build",
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/runtime": "^3.0.0",
-    "@platformatic/next": "^3.0.0",
-    "@platformatic/node": "^3.0.0",
-    "wattpm": "^3.0.0",
-    "wattpm-utils": "^3.0.0"
+    "@platformatic/runtime": "^2.21.0",
+    "@platformatic/next": "^2.21.0",
+    "@platformatic/node": "^2.21.0",
+    "wattpm": "^2.21.0"
   },
   "workspaces": ["web/*", "external/*"]
 }
 ```
 
-**2. Create directory structure for applications:**
+**3. Create directory structure for applications:**
 
 ```bash
 mkdir -p web/ external/
@@ -71,12 +77,12 @@ mkdir -p web/ external/
 
 - `web/` - Directory for resolved web applications
 - `external/` - Directory for resolved external applications
-- `wattpm-utils resolve` command for application resolution
+- `wattpm resolve` command for application resolution
 - Workspace configuration for multi-application management
 
-## Step 2: Configure Multi-Repository Services
+## Step 2: Configure Multi-Repository Applications
 
-### Define Services in watt.json
+### Define Applications in watt.json
 
 Configure your `watt.json` to include applications from multiple repositories:
 
@@ -90,12 +96,12 @@ Configure your `watt.json` to include applications from multiple repositories:
     },
     {
       "id": "user-application",
-      "path": "{PLT_USER_SERVICE_PATH}",
+      "path": "{PLT_USER_APPLICATION_PATH}",
       "url": "https://github.com/your-org/user-application.git"
     },
     {
       "id": "product-application",
-      "path": "{PLT_PRODUCT_SERVICE_PATH}",
+      "path": "{PLT_PRODUCT_APPLICATION_PATH}",
       "url": "https://github.com/your-org/product-application.git"
     },
     {
@@ -109,7 +115,7 @@ Configure your `watt.json` to include applications from multiple repositories:
 
 **Configuration explanation:**
 
-- **Local applications** (like `gateway`) use direct paths
+- **Local applications** (like `composer`) use direct paths
 - **Remote applications** use environment variables for paths + Git URLs
 - **Environment variables** allow flexible local vs. remote resolution
 - **Git URLs** define where to fetch applications when not available locally
@@ -118,8 +124,8 @@ Configure your `watt.json` to include applications from multiple repositories:
 
 ```
 Organization Structure:
-├── my-microservices-app/          # Watt runtime orchestration
-│   ├── watt.json                  # Service definitions
+├── my-microapplications-app/          # Main orchestration app
+│   ├── watt.json                  # Application definitions
 │   ├── package.json               # Workspace configuration
 │   └── web/                       # Resolved applications appear here
 ├── user-application/                  # Separate repository
@@ -141,13 +147,13 @@ Create a `.env` file for local development:
 
 ```env
 # Local application paths (when developing locally)
-PLT_USER_SERVICE_PATH=../user-application
-PLT_PRODUCT_SERVICE_PATH=../product-application
+PLT_USER_APPLICATION_PATH=../user-application
+PLT_PRODUCT_APPLICATION_PATH=../product-application
 PLT_FRONTEND_PATH=../nextjs-frontend
 
 # Production paths (when applications are resolved from Git)
-# PLT_USER_SERVICE_PATH=web/user-application
-# PLT_PRODUCT_SERVICE_PATH=web/product-application
+# PLT_USER_APPLICATION_PATH=web/user-application
+# PLT_PRODUCT_APPLICATION_PATH=web/product-application
 # PLT_FRONTEND_PATH=web/frontend
 ```
 
@@ -157,14 +163,14 @@ For production deployments, applications are resolved from Git repositories:
 
 ```env
 # Production environment - applications resolved from Git
-PLT_USER_SERVICE_PATH=web/user-application
-PLT_PRODUCT_SERVICE_PATH=web/product-application
+PLT_USER_APPLICATION_PATH=web/user-application
+PLT_PRODUCT_APPLICATION_PATH=web/product-application
 PLT_FRONTEND_PATH=web/frontend
 ```
 
 ### Git Configuration
 
-Update your project repository's `.gitignore`:
+Update your main repository's `.gitignore`:
 
 ```gitignore
 # Ignore resolved applications - they come from other repos
@@ -183,13 +189,13 @@ build/
 
 **Why ignore resolved applications:**
 
-- Services are pulled from their own repositories
-- Prevents committing resolved application code to project repo
-- Keeps project repo focused on orchestration configuration
+- Applications are pulled from their own repositories
+- Prevents committing resolved application code to main repo
+- Keeps main repo focused on orchestration configuration
 
-## Step 4: Resolve and Run Services
+## Step 4: Resolve and Run Applications
 
-### Resolve Services from Repositories
+### Resolve Applications from Repositories
 
 **1. Resolve all applications:**
 
@@ -233,7 +239,7 @@ npm run start
 
 ## Step 5: Verification and Testing
 
-### Verify Service Resolution
+### Verify Application Resolution
 
 **1. Check that applications were resolved correctly:**
 
@@ -264,8 +270,8 @@ curl http://localhost:3042/
 
 ```bash
 # Set up local development
-export PLT_USER_SERVICE_PATH=../user-application-local
-export PLT_PRODUCT_SERVICE_PATH=web/product-application  # Use resolved version
+export PLT_USER_APPLICATION_PATH=../user-application-local
+export PLT_PRODUCT_APPLICATION_PATH=web/product-application  # Use resolved version
 
 # Resolve with mixed local/remote applications
 npm run resolve
@@ -283,7 +289,7 @@ npm run dev
 
 ## Troubleshooting
 
-### Service Resolution Fails
+### Application Resolution Fails
 
 **Problem:** `npm run resolve` fails to clone or resolve applications
 
@@ -294,7 +300,7 @@ npm run dev
 - Ensure environment variables are set correctly
 - Verify network connectivity to Git repositories
 
-### Services Not Starting
+### Applications Not Starting
 
 **Problem:** Resolved applications fail to start
 
@@ -351,8 +357,8 @@ jobs:
 
       - name: Resolve applications from Git
         env:
-          PLT_USER_SERVICE_PATH: web/user-application
-          PLT_PRODUCT_SERVICE_PATH: web/product-application
+          PLT_USER_APPLICATION_PATH: web/user-application
+          PLT_PRODUCT_APPLICATION_PATH: web/product-application
           PLT_FRONTEND_PATH: web/frontend
         run: npm run resolve
 
@@ -363,7 +369,7 @@ jobs:
         run: npm run deploy
 ```
 
-### Service Versioning
+### Application Versioning
 
 Pin specific application versions by using Git tags in URLs:
 
@@ -383,10 +389,13 @@ Pin specific application versions by using Git tags in URLs:
 
 Now that you have multi-repository applications working:
 
-- **[Monitoring with Prometheus and Grafana](/docs/guides/monitoring)** - Monitor all applications from one place
-- **[How to Dockerize Your Watt Application](/docs/guides/deployment/dockerize-a-watt-app)** - Deploy your multi-application application
+- **[Set up monitoring](/docs/guides/monitoring)** - Monitor all applications from one place
+- **[Configure deployment](/docs/guides/deployment/)** - Deploy your multi-application application
+- **[Add inter-application communication](/docs/guides/application-communication/)** - Enable applications to communicate securely
+- **[Implement application discovery](/docs/guides/application-mesh/)** - Advanced application orchestration patterns
 
 ## Additional Resources
 
 - [wattpm-resolve sample application](https://github.com/platformatic/wattpm-resolve) - Complete working example
-- [Watt Quick Start](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Application Development Guide](/docs/guides/application-development/) - Best practices for individual applications

@@ -116,7 +116,7 @@ You can configure each application's environment variables in your Watt configur
 }
 ```
 
-Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `application-a` directory:
+Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `APPLICATION_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `application-a` directory:
 
 1.  Set your application-specific environment variable:
 
@@ -134,7 +134,7 @@ APPLICATION_A_NODE_ENV=development
       "path": "./applications/application-a",
       "env": {
         "NODE_CONFIG_DIR": "./applications/application-a/config",
-        "NODE_ENV": `${YOUR_SERVICE_NODE_ENV}`
+        "NODE_ENV": `${YOUR_APPLICATION_NODE_ENV}`
       }
     }
   ]
@@ -147,7 +147,7 @@ You can alsp use this pattern with `env` file:
 APPLICATION_A_NODE_ENV=development
 ```
 
-You can also specify environment files per Platformatic application:
+You can also specify environment files per Watt application:
 
 ```
 {
@@ -263,13 +263,13 @@ NODE_ENV=development node test-config.js
 NODE_ENV=production node test-config.js
 ```
 
-### Verify Service-Specific Configuration
+### Verify Application-Specific Configuration
 
 **Test that each application loads its own configuration:**
 
 ```bash
 # Start your Watt application
-wattpm dev
+npm run dev
 
 # Check application logs for configuration loading
 # Each application should show its specific config values
@@ -288,9 +288,9 @@ wattpm dev
 - Ensure JSON syntax is valid
 - Verify environment variable `NODE_ENV` is set correctly
 
-### Service Configuration Conflicts
+### Application Configuration Conflicts
 
-**Problem:** Services are using wrong configuration
+**Problem:** Applications are using wrong configuration
 
 **Solutions:**
 

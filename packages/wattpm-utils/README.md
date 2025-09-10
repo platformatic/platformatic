@@ -15,12 +15,12 @@ Watt Utils, utilities for the Platformatic's Node.js application server.
 npx wattpm-utils [command]
 ```
 
-Follow our [Quick Start Guide](https://platformatic.dev/docs/getting-started/quick-start-watt)
+Follow our [Quick Start Guide](https://platformatic.dev/docs/getting-started/quick-start)
 guide to get up and running with Platformatic.
 
 ## Documentation
 
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
+- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start)
 - [Reference](https://docs.platformatic.dev/docs/reference/watt/overview)
 - [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 

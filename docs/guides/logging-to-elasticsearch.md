@@ -1,13 +1,13 @@
 # Logging to ElasticSearch (or any other destination)
 
-This guide shows how to configure a Platformatic application to
+This guide shows how to configure a Watt application to
 deliver logs to [ElasticSearch](https://www.elastic.co/elasticsearch/)
 or via any other supported [transports](https://getpino.io/#/docs/transports).
 The logs will then be visualized via [Kibana](https://www.elastic.co/kibana).
 
-## Create a Platformatic application
+## Create a Watt application
 
-Create a Platformatic application using `npm create wattpm`.
+Create a Watt application using `npm create wattpm`.
 
 ## Setup ElasticSearch and Kibana
 
@@ -48,7 +48,7 @@ npm i pino-elasticsearch
 
 ## Configure Logger Transport
 
-Configuring your Platformatic application to log to ElasticSearch is straightforward,
+Configuring your Watt application to log to ElasticSearch is straightforward,
 you just have to configure it like the following:
 
 ```json

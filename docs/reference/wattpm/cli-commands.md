@@ -433,7 +433,7 @@ wattpm patch-config [directory] <patch-file>
 
 ```javascript
 // patch.js
-module.exports = function (runtime, applications) {
+export default function  (runtime, applications) {
   return {
     runtime: [
       /* JSON Patch operations for runtime config */

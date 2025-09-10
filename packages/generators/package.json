@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start-watt",
+  "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
   "scripts": {
     "lint": "eslint",
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",

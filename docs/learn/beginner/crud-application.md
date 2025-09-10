@@ -29,7 +29,7 @@ Traditional Node.js development requires managing separate servers, configuratio
 
 - **Unified Application Server**: One server runs multiple applications (database APIs, custom logic, frontends)
 - **Shared Configuration**: Environment variables, logging, and monitoring work consistently across all applications
-- **Service Orchestration**: Services communicate seamlessly without complex networking setup
+- **Application Orchestration**: Applications communicate seamlessly without complex networking setup
 - **Single Deployment**: Deploy your entire application stack with one command
 - **Built-in Observability**: Unified logging, metrics, and health checks out of the box
 
@@ -57,28 +57,18 @@ Watt acts as your **application server** that can host multiple **applications**
 
 All applications share the same configuration, logging, and deployment - giving you a unified development experience.
 
-These are the main files used by Watt:
-
-1. **`watt.json`** - Your application server configuration
-2. **`.env`** - Environment variables shared across all applications
-3. **`web/`** - Directory where your applications will live
-
-Notice how Watt uses **one configuration file** and **shared environment variables** for your entire application. This is different from managing separate configurations for each application.
-
-## Step 1: Create Your Watt Application Server and Add Your First Application
-
-Let's start by creating a new Watt application. Unlike traditional Node.js development where you might run separate servers for your API, database, and frontend, Watt provides a unified application server that orchestrates all your applications.
+## Step 2: Add Your First Application to Watt
 
 Now we'll add our first application to the Watt application server - a database application that will automatically create REST and GraphQL APIs from our schema.
 
-### Why Add Services to Watt?
+### Why Add Applications to Watt?
 
 Instead of running a separate database server, API server, and frontend server, Watt lets you run them all as **applications within one application server**. This means:
 
 - **Shared configuration** - one `.env` file for all applications
 - **Unified logging** - all application logs in one stream
 - **Single deployment** - deploy everything together
-- **Service communication** - applications can talk to each other seamlessly
+- **Application communication** - applications can talk to each other seamlessly
 
 Navigate to your web directory and add a database application:
 
@@ -86,11 +76,17 @@ Navigate to your web directory and add a database application:
 
 <NewApiProjectInstructions />
 
-**✓ Success Check:** After running the command, you should see:
+**✓ Success Check:** You should see a `web/` directory created with configuration files inside.
 
-- A new `db/` directory inside `web/`
-- Configuration files including `platformatic.json`
-- An initial migration file in `db/migrations/`
+### Experience Watt's Unified Configuration
+
+Take a moment to examine the files Watt created:
+
+1. **`watt.json`** - Your application server configuration
+2. **`.env`** - Environment variables shared across all applications
+3. **`web/`** - Directory where your applications will live
+
+Notice how Watt uses **one configuration file** and **shared environment variables** for your entire application. This is different from managing separate configurations for each application.
 
 Let's verify everything works:
 
@@ -102,7 +98,7 @@ Open your browser to `http://localhost:3042/` (or the port shown in your termina
 
 **✓ Success Check:** You should see the Platformatic welcome page with links to OpenAPI documentation.
 
-## Step 4: Define Your Service's Data Schema
+## Step 4: Define Your Application's Data Schema
 
 Now we'll define the database structure for our Todo API application using migrations. This demonstrates how Watt applications manage their own data while staying integrated with the overall application.
 
@@ -151,6 +147,19 @@ If you prefer to use PostgreSQL from the start (recommended for enterprise devel
 **For MySQL users:** Replace with `mysql://user:password@localhost:3306/todo_app`
 
 The beauty of this architecture is that **Watt** manages the application orchestration while each **application** (like Platformatic DB) handles its own concerns. Your application code remains identical regardless of which database the DB application connects to.
+
+#### Architecture Overview: Watt vs Platformatic DB Application
+
+| Component                       | Role                 | Responsibilities                                                                                                                                                     | Configuration                              |
+| ------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Watt**                        | Application Server   | • Orchestrates multiple applications<br/>• Manages unified configuration<br/>• Handles application discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.json` + shared `.env`                |
+| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/platformatic.json` + `web/db/.env` |
+
+**Key Distinction:**
+
+- **Watt** is the _container_ that runs your application
+- **Platformatic DB** is one _application_ running inside Watt
+- You can have multiple applications (DB, HTTP, Frontend) all managed by one Watt instance
 
 ### Create the Users Table
 
@@ -218,7 +227,7 @@ The **Platformatic DB application** automatically generates TypeScript types fro
 - IntelliSense in your editor
 - Compile-time error checking across all applications
 
-## Step 5: Explore Your Service's Auto-Generated API
+## Step 5: Explore Your Application's Auto-Generated API
 
 Start your Watt application with all applications:
 
@@ -246,7 +255,7 @@ Open your terminal where Watt is running (`npm run dev`). Notice how **all appli
 
 This unified logging means you don't need to check multiple terminals or log files to debug issues across your applications.
 
-### Service Discovery and Communication
+### Application Discovery and Communication
 
 Watt automatically handles application discovery. Your database application is accessible at `/` and other applications you add later can communicate with it using internal networking - no complex configuration needed.
 
@@ -292,7 +301,7 @@ The **Platformatic DB application** generated these REST endpoints for each tabl
 
 The same pattern applies to `/todos`. You also get GraphQL endpoints at `/graphql`!
 
-## Step 7: Prepare for Multi-Service Architecture
+## Step 7: Prepare for Multi-Application Architecture
 
 One of Watt's key benefits is supporting multiple applications in one application. Let's configure CORS so you can easily add a frontend application later.
 
@@ -332,7 +341,7 @@ You've successfully built your first Watt application! Let's review what you acc
 ### What You Built with Watt
 
 - ✅ **A unified application server** running multiple applications seamlessly
-- ✅ **Service orchestration** - database application integrated into your application
+- ✅ **Application orchestration** - database application integrated into your application
 - ✅ **Unified configuration** - single `.env` file and shared settings
 - ✅ **Integrated logging** - all applications logging to one stream
 - ✅ **Auto-generated APIs** with zero boilerplate code
@@ -364,15 +373,15 @@ Unlike traditional Node.js development where you manage separate servers, config
 Now that you understand Watt's unified approach, you can expand your application:
 
 1. **Connect to Your Enterprise Database**: Switch from SQLite to PostgreSQL, MySQL, or your production database
-2. **Add a Frontend Service**: Add a Next.js, Astro, or React capability to your Watt application
-3. **Add Custom HTTP Services**: Create additional applications for business logic that work alongside your database application
-4. **Add a Gateway Service**: Create an API gateway that aggregates multiple applications
-5. **Experience Multi-Service Deployment**: Deploy your entire application stack with one command
+2. **Add a Frontend Application**: Add a Next.js, Astro, or React capability to your Watt application
+3. **Add Custom HTTP Applications**: Create additional applications for business logic that work alongside your database application
+4. **Add a Composer Application**: Create an API gateway that aggregates multiple applications
+5. **Experience Multi-Application Deployment**: Deploy your entire application stack with one command
 6. **Add Authentication**: Implement authentication that works across all applications in your Watt application
 
 ### Explore Watt's Full Capabilities
 
-### Related Tutorials
+<!-- ### Related Tutorials -->
 
 <!-- - [Connect to PostgreSQL/MySQL](../../guides/databases/postgresql-setup.md) - Switch to your enterprise database -->
 <!-- - [Add Authentication to Your API](../intermediate/authentication.md) -->

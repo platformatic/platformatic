@@ -84,7 +84,7 @@ All framework integrations provide:
 
 ## Need Help?
 
-- **New to Watt?** Start with the [Watt Quick Start](/docs/getting-started/quick-start-watt) guide
+- **New to Watt?** Start with the [Watt Quick Start](/docs/getting-started/quick-start) guide
 - **Migrating an existing app?** See [Running Your Project in Watt](/docs/getting-started/port-your-app)
 - **Framework-specific issues?** Check the individual framework reference pages above
 - **Technical details?** Browse the complete [Reference Documentation](../reference/) 

@@ -46,7 +46,7 @@ Low-level components for database integration and API generation:
 
 ## Finding What You Need
 
-- **New to Platformatic?** Start with [Getting Started](/docs/getting-started/quick-start-watt)
+- **New to Platformatic?** Start with [Getting Started](/docs/getting-started/quick-start)
 - **Need to solve a specific problem?** Check [How-to Guides](/docs/guides/build-modular-monolith)
 - **Need specific examples?** Check [How-to Guides](/docs/guides/build-modular-monolith) for practical solutions
 - **Looking for specific configuration options?** Use the search or browse the relevant application section above
