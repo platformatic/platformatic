@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Platformatic CLI",
   "type": "module",
   "bin": {
