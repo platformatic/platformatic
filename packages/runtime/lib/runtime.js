@@ -1423,7 +1423,7 @@ class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel, timeout) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1496,7 +1496,7 @@ class Runtime extends EventEmitter {
       } else {
         worker[kHealthCheckTimer].refresh()
       }
-    }, timeout ?? interval)
+    }, interval)
   }
 
   async #startWorker (
@@ -1564,16 +1564,17 @@ class Runtime extends EventEmitter {
       if (enabled && config.restartOnError > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
-        this.#setupHealthCheck(
-          config,
-          serviceConfig,
-          workersCount,
-          id,
-          index,
-          worker,
-          label,
-          gracePeriod > 0 ? gracePeriod : 1
-        )
+        setTimeout(() => {
+          this.#setupHealthCheck(
+            config,
+            serviceConfig,
+            workersCount,
+            id,
+            index,
+            worker,
+            label
+          )
+        }, gracePeriod > 0 ? gracePeriod : 1).unref()
       }
     } catch (error) {
       // TODO: handle port allocation error here
