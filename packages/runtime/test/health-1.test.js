@@ -134,8 +134,12 @@ test('set the spaces memory correctly when maxHeapTotal is a string', async t =>
 
 test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
-  const server = await createRuntime(configFile)
+  const config = await loadConfig({}, ['-c', configFile])
 
+  const server = await buildServer({
+    app: config.app,
+    ...config.configManager.current
+  })
   await server.start()
 
   t.after(() => {
@@ -145,7 +149,7 @@ test('should continously monitor workers health', async t => {
   const start = Date.now()
 
   // Wait for the first health check
-  await once(server, 'application:worker:health')
+  await once(server, 'health')
 
   const firstAlertTime = Date.now()
 
@@ -153,12 +157,12 @@ test('should continously monitor workers health', async t => {
   ok(gracePeriodMs > 4000, `Expected the grace period to be greater than 4000ms, got ${gracePeriodMs}`)
 
   const events = []
-  server.on('application:worker:health', event => {
+  server.on('health', event => {
     events.push(event)
   })
 
   await sleep(5000)
 
-  const applicationEvents = events.filter(e => e.application === 'serviceApp')
+  const applicationEvents = events.filter(e => e.service === 'serviceApp')
   ok(applicationEvents.length > 8, `Expected more than 8 events, got ${applicationEvents.length}`)
 })
