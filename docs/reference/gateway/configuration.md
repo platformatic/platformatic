@@ -62,7 +62,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](../platformatic/cli.md#start).
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the json configuration.
 
   ```json
   "defaultArgsAdapter": "where.id.in.$>#id"

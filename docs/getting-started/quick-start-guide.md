@@ -5,7 +5,7 @@ import NewApiProjectInstructions from './new-api-project-instructions.md';
 
 # Fullstack Guide
 
-Welcome to your next steps with Platformatic applications such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../reference/client/overview.md) and the [Platformatic Gateway](../reference/gateway/overview.md).
+Welcome to your next steps with Platformatic applications such as [Platformatic Watt](../reference/watt/overview.md), [Platformatic DB](../reference/db/overview.md) with [SQLite](https://www.sqlite.org/), and the [Platformatic Gateway](../reference/gateway/overview.md).
 
 In this tutorial, you will build a movie quotes application, where users can add, like and delete quotes from popular movies. This guide will help you setup and run your first full-stack Platformatic application.
 
