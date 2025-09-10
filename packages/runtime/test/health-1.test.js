@@ -5,6 +5,7 @@ const { once } = require('node:events')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { setTimeout: sleep } = require('node:timers/promises')
 const autocannon = require('autocannon')
 const { safeRemove } = require('@platformatic/utils')
 const { buildServer, loadConfig } = require('..')
@@ -129,4 +130,39 @@ test('set the spaces memory correctly when maxHeapTotal is a string', async t =>
     strictEqual(resourceLimits.maxOldGenerationSizeMb, 192)
     strictEqual(resourceLimits.maxYoungGenerationSizeMb, 64)
   }
+})
+
+test('should continously monitor workers health', async t => {
+  const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
+  const config = await loadConfig({}, ['-c', configFile])
+
+  const server = await buildServer({
+    app: config.app,
+    ...config.configManager.current
+  })
+  await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  const start = Date.now()
+
+  // Wait for the first health check
+  await once(server, 'health')
+
+  const firstAlertTime = Date.now()
+
+  const gracePeriodMs = firstAlertTime - start
+  ok(gracePeriodMs > 4000, `Expected the grace period to be greater than 4000ms, got ${gracePeriodMs}`)
+
+  const events = []
+  server.on('health', event => {
+    events.push(event)
+  })
+
+  await sleep(5000)
+
+  const applicationEvents = events.filter(e => e.service === 'serviceApp')
+  ok(applicationEvents.length > 8, `Expected more than 8 events, got ${applicationEvents.length}`)
 })
