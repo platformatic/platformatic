@@ -177,7 +177,7 @@ test('resolve - should install dependencies using a different package manager', 
   const resolveProcess = await wattpmUtils('resolve', '-P', 'pnpm', rootDir)
 
   ok(resolveProcess.stdout.includes(`Cloning ${repo} into web${sep}resolved`))
-  ok(resolveProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
+  ok(resolveProcess.stdout.includes('Installing dependencies for the project using pnpm ...'))
   ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using pnpm ...'))
 
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'main')

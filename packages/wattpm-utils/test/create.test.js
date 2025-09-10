@@ -223,7 +223,7 @@ test('create - should create a new project using a different package manager', a
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler, PLT_IGNORE_INSTALL_FAILURES: 'true' }
   })
 
-  ok(createProcess.stdout.includes('Installing dependencies for the application using fake-npm'))
+  ok(createProcess.stdout.includes('Installing dependencies for the project using fake-npm'))
   ok(createProcess.stdout.includes('Installing dependencies for the application main using fake-npm'))
   ok(createProcess.stdout.includes('You are all set! Run `fake-npm start` to start your project.'))
 })

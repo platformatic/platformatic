@@ -35,23 +35,23 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   equal(await isFileAccessible(join(root, '.gitignore')), true)
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
-  equal(await isFileAccessible(join(root, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(root, 'watt.json')), true)
 
   // using pnpm will create workspace file
   equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)
 
   // Here check the generated applications
-  const applications = await getApplications(join(root, 'applications'))
+  const applications = await getApplications(join(root, 'web'))
   deepStrictEqual(applications, ['application1', 'application2'])
-  const baseApplication0Dir = join(root, 'applications', applications[0])
-  equal(await isFileAccessible(join(baseApplication0Dir, 'platformatic.json')), true)
+  const baseApplication0Dir = join(root, 'web', applications[0])
+  equal(await isFileAccessible(join(baseApplication0Dir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'plt-env.d.ts')), true)
 
-  const baseApplication1Dir = join(root, 'applications', applications[1])
-  equal(await isFileAccessible(join(baseApplication1Dir, 'platformatic.json')), true)
+  const baseApplication1Dir = join(root, 'web', applications[1])
+  equal(await isFileAccessible(join(baseApplication1Dir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'plugins', 'example.ts')), true)
@@ -78,16 +78,16 @@ test('Add another application to an existing application', async t => {
     equal(await isFileAccessible(join(root, '.gitignore')), true)
     equal(await isFileAccessible(join(root, '.env')), true)
     equal(await isFileAccessible(join(root, '.env.sample')), true)
-    equal(await isFileAccessible(join(root, 'platformatic.json')), true)
+    equal(await isFileAccessible(join(root, 'watt.json')), true)
 
     // using pnpm will create workspace file
     equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)
 
     // Here check the generated applications
-    const applications = await getApplications(join(root, 'applications'))
+    const applications = await getApplications(join(root, 'web'))
     deepStrictEqual(applications, ['application1'])
-    const applicationRoot = join(root, 'applications', applications[0])
-    equal(await isFileAccessible(join(applicationRoot, 'platformatic.json')), true)
+    const applicationRoot = join(root, 'web', applications[0])
+    equal(await isFileAccessible(join(applicationRoot, 'watt.json')), true)
     equal(await isFileAccessible(join(applicationRoot, 'README.md')), true)
     equal(await isFileAccessible(join(applicationRoot, 'routes', 'root.js')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.js')), true)
@@ -110,10 +110,10 @@ test('Add another application to an existing application', async t => {
     await executeCreatePlatformatic(root, { pkgManager: 'pnpm', userInputHandler })
 
     // Here check the generated applications
-    const applications = await getApplications(join(root, 'applications'))
+    const applications = await getApplications(join(root, 'web'))
     deepStrictEqual(applications, ['application1', 'application2'])
-    const applicationRoot = join(root, 'applications', applications[1])
-    equal(await isFileAccessible(join(applicationRoot, 'platformatic.json')), true)
+    const applicationRoot = join(root, 'web', applications[1])
+    equal(await isFileAccessible(join(applicationRoot, 'watt.json')), true)
     equal(await isFileAccessible(join(applicationRoot, 'README.md')), true)
     equal(await isFileAccessible(join(applicationRoot, 'routes', 'root.ts')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.ts')), true)

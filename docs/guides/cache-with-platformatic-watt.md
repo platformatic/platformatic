@@ -26,8 +26,8 @@ Watt provides built-in HTTP caching with tag-based invalidation. This guide show
 
 Before starting, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
-- [npm](https://docs.npmjs.com/cli/) (v10 or higher)
+- [Node.js](https://nodejs.org/) (v22.18.0+)
+- [npm](https://docs.npmjs.com/cli/) (comes with Node.js)
 - A Watt application ([setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt))
 - Basic understanding of HTTP caching headers 
 
@@ -37,7 +37,7 @@ Add HTTP caching configuration to your `watt.json` file:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.17.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
   },

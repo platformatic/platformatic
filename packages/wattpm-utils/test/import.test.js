@@ -469,7 +469,7 @@ test('import - when launched without arguments, should fix the configuration of 
       'Application thid is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
     )
   )
-  ok(importProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(importProcess.stdout.includes('Installing dependencies for the project using npm ...'))
   ok(importProcess.stdout.includes('Installing dependencies for the application first using npm ...'))
   ok(importProcess.stdout.includes('Installing dependencies for the application second using npm ...'))
   ok(importProcess.stdout.includes('Installing dependencies for the application fourth using npm ...'))
@@ -523,7 +523,7 @@ test('import - when launched without arguments, should fix the configuration of 
       'Application thid is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
     )
   )
-  ok(!importProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the project using npm ...'))
   ok(!importProcess.stdout.includes('Installing dependencies for the application first using npm ...'))
   ok(!importProcess.stdout.includes('Installing dependencies for the application second using npm ...'))
   ok(!importProcess.stdout.includes('Installing dependencies for the application fourth using npm ...'))

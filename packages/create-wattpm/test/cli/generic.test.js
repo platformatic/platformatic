@@ -34,8 +34,8 @@ test('Support packages without generator via importing (new application)', async
 
   const baseProjectDir = join(root, 'platformatic')
 
-  // Verify that a platformatic.json file was created
-  deepStrictEqual(JSON.parse(await readFile(resolve(applicationPath, 'platformatic.json'), 'utf8')), {
+  // Verify that a watt.json file was created
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationPath, 'watt.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
@@ -46,8 +46,8 @@ test('Support packages without generator via importing (new application)', async
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
   // Verify that the runtime configuration has an explicit entry for the vite application
-  const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
-  deepStrictEqual(runtimeConfig.applications, [
+  const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'watt.json'), 'utf8'))
+  deepStrictEqual(runtimeConfig.web, [
     {
       id: 'main',
       path: '{PLT_APPLICATION_MAIN_PATH}'
@@ -95,19 +95,19 @@ test('Support packages without generator via importing (existing applications)',
     userInputHandler: userInputHandler1
   })
 
-  let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'platformatic.json')), 'utf8'))
+  let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'watt.json')), 'utf8'))
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
   runtimeConfig.web = [{ id: 'main', path: 'services/main' }]
   runtimeConfig.startTimeout = 12345
-  await writeFile(resolve(join(baseProjectDir, 'platformatic.json')), JSON.stringify(runtimeConfig, null, 2))
+  await writeFile(resolve(join(baseProjectDir, 'watt.json')), JSON.stringify(runtimeConfig, null, 2))
 
   await executeCreatePlatformatic(root, {
     userInputHandler: userInputHandler2,
     args: ['--module=@platformatic/vite']
   })
 
-  // Verify that a platformatic.json file was created
-  deepStrictEqual(JSON.parse(await readFile(resolve(applicationPath, 'platformatic.json'), 'utf8')), {
+  // Verify that a watt.json file was created
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationPath, 'watt.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
@@ -118,7 +118,7 @@ test('Support packages without generator via importing (existing applications)',
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
   // Verify that the runtime configuration has an explicit entry for the vite application but with other entries untouched
-  runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
+  runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'watt.json'), 'utf8'))
 
   deepStrictEqual(runtimeConfig.web, [
     {
@@ -168,11 +168,11 @@ test('Support packages without generator via copy (new application)', async t =>
   })
 
   const baseProjectDir = join(root, 'platformatic')
-  const applicationDir = join(baseProjectDir, 'applications', 'main')
+  const applicationDir = join(baseProjectDir, 'web', 'main')
 
-  // Verify that a platformatic.json file was created and not in the original path
-  ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
+  // Verify that a watt.json file was created and not in the original path
+  ok(!existsSync(resolve(sourcePath, 'watt.json')))
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'watt.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
@@ -183,7 +183,7 @@ test('Support packages without generator via copy (new application)', async t =>
   deepStrictEqual(await readFile(resolve(sourcePath, 'package.json'), 'utf8'), originalPackageJson)
 
   // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
-  const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
+  const runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'watt.json'), 'utf8'))
   ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 
@@ -225,21 +225,21 @@ test('Support packages without generator via copy (existing applications)', asyn
     userInputHandler: userInputHandler1
   })
 
-  let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'platformatic.json')), 'utf8'))
+  let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'watt.json')), 'utf8'))
   runtimeConfig.web = [{ id: 'main', path: 'services/main' }]
   runtimeConfig.startTimeout = 12345
-  await writeFile(resolve(join(baseProjectDir, 'platformatic.json')), JSON.stringify(runtimeConfig, null, 2))
+  await writeFile(resolve(join(baseProjectDir, 'watt.json')), JSON.stringify(runtimeConfig, null, 2))
 
   await executeCreatePlatformatic(root, {
     userInputHandler: userInputHandler2,
     args: ['--module=@platformatic/vite']
   })
 
-  const applicationDir = join(baseProjectDir, 'applications', 'alternate')
+  const applicationDir = join(baseProjectDir, 'web', 'alternate')
 
-  // Verify that a platformatic.json file was created and not in the original path
-  ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
+  // Verify that a watt.json file was created and not in the original path
+  ok(!existsSync(resolve(sourcePath, 'watt.json')))
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'watt.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
@@ -249,14 +249,14 @@ test('Support packages without generator via copy (existing applications)', asyn
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
   deepStrictEqual(await readFile(resolve(sourcePath, 'package.json'), 'utf8'), originalPackageJson)
 
-  // Verify that a platformatic.json file was created and not in the original path
-  ok(!existsSync(resolve(sourcePath, 'platformatic.json')))
-  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'platformatic.json'), 'utf8')), {
+  // Verify that a watt.json file was created and not in the original path
+  ok(!existsSync(resolve(sourcePath, 'watt.json')))
+  deepStrictEqual(JSON.parse(await readFile(resolve(applicationDir, 'watt.json'), 'utf8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/vite/${version}.json`
   })
 
   // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
-  runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'platformatic.json'), 'utf8'))
+  runtimeConfig = JSON.parse(await readFile(resolve(baseProjectDir, 'watt.json'), 'utf8'))
   ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 })

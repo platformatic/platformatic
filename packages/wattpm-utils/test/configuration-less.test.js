@@ -37,8 +37,7 @@ for (const command of ['install', 'update', 'import', 'resolve', 'patch-config']
   })
 }
 
-// TODO@ShogunPanda: This can be restored once we release Watt 3 due to the broken 3.4.1 release
-test.skip('import - when no configuration file exists, should create a watt.json automatically and install required dependencies', async t => {
+test('import - when no configuration file exists, should create a watt.json automatically and install required dependencies', async t => {
   const rootDir = await createTemporaryDirectory(t, 'cli-build')
   await writeFile(
     resolve(rootDir, 'index.js'),

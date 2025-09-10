@@ -10,6 +10,33 @@ let platformaticPackageVersion
 
 export const defaultPackageManager = 'npm'
 
+// Keep this in sync with packages/create-wattpm/lib/index.js.
+// @platformatic/node is purposely missing as it's the fallback option.
+export const applicationTypes = [
+  { name: '@platformatic/nest', label: 'NestJS', dependencies: ['@nestjs/core'] },
+  { name: '@platformatic/next', label: 'Next.js', dependencies: ['next'] },
+  { name: '@platformatic/remix', label: 'Remix', dependencies: ['@remix-run/dev'] },
+  { name: '@platformatic/astro', label: 'Astro', dependencies: ['astro'] },
+  // Since Vite is often used with other frameworks, we must check for Vite last amongst frontend frameworks
+  { name: '@platformatic/vite', label: 'Vite', dependencies: ['vite'] },
+  {
+    name: '@platformatic/gateway',
+    label: 'Platformatic Gateway',
+    dependencies: ['@platformatic/gateway', '@platformatic/composer']
+  },
+  { name: '@platformatic/service', label: 'Platformatic Service', dependencies: ['@platformatic/service'] },
+  { name: '@platformatic/db', label: 'Platformatic DB', dependencies: ['@platformatic/db'] },
+  { name: '@platformatic/php', label: 'Platformatic PHP', dependencies: ['@platformatic/php'] },
+  { name: '@platformatic/ai-warp', label: 'AI-Warp', dependencies: ['@platformatic/ai-warp'] },
+  { name: '@platformatic/pg-hooks', label: 'Platformatic PostgreSQL Hooks', dependencies: ['@platformatic/pg-hooks'] },
+  {
+    name: '@platformatic/rabbitmq-hooks',
+    label: 'Platformatic RabbitMQ Hooks',
+    dependencies: ['@platformatic/rabbitmq-hooks']
+  },
+  { name: '@platformatic/kafka-hooks', label: 'Platformatic Kafka Hooks', dependencies: ['@platformatic/kafka-hooks'] }
+]
+
 export async function getLatestNpmVersion (pkg) {
   const res = await request(`https://registry.npmjs.org/${pkg}`)
   if (res.statusCode === 200) {
@@ -119,23 +146,15 @@ export async function detectApplicationType (root, packageJson) {
   let name
   let label
 
-  if (hasDependency(packageJson, '@nestjs/core')) {
-    name = '@platformatic/nest'
-    label = 'NestJS'
-  } else if (hasDependency(packageJson, 'next')) {
-    name = '@platformatic/next'
-    label = 'Next.js'
-  } else if (hasDependency(packageJson, '@remix-run/dev')) {
-    name = '@platformatic/remix'
-    label = 'Remix'
-  } else if (hasDependency(packageJson, 'astro')) {
-    name = '@platformatic/astro'
-    label = 'Astro'
-    // Since Vite is often used with other frameworks, we must check for Vite last
-  } else if (hasDependency(packageJson, 'vite')) {
-    name = '@platformatic/vite'
-    label = 'Vite'
-  } else if (await hasJavascriptFiles(root)) {
+  for (const appType of applicationTypes) {
+    if (appType.dependencies.some(dep => hasDependency(packageJson, dep))) {
+      name = appType.name
+      label = appType.label
+      break
+    }
+  }
+
+  if (!name && (await hasJavascriptFiles(root))) {
     // If no specific framework is detected, we assume it's a generic Node.js application
     name = '@platformatic/node'
     label = 'Node.js'

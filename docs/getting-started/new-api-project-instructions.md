@@ -27,22 +27,23 @@ pnpm create wattpm
 </TabItem>
 </Tabs>
 
-This interactive command-line tool will guide you through setting up a new Platformatic project. For this guide, please choose the following options:
+This interactive command-line tool will guide you through setting up a new Watt project. For this guide, please choose the following options:
 
 ```
-- Where would you like to create your project?      => .
-- Which package manager do you want to use?         => npm
-- Which kind of application do you want to create?  => @platformatic/db
-- What is the name of the application?              => (generated-randomly), e.g. legal-soup
-- What is the connection string?                    => sqlite://./db.sqlite
-- Do you want to create default migrations?         => Yes
-- Do you want to create another application?        => No
-- Do you want to use TypeScript?                    => No
-- What port do you want to use?                     => 3042
-- Do you want to init the git repository?           => No
+Hello YOURNAME, welcome to Watt 3.0.0!
+? Where would you like to create your project? .
+✔ Installing @platformatic/runtime@^3.0.0 using npm ...
+? Which kind of application do you want to create? @platformatic/db
+✔ Installing @platformatic/db@^3.0.0 using npm ...
+? What is the name of the application? db
+? What is the connection string? sqlite://./db.sqlite
+? Do you want to create default migrations? yes
+? Do you want to use TypeScript? no
+? Do you want to create another application? no
+? What port do you want to use? 3042
 ```
 
-After completing the wizard, your Platformatic application will be ready in the specified folder. This includes example migration files, plugin scripts, routes, and tests within your application directory.
+After completing the wizard, your Watt application will be ready in the specified folder. This includes example migration files, plugin scripts, routes, and tests within your application directory.
 
 :::note
 

@@ -4,7 +4,7 @@ import { checkNodeVersionForApplications, setExecutableId, setExecutableName } f
 
 checkNodeVersionForApplications()
 setExecutableId('wattpm-utils')
-setExecutableName('Watt Utils')
+setExecutableName('Watt')
 
 // Use await import here so that we can throw a proper error on unsupported Node.js version
 const { main } = await import('../index.js')

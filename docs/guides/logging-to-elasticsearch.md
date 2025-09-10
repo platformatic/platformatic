@@ -74,7 +74,7 @@ you just have to configure it like the following:
 }
 ```
 
-This snippet can be applied either to the `platformatic.runtime.json` config
+This snippet can be applied either to the `watt.json` config
 for Platformatic Runtime applications, or as part of the application configuration
 for any other application.
 

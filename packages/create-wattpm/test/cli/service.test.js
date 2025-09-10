@@ -31,13 +31,13 @@ test('Creates a Platformatic Application with no Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'applications'))
+  const applications = await getApplications(join(baseProjectDir, 'web'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'platformatic.json')), true)
+  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.js')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.js')), true)
@@ -63,13 +63,13 @@ test('Creates a Platformatic Application with Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'applications'))
+  const applications = await getApplications(join(baseProjectDir, 'web'))
   equal(applications.length, 1)
-  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'platformatic.json')), true)
+  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.ts')), true)
@@ -79,7 +79,7 @@ test('Creates a Platformatic Application with Typescript', async t => {
 test('Creates a Platformatic Application in a non empty directory', async t => {
   const root = await createTemporaryDirectory(t, 'application')
 
-  const applicationsDir = join(root, 'applications')
+  const applicationsDir = join(root, 'web')
   const applicationDir = join(applicationsDir, 'foo')
   await createDirectory(applicationsDir)
   await createDirectory(join(applicationDir, 'plugins'))
@@ -110,12 +110,12 @@ test('Creates a Platformatic Application in a non empty directory', async t => {
   equal(await isFileAccessible(join(root, '.gitignore')), true)
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
-  equal(await isFileAccessible(join(root, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(root, 'applications/foo/routes/root.js')), true)
-  equal(await isFileAccessible(join(root, 'applications/foo/routes/sample.js')), true)
-  equal(await isFileAccessible(join(root, 'applications/foo/plugins/example.js')), true)
+  equal(await isFileAccessible(join(root, 'watt.json')), true)
+  equal(await isFileAccessible(join(root, 'web/foo/routes/root.js')), true)
+  equal(await isFileAccessible(join(root, 'web/foo/routes/sample.js')), true)
+  equal(await isFileAccessible(join(root, 'web/foo/plugins/example.js')), true)
 
   // check file contents
-  notEqual(await readFile(join(root, 'applications/foo/routes/root.js'), 'utf8'), "console.log('hello world')")
-  equal(await readFile(join(root, 'applications/foo/routes/sample.js'), 'utf8'), "console.log('hello world')")
+  notEqual(await readFile(join(root, 'web/foo/routes/root.js'), 'utf8'), "console.log('hello world')")
+  equal(await readFile(join(root, 'web/foo/routes/sample.js'), 'utf8'), "console.log('hello world')")
 })
