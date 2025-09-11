@@ -318,8 +318,7 @@ export interface PlatformaticRemixConfig {
                   body?: string;
                 };
               };
-          additionalProperties?: never;
-          [k: string]: unknown;
+          plugins?: string[];
         };
     telemetry?: {
       enabled?: boolean | string;

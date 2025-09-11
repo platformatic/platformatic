@@ -15,7 +15,7 @@ test('can start applications programmatically from object', async t => {
       config = await transform(config, ...args)
 
       config.logger ??= {}
-      config.logger.transport ??= {
+      config.logger.transport = {
         target: 'pino/file',
         options: { destination: join(root, 'logs.txt') }
       }

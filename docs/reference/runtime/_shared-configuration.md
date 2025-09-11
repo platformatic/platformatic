@@ -376,6 +376,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
   - **`fail`** (`object`). The failure criteria for the Prometheus server liveness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
+- **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
 
