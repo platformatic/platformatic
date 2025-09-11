@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This section helps you diagnose and resolve common issues when working with Watt and Platformatic services.
+This section helps you diagnose and resolve common issues when working with Watt and Platformatic applications.
 
 ## Common Issues and Solutions
 
@@ -11,6 +11,7 @@ This section helps you diagnose and resolve common issues when working with Watt
 **Problem:** After installing `wattpm`, the command is not recognized.
 
 **Solution:**
+
 ```bash
 # If installed globally, ensure npm global bin is in your PATH
 npm list -g --depth=0
@@ -30,19 +31,15 @@ npx wattpm --help
 **Problem:** Error: "No config file found" or "Cannot parse config file"
 
 **Solution:**
+
 1. Ensure you have a configuration file in the current directory:
    - `watt.json` (recommended for Watt applications)
-   - `platformatic.json`
-   - `platformatic.yml`
-   - `platformatic.toml`
 
 2. Check file format and syntax:
+
    ```bash
    # Validate JSON syntax
    cat watt.json | jq .
-   
-   # Or use the config validation
-   wattpm config validate
    ```
 
 3. Use the `--config` option to specify a custom path:
@@ -57,23 +54,26 @@ npx wattpm --help
 **Problem:** "Connection refused" or "Authentication failed" errors.
 
 **Solution:**
+
 1. **Check connection string format:**
+
    ```javascript
    // PostgreSQL
-   "postgres://username:password@host:port/database"
-   
+   'postgres://username:password@host:port/database'
+
    // MySQL
-   "mysql://username:password@host:port/database"
-   
+   'mysql://username:password@host:port/database'
+
    // SQLite
-   "sqlite://./path/to/database.sqlite"
+   'sqlite://./path/to/database.sqlite'
    ```
 
 2. **Test database connectivity:**
+
    ```bash
    # PostgreSQL
    psql "postgres://user:pass@host:port/db" -c "SELECT 1;"
-   
+
    # MySQL
    mysql -h host -P port -u user -p database -e "SELECT 1;"
    ```
@@ -95,6 +95,7 @@ npx wattpm --help
 **Problem:** "You have migrations to apply" error.
 
 **Solution:**
+
 ```bash
 # Apply pending migrations
 platformatic db migrations apply
@@ -106,28 +107,31 @@ platformatic db migrations status
 platformatic db migrations create
 ```
 
-### Service Discovery and Communication Issues
+### Application Discovery and Communication Issues
 
-#### Service Not Found
+#### Application Not Found
 
-**Problem:** "Service not found" or "Service with id 'X' is not started" errors.
+**Problem:** "Application not found" or "Application with id 'X' is not started" errors.
 
 **Solution:**
-1. **Check running services:**
+
+1. **Check running applications:**
+
    ```bash
    wattpm ps
-   wattpm services
+   wattpm applications
    ```
 
-2. **Verify service configuration:**
+2. **Verify application configuration:**
+
    ```bash
    wattpm config
    ```
 
-3. **Check service health:**
+3. **Check application health:**
    ```bash
    wattpm inject --path /health
-   wattpm logs service-name
+   wattpm logs application-name
    ```
 
 #### Port Already in Use
@@ -135,6 +139,7 @@ platformatic db migrations create
 **Problem:** "EADDRINUSE: address already in use" error.
 
 **Solution:**
+
 ```bash
 # Find process using the port
 lsof -i :3042
@@ -154,7 +159,9 @@ kill -9 PID
 **Problem:** Code changes don't appear when running `wattpm dev`.
 
 **Solution:**
+
 1. **Check watch configuration:**
+
    ```json
    {
      "watch": {
@@ -166,6 +173,7 @@ kill -9 PID
    ```
 
 2. **Restart development server:**
+
    ```bash
    # Stop current process (Ctrl+C)
    wattpm dev
@@ -183,11 +191,12 @@ kill -9 PID
 **Problem:** "Cannot find module" or TypeScript compilation errors.
 
 **Solution:**
+
 ```bash
 # Compile TypeScript plugins
 wattpm build
-# or for individual services
-platformatic service compile
+# or for individual applications
+platformatic application compile
 
 # Generate TypeScript types
 platformatic db types
@@ -203,12 +212,15 @@ cat tsconfig.json
 **Problem:** Application fails to build for production.
 
 **Solution:**
+
 1. **Check dependencies:**
+
    ```bash
    wattpm install --production
    ```
 
-2. **Compile all services:**
+2. **Compile all applications:**
+
    ```bash
    wattpm build
    ```
@@ -223,7 +235,9 @@ cat tsconfig.json
 **Problem:** Slow response times or high memory usage in production.
 
 **Solution:**
+
 1. **Enable metrics collection:**
+
    ```json
    {
      "metrics": {
@@ -234,6 +248,7 @@ cat tsconfig.json
    ```
 
 2. **Check logs for errors:**
+
    ```bash
    wattpm logs --level error
    ```
@@ -247,28 +262,28 @@ cat tsconfig.json
 
 ### Configuration Errors
 
-| Error Code | Description | Solution |
-|------------|-------------|----------|
-| PLT_CONFIG_NO_CONFIG_FILE_FOUND | Configuration file not found | Create a `watt.json` or use `--config` option |
-| PLT_CONFIG_CANNOT_PARSE_CONFIG_FILE | Invalid configuration file syntax | Validate JSON/YAML syntax |
-| PLT_CONFIG_VALIDATION_ERRORS | Configuration doesn't match schema | Check configuration against schema |
-| PLT_CONFIG_ENV_VAR_MISSING | Environment variable not set | Set required environment variables |
+| Error Code                          | Description                        | Solution                                      |
+| ----------------------------------- | ---------------------------------- | --------------------------------------------- |
+| PLT_CONFIG_NO_CONFIG_FILE_FOUND     | Configuration file not found       | Create a `watt.json` or use `--config` option |
+| PLT_CONFIG_CANNOT_PARSE_CONFIG_FILE | Invalid configuration file syntax  | Validate JSON/YAML syntax                     |
+| PLT_CONFIG_VALIDATION_ERRORS        | Configuration doesn't match schema | Check configuration against schema            |
+| PLT_CONFIG_ENV_VAR_MISSING          | Environment variable not set       | Set required environment variables            |
 
 ### Database Errors
 
-| Error Code | Description | Solution |
-|------------|-------------|----------|
-| PLT_SQL_MAPPER_CONNECTION_STRING_REQUIRED | Missing database connection | Add `connectionString` to config |
-| PLT_DB_MIGRATIONS_TO_APPLY_ERROR | Pending migrations | Run `platformatic db migrations apply` |
-| PLT_DB_UNKNOWN_DATABASE_ERROR | Unsupported database | Use PostgreSQL, MySQL, MariaDB, or SQLite |
+| Error Code                                | Description                 | Solution                                  |
+| ----------------------------------------- | --------------------------- | ----------------------------------------- |
+| PLT_SQL_MAPPER_CONNECTION_STRING_REQUIRED | Missing database connection | Add `connectionString` to config          |
+| PLT_DB_MIGRATIONS_TO_APPLY_ERROR          | Pending migrations          | Run `platformatic db migrations apply`    |
+| PLT_DB_UNKNOWN_DATABASE_ERROR             | Unsupported database        | Use PostgreSQL, MySQL, MariaDB, or SQLite |
 
 ### Runtime Errors
 
-| Error Code | Description | Solution |
-|------------|-------------|----------|
-| PLT_RUNTIME_EADDR_IN_USE | Port already in use | Change port or kill existing process |
-| PLT_RUNTIME_SERVICE_NOT_FOUND | Service not found | Check service ID and configuration |
-| PLT_RUNTIME_APPLICATION_NOT_STARTED | Application not running | Start application with `wattpm start` |
+| Error Code                          | Description             | Solution                               |
+| ----------------------------------- | ----------------------- | -------------------------------------- |
+| PLT_RUNTIME_EADDR_IN_USE            | Port already in use     | Change port or kill existing process   |
+| PLT_RUNTIME_APPLICATION_NOT_FOUND   | Application not found   | Check application ID and configuration |
+| PLT_RUNTIME_APPLICATION_NOT_STARTED | Application not running | Start application with `wattpm start`  |
 
 For a complete list of error codes, see the [Error Reference](./errors.md).
 
@@ -299,16 +314,16 @@ wattpm start --inspect
 # Then connect Chrome DevTools or VS Code
 ```
 
-### Check Service Health
+### Check Application Health
 
 ```bash
-# Test individual service endpoints
+# Test individual application endpoints
 wattpm inject --path /health
 wattpm inject --path /metrics
 wattpm inject --path /documentation/json
 
-# View service configuration
-wattpm config service-name
+# View application configuration
+wattpm config application-name
 ```
 
 ### Monitor Logs in Real-time
@@ -317,11 +332,168 @@ wattpm config service-name
 # Stream all logs
 wattpm logs
 
-# Stream logs from specific service
-wattpm logs my-app api-service
+# Stream logs from specific application
+wattpm logs my-app api-application
 
 # Filter by log level
 wattpm logs --level error
+```
+
+## Observability Architecture Diagrams
+
+Understanding how observability works in Watt applications is crucial for effective debugging. Logs, telemetry tracing, and metrics have three completely different implementations and data flows.
+
+### Logging Flow
+
+Watt uses Pino for high-performance logging with centralized log streaming through the Runtime API:
+
+```mermaid
+graph TD
+    A[Watt Application] --> B[Application Worker 1]
+    A --> C[Application Worker 2]
+    A --> D[Application Worker N]
+
+    B --> E[Pino Logger]
+    C --> F[Pino Logger]
+    D --> G[Pino Logger]
+
+    E --> H[Runtime Process]
+    F --> H
+    G --> H
+
+    H --> I[Log Files<br/>pino-roll]
+    H --> J[Management API<br/>getRuntimeLiveLogsStream]
+
+    J --> K[wattpm logs<br/>command]
+
+    L[External Log Aggregator<br/>ELK/Fluentd] --> I
+
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style K fill:#e8f5e8
+    style L fill:#fff3e0
+```
+
+**Key Points:**
+
+- Each worker application uses its own Pino logger instance
+- All logs flow through the main Runtime process
+- Runtime API provides live log streaming for CLI commands
+- Logs are persisted to rotating files using pino-roll
+- External systems can consume log files directly
+
+### Telemetry Tracing Flow
+
+Watt implements distributed tracing using OpenTelemetry with automatic span propagation across applications:
+
+```mermaid
+graph TD
+    A[Incoming Request] --> B[Watt Application]
+    B --> C[Fastify onRequest Hook]
+    C --> D[OpenTelemetry Plugin<br/>startHTTPSpan]
+
+    D --> E[Application Worker 1]
+    D --> F[Application Worker 2]
+
+    E --> G[Inter-application Call<br/>undici interceptor]
+    F --> H[Database Query<br/>auto-instrumentation]
+
+    G --> I[Trace Context<br/>Propagation]
+    H --> I
+
+    I --> J[OTLP Exporter]
+    I --> K[Jaeger Exporter]
+    I --> L[Zipkin Exporter]
+
+    J --> M[OpenTelemetry Collector]
+    K --> N[Jaeger Backend]
+    L --> O[Zipkin Backend]
+
+    M --> P[Observability Platform<br/>Jaeger/Grafana/etc]
+    N --> P
+    O --> P
+
+    style A fill:#e1f5fe
+    style D fill:#f3e5f5
+    style I fill:#e8f5e8
+    style P fill:#fff3e0
+```
+
+**Key Points:**
+
+- Each application has its own OpenTelemetry plugin instance
+- Traces automatically span across application boundaries
+- Context propagation happens via HTTP headers
+- Multiple exporter types supported (OTLP, Jaeger, Zipkin)
+- Custom spans can be created using `app.openTelemetry.startSpan()`
+
+### Metrics Collection Flow
+
+Watt exposes Prometheus-compatible metrics through a dedicated metrics server:
+
+```mermaid
+graph TD
+    A[Watt Application] --> B[Application Worker 1]
+    A --> C[Application Worker 2]
+    A --> D[Application Worker N]
+
+    B --> E[Fastify Metrics<br/>@fastify/metrics]
+    C --> F[Custom Metrics<br/>app.metrics.counter]
+    D --> G[System Metrics<br/>Node.js metrics]
+
+    E --> H[Runtime Process<br/>Metrics Aggregation]
+    F --> H
+    G --> H
+
+    H --> I[Prometheus Server<br/>:9090/metrics]
+    H --> J[Management API<br/>getRuntimeMetrics]
+
+    I --> K[Prometheus Scraper]
+    J --> L[wattpm metrics<br/>command]
+
+    K --> M[Prometheus Database]
+    M --> N[Grafana Dashboard]
+    M --> O[Alertmanager]
+
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style I fill:#e8f5e8
+    style M fill:#fff3e0
+```
+
+**Key Points:**
+
+- Each worker collects its own metrics (HTTP, custom, system)
+- Runtime process aggregates metrics from all workers
+- Dedicated Prometheus server runs on separate port (default 9090)
+- Metrics available in both text and JSON formats
+- Built-in health check endpoints (/ready, /status)
+
+### Observability Integration Patterns
+
+For production deployments, these three systems work together:
+
+```mermaid
+graph LR
+    A[Watt Application] --> B[Logs]
+    A --> C[Traces]
+    A --> D[Metrics]
+
+    B --> E[ELK Stack]
+    C --> F[Jaeger/Tempo]
+    D --> G[Prometheus]
+
+    E --> H[Unified Dashboard<br/>Grafana]
+    F --> H
+    G --> H
+
+    H --> I[Alerting<br/>PagerDuty/Slack]
+    H --> J[APM Analysis<br/>Error Correlation]
+
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style I fill:#ffebee
+    style J fill:#e8f5e8
 ```
 
 ## Getting Additional Help
@@ -348,14 +520,15 @@ cat watt.json
 # Error logs
 wattpm logs --level error > error.log
 
-# Service status
+# Application status
 wattpm ps
-wattpm services
+wattpm applications
 ```
 
 ### Creating Minimal Reproductions
 
 1. **Create a minimal example:**
+
    ```bash
    wattpm create debug-app --skip-dependencies
    cd debug-app
@@ -363,6 +536,7 @@ wattpm services
    ```
 
 2. **Test the issue:**
+
    ```bash
    wattpm dev
    # Document the steps to reproduce

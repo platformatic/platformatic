@@ -8,7 +8,7 @@ In this guide we'll create a "modular monolith" Library application. It will be 
   - Three [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) applications, each with their own databases
   - A [Platformatic Gateway](https://docs.platformatic.dev/docs/reference/gateway/introduction) application which aggregates multiple application's REST APIs into a composed API
 - Customise the composed API that's automatically generated in a Gateway application
-- Generate a client for an application's REST API and use it in a Platformatic application to make API requests
+- Generate a client for an application's REST API and use it in a Watt application to make API requests
 - Add custom functionality to a Gateway application's composed API by modifying its routes and responses
 
 The architecture for our Library application will look like this:

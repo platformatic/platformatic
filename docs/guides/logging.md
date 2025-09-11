@@ -2,11 +2,12 @@
 
 ## Problem
 
-You need to customize logging behavior in your Watt application for different environments (development, staging, production) or integrate with external logging systems.
+You need to customize logging behavior in your Watt application for different environments (development, staging, production) or integrate with external logging systems
 
 ## Solution Overview
 
 Watt uses [Pino](https://getpino.io/) for high-performance logging with extensive configuration options. You can:
+
 - Set consistent logging across all applications via Watt configuration
 - Override logging for specific applications
 - Integrate with external systems (Elasticsearch, files, etc.)
@@ -36,8 +37,9 @@ The default configuration uses `level: info` with pretty-printed output in devel
 ```
 
 **Available levels (most to least verbose):**
+
 - `trace` - Very detailed debugging information
-- `debug` - Debugging information  
+- `debug` - Debugging information
 - `info` - General information (default)
 - `warn` - Warning messages
 - `error` - Error messages only
@@ -45,6 +47,7 @@ The default configuration uses `level: info` with pretty-printed output in devel
 - `silent` - No logging
 
 **Environment-specific example:**
+
 ```json
 {
   "logger": {
@@ -65,19 +68,22 @@ Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
 {
   "logger": {
     "transport": {
-      "targets": [{
-        "target": "pino/file",
-        "options": {
-          "destination": "{LOG_DIR}/app.log",
-          "mkdir": true
+      "targets": [
+        {
+          "target": "pino/file",
+          "options": {
+            "destination": "{LOG_DIR}/app.log",
+            "mkdir": true
+          }
         }
-      }]
+      ]
     }
   }
 }
 ```
 
 **Multiple destinations example:**
+
 ```json
 {
   "logger": {
@@ -91,7 +97,7 @@ Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
           }
         },
         {
-          "target": "pino/file", 
+          "target": "pino/file",
           "level": "error",
           "options": {
             "destination": "{LOG_DIR}/errors.log",
@@ -113,17 +119,20 @@ This logs all messages to console with pretty formatting, and errors to a file.
 **Solution:** Use specialized transport targets:
 
 **Elasticsearch:**
+
 ```json
 {
   "logger": {
     "transport": {
-      "targets": [{
-        "target": "pino-elasticsearch",
-        "options": {
-          "node": "http://127.0.0.1:9200",
-          "index": "my-app-logs"
+      "targets": [
+        {
+          "target": "pino-elasticsearch",
+          "options": {
+            "node": "http://127.0.0.1:9200",
+            "index": "my-app-logs"
+          }
         }
-      }]
+      ]
     }
   }
 }
@@ -141,12 +150,7 @@ Install the transport: `npm install pino-elasticsearch`
 {
   "logger": {
     "redact": {
-      "paths": [
-        "req.headers.authorization",
-        "password", 
-        "apiKey",
-        "req.body.creditCard"
-      ],
+      "paths": ["req.headers.authorization", "password", "apiKey", "req.body.creditCard"],
       "censor": "[REDACTED]"
     }
   }
@@ -154,6 +158,7 @@ Install the transport: `npm install pino-elasticsearch`
 ```
 
 **Before redaction:**
+
 ```json
 {
   "level": 30,
@@ -168,10 +173,11 @@ Install the transport: `npm install pino-elasticsearch`
 ```
 
 **After redaction:**
+
 ```json
 {
   "level": 30,
-  "msg": "User login", 
+  "msg": "User login",
   "password": "[REDACTED]",
   "req": {
     "headers": {
@@ -193,7 +199,7 @@ Install the transport: `npm install pino-elasticsearch`
     "level": "info",
     "timestamp": "isoTime",
     "base": {
-      "service": "my-app",
+      "application": "my-app",
       "version": "1.2.0"
     },
     "redact": {
@@ -204,8 +210,9 @@ Install the transport: `npm install pino-elasticsearch`
 ```
 
 This provides:
+
 - ISO timestamp format for log aggregation
-- Service metadata for filtering
+- Application metadata for filtering
 - Automatic sensitive data redaction
 
 - **base**: The base object for the logs; it can be either be `null` to remove `pid` and `hostname` or a custom key/value object to add custom properties to the logs.
@@ -214,7 +221,7 @@ This provides:
   {
     "logger": {
       "base": {
-        "service": "my-service",
+        "application": "my-application",
         "version": "1.0.0"
       }
     }
@@ -259,7 +266,7 @@ This provides:
 
 ### Note on using custom logger configuration
 
-When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread service is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
+When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread application is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
 
 For example, the difference between the default pino settings and a custom logger configuration that uses a custom `messageKey` is:
 
@@ -279,7 +286,7 @@ With default pino settings:
 }
 ```
 
-With custom logger configuration, for example 
+With custom logger configuration, for example
 
 ```json
 {
@@ -319,7 +326,7 @@ With custom logger configuration, for example
 }
 ```
 
-To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Services logs](#capture-thread-services-logs) for more details); the result will be close to the default pino settings:
+To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Applications logs](#capture-thread-applications-logs) for more details); the result will be close to the default pino settings:
 
 ```json
 {
@@ -339,7 +346,7 @@ To avoid the log entry to be wrapped in the `stdout` property, set the `captureS
 
 ### Capture Thread Applications logs
 
-By default, Platformatic applications logs are captured by Watt and wrapped in the `stdout` and `stderr` streams, for example:
+By default, Watt applications logs are captured by Watt and wrapped in the `stdout` and `stderr` streams, for example:
 
 ```txt
 {"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","caller":"STDOUT","stdout":{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}}
@@ -376,7 +383,7 @@ You can use environment variables in your logger configuration:
     "transport": {
       "target": "pino/file",
       "options": {
-        "destination": "{LOG_DIR}/service.log",
+        "destination": "{LOG_DIR}/application.log",
         "mkdir": true
       }
     }
@@ -413,7 +420,7 @@ A `platformatic.json` configuration file contains the following logger options w
 
 ```js
 export function bindings (bindings) {
-  return { service: 'service-name' }
+  return { application: 'application-name' }
 }
 
 export function level (label) {
@@ -421,7 +428,7 @@ export function level (label) {
 }
 ```
 
-In this example, the logger is configured run a `@platformatic/node` application, but the same configuration can be used for any other Platformatic application.
+In this example, the logger is configured run a `@platformatic/node` application, but the same configuration can be used for any other Watt application.
 In this example, the logger is configured to use a file transport and the `level` is set to `debug`.
 
 ## Programmatic Usage
@@ -430,18 +437,20 @@ When using Platformatic programmatically, you can derive from the `globalThis.pl
 
 ```js
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger.child({ service: 'app1' },
+  loggerInstance: globalThis.platformatic.logger.child(
+    { application: 'app1' },
     {
       formatters: {
-        bindings: (bindings) => {
-          return { name: bindings.service }
-        },
+        bindings: bindings => {
+          return { name: bindings.application }
+        }
       },
       redact: {
         paths: ['secret'],
         censor: '***HIDDEN***'
       }
-    })
+    }
+  )
 })
 ```
 
@@ -449,11 +458,11 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ---
 
-## Setting up a Platformatic application with logging configuration
+## Setting up a Watt application with logging configuration
 
-Let's see an example of a Platformatic application with `watt`, `gateway`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Watt configuration with `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
 
-Watt has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in Watt ensures that the logs will be consistent across all the applications.
+The main `watt` application has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` application ensures that the logs will be consistent across all the applications.
 
 `watt.json`
 
@@ -484,9 +493,7 @@ The other applications have their own logger configuration, for example the `bac
   "logger": {
     "level": "debug",
     "redact": {
-      "paths": [
-        "req.headers.authorization"
-      ],
+      "paths": ["req.headers.authorization"],
       "censor": "***HIDDEN***"
     }
   }
@@ -505,16 +512,15 @@ const app = fastify({
 })
 ```
 
-
 The `next` application has a custom formatter that adds the `application` property to the logs, note the application level is different in the applications.
 
-`next/platformatic.json`
+`next/watt.json`
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
   "application": {
-    "basePath": "/next"    
+    "basePath": "/next"
   },
   "logger": {
     "level": "debug"
@@ -522,12 +528,12 @@ The `next` application has a custom formatter that adds the `application` proper
 }
 ```
 
-Then in the  `next` application the logger is available as `globalThis.platformatic.logger`, for example
+Then in the `next` application the logger is available as `globalThis.platformatic.logger`, for example
 
 `next/src/app/page.jsx`
 
 ```jsx
-export default function Home() {
+export default function Home () {
   globalThis.platformatic.logger?.debug('Home page called')
 
   return (

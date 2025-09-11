@@ -3,6 +3,7 @@
 **What you'll learn:** How to configure your Watt applications using environment variables for different deployment environments, following the twelve-factor app methodology.
 
 **By the end of this tutorial, you'll be able to:**
+
 - Configure Watt applications using environment variables
 - Use `.env` files for local development
 - Set up different configurations for development, staging, and production
@@ -38,6 +39,7 @@ In any Watt configuration file, you can interpolate environment variables using 
 ```
 
 **How it works:**
+
 - The replacement happens after JSON parsing
 - All Watt configuration files support this syntax
 - Variables are resolved at startup time
@@ -56,6 +58,7 @@ DATABASE_URL=sqlite://./dev.db
 ```
 
 **Where to place .env files:**
+
 - Same folder as your Watt configuration file
 - Or in the current working directory
 - Watt automatically finds and loads them
@@ -69,6 +72,7 @@ PORT=4042 LOG_LEVEL=debug npx wattpm dev
 ```
 
 **This is useful for:**
+
 - Quick testing with different values
 - CI/CD pipeline overrides
 - One-off debugging sessions
@@ -90,17 +94,19 @@ DATABASE_URL=postgresql://user:pass@prod-db:5432/myapp
 ```
 
 **Load specific environments:**
+
 ```bash
 # Development
 NODE_ENV=development npx wattpm start
 
-# Production  
+# Production
 NODE_ENV=production npx wattpm start
 ```
 
 ## Step 5: Common Configuration Patterns
 
 ### Database Configuration
+
 ```json
 {
   "db": {
@@ -118,6 +124,7 @@ DB_POOL_SIZE=10
 ```
 
 ### Application Configuration
+
 ```json
 {
   "server": {
@@ -157,11 +164,13 @@ Now that you understand environment variables, you might want to:
 ## Troubleshooting
 
 **Variable not being replaced?**
+
 - Check curly brace syntax: `{VARIABLE_NAME}` not `${VARIABLE_NAME}`
 - Ensure the variable is set: `echo $VARIABLE_NAME`
 - Verify `.env` file location (same folder as config file)
 
 **Environment-specific file not loading?**
+
 - Check `NODE_ENV` value: `echo $NODE_ENV`
 - Ensure file naming: `.env.development`, `.env.production`
 - Remember: command line variables override `.env` files

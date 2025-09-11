@@ -28,8 +28,7 @@ const sidebars = {
       label: 'Getting Started',
       collapsed: false,
       items: [
-        'getting-started/quick-start-watt',
-        'getting-started/quick-start-guide',
+        'getting-started/quick-start',
         'getting-started/port-your-app',
         {
           type: 'category',
@@ -51,8 +50,6 @@ const sidebars = {
           label: 'Application Development',
           collapsed: true,
           items: [
-            'guides/frameworks',
-            'guides/capabilities',
             'guides/build-modular-monolith',
             'guides/cache-with-platformatic-watt',
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',
@@ -72,9 +69,8 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
-            'guides/monitoring-and-observability',
-            'guides/monitoring',
-            'guides/telemetry',
+            'guides/metrics',
+            'guides/distributed-tracing',
             'guides/logging-to-elasticsearch',
             'guides/profiling-with-watt'
           ]
@@ -93,7 +89,7 @@ const sidebars = {
           type: 'category',
           label: 'Watt (Node.js Application Server)',
           collapsed: true,
-          items: ['reference/wattpm/overview', 'reference/wattpm/configuration', 'reference/wattpm/cli-commands']
+          items: ['reference/watt/overview', 'reference/watt/configuration', 'reference/watt/cli-commands']
         },
         {
           type: 'category',
@@ -119,7 +115,7 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'API Gateway (Gateway)',
+              label: 'API Gateway (Composer)',
               collapsed: true,
               items: [
                 'reference/gateway/overview',

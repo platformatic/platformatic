@@ -15,7 +15,7 @@ In this guide, you will learn how to create a new Platformatic guide with Watt, 
 
 <NewApiProjectInstructions/>
 
-Every Platformatic application uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
+Every Watt application uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
 
 Launch your application with the command below:
 
@@ -50,7 +50,7 @@ Using existing configuration ...
 Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) documentation to create a new front-end application, and call it "rest-api-frontend".
 
 :::info
-Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js and Vite frameworks.
+Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js, Vite, and NestJS frameworks.
 :::
 
 Run the command:
@@ -114,7 +114,7 @@ Add your frontend `id` and DB application to your `watt.json` file in your `web/
 
 ### Add a Frontend Client for REST API
 
-To consume REST APIs in your Platformatic application. run the command to use [massimo](https://massimohttp.dev) for exposing a client for your remote OpenAPI server, the client uses fetch and runs on the browser.
+To consume REST APIs in your Watt application. run the command to use [massimo](https://massimohttp.dev) for exposing a client for your remote OpenAPI server, the client uses fetch and runs on the browser.
 
 ```bash
 npx massimo-cli --frontend http://0.0.0.0:3042 --no-full --name client -f web/frontend/src/client

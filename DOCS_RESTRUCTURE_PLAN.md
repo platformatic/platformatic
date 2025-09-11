@@ -16,7 +16,7 @@ The current Platformatic documentation suffers from several critical issues that
 - **Missing user journeys**: No clear progression from beginner to advanced usage
 
 **Strategic Focus:**
-This plan repositions **Watt (wattpm) as the primary product** - the Node.js Application Server that powers everything else. All other components (DB, Service, Composer, Runtime, Capabilities) become services/features that run within Watt.
+This plan repositions **Watt (wattpm) as the primary product** - the Node.js Application Server that powers everything else. All other components (DB, Service, Composer, Runtime) become services/features that run within Watt.
 
 ## User Journey Mapping
 
@@ -263,7 +263,7 @@ Explore advanced features
 
 **3. Core Concepts**
 
-- Services and capabilities
+- Applications and capabilities
 - Configuration-driven development
 - Built-in observability
 
@@ -569,7 +569,7 @@ The planned structure will be implemented in future phases once the foundation i
 
 - [x] **Sidebar Organization** - Fixed Framework Integrations, reordered Services & APIs, reorganized SQL Data Layer
 - [x] **Navigation Enhancement** - Added top navigation links, Reference overview page, fixed versioning issues
-- [x] **Watt Positioning** - Rewrote overview.md to position Watt as primary Node.js Application Server
+- [x] **Watt Positioning** - Rewrote Overview.md to position Watt as primary Node.js Application Server
 - [x] **Clean Architecture** - Removed duplication, established clear content separation by type
 
 These improvements create the foundation needed to implement the full planned structure in subsequent phases.
@@ -886,6 +886,38 @@ const sidebars = {
 - Documentation analytics show improved engagement (time on page, completion rates)
 - Team adoption playbook validated (enterprise onboarding success)
 - Community content creation enabled (contributor guidelines and templates)
+
+### Guide Splitting Requirements (Per Review Feedback)
+
+**Split Monitoring and Observability Guide**: The current `docs/guides/monitoring-and-observability.md` needs to be split into two separate guides:
+
+1. **Basic Node.js Applications Guide** (`docs/guides/logging-basic-nodejs.md`)
+   - Focus on logging and monitoring for simple Node.js applications
+   - Cover environment-specific configurations
+   - Include basic health checks and metrics
+   - Target developers working with standalone Node.js services
+
+2. **Platformatic Service Guide** (`docs/guides/logging-platformatic-services.md`)
+   - Focus on Platformatic Service, Platformatic DB, and Platformatic Composer
+   - Cover unified logging across services
+   - Include advanced monitoring with service mesh patterns
+   - Target developers building comprehensive Watt applications
+
+**Split TypeScript Compilation Guide**: The current `docs/guides/deployment/compiling-typescript.md` needs to be split into two separate guides:
+
+1. **Basic Node.js Applications Guide** (`docs/guides/deployment/compiling-typescript-nodejs.md`)
+   - Focus on TypeScript compilation for basic Node.js applications without Platformatic services
+   - Cover standard TypeScript toolchain (tsc, webpack, etc.)
+   - Include basic build optimization and deployment patterns
+   - Target developers working with standalone Node.js applications
+
+2. **Platformatic Services Guide** (`docs/guides/deployment/compiling-typescript-platformatic.md`)
+   - Focus specifically on Platformatic Service, Platformatic DB, and Platformatic Composer
+   - Cover `plt service compile`, `plt db compile`, `plt composer compile` commands
+   - Include multi-service compilation with `plt runtime compile`
+   - Target developers building Watt applications with Platformatic services
+
+This split addresses the need to distinguish between basic Node.js TypeScript compilation and the specialized compilation workflow for Platformatic services within Watt.
 
 ## Implementation Recommendations
 

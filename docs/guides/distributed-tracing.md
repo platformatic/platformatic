@@ -21,7 +21,7 @@ Check that the server is running by opening [http://localhost:16686/](http://loc
 
 ## Platformatic setup
 
-We'll test this with a Platformatic Gateway that proxies requests to a Platformatic Application, which in turn invokes a Platformatic DB Application.
+We'll test this with a Platformatic Gateway that proxies requests to a Watt Application, which in turn invokes a Platformatic DB Application.
 In this way we show that the telemetry is propagated from the Gateway throughout the applications and the collected correctly.
 Let's setup all these components:
 
@@ -69,7 +69,7 @@ Finally, start the application:
 npm run start
 ```
 
-### Platformatic Application
+### Watt Application
 
 Create at the same level of `test-db` another folder for Application and cd into it:
 

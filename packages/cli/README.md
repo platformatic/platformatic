@@ -19,7 +19,7 @@ npm create platformatic@latest
 npm install platformatic
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
+Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
 guide to get up and running with Platformatic.
 
 ## Documentation

@@ -22,11 +22,12 @@
   <br/>
 </h1>
 
-<div align="center"> 
+<div align="center">
 
-  **Build and run multiple Node.js applications with unified logging, monitoring, and deployment.**  
-  
-  Transform Node.js development with a single server that handles databases, APIs, frontend frameworks, and microservices - all with built-in observability and zero-config deployment.
+**Build and run multiple Node.js applications with unified logging, monitoring, and deployment.**
+
+Transform Node.js development with a single server that handles databases, APIs, frontend frameworks, and microservices - all with built-in observability and zero-config deployment.
+
 </div>
 <br/>
 
@@ -46,64 +47,78 @@ Your application will be running at `http://localhost:3042` with auto-generated 
 
 **One Server, Multiple Services** - Watt runs your database APIs, custom services, frontend frameworks, and API gateways all within a single, unified application server.
 
-- **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box  
+- **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box
 - **🧱 Composable Architecture** - HTTP services, API composers, frontend frameworks, and data services
-- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, and plain Node.js
+- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js
 - **📦 Production Ready** - Docker deployment, environment configuration, and scaling built-in
 - **🚀 TypeScript First** - Full type safety with auto-generated types and SDK
 
 ## Choose Your Learning Path
 
 ### 👋 New to Node.js?
-**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/Overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+
+**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
 Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 
 ### ⚡ Experienced Developer?
-**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start-watt) → [Architecture Overview](https://docs.platformatic.dev/docs/Overview)  
+
+**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start) → [Architecture Overview](https://docs.platformatic.dev/docs/overview)  
 Get running in 5 minutes, then dive into advanced patterns and integrations.
 
 ### 🔄 Migrating Existing Apps?
-**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)  
+
+**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/frameworks)  
 Add Watt to your existing Express, Fastify, or Next.js applications.
 
 ### 📚 Exploring Options?
-**Compare:** [Watt vs Alternatives](https://docs.platformatic.dev/docs/Overview) → [Examples Gallery](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+
+**Compare:** [Watt vs Alternatives](https://docs.platformatic.dev/docs/overview) → [Examples Gallery](https://docs.platformatic.dev/docs/learn/overview)  
 See how Watt compares to Express, Fastify, and other Node.js platforms.
 
 ---
 
 ## Core Capabilities
 
-### HTTP Services  
+### HTTP Services
+
 Custom application logic built on Fastify with automatic API documentation, validation, and plugin integration.
 
 ### API Composition
+
 Combine multiple services into unified APIs with request/response transformation and intelligent caching.
 
 ### Frontend Integration
-Deploy Next.js, Astro, Remix, or Vite applications alongside your APIs with optimized builds and routing.
+
+Deploy Next.js, Astro, Remix, Vite, or NestJS applications alongside your APIs with optimized builds and routing.
 
 ### Client SDK
+
 Auto-generated TypeScript/JavaScript clients for your APIs with full type safety and IDE integration.
 
 ### Data Services
+
 Auto-generated REST and GraphQL APIs from your database schema with built-in authorization, migrations, and relationships.
 
 ## Documentation Structure
 
-### 📖 [Overview](https://docs.platformatic.dev/docs/Overview)
+### 📖 [Overview](https://docs.platformatic.dev/docs/overview)
+
 Understand what Watt is, why it exists, and how it fits your needs
 
-### 🎓 [Learning](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)  
+### 🎓 [Learning](https://docs.platformatic.dev/docs/learn)
+
 Tutorials, examples, and guided paths from beginner to advanced
 
-### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
+### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides)
+
 Solve specific problems with framework integration, deployment, and production setup
 
-### 📋 [Reference](https://docs.platformatic.dev/docs/reference-overview)
+### 📋 [Reference](https://docs.platformatic.dev/docs/reference)
+
 Complete technical specifications for CLI, configuration, and APIs
 
-### 🧠 [Concepts](https://docs.platformatic.dev/docs/Overview) 
+### 🧠 [Concepts](https://docs.platformatic.dev/docs/concepts)
+
 Deep architectural understanding and design decisions
 
 ## Get Support
@@ -122,4 +137,3 @@ Deep architectural understanding and design decisions
 [Learn more about Enterprise Plans →](https://www.platformatichq.com)
 
 ![Command Center](./assets/Hompage_Solution_White.png)
-
