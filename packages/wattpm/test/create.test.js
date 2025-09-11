@@ -31,7 +31,7 @@ test('create should run wattpm-utils create with npx by default', { skip: isWind
   await wattpm('create', { cwd: root, env: { PATH: root } })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'npx -y wattpm-utils create -- -c watt.json')
+  deepStrictEqual(output.trim(), 'npx -y wattpm-utils -- create -c watt.json')
 })
 
 test('create should autodetect the package manager', { skip: isWindows }, async t => {
@@ -40,7 +40,7 @@ test('create should autodetect the package manager', { skip: isWindows }, async 
   await wattpm('create', '-l', { cwd: root, env: { PATH: root } })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'pnpx wattpm-utils create@latest -- -c watt.json')
+  deepStrictEqual(output.trim(), 'pnpx wattpm-utils@latest -- create -c watt.json')
 })
 
 test('create should allow to specify the package manager explictly', { skip: isWindows }, async t => {
@@ -48,7 +48,7 @@ test('create should allow to specify the package manager explictly', { skip: isW
   await wattpm('create', '-P', 'pnpm', { cwd: root, env: { PATH: root } })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'pnpx wattpm-utils create -- -c watt.json -P pnpm')
+  deepStrictEqual(output.trim(), 'pnpx wattpm-utils -- create -c watt.json -P pnpm')
 })
 
 test('should propagate options', { skip: isWindows }, async t => {
@@ -59,5 +59,5 @@ test('should propagate options', { skip: isWindows }, async t => {
   })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'pnpx wattpm-utils create@latest -- -c foo.json -P pnpm -s -M foo -M bar')
+  deepStrictEqual(output.trim(), 'pnpx wattpm-utils@latest -- create -c foo.json -P pnpm -s -M foo -M bar')
 })
