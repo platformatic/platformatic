@@ -73,7 +73,7 @@ export async function createCommand (logger, args) {
     false
   )
 
-  const runArgs = ['wattpm-utils', 'create' + (latest ? '@latest' : ''), '--']
+  const runArgs = ['wattpm-utils' + (latest ? '@latest' : ''), 'create', '--']
 
   runArgs.push('-c', config)
 
