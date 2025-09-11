@@ -16,7 +16,7 @@ In this guide, we will use `Next.js` as our frontend framework, but Watt support
 
 Before starting, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v22.18.0+)
+- [Node.js](https://nodejs.org/) (v22.19.0+)
 - [npm](https://docs.npmjs.com/cli/) (comes with Node.js)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 

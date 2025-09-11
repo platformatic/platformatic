@@ -5,7 +5,7 @@ const currentPlatform = platform()
 
 export function checkNodeVersionForApplications () {
   const currentVersion = process.version
-  const minimumVersion = '22.18.0'
+  const minimumVersion = '22.19.0'
 
   if (lt(currentVersion, minimumVersion)) {
     throw new Error(

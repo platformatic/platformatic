@@ -30,7 +30,7 @@ const wrappableProperties = {
 }
 
 const engines = {
-  node: '>=22.18.0'
+  node: '>=22.19.0'
 }
 
 export const ERROR_PREFIX = 'PLT_RUNTIME_GEN'

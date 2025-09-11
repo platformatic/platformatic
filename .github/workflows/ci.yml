@@ -49,7 +49,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node: 22.18.0
+          node: 22.19.0
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -68,13 +68,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -110,7 +110,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node: 22.18.0
+          node: 22.19.0
           cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
@@ -175,13 +175,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -216,13 +216,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -254,13 +254,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -292,13 +292,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -330,13 +330,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -368,7 +368,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x - main
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
             suite: main
           - label: Linux - 24.x - main
@@ -376,7 +376,7 @@ jobs:
             os: ubuntu-24.04
             suite: main
           - label: Linux - 22.x - api
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
             suite: api
           - label: Linux - 24.x - api
@@ -384,7 +384,7 @@ jobs:
             os: ubuntu-24.04
             suite: api
           - label: Linux - 22.x - cli
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
             suite: cli
           - label: Linux - 24.x - cli
@@ -392,7 +392,7 @@ jobs:
             os: ubuntu-24.04
             suite: cli
           - label: Linux - 22.x - start
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
             suite: start
           - label: Linux - 24.x - start
@@ -400,7 +400,7 @@ jobs:
             os: ubuntu-24.04
             suite: start
           - label: Linux - 22.x - multiple-workers
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
             suite: multiple-workers
           - label: Linux - 24.x - multiple-workers
@@ -408,7 +408,7 @@ jobs:
             os: ubuntu-24.04
             suite: multiple-workers
           - label: Win - 22.x - main
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
             suite: main
           - label: Win - 24.x - main
@@ -416,7 +416,7 @@ jobs:
             os: windows-2025
             suite: main
           - label: Win - 22.x - api
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
             suite: api
           - label: Win - 24.x - api
@@ -424,7 +424,7 @@ jobs:
             os: windows-2025
             suite: api
           - label: Win - 22.x - cli
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
             suite: cli
           - label: Win - 24.x - cli
@@ -432,7 +432,7 @@ jobs:
             os: windows-2025
             suite: cli
           - label: Win - 22.x - start
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
             suite: start
           - label: Win - 24.x - start
@@ -440,7 +440,7 @@ jobs:
             os: windows-2025
             suite: start
           - label: Win - 22.x - multiple-workers
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
             suite: multiple-workers
           - label: Win - 24.x - multiple-workers
@@ -474,13 +474,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -514,7 +514,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
@@ -546,7 +546,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
@@ -578,13 +578,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -621,7 +621,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
@@ -656,31 +656,31 @@ jobs:
         include:
           - label: PostgreSQL - 22.x
             db: postgresql
-            node: 22.18.0
+            node: 22.19.0
           - label: PostgreSQL - 24.x
             db: postgresql
             node: 24.5.0
           - label: MariaDB - 22.x
             db: mariadb
-            node: 22.18.0
+            node: 22.19.0
           - label: MariaDB - 24.x
             db: mariadb
             node: 24.5.0
           - label: MySQL - 22.x
             db: mysql
-            node: 22.18.0
+            node: 22.19.0
           - label: MySQL - 24.x
             db: mysql
             node: 24.5.0
           - label: MySQL8 - 22.x
             db: mysql8
-            node: 22.18.0
+            node: 22.19.0
           - label: MySQL8 - 24.x
             db: mysql8
             node: 24.5.0
           - label: SQLite - 22.x
             db: sqlite
-            node: 22.18.0
+            node: 22.19.0
           - label: SQLite - 24.x
             db: sqlite
             node: 24.5.0
@@ -724,31 +724,31 @@ jobs:
         include:
           - label: PostgreSQL - 22.x
             db: postgresql
-            node: 22.18.0
+            node: 22.19.0
           - label: PostgreSQL - 24.x
             db: postgresql
             node: 24.5.0
           - label: MariaDB - 22.x
             db: mariadb
-            node: 22.18.0
+            node: 22.19.0
           - label: MariaDB - 24.x
             db: mariadb
             node: 24.5.0
           - label: MySQL - 22.x
             db: mysql
-            node: 22.18.0
+            node: 22.19.0
           - label: MySQL - 24.x
             db: mysql
             node: 24.5.0
           - label: MySQL8 - 22.x
             db: mysql8
-            node: 22.18.0
+            node: 22.19.0
           - label: MySQL8 - 24.x
             db: mysql8
             node: 24.5.0
           - label: SQLite - 22.x
             db: sqlite
-            node: 22.18.0
+            node: 22.19.0
           - label: SQLite - 24.x
             db: sqlite
             node: 24.5.0
@@ -787,13 +787,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -825,13 +825,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -863,13 +863,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -901,13 +901,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -945,13 +945,13 @@ jobs:
       matrix:
         include:
           - label: Linux/22
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux/24
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win/22
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win/24
             node: 24.5.0
@@ -989,13 +989,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1027,13 +1027,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1064,7 +1064,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
@@ -1096,13 +1096,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1134,13 +1134,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1172,7 +1172,7 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
@@ -1210,13 +1210,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1248,13 +1248,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1286,13 +1286,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0
@@ -1324,13 +1324,13 @@ jobs:
       matrix:
         include:
           - label: Linux - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: ubuntu-24.04
           - label: Linux - 24.x
             node: 24.5.0
             os: ubuntu-24.04
           - label: Win - 22.x
-            node: 22.18.0
+            node: 22.19.0
             os: windows-2025
           - label: Win - 24.x
             node: 24.5.0

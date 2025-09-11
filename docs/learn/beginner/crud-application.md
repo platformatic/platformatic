@@ -39,7 +39,7 @@ This means you can focus on building features instead of managing infrastructure
 
 Before starting, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v22.18.0+)
+- [Node.js](https://nodejs.org/) (v22.19.0+)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - A code editor (like VS Code)
 - Basic familiarity with the command line

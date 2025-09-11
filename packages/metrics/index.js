@@ -37,22 +37,8 @@ export async function collectThreadCpuMetrics (registry) {
     return
   }
 
-  let threadCpuUsage
-
-  try {
-    // We need until we switch to 22 as thread-cpu-usage is ESM
-    const res = await import('thread-cpu-usage')
-    threadCpuUsage = res.threadCpuUsage
-  } catch {
-    process.emitWarning('thread-cpu-usage not available')
-    // We ignore the loading error, as this might
-    // happen if the library has failed to compile
-    // on this platform.
-    return
-  }
-
   let lastSample = process.hrtime.bigint()
-  let lastUsage = threadCpuUsage()
+  let lastUsage = process.threadCpuUsage()
 
   const threadCpuUserUsageCounterMetric = new Counter({
     name: 'thread_cpu_user_system_seconds_total',
@@ -78,7 +64,7 @@ export async function collectThreadCpuMetrics (registry) {
     // Use this one metric's `collect` to set all metrics' values.
     collect () {
       const newSample = process.hrtime.bigint()
-      const newUsage = threadCpuUsage()
+      const newUsage = process.threadCpuUsage()
       const user = newUsage.user - lastUsage.user
       const system = newUsage.system - lastUsage.system
       const elapsed = Number(newSample - lastSample)
