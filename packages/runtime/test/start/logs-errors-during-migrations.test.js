@@ -18,8 +18,7 @@ test('logs errors during db migrations', async t => {
       config = await transform(config, ...args)
 
       config.restartOnError = 1000
-
-      config.logger.transport ??= {
+      config.logger.transport = {
         target: 'pino/file',
         options: { destination: join(root, 'logs.txt') }
       }

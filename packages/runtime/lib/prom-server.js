@@ -1,6 +1,9 @@
 import fastifyAccepts from '@fastify/accepts'
 import fastifyBasicAuth from '@fastify/basic-auth'
+import { loadModule } from '@platformatic/foundation'
 import fastify from 'fastify'
+import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -216,6 +219,12 @@ export async function startPrometheusServer (runtime, opts) {
         }
       }
     })
+  }
+
+  const require = createRequire(resolve(import.meta.filename))
+  for (const pluginPath of opts.plugins ?? []) {
+    const plugin = await loadModule(require, pluginPath)
+    await promServer.register(plugin)
   }
 
   await promServer.listen({ port, host })

@@ -318,8 +318,7 @@ export interface PlatformaticAstroConfig {
                   body?: string;
                 };
               };
-          additionalProperties?: never;
-          [k: string]: unknown;
+          plugins?: string[];
         };
     telemetry?: {
       enabled?: boolean | string;

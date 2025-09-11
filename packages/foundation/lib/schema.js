@@ -1077,8 +1077,19 @@ export const runtimeProperties = {
               }
             ]
           },
-          additionalProperties: false
-        }
+          plugins: {
+            type: 'array',
+            items: {
+              anyOf: [
+                {
+                  type: 'string',
+                  resolvePath: true
+                }
+              ]
+            }
+          }
+        },
+        additionalProperties: false
       }
     ]
   },
