@@ -1,8 +1,8 @@
-import { getPackageManager, parseArgs } from '@platformatic/foundation'
-import { spawn } from 'node:child_process'
+import { parseArgs } from '@platformatic/foundation'
+import { runDelegatedCommand } from './create.js'
 
 export async function adminCommand (logger, args) {
-  let {
+  const {
     values: { latest, 'package-manager': packageManager }
   } = parseArgs(
     args,
@@ -19,27 +19,7 @@ export async function adminCommand (logger, args) {
     false
   )
 
-  if (!packageManager) {
-    packageManager = await getPackageManager(process.cwd())
-  }
-
-  const modifier = latest ? '@latest' : ''
-
-  let command = 'npx'
-  const commandArgs = ['@platformatic/watt-admin' + modifier]
-
-  if (packageManager === 'pnpm') {
-    command = 'pnpx'
-  } else {
-    commandArgs.unshift('-y')
-  }
-
-  logger.info(`Running watt-admin via ${command} ...`)
-  const proc = spawn(command, commandArgs, { stdio: 'inherit' })
-
-  proc.on('exit', code => {
-    process.exit(code)
-  })
+  return runDelegatedCommand(logger, packageManager, ['@platformatic/watt-admin' + (latest ? '@latest' : '')])
 }
 
 export const help = {

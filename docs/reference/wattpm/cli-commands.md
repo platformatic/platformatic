@@ -29,7 +29,7 @@ These are the primary commands for working with Watt applications:
 
 ### `wattpm create` or `wattpm init`
 
-Creates a new Watt application with interactive setup.
+Creates a new Watt application with interactive setup using `wattpm-utils`.
 
 ```bash
 wattpm create my-app
@@ -38,6 +38,7 @@ wattpm init  # creates in current directory
 
 **Options:**
 
+- `-l, --latest` - Use the latest version of watt-utils
 - `-c, --config <name>` - Configuration file name (default: `watt.json`)
 - `-s, --skip-dependencies` - Don't install dependencies after creating files
 - `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
@@ -458,12 +459,9 @@ Starts the Watt administration web interface.
 wattpm admin [latest]
 ```
 
-**Arguments:**
-
-- `latest` - Use the latest version of watt-admin
-
 **Options:**
 
+- `-l, --latest` - Use the latest version of watt-admin
 - `-P, --package-manager <manager>` - Package manager for installing watt-admin
 
 **Example:**

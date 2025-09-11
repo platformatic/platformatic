@@ -1,40 +1,97 @@
 import { getExecutableName, getPackageManager, parseArgs } from '@platformatic/foundation'
+import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
+import { platform } from 'node:os'
+
+export async function runDelegatedCommand (logger, packageManager, args) {
+  if (!packageManager) {
+    packageManager = await getPackageManager(process.cwd())
+  }
+
+  let runner = 'npx'
+  if (packageManager === 'pnpm') {
+    runner = 'pnpx'
+  } else {
+    args.unshift('-y')
+  }
+
+  logger.info(`Running ${bold(runner)} ${bold(args.join(' '))} ...`)
+
+  const options = { stdio: 'inherit' }
+
+  if (platform() === 'win32') {
+    options.shell = true
+    options.windowsVerbatimArguments = true
+  }
+
+  const proc = spawn(runner, args, options)
+
+  proc.on('exit', code => {
+    process.exit(code)
+  })
+}
 
 export async function createCommand (logger, args) {
-  let {
-    values: { 'package-manager': packageManager }
+  const {
+    values: {
+      latest,
+      config,
+      'package-manager': packageManager,
+      'skip-dependencies': skipDependencies,
+      module: modules
+    }
   } = parseArgs(
     args,
     {
+      latest: {
+        type: 'boolean',
+        short: 'l'
+      },
+      // Keep following options in sync with the create command from wattpm-utils
+      config: {
+        type: 'string',
+        short: 'c',
+        default: 'watt.json'
+      },
       'package-manager': {
         type: 'string',
         short: 'P'
+      },
+      'skip-dependencies': {
+        type: 'boolean',
+        short: 's',
+        default: false
+      },
+      module: {
+        short: 'M',
+        type: 'string',
+        multiple: true,
+        default: []
       }
     },
     false,
     false
   )
 
-  if (!packageManager) {
-    packageManager = await getPackageManager(process.cwd())
+  const runArgs = ['wattpm-utils' + (latest ? '@latest' : ''), '--', 'create']
+
+  runArgs.push('-c', config)
+
+  if (packageManager) {
+    runArgs.push('-P', packageManager)
   }
 
-  let command = 'npx'
-  const commandArgs = ['wattpm-utils']
-
-  if (packageManager === 'pnpm') {
-    command = 'pnpx'
-  } else {
-    commandArgs.unshift('-y')
+  if (skipDependencies) {
+    runArgs.push('-s')
   }
 
-  logger.info(`Running watt-utils create via ${command} ...`)
-  const proc = spawn(command, [...commandArgs, '--', 'create', ...args], { stdio: 'inherit' })
+  if (modules.length > 0) {
+    for (const m of modules) {
+      runArgs.push('-M', m)
+    }
+  }
 
-  proc.on('exit', code => {
-    process.exit(code)
-  })
+  return runDelegatedCommand(logger, packageManager, runArgs)
 }
 
 const createHelp = {
@@ -42,6 +99,10 @@ const createHelp = {
     return `Creates a new ${getExecutableName()} project`
   },
   options: [
+    {
+      usage: '-l --latest',
+      description: 'Use the latest version of @platformatic/watt-admin from'
+    },
     {
       usage: '-c, --config <config>',
       description: 'Name of the configuration file to use (the default is watt.json)'
