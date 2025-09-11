@@ -62,7 +62,11 @@ const sidebars = {
           type: 'category',
           label: 'Deployment & Operations',
           collapsed: true,
-          items: ['guides/deployment/dockerize-a-watt-app', 'guides/deployment/k8s-readiness-liveness']
+          items: [
+            'guides/deployment/dockerize-a-watt-app',
+            'guides/deployment/k8s-readiness-liveness',
+            'guides/deployment/typescript'
+          ]
         },
         {
           type: 'category',

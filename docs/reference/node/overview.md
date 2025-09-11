@@ -89,13 +89,13 @@ server.listen(1)
 
 ## Architecture
 
-If your server entrypoint exports a `create` or `build` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.
+If your server entrypoint exports a `create` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.
 
 If your server entrypoint does not export a function, then Platformatic runtime will execute the function and wait for a TCP server to be started.
 
 In both cases, the listening port is always modified and chosen randomly, overriding any user or application setting.
 
-If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` or `build` functions are not supported anymore.
+If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` functions are not supported anymore.
 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
