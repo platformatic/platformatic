@@ -1,5 +1,6 @@
 import {
   ensureLoggableError,
+  executeWithTimeout,
   FileWatcher,
   kHandledError,
   listRecognizedConfigurationFiles,
@@ -24,6 +25,29 @@ function fetchApplicationUrl (application, key) {
   return getApplicationUrl(application.id)
 }
 
+function handleUnhandled (app, type, err) {
+  const label =
+    workerData.worker.count > 1
+      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
+      : `application "${workerData.applicationConfig.id}"`
+
+  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
+
+  executeWithTimeout(app?.stop(), 1000)
+    .catch()
+    .finally(() => {
+      process.exit(1)
+    })
+}
+
+function handleUnhandledNewListener (event) {
+  if (event === 'uncaughtException' || event === 'unhandledRejection') {
+    globalThis.platformatic.logger.warn(
+      `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
+    )
+  }
+}
+
 export class Controller extends EventEmitter {
   #starting
   #started
@@ -33,6 +57,8 @@ export class Controller extends EventEmitter {
   #debouncedRestart
   #context
   #lastELU
+  #uncaughtExceptionHandler
+  #unhandledRejectionHandler
 
   constructor (
     appConfig,
@@ -239,6 +265,21 @@ export class Controller extends EventEmitter {
       heapUsed,
       heapTotal
     }
+  }
+
+  addUnhandledErrorsHandling () {
+    this.#uncaughtExceptionHandler = handleUnhandled.bind(null, this, 'uncaught exception')
+    this.#unhandledRejectionHandler = handleUnhandled.bind(null, this, 'unhandled rejection')
+
+    process.on('uncaughtException', this.#uncaughtExceptionHandler)
+    process.on('unhandledRejection', this.#unhandledRejectionHandler)
+    process.on('newListener', handleUnhandledNewListener)
+  }
+
+  removeUnhandledErrorsHandling () {
+    process.off('uncaughtException', this.#uncaughtExceptionHandler)
+    process.off('unhandledRejection', this.#unhandledRejectionHandler)
+    process.off('newListener', handleUnhandledNewListener)
   }
 
   #startFileWatching (watch) {

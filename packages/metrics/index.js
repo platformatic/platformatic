@@ -8,7 +8,7 @@ export * as client from 'prom-client'
 const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
-export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
+export const kMetricsGroups = Symbol.for('plt.metrics.MetricsGroups')
 
 export function registerMetricsGroup (registry, group) {
   registry[kMetricsGroups] ??= new Set()

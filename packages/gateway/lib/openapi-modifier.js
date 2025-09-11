@@ -5,7 +5,7 @@ const clone = rfdc()
 
 const MODIFICATION_KEYWORDS = ['rename']
 
-export const originPathSymbol = Symbol('originPath')
+export const originPathSymbol = Symbol.for('plt.gateway.openapi.originPath')
 
 function findDataBySchemaPointer (schemaPointer, schema, data, parentData, callback) {
   const schemaPointerParts = schemaPointer.split('/').slice(1)

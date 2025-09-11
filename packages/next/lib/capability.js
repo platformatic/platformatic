@@ -266,6 +266,8 @@ export class NextCapability extends BaseCapability {
     })
 
     this.verifyOutputDirectory(resolvePath(this.root, '.next'))
+
+    globalThis[Symbol.for('plt.runtime.controller')].removeUnhandledErrorsHandling()
     await this.#startProductionNext()
   }
 

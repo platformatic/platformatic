@@ -80,4 +80,4 @@ export function fromSelectionSet (selectionSet, fields = new Set()) {
   return fields
 }
 
-export const typeSym = Symbol('graphlType')
+export const typeSym = Symbol.for('plt.sql-graphql.graphlType')

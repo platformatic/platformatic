@@ -2,8 +2,6 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureLoggableError,
-  executeWithTimeout,
   getPrivateSymbol
 } from '@platformatic/foundation'
 import dotenv from 'dotenv'
@@ -21,22 +19,7 @@ import { Controller } from './controller.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
-import { kId, kITC, kStderrMarker } from './symbols.js'
-
-function handleUnhandled (app, type, err) {
-  const label =
-    workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-      : `application "${workerData.applicationConfig.id}"`
-
-  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
-
-  executeWithTimeout(app?.stop(), 1000)
-    .catch()
-    .finally(() => {
-      process.exit(1)
-    })
-}
+import { kController, kId, kITC, kStderrMarker } from './symbols.js'
 
 function patchLogging () {
   disablePinoDirectWrite()
@@ -176,18 +159,10 @@ async function main () {
     !!config.managementApi,
     !!config.watch
   )
+  globalThis[kController] = controller
 
   if (config.exitOnUnhandledErrors) {
-    process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
-    process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
-
-    process.on('newListener', event => {
-      if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        globalThis.platformatic.logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
-        )
-      }
-    })
+    controller.addUnhandledErrorsHandling()
   }
 
   await controller.init()
