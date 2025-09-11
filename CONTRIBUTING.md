@@ -8,7 +8,7 @@ Platformatic is an open-source Node.js application platform for building APIs wi
 
 ## Prerequisites
 
-- **Node.js**: Version 22.18 or higher
+- **Node.js**: Version 22.19 or higher
 - **pnpm**: Package manager (follow the [pnpm installation guide](https://pnpm.io/installation))
 - **Docker** (optional): Only required for running Platformatic DB tests with PostgreSQL, MySQL, and MariaDB ([Docker Desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima))
 

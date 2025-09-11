@@ -26,7 +26,7 @@ Watt provides built-in HTTP caching with tag-based invalidation. This guide show
 
 Before starting, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v22.18.0+)
+- [Node.js](https://nodejs.org/) (v22.19.0+)
 - [npm](https://docs.npmjs.com/cli/) (comes with Node.js)
 - A Watt application ([setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt))
 - Basic understanding of HTTP caching headers 

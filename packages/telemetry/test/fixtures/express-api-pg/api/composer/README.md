@@ -5,7 +5,7 @@ This is a generated [Platformatic Gateway](https://docs.platformatic.dev/docs/ga
 ## Requirements
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v22.18.0
+You'll need to have [Node.js](https://nodejs.org/) >= v22.19.0
 
 ## Setup
 

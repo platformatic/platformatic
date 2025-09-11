@@ -10,8 +10,5 @@
     "platformatic": "^2.0.0",
     "@fastify/oauth2": "8.1.2"
   },
-  "engines": {
-    "node": ">=22.18.0"
-  },
   "type": "commonjs"
 }
