@@ -113,11 +113,7 @@ npm start
         .filter(applicationMeta => applicationMeta.application.module !== '@platformatic/gateway')
         .map(applicationMeta => {
           return {
-            id: applicationMeta.name,
-            openapi: {
-              url: '/documentation/json',
-              prefix: `/${applicationMeta.name}`
-            }
+            id: applicationMeta.name
           }
         })
     }

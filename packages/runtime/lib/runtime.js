@@ -294,20 +294,24 @@ export class Runtime extends EventEmitter {
 
     const stopInvocations = []
 
-    const allApplications = await this.getApplications(true)
-
     // Construct the reverse dependency graph
     const dependents = {}
-    for (const application of allApplications.applications) {
-      for (const dependency of application.dependencies ?? []) {
-        let applicationDependents = dependents[dependency]
-        if (!applicationDependents) {
-          applicationDependents = new Set()
-          dependents[dependency] = applicationDependents
-        }
 
-        applicationDependents.add(application.id)
+    try {
+      const allApplications = await this.getApplications(true)
+      for (const application of allApplications.applications) {
+        for (const dependency of application.dependencies ?? []) {
+          let applicationDependents = dependents[dependency]
+          if (!applicationDependents) {
+            applicationDependents = new Set()
+            dependents[dependency] = applicationDependents
+          }
+
+          applicationDependents.add(application.id)
+        }
       }
+    } catch (e) {
+      // Noop - This only happens if stop is invoked after a failed start, in which case we don't care about deps
     }
 
     for (const application of this.getApplicationsIds()) {
@@ -1606,17 +1610,12 @@ export class Runtime extends EventEmitter {
       if (enabled && config.restartOnError > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
-        setTimeout(() => {
-          this.#setupHealthCheck(
-            config,
-            applicationConfig,
-            workersCount,
-            id,
-            index,
-            worker,
-            label
-          )
-        }, gracePeriod > 0 ? gracePeriod : 1).unref()
+        setTimeout(
+          () => {
+            this.#setupHealthCheck(config, applicationConfig, workersCount, id, index, worker, label)
+          },
+          gracePeriod > 0 ? gracePeriod : 1
+        ).unref()
       }
     } catch (err) {
       const error = ensureError(err)

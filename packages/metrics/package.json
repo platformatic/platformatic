@@ -22,9 +22,6 @@
     "@platformatic/http-metrics": "^0.2.1",
     "prom-client": "^15.1.2"
   },
-  "optionalDependencies": {
-    "thread-cpu-usage": "^0.2.0"
-  },
   "devDependencies": {
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
