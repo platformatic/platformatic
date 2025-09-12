@@ -503,14 +503,15 @@ export async function createApplication (
     }
   }
 
-  if (packageManager === 'pnpm') {
+  const pnpmWorkspacePath = join(projectDir, 'pnpm-workspace.yaml')
+  if (packageManager === 'pnpm' && !existsSync(pnpmWorkspacePath)) {
     // add pnpm-workspace.yaml file if needed
     const content = `packages:
 # all packages in direct subdirs of packages/
 - 'applications/*'
 - 'services/*'
 - 'web/*'`
-    await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)
+    await writeFile(pnpmWorkspacePath, content)
   }
 
   if (typeof install === 'function') {
