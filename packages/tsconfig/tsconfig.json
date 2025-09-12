@@ -21,7 +21,6 @@
     "noUnusedParameters": true,
     "useUnknownInCatchVariables": false,
     // Transpilation settings
-    "jsx": "preserve",
     "removeComments": true,
     "newLine": "lf"
   }
