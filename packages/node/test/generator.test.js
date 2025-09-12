@@ -20,7 +20,7 @@ test('should return environment and environment variables', async () => {
   })
 })
 
-test('should generate proper index.js file', async () => {
+test('should generate proper index.js file (Javascript)', async () => {
   const generator = new Generator()
   await generator.prepare()
   const file = generator.getFileObject('index.js')
@@ -29,7 +29,8 @@ test('should generate proper index.js file', async () => {
     "import { createServer } from 'node:http'",
     '',
     'export function create() {',
-    '  return createServer((req, res) => {',
+    '  return createServer((_, res) => {',
+    "    globalThis.platformatic.logger.debug('Serving request.')",
     "    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })",
     "    res.end(JSON.stringify({ hello: 'world' }))",
     '  })',
@@ -38,21 +39,58 @@ test('should generate proper index.js file', async () => {
   ])
 })
 
-test('should include @platformatic/node inside package.json dependencies', async () => {
-  const generator = new Generator()
-  await generator.prepare()
-  const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
-
-  deepStrictEqual(packageJson.dependencies['@platformatic/node'], `^${version}`)
-})
-
-test('should prepare a main entrypoint start script', async () => {
+test('should prepare a valid package.json file (Javascript)', async () => {
   const generator = new Generator()
   await generator.prepare()
   const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
 
   deepStrictEqual(packageJson.main, 'index.js')
-  deepStrictEqual(packageJson.scripts.start, 'start-platformatic-node')
+  deepStrictEqual(packageJson.dependencies['@platformatic/node'], `^${version}`)
+  deepStrictEqual(packageJson.devDependencies, {})
+})
+
+test('should generate proper index.js file (Typescript)', async () => {
+  const generator = new Generator()
+  generator.setConfig({ typescript: true })
+  await generator.prepare()
+  const file = generator.getFileObject('index.ts')
+
+  deepStrictEqual(file.contents.split(/\r?\n/), [
+    "import { getGlobal } from '@platformatic/globals'",
+    "import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'",
+    '',
+    'export function create() {',
+    '  const platformatic = getGlobal()',
+    '',
+    '  return createServer((_: IncomingMessage, res: ServerResponse) => {',
+    "    platformatic.logger.debug('Serving request.')",
+    "    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })",
+    "    res.end(JSON.stringify({ hello: 'world' }))",
+    '  })',
+    '}',
+    ''
+  ])
+})
+
+test('should prepare a valid package.json file (Typescript)', async () => {
+  const generator = new Generator()
+  generator.setConfig({ typescript: true })
+  await generator.prepare()
+  const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
+
+  deepStrictEqual(packageJson.main, 'index.ts')
+  deepStrictEqual(packageJson.dependencies['@platformatic/globals'], `^${version}`)
+  deepStrictEqual(packageJson.dependencies['@platformatic/node'], `^${version}`)
+  deepStrictEqual(packageJson.devDependencies['@types/node'], '^22.0.0')
+})
+
+test('should prepare a valid tsconfig.json file (Typescript)', async () => {
+  const generator = new Generator()
+  generator.setConfig({ typescript: true })
+  await generator.prepare()
+  const tsConfig = JSON.parse(generator.getFileObject('tsconfig.json').contents)
+
+  deepStrictEqual(tsConfig, { extends: '@platformatic/tsconfig' })
 })
 
 test('should prepare a valid watt.json file', async () => {

@@ -1,0 +1,28 @@
+// Note: This tsconfig is written to be extended by the user
+{
+  "compilerOptions": {
+    // General settings
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    // Module settings
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "allowJs": false,
+    // Language settings
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": false,
+    // Transpilation settings
+    "jsx": "preserve",
+    "removeComments": true,
+    "newLine": "lf"
+  }
+}

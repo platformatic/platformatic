@@ -57,3 +57,52 @@ For production deployments, you must compile TypeScript before starting your app
 - Enable strict mode for better type safety
 - Configure proper module resolution for your target environment
 - Test your built application in a production-like environment before deployment
+
+## 📝 Recommended TypeScript Configuration
+
+Platformatic provides a recommended TypeScript configuration through the `@platformatic/tsconfig` package. You can use it by extending it in your `tsconfig.json`:
+
+```json
+{
+  "extends": "@platformatic/tsconfig",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+The recommended configuration uses these settings:
+
+```json
+{
+  "compilerOptions": {
+    // General settings
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    // Module settings
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "allowJs": false,
+    // Language settings
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": false,
+    // Transpilation settings
+    "jsx": "preserve",
+    "removeComments": true,
+    "newLine": "lf"
+  }
+}
+```
+
+**Note**: The `outDir` option is purposely left unset in the base configuration due to [TypeScript issue #29172](https://github.com/Microsoft/TypeScript/issues/29172). You should set it explicitly in your project's `tsconfig.json` as shown in the example above.
