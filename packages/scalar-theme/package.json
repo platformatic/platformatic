@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/scalar-theme",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Platformatic's Scalar theme for @scalar/fastify-api-reference",
   "main": "theme.js",
   "type": "module",
