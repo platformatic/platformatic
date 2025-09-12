@@ -4,7 +4,7 @@ Watt provides TypeScript support across different capabilities with varying comp
 
 ## 🔧 Server-Side Capabilities
 
-For server-side capabilities like `@platformatic/service` and `@platformatic/node`, TypeScript support is provided through Node.js native type stripping:
+For server-side capabilities like `@platformatic/node`, `@platformatic/gateway`, `@platformatic/service` and `@platformatic/db`, TypeScript support is provided through Node.js native type stripping:
 
 - [Node.js Type Stripping Documentation](https://nodejs.org/api/typescript.html)
 - [Node.js --experimental-strip-types flag](https://nodejs.org/docs/latest/api/cli.html#--experimental-strip-types)
