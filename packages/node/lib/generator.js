@@ -82,7 +82,7 @@ export class Generator extends BaseGenerator {
       indexTemplate = indexFileTS
 
       dependencies['@platformatic/globals'] = `^${this.platformaticVersion}`
-      devDependencies['@platformatic/tsconfig'] = `^${this.platformaticVersion}`
+      devDependencies['@platformatic/tsconfig'] = '^0.1.0'
       devDependencies['@types/node'] = '^22.0.0'
     }
 
