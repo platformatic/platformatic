@@ -3,11 +3,27 @@
 import { BaseGenerator } from '@platformatic/generators'
 import { basename, dirname, sep } from 'node:path'
 
-const indexFile = `
+const indexFileJS = `
 import { createServer } from 'node:http'
 
 export function create() {
-  return createServer((req, res) => {
+  return createServer((_, res) => {
+    globalThis.platformatic.logger.debug('Serving request.')
+    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+}
+`
+
+const indexFileTS = `
+import { getGlobal } from '@platformatic/globals'
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+
+export function create() {
+  const platformatic = getGlobal()
+
+  return createServer((_: IncomingMessage, res: ServerResponse) => {
+    platformatic.logger.debug('Serving request.')
     res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -22,12 +38,31 @@ export class Generator extends BaseGenerator {
     })
   }
 
+  async prepareQuestions () {
+    await super.prepareQuestions()
+
+    if (!this.config.skipTypescript) {
+      this.questions.push({
+        type: 'list',
+        name: 'typescript',
+        message: 'Do you want to use TypeScript?',
+        default: false,
+        choices: [
+          { name: 'yes', value: true },
+          { name: 'no', value: false }
+        ]
+      })
+    }
+  }
+
   async prepare () {
+    await this.getPlatformaticVersion()
+
     if (this.config.isUpdating) {
       return
     }
 
-    const main = this.config.main || 'index.js'
+    const main = this.config.main || (this.config.typescript ? 'index.ts' : 'index.js')
     let indexPath = ''
     let indexName = main
 
@@ -36,9 +71,22 @@ export class Generator extends BaseGenerator {
       indexName = basename(main)
     }
 
-    await this.getPlatformaticVersion()
+    let indexTemplate = indexFileJS
+    const dependencies = {
+      '@platformatic/node': `^${this.platformaticVersion}`
+    }
 
-    this.addFile({ path: indexPath, file: indexName, contents: indexFile.trim() + '\n' })
+    const devDependencies = {}
+
+    if (this.config.typescript) {
+      indexTemplate = indexFileTS
+
+      dependencies['@platformatic/globals'] = `^${this.platformaticVersion}`
+      devDependencies['@platformatic/tsconfig'] = '^0.1.0'
+      devDependencies['@types/node'] = '^22.0.0'
+    }
+
+    this.addFile({ path: indexPath, file: indexName, contents: indexTemplate.trim() + '\n' })
 
     this.addFile({
       path: '',
@@ -48,17 +96,21 @@ export class Generator extends BaseGenerator {
           name: `${this.config.applicationName}`,
           main,
           type: 'module',
-          scripts: {
-            start: 'start-platformatic-node'
-          },
-          dependencies: {
-            '@platformatic/node': `^${this.platformaticVersion}`
-          }
+          dependencies,
+          devDependencies
         },
         null,
         2
       )
     })
+
+    if (this.config.typescript) {
+      this.addFile({
+        path: '',
+        file: 'tsconfig.json',
+        contents: JSON.stringify({ extends: '@platformatic/tsconfig' }, null, 2)
+      })
+    }
 
     this.addFile({
       path: '',
