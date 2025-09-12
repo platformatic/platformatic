@@ -237,18 +237,10 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   const firstGatewayConfigFileJson = JSON.parse(firstGatewayConfigFile.contents)
   assert.deepEqual(firstGatewayConfigFileJson.gateway.applications, [
     {
-      id: 'first-service',
-      openapi: {
-        url: '/documentation/json',
-        prefix: '/first-service'
-      }
+      id: 'first-service'
     },
     {
-      id: 'second-service',
-      openapi: {
-        url: '/documentation/json',
-        prefix: '/second-service'
-      }
+      id: 'second-service'
     }
   ])
 
@@ -256,18 +248,10 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   const secondGatewayConfigFileJson = JSON.parse(secondGatewayConfigFile.contents)
   assert.deepEqual(secondGatewayConfigFileJson.gateway.applications, [
     {
-      id: 'first-service',
-      openapi: {
-        url: '/documentation/json',
-        prefix: '/first-service'
-      }
+      id: 'first-service'
     },
     {
-      id: 'second-service',
-      openapi: {
-        url: '/documentation/json',
-        prefix: '/second-service'
-      }
+      id: 'second-service'
     }
   ])
 })
