@@ -116,7 +116,7 @@ const TEST_HELPER_JS = `
 
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const { buildServer } = require('$__MOD__')
+const { create } = require('$__MOD__')
 $__REQUIRES__
 
 async function getServer (t) {
@@ -129,10 +129,11 @@ $__PRE__
   config.watch = false
 $__CONFIG__
   // Add your config customizations here
-  const server = await buildServer(config)
-  t.after(() => server.close())
+  const server = await create(join(__dirname, '../'),config)
+  await server.start({}) // sets .getApplication()
+  t.after(() => server.stop())
 $__POST__
-  return server
+  return server.getApplication()
 }
 
 module.exports.getServer = getServer
@@ -141,7 +142,7 @@ module.exports.getServer = getServer
 const TEST_HELPER_TS = `
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
-import { buildServer } from '$__MOD__'
+import { create } from '$__MOD__'
 import { test } from 'node:test'
 $__REQUIRES__
 
@@ -151,7 +152,7 @@ type TestContext = Parameters<Exclude<testfn, undefined>>[0]
 export async function getServer (t: TestContext) {
 $__PRE__
   // We go up two folder because this files executes in the dist folder
-  const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'watt.json'), 'utf8'))
+  const config = JSON.parse(await readFile(join(import.meta.dirname, "..", "watt.json"), 'utf8'))
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
   config.server ||= {}
@@ -160,10 +161,11 @@ $__PRE__
   config.watch = false
 $__CONFIG__
   // Add your config customizations here
-  const server = await buildServer(config)
-  t.after(() => server.close())
+  const server = await create(join(import.meta.dirname, "../"), config)
+  await server.start({}) // sets .getApplication()
+  t.after(() => server.stop())
 $__POST__
-  return server
+  return server.getApplication();
 }
   `
 
