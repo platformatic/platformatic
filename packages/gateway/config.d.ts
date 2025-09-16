@@ -559,6 +559,10 @@ export interface PlatformaticGatewayConfig {
           labels?: {
             [k: string]: string;
           };
+          /**
+           * Use serviceId instead of applicationId for metrics labels
+           */
+          useV2Metrics?: boolean;
           readiness?:
             | boolean
             | {

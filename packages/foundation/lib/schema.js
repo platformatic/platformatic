@@ -1021,6 +1021,11 @@ export const runtimeProperties = {
             type: 'object',
             additionalProperties: { type: 'string' }
           },
+          useV2Metrics: {
+            type: 'boolean',
+            default: false,
+            description: 'Use serviceId instead of applicationId for metrics labels'
+          },
           readiness: {
             anyOf: [
               { type: 'boolean' },

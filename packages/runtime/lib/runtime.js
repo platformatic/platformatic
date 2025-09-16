@@ -97,6 +97,7 @@ export class Runtime extends EventEmitter {
   #managementApi
   #prometheusServer
   #inspectorServer
+  #metricsLabelName
 
   #applicationsConfigsPatches
   #workers
@@ -161,7 +162,12 @@ export class Runtime extends EventEmitter {
     }
 
     if (config.metrics) {
+      // Determine which label name to use for metrics (serviceId for v2 compatibility, applicationId for v3+)
+      this.#metricsLabelName = config.metrics.useV2Metrics ? 'serviceId' : 'applicationId'
       this.#prometheusServer = await startPrometheusServer(this, config.metrics)
+    } else {
+      // Default to applicationId if metrics are not configured
+      this.#metricsLabelName = 'applicationId'
     }
 
     // Create the logger
@@ -913,10 +919,11 @@ export class Runtime extends EventEmitter {
         if (!values || values.length === 0) continue
 
         const labels = values[0].labels
-        const applicationId = labels?.applicationId
+        // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
+        const applicationId = labels?.[this.#metricsLabelName]
 
         if (!applicationId) {
-          throw new Error('Missing applicationId label in metrics')
+          throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
         }
 
         let applicationMetrics = applicationsMetrics[applicationId]

@@ -144,7 +144,12 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
     registry = new Registry()
   }
 
-  const labels = { ...metricsConfig.labels, applicationId }
+  const labels = { ...metricsConfig.labels }
+
+  // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
+  const labelName = metricsConfig.idLabel || 'applicationId'
+  labels[labelName] = applicationId
+
   if (workerId >= 0) {
     labels.workerId = workerId
   }
