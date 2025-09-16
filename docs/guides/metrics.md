@@ -23,7 +23,22 @@ In this case, we are exposing the metrics on port 9091 (defaults to `9090`), and
 We can also specify the IP address to bind to (defaults to `0.0.0.0`).
 Note that the metrics port is not the default in this configuration. This is because if you want to test the integration running both Prometheus and Platformatic on the same host, Prometheus starts on `9090` port too.
 
-All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../db/configuration.md#metrics) for more details.md#metrics
+All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/_shared-configuration.md#metrics) for more details.
+
+## Metrics Labels
+
+By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. If you need to use `serviceId` instead (for example, when migrating from older versions or for compatibility with existing monitoring setups), you can enable the `useV2Metrics` option:
+
+```json
+{
+  "metrics": {
+    "port": 9090,
+    "useV2Metrics": true
+  }
+}
+```
+
+This will change metric labels from `applicationId="my-service"` to `serviceId="my-service"`.
 
 :::caution
 Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
