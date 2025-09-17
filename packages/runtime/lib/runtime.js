@@ -162,8 +162,8 @@ export class Runtime extends EventEmitter {
     }
 
     if (config.metrics) {
-      // Determine which label name to use for metrics (serviceId for v2 compatibility, applicationId for v3+)
-      this.#metricsLabelName = config.metrics.useV2Metrics ? 'serviceId' : 'applicationId'
+      // Use the configured application label name for metrics (defaults to 'applicationId')
+      this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
       this.#prometheusServer = await startPrometheusServer(this, config.metrics)
     } else {
       // Default to applicationId if metrics are not configured

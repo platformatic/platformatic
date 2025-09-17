@@ -1021,10 +1021,10 @@ export const runtimeProperties = {
             type: 'object',
             additionalProperties: { type: 'string' }
           },
-          useV2Metrics: {
-            type: 'boolean',
-            default: false,
-            description: 'Use serviceId instead of applicationId for metrics labels'
+          applicationLabel: {
+            type: 'string',
+            default: 'applicationId',
+            description: 'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
           },
           readiness: {
             anyOf: [

@@ -166,11 +166,11 @@ async function main () {
   }
 
   // Create the application
-  // Add idLabel to metrics config to determine which label name to use (serviceId vs applicationId)
+  // Add idLabel to metrics config to determine which label name to use (defaults to applicationId)
   const metricsConfig = config.metrics
     ? {
         ...config.metrics,
-        idLabel: config.metrics.useV2Metrics ? 'serviceId' : 'applicationId'
+        idLabel: config.metrics.applicationLabel || 'applicationId'
       }
     : config.metrics
 

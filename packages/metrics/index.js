@@ -146,7 +146,7 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
 
   const labels = { ...metricsConfig.labels }
 
-  // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
+  // Use the configured label name
   const labelName = metricsConfig.idLabel || 'applicationId'
   labels[labelName] = applicationId
 

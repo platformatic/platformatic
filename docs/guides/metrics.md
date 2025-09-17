@@ -27,18 +27,31 @@ All the configuration settings are optional. To use the default settings, set `"
 
 ## Metrics Labels
 
-By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. If you need to use `serviceId` instead (for example, when migrating from older versions or for compatibility with existing monitoring setups), you can enable the `useV2Metrics` option:
+By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. You can customize this label name using the `applicationLabel` option. This is useful when migrating from older versions (which used `serviceId`) or when integrating with existing monitoring setups that expect different label names:
 
 ```json
 {
   "metrics": {
     "port": 9090,
-    "useV2Metrics": true
+    "applicationLabel": "serviceId"
   }
 }
 ```
 
 This will change metric labels from `applicationId="my-service"` to `serviceId="my-service"`.
+
+You can also use completely custom label names:
+
+```json
+{
+  "metrics": {
+    "port": 9090,
+    "applicationLabel": "myCustomAppName"
+  }
+}
+```
+
+This will use `myCustomAppName="my-service"` as the label in metrics.
 
 :::caution
 Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
