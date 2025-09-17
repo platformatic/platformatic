@@ -377,6 +377,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
+- **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
 

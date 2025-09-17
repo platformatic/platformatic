@@ -166,13 +166,21 @@ async function main () {
   }
 
   // Create the application
+  // Add idLabel to metrics config to determine which label name to use (defaults to applicationId)
+  const metricsConfig = config.metrics
+    ? {
+        ...config.metrics,
+        idLabel: config.metrics.applicationLabel || 'applicationId'
+      }
+    : config.metrics
+
   const controller = new Controller(
     application,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
     application.telemetry,
     config.logger,
     serverConfig,
-    config.metrics,
+    metricsConfig,
     !!config.managementApi,
     !!config.watch
   )

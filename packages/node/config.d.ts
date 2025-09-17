@@ -292,6 +292,10 @@ export interface PlatformaticNodeJsConfig {
           labels?: {
             [k: string]: string;
           };
+          /**
+           * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
+           */
+          applicationLabel?: string;
           readiness?:
             | boolean
             | {

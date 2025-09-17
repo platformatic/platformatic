@@ -1021,6 +1021,11 @@ export const runtimeProperties = {
             type: 'object',
             additionalProperties: { type: 'string' }
           },
+          applicationLabel: {
+            type: 'string',
+            default: 'applicationId',
+            description: 'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
+          },
           readiness: {
             anyOf: [
               { type: 'boolean' },
