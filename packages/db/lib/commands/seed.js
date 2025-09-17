@@ -35,7 +35,7 @@ export async function seed (logger, configFile, args, { colorette: { bold }, log
 
   const importedModule = await loadModule(createRequire(resolve(process.cwd(), 'noop.js')), seedFile)
 
-  const seedFunction = typeof importedModule?.seed !== 'function' ? importedModule : importedModule
+  const seedFunction = typeof importedModule?.seed !== 'function' ? importedModule : importedModule.seed
 
   if (typeof seedFunction !== 'function') {
     logFatalError(logger, 'Cannot find seed function.')
