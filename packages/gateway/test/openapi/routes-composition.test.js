@@ -503,3 +503,96 @@ test('should compose applications with authentication components', async t => {
     }
   })
 })
+
+test('should proxy multipart content in OpenAPI composition', async t => {
+  const api = await createBasicApplication(t)
+
+  await api.register(import('@fastify/multipart'))
+
+  // Add a multipart endpoint to the test API
+  api.post(
+    '/upload',
+    {
+      schema: {
+        consumes: ['multipart/form-data'],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              contentType: { type: 'string' },
+              parts: { type: 'number' }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const parts = []
+      if (request.isMultipart()) {
+        for await (const part of request.parts()) {
+          parts.push(part)
+        }
+      }
+      return {
+        contentType: request.headers['content-type'] || 'unknown',
+        parts: parts.length
+      }
+    }
+  )
+
+  await api.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  // Test multipart form data upload through the gateway
+  const boundary = '----formdata-platformatic-test'
+  const multipartBody = [
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="description"',
+    '',
+    'Test file description',
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="file"; filename="test.txt"',
+    'Content-Type: text/plain',
+    '',
+    'test content',
+    `--${boundary}--`,
+    ''
+  ].join('\r\n')
+
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'POST',
+    path: '/api/upload',
+    headers: {
+      'content-type': `multipart/form-data; boundary=${boundary}`
+    },
+    body: multipartBody
+  })
+
+  // This test should initially fail due to multipart content not being properly proxied
+  assert.equal(statusCode, 200)
+  const response = JSON.parse(await body.text())
+  assert.equal(response.parts, 2)
+  assert.ok(response.contentType.includes('multipart/form-data'))
+})

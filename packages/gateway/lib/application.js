@@ -146,6 +146,13 @@ export async function platformaticGateway (app, capability) {
 
   await app.register(gatewayHook)
 
+  // Add content type parser for multipart form data to enable proxying
+  if (!app.hasContentTypeParser('multipart/form-data')) {
+    app.addContentTypeParser('multipart/form-data', function (req, body, done) {
+      done(null, body)
+    })
+  }
+
   let generatedComposedOpenAPI = null
   if (hasOpenapiApplications) {
     generatedComposedOpenAPI = await openApiGenerator(app, config.gateway)
