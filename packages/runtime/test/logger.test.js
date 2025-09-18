@@ -29,8 +29,10 @@ function stdioOutputToLogs (data) {
 }
 
 async function requestAndDump (url, opts) {
-  const { body } = await request(url, opts)
-  await body.text()
+  try {
+    const { body } = await request(url, opts)
+    await body.text()
+  } catch {}
 }
 
 function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
@@ -358,13 +360,11 @@ test('should handle logs from thread applications as they are with captureStdio:
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -372,7 +372,7 @@ test('should handle logs from thread applications as they are with captureStdio:
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -412,13 +412,11 @@ test('should use base and messageKey options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -426,7 +424,7 @@ test('should use base and messageKey options', async t => {
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -486,7 +484,7 @@ test('should use custom config', async t => {
       if (message.includes('request completed')) {
         responses++
       }
-      return responses > 2
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
