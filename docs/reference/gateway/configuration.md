@@ -78,6 +78,20 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`addEmptySchema`** (`boolean`) - If true, the gateway will add an empty response schema to the composed OpenAPI specification. Default is `false`.
 
+- **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
+
+  ```json title="Example JSON object"
+  {
+    "gateway": {
+      "passthroughContentTypes": [
+        "multipart/form-data",
+        "application/octet-stream",
+        "application/custom-binary"
+      ]
+    }
+  }
+  ```
+
 ### OpenAPI
 
 - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If an application is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
