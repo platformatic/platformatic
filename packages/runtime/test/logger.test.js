@@ -1,7 +1,7 @@
 import { execa } from 'execa'
 import { ok } from 'node:assert'
 import { join } from 'node:path'
-import { test, beforeEach, afterEach } from 'node:test'
+import { test, afterEach } from 'node:test'
 import { request, Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
 
