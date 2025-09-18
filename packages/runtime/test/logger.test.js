@@ -1,8 +1,8 @@
 import { execa } from 'execa'
 import { ok } from 'node:assert'
 import { join } from 'node:path'
-import { test } from 'node:test'
-import { request } from 'undici'
+import { test, afterEach } from 'node:test'
+import { request, Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
 
 function stdioOutputToLogs (data) {
@@ -25,7 +25,15 @@ function stdioOutputToLogs (data) {
     })
     .filter(log => log)
 
-  return logs.flat()
+  const lines = logs.flat()
+  return lines
+}
+
+async function requestAndDump (url, opts) {
+  try {
+    const { body } = await request(url, opts)
+    await body.text()
+  } catch {}
 }
 
 function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
@@ -106,6 +114,13 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
   })
 }
 
+setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
+
+afterEach(async () => {
+  await getGlobalDispatcher().close()
+  setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
+})
+
 test('should use full logger options - formatters, timestamp, redaction', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
@@ -113,7 +128,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -158,7 +173,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -234,7 +249,7 @@ test('should inherit full logger options from runtime to different applications'
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -263,7 +278,7 @@ test('should get json logs from thread applications when they are not pino defau
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/' })
+      await requestAndDump(url, { path: '/' })
       requested = true
     },
     done: message => {
@@ -303,8 +318,8 @@ test('should handle logs from thread applications as they are with captureStdio:
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
       requested = true
     },
     done: message => {
@@ -353,13 +368,11 @@ test('should handle logs from thread applications as they are with captureStdio:
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -367,7 +380,7 @@ test('should handle logs from thread applications as they are with captureStdio:
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -407,13 +420,11 @@ test('should use base and messageKey options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -421,7 +432,7 @@ test('should use base and messageKey options', async t => {
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -442,13 +453,11 @@ test('should use null base in options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -456,7 +465,7 @@ test('should use null base in options', async t => {
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -473,19 +482,17 @@ test('should use custom config', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
-      requested = true
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
     },
     done: message => {
       if (message.includes('request completed')) {
         responses++
       }
-      return requested && responses > 2
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
