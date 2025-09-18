@@ -25,7 +25,11 @@ function stdioOutputToLogs (data) {
     })
     .filter(log => log)
 
-  return logs.flat()
+  const lines = logs.flat()
+
+  console.log(lines)
+
+  return lines
 }
 
 async function requestAndDump (url, opts) {
