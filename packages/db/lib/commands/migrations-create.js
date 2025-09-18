@@ -1,12 +1,14 @@
-import { loadConfiguration } from '@platformatic/foundation'
+import { loadConfiguration, kMetadata } from '@platformatic/foundation'
 import { writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import * as errors from '../errors.js'
 import { Migrator } from '../migrator.js'
 import { schema } from '../schema.js'
+import { transform } from '../config-transform.js'
 
 export async function createMigrations (logger, configFile, _, { colorette: { bold } }) {
-  const config = await loadConfiguration(configFile, schema)
+  const config = await transform(await loadConfiguration(configFile, schema))
+  const root = config[kMetadata].root
 
   let migrator = null
   try {
@@ -29,7 +31,7 @@ export async function createMigrations (logger, configFile, _, { colorette: { bo
     await Promise.all([writeFile(doFile, ''), writeFile(undoFile, '')])
 
     logger.info(
-      `Created migration files ${bold(relative(process.cwd(), doFile))} and ${bold(relative(process.cwd(), undoFile))}.`
+      `Created migration files ${bold(relative(root, doFile))} and ${bold(relative(root, undoFile))}.`
     )
   } catch (error) {
     logger.error(error.message)

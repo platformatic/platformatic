@@ -1,0 +1,104 @@
+[
+  {
+    "schema": "public",
+    "table": "versions",
+    "constraints": [
+      {
+        "constraint_catalog": "test_db_45c1c090e26b41c3aa1aaeec167f3b1e",
+        "constraint_schema": "public",
+        "constraint_name": "versions_pkey",
+        "table_catalog": "test_db_45c1c090e26b41c3aa1aaeec167f3b1e",
+        "table_schema": "public",
+        "table_name": "versions",
+        "constraint_type": "PRIMARY KEY",
+        "is_deferrable": "NO",
+        "initially_deferred": "NO",
+        "enforced": "YES",
+        "nulls_distinct": null,
+        "column_name": "version",
+        "ordinal_position": 1,
+        "position_in_unique_constraint": null,
+        "foreign_table_name": "versions",
+        "foreign_column_name": "version",
+        "foreign_table_schema": "public"
+      }
+    ],
+    "columns": [
+      {
+        "column_name": "version",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "is_generated": "NEVER",
+        "data_type": "bigint",
+        "isArray": false
+      },
+      {
+        "column_name": "name",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "is_generated": "NEVER",
+        "data_type": "text",
+        "isArray": false
+      },
+      {
+        "column_name": "md5",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "is_generated": "NEVER",
+        "data_type": "text",
+        "isArray": false
+      },
+      {
+        "column_name": "run_at",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "is_generated": "NEVER",
+        "data_type": "timestamp with time zone",
+        "isArray": false
+      }
+    ]
+  },
+  {
+    "schema": "public",
+    "table": "graphs",
+    "constraints": [
+      {
+        "constraint_catalog": "test_db_45c1c090e26b41c3aa1aaeec167f3b1e",
+        "constraint_schema": "public",
+        "constraint_name": "graphs_pkey",
+        "table_catalog": "test_db_45c1c090e26b41c3aa1aaeec167f3b1e",
+        "table_schema": "public",
+        "table_name": "graphs",
+        "constraint_type": "PRIMARY KEY",
+        "is_deferrable": "NO",
+        "initially_deferred": "NO",
+        "enforced": "YES",
+        "nulls_distinct": null,
+        "column_name": "id",
+        "ordinal_position": 1,
+        "position_in_unique_constraint": null,
+        "foreign_table_name": "graphs",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "public"
+      }
+    ],
+    "columns": [
+      {
+        "column_name": "id",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "is_generated": "NEVER",
+        "data_type": "integer",
+        "isArray": false
+      },
+      {
+        "column_name": "name",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "is_generated": "NEVER",
+        "data_type": "text",
+        "isArray": false
+      }
+    ]
+  }
+]

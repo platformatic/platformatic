@@ -4,6 +4,7 @@ import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
 import { basename, join, relative, resolve, sep } from 'node:path'
 import { setupDB } from './utils.js'
+import { kMetadata } from '@platformatic/foundation'
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
@@ -117,12 +118,14 @@ export async function execute ({ logger, config }) {
   const { db, entities } = wrap
 
   const count = Object.keys(entities).length
+  process._rawDebug(`Found ${count} entities in the database schema`)
   if (count === 0) {
     // do not generate types if no schema is found
     return 0
   }
 
-  const typesFolderPath = resolve(process.cwd(), config.types?.dir ?? 'types')
+  const root = config[kMetadata].root
+  const typesFolderPath = resolve(root, config.types?.dir ?? 'types')
 
   // Prepare the types folder
   if (await isFileAccessible(typesFolderPath)) {
@@ -149,8 +152,8 @@ export async function execute ({ logger, config }) {
   }
 
   // Generate plt-env.d.ts
-  const environmentPath = join(process.cwd(), 'plt-env.d.ts')
-  const pltEnvironment = await generateEnvironmentTypes(relative(process.cwd(), typesFolderPath))
+  const environmentPath = join(root, 'plt-env.d.ts')
+  const pltEnvironment = await generateEnvironmentTypes(relative(root, typesFolderPath))
   if (await writeFileIfChanged(environmentPath, pltEnvironment)) {
     logger.info('Regenerated plt-env.d.ts.')
   }

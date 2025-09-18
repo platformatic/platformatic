@@ -1,4 +1,4 @@
-import { loadConfiguration, loadModule } from '@platformatic/foundation'
+import { loadConfiguration, loadModule, kMetadata } from '@platformatic/foundation'
 import { access } from 'fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -6,9 +6,10 @@ import { MissingSeedFileError } from '../errors.js'
 import { Migrator } from '../migrator.js'
 import { schema } from '../schema.js'
 import { setupDB } from '../utils.js'
+import { transform } from '../config-transform.js'
 
 export async function seed (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await loadConfiguration(configFile, schema)
+  const config = await transform(await loadConfiguration(configFile, schema))
 
   if (config.migrations !== undefined) {
     const migrator = new Migrator(config.migrations, config.db, logger)
@@ -28,12 +29,13 @@ export async function seed (logger, configFile, args, { colorette: { bold }, log
     throw new MissingSeedFileError()
   }
 
-  const seedFile = resolve(process.cwd(), args[0])
+  const root = config[kMetadata].root
+  const seedFile = resolve(root, args[0])
   await access(seedFile)
 
   logger.info(`Seeding from ${bold(seedFile)}`)
 
-  const importedModule = await loadModule(createRequire(resolve(process.cwd(), 'noop.js')), seedFile)
+  const importedModule = await loadModule(createRequire(resolve(root, 'noop.js')), seedFile)
 
   const seedFunction = typeof importedModule?.seed !== 'function' ? importedModule : importedModule.seed
 
