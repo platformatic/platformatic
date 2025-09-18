@@ -1,10 +1,9 @@
-import { createDirectory, isFileAccessible } from '@platformatic/foundation'
+import { createDirectory, isFileAccessible, kMetadata } from '@platformatic/foundation'
 import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
 import { basename, join, relative, resolve, sep } from 'node:path'
 import { setupDB } from './utils.js'
-import { kMetadata } from '@platformatic/foundation'
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
