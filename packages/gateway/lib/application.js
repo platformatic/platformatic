@@ -153,6 +153,13 @@ export async function platformaticGateway (app, capability) {
     })
   }
 
+  // Add content type parser for binary content to enable proxying
+  if (!app.hasContentTypeParser('application/octet-stream')) {
+    app.addContentTypeParser('application/octet-stream', function (req, body, done) {
+      done(null, body)
+    })
+  }
+
   let generatedComposedOpenAPI = null
   if (hasOpenapiApplications) {
     generatedComposedOpenAPI = await openApiGenerator(app, config.gateway)
