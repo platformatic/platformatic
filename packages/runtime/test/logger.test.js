@@ -1,8 +1,8 @@
 import { execa } from 'execa'
 import { ok } from 'node:assert'
 import { join } from 'node:path'
-import { test } from 'node:test'
-import { request } from 'undici'
+import { test, beforeEach, afterEach } from 'node:test'
+import { request, Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
 
 function stdioOutputToLogs (data) {
@@ -112,6 +112,13 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
     })
   })
 }
+
+setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
+
+afterEach(() => {
+  getGlobalDispatcher().close()
+  setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
+})
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
