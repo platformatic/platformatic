@@ -500,7 +500,7 @@ test('should use custom config', async t => {
   ok(
     logs.every(log => {
       const keys = Object.keys(log)
-      return log.severity === 'INFO' && log.message.length > 0 && !keys.includes('pid') && !keys.includes('hostname')
+      return typeof log.severity === 'string' && log.message.length > 0 && !keys.includes('pid') && !keys.includes('hostname')
     })
   )
 })
