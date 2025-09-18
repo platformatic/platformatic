@@ -85,7 +85,7 @@ When a service makes a request to another service (e.g., `http://auth.plt.local/
 
 The mesh network is optimized for high-performance inter-service communication:
 
-- **Zero-Copy Streaming**: Large request and response bodies use MessagePort transfers to avoid memory copying overhead
+- **Efficient Streaming**: Large request and response bodies use MessagePort transfers to avoid concatenation overhead
 - **Concurrent Processing**: Multiple worker threads can process requests simultaneously across different CPU cores
 - **Efficient Load Balancing**: Round-robin worker selection operates in O(1) time complexity
 - **Asynchronous Communication**: All inter-thread communication is non-blocking, preserving application responsiveness

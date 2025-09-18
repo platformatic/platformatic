@@ -158,16 +158,16 @@ workerPort.postMessage(requestData)
 - **Stream Handling**: Large payloads transferred as MessagePort streams for efficiency
 - **Error Propagation**: Network errors and timeouts properly forwarded to requesting service
 
-#### Zero-Copy Streaming
+#### Efficient Streaming
 
-For large request/response bodies, the system uses MessagePort transfers:
+For large request/response bodies, the system uses MessagePort transfers to avoid concatenation:
 
 ```javascript
 // Large payload handling
 if (bodySize > STREAM_THRESHOLD) {
   const { port1, port2 } = new MessageChannel()
 
-  // Transfer stream without memory copying
+  // Transfer stream with single copy (avoids concatenation)
   workerPort.postMessage({
     requestId,
     bodyStream: port1
@@ -241,7 +241,7 @@ The mesh network is optimized for high-performance inter-service communication:
 
 #### Throughput Optimization
 
-- **Zero-Copy Transfers**: Large payloads avoid memory copying through MessagePort streaming
+- **Efficient Transfers**: Large payloads use MessagePort streaming to avoid concatenation overhead
 - **Concurrent Processing**: Multiple workers process requests simultaneously across CPU cores
 - **Connection Pooling**: Reuse MessageChannels for multiple requests
 - **Asynchronous I/O**: All inter-thread communication is non-blocking
