@@ -28,6 +28,11 @@ function stdioOutputToLogs (data) {
   return logs.flat()
 }
 
+async function requestAndDump (url, opts) {
+  const { body } = await request(url, opts)
+  await body.text()
+}
+
 function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
   return new Promise((resolve, reject) => {
     if (!done) {
@@ -113,7 +118,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -158,7 +163,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -234,7 +239,7 @@ test('should inherit full logger options from runtime to different applications'
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/logs' })
+      await requestAndDump(url, { path: '/logs' })
       requested = true
     },
     done: message => {
@@ -263,7 +268,7 @@ test('should get json logs from thread applications when they are not pino defau
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/' })
+      await requestAndDump(url, { path: '/' })
       requested = true
     },
     done: message => {
@@ -303,8 +308,8 @@ test('should handle logs from thread applications as they are with captureStdio:
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
       requested = true
     },
     done: message => {
@@ -446,8 +451,8 @@ test('should use null base in options', async t => {
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
       requested = true
     },
     done: message => {
@@ -477,8 +482,8 @@ test('should use custom config', async t => {
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
-      await request(url, { path: '/service/' })
-      await request(url, { path: '/node/' })
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
       requested = true
     },
     done: message => {
