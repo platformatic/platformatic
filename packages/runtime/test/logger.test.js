@@ -447,7 +447,6 @@ test('should use null base in options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
@@ -461,7 +460,7 @@ test('should use null base in options', async t => {
       } else if (message.includes('call route / on node')) {
         responses++
       }
-      return requested && responses > 1
+      return responses > 1
     }
   })
   const logs = stdioOutputToLogs(stdout)
@@ -484,13 +483,12 @@ test('should use custom config', async t => {
     onReady: async ({ url }) => {
       await requestAndDump(url, { path: '/service/' })
       await requestAndDump(url, { path: '/node/' })
-      requested = true
     },
     done: message => {
       if (message.includes('request completed')) {
         responses++
       }
-      return requested && responses > 2
+      return responses > 2
     }
   })
   const logs = stdioOutputToLogs(stdout)
