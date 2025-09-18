@@ -116,8 +116,8 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
 
 setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
 
-afterEach(() => {
-  getGlobalDispatcher().close()
+afterEach(async () => {
+  await getGlobalDispatcher().close()
   setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
 })
 
