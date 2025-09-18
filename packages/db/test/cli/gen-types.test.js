@@ -56,7 +56,7 @@ test('generate ts types', async t => {
   await execa(pathToTSD, { cwd })
 })
 
-test.only('generate ts types without changing the cwd', async t => {
+test('generate ts types without changing the cwd', async t => {
   const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
 
