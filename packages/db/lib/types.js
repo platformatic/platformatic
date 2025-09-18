@@ -117,7 +117,6 @@ export async function execute ({ logger, config }) {
   const { db, entities } = wrap
 
   const count = Object.keys(entities).length
-  process._rawDebug(`Found ${count} entities in the database schema`)
   if (count === 0) {
     // do not generate types if no schema is found
     return 0

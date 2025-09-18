@@ -64,10 +64,7 @@ test('generate ts types without changing the cwd', async t => {
   const context = createTestContext()
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  await withWorkingDirectory(cwd, async () => {
-    await applyMigrations(logger, configFile, [], context)
-  })()
-
+  await applyMigrations(logger, configFile, [], context)
   await generateTypes(logger, configFile, [], context)
 
   await execa(pathToTSD, { cwd })
