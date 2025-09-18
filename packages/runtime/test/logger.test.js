@@ -452,7 +452,6 @@ test('should use null base in options', async t => {
     onReady: async ({ url }) => {
       await requestAndDump(url, { path: '/service/' })
       await requestAndDump(url, { path: '/node/' })
-      requested = true
     },
     done: message => {
       if (message.includes('call route / on service')) {
@@ -477,7 +476,6 @@ test('should use custom config', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
 
   let responses = 0
-  let requested = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
