@@ -181,7 +181,13 @@ export const gateway = {
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
-    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
+    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
+    passthroughContentTypes: {
+      type: 'array',
+      items: { type: 'string' },
+      default: ['multipart/form-data', 'application/octet-stream'],
+      description: 'Content types that should be passed through without parsing to enable proxying'
+    }
   },
   required: [],
   default: {},

@@ -146,18 +146,15 @@ export async function platformaticGateway (app, capability) {
 
   await app.register(gatewayHook)
 
-  // Add content type parser for multipart form data to enable proxying
-  if (!app.hasContentTypeParser('multipart/form-data')) {
-    app.addContentTypeParser('multipart/form-data', function (req, body, done) {
-      done(null, body)
-    })
-  }
-
-  // Add content type parser for binary content to enable proxying
-  if (!app.hasContentTypeParser('application/octet-stream')) {
-    app.addContentTypeParser('application/octet-stream', function (req, body, done) {
-      done(null, body)
-    })
+  // Register pass-through content type parsers from config
+  const passthroughTypes = config.gateway.passthroughContentTypes ||
+                          ['multipart/form-data', 'application/octet-stream']
+  for (const contentType of passthroughTypes) {
+    if (!app.hasContentTypeParser(contentType)) {
+      app.addContentTypeParser(contentType, function (req, body, done) {
+        done(null, body)
+      })
+    }
   }
 
   let generatedComposedOpenAPI = null
