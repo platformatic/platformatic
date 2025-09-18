@@ -26,9 +26,6 @@ function stdioOutputToLogs (data) {
     .filter(log => log)
 
   const lines = logs.flat()
-
-  console.log(lines)
-
   return lines
 }
 
