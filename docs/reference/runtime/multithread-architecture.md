@@ -84,6 +84,220 @@ The system uses `undici-thread-interceptor` for application mesh:
 - **Automatic Discovery**: Services can communicate without explicit configuration
 - **Load Balancing**: Requests automatically distributed across worker instances
 
+## Internal Mesh Network Architecture
+
+The Platformatic Runtime implements a sophisticated internal mesh network that enables seamless communication between microservices running in different worker threads. This system is built on the `undici-thread-interceptor` package and provides transparent HTTP-based communication without the overhead of network sockets.
+
+For a higher-level overview of inter-application communication, see the [Runtime Overview](../runtime/overview.md#inter-application-communication) documentation.
+
+### Mesh Network Topology
+
+The mesh creates full connectivity between all worker threads:
+
+```
+Runtime Manager (Main Thread)
+    ├── ThreadInterceptor/Coordinator
+    └── MessageChannels to all workers
+
+Worker Thread Pool
+    ├── Worker 1 (api.plt.local)
+    ├── Worker 2 (api.plt.local)
+    ├── Worker 3 (auth.plt.local)
+    └── Worker 4 (db.plt.local)
+
+Direct Worker-to-Worker Channels
+    ├── Worker 1 ↔ Worker 2, 3, 4
+    ├── Worker 2 ↔ Worker 3, 4
+    └── Worker 3 ↔ Worker 4
+```
+
+### Domain-Based Routing System
+
+The mesh network uses a sophisticated domain-based routing system to direct requests to the appropriate services:
+
+#### Routing Configuration
+
+- **Domain Suffix**: All internal services use the configurable `.plt.local` domain
+- **Service Mapping**: Each service ID maps to a specific domain (e.g., `auth` → `auth.plt.local`)
+- **Multiple Workers**: Multiple worker instances can serve the same domain for load balancing
+
+#### Request Routing Process
+
+When a request is made to `http://auth.plt.local/verify`:
+
+1. **Hostname Extraction**: Extract hostname `auth.plt.local` from the request URL
+2. **Domain Validation**: Check if hostname ends with the configured domain suffix
+3. **Service Resolution**: Map `auth` to the list of available worker threads
+4. **Load Balancing**: Use round-robin to select the next available worker
+5. **Route Request**: Forward request to the selected worker via MessageChannel
+
+### Inter-Thread Communication Patterns
+
+The mesh network uses Node.js MessageChannel for efficient communication between threads:
+
+#### Request Serialization and Transfer
+
+```javascript
+// Request flow from Worker A to Worker B
+const requestData = {
+  id: generateUniqueId(),
+  method: 'POST',
+  path: '/api/users',
+  headers: { 'Content-Type': 'application/json' },
+  body: requestBody // Transferred as MessagePort for large payloads
+}
+
+// Send via MessageChannel
+workerPort.postMessage(requestData)
+```
+
+#### MessageChannel Architecture
+
+- **Bidirectional Communication**: Each worker pair has a dedicated MessageChannel
+- **Request/Response Correlation**: Unique request IDs match responses to original requests
+- **Stream Handling**: Large payloads transferred as MessagePort streams for efficiency
+- **Error Propagation**: Network errors and timeouts properly forwarded to requesting service
+
+#### Efficient Streaming
+
+For large request/response bodies, the system uses MessagePort transfers to avoid concatenation:
+
+```javascript
+// Large payload handling
+if (bodySize > STREAM_THRESHOLD) {
+  const { port1, port2 } = new MessageChannel()
+
+  // Transfer stream with single copy (avoids concatenation)
+  workerPort.postMessage({
+    requestId,
+    bodyStream: port1
+  }, [port1])
+
+  // Stream data through port2
+  streamData(body, port2)
+}
+```
+
+### Load Balancing and Scaling
+
+#### Round-Robin Distribution
+
+The RoundRobin class manages worker selection with O(1) efficiency:
+
+```javascript
+class RoundRobin {
+  constructor(workers) {
+    this.workers = workers
+    this.index = 0
+  }
+
+  next() {
+    const worker = this.workers[this.index]
+    this.index = (this.index + 1) % this.workers.length
+    return worker
+  }
+}
+```
+
+#### Scaling Patterns
+
+- **Horizontal Scaling**: Add more worker instances for the same service
+- **Health-Aware Balancing**: Exclude unhealthy workers from rotation
+- **Dynamic Scaling**: Workers can be added/removed during runtime
+- **Service-Specific Scaling**: Different services can have different worker counts
+
+### Dynamic Mesh Management
+
+The mesh network adapts automatically to runtime changes:
+
+#### Worker Registration Process
+
+When a new worker starts:
+
+1. **Worker Initialization**: Worker thread calls `wire()` with its application server
+2. **Mesh Registration**: Worker registers with the ThreadInterceptor in the main thread
+3. **Channel Establishment**: MessageChannels created between new worker and all existing workers
+4. **Route Advertisement**: New worker's routes are propagated to all other workers
+5. **Load Balancer Update**: RoundRobin instances updated with new worker
+
+#### Runtime Route Management
+
+```javascript
+// Add new service instance
+interceptor.route("newservice", workerThread)
+
+// Remove specific worker from service
+interceptor.unroute("newservice", workerThread)
+
+// Mesh automatically updates:
+// - MessageChannels established/torn down
+// - All workers notified of changes
+// - Load balancing updated
+```
+
+### Performance Characteristics
+
+The mesh network is optimized for high-performance inter-service communication:
+
+#### Throughput Optimization
+
+- **Efficient Transfers**: Large payloads use MessagePort streaming to avoid concatenation overhead
+- **Concurrent Processing**: Multiple workers process requests simultaneously across CPU cores
+- **Connection Pooling**: Reuse MessageChannels for multiple requests
+- **Asynchronous I/O**: All inter-thread communication is non-blocking
+
+#### Latency Characteristics
+
+- **In-Memory Communication**: Eliminates network stack overhead
+- **Direct Thread Communication**: No intermediate proxies or gateways
+- **Efficient Serialization**: Minimal request/response serialization overhead
+- **Round-Robin Selection**: O(1) worker selection time
+
+#### Memory Efficiency
+
+- **Shared Code**: Worker threads share the same V8 isolate for code
+- **Isolated Heaps**: Each worker has independent memory heap
+- **Stream Processing**: Large payloads streamed rather than buffered
+- **Resource Limits**: Per-worker memory limits prevent resource exhaustion
+
+### Integration with Threading Model
+
+The mesh network is tightly integrated with the multithread architecture:
+
+#### Worker Lifecycle Integration
+
+- **Startup**: Mesh registration happens during worker initialization
+- **Health Monitoring**: Mesh reflects worker health status in routing decisions
+- **Restart**: Worker replacement maintains mesh connectivity
+- **Shutdown**: Graceful mesh cleanup during worker termination
+
+#### Fault Tolerance
+
+- **Worker Failure Isolation**: Failed workers removed from mesh without affecting others
+- **Automatic Recovery**: New workers automatically join the mesh
+- **Circuit Breaker**: Temporarily exclude failing services from routing
+- **Graceful Degradation**: Continue operation with reduced worker count
+
+### Security and Isolation
+
+The mesh network maintains security boundaries:
+
+#### Thread Isolation
+
+- **Memory Isolation**: Each worker has independent memory space
+- **Process Isolation**: Option to run workers in separate processes
+- **Resource Limits**: Memory and CPU constraints per worker
+- **Capability Control**: Limited access to system resources per worker
+
+#### Communication Security
+
+- **Internal-Only**: Mesh communication limited to `.plt.local` domain
+- **No External Access**: Mesh traffic never leaves the runtime process
+- **Request Validation**: Input validation at mesh boundaries
+- **Error Boundary**: Errors contained within individual workers
+
+This comprehensive mesh network architecture enables Platformatic Runtime to provide transparent, high-performance inter-service communication while maintaining the benefits of isolation and scalability that come with a multi-threaded execution model.
+
 ## Inter-Thread Communication (ITC)
 
 ### Communication Patterns
