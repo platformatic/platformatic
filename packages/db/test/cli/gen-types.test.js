@@ -56,6 +56,20 @@ test('generate ts types', async t => {
   await execa(pathToTSD, { cwd })
 })
 
+test('generate ts types without changing the cwd', async t => {
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
+  const cwd = await prepareTemporaryDirectory(t, testDir)
+
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+  const configFile = resolve(cwd, 'platformatic.db.json')
+
+  await applyMigrations(logger, configFile, [], context)
+  await generateTypes(logger, configFile, [], context)
+
+  await execa(pathToTSD, { cwd })
+})
+
 test('generate ts types twice', async t => {
   const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)

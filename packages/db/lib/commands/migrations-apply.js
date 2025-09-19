@@ -1,5 +1,6 @@
 import { loadConfiguration } from '@platformatic/foundation'
 import { utimesSync } from 'node:fs'
+import { transform } from '../config.js'
 import { execute } from '../migrator.js'
 import { schema } from '../schema.js'
 import { updateSchemaLock } from '../utils.js'
@@ -7,7 +8,7 @@ import { generateTypes } from './types.js'
 
 export async function applyMigrations (logger, configFile, args, context) {
   const { parseArgs, logFatalError } = context
-  const config = await loadConfiguration(configFile, schema)
+  const config = await loadConfiguration(configFile, schema, { transform })
 
   const {
     values: { to, rollback }
