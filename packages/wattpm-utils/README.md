@@ -21,7 +21,7 @@ guide to get up and running with Platformatic.
 ## Documentation
 
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start)
-- [Reference](https://docs.platformatic.dev/docs/reference/watt/overview)
+- [Reference](https://docs.platformatic.dev/docs/reference/wattpm/overview)
 - [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
 Check out our full documentation at [platformatic.dev](https://platformatic.dev).
