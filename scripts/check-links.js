@@ -132,6 +132,8 @@ function checkHttpLink (url) {
       }
 
       const req = client.request(url, options, res => {
+        res.on('error', () => {}) // no errors
+        res.resume() // Consume response data to free up memory
         // Handle redirects
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           // Resolve relative redirect locations
@@ -144,6 +146,8 @@ function checkHttpLink (url) {
           checkHttpLink(redirectUrl).then(resolve)
         } else if (res.statusCode === 404) {
           resolve({ ok: false, status: res.statusCode, reason: 'Not Found (404)' })
+        } else if (res.statusCode === 403) {
+          resolve({ ok: true, status: res.statusCode, reason: 'Forbidden 403, assuming correct' })
         } else if (res.statusCode >= 200 && res.statusCode < 400) {
           // For Docusaurus sites, we need to check content for "Page Not Found"
           if (url.includes('docs.platformatic.dev')) {

@@ -45,6 +45,7 @@ const sidebars = {
       label: 'How-to Guides',
       collapsed: true,
       items: [
+        'guides',
         {
           type: 'category',
           label: 'Application Development',
@@ -88,7 +89,7 @@ const sidebars = {
       label: 'Reference',
       collapsed: true,
       items: [
-        'reference-overview',
+        'reference',
         {
           type: 'category',
           label: 'Watt (Node.js Application Server)',
