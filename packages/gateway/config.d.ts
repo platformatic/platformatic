@@ -366,6 +366,10 @@ export interface PlatformaticGatewayConfig {
     };
     addEmptySchema?: boolean;
     refreshTimeout?: number;
+    /**
+     * Content types that should be passed through without parsing to enable proxying
+     */
+    passthroughContentTypes?: string[];
   };
   types?: {
     autogenerate?: boolean;

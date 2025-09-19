@@ -29,7 +29,8 @@ test('get application config via capability api', async t => {
     gateway: {
       applications: [],
       refreshTimeout: 1000,
-      addEmptySchema: false
+      addEmptySchema: false,
+      passthroughContentTypes: ['multipart/form-data', 'application/octet-stream']
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]

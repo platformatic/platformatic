@@ -87,6 +87,81 @@ test('seed and start', async t => {
   }
 })
 
+test('seed and start with named export seed function', async t => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
+
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
+  const configFile = join(cwd, 'platformatic.db.json')
+
+  const migrationsLogger = createCapturingLogger()
+  const migrationsContext = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(migrationsLogger, configFile, [], migrationsContext)
+
+  const seedLogger = createCapturingLogger()
+  const seedContext = createTestContext()
+
+  // Change to the test directory so seed can find seed.js
+  const originalCwd = process.cwd()
+  process.chdir(cwd)
+  try {
+    await seedCommand(seedLogger, configFile, ['seed-named-export.js'], seedContext)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const seedOutput = seedLogger.getCaptured()
+  assert.match(seedOutput, /Seeding from .*seed-named-export\.js/)
+  assert.match(seedOutput, /42/) // custom logger.info line from the seed file
+  assert.match(seedOutput, /Seeding complete/)
+
+  const { child, url } = await start([], {
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
+  })
+
+  t.after(async () => {
+    await safeKill(child)
+    await dropTestDB()
+  })
+
+  {
+    const res = await request(`${url}/graphql`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `
+              query {
+                graphs {
+                  id
+                  name
+                }
+              }
+            `
+      })
+    })
+    assert.equal(res.statusCode, 200, 'graphs status code')
+    const body = await res.body.json()
+    assert.deepEqual(body, {
+      data: {
+        graphs: [
+          {
+            id: '1',
+            name: 'Hello'
+          },
+          {
+            id: '2',
+            name: 'Hello 2'
+          }
+        ]
+      }
+    })
+  }
+})
+
 test('seed command should throw an error if there are migrations to apply', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
