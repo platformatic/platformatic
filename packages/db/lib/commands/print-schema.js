@@ -5,7 +5,7 @@ import { schema } from '../schema.js'
 import { transform } from '../config-transform.js'
 
 export async function printSchema (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await transform(await loadConfiguration(configFile, schema))
+  const config = await loadConfiguration(configFile, schema, { transform })
 
   const type = args[0]
 

@@ -7,7 +7,7 @@ import { schema } from '../schema.js'
 import { transform } from '../config-transform.js'
 
 export async function createMigrations (logger, configFile, _, { colorette: { bold } }) {
-  const config = await transform(await loadConfiguration(configFile, schema))
+  const config = await loadConfiguration(configFile, schema, { transform })
   const root = config[kMetadata].root
 
   let migrator = null

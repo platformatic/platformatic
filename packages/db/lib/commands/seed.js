@@ -9,7 +9,7 @@ import { setupDB } from '../utils.js'
 import { transform } from '../config-transform.js'
 
 export async function seed (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await transform(await loadConfiguration(configFile, schema))
+  const config = await loadConfiguration(configFile, schema, { transform })
 
   if (config.migrations !== undefined) {
     const migrator = new Migrator(config.migrations, config.db, logger)
