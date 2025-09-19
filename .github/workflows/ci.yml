@@ -6,7 +6,6 @@ on:
       - main
       - v1.x
       - v2.x
-      - v3-alpha-2
     paths-ignore:
       - 'docs/**'
       - '**.md'
