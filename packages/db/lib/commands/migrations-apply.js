@@ -1,10 +1,10 @@
 import { loadConfiguration } from '@platformatic/foundation'
 import { utimesSync } from 'node:fs'
+import { transform } from '../config.js'
 import { execute } from '../migrator.js'
 import { schema } from '../schema.js'
 import { updateSchemaLock } from '../utils.js'
 import { generateTypes } from './types.js'
-import { transform } from '../config-transform.js'
 
 export async function applyMigrations (logger, configFile, args, context) {
   const { parseArgs, logFatalError } = context

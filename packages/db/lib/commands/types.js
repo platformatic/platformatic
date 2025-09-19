@@ -1,7 +1,7 @@
 import { loadConfiguration } from '@platformatic/foundation'
+import { transform } from '../config.js'
 import { schema } from '../schema.js'
 import { execute } from '../types.js'
-import { transform } from '../config-transform.js'
 
 export async function generateTypes (logger, configFile, _args) {
   const config = await loadConfiguration(configFile, schema, { transform })

@@ -1,7 +1,7 @@
+import { kMetadata } from '@platformatic/foundation'
 import { transform as serviceTransform } from '@platformatic/service'
 import { readFile } from 'node:fs/promises'
 import { resolve as resolvePath } from 'node:path'
-import { kMetadata } from '@platformatic/foundation'
 
 export async function transform (config) {
   config = await serviceTransform(config)
