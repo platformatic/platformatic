@@ -2,9 +2,11 @@ name: Link Check
 
 on:
   push:
-    branches: ['**']
+    branches:
+      - main
+      - v1.x
+      - v2.x
   pull_request:
-    branches: ['**']
   schedule:
     - cron: '0 0 * * *'  # Daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
@@ -20,12 +22,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           
       - name: Run link checker
-        run: |
-          chmod +x scripts/check-links.js
-          node scripts/check-links.js
+        run: node scripts/check-links.js
           
       - name: Upload results artifact
         if: failure()
