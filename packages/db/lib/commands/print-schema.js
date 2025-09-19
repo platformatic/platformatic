@@ -1,10 +1,11 @@
 import { abstractLogger, kMetadata, loadConfiguration } from '@platformatic/foundation'
 import { printSchema as printGraphqlSchema } from 'graphql'
 import { create } from '../../index.js'
+import { transform } from '../config.js'
 import { schema } from '../schema.js'
 
 export async function printSchema (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await loadConfiguration(configFile, schema)
+  const config = await loadConfiguration(configFile, schema, { transform })
 
   const type = args[0]
 
