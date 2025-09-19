@@ -146,6 +146,17 @@ export async function platformaticGateway (app, capability) {
 
   await app.register(gatewayHook)
 
+  // Register pass-through content type parsers from config
+  const passthroughTypes = config.gateway.passthroughContentTypes ||
+                          ['multipart/form-data', 'application/octet-stream']
+  for (const contentType of passthroughTypes) {
+    if (!app.hasContentTypeParser(contentType)) {
+      app.addContentTypeParser(contentType, function (req, body, done) {
+        done(null, body)
+      })
+    }
+  }
+
   let generatedComposedOpenAPI = null
   if (hasOpenapiApplications) {
     generatedComposedOpenAPI = await openApiGenerator(app, config.gateway)
