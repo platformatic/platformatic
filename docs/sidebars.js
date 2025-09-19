@@ -65,7 +65,7 @@ const sidebars = {
           items: [
             'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/k8s-readiness-liveness',
-            'guides/deployment/typescript'
+            'guides/deployment/compiling-typescript'
           ]
         },
         {
@@ -93,7 +93,7 @@ const sidebars = {
           type: 'category',
           label: 'Watt (Node.js Application Server)',
           collapsed: true,
-          items: ['reference/watt/overview', 'reference/watt/configuration', 'reference/watt/cli-commands']
+          items: ['reference/wattpm/overview', 'reference/wattpm/configuration', 'reference/wattpm/cli-commands']
         },
         {
           type: 'category',
