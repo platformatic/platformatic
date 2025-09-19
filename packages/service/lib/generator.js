@@ -171,24 +171,24 @@ $__POST__
 
 const TS_CONFIG = `
 {
-  compilerOptions: {
-    module: 'commonjs',
-    esModuleInterop: true,
-    target: 'es2020',
-    sourceMap: true,
-    pretty: true,
-    noEmitOnError: true,
-    incremental: true,
-    strict: true,
-    outDir: 'dist',
-    skipLibCheck: true
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "sourceMap": true,
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
   },
-  watchOptions: {
-    watchFile: 'fixedPollingInterval',
-    watchDirectory: 'fixedPollingInterval',
-    fallbackPolling: 'dynamicPriority',
-    synchronousWatchDirectory: true,
-    excludeDirectories: ['**/node_modules', 'dist']
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules", "dist"]
   }
 }
 `
@@ -236,7 +236,7 @@ npm start
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 `
 
-export function applyTestHelperCustomizations (testHelper, mod, customizations) {
+export function applyTestHelperCustomizations(testHelper, mod, customizations) {
   return testHelper
     .replaceAll('$__MOD__', mod || '@platformatic/service')
     .replaceAll('$__REQUIRES__', customizations.requires || '')
@@ -246,14 +246,14 @@ export function applyTestHelperCustomizations (testHelper, mod, customizations) 
 }
 
 export class Generator extends BaseGenerator {
-  constructor (opts = {}) {
+  constructor(opts = {}) {
     super({
       module: '@platformatic/service',
       ...opts
     })
   }
 
-  getConfigFieldsDefinitions () {
+  getConfigFieldsDefinitions() {
     if (this.config.isRuntimeContext) {
       return []
     }
@@ -283,7 +283,7 @@ export class Generator extends BaseGenerator {
     ]
   }
 
-  getDefaultConfig () {
+  getDefaultConfig() {
     const defaultBaseConfig = super.getDefaultConfig()
 
     return {
@@ -293,7 +293,7 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async prepareQuestions () {
+  async prepareQuestions() {
     await super.prepareQuestions()
 
     if (!this.config.skipTypescript) {
@@ -310,7 +310,7 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async _beforePrepare () {
+  async _beforePrepare() {
     if (this.config.isUpdating) {
       return
     }
@@ -331,7 +331,7 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async _afterPrepare () {
+  async _afterPrepare() {
     // if we are NOT updating, create env and files, otherwise leave as it is
     if (this.config.isUpdating) {
       return
@@ -396,7 +396,7 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async _getConfigFileContents () {
+  async _getConfigFileContents() {
     const config = {
       $schema: `https://schemas.platformatic.dev/@platformatic/service/${this.platformaticVersion}.json`,
       service: {
