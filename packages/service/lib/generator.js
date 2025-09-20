@@ -171,24 +171,24 @@ $__POST__
 
 const TS_CONFIG = `
 {
-  compilerOptions: {
-    module: 'commonjs',
-    esModuleInterop: true,
-    target: 'es2020',
-    sourceMap: true,
-    pretty: true,
-    noEmitOnError: true,
-    incremental: true,
-    strict: true,
-    outDir: 'dist',
-    skipLibCheck: true
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "sourceMap": true,
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
   },
-  watchOptions: {
-    watchFile: 'fixedPollingInterval',
-    watchDirectory: 'fixedPollingInterval',
-    fallbackPolling: 'dynamicPriority',
-    synchronousWatchDirectory: true,
-    excludeDirectories: ['**/node_modules', 'dist']
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules", "dist"]
   }
 }
 `
