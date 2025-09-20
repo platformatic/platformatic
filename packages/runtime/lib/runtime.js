@@ -337,16 +337,48 @@ export class Runtime extends EventEmitter {
     this.#updateStatus('stopped')
   }
 
-  async restart () {
-    this.emit('restarting')
+  async restart (opts) {
+    const { gradual = false } = opts ?? {}
 
-    await this.stop()
-    this.#meshInterceptor.restart()
-    await this.start()
+    this.emit('restarting', { gradual })
+
+    if (gradual) {
+      const ids = this.getApplicationsIds()
+      // todo: replace ids[0] with actual applicationId (or restart all)
+      await this.#gradualRestart(ids[0])
+    } else {
+      await this.stop()
+      this.#meshInterceptor.restart()
+      await this.start()
+    }
 
     this.emit('restarted')
 
     return this.#url
+  }
+
+  async #gradualRestart (applicationId, silent = false) {
+    const config = this.#config
+    const applicationConfig = config.applications.find(s => s.id === applicationId)
+
+    if (!applicationConfig) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
+    if (!silent) {
+      this.logger.info(`Gradually restarting workers of ${applicationId}`)
+    }
+    const workersCount = await this.#workers.getCount(applicationConfig.id)
+
+    const workers = await this.getWorkers()
+    for (const [label, { worker: workerIdx }] of Object.entries(workers)) {
+      const worker = this.#workers.get(label)
+      await this.#replaceWorker(config, applicationConfig, workersCount, applicationId, workerIdx, worker)
+    }
+
+    if (!silent) {
+      this.logger.info(`Gradual restart of ${applicationId} finished`)
+    }
   }
 
   async close (silent = false) {
@@ -1814,11 +1846,16 @@ export class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker) {
+  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker, silent) {
     const workerId = `${applicationId}:${index}`
+    const label = this.#workerExtendedLabel(applicationId, index, workersCount)
     let newWorker
 
     try {
+      if (!silent) {
+        this.logger.info(`Preparing to start a replacement for ${label}...`)
+      }
+
       // Create a new worker
       newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
 
@@ -1845,6 +1882,9 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
+    if (!silent) {
+      this.logger.info(`Preparing to stop the old version of ${label}...`)
+    }
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
   }
 

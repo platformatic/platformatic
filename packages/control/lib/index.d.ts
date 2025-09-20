@@ -104,7 +104,7 @@ export class RuntimeApiClient {
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
   getRuntimeApplicationEnv (pid: number, applicationId: string): Promise<Record<string, string>>
   reloadRuntime (pid: number, options?: object): Promise<ChildProcess>
-  restartRuntime (pid: number): Promise<void>
+  restartRuntime (pid: number, options?: {gradual?: boolean}): Promise<void>
   stopRuntime (pid: number): Promise<void>
   getRuntimeMetrics<T extends { format?: 'text' | 'json' }> (
     pid: number,
