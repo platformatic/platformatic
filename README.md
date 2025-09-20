@@ -104,7 +104,7 @@ Understand what Watt is, why it exists, and how it fits your needs
 
 Solve specific problems with framework integration, deployment, and production setup
 
-### 📋 [Reference](https://docs.platformatic.dev/docs/reference-overview)
+### 📋 [Reference](https://docs.platformatic.dev/docs/reference)
 
 Complete technical specifications for CLI, configuration, and APIs
 
