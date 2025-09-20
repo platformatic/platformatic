@@ -33,22 +33,18 @@ env:
 
 jobs:
   setup:
-    name: 'setup - ${{ matrix.label }}'
+    name: 'setup - ${{ matrix.os }}'
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux
-            os: ubuntu-24.04
-          - label: Win
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node: 22.19.0
+          node: 22
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -58,26 +54,15 @@ jobs:
           command: pnpm fetch --ignore-scripts
 
   dependency-check:
-    name: 'dependency-check - ${{ matrix.label }}'
+    name: 'dependency-check - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -109,7 +94,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node: 22.19.0
+          node: 22
           cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
@@ -165,26 +150,15 @@ jobs:
           pnpm --filter="@platformatic/sql-events" run test:typescript
 
   cli:
-    name: 'cli - ${{ matrix.label }}'
+    name: 'cli - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'cli' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -206,26 +180,15 @@ jobs:
         run: cd packages/cli && pnpm run license
 
   foundation:
-    name: 'foundation - ${{ matrix.label }}'
+    name: 'foundation - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'utils' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -244,26 +207,15 @@ jobs:
         run: cd packages/foundation && pnpm test && pnpm run lint
 
   basic:
-    name: 'basic - ${{ matrix.label }}'
+    name: 'basic - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'basic' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -282,26 +234,15 @@ jobs:
         run: cd packages/basic && pnpm test && pnpm run lint
 
   itc:
-    name: 'itc - ${{ matrix.label }}'
+    name: 'itc - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'itc' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -320,26 +261,15 @@ jobs:
         run: cd packages/itc && pnpm test && pnpm run lint
 
   globals:
-    name: 'globals - ${{ matrix.label }}'
+    name: 'globals - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'globals' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -358,94 +288,16 @@ jobs:
         run: cd packages/globals && pnpm test && pnpm run lint
 
   runtime:
-    name: 'runtime - ${{ matrix.label }}'
+    name: 'runtime - ${{ matrix.os }} - ${{ matrix.node }} - ${{ matrix.suite }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'runtime' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x - main
-            node: 22.19.0
-            os: ubuntu-24.04
-            suite: main
-          - label: Linux - 24.x - main
-            node: 24.5.0
-            os: ubuntu-24.04
-            suite: main
-          - label: Linux - 22.x - api
-            node: 22.19.0
-            os: ubuntu-24.04
-            suite: api
-          - label: Linux - 24.x - api
-            node: 24.5.0
-            os: ubuntu-24.04
-            suite: api
-          - label: Linux - 22.x - cli
-            node: 22.19.0
-            os: ubuntu-24.04
-            suite: cli
-          - label: Linux - 24.x - cli
-            node: 24.5.0
-            os: ubuntu-24.04
-            suite: cli
-          - label: Linux - 22.x - start
-            node: 22.19.0
-            os: ubuntu-24.04
-            suite: start
-          - label: Linux - 24.x - start
-            node: 24.5.0
-            os: ubuntu-24.04
-            suite: start
-          - label: Linux - 22.x - multiple-workers
-            node: 22.19.0
-            os: ubuntu-24.04
-            suite: multiple-workers
-          - label: Linux - 24.x - multiple-workers
-            node: 24.5.0
-            os: ubuntu-24.04
-            suite: multiple-workers
-          - label: Win - 22.x - main
-            node: 22.19.0
-            os: windows-2025
-            suite: main
-          - label: Win - 24.x - main
-            node: 24.5.0
-            os: windows-2025
-            suite: main
-          - label: Win - 22.x - api
-            node: 22.19.0
-            os: windows-2025
-            suite: api
-          - label: Win - 24.x - api
-            node: 24.5.0
-            os: windows-2025
-            suite: api
-          - label: Win - 22.x - cli
-            node: 22.19.0
-            os: windows-2025
-            suite: cli
-          - label: Win - 24.x - cli
-            node: 24.5.0
-            os: windows-2025
-            suite: cli
-          - label: Win - 22.x - start
-            node: 22.19.0
-            os: windows-2025
-            suite: start
-          - label: Win - 24.x - start
-            node: 24.5.0
-            os: windows-2025
-            suite: start
-          - label: Win - 22.x - multiple-workers
-            node: 22.19.0
-            os: windows-2025
-            suite: multiple-workers
-          - label: Win - 24.x - multiple-workers
-            node: 24.5.0
-            os: windows-2025
-            suite: multiple-workers
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
+        suite: [main, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -464,26 +316,15 @@ jobs:
         run: cd packages/runtime && pnpm run test:${{ matrix.suite }}
 
   service:
-    name: 'service - ${{ matrix.label }}'
+    name: 'service - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'service' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -504,20 +345,14 @@ jobs:
           pnpm run test
 
   gateway:
-    name: 'gateway - ${{ matrix.label }}'
+    name: 'gateway - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'gateway' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -536,20 +371,14 @@ jobs:
         run: cd packages/gateway && pnpm run test
 
   composer:
-    name: 'composer - ${{ matrix.label }}'
+    name: 'composer - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'composer' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -568,26 +397,15 @@ jobs:
         run: cd packages/composer && pnpm run test
 
   db:
-    name: 'db - ${{ matrix.label }}'
+    name: 'db - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -611,20 +429,14 @@ jobs:
         run: cd packages/db && pnpm test && pnpm run lint
 
   db-authorization:
-    name: 'db-authorization - ${{ matrix.label }}'
+    name: 'db-authorization - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -645,44 +457,15 @@ jobs:
         run: cd packages/db-authorization && pnpm test && pnpm run lint
 
   db-core-test:
-    name: 'db-core-test - ${{ matrix.label }}'
+    name: 'db-core-test - ${{ matrix.db }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: PostgreSQL - 22.x
-            db: postgresql
-            node: 22.19.0
-          - label: PostgreSQL - 24.x
-            db: postgresql
-            node: 24.5.0
-          - label: MariaDB - 22.x
-            db: mariadb
-            node: 22.19.0
-          - label: MariaDB - 24.x
-            db: mariadb
-            node: 24.5.0
-          - label: MySQL - 22.x
-            db: mysql
-            node: 22.19.0
-          - label: MySQL - 24.x
-            db: mysql
-            node: 24.5.0
-          - label: MySQL8 - 22.x
-            db: mysql8
-            node: 22.19.0
-          - label: MySQL8 - 24.x
-            db: mysql8
-            node: 24.5.0
-          - label: SQLite - 22.x
-            db: sqlite
-            node: 22.19.0
-          - label: SQLite - 24.x
-            db: sqlite
-            node: 24.5.0
+        db: [postgresql, mariadb, mysql, mysql8, sqlite]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -713,44 +496,15 @@ jobs:
         run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }} && cd ..
 
   sql-events:
-    name: 'sql-events - ${{ matrix.label }}'
+    name: 'sql-events - ${{ matrix.db }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'sql-events' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: PostgreSQL - 22.x
-            db: postgresql
-            node: 22.19.0
-          - label: PostgreSQL - 24.x
-            db: postgresql
-            node: 24.5.0
-          - label: MariaDB - 22.x
-            db: mariadb
-            node: 22.19.0
-          - label: MariaDB - 24.x
-            db: mariadb
-            node: 24.5.0
-          - label: MySQL - 22.x
-            db: mysql
-            node: 22.19.0
-          - label: MySQL - 24.x
-            db: mysql
-            node: 24.5.0
-          - label: MySQL8 - 22.x
-            db: mysql8
-            node: 22.19.0
-          - label: MySQL8 - 24.x
-            db: mysql8
-            node: 24.5.0
-          - label: SQLite - 22.x
-            db: sqlite
-            node: 22.19.0
-          - label: SQLite - 24.x
-            db: sqlite
-            node: 24.5.0
+        db: [postgresql, mariadb, mysql, mysql8, sqlite]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -777,26 +531,15 @@ jobs:
         run: cd packages/sql-events && pnpm run test:${{ matrix.db }}
 
   wattpm:
-    name: 'wattpm - ${{ matrix.label }}'
+    name: 'wattpm - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'wattpm' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -815,26 +558,15 @@ jobs:
         run: cd packages/wattpm && pnpm test && pnpm run lint
 
   wattpm-utils:
-    name: 'wattpm-utils - ${{ matrix.label }}'
+    name: 'wattpm-utils - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'wattpm-utils' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -853,26 +585,15 @@ jobs:
         run: cd packages/wattpm-utils && pnpm test && pnpm run lint
 
   wattpm-pprof-capture:
-    name: 'wattpm-pprof-capture - ${{ matrix.label }}'
+    name: 'wattpm-pprof-capture - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'wattpm-pprof-capture' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -891,26 +612,15 @@ jobs:
         run: cd packages/wattpm-pprof-capture && pnpm test && pnpm run lint
 
   create-wattpm:
-    name: 'create-wattpm - ${{ matrix.label }}'
+    name: 'create-wattpm - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'create-wattpm' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -935,26 +645,15 @@ jobs:
         run: cd packages/create-wattpm && pnpm test && pnpm run lint
 
   create-platformatic:
-    name: 'create-platformatic - ${{ matrix.label }}'
+    name: 'create-platformatic - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux/22
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux/24
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win/22
-            node: 22.19.0
-            os: windows-2025
-          - label: Win/24
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -979,26 +678,15 @@ jobs:
         run: cd packages/create-platformatic && pnpm test && pnpm run lint
 
   control:
-    name: 'control - ${{ matrix.label }}'
+    name: 'control - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'control' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1017,26 +705,15 @@ jobs:
         run: cd packages/control && pnpm test && pnpm run lint
 
   metrics:
-    name: 'metrics - ${{ matrix.label }}'
+    name: 'metrics - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'metrics' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1054,20 +731,14 @@ jobs:
         run: cd packages/metrics && pnpm test && pnpm run lint
 
   telemetry:
-    name: 'telemetry - ${{ matrix.label }}'
+    name: 'telemetry - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'telemetry' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1086,26 +757,15 @@ jobs:
         run: cd packages/telemetry && pnpm test && pnpm run lint
 
   generators:
-    name: 'generators - ${{ matrix.label }}'
+    name: 'generators - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'generators' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1124,26 +784,15 @@ jobs:
         run: cd packages/generators && pnpm test && pnpm run lint
 
   node:
-    name: 'node - ${{ matrix.label }}'
+    name: 'node - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'node' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1162,20 +811,14 @@ jobs:
         run: cd packages/node && pnpm test && pnpm run lint
 
   next:
-    name: 'next - ${{ matrix.label }}'
+    name: 'next - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
+        node: [22, 24]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
@@ -1200,26 +843,15 @@ jobs:
         run: cd packages/next && pnpm test && pnpm run lint
 
   vite:
-    name: 'vite - ${{ matrix.label }}'
+    name: 'vite - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'vite' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1238,26 +870,15 @@ jobs:
         run: cd packages/vite && pnpm test && pnpm run lint
 
   astro:
-    name: 'astro - ${{ matrix.label }}'
+    name: 'astro - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'astro' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1276,26 +897,15 @@ jobs:
         run: cd packages/astro && pnpm test && pnpm run lint
 
   remix:
-    name: 'remix - ${{ matrix.label }}'
+    name: 'remix - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'remix' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1314,26 +924,15 @@ jobs:
         run: cd packages/remix && pnpm test && pnpm run lint
 
   nest:
-    name: 'nest - ${{ matrix.label }}'
+    name: 'nest - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'nest' }}
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
       matrix:
-        include:
-          - label: Linux - 22.x
-            node: 22.19.0
-            os: ubuntu-24.04
-          - label: Linux - 24.x
-            node: 24.5.0
-            os: ubuntu-24.04
-          - label: Win - 22.x
-            node: 22.19.0
-            os: windows-2025
-          - label: Win - 24.x
-            node: 24.5.0
-            os: windows-2025
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - uses: pnpm/action-setup@v4.1.0
