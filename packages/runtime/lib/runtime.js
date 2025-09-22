@@ -337,48 +337,20 @@ export class Runtime extends EventEmitter {
     this.#updateStatus('stopped')
   }
 
-  async restart (opts) {
-    const { gradual = false } = opts ?? {}
+  async restart () {
+    this.emit('restarting')
 
-    this.emit('restarting', { gradual })
-
-    if (gradual) {
-      const ids = this.getApplicationsIds()
-      // todo: replace ids[0] with actual applicationId (or restart all)
-      await this.#gradualRestart(ids[0])
-    } else {
-      await this.stop()
-      this.#meshInterceptor.restart()
-      await this.start()
+    const restartInvocations = []
+    for (const application of this.getApplicationsIds()) {
+      // The entrypoint has been stopped above
+      restartInvocations.push([application])
     }
+
+    await executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
 
     this.emit('restarted')
 
     return this.#url
-  }
-
-  async #gradualRestart (applicationId, silent = false) {
-    const config = this.#config
-    const applicationConfig = config.applications.find(s => s.id === applicationId)
-
-    if (!applicationConfig) {
-      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
-    }
-
-    if (!silent) {
-      this.logger.info(`Gradually restarting workers of ${applicationId}`)
-    }
-    const workersCount = await this.#workers.getCount(applicationConfig.id)
-
-    const workers = await this.getWorkers()
-    for (const [label, { worker: workerIdx }] of Object.entries(workers)) {
-      const worker = this.#workers.get(label)
-      await this.#replaceWorker(config, applicationConfig, workersCount, applicationId, workerIdx, worker)
-    }
-
-    if (!silent) {
-      this.logger.info(`Gradual restart of ${applicationId} finished`)
-    }
   }
 
   async close (silent = false) {
@@ -536,6 +508,23 @@ export class Runtime extends EventEmitter {
     }
 
     this.emit('application:stopped', id)
+  }
+
+  async restartApplication (id) {
+    const config = this.#config
+    const applicationConfig = this.#config.applications.find(s => s.id === id)
+    const workersCount = await this.#workers.getCount(id)
+
+    this.emit('application:restarting', id)
+
+    for (let i = 0; i < workersCount; i++) {
+      const label = `${id}:${i}`
+      const worker = this.#workers.get(label)
+
+      await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+    }
+
+    this.emit('application:restarted', id)
   }
 
   async buildApplication (id) {

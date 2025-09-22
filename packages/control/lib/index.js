@@ -370,13 +370,12 @@ export class RuntimeApiClient {
     return child
   }
 
-  async restartRuntime (pid, opts) {
+  async restartRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/restart',
-      method: 'POST',
-      query: { gradual: Boolean(opts?.gradual) }
+      method: 'POST'
     })
 
     if (statusCode !== 200) {

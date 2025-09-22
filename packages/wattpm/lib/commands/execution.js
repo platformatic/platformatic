@@ -102,25 +102,13 @@ export async function stopCommand (logger, args) {
 }
 
 export async function restartCommand (logger, args) {
-  const {
-    positionals,
-    values: { gradual }
-  } = parseArgs(
-    args,
-    {
-      gradual: {
-        type: 'boolean',
-        short: 'g'
-      }
-    },
-    false
-  )
+  const { positionals } = parseArgs(args, {}, false)
 
   try {
     const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
 
-    await client.restartRuntime(runtime.pid, { gradual })
+    await client.restartRuntime(runtime.pid)
     await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
@@ -228,12 +216,6 @@ export const help = {
         name: 'id',
         description:
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
-      },
-      {
-        name: 'gradual',
-        usage: '-g --gradual',
-        description:
-          'Instead of stopping and restarting all at once, this option restarts workers one by one'
       }
     ]
   },

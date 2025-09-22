@@ -74,3 +74,62 @@ test('do not restart if application is not started', async t => {
   ok(logs.includes('Failed to start application \\"service-2\\" after 5 attempts.'))
   ok(logs.includes('Stopping the application \\"service-1\\"...'))
 })
+
+test('will restart applications in parallel', async t => {
+  const configFile = join(fixturesDir, 'parallel-restart', 'platformatic.json')
+  const app = await createRuntime(configFile)
+  let entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const events = []
+
+  {
+    const res = await request(entryUrl + '/application-1')
+
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { ok: true })
+  }
+
+  {
+    const res = await request(entryUrl + '/application-2')
+
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { ok: true })
+  }
+
+  for (const event of ['restarting', 'restarted', 'application:restarting', 'application:restarted']) {
+    app.on(event, id => {
+      events.push([event, id])
+    })
+  }
+
+  entryUrl = await app.restart()
+
+  {
+    const res = await request(entryUrl + '/application-1')
+
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { ok: true })
+  }
+
+  {
+    const res = await request(entryUrl + '/application-2')
+
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { ok: true })
+  }
+
+  strictEqual(events[0][0], 'restarting')
+  strictEqual(events.at(-1)[0], 'restarted')
+  ok(events.findIndex(e => e[0] === 'application:restarting') !== -1)
+  ok(events.findIndex(e => e[0] === 'application:restarted') !== -1)
+
+  // All applications should trigger a restart before the previous one is finished
+  ok(
+    events.findLastIndex(e => e[0] === 'application:restarting') <
+      events.findIndex(e => e[0] === 'application:restarted')
+  )
+})
