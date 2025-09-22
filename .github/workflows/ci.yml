@@ -1196,7 +1196,6 @@ jobs:
           command: pnpm install --frozen-lockfile
       - name: Start docker containers for testing
         run: docker compose up -d valkey
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
       - name: Run next package test suite
         run: cd packages/next && pnpm test && pnpm run lint
 
