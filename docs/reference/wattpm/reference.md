@@ -95,6 +95,8 @@ Restarts all applications of a running application.
 
 This command will pickup changes in the applications (including configuration files) but not the main Watt configuration file.
 
+All applications are restarted in parallel, and within each application, workers are replaced one at a time.
+
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)

@@ -211,6 +211,8 @@ export const help = {
   restart: {
     usage: 'restart [id]',
     description: 'Restarts all applications',
+    footer:
+      'All applications are restarted in parallel, and within each application, workers are replaced one at a time.',
     args: [
       {
         name: 'id',

@@ -1842,7 +1842,7 @@ export class Runtime extends EventEmitter {
 
     try {
       if (!silent) {
-        this.logger.info(`Preparing to start a replacement for ${label}...`)
+        this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
       }
 
       // Create a new worker
@@ -1872,7 +1872,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (!silent) {
-      this.logger.info(`Preparing to stop the old version of ${label}...`)
+      this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
   }
