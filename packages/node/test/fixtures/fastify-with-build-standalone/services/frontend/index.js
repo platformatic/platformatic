@@ -6,6 +6,10 @@ export function build () {
     loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
   })
 
+  app.addHook('onClose', async () => {
+    globalThis.platformatic?.events.emitAndNotify('fastify:close')
+  })
+
   const prefix = globalThis.platformatic?.basePath ?? ''
 
   app.get(ensureTrailingSlash(cleanBasePath(prefix)), async () => {

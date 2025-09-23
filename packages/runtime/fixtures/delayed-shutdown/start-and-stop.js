@@ -1,7 +1,7 @@
-import { createRuntime } from '../../test/helpers.js'
+import { create } from '../../index.js'
 
 async function main () {
-  const runtime = await createRuntime(process.argv[2])
+  const runtime = await create(process.argv[2])
   await runtime.start()
 
   setTimeout(() => {

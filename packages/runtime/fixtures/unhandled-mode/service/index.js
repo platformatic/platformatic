@@ -1,5 +1,5 @@
 process.on('uncaughtException', () => {
-  globalThis[Symbol.for('plt.runtime.itc')].notify('event', { event: 'uncaughtException' })
+  globalThis.platformatic.events.emitAndNotify('uncaughtException')
 })
 
 export default async function (fastify) {

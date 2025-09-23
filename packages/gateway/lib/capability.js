@@ -62,12 +62,12 @@ export class GatewayCapability extends ServiceCapability {
       }
 
       if (unstarted.size > 0) {
-        globalThis[kITC].notify('event', { event: 'unhealthy' })
+        globalThis.platformatic.events.emitAndNotify('unhealthy')
         return false
       }
     }
 
-    globalThis[kITC].notify('event', { event: 'healthy' })
+    globalThis.platformatic.events.emitAndNotify('healthy')
     return true
   }
 

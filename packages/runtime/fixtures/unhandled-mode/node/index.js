@@ -2,7 +2,7 @@ import fastify from 'fastify'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 process.on('unhandledRejection', () => {
-  globalThis[Symbol.for('plt.children.itc')].notify('event', { event: 'unhandledRejection' })
+  globalThis.platformatic.events.emitAndNotify('unhandledRejection')
 })
 
 async function trigger () {
