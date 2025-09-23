@@ -1,9 +1,6 @@
 {
   "name": "composer",
   "type": "commonjs",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "dependencies": {
     "@platformatic/gateway": "^2.3.1"
   }

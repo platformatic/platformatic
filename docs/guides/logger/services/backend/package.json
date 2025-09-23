@@ -4,9 +4,6 @@
   "private": true,
   "type": "module",
   "main": "app.js",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "dependencies": {
     "@platformatic/node": "^2.61.0",
     "fastify": "^5.0.0"

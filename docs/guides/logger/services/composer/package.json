@@ -1,8 +1,5 @@
 {
   "name": "gateway",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "devDependencies": {
     "fastify": "^5.0.0"
   },

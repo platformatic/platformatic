@@ -103,9 +103,9 @@ export class RuntimeGenerator extends BaseGenerator {
     const template = {
       name: `${this.runtimeName}`,
       scripts: {
-        dev: this.config.devCommand,
-        build: this.config.buildCommand,
-        start: this.config.startCommand ?? 'platformatic start'
+        dev: this.config.devCommand ?? 'wattpm dev',
+        build: this.config.buildCommand ?? 'wattpm build',
+        start: this.config.startCommand ?? 'wattpm start'
       },
       devDependencies: {
         fastify: `^${this.fastifyVersion}`
@@ -594,7 +594,7 @@ export class WrappedGenerator extends BaseGenerator {
     scripts ??= {}
     scripts.dev ??= this.config.devCommand
     scripts.build ??= this.config.buildCommand
-    scripts.start ??= this.config.startCommand ?? 'platformatic start'
+    scripts.start ??= this.config.startCommand ?? 'wattpm start'
 
     this.addFile({
       path: '',

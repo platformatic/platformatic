@@ -1,7 +1,6 @@
 {
   "name": "service",
   "scripts": {
-    "start": "platformatic start",
     "clean": "rm -fr ./dist",
     "build": "tsc -p ."
   },

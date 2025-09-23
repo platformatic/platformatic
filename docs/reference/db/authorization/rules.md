@@ -191,7 +191,7 @@ In this example, the `user` role can delete all the posts edited before yesterda
 
 ## Access validation on `entity mapper` for plugins
 
-To assert that a specific user with it's `role(s)` has the correct access rights to use entities on a `platformatic plugin` the context should be passed to the `entity mapper` in order to verify its permissions like this:
+To assert that a specific user with it's `role(s)` has the correct access rights to use entities on a Platformatic plugin the context should be passed to the `entity mapper` in order to verify its permissions like this:
 
 To ensure that a specific user has the correct access rights to use entities within a Platformatic plugin, the user's context should be passed to the `entity mapper`. This integration allows the mapper to verify permissions based on the defined rules.
 

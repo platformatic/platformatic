@@ -4,9 +4,6 @@
   "workspaces": [
     "services/*"
   ],
-  "scripts": {
-    "start": "platformatic start"
-  },
   "dependencies": {
     "@platformatic/runtime": "^2.3.1",
     "platformatic": "^2.3.1"

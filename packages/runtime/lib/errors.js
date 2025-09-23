@@ -105,7 +105,7 @@ export const CannotMapSpecifierToAbsolutePathError = createError(
 )
 export const NodeInspectorFlagsNotSupportedError = createError(
   `${ERROR_PREFIX}_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED`,
-  "The Node.js inspector flags are not supported. Please use 'platformatic start --inspect' instead."
+  "The Node.js inspector flags are not supported. Please use 'wattpm start --inspect' instead."
 )
 export const FailedToUnlinkManagementApiSocket = createError(
   `${ERROR_PREFIX}_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET`,

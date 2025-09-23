@@ -1,8 +1,5 @@
 {
   "name": "gateway",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "dependencies": {
     "@platformatic/gateway": "^2.56.0"
   }
