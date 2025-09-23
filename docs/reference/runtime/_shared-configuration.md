@@ -445,7 +445,7 @@ This can be configured by the `envfile` property in the application configuratio
 Environment variables can also be set directly on the command line, for example:
 
 ```bash
-PLT_ENTRYPOINT=application npx platformatic runtime
+PLT_ENTRYPOINT=application npx wattpm start
 ```
 
 :::note

@@ -96,16 +96,10 @@ npx wattpm --help
 
 **Solution:**
 
-```bash
+````bash
 # Apply pending migrations
-platformatic db migrations apply
-
-# Check migration status
-platformatic db migrations status
-
-# Create a new migration
-platformatic db migrations create
-```
+wattpm db:migrations:apply
+K```
 
 ### Application Discovery and Communication Issues
 
@@ -120,7 +114,7 @@ platformatic db migrations create
    ```bash
    wattpm ps
    wattpm applications
-   ```
+````
 
 2. **Verify application configuration:**
 
@@ -195,11 +189,9 @@ kill -9 PID
 ```bash
 # Compile TypeScript plugins
 wattpm build
-# or for individual applications
-platformatic application compile
 
 # Generate TypeScript types
-platformatic db types
+wattpm db:types
 
 # Check TypeScript configuration
 cat tsconfig.json
@@ -274,7 +266,7 @@ cat tsconfig.json
 | Error Code                                | Description                 | Solution                                  |
 | ----------------------------------------- | --------------------------- | ----------------------------------------- |
 | PLT_SQL_MAPPER_CONNECTION_STRING_REQUIRED | Missing database connection | Add `connectionString` to config          |
-| PLT_DB_MIGRATIONS_TO_APPLY_ERROR          | Pending migrations          | Run `platformatic db migrations apply`    |
+| PLT_DB_MIGRATIONS_TO_APPLY_ERROR          | Pending migrations          | Run `wattpm db:migrations:apply`          |
 | PLT_DB_UNKNOWN_DATABASE_ERROR             | Unsupported database        | Use PostgreSQL, MySQL, MariaDB, or SQLite |
 
 ### Runtime Errors

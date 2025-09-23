@@ -187,7 +187,7 @@ wattpm create
 
 4. Follow the prompts and start the app:
 ```bash
-platformatic start
+wattpm start
 ```
 
 ## Documentation

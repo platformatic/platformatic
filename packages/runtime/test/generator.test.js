@@ -103,6 +103,11 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
   await rg.prepare()
   const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
   assert.equal(packageJson.name, 'test-runtime')
+  assert.deepStrictEqual(packageJson.scripts, {
+    dev: 'wattpm dev',
+    start: 'wattpm start',
+    build: 'wattpm build'
+  })
   assert.deepStrictEqual(packageJson.workspaces, ['applications/*'])
 
   assert.ok(packageJson.dependencies['@platformatic/runtime'])
@@ -517,7 +522,7 @@ test('WrappedGenerator - should create a valid package.json', async t => {
       build: 'foo',
       other: 'bar',
       dev: 'dev',
-      start: 'platformatic start'
+      start: 'wattpm start'
     },
     dependencies: {
       '@platformatic/runtime': `^${version}`,

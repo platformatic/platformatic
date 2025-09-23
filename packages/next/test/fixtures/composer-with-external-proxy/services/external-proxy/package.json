@@ -1,8 +1,5 @@
 {
   "name": "external-proxy",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "devDependencies": {
     "fastify": "^5.0.0-alpha.4"
   },

@@ -42,7 +42,7 @@ Here it is an example:
 // web/service/index.js
 
 globalThis.platformatic.messaging.handle({
-  async time({ offset }) {
+  async time ({ offset }) {
     return Date.now() + offset
   }
 })
@@ -124,7 +124,7 @@ Here is an example of how to set a custom health check:
 ```js
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const app = fastify()
 
   globalThis.platformatic.setCustomHealthCheck(async () => {
@@ -149,7 +149,7 @@ Setting custom response for the healthcheck endpoint:
 ```js
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const app = fastify()
 
   globalThis.platformatic.setCustomHealthCheck(async () => {
@@ -206,7 +206,7 @@ export function create() {
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "platformatic start"
+    "start": "wattpm start"
   },
   "dependencies": {
     "fastify": "^5.0.0",

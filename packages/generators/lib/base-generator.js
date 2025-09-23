@@ -344,7 +344,9 @@ class BaseGenerator extends FileGenerator {
     const template = {
       name: `${this.config.applicationName}`,
       scripts: {
-        start: 'platformatic start',
+        dev: 'wattpm dev',
+        start: 'wattpm start',
+        build: 'wattpm build',
         test: 'node --test'
       },
       devDependencies: {

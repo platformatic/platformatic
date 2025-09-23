@@ -258,7 +258,7 @@
 
 ### PLT_RUNTIME_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED
 
-**Message:** The Node.js inspector flags are not supported. Please use 'platformatic start --inspect' instead.
+**Message:** The Node.js inspector flags are not supported. Please use 'wattpm start --inspect' instead.
 
 ### PLT_RUNTIME_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET
 

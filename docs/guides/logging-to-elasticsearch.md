@@ -81,7 +81,7 @@ for any other application.
 This setup will allow you to log both to the terminal (TTY)
 and to ElasticSearch at the same time.
 
-Start your server with `platformatic start`, and navigate across
+Start your server with `wattpm start`, and navigate across
 its API.
 
 ## Configure Kibana

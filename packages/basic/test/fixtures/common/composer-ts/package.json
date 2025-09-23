@@ -1,8 +1,5 @@
 {
   "name": "gateway",
-  "scripts": {
-    "start": "platformatic start"
-  },
   "devDependencies": {
     "typescript": "^5.5.4"
   },

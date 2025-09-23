@@ -635,7 +635,7 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: platformatic cli global link
+      - name: Setup globals
         run: cd packages/cli && pnpm link --global && cd ../..
       - name: Setup local git user and email
         run: |
@@ -668,7 +668,7 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: platformatic cli global link
+      - name: Setup globals
         run: cd packages/cli && pnpm link --global && cd ../..
       - name: Setup local git user and email
         run: |
