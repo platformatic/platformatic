@@ -222,6 +222,7 @@ test('config - should list configuration for an application', async t => {
     ],
     applicationTimeout: 300000,
     workers: 1,
+    workersRestartDelay: 0,
     watch: false,
     gracefulShutdown: {
       runtime: 10000,
