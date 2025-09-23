@@ -113,8 +113,8 @@ export async function pprofCommand (logger, args) {
 
 export const help = {
   pprof: {
-    usage: 'pprof <start|stop> [id] [service]',
-    description: 'Profile CPU usage of running services',
+    usage: 'pprof <start|stop> [id] [application]',
+    description: 'Profile CPU usage of running application',
     options: [],
     args: [
       {

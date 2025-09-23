@@ -106,9 +106,9 @@ export async function restartCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
-    await client.restartRuntime(runtime.pid)
+    await client.restartRuntime(runtime.pid, ...applications)
     await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
@@ -209,8 +209,8 @@ export const help = {
     ]
   },
   restart: {
-    usage: 'restart [id]',
-    description: 'Restarts all applications',
+    usage: 'restart [id] [application...]',
+    description: 'Restarts applications',
     footer:
       'All applications are restarted in parallel, and within each application, workers are replaced one at a time.',
     args: [
@@ -218,6 +218,11 @@ export const help = {
         name: 'id',
         description:
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+      },
+      {
+        name: 'application',
+        description:
+          'The name of the application to restart (if omitted, all applications are restarted)'
       }
     ]
   },
