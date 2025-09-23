@@ -370,12 +370,14 @@ export class RuntimeApiClient {
     return child
   }
 
-  async restartRuntime (pid) {
+  async restartRuntime (pid, ...applications) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/restart',
-      method: 'POST'
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ applications })
     })
 
     if (statusCode !== 200) {

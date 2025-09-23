@@ -98,13 +98,17 @@ export class RuntimeApiClient {
   getRuntimes (): Promise<Runtime[]>
   getRuntimeMetadata (pid: number): Promise<Runtime>
   getRuntimeApplications (pid: number): Promise<RuntimeApplications>
-  getRuntimeConfig (pid: number): Promise<Record<string, unknown> & { path?: string, configFile?: string, configPath?: string, server?: { path?: string } }>
+  getRuntimeConfig (
+    pid: number
+  ): Promise<
+    Record<string, unknown> & { path?: string; configFile?: string; configPath?: string; server?: { path?: string } }
+  >
   getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
   getRuntimeApplicationEnv (pid: number, applicationId: string): Promise<Record<string, string>>
   reloadRuntime (pid: number, options?: object): Promise<ChildProcess>
-  restartRuntime (pid: number): Promise<void>
+  restartRuntime (pid: number, ...applications: string[]): Promise<void>
   stopRuntime (pid: number): Promise<void>
   getRuntimeMetrics<T extends { format?: 'text' | 'json' }> (
     pid: number,

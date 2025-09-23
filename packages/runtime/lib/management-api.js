@@ -36,9 +36,10 @@ export async function managementApiPlugin (app, opts) {
     await runtime.close()
   })
 
-  app.post('/restart', async () => {
-    app.log.debug('restart applications')
-    await runtime.restart()
+  app.post('/restart', async request => {
+    const applications = request.body?.applications ?? []
+    app.log.debug({ applications }, 'restart applications')
+    await runtime.restart(applications)
   })
 
   app.get('/applications', async () => {

@@ -179,12 +179,13 @@ wattpm stop [id]
 Restarts all applications in a running application (picks up application changes, not main config).
 
 ```bash
-wattpm restart [id]
+wattpm restart [id] [application...]
 ```
 
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
+- `application` - Name of the application to restart (if omitted, all applications are restarted).
 
 ### `wattpm reload`
 
