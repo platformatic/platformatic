@@ -374,8 +374,10 @@ export class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/v1/restart' + (applications.length ? '?applications=' + applications.flat().join(',') : ''),
-      method: 'POST'
+      path: '/api/v1/restart',
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ applications })
     })
 
     if (statusCode !== 200) {

@@ -37,7 +37,7 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.post('/restart', async request => {
-    const applications = request.query.applications?.split(',') || []
+    const applications = request.body?.applications ?? []
     app.log.debug({ applications }, 'restart applications')
     await runtime.restart(applications)
   })
