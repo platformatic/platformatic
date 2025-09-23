@@ -193,3 +193,47 @@ test('should get runtime OpenAPI definition', async t => {
   }
   assert.strictEqual(error.code, 'PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI', 'invalid runtime application name passed')
 })
+
+test('should restart all applications', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  const logsStream = runtimeClient.getRuntimeLiveLogsStream(runtime.pid)
+
+  const logs = []
+  logsStream.pipe(split()).on('data', line => {
+    logs.push(JSON.parse(line))
+  })
+
+  await runtimeClient.restartRuntime(runtime.pid)
+  logsStream.destroy()
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-1'))
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-2'))
+})
+
+test('should only restart certain applications', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  const logsStream = runtimeClient.getRuntimeLiveLogsStream(runtime.pid)
+
+  const logs = []
+  logsStream.pipe(split()).on('data', line => {
+    logs.push(JSON.parse(line))
+  })
+
+  await runtimeClient.restartRuntime(runtime.pid, 'service-1')
+  logsStream.destroy()
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-1'))
+  assert.ok(!logs.find(l => l.event === 'application:restarting' && l.payload === 'service-2'))
+})

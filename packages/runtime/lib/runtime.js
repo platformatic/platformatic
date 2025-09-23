@@ -337,13 +337,14 @@ export class Runtime extends EventEmitter {
     this.#updateStatus('stopped')
   }
 
-  async restart () {
+  async restart (applications = []) {
     this.emit('restarting')
 
     const restartInvocations = []
     for (const application of this.getApplicationsIds()) {
-      // The entrypoint has been stopped above
-      restartInvocations.push([application])
+      if (applications.length === 0 || applications.includes(application)) {
+        restartInvocations.push([application])
+      }
     }
 
     await executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)

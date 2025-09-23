@@ -36,6 +36,8 @@ export async function startRuntime (configPath, env = {}, additionalArgs = []) {
     })
   )
 
+  runtime.stderr.pipe(process.stderr)
+
   const errorTimeout = setTimeout(() => {
     throw new Error("Couldn't start server")
   }, 30000)
