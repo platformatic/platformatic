@@ -2,6 +2,8 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.3.1.json",
   "entrypoint": "composer",
   "watch": false,
+  "workersRestartDelay": 1000,
+  "workers": 3,
   "autoload": {
     "path": "./services"
   },

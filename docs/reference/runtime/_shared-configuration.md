@@ -159,6 +159,10 @@ The default number of workers to start per each application. It can be overriden
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
+### `workersRestartDelay`
+
+Configures the amount of milliseconds to wait before replacing another worker of an application during a restart.
+
 ### `gracefulShutdown`
 
 Configures the amount of milliseconds to wait before forcefully killing an application or the runtime.

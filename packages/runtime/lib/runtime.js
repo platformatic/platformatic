@@ -521,6 +521,10 @@ export class Runtime extends EventEmitter {
       const label = `${id}:${i}`
       const worker = this.#workers.get(label)
 
+      if (i > 0 && config.workersRestartDelay > 0) {
+        await sleep(config.workersRestartDelay)
+      }
+
       await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
     }
 
