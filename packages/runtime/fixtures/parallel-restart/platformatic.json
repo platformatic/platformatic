@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.3.1.json",
+  "entrypoint": "composer",
+  "watch": false,
+  "workersRestartDelay": 1000,
+  "workers": 3,
+  "autoload": {
+    "path": "./services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
+}

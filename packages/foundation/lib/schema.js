@@ -834,6 +834,16 @@ export const runtimeProperties = {
   services: applications,
   web: applications,
   workers: { ...workers, default: 1 },
+  workersRestartDelay: {
+    anyOf: [
+      {
+        type: 'number',
+        minimum: 0
+      },
+      { type: 'string' }
+    ],
+    default: 0
+  },
   logger,
   server,
   startTimeout: {
@@ -1024,7 +1034,8 @@ export const runtimeProperties = {
           applicationLabel: {
             type: 'string',
             default: 'applicationId',
-            description: 'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
+            description:
+              'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
           },
           readiness: {
             anyOf: [

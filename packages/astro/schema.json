@@ -634,6 +634,18 @@
           ],
           "default": 1
         },
+        "workersRestartDelay": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0
+        },
         "logger": {
           "type": "object",
           "properties": {

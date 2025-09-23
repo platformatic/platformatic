@@ -340,9 +340,13 @@ export class Runtime extends EventEmitter {
   async restart () {
     this.emit('restarting')
 
-    await this.stop()
-    this.#meshInterceptor.restart()
-    await this.start()
+    const restartInvocations = []
+    for (const application of this.getApplicationsIds()) {
+      // The entrypoint has been stopped above
+      restartInvocations.push([application])
+    }
+
+    await executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
 
     this.emit('restarted')
 
@@ -504,6 +508,27 @@ export class Runtime extends EventEmitter {
     }
 
     this.emit('application:stopped', id)
+  }
+
+  async restartApplication (id) {
+    const config = this.#config
+    const applicationConfig = this.#config.applications.find(s => s.id === id)
+    const workersCount = await this.#workers.getCount(id)
+
+    this.emit('application:restarting', id)
+
+    for (let i = 0; i < workersCount; i++) {
+      const label = `${id}:${i}`
+      const worker = this.#workers.get(label)
+
+      if (i > 0 && config.workersRestartDelay > 0) {
+        await sleep(config.workersRestartDelay)
+      }
+
+      await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+    }
+
+    this.emit('application:restarted', id)
   }
 
   async buildApplication (id) {
@@ -1814,11 +1839,16 @@ export class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker) {
+  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker, silent) {
     const workerId = `${applicationId}:${index}`
+    const label = this.#workerExtendedLabel(applicationId, index, workersCount)
     let newWorker
 
     try {
+      if (!silent) {
+        this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
+      }
+
       // Create a new worker
       newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
 
@@ -1845,6 +1875,9 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
+    if (!silent) {
+      this.logger.debug(`Preparing to stop the old version of ${label} ...`)
+    }
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
   }
 

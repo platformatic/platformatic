@@ -118,6 +118,7 @@ export interface PlatformaticNodeJsConfig {
       [k: string]: unknown;
     }[];
     workers?: number | string;
+    workersRestartDelay?: number | string;
     logger?: {
       level: (
         | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
