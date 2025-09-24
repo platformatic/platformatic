@@ -1433,9 +1433,12 @@ export class Runtime extends EventEmitter {
     worker[kITC].listen()
 
     // Forward events from the worker
+    // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
-      // Do not use emitAndNotify here since we don't want to forward unknown events
-      this.emit(`application:worker:event:${event}`, ...payload)
+      event = `application:worker:event:${event}`
+
+      this.emit(event, ...payload)
+      this.logger.trace({ event, payload }, 'Runtime event')
     })
 
     // Only activate watch for the first instance
