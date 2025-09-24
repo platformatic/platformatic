@@ -12,6 +12,10 @@ function getEntityLinksForEntity (app, entity) {
   for (const relation of entity.relations) {
     const ownField = camelcase(relation.column_name)
     const relatedEntity = app.platformatic.entities[relation.foreignEntityName]
+    if (!relatedEntity) {
+      app.log.warn(`Entity "${entity.singularName}" has a foreign relation to unknown entity "${relation.foreignEntityName}". Skipped.`)
+      continue
+    }
     const relatedEntityPrimaryKeyCamelcase = camelcase(relatedEntity.primaryKeys.values().next().value)
     const relatedEntityPrimaryKeyCamelcaseCapitalized = capitalize(relatedEntityPrimaryKeyCamelcase)
     const getEntityById = `Get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`
@@ -148,6 +152,10 @@ export async function entityPlugin (app, opts) {
   for (const reverseRelationship of entity.reverseRelationships) {
     const targetEntityName = reverseRelationship.relation.entityName
     const targetEntity = app.platformatic.entities[targetEntityName]
+    if (!targetEntity) {
+      app.log.warn(`Entity "${entity.singularName}" has a reverse relation to unknown entity "${targetEntityName}". Skipped.`)
+      continue
+    }
     const targetForeignKeyCamelcase = camelcase(reverseRelationship.relation.column_name)
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'
@@ -275,6 +283,10 @@ export async function entityPlugin (app, opts) {
   for (const relation of entity.relations) {
     const targetEntityName = relation.foreignEntityName
     const targetEntity = app.platformatic.entities[targetEntityName]
+    if (!targetEntity) {
+      app.log.warn(`Entity "${entity.singularName}" has a foreign relation to unknown entity "${targetEntityName}". Skipped.`)
+      continue
+    }
     const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
     const targetColumnCamelcase = camelcase(relation.column_name)
     // In this case, we navigate the relationship so we MUST use the column_name otherwise we will fail in case of recursive relationships
