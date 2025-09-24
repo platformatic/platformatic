@@ -3,7 +3,7 @@ import { type EventEmitter } from 'node:events'
 import { type Level, type Logger } from 'pino'
 import * as Client from 'prom-client'
 
-type Optional<T> = T | undefined;
+type Optional<T> = T | undefined
 
 export type Handler = ((data: any) => any) | ((data: any) => Promise<any>)
 
@@ -12,9 +12,17 @@ export interface InvalidateHttpCacheOptions {
   tags?: string[]
 }
 
-export interface PlatformaticGlobalInterface {
-  events: EventEmitter
+// This is purposely a copy of the one in @platformatic/itc to avoid the dependency
+export interface ITC {
+  send (name: string, message: any, options?: Record<string, any>): Promise<any>
+  notify (name: string, message: any, options?: Record<string, any>): void
+  handle (message: string, handler: Handler): void
+  getHandler (message: string): Handler | undefined
+  listen (): void
+  close (): void
+}
 
+export interface PlatformaticGlobalInterface {
   // Runtime
   isBuilding: boolean
   executable: string
@@ -68,12 +76,9 @@ export interface PlatformaticGlobalInterface {
       | Promise<{ status: boolean; statusCode?: number; body?: string }>
   ): void
 
-  // Messaging
-  messaging: {
-    send (name: string, message: any, options?: Record<string, any>): Promise<any>
-    handle (message: Record<string, Handler>): void
-    handle (message: string, handler: Handler): void
-  }
+  events: EventEmitter & { emitAndNotify: EventEmitter['emit'] }
+  itc: ITC
+  messaging: ITC & { handle (message: Record<string, Handler>): void }
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>

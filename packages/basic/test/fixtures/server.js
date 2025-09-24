@@ -6,7 +6,7 @@ function handler (_, res) {
     connection: 'close'
   })
 
-  res.end(JSON.stringify({ ...globalThis.platformatic, events: undefined, prometheus: undefined }))
+  res.end(JSON.stringify({ ...globalThis.platformatic, events: undefined, prometheus: undefined, itc: undefined }))
 }
 
 createServer(handler).listen({ host: '127.0.0.1', port: 10000 })

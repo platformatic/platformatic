@@ -16,7 +16,6 @@ import { pinoHttp } from 'pino-http'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-const kITC = Symbol.for('plt.runtime.itc')
 const supportedVersions = '^11.0.0'
 
 export class NestCapability extends BaseCapability {
@@ -76,7 +75,7 @@ export class NestCapability extends BaseCapability {
 
       // We use url changing as a way to notify restarts
       this.childManager.on('url', () => {
-        globalThis[kITC].notify('event', { event: 'url', url: this.url })
+        globalThis.platformatic.events.emitAndNotify('url', this.url)
       })
     } else {
       return this.#startProduction(listen)

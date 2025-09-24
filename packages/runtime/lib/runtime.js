@@ -338,7 +338,7 @@ export class Runtime extends EventEmitter {
   }
 
   async restart (applications = []) {
-    this.emit('restarting')
+    this.emitAndNotify('restarting')
 
     const restartInvocations = []
     for (const application of this.getApplicationsIds()) {
@@ -349,7 +349,7 @@ export class Runtime extends EventEmitter {
 
     await executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
 
-    this.emit('restarted')
+    this.emitAndNotify('restarted')
 
     return this.#url
   }
@@ -367,15 +367,15 @@ export class Runtime extends EventEmitter {
       await this.#prometheusServer.close()
     }
 
+    if (this.#sharedHttpCache?.close) {
+      await this.#sharedHttpCache.close()
+    }
+
     if (this.logger) {
       this.#loggerDestination?.end()
 
       this.logger = abstractLogger
       this.#loggerDestination = null
-    }
-
-    if (this.#sharedHttpCache?.close) {
-      await this.#sharedHttpCache.close()
     }
 
     this.#updateStatus('closed')
@@ -437,13 +437,13 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  emit (event, payload) {
+  emitAndNotify (event, ...payload) {
     for (const worker of this.#workers.values()) {
       worker[kITC].notify('runtime:event', { event, payload })
     }
 
     this.logger.trace({ event, payload }, 'Runtime event')
-    return super.emit(event, payload)
+    return this.emit(event, ...payload)
   }
 
   async sendCommandToApplication (id, name, message) {
@@ -478,13 +478,13 @@ export class Runtime extends EventEmitter {
 
     const workersCount = await this.#workers.getCount(applicationConfig.id)
 
-    this.emit('application:starting', id)
+    this.emitAndNotify('application:starting', id)
 
     for (let i = 0; i < workersCount; i++) {
       await this.#startWorker(config, applicationConfig, workersCount, id, i, silent)
     }
 
-    this.emit('application:started', id)
+    this.emitAndNotify('application:started', id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {
@@ -497,7 +497,7 @@ export class Runtime extends EventEmitter {
 
     const workersCount = await this.#workers.getCount(applicationConfig.id)
 
-    this.emit('application:stopping', id)
+    this.emitAndNotify('application:stopping', id)
 
     if (typeof workersCount === 'number') {
       const stopInvocations = []
@@ -508,7 +508,7 @@ export class Runtime extends EventEmitter {
       await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
 
-    this.emit('application:stopped', id)
+    this.emitAndNotify('application:stopped', id)
   }
 
   async restartApplication (id) {
@@ -516,7 +516,7 @@ export class Runtime extends EventEmitter {
     const applicationConfig = this.#config.applications.find(s => s.id === id)
     const workersCount = await this.#workers.getCount(id)
 
-    this.emit('application:restarting', id)
+    this.emitAndNotify('application:restarting', id)
 
     for (let i = 0; i < workersCount; i++) {
       const label = `${id}:${i}`
@@ -529,16 +529,16 @@ export class Runtime extends EventEmitter {
       await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
     }
 
-    this.emit('application:restarted', id)
+    this.emitAndNotify('application:restarted', id)
   }
 
   async buildApplication (id) {
     const application = await this.#getApplicationById(id)
 
-    this.emit('application:building', id)
+    this.emitAndNotify('application:building', id)
     try {
       await sendViaITC(application, 'build')
-      this.emit('application:built', id)
+      this.emitAndNotify('application:built', id)
     } catch (e) {
       // The application exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
@@ -596,7 +596,7 @@ export class Runtime extends EventEmitter {
         return
       }
 
-      this.emit('metrics', metrics)
+      this.emitAndNotify('metrics', metrics)
       this.#metrics.push(metrics)
       if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
         this.#metrics.shift()
@@ -1202,7 +1202,7 @@ export class Runtime extends EventEmitter {
 
   #updateStatus (status, args) {
     this.#status = status
-    this.emit(status, args)
+    this.emitAndNotify(status, args)
   }
 
   #showUrl () {
@@ -1262,7 +1262,7 @@ export class Runtime extends EventEmitter {
 
     await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
 
-    this.emit('application:init', id)
+    this.emitAndNotify('application:init', id)
   }
 
   async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true) {
@@ -1371,7 +1371,7 @@ export class Runtime extends EventEmitter {
 
       const started = worker[kWorkerStatus] === 'started'
       worker[kWorkerStatus] = 'exited'
-      this.emit('application:worker:exited', eventPayload)
+      this.emitAndNotify('application:worker:exited', eventPayload)
 
       this.#cleanupWorker(worker)
 
@@ -1382,7 +1382,7 @@ export class Runtime extends EventEmitter {
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
         if (started && (!config.watch || code !== 0)) {
-          this.emit('application:worker:error', { ...eventPayload, code })
+          this.emitAndNotify('application:worker:error', { ...eventPayload, code })
           this.#broadcastWorkers()
 
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
@@ -1403,7 +1403,7 @@ export class Runtime extends EventEmitter {
               }
             )
           } else {
-            this.emit('application:worker:unvailable', eventPayload)
+            this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
           }
         }
@@ -1433,8 +1433,12 @@ export class Runtime extends EventEmitter {
     worker[kITC].listen()
 
     // Forward events from the worker
+    // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
-      this.emit(`application:worker:event:${event}`, { ...eventPayload, payload })
+      event = `application:worker:event:${event}`
+
+      this.emit(event, ...payload)
+      this.logger.trace({ event, payload }, 'Runtime event')
     })
 
     // Only activate watch for the first instance
@@ -1444,7 +1448,7 @@ export class Runtime extends EventEmitter {
       // so that applications can eventually manually trigger a restart. This mechanism is current
       // used by the gateway.
       worker[kITC].on('changed', async () => {
-        this.emit('application:worker:changed', eventPayload)
+        this.emitAndNotify('application:worker:changed', eventPayload)
 
         try {
           const wasStarted = worker[kWorkerStatus].startsWith('start')
@@ -1455,7 +1459,7 @@ export class Runtime extends EventEmitter {
           }
 
           this.logger.info(`The application "${applicationId}" has been successfully reloaded ...`)
-          this.emit('application:worker:reloaded', eventPayload)
+          this.emitAndNotify('application:worker:reloaded', eventPayload)
 
           if (applicationConfig.entrypoint) {
             this.#showUrl()
@@ -1483,7 +1487,7 @@ export class Runtime extends EventEmitter {
 
     worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
-    this.emit('application:worker:init', eventPayload)
+    this.emitAndNotify('application:worker:init', eventPayload)
 
     return worker
   }
@@ -1527,7 +1531,7 @@ export class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      this.emit('application:worker:health', {
+      this.emitAndNotify('application:worker:health', {
         id: worker[kId],
         application: id,
         worker: index,
@@ -1556,7 +1560,7 @@ export class Runtime extends EventEmitter {
 
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
-          this.emit('application:worker:unhealthy', { application: id, worker: index })
+          this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
 
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
@@ -1608,7 +1612,7 @@ export class Runtime extends EventEmitter {
     }
 
     worker[kWorkerStatus] = 'starting'
-    this.emit('application:worker:starting', eventPayload)
+    this.emitAndNotify('application:worker:starting', eventPayload)
 
     try {
       let workerUrl
@@ -1616,7 +1620,7 @@ export class Runtime extends EventEmitter {
         workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
         if (workerUrl === kTimeout) {
-          this.emit('application:worker:startTimeout', eventPayload)
+          this.emitAndNotify('application:worker:startTimeout', eventPayload)
           this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
           throw new ApplicationStartTimeoutError(id, config.startTimeout)
@@ -1632,7 +1636,7 @@ export class Runtime extends EventEmitter {
       }
 
       worker[kWorkerStatus] = 'started'
-      this.emit('application:worker:started', eventPayload)
+      this.emitAndNotify('application:worker:started', eventPayload)
       this.#broadcastWorkers()
 
       if (!silent) {
@@ -1671,7 +1675,7 @@ export class Runtime extends EventEmitter {
         }
       }
 
-      this.emit('application:worker:start:error', { ...eventPayload, error })
+      this.emitAndNotify('application:worker:start:error', { ...eventPayload, error })
 
       if (error.code !== 'PLT_RUNTIME_APPLICATION_START_TIMEOUT') {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}: ${error.message}`)
@@ -1685,7 +1689,7 @@ export class Runtime extends EventEmitter {
 
       if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
         this.logger.error(`Failed to start ${label} after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
-        this.emit('application:worker:start:failed', { ...eventPayload, error })
+        this.emitAndNotify('application:worker:start:failed', { ...eventPayload, error })
         throw error
       }
 
@@ -1721,7 +1725,7 @@ export class Runtime extends EventEmitter {
 
     worker[kWorkerStatus] = 'stopping'
     worker[kITC].removeAllListeners('changed')
-    this.emit('application:worker:stopping', eventPayload)
+    this.emitAndNotify('application:worker:stopping', eventPayload)
 
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
@@ -1736,7 +1740,7 @@ export class Runtime extends EventEmitter {
     try {
       await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
     } catch (error) {
-      this.emit('application:worker:stop:error', eventPayload)
+      this.emitAndNotify('application:worker:stop:error', eventPayload)
       this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].notify('application:worker:stop:processed')
@@ -1755,14 +1759,14 @@ export class Runtime extends EventEmitter {
 
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
-      this.emit('application:worker:exit:timeout', eventPayload)
+      this.emitAndNotify('application:worker:exit:timeout', eventPayload)
       await worker.terminate()
     }
 
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
-    this.emit('application:worker:stopped', eventPayload)
+    this.emitAndNotify('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
   }
 
@@ -1986,7 +1990,7 @@ export class Runtime extends EventEmitter {
     }
 
     context.transferList = [port2]
-    this.emit('application:worker:messagingChannel', { application, worker })
+    this.emitAndNotify('application:worker:messagingChannel', { application, worker })
     return port2
   }
 

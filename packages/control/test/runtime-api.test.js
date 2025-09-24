@@ -212,8 +212,8 @@ test('should restart all applications', async t => {
 
   await runtimeClient.restartRuntime(runtime.pid)
   logsStream.destroy()
-  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-1'))
-  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-2'))
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-1'))
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-2'))
 })
 
 test('should only restart certain applications', async t => {
@@ -234,6 +234,6 @@ test('should only restart certain applications', async t => {
 
   await runtimeClient.restartRuntime(runtime.pid, 'service-1')
   logsStream.destroy()
-  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload === 'service-1'))
-  assert.ok(!logs.find(l => l.event === 'application:restarting' && l.payload === 'service-2'))
+  assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-1'))
+  assert.ok(!logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-2'))
 })

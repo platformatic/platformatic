@@ -4,6 +4,7 @@ import { once } from 'node:events'
 import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import split from 'split2'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -12,14 +13,16 @@ test('correctly applies the runtime graceful shutdown timeout', { skip: platform
   const configFile = join(fixturesDir, 'delayed-shutdown', 'platformatic.runtime.json')
   const child = spawn(process.execPath, [scriptFile, configFile])
 
-  let stderr = ''
-  child.stderr.setEncoding('utf8')
-  child.stderr.on('data', data => {
-    stderr += data
-  })
+  const logs = []
+  child.stdout.setEncoding('utf8')
+  child.stdout.pipe(split(JSON.parse)).on('data', logs.push.bind(logs))
 
   const [exitCode] = await once(child, 'exit')
 
   strictEqual(exitCode, 1)
-  ok(stderr.trim().endsWith('killed by timeout (1000ms)'))
+  ok(
+    logs.find(
+      m => m.level === 50 && m.msg === 'Could not close the runtime in 1000 ms, aborting the process with exit code 1.'
+    )
+  )
 })

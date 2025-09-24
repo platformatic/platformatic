@@ -36,9 +36,13 @@ function handleSignal (runtime, config) {
     }
   }
 
+  function onTimeout (timeout) {
+    runtime.logger.error(`Could not close the runtime in ${timeout} ms, aborting the process with exit code 1.`)
+  }
+
   process.on('newListener', filterCloseWithGraceSIGUSR2)
 
-  const cwg = closeWithGrace({ delay: config.gracefulShutdown?.runtime ?? 10000 }, async event => {
+  const cwg = closeWithGrace({ delay: config.gracefulShutdown?.runtime ?? 10000, onTimeout }, async event => {
     if (event.err instanceof Error) {
       console.error(event.err)
     }

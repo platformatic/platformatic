@@ -199,7 +199,7 @@ export class NodeCapability extends BaseCapability {
     if (this.childManager) {
       return this.stopCommand()
       // This is needed if the capability was subclassed
-    } else if (!this.#server) {
+    } else if (!this.#server && !this.#app) {
       return
     }
 

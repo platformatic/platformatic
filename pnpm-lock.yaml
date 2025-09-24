@@ -1301,8 +1301,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       close-with-grace:
-        specifier: ^2.2.0
-        version: 2.2.0
+        specifier: ^2.3.0
+        version: 2.3.0
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
@@ -5034,6 +5034,9 @@ packages:
 
   close-with-grace@2.2.0:
     resolution: {integrity: sha512-OdcFxnxTm/AMLPHA4Aq3J1BLpkojXP7I4G5QBQLN5TT55ED/rk04rAoDbtfNnfZ988kGXPxh1bdRLeIU9bz/lA==}
+
+  close-with-grace@2.3.0:
+    resolution: {integrity: sha512-38BS9BuqAml6XFIlSWQcj3eivE05yFV6cJDuYoNGiHrE+h9ud1JtMJIVKXdLWa2Uo2Xt7q/GYczOesEchvBEsw==}
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -13283,6 +13286,8 @@ snapshots:
   clone@2.1.2: {}
 
   close-with-grace@2.2.0: {}
+
+  close-with-grace@2.3.0: {}
 
   clsx@2.1.1: {}
 

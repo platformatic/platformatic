@@ -23,6 +23,13 @@ import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
 import { kId, kITC, kStderrMarker } from './symbols.js'
 
+class ForwardingEventEmitter extends EventEmitter {
+  emitAndNotify (event, ...args) {
+    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    return this.emit(event, ...args)
+  }
+}
+
 function handleUnhandled (app, type, err) {
   const label =
     workerData.worker.count > 1
@@ -103,7 +110,7 @@ async function main () {
   globalThis[kId] = threadId
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
     logger: createLogger(),
-    events: new EventEmitter()
+    events: new ForwardingEventEmitter()
   })
 
   const config = workerData.config
@@ -217,6 +224,7 @@ async function main () {
   // Setup interaction with parent port
   const itc = setupITC(controller, application, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
+  globalThis.platformatic.itc = itc
 
   itc.notify('init')
 }

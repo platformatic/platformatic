@@ -22,6 +22,13 @@ import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
 
+class ForwardingEventEmitter extends EventEmitter {
+  emitAndNotify (event, ...args) {
+    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    return super.emit(event, ...args)
+  }
+}
+
 const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
 function createInterceptor () {
@@ -480,7 +487,7 @@ async function main () {
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
   globalThis.platformatic = data
-  globalThis.platformatic.events = new EventEmitter()
+  globalThis.platformatic.events = new ForwardingEventEmitter()
 
   if (loader) {
     register(loader, { data })
@@ -490,7 +497,10 @@ async function main () {
     await importFile(script)
   }
 
-  globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
+  const childProcess = new ChildProcess()
+  globalThis[Symbol.for('plt.children.itc')] = childProcess
+  globalThis.platformatic.itc = childProcess
+  globalThis.platformatic.events.target = childProcess
 }
 
 await main()

@@ -18,6 +18,7 @@ import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
+
 const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseCapability extends EventEmitter {
@@ -188,7 +189,7 @@ export class BaseCapability extends EventEmitter {
 
     const { promise, resolve, reject } = Promise.withResolvers()
 
-    function runtimeEventHandler ({ event, payload }) {
+    function runtimeEventHandler ({ event, payload: [payload] }) {
       if (event !== 'application:worker:started') {
         return
       }
@@ -247,7 +248,7 @@ export class BaseCapability extends EventEmitter {
 
     const { promise, resolve } = Promise.withResolvers()
 
-    function runtimeEventHandler ({ event, payload }) {
+    function runtimeEventHandler ({ event, payload: [payload] }) {
       if (event !== 'application:worker:stopped') {
         return
       }
@@ -460,7 +461,7 @@ export class BaseCapability extends EventEmitter {
 
     this.childManager.on('event', event => {
       globalThis[kITC].notify('event', event)
-      this.emit('application:worker:event', config)
+      this.emit('application:worker:event:' + event.event, event.payload)
     })
 
     // This is not really important for the URL but sometimes it also a sign
