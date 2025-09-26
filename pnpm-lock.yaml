@@ -583,7 +583,7 @@ importers:
         version: 5.6.1
       get-jwks:
         specifier: ^11.0.0
-        version: 11.0.1
+        version: 11.0.2
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.44.1(eslint@9.36.0)(typescript@5.9.2))(eslint@9.36.0)(typescript@5.9.2)
@@ -6071,8 +6071,8 @@ packages:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
     engines: {node: '>= 0.4'}
 
-  get-jwks@11.0.1:
-    resolution: {integrity: sha512-/1kb/MEh5bfT6Nyy8f3IhCaE6pXa9LdS/QRyRoQNdrzsmgTHjw+QcV19qumsHYIfcKWiBp6xwpJ7sMZREr5mvg==}
+  get-jwks@11.0.2:
+    resolution: {integrity: sha512-mWv9ebbZnbMmxh1EJUzPeqmHrM+4XMNK2j6UWGlk6kUwZKHh0yF+3ieRzXkGKCMbWBdIlh18bEpn1kGeq+7pjQ==}
     engines: {node: '>=20'}
 
   get-port@5.1.1:
@@ -6949,8 +6949,8 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  lru-cache@11.2.1:
-    resolution: {integrity: sha512-r8LA6i4LP4EeWOhqBaZZjDWwehd1xUJPCJd9Sv300H0ZmcUER4+JPh7bqqZeqs1o5pgtgvXm+d9UGrB5zZGDiQ==}
+  lru-cache@11.2.2:
+    resolution: {integrity: sha512-F9ODfyqML2coTIsQpSkRHnLSZMtkU8Q+mSfcaIyKwy58u+8k5nvAYeiNhsyMARvzNcXJ9QfWVrcPsC9e9rAxtg==}
     engines: {node: 20 || >=22}
 
   lru-cache@5.1.1:
@@ -14391,7 +14391,7 @@ snapshots:
       '@fastify/jwt': 9.1.0
       fastify: 5.6.1
       fastify-plugin: 5.0.1
-      get-jwks: 11.0.1
+      get-jwks: 11.0.2
 
   fastify@5.4.0:
     dependencies:
@@ -14656,10 +14656,10 @@ snapshots:
       hasown: 2.0.2
       math-intrinsics: 1.1.0
 
-  get-jwks@11.0.1:
+  get-jwks@11.0.2:
     dependencies:
       jwk-to-pem: 2.0.7
-      lru-cache: 11.2.1
+      lru-cache: 11.2.2
 
   get-port@5.1.1: {}
 
@@ -15647,7 +15647,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  lru-cache@11.2.1: {}
+  lru-cache@11.2.2: {}
 
   lru-cache@5.1.1:
     dependencies:
@@ -17101,7 +17101,7 @@ snapshots:
 
   path-scurry@2.0.0:
     dependencies:
-      lru-cache: 11.2.1
+      lru-cache: 11.2.2
       minipass: 7.1.2
 
   path-to-regexp@0.1.12: {}
