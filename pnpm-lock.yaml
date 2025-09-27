@@ -380,7 +380,7 @@ importers:
         version: 8.2.0
       '@fastify/swagger':
         specifier: ^9.0.0
-        version: 9.5.1
+        version: 9.5.2
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -726,7 +726,7 @@ importers:
         version: 8.2.0
       '@fastify/swagger':
         specifier: ^9.0.0
-        version: 9.5.1
+        version: 9.5.2
       '@fastify/view':
         specifier: ^10.0.1
         version: 10.0.2
@@ -1468,7 +1468,7 @@ importers:
         version: 8.2.0
       '@fastify/swagger':
         specifier: ^9.0.0
-        version: 9.5.1
+        version: 9.5.2
       '@fastify/under-pressure':
         specifier: ^9.0.0
         version: 9.0.3
@@ -1836,7 +1836,7 @@ importers:
         version: 4.2.0
       '@fastify/swagger':
         specifier: ^9.0.0
-        version: 9.5.1
+        version: 9.5.2
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
@@ -1897,7 +1897,7 @@ importers:
     dependencies:
       '@fastify/swagger':
         specifier: ^9.5.1
-        version: 9.5.1
+        version: 9.5.2
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
@@ -2978,8 +2978,8 @@ packages:
   '@fastify/static@8.2.0':
     resolution: {integrity: sha512-PejC/DtT7p1yo3p+W7LiUtLMsV8fEvxAK15sozHy9t8kwo5r0uLYmhV/inURmGz1SkHZFz/8CNtHLPyhKcx4SQ==}
 
-  '@fastify/swagger@9.5.1':
-    resolution: {integrity: sha512-EGjYLA7vDmCPK7XViAYMF6y4+K3XUy5soVTVxsyXolNe/Svb4nFQxvtuQvvoQb2Gzc9pxiF3+ZQN/iZDHhKtTg==}
+  '@fastify/swagger@9.5.2':
+    resolution: {integrity: sha512-8e8w/LItg/cF6IR/hYKtnt+E0QImees5o3YWJsTLxaIk+tzNUEc6Z2Ursi4oOHWwUlKjUCnV6yh5z5ZdxvlsWA==}
 
   '@fastify/under-pressure@9.0.3':
     resolution: {integrity: sha512-uWzyFn9ThgGgynxyoX/kqgLtPtNBXXvQgN3U8fSRPNBS1y5mEZC/uCBRx03hXm9PDsQwTGN7qt83ItsHVQ0L4A==}
@@ -10727,7 +10727,7 @@ snapshots:
       fastq: 1.19.1
       glob: 11.0.3
 
-  '@fastify/swagger@9.5.1':
+  '@fastify/swagger@9.5.2':
     dependencies:
       fastify-plugin: 5.0.1
       json-schema-resolver: 3.0.0
