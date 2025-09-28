@@ -96,6 +96,7 @@ export class NodeCapability extends BaseCapability {
   #dispatcher
   #isFastify
   #isKoa
+  #appClose
   #useHttpForDispatch
 
   constructor (root, config, context) {
@@ -158,8 +159,9 @@ export class NodeCapability extends BaseCapability {
 
     // Deal with application
     const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
+    this.#appClose = this.#module['close']
 
-    if (config.node?.hasServer !== false && this.#module.hasServer !== false) {
+    if (this.#hasServer()) {
       if (factory) {
         // We have build function, this Capability will not use HTTP unless it is the entrypoint
         serverPromise.cancel()
@@ -193,13 +195,24 @@ export class NodeCapability extends BaseCapability {
     return this.url
   }
 
+  #hasServer () {
+    return this.config.node?.hasServer !== false && this.#module.hasServer !== false
+  }
+
   async stop () {
     await super.stop()
 
     if (this.childManager) {
       return this.stopCommand()
-      // This is needed if the capability was subclassed
-    } else if (!this.#server && !this.#app) {
+    }
+
+    // for no-server apps, we support custom close method
+    if (this.#appClose && !this.#hasServer()) {
+      return this.#appClose()
+    }
+
+    // This is needed if the capability was subclassed
+    if (!this.#server && !this.#app) {
       return
     }
 

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.6.0.json",
+  "entrypoint": "background-app",
+  "services": [
+    {
+      "id": "background-app",
+      "path": "./services/background-app",
+      "config": "platformatic.application.json"
+    }
+  ],
+  "logger": {
+    "level": "warn"
+  }
+}
