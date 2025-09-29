@@ -14,8 +14,8 @@ export interface InvalidateHttpCacheOptions {
 
 // This is purposely a copy of the one in @platformatic/itc to avoid the dependency
 export interface ITC {
-  send (name: string, message: any, options?: Record<string, any>): Promise<any>
-  notify (name: string, message: any, options?: Record<string, any>): void
+  send (message: string, data: any, options?: Record<string, any>): Promise<any>
+  notify (message: string, data: any, options?: Record<string, any>): void
   handle (message: string, handler: Handler): void
   getHandler (message: string): Handler | undefined
   listen (): void
