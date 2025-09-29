@@ -22,6 +22,12 @@ export interface ITC {
   close (): void
 }
 
+export interface MessagingApi {
+  send (name: string, message: string, data: any): Promise<any>
+  notify (name: string, message: string, data: any): void
+  handle (message: string, handler: Handler): void
+}
+
 export interface PlatformaticGlobalInterface {
   // Runtime
   isBuilding: boolean
@@ -78,7 +84,7 @@ export interface PlatformaticGlobalInterface {
 
   events: EventEmitter & { emitAndNotify: EventEmitter['emit'] }
   itc: ITC
-  messaging: ITC & { handle (message: Record<string, Handler>): void }
+  messaging: MessagingApi
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
