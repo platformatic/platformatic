@@ -70,12 +70,14 @@ export async function waitEventFromITC (worker, event) {
 }
 
 export function setupITC (controller, application, dispatcher, sharedContext) {
-  const messaging = new MessagingITC(controller.appConfig.id, workerData.config)
+  const logger = globalThis.platformatic.logger
+  const messaging = new MessagingITC(controller.appConfig.id, workerData.config, logger)
 
   Object.assign(globalThis.platformatic ?? {}, {
     messaging: {
       handle: messaging.handle.bind(messaging),
-      send: messaging.send.bind(messaging)
+      send: messaging.send.bind(messaging),
+      notify: messaging.notify.bind(messaging)
     }
   })
 

@@ -1,5 +1,5 @@
 import { executeWithTimeout, kTimeout } from '@platformatic/foundation'
-import { ITC, generateResponse, sanitize } from '@platformatic/itc'
+import { ITC, parseRequest, generateRequest, generateResponse, sanitize, errors } from '@platformatic/itc'
 import { MessagingError } from '../errors.js'
 import { RoundRobinMap } from './round-robin-map.js'
 import { kITC, kWorkersBroadcast } from './symbols.js'
@@ -11,10 +11,13 @@ export class MessagingITC extends ITC {
   #listener
   #closeResolvers
   #broadcastChannel
+  #notificationsChannel
+  #notificationsChannels
   #workers
   #sources
+  #logger
 
-  constructor (id, runtimeConfig) {
+  constructor (id, runtimeConfig, logger) {
     super({
       throwOnMissingHandler: true,
       name: `${id}-messaging`
@@ -27,6 +30,12 @@ export class MessagingITC extends ITC {
     // Start listening on the BroadcastChannel for the list of applications
     this.#broadcastChannel = new BroadcastChannel(kWorkersBroadcast)
     this.#broadcastChannel.onmessage = this.#updateWorkers.bind(this)
+
+    this.#notificationsChannel = new BroadcastChannel(`plt.messaging.notifications-${id}`)
+    this.#notificationsChannel.onmessage = this.#handleNotification.bind(this)
+
+    this.#notificationsChannels = new Map()
+    this.#logger = logger
 
     this.listen()
   }
@@ -87,6 +96,18 @@ export class MessagingITC extends ITC {
     return response
   }
 
+  notify (application, name, message) {
+    const request = generateRequest(name, message)
+
+    let channel = this.#notificationsChannels.get(application)
+    if (!channel) {
+      channel = new BroadcastChannel(`plt.messaging.notifications-${application}`)
+      this.#notificationsChannels.set(application, channel)
+    }
+
+    channel.postMessage(sanitize(request))
+  }
+
   async addSource (channel) {
     this.#sources.add(channel)
     this.#setupChannel(channel)
@@ -118,6 +139,11 @@ export class MessagingITC extends ITC {
   _close () {
     this.#closeResolvers.resolve()
     this.#broadcastChannel.close()
+    this.#notificationsChannel.close()
+
+    for (const channel of this.#notificationsChannels.values()) {
+      channel.close()
+    }
 
     for (const source of this.#sources) {
       source.close()
@@ -164,6 +190,27 @@ export class MessagingITC extends ITC {
     }
 
     this.#workers.configure(instances)
+  }
+
+  async #handleNotification (messageEvent) {
+    let request
+    try {
+      request = parseRequest(messageEvent.data)
+    } catch (error) {
+      this.#logger.error({ error }, 'Failed to parse the notification message.')
+      return
+    }
+
+    try {
+      const handler = this.getHandler(request.name)
+      if (!handler) {
+        throw new errors.HandlerNotFoundError(request.name)
+      }
+
+      await handler(request.data)
+    } catch (error) {
+      this.#logger.error({ error }, `"Handler for the "${request.name}" message failed.`)
+    }
   }
 
   #handlePendingResponse (channel) {

@@ -50,6 +50,13 @@ The messaging API contains the following functions:
 The `send` method sends a message to one random receiving application worker.
 The `send` method awaits for the response from the message handler. By default it uses a 30s timeout. To change the timeout, update the `messagingTimeout` option in the watt [configuration](../wattpm/configuration.md#messagingtimeout).
 
+- **globalThis.platformatic.messaging.notify(application, message, data)**: Notifies all application workers with a message.
+  - `application`: a string with the name of the application
+  - `message`: a string with the name of the message
+  - `data`: any cloneable JavaScript value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
+
+The `notify` method sends a message to all application workers. It does not wait for the response from the message handler.
+
 Once an application adds a handler via `globalThis.platformatic.messaging.handle` API, then any other application can invoke the function using the `globalThis.platformatic.messaging.send` API.
 If an application makes a `send` call, before a handler is registered, the `send` call throws an error. To make sure that an application is ready, use a runtime [dependencies API](../wattpm/configuration.md#applications).
 
@@ -65,6 +72,8 @@ globalThis.platformatic.messaging.handle({
 })
 ```
 
+The `send` method sends a message to one random receiving application worker.
+
 ```js
 // web/entrypoint/index.js
 
@@ -72,6 +81,18 @@ app.get('/time', async req => {
   const response = await globalThis.platformatic.messaging.send('application', 'time', { offset: 1000 })
 
   return { thread: response }
+})
+```
+
+The `notify` method sends a message to all application workers.
+
+```js
+// web/entrypoint/index.js
+
+app.get('/time', async req => {
+  globalThis.platformatic.messaging.notify('application', 'time', { offset: 1000 })
+
+  return { thread: 'ok' }
 })
 ```
 
