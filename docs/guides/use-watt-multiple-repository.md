@@ -53,7 +53,7 @@ cd my-microapplications-app
   "private": true,
   "scripts": {
     "dev": "wattpm dev",
-    "resolve": "wattpm resolve",
+    "resolve": "wattpm-utils resolve",
     "build": "wattpm build",
     "start": "wattpm start"
   },
@@ -77,7 +77,7 @@ mkdir -p web/ external/
 
 - `web/` - Directory for resolved web applications
 - `external/` - Directory for resolved external applications
-- `wattpm resolve` command for application resolution
+- `wattpm-utils resolve` command for application resolution
 - Workspace configuration for multi-application management
 
 ## Step 2: Configure Multi-Repository Applications

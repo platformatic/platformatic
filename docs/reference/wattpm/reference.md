@@ -187,7 +187,7 @@ The command will insert a new application in the `watt.json`.
 
 The external resource can be a local folder or a URL. If it is a local folder, then Watt will try to resolve Git remotes to also populate the URL.
 
-When using URL, the resource can be later downloaded using `wattpm resolve`.
+When using URL, the resource can be later downloaded using `wattpm-utils resolve`.
 
 If it is invoked without arguments, the command will try to fix all missing Platformatic dependencies in all local applications.
 
