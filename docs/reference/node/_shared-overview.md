@@ -84,7 +84,7 @@ app.get('/time', async req => {
 })
 ```
 
-The `notify` method sends a message to all application workers.
+The `notify` method sends a message to all application workers. Notification messages are exchanged using Node.js [`BroadcastChannel`](https://nodejs.org/dist/latest/docs/api/worker_threads.html#class-broadcastchannel-extends-eventtarget)
 
 ```js
 // web/entrypoint/index.js
