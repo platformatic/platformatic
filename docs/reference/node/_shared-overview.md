@@ -34,7 +34,7 @@ The healthcheck function will ensure the readiness of the application, and the r
 
 Services can talk to each other using a messaging API available in the `globalThis.platformatic.messaging` object.
 
-The messaging API contains two methods:
+The messaging API contains the following functions:
 
 - **`globalThis.platformatic.messaging.handle(message, handler)`**: Registers a message handler for the specified message.
   - `message`: a string with the name of the message
@@ -47,7 +47,8 @@ The messaging API contains two methods:
   - `options`: an optional object with the following properties:
     - `transferList`: a list of ArrayBuffer, MessagePort, and FileHandle objects. After transferring, they are not usable on the sending side of the channel anymore.
 
-If receiving application has multiple workers, the message will be sent to one of the them randomly. The `send` methods awaits for the response from the message handler.
+The `send` method sends a message to one random receiving application worker.
+The `send` method awaits for the response from the message handler. By default it uses a 30s timeout. To change the timeout, update the `messagingTimeout` option in the watt [configuration](../wattpm/configuration.md#messagingtimeout).
 
 Once an application adds a handler via `globalThis.platformatic.messaging.handle` API, then any other application can invoke the function using the `globalThis.platformatic.messaging.send` API.
 If an application makes a `send` call, before a handler is registered, the `send` call throws an error. To make sure that an application is ready, use a runtime [dependencies API](../wattpm/configuration.md#applications).
