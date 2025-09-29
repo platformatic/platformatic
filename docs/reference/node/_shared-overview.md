@@ -47,7 +47,7 @@ The messaging API contains the following functions:
   - `options`: an optional object with the following properties:
     - `transferList`: a list of ArrayBuffer, MessagePort, and FileHandle objects. After transferring, they are not usable on the sending side of the channel anymore.
 
-The `send` method sends a message to one random receiving application worker.
+The `send` method sends a message to one receiving application worker using a round-robin algorithm.
 The `send` method awaits for the response from the message handler. By default it uses a 30s timeout. To change the timeout, update the `messagingTimeout` option in the watt [configuration](../wattpm/configuration.md#messagingtimeout).
 
 - **globalThis.platformatic.messaging.notify(application, message, data)**: Notifies all application workers with a message.
@@ -72,7 +72,7 @@ globalThis.platformatic.messaging.handle({
 })
 ```
 
-The `send` method sends a message to one random receiving application worker.
+The `send` method sends a message to one receiving application worker using a round-robin algorithm.
 
 ```js
 // web/entrypoint/index.js
