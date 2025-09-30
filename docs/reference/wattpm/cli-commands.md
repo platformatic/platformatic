@@ -244,12 +244,12 @@ wattpm import https://github.com/user/my-application.git --id my-application
 wattpm import --http --branch develop user/repo
 ```
 
-### `wattpm resolve`
+### `wattpm-utils resolve`
 
 Downloads and resolves all external applications defined in your configuration.
 
 ```bash
-wattpm resolve [directory]
+wattpm-utils resolve [directory]
 ```
 
 **Options:**
@@ -263,7 +263,7 @@ wattpm resolve [directory]
 **Example:**
 
 ```bash
-wattpm resolve --username myuser --password $GITHUB_TOKEN
+wattpm-utils resolve --username myuser --password $GITHUB_TOKEN
 ```
 
 ## Debugging and Inspection Commands
@@ -534,7 +534,7 @@ wattpm inject --path /api/health
 wattpm import platformatic/example-application
 
 # Resolve all external applications
-wattpm resolve
+wattpm-utils resolve
 
 # Restart to pick up changes
 wattpm restart
