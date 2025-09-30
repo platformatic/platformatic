@@ -1,4 +1,4 @@
-import { executeWithTimeout, kTimeout } from '@platformatic/foundation'
+import { executeWithTimeout, ensureLoggableError, kTimeout } from '@platformatic/foundation'
 import { ITC, parseRequest, generateRequest, generateResponse, sanitize, errors } from '@platformatic/itc'
 import { MessagingError } from '../errors.js'
 import { RoundRobinMap } from './round-robin-map.js'
@@ -11,7 +11,6 @@ export class MessagingITC extends ITC {
   #listener
   #closeResolvers
   #broadcastChannel
-  #notificationsChannel
   #notificationsChannels
   #workers
   #sources
@@ -31,10 +30,12 @@ export class MessagingITC extends ITC {
     this.#broadcastChannel = new BroadcastChannel(kWorkersBroadcast)
     this.#broadcastChannel.onmessage = this.#updateWorkers.bind(this)
 
-    this.#notificationsChannel = new BroadcastChannel(`plt.messaging.notifications-${id}`)
-    this.#notificationsChannel.onmessage = this.#handleNotification.bind(this)
-
     this.#notificationsChannels = new Map()
+
+    const notificationsChannel = new BroadcastChannel(`plt.messaging.notifications-${id}`)
+    notificationsChannel.onmessage = this.#handleNotification.bind(this)
+    this.#notificationsChannels.set(id, notificationsChannel)
+
     this.#logger = logger
 
     this.listen()
@@ -139,7 +140,6 @@ export class MessagingITC extends ITC {
   _close () {
     this.#closeResolvers.resolve()
     this.#broadcastChannel.close()
-    this.#notificationsChannel.close()
 
     for (const channel of this.#notificationsChannels.values()) {
       channel.close()
@@ -196,8 +196,8 @@ export class MessagingITC extends ITC {
     let request
     try {
       request = parseRequest(messageEvent.data)
-    } catch (error) {
-      this.#logger.error({ error }, 'Failed to parse the notification message.')
+    } catch (err) {
+      this.#logger.error({ err: ensureLoggableError(err) }, 'Failed to parse the notification message.')
       return
     }
 

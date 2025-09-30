@@ -23,7 +23,7 @@ export interface ITC {
 }
 
 export interface MessagingApi {
-  send (name: string, message: string, data: any): Promise<any>
+  send (name: string, message: string, data: any, options?: Record<string, any>): Promise<any>
   notify (name: string, message: string, data: any): void
   handle (message: string, handler: Handler): void
 }

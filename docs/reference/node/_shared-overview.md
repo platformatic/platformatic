@@ -56,6 +56,7 @@ The `send` method awaits for the response from the message handler. By default i
   - `data`: any cloneable JavaScript value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
 
 The `notify` method sends a message to all application workers. It does not wait for the response from the message handler.
+Notification messages are exchanged using Node.js [`BroadcastChannel`](https://nodejs.org/dist/latest/docs/api/worker_threads.html#class-broadcastchannel-extends-eventtarget). The data must be cloneable value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
 
 Once an application adds a handler via `globalThis.platformatic.messaging.handle` API, then any other application can invoke the function using the `globalThis.platformatic.messaging.send` API.
 If an application makes a `send` call, before a handler is registered, the `send` call throws an error. To make sure that an application is ready, use a runtime [dependencies API](../wattpm/configuration.md#applications).

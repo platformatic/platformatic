@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { tmpdir } from 'node:os'
-import { readFile, rm } from 'node:fs/promises'
+import { writeFile, readFile, rm } from 'node:fs/promises'
 import { request } from 'undici'
 import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
 import { createRuntime, updateFile } from '../helpers.js'
@@ -448,7 +448,7 @@ test('should notify all the workers', async t => {
   const app = await createRuntime(configFile)
 
   const testFile = resolve(tmpdir(), 'platformatic.test.txt')
-  await rm(testFile, { force: true }).catch(() => {})
+  await writeFile(testFile, '')
 
   t.after(async () => {
     await app.close()
