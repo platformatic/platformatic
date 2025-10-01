@@ -2,7 +2,8 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { tmpdir } from 'node:os'
-import { writeFile, readFile, rm } from 'node:fs/promises'
+import { writeFile, readFile, rm, mkdtemp } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
 import { createRuntime, updateFile } from '../helpers.js'
@@ -447,13 +448,18 @@ test('should notify all the workers', async t => {
   const configFile = resolve(root, './platformatic.1-to-n.json')
   const app = await createRuntime(configFile)
 
-  const testFile = resolve(tmpdir(), 'platformatic.test.txt')
+  const tmpDir = await mkdtemp(resolve(tmpdir(), 'platformatic.test.'))
+  const testFile = resolve(tmpDir, 'platformatic.test.txt')
+
   await writeFile(testFile, '')
 
   t.after(async () => {
     await app.close()
-    await rm(testFile, { force: true }).catch(() => {})
+    await rm(testFile, { force: true, recursive: true }).catch(() => {})
   })
+
+  // Escape the path to avoid issues with Windows
+  const escapedTestFile = testFile.replace(/\\/g, '\\\\')
 
   await updateFile(resolve(root, './second/plugin.js'), contents => {
     return contents.replace(
@@ -461,7 +467,7 @@ test('should notify all the workers', async t => {
       `async thread () {
         const { appendFileSync } = require('node:fs')
         const { workerData } = require('node:worker_threads')
-        appendFileSync('${testFile}', workerData.worker.id + '\\n')
+        appendFileSync('${escapedTestFile}', workerData.worker.id + '\\n')
       `)
   })
 
@@ -476,6 +482,9 @@ test('should notify all the workers', async t => {
     const response = await res.body.json()
     deepStrictEqual(response, {})
   }
+
+  // Wait for notifications to be processed
+  await sleep(3000)
 
   const content = await readFile(testFile, 'utf8')
   const lines = content.split('\n').filter(line => line.length > 0)
