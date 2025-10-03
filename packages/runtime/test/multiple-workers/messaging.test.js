@@ -1,6 +1,9 @@
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { tmpdir } from 'node:os'
+import { writeFile, readFile, rm, mkdtemp } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
 import { createRuntime, updateFile } from '../helpers.js'
@@ -438,4 +441,56 @@ test('should reuse channels when the worker are restarted', async t => {
   }
 
   deepStrictEqual(createdChannels, 3)
+})
+
+test('should notify all the workers', async t => {
+  const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
+  const configFile = resolve(root, './platformatic.1-to-n.json')
+  const app = await createRuntime(configFile)
+
+  const tmpDir = await mkdtemp(resolve(tmpdir(), 'platformatic.test.'))
+  const testFile = resolve(tmpDir, 'platformatic.test.txt')
+
+  await writeFile(testFile, '')
+
+  t.after(async () => {
+    await app.close()
+    await rm(testFile, { force: true, recursive: true }).catch(() => {})
+  })
+
+  // Escape the path to avoid issues with Windows
+  const escapedTestFile = testFile.replace(/\\/g, '\\\\')
+
+  await updateFile(resolve(root, './second/plugin.js'), contents => {
+    return contents.replace(
+      'async thread () {',
+      `async thread () {
+        const { appendFileSync } = require('node:fs')
+        const { workerData } = require('node:worker_threads')
+        appendFileSync('${escapedTestFile}', workerData.worker.id + '\\n')
+      `)
+  })
+
+  const url = await app.start()
+
+  {
+    const res = await request(`${url}/first/thread/12345`, {
+      query: { notify: true }
+    })
+    deepStrictEqual(res.statusCode, 200)
+
+    const response = await res.body.json()
+    deepStrictEqual(response, {})
+  }
+
+  // Wait for notifications to be processed
+  await sleep(3000)
+
+  const content = await readFile(testFile, 'utf8')
+  const lines = content.split('\n').filter(line => line.length > 0)
+  deepStrictEqual(lines.length, 3)
+
+  ok(lines.includes('second:0'))
+  ok(lines.includes('second:1'))
+  ok(lines.includes('second:2'))
 })

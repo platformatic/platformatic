@@ -14,12 +14,18 @@ export interface InvalidateHttpCacheOptions {
 
 // This is purposely a copy of the one in @platformatic/itc to avoid the dependency
 export interface ITC {
-  send (name: string, message: any, options?: Record<string, any>): Promise<any>
-  notify (name: string, message: any, options?: Record<string, any>): void
+  send (message: string, data: any, options?: Record<string, any>): Promise<any>
+  notify (message: string, data: any, options?: Record<string, any>): void
   handle (message: string, handler: Handler): void
   getHandler (message: string): Handler | undefined
   listen (): void
   close (): void
+}
+
+export interface MessagingApi {
+  send (name: string, message: string, data: any, options?: Record<string, any>): Promise<any>
+  notify (name: string, message: string, data: any): void
+  handle (message: string, handler: Handler): void
 }
 
 export interface PlatformaticGlobalInterface {
@@ -78,7 +84,7 @@ export interface PlatformaticGlobalInterface {
 
   events: EventEmitter & { emitAndNotify: EventEmitter['emit'] }
   itc: ITC
-  messaging: ITC & { handle (message: Record<string, Handler>): void }
+  messaging: MessagingApi
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
