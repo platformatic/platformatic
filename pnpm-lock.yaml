@@ -1103,8 +1103,8 @@ importers:
         specifier: ^5.0.0
         version: 5.5.0
       get-jwks:
-        specifier: ^11.0.0
-        version: 11.0.1
+        specifier: ^11.0.2
+        version: 11.0.3
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.41.0(eslint@9.34.0)(typescript@5.8.3))(eslint@9.34.0)(typescript@5.8.3)
@@ -6931,8 +6931,8 @@ packages:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
     engines: {node: '>= 0.4'}
 
-  get-jwks@11.0.1:
-    resolution: {integrity: sha512-/1kb/MEh5bfT6Nyy8f3IhCaE6pXa9LdS/QRyRoQNdrzsmgTHjw+QcV19qumsHYIfcKWiBp6xwpJ7sMZREr5mvg==}
+  get-jwks@11.0.3:
+    resolution: {integrity: sha512-yWUmmNOgxhNxVhW2xabk9Rvy7wb8NjqWPMzh7g/A1Ke8xHnPooHZgtDMWL0P3liCZiRcRs9zSD33seMUlqguuQ==}
     engines: {node: '>=20'}
 
   get-port@5.1.1:
@@ -15413,7 +15413,7 @@ snapshots:
       '@fastify/jwt': 9.1.0
       fastify: 5.5.0
       fastify-plugin: 5.0.1
-      get-jwks: 11.0.1
+      get-jwks: 11.0.3
 
   fastify@5.4.0:
     dependencies:
@@ -15687,7 +15687,7 @@ snapshots:
       hasown: 2.0.2
       math-intrinsics: 1.1.0
 
-  get-jwks@11.0.1:
+  get-jwks@11.0.3:
     dependencies:
       jwk-to-pem: 2.0.7
       lru-cache: 11.1.0
