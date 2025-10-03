@@ -126,7 +126,8 @@ export async function managementApiPlugin (app, opts) {
     const { id } = request.params
     app.log.debug('stop profiling', { id })
 
-    const profileData = await runtime.stopApplicationProfiling(id)
+    const options = request.body || {}
+    const profileData = await runtime.stopApplicationProfiling(id, options)
     reply.type('application/octet-stream').code(200).send(profileData)
   })
 

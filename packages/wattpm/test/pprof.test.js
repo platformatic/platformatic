@@ -37,7 +37,7 @@ test('pprof start - should start profiling on specific service', async t => {
   const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', 'main')
 
   ok(
-    pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0,
+    pprofStartProcess.stdout.includes('CPU profiling started') || pprofStartProcess.stdout.includes('profiling started') || pprofStartProcess.stdout.length === 0,
     'Should start profiling successfully'
   )
   strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
@@ -79,7 +79,7 @@ test('pprof stop - should stop profiling and create profile file', async t => {
 
   // Check that a profile file was created
   const files = await readdir(tempDir)
-  const profileFiles = files.filter(file => file.startsWith('pprof-main-') && file.endsWith('.pb'))
+  const profileFiles = files.filter(file => file.startsWith('pprof-cpu-main-') && file.endsWith('.pb'))
   ok(profileFiles.length > 0, 'Should create at least one profile file')
 
   // Check that the file has content
@@ -117,7 +117,7 @@ test('pprof start - should start profiling on all services when no service speci
   const pprofStartProcess = await wattpm('pprof', 'start')
 
   ok(
-    pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0,
+    pprofStartProcess.stdout.includes('CPU profiling started') || pprofStartProcess.stdout.includes('profiling started') || pprofStartProcess.stdout.length === 0,
     'Should start profiling on all services'
   )
   strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
@@ -266,7 +266,7 @@ test('pprof start - should start profiling with explicit runtime id and service'
   const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', runtimeId, 'main')
 
   ok(
-    pprofStartProcess.stdout.includes('Profiling started') || pprofStartProcess.stdout.length === 0,
+    pprofStartProcess.stdout.includes('CPU profiling started') || pprofStartProcess.stdout.includes('profiling started') || pprofStartProcess.stdout.length === 0,
     'Should start profiling with explicit runtime id'
   )
   strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
@@ -317,7 +317,7 @@ test('pprof stop - should stop profiling with explicit runtime id and service', 
 
   // Check that a profile file was created
   const files = await readdir(tempDir)
-  const profileFiles = files.filter(file => file.startsWith('pprof-main-') && file.endsWith('.pb'))
+  const profileFiles = files.filter(file => file.startsWith('pprof-cpu-main-') && file.endsWith('.pb'))
   ok(profileFiles.length > 0, 'Should create at least one profile file')
 
   // Check that the file has content
@@ -389,4 +389,162 @@ test('pprof - should handle service not found with explicit runtime id', async t
     errorText.includes('Service not found') || errorText.includes('non-existent-service'),
     'Should indicate service not found'
   )
+})
+
+test('pprof start --type=heap - should start heap profiling', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '--type=heap', 'main')
+
+  ok(
+    pprofStartProcess.stdout.includes('HEAP profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start heap profiling successfully'
+  )
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Clean up
+  await wattpmInDir(tempDir, 'pprof', 'stop', '--type=heap', 'main')
+})
+
+test('pprof stop --type=heap - should stop heap profiling and create profile file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start heap profiling
+  await wattpmInDir(tempDir, 'pprof', 'start', '--type=heap', 'main')
+
+  // Wait a bit for some allocations
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Stop heap profiling and get file
+  const pprofStopProcess = await wattpmInDir(tempDir, 'pprof', 'stop', '--type=heap', 'main')
+
+  strictEqual(pprofStopProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Check that a heap profile file was created
+  const files = await readdir(tempDir)
+  const profileFiles = files.filter(file => file.startsWith('pprof-heap-main-') && file.endsWith('.pb'))
+  ok(profileFiles.length > 0, 'Should create at least one heap profile file')
+
+  // Check that the file has content
+  const profileFile = profileFiles[0]
+  const stats = await stat(join(tempDir, profileFile))
+  ok(stats.size > 0, 'Heap profile file should not be empty')
+})
+
+test('pprof concurrent cpu and heap profiling', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start CPU profiling
+  await wattpmInDir(tempDir, 'pprof', 'start', '--type=cpu', 'main')
+
+  // Start heap profiling
+  await wattpmInDir(tempDir, 'pprof', 'start', '--type=heap', 'main')
+
+  // Wait a bit
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Stop both
+  await wattpmInDir(tempDir, 'pprof', 'stop', '--type=cpu', 'main')
+  await wattpmInDir(tempDir, 'pprof', 'stop', '--type=heap', 'main')
+
+  // Check that both profile files were created
+  const files = await readdir(tempDir)
+  const cpuProfileFiles = files.filter(file => file.startsWith('pprof-cpu-main-') && file.endsWith('.pb'))
+  const heapProfileFiles = files.filter(file => file.startsWith('pprof-heap-main-') && file.endsWith('.pb'))
+
+  ok(cpuProfileFiles.length > 0, 'Should create at least one CPU profile file')
+  ok(heapProfileFiles.length > 0, 'Should create at least one heap profile file')
+
+  // Check that both files have content
+  const cpuStats = await stat(join(tempDir, cpuProfileFiles[0]))
+  const heapStats = await stat(join(tempDir, heapProfileFiles[0]))
+  ok(cpuStats.size > 0, 'CPU profile file should not be empty')
+  ok(heapStats.size > 0, 'Heap profile file should not be empty')
+})
+
+test('pprof --type with short option -t', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start heap profiling with short option
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '-t', 'heap', 'main')
+
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Stop heap profiling with short option
+  const pprofStopProcess = await wattpmInDir(tempDir, 'pprof', 'stop', '-t', 'heap', 'main')
+
+  strictEqual(pprofStopProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Check that a heap profile file was created
+  const files = await readdir(tempDir)
+  const profileFiles = files.filter(file => file.startsWith('pprof-heap-main-') && file.endsWith('.pb'))
+  ok(profileFiles.length > 0, 'Should create at least one heap profile file')
 })

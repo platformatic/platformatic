@@ -556,11 +556,11 @@ export class Runtime extends EventEmitter {
     return sendViaITC(service, 'startProfiling', options)
   }
 
-  async stopApplicationProfiling (id, ensureStarted = true) {
+  async stopApplicationProfiling (id, options = {}, ensureStarted = true) {
     const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'stopProfiling')
+    return sendViaITC(service, 'stopProfiling', options)
   }
 
   async updateUndiciInterceptors (undiciConfig) {
