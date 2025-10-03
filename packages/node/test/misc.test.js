@@ -26,3 +26,21 @@ test('correctly invokes onClose hooks', async t => {
   ok(logs.find(m => m.event === 'application:worker:event:fastify:close'))
   ok(!logs.find(m => m.event === 'application:worker:exit:timeout'))
 })
+
+test('correctly invokes close function for no server apps', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'node-no-server-lifecycle', false, undefined, (
+    root,
+    config
+  ) => {
+    config.logger.level = 'trace'
+    return config
+  })
+  await startRuntime(t, runtime)
+
+  await runtime.close()
+
+  const logs = await getLogsFromFile(root)
+  ok(logs.find(m => m.event === 'application:worker:event:no-server:work'))
+  ok(logs.find(m => m.event === 'application:worker:event:no-server:close'))
+  ok(!logs.find(m => m.event === 'application:worker:exit:timeout'))
+})

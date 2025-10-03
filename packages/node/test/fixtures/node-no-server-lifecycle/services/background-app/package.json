@@ -1,0 +1,8 @@
+{
+  "main": "index.mjs",
+  "type": "module",
+  "dependencies": {
+    "@platformatic/basic": "^3.6.0",
+    "@platformatic/node": "^3.6.0"
+  }
+}

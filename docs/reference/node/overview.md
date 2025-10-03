@@ -100,6 +100,7 @@ If the application uses the `commands` property then it's always responsible to 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
 If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Alternatively, you can set the `node.hasServer` property to false in your `watt.json` file.
+To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
 
 ## Example applications entrypoints
 
@@ -145,6 +146,13 @@ app.listen(3000)
 export const hasServer = false
 
 globalThis.platformatic.messaging.handle('ping', () => 'pong')
+
+const timeoutId = setTimeout(() => console.log('done'), 10_000)
+
+// Optionally provide a close function
+export async function close() {
+  clearTimeout(timeoutId)
+}
 ```
 
 ### Typescript

@@ -353,7 +353,7 @@ export async function startRuntime (t, runtime, pauseAfterCreation = false, appl
     await pause(t, url, pauseAfterCreation)
   }
 
-  return url.replace('[::]', '127.0.0.1')
+  return url?.replace('[::]', '127.0.0.1')
 }
 
 export async function createRuntime (
