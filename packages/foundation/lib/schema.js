@@ -49,6 +49,29 @@ export const workers = {
   ]
 }
 
+const verticalScaler = {
+  type: 'object',
+  properties: {
+    enabled: { type: 'boolean', default: true },
+    maxWorkers: { type: 'number', minimum: 1 },
+    scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+    scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
+    timeWindowSec: { type: 'number', minimum: 0 },
+    cooldownSec: { type: 'number', minimum: 0 },
+    applications: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          minWorkers: { type: 'number', minimum: 1 },
+          maxWorkers: { type: 'number', minimum: 1 }
+        },
+        additionalProperties: false
+      }
+    }
+  }
+}
+
 export const preload = {
   anyOf: [
     { type: 'string', resolvePath: true },
@@ -1110,6 +1133,7 @@ export const runtimeProperties = {
     ]
   },
   telemetry,
+  verticalScaler,
   inspectorOptions: {
     type: 'object',
     properties: {
