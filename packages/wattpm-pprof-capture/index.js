@@ -1,11 +1,21 @@
-import { time } from '@datadog/pprof'
+import { time, heap } from '@datadog/pprof'
 import { NoProfileAvailableError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-let isCapturing = false
-let latestProfile = null
-let captureInterval = null
+// Track profiling state separately for each type
+const profilingState = {
+  cpu: {
+    isCapturing: false,
+    latestProfile: null,
+    captureInterval: null
+  },
+  heap: {
+    isCapturing: false,
+    latestProfile: null,
+    captureInterval: null
+  }
+}
 
 // Keep trying until ITC is available. This is needed because preloads run
 // before the app thread initialization, so globalThis.platformatic.messaging
@@ -19,51 +29,101 @@ const registerInterval = setInterval(() => {
   }
 }, 10)
 
-function rotateProfile () {
-  // `true` immediately restarts profiling after stopping
-  latestProfile = time.stop(true)
+function getProfiler (type) {
+  return type === 'heap' ? heap : time
+}
+
+function rotateProfile (type) {
+  const profiler = getProfiler(type)
+  const state = profilingState[type]
+
+  if (type === 'heap') {
+    // Heap profiler needs to call profile() to get the current profile
+    state.latestProfile = profiler.profile()
+  } else {
+    // CPU time profiler: `true` immediately restarts profiling after stopping
+    state.latestProfile = profiler.stop(true)
+  }
 }
 
 export function startProfiling (options = {}) {
-  if (isCapturing) {
+  const type = options.type || 'cpu'
+  const state = profilingState[type]
+
+  if (state.isCapturing) {
     throw new ProfilingAlreadyStartedError()
   }
-  isCapturing = true
+  state.isCapturing = true
 
-  time.start(options)
+  const profiler = getProfiler(type)
+
+  // Heap profiler has different API than time profiler
+  if (type === 'heap') {
+    // Heap profiler takes intervalBytes and stackDepth as positional arguments
+    // Default: 512KB interval, 64 stack depth
+    const intervalBytes = options.intervalBytes || 512 * 1024
+    const stackDepth = options.stackDepth || 64
+    profiler.start(intervalBytes, stackDepth)
+  } else {
+    // CPU time profiler takes options object
+    profiler.start(options)
+  }
 
   // Set up profile window rotation if durationMillis is provided
   const timeout = options.durationMillis
   if (timeout) {
-    captureInterval = setInterval(rotateProfile, timeout)
-    captureInterval.unref()
+    state.captureInterval = setInterval(() => rotateProfile(type), timeout)
+    state.captureInterval.unref()
   }
 }
 
-export function stopProfiling () {
-  if (!isCapturing) {
+export function stopProfiling (options = {}) {
+  const type = options.type || 'cpu'
+  const state = profilingState[type]
+
+  if (!state.isCapturing) {
     throw new ProfilingNotStartedError()
   }
-  isCapturing = false
+  state.isCapturing = false
 
-  clearInterval(captureInterval)
-  captureInterval = null
+  clearInterval(state.captureInterval)
+  state.captureInterval = null
 
-  latestProfile = time.stop()
-  return latestProfile.encode()
+  const profiler = getProfiler(type)
+
+  // Heap and CPU profilers have different stop APIs
+  if (type === 'heap') {
+    // Get the profile before stopping
+    state.latestProfile = profiler.profile()
+    profiler.stop()
+  } else {
+    // CPU time profiler returns the profile when stopping
+    state.latestProfile = profiler.stop()
+  }
+
+  return state.latestProfile.encode()
 }
 
-export function getLastProfile () {
+export function getLastProfile (options = {}) {
+  const type = options.type || 'cpu'
+  const state = profilingState[type]
+
   // TODO: Should it be allowed to get last profile after stopping?
-  if (!isCapturing) {
+  if (!state.isCapturing) {
     throw new ProfilingNotStartedError()
   }
 
-  if (latestProfile == null) {
+  const profiler = getProfiler(type)
+
+  // For heap profiler, always get the current profile
+  // For CPU profiler, use the cached profile if available
+  if (type === 'heap') {
+    state.latestProfile = profiler.profile()
+  } else if (state.latestProfile == null) {
     throw new NoProfileAvailableError()
   }
 
-  return latestProfile.encode()
+  return state.latestProfile.encode()
 }
 
 export * as errors from './lib/errors.js'

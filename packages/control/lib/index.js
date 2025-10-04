@@ -318,12 +318,16 @@ export class RuntimeApiClient {
     return await body.json()
   }
 
-  async stopApplicationProfiling (pid, applicationId) {
+  async stopApplicationProfiling (pid, applicationId, options = {}) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: `/api/v1/applications/${applicationId}/pprof/stop`,
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(options)
     })
 
     if (statusCode !== 200) {

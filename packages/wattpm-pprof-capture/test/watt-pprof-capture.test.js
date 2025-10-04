@@ -200,3 +200,119 @@ test('getLastProfile should return same profile until next rotation', async t =>
 
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
+
+test('heap profiling should work', async t => {
+  const { app } = await createApp(t)
+
+  // Start heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // Wait a bit for some allocations
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Stop heap profiling and get profile
+  const profile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+  assert.ok(profile instanceof Uint8Array, 'Heap profile should be Uint8Array')
+  assert.ok(profile.length > 0, 'Heap profile should have content')
+})
+
+test('heap profiling should throw error when not started', async t => {
+  const { app } = await createApp(t)
+
+  // Try to stop heap profiling without starting
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' }),
+    { code: 'PLT_PPROF_PROFILING_NOT_STARTED' },
+    'Should throw ProfilingNotStartedError for heap profiling'
+  )
+})
+
+test('heap profiling multiple start attempts should throw error', async t => {
+  const { app } = await createApp(t)
+
+  // Start heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // Try to start again - should throw ProfilingAlreadyStartedError
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' }),
+    { code: 'PLT_PPROF_PROFILING_ALREADY_STARTED' },
+    'Should throw ProfilingAlreadyStartedError for heap profiling'
+  )
+
+  await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('concurrent CPU and heap profiling should work', async t => {
+  const { app } = await createApp(t)
+
+  // Start both CPU and heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'cpu' })
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // Wait a bit for data
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Stop both and get profiles
+  const cpuProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'cpu' })
+  const heapProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+
+  assert.ok(cpuProfile instanceof Uint8Array, 'CPU profile should be Uint8Array')
+  assert.ok(cpuProfile.length > 0, 'CPU profile should have content')
+  assert.ok(heapProfile instanceof Uint8Array, 'Heap profile should be Uint8Array')
+  assert.ok(heapProfile.length > 0, 'Heap profile should have content')
+})
+
+test('heap profiling getLastProfile should return current heap snapshot', async t => {
+  const { app } = await createApp(t)
+
+  // Start heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // Wait a bit for allocations
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Get last profile should work for heap (returns current snapshot)
+  const profile1 = await app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' })
+  assert.ok(profile1 instanceof Uint8Array, 'Heap profile should be Uint8Array')
+  assert.ok(profile1.length > 0, 'Heap profile should have content')
+
+  // Get another snapshot
+  await new Promise(resolve => setTimeout(resolve, 100))
+  const profile2 = await app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' })
+  assert.ok(profile2 instanceof Uint8Array, 'Heap profile should be Uint8Array')
+
+  await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('CPU and heap profiling are independent', async t => {
+  const { app } = await createApp(t)
+
+  // Start only CPU profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'cpu' })
+
+  // Heap profiling should not be started
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' }),
+    { code: 'PLT_PPROF_PROFILING_NOT_STARTED' },
+    'Heap profiling should not be started'
+  )
+
+  // CPU profiling should work
+  const cpuProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'cpu' })
+  assert.ok(cpuProfile instanceof Uint8Array, 'CPU profile should work')
+
+  // Now start heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // CPU profiling should not be started anymore
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling', { type: 'cpu' }),
+    { code: 'PLT_PPROF_PROFILING_NOT_STARTED' },
+    'CPU profiling should not be started'
+  )
+
+  // Heap profiling should work
+  const heapProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+  assert.ok(heapProfile instanceof Uint8Array, 'Heap profile should work')
+})
