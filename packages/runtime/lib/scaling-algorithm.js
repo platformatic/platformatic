@@ -5,6 +5,7 @@ class ScalingAlgorithm {
   #timeWindowSec
   #appsELUs
   #minELUDiff
+  #appsConfigs
 
   constructor (options = {}) {
     this.#scaleUpELU = options.scaleUpELU ?? 0.8
@@ -12,6 +13,7 @@ class ScalingAlgorithm {
     this.#maxWorkers = options.maxWorkers ?? 10
     this.#minELUDiff = options.minELUDiff ?? 0.2
     this.#timeWindowSec = options.timeWindowSec ?? 60
+    this.#appsConfigs = options.applications ?? {}
 
     this.#appsELUs = {}
   }
@@ -55,10 +57,10 @@ class ScalingAlgorithm {
 
     const recommendations = []
 
-    for (let i = 0; i < appsInfo.length; i++) {
-      const { applicationId, elu, workersCount } = appsInfo[i]
+    for (const { applicationId, elu, workersCount } of appsInfo) {
+      const appMinWorkers = this.#appsConfigs[applicationId]?.minWorkers ?? 1
 
-      if (elu < this.#scaleDownELU && workersCount > 1) {
+      if (elu < this.#scaleDownELU && workersCount > appMinWorkers) {
         recommendations.push({
           applicationId,
           workersCount: workersCount - 1,
@@ -68,14 +70,19 @@ class ScalingAlgorithm {
       }
     }
 
-    const scaleUpCandidate = appsInfo.at(-1)
-    if (scaleUpCandidate.elu > this.#scaleUpELU) {
+    for (const scaleUpCandidate of appsInfo.toReversed()) {
+      if (scaleUpCandidate.elu < this.#scaleUpELU) break
+
       const { applicationId, workersCount } = scaleUpCandidate
+
+      const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxWorkers
+      if (workersCount >= appMaxWorkers) continue
 
       if (totalWorkersCount >= this.#maxWorkers) {
         let scaleDownCandidate = null
         for (const app of appsInfo) {
-          if (app.workersCount > 1) {
+          const appMinWorkers = this.#appsConfigs[app.applicationId]?.minWorkers ?? 1
+          if (app.workersCount > appMinWorkers) {
             scaleDownCandidate = app
             break
           }
@@ -104,6 +111,7 @@ class ScalingAlgorithm {
         })
         totalWorkersCount++
       }
+      break
     }
 
     return recommendations

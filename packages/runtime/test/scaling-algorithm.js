@@ -229,6 +229,79 @@ test('ScalingAlgorithm - should scale down many apps per recommendation', async 
   }
 })
 
+test('ScalingAlgorithm - should not scale if the application max workers is reached', async () => {
+  const scalingAlgorithm = new ScalingAlgorithm({
+    maxWorkers: 10,
+    applications: {
+      'app-1': {
+        maxWorkers: 5
+      }
+    }
+  })
+
+  const { appsWorkersInfo, healthInfo } = generateMetadata([
+    { applicationId: 'app-1', elu: 1, workersCount: 5 },
+    { applicationId: 'app-2', elu: 0.95, workersCount: 3 }
+  ])
+
+  for (const health of healthInfo) {
+    scalingAlgorithm.addWorkerHealthInfo(health)
+  }
+
+  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
+  assert.strictEqual(recommendations.length, 1)
+
+  const recommendation = recommendations[0]
+
+  // The app-1 is not scaled because it has max workers
+  // even if the elu is higher than the app-2
+  // The app-2 is scaled instead
+  assert.strictEqual(recommendation.applicationId, 'app-2')
+  assert.strictEqual(recommendation.workersCount, 4)
+  assert.strictEqual(recommendation.direction, 'up')
+})
+
+test('ScalingAlgorithm - should scale down the next best app if the min workers is reached', async () => {
+  const scaleUpELU = 0.8
+  const scaleDownELU = 0.2
+  const maxWorkers = 8
+
+  const scalingAlgorithm = new ScalingAlgorithm({
+    scaleUpELU,
+    scaleDownELU,
+    maxWorkers,
+    applications: {
+      'app-4': {
+        minWorkers: 2
+      }
+    }
+  })
+
+  const { appsWorkersInfo, healthInfo } = generateMetadata([
+    { applicationId: 'app-1', elu: 0.99, workersCount: 2 },
+    { applicationId: 'app-2', elu: 0.95, workersCount: 2 },
+    { applicationId: 'app-3', elu: 0.6, workersCount: 2 },
+    { applicationId: 'app-4', elu: 0.4, workersCount: 2 },
+  ])
+
+  for (const health of healthInfo) {
+    scalingAlgorithm.addWorkerHealthInfo(health)
+  }
+
+  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
+  assert.strictEqual(recommendations.length, 2)
+
+  const scaleDownRecommendation = recommendations[0]
+  assert.strictEqual(scaleDownRecommendation.applicationId, 'app-3')
+  assert.strictEqual(scaleDownRecommendation.workersCount, 1)
+  assert.strictEqual(scaleDownRecommendation.direction, 'down')
+
+  const scaleUpRecommendation = recommendations[1]
+  assert.strictEqual(scaleUpRecommendation.applicationId, 'app-1')
+  assert.strictEqual(scaleUpRecommendation.workersCount, 3)
+  assert.strictEqual(scaleUpRecommendation.direction, 'up')
+})
+
 function randomFloat (min, max) {
   return Math.random() * (max - min) + min
 }
