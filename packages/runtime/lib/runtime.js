@@ -181,7 +181,7 @@ export class Runtime extends EventEmitter {
 
     const workersConfig = []
     for (const application of config.applications) {
-      const count = application.workers ?? this.#config.workers
+      const count = application.workers ?? this.#config.workers ?? 1
       if (count > 1 && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
           `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
@@ -2451,6 +2451,7 @@ export class Runtime extends EventEmitter {
     const minELUDiff = scalerConfig.minELUDiff ?? 0.2
     const scaleIntervalSec = scalerConfig.scaleIntervalSec ?? 60
     const timeWindowSec = scalerConfig.timeWindowSec ?? 60
+    const applicationsConfigs = scalerConfig.applications ?? {}
 
     const scalingAlgorithm = new ScalingAlgorithm({
       maxWorkers,
@@ -2458,7 +2459,7 @@ export class Runtime extends EventEmitter {
       scaleDownELU,
       minELUDiff,
       timeWindowSec,
-      applications: scalerConfig.applications
+      applications: applicationsConfigs
     })
 
     this.on('application:worker:health', async (healthInfo) => {

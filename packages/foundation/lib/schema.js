@@ -858,7 +858,7 @@ export const runtimeProperties = {
   applications,
   services: applications,
   web: applications,
-  workers: { ...workers, default: 1 },
+  workers: { ...workers },
   workersRestartDelay: {
     anyOf: [
       {

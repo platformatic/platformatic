@@ -923,8 +923,7 @@
         {
           "type": "string"
         }
-      ],
-      "default": 1
+      ]
     },
     "workersRestartDelay": {
       "anyOf": [
