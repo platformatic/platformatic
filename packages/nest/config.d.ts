@@ -406,8 +406,10 @@ export interface PlatformaticNestJSConfig {
       maxWorkers?: number;
       scaleUpELU?: number;
       scaleDownELU?: number;
+      minELUDiff?: number;
       timeWindowSec?: number;
       cooldownSec?: number;
+      scaleIntervalSec?: number;
       applications?: {
         [k: string]: {
           minWorkers?: number;
