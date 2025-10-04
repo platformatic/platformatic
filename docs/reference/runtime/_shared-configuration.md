@@ -424,6 +424,24 @@ _Every object_ has:
 }
 ```
 
+### verticalScaler
+
+The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime.
+
+- **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
+- **`maxWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.cpus().length`.
+- **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. Default: `60`.
+- **`scaleUpELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling up.
+Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.8`.
+- **`scaleDownELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling down.
+Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.2`.
+- **`minELUDiff`** (`number`). The minimum ELU difference required between applications for worker reallocation when at maximum worker limit. Default: `0.2`.
+- **`timeWindowSec`** (`number`). The time window in seconds over which the ELU is averaged. Default: `60`.
+- **`scaleIntervalSec`** (`number`). The interval in seconds for periodic scaling checks. Default: `60`.
+- **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
+  - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
+  - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.
+
 ## Setting and Using ENV placeholders
 
 The value for any configuration setting can be replaced with an environment

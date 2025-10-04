@@ -401,6 +401,23 @@ export interface PlatformaticViteConfig {
             [k: string]: unknown;
           };
     };
+    verticalScaler?: {
+      enabled?: boolean;
+      maxWorkers?: number;
+      scaleUpELU?: number;
+      scaleDownELU?: number;
+      minELUDiff?: number;
+      timeWindowSec?: number;
+      cooldownSec?: number;
+      scaleIntervalSec?: number;
+      applications?: {
+        [k: string]: {
+          minWorkers?: number;
+          maxWorkers?: number;
+        };
+      };
+      [k: string]: unknown;
+    };
     inspectorOptions?: {
       host?: string;
       port?: number;

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.62.1.json",
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": ["./routes"]
+  }
+}
