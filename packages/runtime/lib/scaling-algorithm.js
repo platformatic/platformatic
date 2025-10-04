@@ -10,7 +10,7 @@ class ScalingAlgorithm {
   constructor (options = {}) {
     this.#scaleUpELU = options.scaleUpELU ?? 0.8
     this.#scaleDownELU = options.scaleDownELU ?? 0.2
-    this.#maxWorkers = options.maxWorkers ?? 10
+    this.#maxWorkers = options.maxWorkers
     this.#minELUDiff = options.minELUDiff ?? 0.2
     this.#timeWindowSec = options.timeWindowSec ?? 60
     this.#appsConfigs = options.applications ?? {}
@@ -88,20 +88,22 @@ class ScalingAlgorithm {
           }
         }
 
-        const eluDiff = scaleUpCandidate.elu - scaleDownCandidate.elu
-        const workersDiff = scaleDownCandidate.workersCount - scaleUpCandidate.workersCount
+        if (scaleDownCandidate) {
+          const eluDiff = scaleUpCandidate.elu - scaleDownCandidate.elu
+          const workersDiff = scaleDownCandidate.workersCount - scaleUpCandidate.workersCount
 
-        if (eluDiff >= this.#minELUDiff || workersDiff >= 2) {
-          recommendations.push({
-            applicationId: scaleDownCandidate.applicationId,
-            workersCount: scaleDownCandidate.workersCount - 1,
-            direction: 'down'
-          })
-          recommendations.push({
-            applicationId,
-            workersCount: workersCount + 1,
-            direction: 'up'
-          })
+          if (eluDiff >= this.#minELUDiff || workersDiff >= 2) {
+            recommendations.push({
+              applicationId: scaleDownCandidate.applicationId,
+              workersCount: scaleDownCandidate.workersCount - 1,
+              direction: 'down'
+            })
+            recommendations.push({
+              applicationId,
+              workersCount: workersCount + 1,
+              direction: 'up'
+            })
+          }
         }
       } else {
         recommendations.push({
@@ -135,6 +137,8 @@ class ScalingAlgorithm {
       eluCount++
     }
 
+    if (eluCount === 0) return 0
+
     return Math.round(eluSum / eluCount * 100) / 100
   }
 
@@ -147,12 +151,21 @@ class ScalingAlgorithm {
     for (const workerId in appELUs) {
       const workerELUs = appELUs[workerId]
 
+      let firstValidIndex = -1
       for (let i = 0; i < workerELUs.length; i++) {
         const timestamp = workerELUs[i].timestamp
-        if (timestamp < now - this.#timeWindowSec * 1000) {
-          workerELUs.splice(0, i)
+        if (timestamp >= now - this.#timeWindowSec * 1000) {
+          firstValidIndex = i
           break
         }
+      }
+
+      if (firstValidIndex > 0) {
+        // Remove all outdated entries before the first valid one
+        workerELUs.splice(0, firstValidIndex)
+      } else if (firstValidIndex === -1) {
+        // All entries are outdated, clear the array
+        workerELUs.length = 0
       }
 
       // If there are no more workerELUs, remove the workerId

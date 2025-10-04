@@ -2448,14 +2448,17 @@ export class Runtime extends EventEmitter {
     const cooldown = scalerConfig.cooldownSec ?? 60
     const scaleUpELU = scalerConfig.scaleUpELU ?? 0.8
     const scaleDownELU = scalerConfig.scaleDownELU ?? 0.2
-    const timeout = scalerConfig.timeWindowSec ?? 60
+    const minELUDiff = scalerConfig.minELUDiff ?? 0.2
+    const scaleIntervalSec = scalerConfig.scaleIntervalSec ?? 60
     const timeWindowSec = scalerConfig.timeWindowSec ?? 60
 
     const scalingAlgorithm = new ScalingAlgorithm({
       maxWorkers,
       scaleUpELU,
       scaleDownELU,
-      timeWindowSec
+      minELUDiff,
+      timeWindowSec,
+      applications: scalerConfig.applications
     })
 
     this.on('application:worker:health', async (healthInfo) => {
@@ -2517,7 +2520,7 @@ export class Runtime extends EventEmitter {
       await this.updateApplicationsResources(resourcesUpdates)
     }
 
-    // Timeout for the scaling down check
-    setTimeout(checkForScaling, timeout * 1000).unref()
+    // Interval for periodic scaling checks
+    setInterval(checkForScaling, scaleIntervalSec * 1000).unref()
   }
 }
