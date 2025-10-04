@@ -2442,6 +2442,9 @@ export class Runtime extends EventEmitter {
   }
 
   #setupVerticalScaler () {
+    const isWorkersFixed = this.#config.workers !== undefined
+    if (isWorkersFixed) return
+
     const scalerConfig = this.#config.verticalScaler
 
     const maxWorkers = scalerConfig.maxWorkers ?? os.cpus().length
@@ -2452,6 +2455,22 @@ export class Runtime extends EventEmitter {
     const scaleIntervalSec = scalerConfig.scaleIntervalSec ?? 60
     const timeWindowSec = scalerConfig.timeWindowSec ?? 60
     const applicationsConfigs = scalerConfig.applications ?? {}
+
+    for (const application of this.#config.applications) {
+      if (application.entrypoint && !features.node.reusePort) {
+        applicationsConfigs[application.id] = {
+          minWorkers: 1,
+          maxWorkers: 1
+        }
+        continue
+      }
+      if (application.workers !== undefined) {
+        applicationsConfigs[application.id] = {
+          minWorkers: application.workers,
+          maxWorkers: application.workers
+        }
+      }
+    }
 
     const scalingAlgorithm = new ScalingAlgorithm({
       maxWorkers,
