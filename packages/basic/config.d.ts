@@ -300,18 +300,14 @@ export interface PlatformaticBasicConfig {
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
+      minWorkers?: number;
+      maxWorkers?: number;
       scaleUpELU?: number;
       scaleDownELU?: number;
       minELUDiff?: number;
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
-      applications?: {
-        [k: string]: {
-          minWorkers?: number;
-          maxWorkers?: number;
-        };
-      };
       [k: string]: unknown;
     };
     inspectorOptions?: {

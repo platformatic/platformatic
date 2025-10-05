@@ -1878,23 +1878,6 @@
             "scaleIntervalSec": {
               "type": "number",
               "minimum": 0
-            },
-            "applications": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object",
-                "properties": {
-                  "minWorkers": {
-                    "type": "number",
-                    "minimum": 1
-                  },
-                  "maxWorkers": {
-                    "type": "number",
-                    "minimum": 1
-                  }
-                },
-                "additionalProperties": false
-              }
             }
           }
         },

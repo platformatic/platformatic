@@ -335,6 +335,8 @@ export type PlatformaticRuntimeConfig = {
   verticalScaler?: {
     enabled?: boolean;
     maxTotalWorkers?: number;
+    minWorkers?: number;
+    maxWorkers?: number;
     scaleUpELU?: number;
     scaleDownELU?: number;
     minELUDiff?: number;

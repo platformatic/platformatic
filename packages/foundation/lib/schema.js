@@ -61,18 +61,7 @@ const verticalScaler = {
     minELUDiff: { type: 'number', minimum: 0, maximum: 1 },
     timeWindowSec: { type: 'number', minimum: 0 },
     cooldownSec: { type: 'number', minimum: 0 },
-    scaleIntervalSec: { type: 'number', minimum: 0 },
-    applications: {
-      type: 'object',
-      additionalProperties: {
-        type: 'object',
-        properties: {
-          minWorkers: { type: 'number', minimum: 1 },
-          maxWorkers: { type: 'number', minimum: 1 }
-        },
-        additionalProperties: false
-      }
-    }
+    scaleIntervalSec: { type: 'number', minimum: 0 }
   }
 }
 
