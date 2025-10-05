@@ -40,7 +40,7 @@ class ScalingAlgorithm {
 
     for (const applicationId in appsWorkersInfo) {
       const workersCount = appsWorkersInfo[applicationId]
-      const elu = this.#calculateAppELU(applicationId)
+      const elu = this.#calculateAppAvgELU(applicationId)
       appsInfo.push({ applicationId, workersCount, elu })
       totalWorkersCount += workersCount
     }
@@ -119,7 +119,7 @@ class ScalingAlgorithm {
     return recommendations
   }
 
-  #calculateAppELU (applicationId) {
+  #calculateAppAvgELU (applicationId) {
     this.#removeOutdatedAppELUs(applicationId)
 
     const appELUs = this.#appsELUs[applicationId]
