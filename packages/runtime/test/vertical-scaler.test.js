@@ -51,7 +51,7 @@ test('should not scale an application when the scaler is the cooldown', async t 
       config = await transform(config, ...args)
       config.verticalScaler = {
         enabled: true,
-        maxWorkers: 5
+        maxTotalWorkers: 5
       }
       return config
     }

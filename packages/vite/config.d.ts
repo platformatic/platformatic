@@ -403,7 +403,7 @@ export interface PlatformaticViteConfig {
     };
     verticalScaler?: {
       enabled?: boolean;
-      maxWorkers?: number;
+      maxTotalWorkers?: number;
       scaleUpELU?: number;
       scaleDownELU?: number;
       minELUDiff?: number;

@@ -429,7 +429,7 @@ _Every object_ has:
 The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime.
 
 - **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
-- **`maxWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.cpus().length`.
+- **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.cpus().length`.
 - **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. Default: `60`.
 - **`scaleUpELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling up.
 Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.8`.

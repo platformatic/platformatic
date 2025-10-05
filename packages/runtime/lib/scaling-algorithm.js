@@ -1,7 +1,7 @@
 class ScalingAlgorithm {
   #scaleUpELU
   #scaleDownELU
-  #maxWorkers
+  #maxTotalWorkers
   #timeWindowSec
   #appsELUs
   #minELUDiff
@@ -10,7 +10,7 @@ class ScalingAlgorithm {
   constructor (options = {}) {
     this.#scaleUpELU = options.scaleUpELU ?? 0.8
     this.#scaleDownELU = options.scaleDownELU ?? 0.2
-    this.#maxWorkers = options.maxWorkers
+    this.#maxTotalWorkers = options.maxTotalWorkers
     this.#minELUDiff = options.minELUDiff ?? 0.2
     this.#timeWindowSec = options.timeWindowSec ?? 60
     this.#appsConfigs = options.applications ?? {}
@@ -75,10 +75,10 @@ class ScalingAlgorithm {
 
       const { applicationId, workersCount } = scaleUpCandidate
 
-      const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxWorkers
+      const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxTotalWorkers
       if (workersCount >= appMaxWorkers) continue
 
-      if (totalWorkersCount >= this.#maxWorkers) {
+      if (totalWorkersCount >= this.#maxTotalWorkers) {
         let scaleDownCandidate = null
         for (const app of appsInfo) {
           const appMinWorkers = this.#appsConfigs[app.applicationId]?.minWorkers ?? 1

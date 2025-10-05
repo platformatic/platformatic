@@ -1538,7 +1538,7 @@
               "type": "boolean",
               "default": true
             },
-            "maxWorkers": {
+            "maxTotalWorkers": {
               "type": "number",
               "minimum": 1
             },

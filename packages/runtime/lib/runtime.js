@@ -2447,7 +2447,7 @@ export class Runtime extends EventEmitter {
 
     const scalerConfig = this.#config.verticalScaler
 
-    const maxWorkers = scalerConfig.maxWorkers ?? os.cpus().length
+    const maxTotalWorkers = scalerConfig.maxTotalWorkers ?? os.cpus().length
     const cooldown = scalerConfig.cooldownSec ?? 60
     const scaleUpELU = scalerConfig.scaleUpELU ?? 0.8
     const scaleDownELU = scalerConfig.scaleDownELU ?? 0.2
@@ -2473,7 +2473,7 @@ export class Runtime extends EventEmitter {
     }
 
     const scalingAlgorithm = new ScalingAlgorithm({
-      maxWorkers,
+      maxTotalWorkers,
       scaleUpELU,
       scaleDownELU,
       minELUDiff,

@@ -64,7 +64,7 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| **maxWorkers** | Maximum total workers across all applications | `CPU cores count` |
+| **maxTotalWorkers** | Maximum total workers across all applications | `CPU cores count` |
 | **scaleUpELU** | ELU threshold to trigger scaling up | 0.8 |
 | **scaleDownELU** | ELU threshold to trigger scaling down | 0.2 |
 | **minELUDiff** | Minimum ELU difference required for worker reallocation | 0.2 |
@@ -84,7 +84,7 @@ Individual applications can override global limits using the `applications` para
 Example:
 ```json
 {
-  "maxWorkers": 10,
+  "maxTotalWorkers": 10,
   "applications": {
     "api-service": {
       "minWorkers": 2,

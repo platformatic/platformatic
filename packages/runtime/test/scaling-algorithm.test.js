@@ -45,11 +45,11 @@ test('ScalingAlgorithm - should not scale down if there is 1 worker', async () =
 })
 
 test('ScalingAlgorithm - should scale up if the max workers is reached', async () => {
-  const maxWorkers = 2
-  const scalingAlgorithm = new ScalingAlgorithm({ maxWorkers })
+  const maxTotalWorkers = 2
+  const scalingAlgorithm = new ScalingAlgorithm({ maxTotalWorkers })
 
   const applicationId = 'app-1'
-  const workersCount = maxWorkers
+  const workersCount = maxTotalWorkers
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId, maxELU: 1, workersCount }
@@ -135,12 +135,12 @@ test('ScalingAlgorithm - should scale up only one app per recommendation', async
 test('ScalingAlgorithm - should scale up the worth application and sclale down the best', async () => {
   const scaleUpELU = 0.8
   const scaleDownELU = 0.2
-  const maxWorkers = 8
+  const maxTotalWorkers = 8
 
   const scalingAlgorithm = new ScalingAlgorithm({
     scaleUpELU,
     scaleDownELU,
-    maxWorkers
+    maxTotalWorkers
   })
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
@@ -171,12 +171,12 @@ test('ScalingAlgorithm - should scale up the worth application and sclale down t
 test('ScalingAlgorithm - should scale down app with more pods if elu are equal', async () => {
   const scaleUpELU = 0.8
   const scaleDownELU = 0.2
-  const maxWorkers = 8
+  const maxTotalWorkers = 8
 
   const scalingAlgorithm = new ScalingAlgorithm({
     scaleUpELU,
     scaleDownELU,
-    maxWorkers
+    maxTotalWorkers
   })
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
@@ -231,7 +231,7 @@ test('ScalingAlgorithm - should scale down many apps per recommendation', async 
 
 test('ScalingAlgorithm - should not scale if the application max workers is reached', async () => {
   const scalingAlgorithm = new ScalingAlgorithm({
-    maxWorkers: 10,
+    maxTotalWorkers: 10,
     applications: {
       'app-1': {
         maxWorkers: 5
@@ -264,12 +264,12 @@ test('ScalingAlgorithm - should not scale if the application max workers is reac
 test('ScalingAlgorithm - should scale down the next best app if the min workers is reached', async () => {
   const scaleUpELU = 0.8
   const scaleDownELU = 0.2
-  const maxWorkers = 8
+  const maxTotalWorkers = 8
 
   const scalingAlgorithm = new ScalingAlgorithm({
     scaleUpELU,
     scaleDownELU,
-    maxWorkers,
+    maxTotalWorkers,
     applications: {
       'app-4': {
         minWorkers: 2
