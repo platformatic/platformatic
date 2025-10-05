@@ -17,15 +17,15 @@ const runtimeLogger = {
 schemaComponents.runtimeProperties.logger = runtimeLogger
 
 schemaComponents.runtimeProperties.verticalScaler.properties.applications = {
- type: 'object',
- additionalProperties: {
-   type: 'object',
-   properties: {
-     minWorkers: { type: 'number', minimum: 1 },
-     maxWorkers: { type: 'number', minimum: 1 }
-   },
-   additionalProperties: false
- }
+  type: 'object',
+  additionalProperties: {
+    type: 'object',
+    properties: {
+      minWorkers: { type: 'number', minimum: 1 },
+      maxWorkers: { type: 'number', minimum: 1 }
+    },
+    additionalProperties: false
+  }
 }
 
 const platformaticRuntimeSchema = {
