@@ -1890,7 +1890,8 @@
             "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "inspectorOptions": {
       "type": "object",

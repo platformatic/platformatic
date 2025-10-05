@@ -349,7 +349,6 @@ export type PlatformaticRuntimeConfig = {
         maxWorkers?: number;
       };
     };
-    [k: string]: unknown;
   };
   inspectorOptions?: {
     host?: string;

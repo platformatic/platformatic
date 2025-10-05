@@ -62,7 +62,8 @@ const verticalScaler = {
     timeWindowSec: { type: 'number', minimum: 0 },
     cooldownSec: { type: 'number', minimum: 0 },
     scaleIntervalSec: { type: 'number', minimum: 0 }
-  }
+  },
+  additionalProperties: false
 }
 
 export const preload = {

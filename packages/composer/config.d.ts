@@ -473,7 +473,6 @@ export interface PlatformaticComposerConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
-      [k: string]: unknown;
     };
     inspectorOptions?: {
       host?: string;

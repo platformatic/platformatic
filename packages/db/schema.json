@@ -2516,7 +2516,8 @@
               "type": "number",
               "minimum": 0
             }
-          }
+          },
+          "additionalProperties": false
         },
         "inspectorOptions": {
           "type": "object",

@@ -412,7 +412,6 @@ export interface PlatformaticAstroConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
-      [k: string]: unknown;
     };
     inspectorOptions?: {
       host?: string;
