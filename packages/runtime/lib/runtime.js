@@ -2448,6 +2448,8 @@ export class Runtime extends EventEmitter {
     const scalerConfig = this.#config.verticalScaler
 
     const maxTotalWorkers = scalerConfig.maxTotalWorkers ?? os.cpus().length
+    const maxWorkers = scalerConfig.maxWorkers ?? maxTotalWorkers
+    const minWorkers = scalerConfig.minWorkers ?? 1
     const cooldown = scalerConfig.cooldownSec ?? 60
     const scaleUpELU = scalerConfig.scaleUpELU ?? 0.8
     const scaleDownELU = scalerConfig.scaleDownELU ?? 0.2
@@ -2469,7 +2471,14 @@ export class Runtime extends EventEmitter {
           minWorkers: application.workers,
           maxWorkers: application.workers
         }
+        continue
       }
+    }
+
+    for (const applicationId in applicationsConfigs) {
+      applicationsConfigs[applicationId] ??= {}
+      applicationsConfigs[applicationId].minWorkers ??= minWorkers
+      applicationsConfigs[applicationId].maxWorkers ??= maxWorkers
     }
 
     const scalingAlgorithm = new ScalingAlgorithm({

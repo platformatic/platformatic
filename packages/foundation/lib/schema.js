@@ -54,6 +54,8 @@ const verticalScaler = {
   properties: {
     enabled: { type: 'boolean', default: true },
     maxTotalWorkers: { type: 'number', minimum: 1 },
+    minWorkers: { type: 'number', minimum: 1 },
+    maxWorkers: { type: 'number', minimum: 1 },
     scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
     scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
     minELUDiff: { type: 'number', minimum: 0, maximum: 1 },

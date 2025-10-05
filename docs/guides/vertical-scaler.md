@@ -65,6 +65,8 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | **maxTotalWorkers** | Maximum total workers across all applications | `CPU cores count` |
+| **minWorkers** | Minimum workers for each application | 1 |
+| **maxWorkers** | Maximum workers for each application | `maxTotalWorkers` |
 | **scaleUpELU** | ELU threshold to trigger scaling up | 0.8 |
 | **scaleDownELU** | ELU threshold to trigger scaling down | 0.2 |
 | **minELUDiff** | Minimum ELU difference required for worker reallocation | 0.2 |
