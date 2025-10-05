@@ -72,7 +72,7 @@ export async function createRuntime (configOrRoot, sourceOrConfig, context) {
 
   const originalTransform = context?.transform ?? transform
   context ??= {}
-  context.logsPath = resolve(tempPath, `log-${Date.now()}.txt`)
+  context.logsPath ??= resolve(tempPath, `log-${Date.now()}.txt`)
 
   return create(configOrRoot, sourceOrConfig, {
     ...context,

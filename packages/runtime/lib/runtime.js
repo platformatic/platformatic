@@ -2473,12 +2473,21 @@ export class Runtime extends EventEmitter {
         }
         continue
       }
+
+      applicationsConfigs[application.id] ??= {}
+      applicationsConfigs[application.id].minWorkers ??= minWorkers
+      applicationsConfigs[application.id].maxWorkers ??= maxWorkers
     }
 
     for (const applicationId in applicationsConfigs) {
-      applicationsConfigs[applicationId] ??= {}
-      applicationsConfigs[applicationId].minWorkers ??= minWorkers
-      applicationsConfigs[applicationId].maxWorkers ??= maxWorkers
+      const application = this.#config.applications.find(
+        app => app.id === applicationId
+      )
+      if (!application) {
+        this.logger.warn(
+          `Vertical scaler configuration has a configuration for non-existing application "${applicationId}"`
+        )
+      }
     }
 
     const scalingAlgorithm = new ScalingAlgorithm({
