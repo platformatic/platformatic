@@ -40,6 +40,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/wattpm-pprof-capture": "workspace:*",
     "autocannon": "^8.0.0",
+    "atomic-sleep": "^1.0.0",
     "c8": "^10.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",

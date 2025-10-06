@@ -1391,6 +1391,9 @@ importers:
       '@platformatic/wattpm-pprof-capture':
         specifier: workspace:*
         version: link:../wattpm-pprof-capture
+      atomic-sleep:
+        specifier: ^1.0.0
+        version: 1.0.0
       autocannon:
         specifier: ^8.0.0
         version: 8.0.0
