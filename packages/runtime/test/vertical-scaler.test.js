@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { tmpdir, cpus } from 'node:os'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { mkdtemp, readFile } from 'node:fs/promises'
 import { request } from 'undici'
@@ -242,6 +242,9 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     'Vertical scaler configuration has a configuration for non-existing application \\"non-existing-app\\"'
   ))
 
+  const maxTotalWorkers = cpus().length
+  const maxWorkers = maxTotalWorkers
+
   const verticalScalerConfig = runtimeConfig?.verticalScaler
   assert.deepStrictEqual(verticalScalerConfig, {
     enabled: true,
@@ -249,8 +252,8 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
       'service-1': { minWorkers: 1, maxWorkers: 1 },
       'service-2': { minWorkers: 1, maxWorkers: 1 }
     },
-    maxTotalWorkers: 12,
-    maxWorkers: 12,
+    maxTotalWorkers,
+    maxWorkers,
     minWorkers: 1,
     minELUDiff: 0.2,
     scaleDownELU: 0.2,
