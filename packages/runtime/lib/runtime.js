@@ -9,6 +9,7 @@ import {
   kTimeout,
   parseMemorySize
 } from '@platformatic/foundation'
+import os from 'node:os'
 import { ITC } from '@platformatic/itc'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
@@ -44,6 +45,7 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
+import ScalingAlgorithm from './scaling-algorithm.js'
 import {
   kApplicationId,
   kConfig,
@@ -179,7 +181,7 @@ export class Runtime extends EventEmitter {
 
     const workersConfig = []
     for (const application of config.applications) {
-      const count = application.workers ?? this.#config.workers
+      const count = application.workers ?? this.#config.workers ?? 1
       if (count > 1 && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
           `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
@@ -272,6 +274,10 @@ export class Runtime extends EventEmitter {
 
     if (this.#managementApi && typeof this.#metrics === 'undefined') {
       this.startCollectingMetrics()
+    }
+
+    if (this.#config.verticalScaler?.enabled) {
+      this.#setupVerticalScaler()
     }
 
     this.#showUrl()
@@ -2433,5 +2439,126 @@ export class Runtime extends EventEmitter {
     if (!found) {
       throw new MissingPprofCapture()
     }
+  }
+
+  #setupVerticalScaler () {
+    const isWorkersFixed = this.#config.workers !== undefined
+    if (isWorkersFixed) return
+
+    const scalerConfig = this.#config.verticalScaler
+
+    const maxTotalWorkers = scalerConfig.maxTotalWorkers ?? os.cpus().length
+    const maxWorkers = scalerConfig.maxWorkers ?? maxTotalWorkers
+    const minWorkers = scalerConfig.minWorkers ?? 1
+    const cooldown = scalerConfig.cooldownSec ?? 60
+    const scaleUpELU = scalerConfig.scaleUpELU ?? 0.8
+    const scaleDownELU = scalerConfig.scaleDownELU ?? 0.2
+    const minELUDiff = scalerConfig.minELUDiff ?? 0.2
+    const scaleIntervalSec = scalerConfig.scaleIntervalSec ?? 60
+    const timeWindowSec = scalerConfig.timeWindowSec ?? 60
+    const applicationsConfigs = scalerConfig.applications ?? {}
+
+    for (const application of this.#config.applications) {
+      if (application.entrypoint && !features.node.reusePort) {
+        applicationsConfigs[application.id] = {
+          minWorkers: 1,
+          maxWorkers: 1
+        }
+        continue
+      }
+      if (application.workers !== undefined) {
+        applicationsConfigs[application.id] = {
+          minWorkers: application.workers,
+          maxWorkers: application.workers
+        }
+        continue
+      }
+
+      applicationsConfigs[application.id] ??= {}
+      applicationsConfigs[application.id].minWorkers ??= minWorkers
+      applicationsConfigs[application.id].maxWorkers ??= maxWorkers
+    }
+
+    for (const applicationId in applicationsConfigs) {
+      const application = this.#config.applications.find(
+        app => app.id === applicationId
+      )
+      if (!application) {
+        this.logger.warn(
+          `Vertical scaler configuration has a configuration for non-existing application "${applicationId}"`
+        )
+      }
+    }
+
+    const scalingAlgorithm = new ScalingAlgorithm({
+      maxTotalWorkers,
+      scaleUpELU,
+      scaleDownELU,
+      minELUDiff,
+      timeWindowSec,
+      applications: applicationsConfigs
+    })
+
+    this.on('application:worker:health', async (healthInfo) => {
+      if (!healthInfo) {
+        this.logger.error('No health info received')
+        return
+      }
+
+      scalingAlgorithm.addWorkerHealthInfo(healthInfo)
+
+      if (healthInfo.currentHealth.elu > scaleUpELU) {
+        await checkForScaling()
+      }
+    })
+
+    let isScaling = false
+    let lastScaling = 0
+
+    const checkForScaling = async () => {
+      const isInCooldown = Date.now() < lastScaling + cooldown * 1000
+      if (isScaling || isInCooldown) return
+      isScaling = true
+
+      try {
+        const workersInfo = await this.getWorkers()
+
+        const appsWorkersInfo = {}
+        for (const worker of Object.values(workersInfo)) {
+          if (worker.status === 'exited') continue
+
+          const applicationId = worker.application
+          appsWorkersInfo[applicationId] ??= 0
+          appsWorkersInfo[applicationId]++
+        }
+
+        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
+        if (recommendations.length > 0) {
+          await applyRecommendations(recommendations)
+        }
+      } catch (err) {
+        this.logger.error({ err }, 'Failed to scale applications')
+      } finally {
+        isScaling = false
+        lastScaling = Date.now()
+      }
+    }
+
+    const applyRecommendations = async (recommendations) => {
+      const resourcesUpdates = []
+      for (const recommendation of recommendations) {
+        const { applicationId, workersCount, direction } = recommendation
+        this.logger.info(`Scaling ${direction} the "${applicationId}" app to ${workersCount} workers`)
+
+        resourcesUpdates.push({
+          application: applicationId,
+          workers: workersCount
+        })
+      }
+      await this.updateApplicationsResources(resourcesUpdates)
+    }
+
+    // Interval for periodic scaling checks
+    setInterval(checkForScaling, scaleIntervalSec * 1000).unref()
   }
 }

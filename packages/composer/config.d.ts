@@ -179,6 +179,7 @@ export interface PlatformaticComposerConfig {
       [k: string]: unknown;
     }[];
     workers?: number | string;
+    workersRestartDelay?: number | string;
     logger?: {
       level: (
         | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
@@ -460,6 +461,18 @@ export interface PlatformaticComposerConfig {
             additionalProperties?: never;
             [k: string]: unknown;
           };
+    };
+    verticalScaler?: {
+      enabled?: boolean;
+      maxTotalWorkers?: number;
+      minWorkers?: number;
+      maxWorkers?: number;
+      scaleUpELU?: number;
+      scaleDownELU?: number;
+      minELUDiff?: number;
+      timeWindowSec?: number;
+      cooldownSec?: number;
+      scaleIntervalSec?: number;
     };
     inspectorOptions?: {
       host?: string;
@@ -786,6 +799,10 @@ export interface PlatformaticComposerConfig {
     };
     addEmptySchema?: boolean;
     refreshTimeout?: number;
+    /**
+     * Content types that should be passed through without parsing to enable proxying
+     */
+    passthroughContentTypes?: string[];
   };
 }
 export interface Info {

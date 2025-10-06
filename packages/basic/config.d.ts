@@ -297,6 +297,18 @@ export interface PlatformaticBasicConfig {
             [k: string]: unknown;
           };
     };
+    verticalScaler?: {
+      enabled?: boolean;
+      maxTotalWorkers?: number;
+      minWorkers?: number;
+      maxWorkers?: number;
+      scaleUpELU?: number;
+      scaleDownELU?: number;
+      minELUDiff?: number;
+      timeWindowSec?: number;
+      cooldownSec?: number;
+      scaleIntervalSec?: number;
+    };
     inspectorOptions?: {
       host?: string;
       port?: number;
