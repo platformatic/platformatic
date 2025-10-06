@@ -5,6 +5,7 @@ import { tmpdir, availableParallelism } from 'node:os'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { mkdtemp, readFile } from 'node:fs/promises'
 import { request } from 'undici'
+import { features } from '@platformatic/foundation'
 import { createRuntime } from './helpers.js'
 import { transform } from '../lib/config.js'
 
@@ -254,6 +255,63 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     },
     maxTotalWorkers,
     maxWorkers,
+    minWorkers: 1,
+    minELUDiff: 0.2,
+    scaleDownELU: 0.2,
+    scaleIntervalSec: 60,
+    scaleUpELU: 0.8,
+    timeWindowSec: 60,
+    cooldownSec: 60
+  })
+})
+
+test('should scale a standalone application if elu is higher than treshold', async t => {
+  const configFile = join(fixturesDir, 'vertical-scaler-service', 'platformatic.json')
+
+  let runtimeConfig = null
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      runtimeConfig = config
+      return config
+    }
+  })
+
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const { statusCode } = await request(entryUrl + '/cpu-intensive', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ timeout: 1000 })
+  })
+  assert.strictEqual(statusCode, 200)
+
+  await sleep(10000)
+
+  const workers = await app.getWorkers()
+
+  const serviceWorkers = []
+  for (const worker of Object.values(workers)) {
+    if (worker.application === 'service-2') {
+      serviceWorkers.push(worker)
+    }
+  }
+
+  const maxTotalWorkers = availableParallelism()
+  const maxWorkers = features.node.reusePort ? 2 : 1
+  const verticalScalerConfig = runtimeConfig?.verticalScaler
+
+  assert.deepStrictEqual(verticalScalerConfig, {
+    enabled: true,
+    applications: {
+      'service-1': { minWorkers: 1, maxWorkers }
+    },
+    maxTotalWorkers,
+    maxWorkers: 2,
     minWorkers: 1,
     minELUDiff: 0.2,
     scaleDownELU: 0.2,
