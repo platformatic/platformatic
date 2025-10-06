@@ -2447,16 +2447,27 @@ export class Runtime extends EventEmitter {
 
     const scalerConfig = this.#config.verticalScaler
 
-    const maxTotalWorkers = scalerConfig.maxTotalWorkers ?? os.cpus().length
-    const maxWorkers = scalerConfig.maxWorkers ?? maxTotalWorkers
-    const minWorkers = scalerConfig.minWorkers ?? 1
-    const cooldown = scalerConfig.cooldownSec ?? 60
-    const scaleUpELU = scalerConfig.scaleUpELU ?? 0.8
-    const scaleDownELU = scalerConfig.scaleDownELU ?? 0.2
-    const minELUDiff = scalerConfig.minELUDiff ?? 0.2
-    const scaleIntervalSec = scalerConfig.scaleIntervalSec ?? 60
-    const timeWindowSec = scalerConfig.timeWindowSec ?? 60
-    const applicationsConfigs = scalerConfig.applications ?? {}
+    scalerConfig.maxTotalWorkers ??= os.cpus().length
+    scalerConfig.maxWorkers ??= scalerConfig.maxTotalWorkers
+    scalerConfig.minWorkers ??= 1
+    scalerConfig.cooldownSec ??= 60
+    scalerConfig.scaleUpELU ??= 0.8
+    scalerConfig.scaleDownELU ??= 0.2
+    scalerConfig.minELUDiff ??= 0.2
+    scalerConfig.scaleIntervalSec ??= 60
+    scalerConfig.timeWindowSec ??= 60
+    scalerConfig.applications ??= {}
+
+    const maxTotalWorkers = scalerConfig.maxTotalWorkers
+    const maxWorkers = scalerConfig.maxWorkers
+    const minWorkers = scalerConfig.minWorkers
+    const cooldown = scalerConfig.cooldownSec
+    const scaleUpELU = scalerConfig.scaleUpELU
+    const scaleDownELU = scalerConfig.scaleDownELU
+    const minELUDiff = scalerConfig.minELUDiff
+    const scaleIntervalSec = scalerConfig.scaleIntervalSec
+    const timeWindowSec = scalerConfig.timeWindowSec
+    const applicationsConfigs = scalerConfig.applications
 
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
@@ -2484,6 +2495,8 @@ export class Runtime extends EventEmitter {
         app => app.id === applicationId
       )
       if (!application) {
+        delete applicationsConfigs[applicationId]
+
         this.logger.warn(
           `Vertical scaler configuration has a configuration for non-existing application "${applicationId}"`
         )
