@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { tmpdir, cpus } from 'node:os'
+import { tmpdir, availableParallelism } from 'node:os'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { mkdtemp, readFile } from 'node:fs/promises'
 import { request } from 'undici'
@@ -242,7 +242,7 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     'Vertical scaler configuration has a configuration for non-existing application \\"non-existing-app\\"'
   ))
 
-  const maxTotalWorkers = cpus().length
+  const maxTotalWorkers = availableParallelism()
   const maxWorkers = maxTotalWorkers
 
   const verticalScalerConfig = runtimeConfig?.verticalScaler

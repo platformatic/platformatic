@@ -2447,7 +2447,7 @@ export class Runtime extends EventEmitter {
 
     const scalerConfig = this.#config.verticalScaler
 
-    scalerConfig.maxTotalWorkers ??= os.cpus().length
+    scalerConfig.maxTotalWorkers ??= os.availableParallelism()
     scalerConfig.maxWorkers ??= scalerConfig.maxTotalWorkers
     scalerConfig.minWorkers ??= 1
     scalerConfig.cooldownSec ??= 60
