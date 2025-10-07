@@ -143,6 +143,12 @@ export function transformESM (source) {
   return generate.default(ast).code
 }
 
+export function setLoaderData (data) {
+  candidates = data.candidates
+  basePath = data.basePath ?? ''
+  config = data.config
+}
+
 export async function initialize (data) {
   const realRoot = pathToFileURL(await realpath(fileURLToPath(data.root)))
 
@@ -150,10 +156,12 @@ export async function initialize (data) {
     realRoot.pathname += '/'
   }
 
-  // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
-  candidates = ['next.config.js', 'next.config.mjs'].map(c => new URL(c, realRoot).toString())
-  basePath = data.basePath ?? ''
-  config = data.config
+  setLoaderData({
+    // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
+    candidates: ['next.config.js', 'next.config.mjs'].map(c => new URL(c, realRoot).toString()),
+    basePath: data.basePath ?? '',
+    config: data.config
+  })
 }
 
 export async function load (url, context, nextLoad) {
