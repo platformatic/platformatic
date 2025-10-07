@@ -1,5 +1,6 @@
 import {
   ensureLoggableError,
+  executeWithTimeout,
   FileWatcher,
   kHandledError,
   listRecognizedConfigurationFiles,
@@ -24,6 +25,21 @@ function fetchApplicationUrl (application, key) {
   return getApplicationUrl(application.id)
 }
 
+function handleUnhandled (app, type, err) {
+  const label =
+    workerData.worker.count > 1
+      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
+      : `application "${workerData.applicationConfig.id}"`
+
+  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
+
+  executeWithTimeout(app?.stop(), 1000)
+    .catch()
+    .finally(() => {
+      process.exit(1)
+    })
+}
+
 export class Controller extends EventEmitter {
   #starting
   #started
@@ -34,21 +50,13 @@ export class Controller extends EventEmitter {
   #context
   #lastELU
 
-  constructor (
-    appConfig,
-    workerId,
-    telemetryConfig,
-    loggerConfig,
-    serverConfig,
-    metricsConfig,
-    hasManagementApi,
-    watch
-  ) {
+  constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
     super()
-    this.appConfig = appConfig
-    this.applicationId = this.appConfig.id
+    this.runtimeConfig = runtimeConfig
+    this.applicationConfig = applicationConfig
+    this.applicationId = this.applicationConfig.id
     this.workerId = workerId
-    this.#watch = watch
+    this.#watch = !!runtimeConfig.watch
     this.#starting = false
     this.#started = false
     this.#listening = false
@@ -60,17 +68,17 @@ export class Controller extends EventEmitter {
       controller: this,
       applicationId: this.applicationId,
       workerId: this.workerId,
-      directory: this.appConfig.path,
-      dependencies: this.appConfig.dependencies,
-      isEntrypoint: this.appConfig.entrypoint,
-      isProduction: this.appConfig.isProduction,
-      telemetryConfig,
+      directory: this.applicationConfig.path,
+      dependencies: this.applicationConfig.dependencies,
+      isEntrypoint: this.applicationConfig.entrypoint,
+      isProduction: this.applicationConfig.isProduction,
+      telemetryConfig: this.applicationConfig.telemetry,
+      loggerConfig: runtimeConfig.logger,
       metricsConfig,
-      loggerConfig,
       serverConfig,
       worker: workerData?.worker,
-      hasManagementApi: !!hasManagementApi,
-      fetchApplicationUrl: fetchApplicationUrl.bind(null, appConfig)
+      hasManagementApi: !!runtimeConfig.managementApi,
+      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig)
     }
   }
 
@@ -90,7 +98,7 @@ export class Controller extends EventEmitter {
   // Note: capability's init() is executed within start
   async init () {
     try {
-      const appConfig = this.appConfig
+      const appConfig = this.applicationConfig
 
       if (appConfig.isProduction && !process.env.NODE_ENV) {
         process.env.NODE_ENV = 'production'
@@ -120,6 +128,10 @@ export class Controller extends EventEmitter {
       }
 
       this.#updateDispatcher()
+
+      if (!this.capability.exitOnUnhandledErrors && !this.runtimeConfig.exitOnUnhandledErrors) {
+        this.#setupHandlers()
+      }
     } catch (err) {
       if (err.validationErrors) {
         globalThis.platformatic.logger.error(
@@ -168,7 +180,7 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.appConfig.useHttp
+    const listen = !!this.applicationConfig.useHttp
 
     try {
       await this.capability.start({ listen })
@@ -203,7 +215,7 @@ export class Controller extends EventEmitter {
 
   async listen () {
     // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.appConfig.entrypoint || this.appConfig.useHttp || this.#listening) {
+    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
       return
     }
 
@@ -298,5 +310,18 @@ export class Controller extends EventEmitter {
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
     setGlobalDispatcher(dispatcher)
+  }
+
+  #setupHandlers () {
+    process.on('uncaughtException', handleUnhandled.bind(null, this, 'uncaught exception'))
+    process.on('unhandledRejection', handleUnhandled.bind(null, this, 'unhandled rejection'))
+
+    process.on('newListener', event => {
+      if (event === 'uncaughtException' || event === 'unhandledRejection') {
+        globalThis.platformatic.logger.warn(
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
+        )
+      }
+    })
   }
 }
