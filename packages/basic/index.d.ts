@@ -22,6 +22,8 @@ export declare const schemaOptions: Partial<Record<string, unknown>>
 
 export class BaseCapability<Config = Record<string, any>, Options = BaseOptions> {
   basePath: string
+  url: string
+
   constructor (
     type: string,
     version: string,
@@ -32,6 +34,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
 
   init (): Promise<void>
   start (options: StartOptions): Promise<void>
+  close (): Promise<void>
   stop (): Promise<void>
   build (): Promise<void>
   getUrl (): string
