@@ -538,6 +538,87 @@ test(
   }
 )
 
+test('should properly use the Valkey cache handler when using next.config.ts', { skip: isCIOnWindows }, async t => {
+  const { url } = await prepareRuntimeWithBackend(t, 'caching-valkey-ts')
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  let version
+  let time
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+    time = mo[2]
+  }
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    notDeepStrictEqual(mo[1], version)
+    deepStrictEqual(mo[2], time)
+  }
+
+  const key = keyFor(
+    valkeyPrefix,
+    'development',
+    'values',
+    // This might change in different versions of Next.js, keep in sync
+    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+  )
+
+  const storedValues = verifyValkeySequence(valkeyCalls, [
+    ['get', key],
+    ['set', key, null, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['get', key]
+  ])
+
+  const {
+    value: {
+      kind,
+      data: { body, status, url: cachedUrl },
+      revalidate: revalidateNext
+    },
+    tags,
+    revalidate: revalidatePlt,
+    maxTTL,
+    applicationId
+  } = unpack(Buffer.from(storedValues[0], 'base64url'))
+
+  deepStrictEqual(kind, 'FETCH')
+  deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
+  deepStrictEqual(status, 200)
+  deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
+  deepStrictEqual(tags, ['first', 'second', 'third'])
+  deepStrictEqual(revalidateNext, 120)
+  deepStrictEqual(revalidatePlt, 120)
+  deepStrictEqual(maxTTL, 86400 * 7)
+  deepStrictEqual(applicationId, 'frontend')
+})
+
 test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async t => {
   const { url } = await prepareRuntimeWithBackend(t, configuration)
 
