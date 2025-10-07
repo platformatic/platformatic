@@ -107,7 +107,7 @@ wattpm start
 
 ## Port your Next.js application to Watt
 
-In order to run your existing application with Watt, you can use the import capability of `wattpm-utils`.
+In order to run your existing Next.js application with Watt, you can use the import capability of `wattpm-utils`.
 
 From the root of your application, run:
 
@@ -141,7 +141,3 @@ By default, Watt will run on random port. If you want to choose a specific port,
 
 - [Watt Quick Start](/docs/getting-started/quick-start/)
 - [Framework Integration Guides](/docs/guides/frameworks) - Setup guides for Next.js, Astro, Remix, Vite, and more
-
-```
-
-```
