@@ -28,6 +28,8 @@ export class NextCapability extends BaseCapability {
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
+
+    this.exitOnUnhandledErrors = false
   }
 
   async init () {

@@ -88,6 +88,8 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
+    // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
+    this.exitOnUnhandledErrors = true
 
     // Setup globals
     this.registerGlobals({

@@ -48,3 +48,27 @@ test('can access Platformatic globals in production mode', async t => {
     ok(text.includes('<code>/frontend<!-- --> <!-- -->true</code>'))
   }
 })
+
+test('should not show start in handle mode in production', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'standalone', true, null)
+  const url = await startRuntime(t, runtime, null, ['frontend'])
+
+  {
+    const { statusCode } = await request(url + '/')
+    deepStrictEqual(statusCode, 200)
+    await runtime.close()
+  }
+
+  const logs = await getLogsFromFile(root)
+
+  ok(
+    !logs.find(
+      entry =>
+        entry.level === 40 &&
+        entry.name === 'frontend' &&
+        entry.msg.startsWith(
+          'A listener has been added for the "process.uncaughtException" event. This listener will be never triggered as Watt default behavior will kill the process before.'
+        )
+    )
+  )
+})
