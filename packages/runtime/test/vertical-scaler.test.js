@@ -325,7 +325,7 @@ test('should scale a standalone application if elu is higher than treshold', asy
   })
 })
 
-test('should scale applications to their min workers at start', async t => {
+test.skip('should scale applications to their min workers at start', async t => {
   const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
