@@ -22,7 +22,6 @@ export declare const schemaOptions: Partial<Record<string, unknown>>
 
 export class BaseCapability<Config = Record<string, any>, Options = BaseOptions> {
   basePath: string
-  url: string
 
   constructor (
     type: string,
