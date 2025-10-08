@@ -345,7 +345,6 @@ test('should scale applications to their min workers at start', async t => {
 
   const workers = await app.getWorkers()
 
-  const service1Workers = []
   const service2Workers = []
 
   for (const worker of Object.values(workers)) {

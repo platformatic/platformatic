@@ -95,8 +95,8 @@ class ScalingAlgorithm {
       const { applicationId, workersCount } = scaleUpCandidate
 
       const isScaled = recommendations.some(
-        r => r.applicationId === applicationId
-          && r.direction === 'up'
+        r => r.applicationId === applicationId &&
+          r.direction === 'up'
       )
       if (isScaled) continue
 
