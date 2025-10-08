@@ -128,6 +128,12 @@ export function pause (t, url, timeout) {
 export async function updateFile (path, update) {
   const contents = await readFile(path, 'utf-8')
   await writeFile(path, await update(contents), 'utf-8')
+
+  return {
+    revert () {
+      return writeFile(path, contents, 'utf-8')
+    }
+  }
 }
 
 export async function ensureDependencies (configOrPaths) {
