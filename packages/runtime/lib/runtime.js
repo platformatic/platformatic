@@ -2584,12 +2584,12 @@ export class Runtime extends EventEmitter {
         const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
         if (recommendations.length > 0) {
           await applyRecommendations(recommendations)
+          lastScaling = Date.now()
         }
       } catch (err) {
         this.logger.error({ err }, 'Failed to scale applications')
       } finally {
         isScaling = false
-        lastScaling = Date.now()
       }
     }
 
