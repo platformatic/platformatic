@@ -19,9 +19,7 @@ class ScalingAlgorithm {
   }
 
   addWorkerHealthInfo (healthInfo) {
-    const workerId = healthInfo.id
-    const applicationId = healthInfo.application
-    const elu = healthInfo.currentHealth.elu
+    const { workerId, applicationId, elu } = healthInfo
     const timestamp = Date.now()
 
     if (!this.#appsELUs[applicationId]) {
@@ -59,6 +57,27 @@ class ScalingAlgorithm {
 
     for (const { applicationId, elu, workersCount } of appsInfo) {
       const appMinWorkers = this.#appsConfigs[applicationId]?.minWorkers ?? 1
+      const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxTotalWorkers
+
+      if (workersCount < appMinWorkers) {
+        recommendations.push({
+          applicationId,
+          workersCount: appMinWorkers,
+          direction: 'up'
+        })
+        totalWorkersCount += appMinWorkers - workersCount
+        continue
+      }
+
+      if (workersCount > appMaxWorkers) {
+        recommendations.push({
+          applicationId,
+          workersCount: appMaxWorkers,
+          direction: 'down'
+        })
+        totalWorkersCount -= workersCount - appMaxWorkers
+        continue
+      }
 
       if (elu < this.#scaleDownELU && workersCount > appMinWorkers) {
         recommendations.push({
@@ -74,6 +93,12 @@ class ScalingAlgorithm {
       if (scaleUpCandidate.elu < this.#scaleUpELU) break
 
       const { applicationId, workersCount } = scaleUpCandidate
+
+      const isScaled = recommendations.some(
+        r => r.applicationId === applicationId &&
+          r.direction === 'up'
+      )
+      if (isScaled) continue
 
       const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxTotalWorkers
       if (workersCount >= appMaxWorkers) continue

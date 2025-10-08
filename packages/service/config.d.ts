@@ -609,6 +609,7 @@ export interface PlatformaticServiceConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
+      gracePeriod?: number;
     };
     inspectorOptions?: {
       host?: string;

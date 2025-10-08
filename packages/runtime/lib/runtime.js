@@ -58,7 +58,8 @@ import {
   kStderrMarker,
   kWorkerId,
   kWorkersBroadcast,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerStartTime
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -278,7 +279,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.#config.verticalScaler?.enabled) {
-      this.#setupVerticalScaler()
+      await this.#setupVerticalScaler()
     }
 
     this.#showUrl()
@@ -1661,6 +1662,8 @@ export class Runtime extends EventEmitter {
       }
 
       worker[kWorkerStatus] = 'started'
+      worker[kWorkerStartTime] = Date.now()
+
       this.emitAndNotify('application:worker:started', eventPayload)
       this.#broadcastWorkers()
 
@@ -2460,9 +2463,14 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  #setupVerticalScaler () {
-    const isWorkersFixed = this.#config.workers !== undefined
-    if (isWorkersFixed) return
+  async #setupVerticalScaler () {
+    const fixedWorkersCount = this.#config.workers
+    if (fixedWorkersCount !== undefined) {
+      this.logger.warn(
+        `Vertical scaler disabled because the "workers" configuration is set to ${fixedWorkersCount}`
+      )
+      return
+    }
 
     const scalerConfig = this.#config.verticalScaler
 
@@ -2475,6 +2483,7 @@ export class Runtime extends EventEmitter {
     scalerConfig.minELUDiff ??= 0.2
     scalerConfig.scaleIntervalSec ??= 60
     scalerConfig.timeWindowSec ??= 60
+    scalerConfig.gracePeriod ??= 30 * 1000
     scalerConfig.applications ??= {}
 
     const maxTotalWorkers = scalerConfig.maxTotalWorkers
@@ -2487,9 +2496,18 @@ export class Runtime extends EventEmitter {
     const scaleIntervalSec = scalerConfig.scaleIntervalSec
     const timeWindowSec = scalerConfig.timeWindowSec
     const applicationsConfigs = scalerConfig.applications
+    const gracePeriod = scalerConfig.gracePeriod
+    const healthCheckInterval = 1000
+
+    const initialResourcesUpdates = []
 
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
+        this.logger.warn(
+          `The "${application.id}" application cannot be scaled because it is an entrypoint` +
+          ' and the "reusePort" feature is not available in your OS.'
+        )
+
         applicationsConfigs[application.id] = {
           minWorkers: 1,
           maxWorkers: 1
@@ -2497,6 +2515,10 @@ export class Runtime extends EventEmitter {
         continue
       }
       if (application.workers !== undefined) {
+        this.logger.warn(
+          `The "${application.id}" application cannot be scaled because` +
+          ` it has a fixed number of workers (${application.workers}).`
+        )
         applicationsConfigs[application.id] = {
           minWorkers: application.workers,
           maxWorkers: application.workers
@@ -2507,6 +2529,18 @@ export class Runtime extends EventEmitter {
       applicationsConfigs[application.id] ??= {}
       applicationsConfigs[application.id].minWorkers ??= minWorkers
       applicationsConfigs[application.id].maxWorkers ??= maxWorkers
+
+      const appMinWorkers = applicationsConfigs[application.id].minWorkers
+      if (appMinWorkers > 1) {
+        initialResourcesUpdates.push({
+          application: application.id,
+          workers: minWorkers
+        })
+      }
+    }
+
+    if (initialResourcesUpdates.length > 0) {
+      await this.updateApplicationsResources(initialResourcesUpdates)
     }
 
     for (const applicationId in applicationsConfigs) {
@@ -2529,18 +2563,43 @@ export class Runtime extends EventEmitter {
       applications: applicationsConfigs
     })
 
-    this.on('application:worker:health', async healthInfo => {
-      if (!healthInfo) {
-        this.logger.error('No health info received')
-        return
+    const healthCheckTimeout = setTimeout(async () => {
+      let shouldCheckForScaling = false
+
+      const now = Date.now()
+
+      for (const worker of this.#workers.values()) {
+        if (
+          worker[kWorkerStatus] !== 'started' ||
+          worker[kWorkerStartTime] + gracePeriod > now
+        ) {
+          continue
+        }
+
+        try {
+          const health = await this.#getHealth(worker)
+          if (!health) continue
+
+          scalingAlgorithm.addWorkerHealthInfo({
+            workerId: worker[kId],
+            applicationId: worker[kApplicationId],
+            elu: health.elu
+          })
+
+          if (health.elu > scaleUpELU) {
+            shouldCheckForScaling = true
+          }
+        } catch (err) {
+          this.logger.error({ err }, 'Failed to get health for worker')
+        }
       }
 
-      scalingAlgorithm.addWorkerHealthInfo(healthInfo)
-
-      if (healthInfo.currentHealth.elu > scaleUpELU) {
+      if (shouldCheckForScaling) {
         await checkForScaling()
       }
-    })
+
+      healthCheckTimeout.refresh()
+    }, healthCheckInterval).unref()
 
     let isScaling = false
     let lastScaling = 0
@@ -2565,12 +2624,12 @@ export class Runtime extends EventEmitter {
         const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
         if (recommendations.length > 0) {
           await applyRecommendations(recommendations)
+          lastScaling = Date.now()
         }
       } catch (err) {
         this.logger.error({ err }, 'Failed to scale applications')
       } finally {
         isScaling = false
-        lastScaling = Date.now()
       }
     }
 

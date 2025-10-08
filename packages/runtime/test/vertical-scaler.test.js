@@ -54,7 +54,8 @@ test('should not scale an application when the scaler is the cooldown', async t 
       config = await transform(config, ...args)
       config.verticalScaler = {
         enabled: true,
-        maxTotalWorkers: 5
+        maxTotalWorkers: 5,
+        gracePeriod: 1
       }
       return config
     }
@@ -261,7 +262,8 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
     timeWindowSec: 60,
-    cooldownSec: 60
+    cooldownSec: 60,
+    gracePeriod: 30 * 1000
   })
 })
 
@@ -318,6 +320,37 @@ test('should scale a standalone application if elu is higher than treshold', asy
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
     timeWindowSec: 60,
-    cooldownSec: 60
+    cooldownSec: 60,
+    gracePeriod: 30 * 1000
   })
+})
+
+test.skip('should scale applications to their min workers at start', async t => {
+  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.verticalScaler = {
+        enabled: true,
+        minWorkers: 3
+      }
+      return config
+    }
+  })
+  await app.start()
+
+  t.after(() => app.close())
+
+  await sleep(5000)
+
+  const workers = await app.getWorkers()
+
+  const service2Workers = []
+
+  for (const worker of Object.values(workers)) {
+    if (worker.application === 'service-2') {
+      service2Workers.push(worker)
+    }
+  }
+  assert.strictEqual(service2Workers.length, 3)
 })

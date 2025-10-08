@@ -684,6 +684,7 @@ export interface PlatformaticGatewayConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
+      gracePeriod?: number;
     };
     inspectorOptions?: {
       host?: string;

@@ -385,6 +385,7 @@ export interface PlatformaticComposerConfig {
                 };
               };
           plugins?: string[];
+          timeout?: number | string;
         };
     telemetry?: {
       enabled?: boolean | string;
@@ -473,6 +474,7 @@ export interface PlatformaticComposerConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
+      gracePeriod?: number;
     };
     inspectorOptions?: {
       host?: string;

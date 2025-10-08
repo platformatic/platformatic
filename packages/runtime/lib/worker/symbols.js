@@ -6,6 +6,7 @@ export const kWorkerId = Symbol.for('plt.runtime.worker.id')
 export const kITC = Symbol.for('plt.runtime.itc')
 export const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
 export const kWorkerStatus = Symbol('plt.runtime.worker.status')
+export const kWorkerStartTime = Symbol.for('plt.runtime.worker.startTime')
 export const kInterceptors = Symbol.for('plt.runtime.worker.interceptors')
 export const kLastELU = Symbol.for('plt.runtime.worker.lastELU')
 

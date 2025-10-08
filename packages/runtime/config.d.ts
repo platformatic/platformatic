@@ -373,6 +373,7 @@ export type PlatformaticRuntimeConfig = {
     timeWindowSec?: number;
     cooldownSec?: number;
     scaleIntervalSec?: number;
+    gracePeriod?: number;
     applications?: {
       [k: string]: {
         minWorkers?: number;

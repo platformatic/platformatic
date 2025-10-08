@@ -413,6 +413,7 @@ export interface PlatformaticNodeJsConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
+      gracePeriod?: number;
     };
     inspectorOptions?: {
       host?: string;

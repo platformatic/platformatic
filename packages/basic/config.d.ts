@@ -309,6 +309,7 @@ export interface PlatformaticBasicConfig {
       timeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
+      gracePeriod?: number;
     };
     inspectorOptions?: {
       host?: string;
