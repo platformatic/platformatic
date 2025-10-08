@@ -283,7 +283,8 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      this.childManager.register()
+      await this.childManager.register()
+
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
