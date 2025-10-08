@@ -67,15 +67,15 @@ runtime. Each application object supports the following settings:
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `wattpm-utils`. Default is to autodetect it, unless it is specified via command line.
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
 - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
-- **`permissions`** (`object`): Restrict permissions of the application. Supported properties are:
+- **`permissions`** (`object`): Configure application-level security permissions to restrict file system access. Supported properties are:
   - **`fs`**:
-    - **`read`**: List of paths that the application can read from. It follows the same rules of [Node.js --allow-fs-read][https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-read] option.
-    - **`write`**: List of paths that the application can read from. It follows the same rules of [Node.js --allow-fs-write][https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-write] option.
+    - **`read`** (`array` of `string`s): Array of file system paths the application is permitted to read from. Uses the same syntax as Node.js [--allow-fs-read](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-read).
+    - **`write`** (`array` of `string`s): Array of file system paths the application is permitted to write to. Uses the same syntax as Node.js [--allow-fs-write](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-write).
 
-  Note that the `permissions.fs.read` option will automatically add some other paths that are required for the application to work properly:
-  - Current Watt project `node_modules` folder.
-  - Current application `node_modules` folder.
-  - Any `node_modules` found in any ancestor of the runtime's path.
+  When filesystem permissions are enabled, certain paths are automatically added to maintain application functionality:
+  - The current Watt project's `node_modules` directory
+  - The application's own `node_modules` directory
+  - Any `node_modules` directories found in parent directories of the runtime path
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
