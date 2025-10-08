@@ -2482,6 +2482,11 @@ export class Runtime extends EventEmitter {
 
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
+        this.logger.warn(
+          `The "${application.id}" application cannot be scaled because it is an entrypoint`
+          + ` and the "reusePort" feature is not available in your OS.`
+        )
+
         applicationsConfigs[application.id] = {
           minWorkers: 1,
           maxWorkers: 1
@@ -2489,6 +2494,10 @@ export class Runtime extends EventEmitter {
         continue
       }
       if (application.workers !== undefined) {
+        this.logger.warn(
+          `The "${application.id}" application cannot be scaled because` +
+          ` it has a fixed number of workers (${application.workers}).`
+        )
         applicationsConfigs[application.id] = {
           minWorkers: application.workers,
           maxWorkers: application.workers
