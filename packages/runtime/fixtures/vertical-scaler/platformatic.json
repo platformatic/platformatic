@@ -17,6 +17,7 @@
     "enabled": false
   },
   "verticalScaler": {
-    "enabled": true
+    "enabled": true,
+    "gracePeriod": 1
   }
 }

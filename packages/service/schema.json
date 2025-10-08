@@ -2204,6 +2204,10 @@
             "scaleIntervalSec": {
               "type": "number",
               "minimum": 0
+            },
+            "gracePeriod": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "additionalProperties": false

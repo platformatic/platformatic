@@ -57,7 +57,8 @@ import {
   kStderrMarker,
   kWorkerId,
   kWorkersBroadcast,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerStartTime
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -1642,6 +1643,8 @@ export class Runtime extends EventEmitter {
       }
 
       worker[kWorkerStatus] = 'started'
+      worker[kWorkerStartTime] = Date.now()
+
       this.emitAndNotify('application:worker:started', eventPayload)
       this.#broadcastWorkers()
 
@@ -2442,8 +2445,13 @@ export class Runtime extends EventEmitter {
   }
 
   #setupVerticalScaler () {
-    const isWorkersFixed = this.#config.workers !== undefined
-    if (isWorkersFixed) return
+    const fixedWorkersCount = this.#config.workers
+    if (fixedWorkersCount !== undefined) {
+      this.logger.warn(
+        `Vertical scaler disabled because the "workers" configuration is set to ${fixedWorkersCount}`
+      )
+      return
+    }
 
     const scalerConfig = this.#config.verticalScaler
 
@@ -2456,6 +2464,7 @@ export class Runtime extends EventEmitter {
     scalerConfig.minELUDiff ??= 0.2
     scalerConfig.scaleIntervalSec ??= 60
     scalerConfig.timeWindowSec ??= 60
+    scalerConfig.gracePeriod ??= 30 * 1000
     scalerConfig.applications ??= {}
 
     const maxTotalWorkers = scalerConfig.maxTotalWorkers
@@ -2468,6 +2477,7 @@ export class Runtime extends EventEmitter {
     const scaleIntervalSec = scalerConfig.scaleIntervalSec
     const timeWindowSec = scalerConfig.timeWindowSec
     const applicationsConfigs = scalerConfig.applications
+    const gracePeriod = scalerConfig.gracePeriod
     const healthCheckInterval = 1000
 
     for (const application of this.#config.applications) {
@@ -2516,8 +2526,13 @@ export class Runtime extends EventEmitter {
     const healthCheckTimeout = setTimeout(async () => {
       let shouldCheckForScaling = false
 
+      const now = Date.now()
+
       for (const worker of this.#workers.values()) {
-        if (worker[kWorkerStatus] !== 'started') {
+        if (
+          worker[kWorkerStatus] !== 'started' ||
+          worker[kWorkerStartTime] + gracePeriod > now
+        ) {
           continue
         }
 

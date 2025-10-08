@@ -439,6 +439,7 @@ Scaler compares an average ELU an application collects over a `timeWindowSec` pe
 Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.2`.
 - **`minELUDiff`** (`number`). The minimum ELU difference required between applications for worker reallocation when at maximum worker limit. Default: `0.2`.
 - **`timeWindowSec`** (`number`). The time window in seconds over which the ELU is averaged. Default: `60`.
+- **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. Default: `30000`.
 - **`scaleIntervalSec`** (`number`). The interval in seconds for periodic scaling checks. Default: `60`.
 - **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
   - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
