@@ -77,6 +77,9 @@ runtime. Each application object supports the following settings:
   - The application's own `node_modules` directory
   - Any `node_modules` directories found in parent directories of the runtime path
 
+  The security permissions are based on Node.js permission model and therefore the application will have restricted access to native modules, child processes, worker threads, the inspector protocol, and WASI.
+  See the [Node.js Permission Model Constraints](https://nodejs.org/dist/latest/docs/api/permissions.html#permission-model-constraints) for complete details.
+
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
   intrumentations per application, e.g.:
