@@ -339,22 +339,8 @@ function generateMetadata (apps = []) {
 
 function generateHealthInfo (options = {}) {
   return {
-    id: options.id ?? 'worker-1',
-    application: options.applicationId ?? 'app-1',
-    currentHealth: {
-      elu: options.elu ?? 0.1,
-      heapUsed: 1024,
-      heapTotal: 2048
-    },
-    unhealthy: false,
-    healthConfig: {
-      enabled: true,
-      interval: 1000,
-      gracePeriod: 1000,
-      maxUnhealthyChecks: 10,
-      maxELU: 0.99,
-      maxHeapUsed: 0.99,
-      maxHeapTotal: 4294967296
-    }
+    workerId: options.id ?? 'worker-1',
+    applicationId: options.applicationId ?? 'app-1',
+    elu: options.elu ?? 0.1
   }
 }

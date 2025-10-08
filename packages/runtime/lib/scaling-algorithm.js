@@ -19,9 +19,7 @@ class ScalingAlgorithm {
   }
 
   addWorkerHealthInfo (healthInfo) {
-    const workerId = healthInfo.id
-    const applicationId = healthInfo.application
-    const elu = healthInfo.currentHealth.elu
+    const { workerId, applicationId, elu } = healthInfo
     const timestamp = Date.now()
 
     if (!this.#appsELUs[applicationId]) {

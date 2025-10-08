@@ -2468,6 +2468,7 @@ export class Runtime extends EventEmitter {
     const scaleIntervalSec = scalerConfig.scaleIntervalSec
     const timeWindowSec = scalerConfig.timeWindowSec
     const applicationsConfigs = scalerConfig.applications
+    const healthCheckInterval = 1000
 
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
@@ -2512,18 +2513,38 @@ export class Runtime extends EventEmitter {
       applications: applicationsConfigs
     })
 
-    this.on('application:worker:health', async (healthInfo) => {
-      if (!healthInfo) {
-        this.logger.error('No health info received')
-        return
+    const healthCheckTimeout = setTimeout(async () => {
+      let shouldCheckForScaling = false
+
+      for (const worker of this.#workers.values()) {
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
+
+        try {
+          const health = await this.#getHealth(worker)
+          if (!health) continue
+
+          scalingAlgorithm.addWorkerHealthInfo({
+            workerId: worker[kId],
+            applicationId: worker[kApplicationId],
+            elu: health.elu
+          })
+
+          if (health.elu > scaleUpELU) {
+            shouldCheckForScaling = true
+          }
+        } catch (err) {
+          this.logger.error({ err }, 'Failed to get health for worker')
+        }
       }
 
-      scalingAlgorithm.addWorkerHealthInfo(healthInfo)
-
-      if (healthInfo.currentHealth.elu > scaleUpELU) {
+      if (shouldCheckForScaling) {
         await checkForScaling()
       }
-    })
+
+      healthCheckTimeout.refresh()
+    }, healthCheckInterval).unref()
 
     let isScaling = false
     let lastScaling = 0

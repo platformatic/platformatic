@@ -14,8 +14,7 @@
     "port": "3042"
   },
   "health": {
-    "gracePeriod": 1,
-    "interval": 1000
+    "enabled": false
   },
   "verticalScaler": {
     "enabled": true
