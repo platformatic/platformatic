@@ -2524,7 +2524,9 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    await this.updateApplicationsResources(initialResourcesUpdates)
+    if (initialResourcesUpdates.length > 0) {
+      await this.updateApplicationsResources(initialResourcesUpdates)
+    }
 
     for (const applicationId in applicationsConfigs) {
       const application = this.#config.applications.find(app => app.id === applicationId)
