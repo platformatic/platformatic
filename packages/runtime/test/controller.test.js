@@ -19,7 +19,7 @@ test('errors when starting an already started application (no logging)', async t
     watch: true,
     dependencies: []
   }
-  const app = new Controller(config)
+  const app = new Controller({}, config)
   await app.init()
 
   t.after(app.stop.bind(app))
@@ -40,7 +40,7 @@ test('errors when stopping an already stopped application', async t => {
     watch: true,
     dependencies: []
   }
-  const app = new Controller(config)
+  const app = new Controller({}, config)
   await app.init()
 
   await rejects(async () => {
@@ -57,7 +57,7 @@ test('logs errors if an env variable is missing', async t => {
     entrypoint: true,
     watch: true
   }
-  const app = new Controller(config)
+  const app = new Controller({}, config)
 
   globalThis.platformatic = { logger: abstractLogger }
 
@@ -85,7 +85,7 @@ test('Uses the server config if passed', async t => {
       level: 'info'
     }
   }
-  const app = new Controller(config, 0, null, null, serverConfig)
+  const app = new Controller({}, config, 0, serverConfig)
 
   t.after(async function () {
     t.mock.restoreAll()
@@ -125,7 +125,7 @@ test('logs errors during startup', async t => {
     entrypoint: true,
     watch: true
   }
-  const app = new Controller(config)
+  const app = new Controller({}, config)
 
   let data = ''
   t.mock.method(process.stdout, 'write', chunk => {
@@ -151,7 +151,7 @@ test('returns application statuses', async t => {
     watch: true,
     dependencies: []
   }
-  const app = new Controller(config)
+  const app = new Controller({}, config)
   await app.init()
 
   app.start()
@@ -187,7 +187,7 @@ test('supports configuration overrides', async t => {
     dependencies: []
   }
 
-  const app = new Controller(config)
+  const app = new Controller({}, config)
 
   await app.init()
 

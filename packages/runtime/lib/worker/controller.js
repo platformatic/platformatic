@@ -129,7 +129,7 @@ export class Controller extends EventEmitter {
 
       this.#updateDispatcher()
 
-      if (!this.capability.exitOnUnhandledErrors && !this.runtimeConfig.exitOnUnhandledErrors) {
+      if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
         this.#setupHandlers()
       }
     } catch (err) {
