@@ -2483,8 +2483,8 @@ export class Runtime extends EventEmitter {
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
-          `The "${application.id}" application cannot be scaled because it is an entrypoint`
-          + ` and the "reusePort" feature is not available in your OS.`
+          `The "${application.id}" application cannot be scaled because it is an entrypoint` +
+          ' and the "reusePort" feature is not available in your OS.'
         )
 
         applicationsConfigs[application.id] = {
