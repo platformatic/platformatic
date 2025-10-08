@@ -30,19 +30,7 @@ The `autoload` configuration is intended to be used with monorepo applications.
   microservice's directory name, and the configuration file is expected to be a
   well-known Platformatic configuration file. `mappings` can be used to override
   these default values.
-  - **`id`** (**required**, `string`) - The overridden ID. This becomes the new
-    microservice ID.
-  - \*\*`config` (`string`) - The overridden configuration file.
-    name. This is the file that will be used when starting the microservice.
-  - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
-    on `127.0.0.1`, and exposed to the other applications via that port and on default,
-    it is set to `false`.
-  - **`workers`** (`number`) - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
-  - **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
-  - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
-  - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
-  - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
-  - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
+  Supported properties are the same of entries in `application`, except `path`, `url`, and `gitBranch`.
 
 ### `preload`
 
@@ -79,6 +67,19 @@ runtime. Each application object supports the following settings:
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `wattpm-utils`. Default is to autodetect it, unless it is specified via command line.
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
 - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
+- **`permissions`** (`object`): Configure application-level security permissions to restrict file system access. Supported properties are:
+  - **`fs`**:
+    - **`read`** (`array` of `string`s): Array of file system paths the application is permitted to read from. Uses the same syntax as Node.js [--allow-fs-read](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-read).
+    - **`write`** (`array` of `string`s): Array of file system paths the application is permitted to write to. Uses the same syntax as Node.js [--allow-fs-write](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-write).
+
+  When filesystem permissions are enabled, certain paths are automatically added to maintain application functionality:
+  - The current Watt project's `node_modules` directory
+  - The application's own `node_modules` directory
+  - Any `node_modules` directories found in parent directories of the runtime path
+
+  The security permissions are based on Node.js permission model and therefore the application will have restricted access to native modules, child processes, worker threads, the inspector protocol, and WASI.
+  See the [Node.js Permission Model Constraints](https://nodejs.org/dist/latest/docs/api/permissions.html#permission-model-constraints) for complete details.
+
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
   intrumentations per application, e.g.:

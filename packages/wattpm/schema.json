@@ -171,6 +171,40 @@
                 },
                 "additionalProperties": false
               },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "envfile": {
+                "type": "string"
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "default": false
+              },
+              "packageManager": {
+                "type": "string",
+                "enum": [
+                  "npm",
+                  "pnpm",
+                  "yarn"
+                ]
+              },
               "preload": {
                 "anyOf": [
                   {
@@ -186,20 +220,66 @@
                   }
                 ]
               },
-              "dependencies": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "arguments": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
               "nodeOptions": {
                 "type": "string"
+              },
+              "permissions": {
+                "type": "object",
+                "properties": {
+                  "fs": {
+                    "type": "object",
+                    "properties": {
+                      "read": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "write": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "telemetry": {
+                "type": "object",
+                "properties": {
+                  "instrumentations": {
+                    "type": "array",
+                    "description": "An array of instrumentations loaded if telemetry is enabled",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "package": {
+                              "type": "string"
+                            },
+                            "exportName": {
+                              "type": "string"
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          },
+                          "required": [
+                            "package"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
               }
             }
           }
@@ -404,6 +484,30 @@
           },
           "nodeOptions": {
             "type": "string"
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "fs": {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "write": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           },
           "telemetry": {
             "type": "object",
@@ -641,6 +745,30 @@
           "nodeOptions": {
             "type": "string"
           },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "fs": {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "write": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
           "telemetry": {
             "type": "object",
             "properties": {
@@ -876,6 +1004,30 @@
           },
           "nodeOptions": {
             "type": "string"
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "fs": {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "write": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           },
           "telemetry": {
             "type": "object",

@@ -45,7 +45,7 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
-export function autoDetectPprofCapture (config) {
+export function pprofCapturePreloadPath () {
   const require = createRequire(import.meta.url)
 
   let pprofCapturePath
@@ -54,6 +54,12 @@ export function autoDetectPprofCapture (config) {
   } catch (err) {
     // No-op
   }
+
+  return pprofCapturePath
+}
+
+export function autoDetectPprofCapture (config) {
+  const pprofCapturePath = pprofCapturePreloadPath()
 
   // Add to preload if not already present
   if (!config.preload) {
@@ -192,14 +198,7 @@ export async function transform (config, _, context) {
         config = join(entryPath, configFilename)
       }
 
-      const application = {
-        id,
-        config,
-        path: entryPath,
-        useHttp: !!mapping.useHttp,
-        health: mapping.health,
-        dependencies: mapping.dependencies
-      }
+      const application = { id, config, path: entryPath, ...mapping }
       const existingApplicationId = applications.findIndex(application => application.id === id)
 
       if (existingApplicationId !== -1) {
