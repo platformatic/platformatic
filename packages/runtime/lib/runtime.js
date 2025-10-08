@@ -892,8 +892,12 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        const applicationMetrics = await sendViaITC(worker, 'getMetrics', format)
-        if (applicationMetrics) {
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', format),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
           }

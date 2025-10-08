@@ -383,6 +383,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
+- **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
 

@@ -520,6 +520,7 @@ export interface PlatformaticServiceConfig {
                 };
               };
           plugins?: string[];
+          timeout?: number | string;
         };
     telemetry?: {
       enabled?: boolean | string;

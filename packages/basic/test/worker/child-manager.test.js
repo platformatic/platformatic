@@ -81,7 +81,7 @@ test('ChildManager - register - can register a local loader', async t => {
   createLogger()
   const manager = new ChildManager({ loader: new URL('../fixtures/loader.js', import.meta.url) })
 
-  manager.register()
+  await manager.register()
 
   const { loaded } = await import(new URL('../fixtures/non-existing.js', import.meta.url))
   await manager.close()
