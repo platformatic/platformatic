@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
-import { ensureFileUrl } from '../utils.js'
+import { ensureFileUrl, importFile } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
@@ -185,9 +185,13 @@ export class ChildManager extends ITC {
     return this.#clients
   }
 
-  register () {
+  async register () {
     Object.assign(globalThis.platformatic, this.#context)
     register(this.#loader, { data: this.#context })
+
+    for (const script of this.#scripts) {
+      await importFile(script)
+    }
   }
 
   emit (...args) {

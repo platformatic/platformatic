@@ -139,6 +139,9 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.44.1(eslint@9.36.0)(typescript@5.9.2))(eslint@9.36.0)(typescript@5.9.2)
+      tsd:
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.5.4
         version: 5.9.2

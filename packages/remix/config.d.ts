@@ -324,6 +324,7 @@ export interface PlatformaticRemixConfig {
                 };
               };
           plugins?: string[];
+          timeout?: number | string;
         };
     telemetry?: {
       enabled?: boolean | string;

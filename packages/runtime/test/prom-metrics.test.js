@@ -814,3 +814,30 @@ test('liveness - should respond to liveness with the custom readiness response f
     strictEqual(await body.text(), 'Not ready')
   }
 })
+
+test('should not wait for a blocked worker for metrics', async t => {
+  const projectDir = join(fixturesDir, 'custom-metrics-blocked')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const start = Date.now()
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics'
+  })
+  strictEqual(statusCode, 200)
+
+  const metrics = await body.text()
+
+  strictEqual(metrics.trim(), '')
+  ok(Date.now() - start < 3000, 'should not take more than 3 seconds to respond')
+})

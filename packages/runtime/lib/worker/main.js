@@ -2,8 +2,6 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureLoggableError,
-  executeWithTimeout,
   getPrivateSymbol
 } from '@platformatic/foundation'
 import dotenv from 'dotenv'
@@ -28,21 +26,6 @@ class ForwardingEventEmitter extends EventEmitter {
     globalThis.platformatic.itc.notify('event', { event, payload: args })
     return this.emit(event, ...args)
   }
-}
-
-function handleUnhandled (app, type, err) {
-  const label =
-    workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-      : `application "${workerData.applicationConfig.id}"`
-
-  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
-
-  executeWithTimeout(app?.stop(), 1000)
-    .catch()
-    .finally(() => {
-      process.exit(1)
-    })
 }
 
 function patchLogging () {
@@ -113,16 +96,16 @@ async function main () {
     events: new ForwardingEventEmitter()
   })
 
-  const config = workerData.config
+  const runtimeConfig = workerData.config
 
-  await performPreloading(config, workerData.applicationConfig)
+  await performPreloading(runtimeConfig, workerData.applicationConfig)
 
-  const application = workerData.applicationConfig
+  const applicationConfig = workerData.applicationConfig
 
   // Load env file and mixin env vars from application config
   let envfile
-  if (application.envfile) {
-    envfile = resolve(workerData.dirname, application.envfile)
+  if (applicationConfig.envfile) {
+    envfile = resolve(workerData.dirname, applicationConfig.envfile)
   } else {
     envfile = resolve(workerData.applicationConfig.path, '.env')
   }
@@ -133,20 +116,20 @@ async function main () {
     path: envfile
   })
 
-  if (config.env) {
-    Object.assign(process.env, config.env)
+  if (runtimeConfig.env) {
+    Object.assign(process.env, runtimeConfig.env)
   }
-  if (application.env) {
-    Object.assign(process.env, application.env)
+  if (applicationConfig.env) {
+    Object.assign(process.env, applicationConfig.env)
   }
 
-  const { threadDispatcher } = await setDispatcher(config)
+  const { threadDispatcher } = await setDispatcher(runtimeConfig)
 
   // If the application is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
-  if (config.server && application.entrypoint) {
-    serverConfig = config.server
-  } else if (application.useHttp) {
+  if (runtimeConfig.server && applicationConfig.entrypoint) {
+    serverConfig = runtimeConfig.server
+  } else if (applicationConfig.useHttp) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
@@ -169,48 +152,32 @@ async function main () {
     const res = await fetch(url)
     const [{ devtoolsFrontendUrl }] = await res.json()
 
-    console.log(`For ${application.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
+    console.log(`For ${applicationConfig.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
   }
 
   // Create the application
   // Add idLabel to metrics config to determine which label name to use (defaults to applicationId)
-  const metricsConfig = config.metrics
+  const metricsConfig = runtimeConfig.metrics
     ? {
-        ...config.metrics,
-        idLabel: config.metrics.applicationLabel || 'applicationId'
+        ...runtimeConfig.metrics,
+        idLabel: runtimeConfig.metrics.applicationLabel || 'applicationId'
       }
-    : config.metrics
+    : runtimeConfig.metrics
 
   const controller = new Controller(
-    application,
+    runtimeConfig,
+    applicationConfig,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
-    application.telemetry,
-    config.logger,
     serverConfig,
-    metricsConfig,
-    !!config.managementApi,
-    !!config.watch
+    metricsConfig
   )
-
-  if (config.exitOnUnhandledErrors) {
-    process.on('uncaughtException', handleUnhandled.bind(null, controller, 'uncaught exception'))
-    process.on('unhandledRejection', handleUnhandled.bind(null, controller, 'unhandled rejection'))
-
-    process.on('newListener', event => {
-      if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        globalThis.platformatic.logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
-        )
-      }
-    })
-  }
 
   await controller.init()
 
-  if (application.entrypoint && config.basePath) {
+  if (applicationConfig.entrypoint && runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
     if (!meta.gateway.wantsAbsoluteUrls) {
-      stripBasePath(config.basePath)
+      stripBasePath(runtimeConfig.basePath)
     }
   }
 
@@ -222,7 +189,7 @@ async function main () {
   }
 
   // Setup interaction with parent port
-  const itc = setupITC(controller, application, threadDispatcher, sharedContext)
+  const itc = setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
   globalThis.platformatic.itc = itc
 

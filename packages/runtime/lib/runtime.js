@@ -9,7 +9,6 @@ import {
   kTimeout,
   parseMemorySize
 } from '@platformatic/foundation'
-import os from 'node:os'
 import { ITC } from '@platformatic/itc'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
@@ -17,6 +16,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
+import os from 'node:os'
 import { join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -40,12 +40,12 @@ import {
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { startPrometheusServer } from './prom-server.js'
+import ScalingAlgorithm from './scaling-algorithm.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import ScalingAlgorithm from './scaling-algorithm.js'
 import {
   kApplicationId,
   kConfig,
@@ -892,8 +892,12 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        const applicationMetrics = await sendViaITC(worker, 'getMetrics', format)
-        if (applicationMetrics) {
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', format),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
           }
@@ -2523,9 +2527,7 @@ export class Runtime extends EventEmitter {
     await this.updateApplicationsResources(initialResourcesUpdates)
 
     for (const applicationId in applicationsConfigs) {
-      const application = this.#config.applications.find(
-        app => app.id === applicationId
-      )
+      const application = this.#config.applications.find(app => app.id === applicationId)
       if (!application) {
         delete applicationsConfigs[applicationId]
 
@@ -2614,7 +2616,7 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    const applyRecommendations = async (recommendations) => {
+    const applyRecommendations = async recommendations => {
       const resourcesUpdates = []
       for (const recommendation of recommendations) {
         const { applicationId, workersCount, direction } = recommendation

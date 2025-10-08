@@ -28,6 +28,8 @@ export class NextCapability extends BaseCapability {
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
+
+    this.exitOnUnhandledErrors = false
   }
 
   async init () {
@@ -281,7 +283,8 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      this.childManager.register()
+      await this.childManager.register()
+
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true

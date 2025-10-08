@@ -71,7 +71,7 @@ export async function waitEventFromITC (worker, event) {
 
 export function setupITC (controller, application, dispatcher, sharedContext) {
   const logger = globalThis.platformatic.logger
-  const messaging = new MessagingITC(controller.appConfig.id, workerData.config, logger)
+  const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 
   Object.assign(globalThis.platformatic ?? {}, {
     messaging: {
@@ -82,7 +82,7 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
   })
 
   const itc = new ITC({
-    name: controller.appConfig.id + '-worker',
+    name: controller.applicationConfig.id + '-worker',
     port: parentPort,
     handlers: {
       async start () {

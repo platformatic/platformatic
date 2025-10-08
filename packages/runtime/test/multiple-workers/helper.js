@@ -12,8 +12,16 @@ const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 export async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
 
+  if (process.env.PLT_TESTS_KEEP_TMP) {
+    process._rawDebug('Runtime root:', resolve(root))
+  }
+
   await createDirectory(root)
-  t.after(() => safeRemove(root))
+  t.after(() => {
+    if (!process.env.PLT_TESTS_KEEP_TMP) {
+      return safeRemove(root)
+    }
+  })
 
   await cp(resolve(fixturesDir, name), root, { recursive: true })
 

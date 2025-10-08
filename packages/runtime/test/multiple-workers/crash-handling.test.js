@@ -104,7 +104,7 @@ test('can restart only crashed workers when they crash', async t => {
 
   await app.start()
 
-  await updateFile(resolve(root, 'node/index.mjs'), contents => {
+  const update = await updateFile(resolve(root, 'node/index.mjs'), contents => {
     return (
       contents +
       "\n\nif(globalThis.platformatic.workerId % 2 === 0) { setTimeout(() => { throw new Error('kaboom') }, 250) }"
@@ -141,6 +141,15 @@ test('can restart only crashed workers when they crash', async t => {
 
   await eventsPromise
 
+  update.revert()
+
+  await waitForEvents(
+    app,
+    { event: 'application:worker:started', application: 'node', worker: 0 },
+    { event: 'application:worker:started', application: 'node', worker: 2 },
+    { event: 'application:worker:started', application: 'node', worker: 4 }
+  )
+
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
   ok(errors.find(e => e.application === 'node' && e.worker === 2))
   ok(errors.find(e => e.application === 'node' && e.worker === 4))
@@ -159,7 +168,7 @@ test('can restart only crashed workers when they exit', async t => {
 
   await app.start()
 
-  await updateFile(resolve(root, 'node/index.mjs'), contents => {
+  const update = await updateFile(resolve(root, 'node/index.mjs'), contents => {
     return (
       contents + '\n\nif(globalThis.platformatic.workerId % 2 === 0) { setTimeout(() => { process.exit(1) }, 250) }'
     )
@@ -194,6 +203,15 @@ test('can restart only crashed workers when they exit', async t => {
   await client.close()
 
   await eventsPromise
+
+  update.revert()
+
+  await waitForEvents(
+    app,
+    { event: 'application:worker:started', application: 'node', worker: 0 },
+    { event: 'application:worker:started', application: 'node', worker: 2 },
+    { event: 'application:worker:started', application: 'node', worker: 4 }
+  )
 
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
   ok(errors.find(e => e.application === 'node' && e.worker === 2))
