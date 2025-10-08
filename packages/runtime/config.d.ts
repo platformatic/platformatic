@@ -31,10 +31,39 @@ export type PlatformaticRuntimeConfig = {
           maxHeapTotal?: number | string;
           maxYoungGeneration?: number | string;
         };
-        preload?: string | string[];
         dependencies?: string[];
         arguments?: string[];
+        env?: {
+          [k: string]: string;
+        };
+        envfile?: string;
+        sourceMaps?: boolean;
+        packageManager?: "npm" | "pnpm" | "yarn";
+        preload?: string | string[];
         nodeOptions?: string;
+        permissions?: {
+          fs?: {
+            read?: string[];
+            write?: string[];
+          };
+        };
+        telemetry?: {
+          /**
+           * An array of instrumentations loaded if telemetry is enabled
+           */
+          instrumentations?: (
+            | string
+            | {
+                package: string;
+                exportName?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+                [k: string]: unknown;
+              }
+          )[];
+          [k: string]: unknown;
+        };
       };
     };
   };

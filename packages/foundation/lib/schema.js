@@ -735,6 +735,30 @@ export const applications = {
       nodeOptions: {
         type: 'string'
       },
+      permissions: {
+        type: 'object',
+        properties: {
+          fs: {
+            type: 'object',
+            properties: {
+              read: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              },
+              write: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        additionalProperties: false
+      },
       telemetry: {
         type: 'object',
         properties: {
@@ -814,35 +838,7 @@ export const runtimeProperties = {
           type: 'object',
           additionalProperties: false,
           required: ['id'],
-          properties: {
-            id: {
-              type: 'string'
-            },
-            config: {
-              type: 'string'
-            },
-            useHttp: {
-              type: 'boolean'
-            },
-            workers,
-            health: { ...healthWithoutDefaults },
-            preload,
-            dependencies: {
-              type: 'array',
-              items: {
-                type: 'string'
-              }
-            },
-            arguments: {
-              type: 'array',
-              items: {
-                type: 'string'
-              }
-            },
-            nodeOptions: {
-              type: 'string'
-            }
-          }
+          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch'])
         }
       }
     }

@@ -10,12 +10,26 @@ export const isCIOnWindows = process.env.CI && isWindows
 export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 
 let tempDirCounter = 0
-const tempPath = resolve(import.meta.dirname, '../../../tmp/')
+
+export const tempPath = resolve(import.meta.dirname, '../../../tmp/')
 
 export async function getTempDir () {
   const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
+}
+
+export async function createTemporaryDirectory (t, prefix) {
+  const directory = join(tempPath, `test-runtime-${prefix}-${process.pid}-${tempDirCounter++}`)
+
+  t.after(async () => {
+    if (!process.env.PLT_TESTS_KEEP_TMP) {
+      return safeRemove(directory)
+    }
+  })
+
+  await createDirectory(directory)
+  return directory
 }
 
 export async function moveToTmpdir (teardown) {

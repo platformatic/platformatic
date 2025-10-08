@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "services": [
+    {
+      "id": "service",
+      "path": ".",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

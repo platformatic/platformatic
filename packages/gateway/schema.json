@@ -1475,6 +1475,30 @@
               "nodeOptions": {
                 "type": "string"
               },
+              "permissions": {
+                "type": "object",
+                "properties": {
+                  "fs": {
+                    "type": "object",
+                    "properties": {
+                      "read": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "write": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
               "telemetry": {
                 "type": "object",
                 "properties": {

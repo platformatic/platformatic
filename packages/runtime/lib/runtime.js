@@ -9,7 +9,6 @@ import {
   kTimeout,
   parseMemorySize
 } from '@platformatic/foundation'
-import os from 'node:os'
 import { ITC } from '@platformatic/itc'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
@@ -17,13 +16,15 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
-import { join } from 'node:path'
+import os from 'node:os'
+import { dirname, isAbsolute, join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { pprofCapturePreloadPath } from './config.js'
 import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
@@ -40,12 +41,12 @@ import {
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { startPrometheusServer } from './prom-server.js'
+import ScalingAlgorithm from './scaling-algorithm.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import ScalingAlgorithm from './scaling-algorithm.js'
 import {
   kApplicationId,
   kConfig,
@@ -1315,6 +1316,17 @@ export class Runtime extends EventEmitter {
       execArgv.push('--enable-source-maps')
     }
 
+    if (applicationConfig.permissions?.fs) {
+      execArgv.push(...this.#setupPermissions(applicationConfig))
+    }
+
+    let preload = config.preload
+    if (execArgv.includes('--permission')) {
+      // Remove wattpm-pprof-capture from preload since it is not supported
+      const pprofCapturePath = pprofCapturePreloadPath()
+      preload = preload.filter(p => p !== pprofCapturePath)
+    }
+
     const workerEnv = structuredClone(this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {
@@ -1337,7 +1349,10 @@ export class Runtime extends EventEmitter {
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
-        config,
+        config: {
+          ...config,
+          preload
+        },
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2491,9 +2506,7 @@ export class Runtime extends EventEmitter {
     }
 
     for (const applicationId in applicationsConfigs) {
-      const application = this.#config.applications.find(
-        app => app.id === applicationId
-      )
+      const application = this.#config.applications.find(app => app.id === applicationId)
       if (!application) {
         delete applicationsConfigs[applicationId]
 
@@ -2512,7 +2525,7 @@ export class Runtime extends EventEmitter {
       applications: applicationsConfigs
     })
 
-    this.on('application:worker:health', async (healthInfo) => {
+    this.on('application:worker:health', async healthInfo => {
       if (!healthInfo) {
         this.logger.error('No health info received')
         return
@@ -2557,7 +2570,7 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    const applyRecommendations = async (recommendations) => {
+    const applyRecommendations = async recommendations => {
       const resourcesUpdates = []
       for (const recommendation of recommendations) {
         const { applicationId, workersCount, direction } = recommendation
@@ -2573,5 +2586,49 @@ export class Runtime extends EventEmitter {
 
     // Interval for periodic scaling checks
     setInterval(checkForScaling, scaleIntervalSec * 1000).unref()
+  }
+
+  #setupPermissions (applicationConfig) {
+    const argv = []
+    const allows = new Set()
+    const { read, write } = applicationConfig.permissions.fs
+
+    if (read?.length) {
+      for (const p of read) {
+        allows.add(`--allow-fs-read=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
+      }
+    }
+
+    if (write?.length) {
+      for (const p of write) {
+        allows.add(`--allow-fs-write=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
+      }
+    }
+
+    if (allows.size === 0) {
+      return argv
+    }
+
+    // We need to allow read access to the node_modules folder both at the runtime level and at the application level
+    allows.add(`--allow-fs-read=${join(this.#root, 'node_modules', '*')}`)
+    allows.add(`--allow-fs-read=${join(applicationConfig.path, 'node_modules', '*')}`)
+
+    // Since we can't really predict how dependencies are installed (symlinks, pnpm store, and so forth), we also
+    // add any node_modules folder found in the ancestors of the current file
+    let lastPath = import.meta.dirname
+    let currentPath = import.meta.dirname
+
+    do {
+      lastPath = currentPath
+      const nodeModules = join(currentPath, 'node_modules')
+      if (existsSync(nodeModules)) {
+        allows.add(`--allow-fs-read=${join(nodeModules, '*')}`)
+      }
+
+      currentPath = dirname(currentPath)
+    } while (lastPath !== currentPath)
+
+    argv.push('--permission', ...allows)
+    return argv
   }
 }
