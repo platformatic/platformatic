@@ -278,7 +278,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.#config.verticalScaler?.enabled) {
-      this.#setupVerticalScaler()
+      await this.#setupVerticalScaler()
     }
 
     this.#showUrl()
@@ -2444,7 +2444,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  #setupVerticalScaler () {
+  async #setupVerticalScaler () {
     const fixedWorkersCount = this.#config.workers
     if (fixedWorkersCount !== undefined) {
       this.logger.warn(
@@ -2480,6 +2480,8 @@ export class Runtime extends EventEmitter {
     const gracePeriod = scalerConfig.gracePeriod
     const healthCheckInterval = 1000
 
+    const initialResourcesUpdates = []
+
     for (const application of this.#config.applications) {
       if (application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
@@ -2508,7 +2510,17 @@ export class Runtime extends EventEmitter {
       applicationsConfigs[application.id] ??= {}
       applicationsConfigs[application.id].minWorkers ??= minWorkers
       applicationsConfigs[application.id].maxWorkers ??= maxWorkers
+
+      const appMinWorkers = applicationsConfigs[application.id].minWorkers
+      if (appMinWorkers > 1) {
+        initialResourcesUpdates.push({
+          application: application.id,
+          workers: minWorkers
+        })
+      }
     }
+
+    await this.updateApplicationsResources(initialResourcesUpdates)
 
     for (const applicationId in applicationsConfigs) {
       const application = this.#config.applications.find(
