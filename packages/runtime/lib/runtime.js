@@ -893,7 +893,7 @@ export class Runtime extends EventEmitter {
 
         const applicationMetrics = await executeWithTimeout(
           sendViaITC(worker, 'getMetrics', format),
-          this.#config.metrics.timeout
+          this.#config.metrics?.timeout ?? 10000
         )
 
         if (applicationMetrics && applicationMetrics !== kTimeout) {

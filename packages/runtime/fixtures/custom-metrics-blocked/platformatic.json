@@ -2,7 +2,10 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
   "watch": false,
   "managementApi": true,
-  "metrics": true,
+  "metrics": {
+    "enabled": true,
+    "timeout": 1000
+  },
   "restartOnError": 500,
   "entrypoint": "main",
   "autoload": {
