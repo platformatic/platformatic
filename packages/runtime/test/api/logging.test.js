@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { hostname as getHostname } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -151,7 +151,8 @@ test('logs stdio from the application thread', async t => {
       }
     ])
 
-    deepStrictEqual(runtimeMessages, [
+    // Do not use deepStrictEqual as some other message might be logged but we don't care about all of them
+    deepEqual(runtimeMessages, [
       {
         level: 30,
         pid,

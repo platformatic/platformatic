@@ -324,6 +324,7 @@ export interface PlatformaticAstroConfig {
                 };
               };
           plugins?: string[];
+          timeout?: number | string;
         };
     telemetry?: {
       enabled?: boolean | string;

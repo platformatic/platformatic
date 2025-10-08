@@ -336,6 +336,13 @@ export async function transform (config, _, context) {
     // like adding other applications.
   }
 
+  if (config.metrics === true) {
+    config.metrics = {
+      enabled: true,
+      timeout: 1000
+    }
+  }
+
   config.applications = applications
   config.web = undefined
   config.services = undefined
