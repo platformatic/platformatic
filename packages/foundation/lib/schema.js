@@ -1120,6 +1120,10 @@ export const runtimeProperties = {
                 }
               ]
             }
+          },
+          timeout: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }],
+            default: 1000
           }
         },
         additionalProperties: false

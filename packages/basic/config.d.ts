@@ -220,6 +220,7 @@ export interface PlatformaticBasicConfig {
                 };
               };
           plugins?: string[];
+          timeout?: number | string;
         };
     telemetry?: {
       enabled?: boolean | string;

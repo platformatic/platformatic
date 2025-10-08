@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "watch": false,
+  "managementApi": true,
+  "metrics": true,
+  "restartOnError": 500,
+  "entrypoint": "main",
+  "autoload": {
+    "path": "."
+  },
+  "logger": {
+    "level": "error"
+  },
+  "gracefulShutdown": {
+    "runtime": 10000,
+    "application": 1000
+  }
+}

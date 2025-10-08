@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/3.0.0.json",
+  "plugins": {
+    "paths": ["./plugin.js"]
+  },
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  }
+}
