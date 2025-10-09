@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import si from 'systeminformation'
 
 export function getArrayDifference (a, b) {
   return a.filter(element => {
@@ -16,4 +18,76 @@ export function getRuntimeTmpDir (runtimeDir) {
   const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
   const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
   return join(platformaticTmpDir, runtimeDirHash)
+}
+
+async function readNumberFromCgroupFile (path) {
+  try {
+    const raw = (await readFile(path, 'utf8')).trim()
+    if (raw === 'max') return null
+    return Number(raw)
+  } catch {
+    return null
+  }
+}
+
+async function getCgroupV2MemmoryInfo () {
+  let [total, used] = await Promise.all([
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory.max'),
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory.current')
+  ])
+  if (total == null && used == null) return null
+
+  if (total === null) {
+    const mem = await si.mem()
+    total = mem.total
+  }
+
+  return { scope: 'cgroup-v2', used, total }
+}
+
+async function getCgroupV1MemmoryInfo () {
+  let [total, used] = await Promise.all([
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory.max'),
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory.current')
+  ])
+  if (total == null && used == null) return null
+
+  // Some v1 setups report 9.22e18 (≈unlimited)
+  const unlimited = total > 1e18
+  if (total === null || total > 1e18) {
+    const mem = await si.mem()
+    total = mem.total
+  }
+
+  return { scope: 'cgroup-v1', used, total }
+}
+
+async function readHostMemoryInfo () {
+  const mem = await si.mem()
+  return { scope: 'host', used: mem.active, total: mem.total }
+}
+
+export async function getMemoryInfo (options = {}) {
+  const scope = options.scope
+
+  if (scope === 'cgroup-v2') {
+    return getCgroupV2MemmoryInfo()
+  }
+  if (scope === 'cgroup-v1') {
+    return getCgroupV1MemmoryInfo()
+  }
+  if (scope === 'host') {
+    return readHostMemoryInfo()
+  }
+
+  let memInfo = await getCgroupV2MemmoryInfo()
+
+  if (!memInfo) {
+    memInfo = await getCgroupV1MemmoryInfo()
+  }
+  if (!memInfo) {
+    memInfo = await readHostMemoryInfo()
+  }
+
+  return memInfo
 }
