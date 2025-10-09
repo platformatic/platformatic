@@ -199,7 +199,8 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
           'service-1': { maxWorkers: 1 },
           'service-2': { maxWorkers: 1 },
           'non-existing-app': { maxWorkers: 1 }
-        }
+        },
+        maxTotalMemory: 1000000
       }
       runtimeConfig = config
       return config
@@ -255,6 +256,7 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
       'service-2': { minWorkers: 1, maxWorkers: 1 }
     },
     maxTotalWorkers,
+    maxTotalMemory: 1000000,
     maxWorkers,
     minWorkers: 1,
     minELUDiff: 0.2,
@@ -274,6 +276,7 @@ test('should scale a standalone application if elu is higher than treshold', asy
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
+      config.verticalScaler.maxTotalMemory = 1000000
       runtimeConfig = config
       return config
     }
@@ -313,6 +316,7 @@ test('should scale a standalone application if elu is higher than treshold', asy
       'service-1': { minWorkers: 1, maxWorkers }
     },
     maxTotalWorkers,
+    maxTotalMemory: 1000000,
     maxWorkers: 2,
     minWorkers: 1,
     minELUDiff: 0.2,
