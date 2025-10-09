@@ -428,24 +428,35 @@ _Every object_ has:
 
 ### verticalScaler
 
-The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime.
+The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime. The vertical scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
+
+The scaler operates in two modes:
+- **Reactive Mode**: Triggers scaling checks immediately when any worker's ELU exceeds the `scaleUpELU` threshold
+- **Periodic Mode**: Runs scaling checks at regular intervals defined by `scaleIntervalSec`
+
+When scaling up, the algorithm ensures there is sufficient available system memory (calculated as available memory minus 10% safety buffer) to accommodate new workers based on the application's average heap usage.
+
+Configuration options:
 
 - **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
-- **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.cpus().length`.
+- **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
 - **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
 - **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
-- **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. Default: `60`.
-- **`scaleUpELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling up.
-  Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.8`.
-- **`scaleDownELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling down.
-  Scaler compares an average ELU an application collects over a `timeWindowSec` period. Default: `0.2`.
-- **`minELUDiff`** (`number`). The minimum ELU difference required between applications for worker reallocation when at maximum worker limit. Default: `0.2`.
-- **`timeWindowSec`** (`number`). The time window in seconds over which the ELU is averaged. Default: `60`.
-- **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. Default: `30000`.
-- **`scaleIntervalSec`** (`number`). The interval in seconds for periodic scaling checks. Default: `60`.
+- **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
+- **`scaleUpELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling up. The scaler compares the average ELU an application collects over the `timeWindowSec` period. Must be between 0 and 1. Default: `0.8`.
+- **`scaleDownELU`** (`number`). The ELU (Event Loop Utilization) threshold below which an application can be scaled down. The scaler compares the average ELU an application collects over the `timeWindowSec` period. Must be between 0 and 1. Default: `0.2`.
+- **`minELUDiff`** (`number`). The minimum ELU difference required between applications for worker reallocation when at maximum worker limit or insufficient memory. Default: `0.2`.
+- **`timeWindowSec`** (`number`). The time window in seconds over which ELU and memory metrics are collected and averaged. Longer windows provide more stable decisions but slower reactions. Default: `60`.
+- **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
+- **`scaleIntervalSec`** (`number`). The interval in seconds for periodic scaling checks. The scaler will also run reactively when ELU thresholds are exceeded. Default: `60`.
 - **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
   - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
   - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.
+
+**Notes:**
+- Applications with a fixed `workers` configuration or entrypoint applications on systems without `reusePort` support will have their min/max workers automatically set to their current value to prevent scaling.
+- The scaler tracks heap memory usage and will not scale up if there is insufficient available system memory, even if ELU thresholds are met.
+- A 10% memory buffer is reserved to prevent out-of-memory situations.
 
 ## Setting and Using ENV placeholders
 
