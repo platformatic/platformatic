@@ -1351,6 +1351,9 @@ importers:
       sonic-boom:
         specifier: ^4.2.0
         version: 4.2.0
+      systeminformation:
+        specifier: ^5.27.11
+        version: 5.27.11
       undici:
         specifier: ^7.0.0
         version: 7.11.0
@@ -9016,6 +9019,12 @@ packages:
   symbol-observable@4.0.0:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
     engines: {node: '>=0.10'}
+
+  systeminformation@5.27.11:
+    resolution: {integrity: sha512-K3Lto/2m3K2twmKHdgx5B+0in9qhXK4YnoT9rIlgwN/4v7OV5c8IjbeAUkuky/6VzCQC7iKCAqi8rZathCdjHg==}
+    engines: {node: '>=8.0.0'}
+    os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
+    hasBin: true
 
   table@6.9.0:
     resolution: {integrity: sha512-9kY+CygyYM6j02t5YFHbNz2FN5QmYGv9zAjVp4lCDjlCw7amdckXlEt/bjMhUIfj4ThGRE4gCUH5+yGnNuPo5A==}
@@ -18417,6 +18426,8 @@ snapshots:
   swap-case@3.0.3: {}
 
   symbol-observable@4.0.0: {}
+
+  systeminformation@5.27.11: {}
 
   table@6.9.0:
     dependencies:

@@ -47,6 +47,7 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
+import sysinfo from 'systeminformation'
 import {
   kApplicationId,
   kConfig,
@@ -2583,7 +2584,9 @@ export class Runtime extends EventEmitter {
           scalingAlgorithm.addWorkerHealthInfo({
             workerId: worker[kId],
             applicationId: worker[kApplicationId],
-            elu: health.elu
+            elu: health.elu,
+            heapUsed: health.heapUsed,
+            heapTotal: health.heapTotal
           })
 
           if (health.elu > scaleUpELU) {
@@ -2611,6 +2614,7 @@ export class Runtime extends EventEmitter {
 
       try {
         const workersInfo = await this.getWorkers()
+        const mem = await sysinfo.mem()
 
         const appsWorkersInfo = {}
         for (const worker of Object.values(workersInfo)) {
@@ -2621,7 +2625,10 @@ export class Runtime extends EventEmitter {
           appsWorkersInfo[applicationId]++
         }
 
-        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
+        const availableMemory = mem.available - (mem.total * 0.1)
+        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
+          availableMemory
+        })
         if (recommendations.length > 0) {
           await applyRecommendations(recommendations)
           lastScaling = Date.now()
