@@ -17,4 +17,3 @@ test('getMemoryInfo - should get the host memory info', async t => {
   ok(memInfo.total > 0)
   ok(memInfo.used <= memInfo.total)
 })
-

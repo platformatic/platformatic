@@ -47,7 +47,7 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import sysinfo from 'systeminformation'
+import { getMemoryInfo } from './utils.js'
 import {
   kApplicationId,
   kConfig,
@@ -2606,6 +2606,7 @@ export class Runtime extends EventEmitter {
 
     let isScaling = false
     let lastScaling = 0
+    let memScope = null
 
     const checkForScaling = async () => {
       const isInCooldown = Date.now() < lastScaling + cooldown * 1000
@@ -2614,7 +2615,8 @@ export class Runtime extends EventEmitter {
 
       try {
         const workersInfo = await this.getWorkers()
-        const mem = await sysinfo.mem()
+        const mem = await getMemoryInfo({ scope: memScope })
+        memScope = mem.scope
 
         const appsWorkersInfo = {}
         for (const worker of Object.values(workersInfo)) {
@@ -2625,7 +2627,7 @@ export class Runtime extends EventEmitter {
           appsWorkersInfo[applicationId]++
         }
 
-        const availableMemory = mem.available - (mem.total * 0.1)
+        const availableMemory = (mem.total * 0.9) - mem.used
         const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
           availableMemory
         })

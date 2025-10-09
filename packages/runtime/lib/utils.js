@@ -30,7 +30,7 @@ async function readNumberFromCgroupFile (path) {
   }
 }
 
-async function getCgroupV2MemmoryInfo () {
+async function getCgroupV2MemoryInfo () {
   let [total, used] = await Promise.all([
     readNumberFromCgroupFile('/sys/fs/cgroup/memory.max'),
     readNumberFromCgroupFile('/sys/fs/cgroup/memory.current')
@@ -45,15 +45,14 @@ async function getCgroupV2MemmoryInfo () {
   return { scope: 'cgroup-v2', used, total }
 }
 
-async function getCgroupV1MemmoryInfo () {
+async function getCgroupV1MemoryInfo () {
   let [total, used] = await Promise.all([
-    readNumberFromCgroupFile('/sys/fs/cgroup/memory.max'),
-    readNumberFromCgroupFile('/sys/fs/cgroup/memory.current')
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory/memory.limit_in_bytes'),
+    readNumberFromCgroupFile('/sys/fs/cgroup/memory/memory.usage_in_bytes')
   ])
   if (total == null && used == null) return null
 
   // Some v1 setups report 9.22e18 (≈unlimited)
-  const unlimited = total > 1e18
   if (total === null || total > 1e18) {
     const mem = await si.mem()
     total = mem.total
@@ -71,19 +70,19 @@ export async function getMemoryInfo (options = {}) {
   const scope = options.scope
 
   if (scope === 'cgroup-v2') {
-    return getCgroupV2MemmoryInfo()
+    return getCgroupV2MemoryInfo()
   }
   if (scope === 'cgroup-v1') {
-    return getCgroupV1MemmoryInfo()
+    return getCgroupV1MemoryInfo()
   }
   if (scope === 'host') {
     return readHostMemoryInfo()
   }
 
-  let memInfo = await getCgroupV2MemmoryInfo()
+  let memInfo = await getCgroupV2MemoryInfo()
 
   if (!memInfo) {
-    memInfo = await getCgroupV1MemmoryInfo()
+    memInfo = await getCgroupV1MemoryInfo()
   }
   if (!memInfo) {
     memInfo = await readHostMemoryInfo()
