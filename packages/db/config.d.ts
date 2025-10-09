@@ -771,6 +771,7 @@ export interface PlatformaticDatabaseConfig {
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
+      maxTotalMemory?: number;
       minWorkers?: number;
       maxWorkers?: number;
       scaleUpELU?: number;

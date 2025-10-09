@@ -405,6 +405,7 @@ export interface PlatformaticViteConfig {
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
+      maxTotalMemory?: number;
       minWorkers?: number;
       maxWorkers?: number;
       scaleUpELU?: number;

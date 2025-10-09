@@ -19,10 +19,11 @@ ELU values are collected continuously from all workers and averaged over a confi
 
 #### Memory Usage
 The algorithm tracks heap memory usage (`heapUsed` and `heapTotal`) for each worker. When making scaling decisions, it considers:
-- **Available system memory**: The free memory available on the system, minus a 10% safety buffer
+- **Total memory limit**: A configured maximum total memory (`maxTotalMemory`), defaulting to 90% of the system's total memory
+- **Available memory**: Calculated as `maxTotalMemory - currently used memory`
 - **Average heap usage**: The average memory consumed by workers of each application
 
-This ensures that new workers are only started when there's sufficient memory available to accommodate them.
+The system memory information is obtained from cgroup files when running in containerized environments (Docker, Kubernetes), or from the operating system otherwise. This ensures that new workers are only started when there's sufficient memory available to accommodate them based on the application's average heap usage.
 
 ### Scaling Logic
 
@@ -34,10 +35,11 @@ The algorithm operates in two modes:
 Both modes analyze all applications and generate scaling recommendations:
 
 #### 1. Metric Collection
-- Collects ELU and heap memory metrics from all active workers
+- Collects ELU and heap memory metrics from all active workers every second
+- Only collects metrics from workers that have been running for at least the grace period (default: 30 seconds)
 - Maintains a rolling time window of metrics (default: 60 seconds)
 - Calculates average ELU and heap usage per application across all its workers
-- Checks available system memory (total available minus 10% safety buffer)
+- Checks available memory by calculating `maxTotalMemory - currently used memory`
 
 #### 2. Application Prioritization
 Applications are prioritized based on:
@@ -85,6 +87,7 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | **maxTotalWorkers** | Maximum total workers across all applications | `os.availableParallelism()` |
+| **maxTotalMemory** | Maximum total memory that can be used by all workers (bytes) | 90% of system total memory |
 | **minWorkers** | Minimum workers for each application | 1 |
 | **maxWorkers** | Maximum workers for each application | `maxTotalWorkers` |
 | **scaleUpELU** | ELU threshold to trigger scaling up (0-1) | 0.8 |
@@ -223,12 +226,14 @@ Example:
 - App A: 2 workers, ELU = 0.85, avg heap = 1.5GB
 - App B: 1 worker, ELU = 0.3, avg heap = 500MB
 - Total: 3 workers, Max: 10
-- Available memory: 1GB
+- maxTotalMemory: 10GB
+- Currently used memory: 9GB
+- Available memory: 1GB (10GB - 9GB)
 
 **Analysis:**
 - App A needs scaling (ELU = 0.85 > 0.8)
 - Under max worker limit (3 < 10)
-- Insufficient memory for new worker (1GB < 1.5GB needed)
+- Insufficient memory for new worker (1GB available < 1.5GB needed for new worker)
 - App B cannot be scaled down (already at minWorkers = 1)
 
 **Decision:** No scaling (insufficient memory and no workers to reallocate)

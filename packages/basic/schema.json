@@ -1219,6 +1219,10 @@
               "type": "number",
               "minimum": 1
             },
+            "maxTotalMemory": {
+              "type": "number",
+              "minimum": 0
+            },
             "minWorkers": {
               "type": "number",
               "minimum": 1

@@ -434,12 +434,13 @@ The scaler operates in two modes:
 - **Reactive Mode**: Triggers scaling checks immediately when any worker's ELU exceeds the `scaleUpELU` threshold
 - **Periodic Mode**: Runs scaling checks at regular intervals defined by `scaleIntervalSec`
 
-When scaling up, the algorithm ensures there is sufficient available system memory (calculated as available memory minus 10% safety buffer) to accommodate new workers based on the application's average heap usage.
+When scaling up, the algorithm ensures there is sufficient available memory to accommodate new workers based on the application's average heap usage. Available memory is calculated as `maxTotalMemory - currently used memory`, where used memory is obtained from cgroup files in containerized environments or from the operating system otherwise.
 
 Configuration options:
 
 - **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
 - **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
+- **`maxTotalMemory`** (`number`). The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
 - **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
 - **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
 - **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
@@ -455,8 +456,8 @@ Configuration options:
 
 **Notes:**
 - Applications with a fixed `workers` configuration or entrypoint applications on systems without `reusePort` support will have their min/max workers automatically set to their current value to prevent scaling.
-- The scaler tracks heap memory usage and will not scale up if there is insufficient available system memory, even if ELU thresholds are met.
-- A 10% memory buffer is reserved to prevent out-of-memory situations.
+- The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
+- By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
 
 ## Setting and Using ENV placeholders
 

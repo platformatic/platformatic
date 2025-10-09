@@ -2474,8 +2474,11 @@ export class Runtime extends EventEmitter {
     }
 
     const scalerConfig = this.#config.verticalScaler
+    const memInfo = await getMemoryInfo()
+    const memScope = memInfo.scope
 
     scalerConfig.maxTotalWorkers ??= os.availableParallelism()
+    scalerConfig.maxTotalMemory ??= memInfo.total * 0.9
     scalerConfig.maxWorkers ??= scalerConfig.maxTotalWorkers
     scalerConfig.minWorkers ??= 1
     scalerConfig.cooldownSec ??= 60
@@ -2488,6 +2491,7 @@ export class Runtime extends EventEmitter {
     scalerConfig.applications ??= {}
 
     const maxTotalWorkers = scalerConfig.maxTotalWorkers
+    const maxTotalMemory = scalerConfig.maxTotalMemory
     const maxWorkers = scalerConfig.maxWorkers
     const minWorkers = scalerConfig.minWorkers
     const cooldown = scalerConfig.cooldownSec
@@ -2606,7 +2610,6 @@ export class Runtime extends EventEmitter {
 
     let isScaling = false
     let lastScaling = 0
-    let memScope = null
 
     const checkForScaling = async () => {
       const isInCooldown = Date.now() < lastScaling + cooldown * 1000
@@ -2616,7 +2619,6 @@ export class Runtime extends EventEmitter {
       try {
         const workersInfo = await this.getWorkers()
         const mem = await getMemoryInfo({ scope: memScope })
-        memScope = mem.scope
 
         const appsWorkersInfo = {}
         for (const worker of Object.values(workersInfo)) {
@@ -2627,7 +2629,7 @@ export class Runtime extends EventEmitter {
           appsWorkersInfo[applicationId]++
         }
 
-        const availableMemory = (mem.total * 0.9) - mem.used
+        const availableMemory = maxTotalMemory - mem.used
         const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
           availableMemory
         })
