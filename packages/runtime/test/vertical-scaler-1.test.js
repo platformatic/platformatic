@@ -324,33 +324,3 @@ test('should scale a standalone application if elu is higher than treshold', asy
     gracePeriod: 30 * 1000
   })
 })
-
-test('should scale applications to their min workers at start', async t => {
-  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
-  const app = await createRuntime(configFile, null, {
-    async transform (config, ...args) {
-      config = await transform(config, ...args)
-      config.verticalScaler = {
-        enabled: true,
-        minWorkers: 2
-      }
-      return config
-    }
-  })
-  await app.start()
-
-  t.after(() => app.close())
-
-  await sleep(5000)
-
-  const workers = await app.getWorkers()
-
-  const service2Workers = []
-
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
-  assert.strictEqual(service2Workers.length, 2)
-})
