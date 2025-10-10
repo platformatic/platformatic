@@ -39,8 +39,8 @@
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/wattpm-pprof-capture": "workspace:*",
-    "autocannon": "^8.0.0",
     "atomic-sleep": "^1.0.0",
+    "autocannon": "^8.0.0",
     "c8": "^10.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
@@ -88,6 +88,7 @@
     "prom-client": "^15.1.2",
     "semgrator": "^0.3.0",
     "sonic-boom": "^4.2.0",
+    "systeminformation": "^5.27.11",
     "undici": "^7.0.0",
     "undici-thread-interceptor": "^0.14.0",
     "ws": "^8.16.0"

@@ -405,6 +405,7 @@ export interface PlatformaticRemixConfig {
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
+      maxTotalMemory?: number;
       minWorkers?: number;
       maxWorkers?: number;
       scaleUpELU?: number;

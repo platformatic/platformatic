@@ -3,7 +3,7 @@ class ScalingAlgorithm {
   #scaleDownELU
   #maxTotalWorkers
   #timeWindowSec
-  #appsELUs
+  #appsMetrics
   #minELUDiff
   #appsConfigs
 
@@ -15,31 +15,38 @@ class ScalingAlgorithm {
     this.#timeWindowSec = options.timeWindowSec ?? 60
     this.#appsConfigs = options.applications ?? {}
 
-    this.#appsELUs = {}
+    this.#appsMetrics = {}
   }
 
   addWorkerHealthInfo (healthInfo) {
-    const { workerId, applicationId, elu } = healthInfo
+    const { workerId, applicationId, elu, heapUsed } = healthInfo
     const timestamp = Date.now()
 
-    if (!this.#appsELUs[applicationId]) {
-      this.#appsELUs[applicationId] = {}
+    if (!this.#appsMetrics[applicationId]) {
+      this.#appsMetrics[applicationId] = {}
     }
-    if (!this.#appsELUs[applicationId][workerId]) {
-      this.#appsELUs[applicationId][workerId] = []
+    if (!this.#appsMetrics[applicationId][workerId]) {
+      this.#appsMetrics[applicationId][workerId] = []
     }
-    this.#appsELUs[applicationId][workerId].push({ elu, timestamp })
+    this.#appsMetrics[applicationId][workerId].push({
+      elu,
+      timestamp,
+      heapUsed
+    })
     this.#removeOutdatedAppELUs(applicationId)
   }
 
-  getRecommendations (appsWorkersInfo) {
+  getRecommendations (appsWorkersInfo, options = {}) {
     let totalWorkersCount = 0
+    let totalAvailableMemory = options.availableMemory ?? Infinity
+
     let appsInfo = []
 
     for (const applicationId in appsWorkersInfo) {
       const workersCount = appsWorkersInfo[applicationId]
       const elu = this.#calculateAppAvgELU(applicationId)
-      appsInfo.push({ applicationId, workersCount, elu })
+      const heapUsed = this.#calculateAppAvgHeapUsed(applicationId)
+      appsInfo.push({ applicationId, workersCount, elu, heapUsed })
       totalWorkersCount += workersCount
     }
 
@@ -55,7 +62,7 @@ class ScalingAlgorithm {
 
     const recommendations = []
 
-    for (const { applicationId, elu, workersCount } of appsInfo) {
+    for (const { applicationId, elu, heapUsed, workersCount } of appsInfo) {
       const appMinWorkers = this.#appsConfigs[applicationId]?.minWorkers ?? 1
       const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxTotalWorkers
 
@@ -65,7 +72,10 @@ class ScalingAlgorithm {
           workersCount: appMinWorkers,
           direction: 'up'
         })
-        totalWorkersCount += appMinWorkers - workersCount
+
+        const newWorkersCount = appMinWorkers - workersCount
+        totalWorkersCount += newWorkersCount
+        totalAvailableMemory += newWorkersCount * heapUsed
         continue
       }
 
@@ -75,7 +85,10 @@ class ScalingAlgorithm {
           workersCount: appMaxWorkers,
           direction: 'down'
         })
-        totalWorkersCount -= workersCount - appMaxWorkers
+
+        const removedWorkersCount = workersCount - appMaxWorkers
+        totalWorkersCount -= removedWorkersCount
+        totalAvailableMemory -= removedWorkersCount * heapUsed
         continue
       }
 
@@ -85,7 +98,10 @@ class ScalingAlgorithm {
           workersCount: workersCount - 1,
           direction: 'down'
         })
-        totalWorkersCount--
+
+        const removedWorkersCount = 1
+        totalWorkersCount -= removedWorkersCount
+        totalAvailableMemory -= removedWorkersCount * heapUsed
       }
     }
 
@@ -99,6 +115,7 @@ class ScalingAlgorithm {
           r.direction === 'up'
       )
       if (isScaled) continue
+      if (totalAvailableMemory < scaleUpCandidate.heapUsed) continue
 
       const appMaxWorkers = this.#appsConfigs[applicationId]?.maxWorkers ?? this.#maxTotalWorkers
       if (workersCount >= appMaxWorkers) continue
@@ -147,7 +164,7 @@ class ScalingAlgorithm {
   #calculateAppAvgELU (applicationId) {
     this.#removeOutdatedAppELUs(applicationId)
 
-    const appELUs = this.#appsELUs[applicationId]
+    const appELUs = this.#appsMetrics[applicationId]
     if (!appELUs) return 0
 
     let eluSum = 0
@@ -167,8 +184,31 @@ class ScalingAlgorithm {
     return Math.round(eluSum / eluCount * 100) / 100
   }
 
+  #calculateAppAvgHeapUsed (applicationId) {
+    this.#removeOutdatedAppELUs(applicationId)
+
+    const appELUs = this.#appsMetrics[applicationId]
+    if (!appELUs) return 0
+
+    let heapUsedSum = 0
+    let heapUsedCount = 0
+
+    for (const workerId in appELUs) {
+      const workerELUs = appELUs[workerId]
+      const workerELUSum = workerELUs.reduce(
+        (sum, workerELU) => sum + workerELU.heapUsed, 0
+      )
+      heapUsedSum += workerELUSum / workerELUs.length
+      heapUsedCount++
+    }
+
+    if (heapUsedCount === 0) return 0
+
+    return Math.round(heapUsedSum / heapUsedCount * 100) / 100
+  }
+
   #removeOutdatedAppELUs (applicationId) {
-    const appELUs = this.#appsELUs[applicationId]
+    const appELUs = this.#appsMetrics[applicationId]
     if (!appELUs) return
 
     const now = Date.now()

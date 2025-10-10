@@ -342,6 +342,49 @@ test('ScalingAlgorithm - should scale up apps to their min workers if the actual
   assert.strictEqual(scaleUpRecommendation3.direction, 'up')
 })
 
+test('ScalingAlgorithm - should not scale if there is not enough memory', async () => {
+  const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU: 0.8 })
+
+  const { appsWorkersInfo, healthInfo } = generateMetadata([
+    { applicationId: 'app-1', elu: 1, heapUsed: 1000, workersCount: 1 },
+    { applicationId: 'app-2', elu: 1, heapUsed: 1000, workersCount: 1 },
+    { applicationId: 'app-3', elu: 1, heapUsed: 1000, workersCount: 1 }
+  ])
+
+  for (const health of healthInfo) {
+    scalingAlgorithm.addWorkerHealthInfo(health)
+  }
+
+  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
+    availableMemory: 500
+  })
+  assert.strictEqual(recommendations.length, 0)
+})
+
+test('ScalingAlgorithm - should scale an application that has enough memory', async () => {
+  const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU: 0.8 })
+
+  const { appsWorkersInfo, healthInfo } = generateMetadata([
+    { applicationId: 'app-1', elu: 1, heapUsed: 2000, workersCount: 1 },
+    { applicationId: 'app-2', elu: 1, heapUsed: 1000, workersCount: 1 },
+    { applicationId: 'app-3', elu: 1, heapUsed: 3000, workersCount: 1 }
+  ])
+
+  for (const health of healthInfo) {
+    scalingAlgorithm.addWorkerHealthInfo(health)
+  }
+
+  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
+    availableMemory: 1200
+  })
+  assert.strictEqual(recommendations.length, 1)
+
+  const recommendation = recommendations[0]
+  assert.strictEqual(recommendation.applicationId, 'app-2')
+  assert.strictEqual(recommendation.workersCount, 2)
+  assert.strictEqual(recommendation.direction, 'up')
+})
+
 function randomFloat (min, max) {
   return Math.random() * (max - min) + min
 }
@@ -354,6 +397,7 @@ function generateMetadata (apps = []) {
     const elu = app.elu
     const minELU = app.minELU ?? 0
     const maxELU = app.maxELU ?? 1
+    const heapUsed = app.heapUsed ?? 1000
     const applicationId = app.applicationId
 
     const workersCount = app.workersCount ?? 1
@@ -366,6 +410,7 @@ function generateMetadata (apps = []) {
           id: workerId,
           applicationId,
           elu: workerELU,
+          heapUsed
         })
         healthInfo.push(workerHealthInfo)
       }
@@ -381,6 +426,7 @@ function generateHealthInfo (options = {}) {
   return {
     workerId: options.id ?? 'worker-1',
     applicationId: options.applicationId ?? 'app-1',
-    elu: options.elu ?? 0.1
+    elu: options.elu ?? 0.1,
+    heapUsed: options.heapUsed ?? 1000
   }
 }

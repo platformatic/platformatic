@@ -47,6 +47,7 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
+import { getMemoryInfo } from './metrics.js'
 import {
   kApplicationId,
   kConfig,
@@ -2473,8 +2474,11 @@ export class Runtime extends EventEmitter {
     }
 
     const scalerConfig = this.#config.verticalScaler
+    const memInfo = await getMemoryInfo()
+    const memScope = memInfo.scope
 
     scalerConfig.maxTotalWorkers ??= os.availableParallelism()
+    scalerConfig.maxTotalMemory ??= memInfo.total * 0.9
     scalerConfig.maxWorkers ??= scalerConfig.maxTotalWorkers
     scalerConfig.minWorkers ??= 1
     scalerConfig.cooldownSec ??= 60
@@ -2487,6 +2491,7 @@ export class Runtime extends EventEmitter {
     scalerConfig.applications ??= {}
 
     const maxTotalWorkers = scalerConfig.maxTotalWorkers
+    const maxTotalMemory = scalerConfig.maxTotalMemory
     const maxWorkers = scalerConfig.maxWorkers
     const minWorkers = scalerConfig.minWorkers
     const cooldown = scalerConfig.cooldownSec
@@ -2583,7 +2588,9 @@ export class Runtime extends EventEmitter {
           scalingAlgorithm.addWorkerHealthInfo({
             workerId: worker[kId],
             applicationId: worker[kApplicationId],
-            elu: health.elu
+            elu: health.elu,
+            heapUsed: health.heapUsed,
+            heapTotal: health.heapTotal
           })
 
           if (health.elu > scaleUpELU) {
@@ -2611,6 +2618,7 @@ export class Runtime extends EventEmitter {
 
       try {
         const workersInfo = await this.getWorkers()
+        const mem = await getMemoryInfo({ scope: memScope })
 
         const appsWorkersInfo = {}
         for (const worker of Object.values(workersInfo)) {
@@ -2621,7 +2629,10 @@ export class Runtime extends EventEmitter {
           appsWorkersInfo[applicationId]++
         }
 
-        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
+        const availableMemory = maxTotalMemory - mem.used
+        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
+          availableMemory
+        })
         if (recommendations.length > 0) {
           await applyRecommendations(recommendations)
           lastScaling = Date.now()
