@@ -40,7 +40,7 @@ class ScalingAlgorithm {
     let totalWorkersCount = 0
     let totalAvailableMemory = options.availableMemory ?? Infinity
 
-    let appsInfo = []
+    const appsInfo = []
 
     for (const applicationId in appsWorkersInfo) {
       const workersCount = appsWorkersInfo[applicationId]
