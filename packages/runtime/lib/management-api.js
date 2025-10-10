@@ -132,6 +132,17 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
+    const config = await runtime.getRuntimeConfig()
+
+    if (!config.metrics || config.metrics.enabled === false) {
+      reply.code(501)
+      return {
+        statusCode: 501,
+        error: 'Not Implemented',
+        message: 'Metrics are disabled.'
+      }
+    }
+
     const accepts = req.accepts()
 
     if (!accepts.type('text/plain') && accepts.type('application/json')) {
@@ -145,6 +156,20 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.get('/metrics/live', { websocket: true }, async socket => {
+    const config = await runtime.getRuntimeConfig()
+
+    if (!config.metrics || config.metrics.enabled === false) {
+      socket.send(
+        JSON.stringify({
+          statusCode: 501,
+          error: 'Not Implemented',
+          message: 'Metrics are disabled.'
+        })
+      )
+      socket.terminate()
+      return
+    }
+
     const cachedMetrics = runtime.getCachedMetrics()
     if (cachedMetrics.length > 0) {
       const serializedMetrics = cachedMetrics.map(metric => JSON.stringify(metric)).join('\n')

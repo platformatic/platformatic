@@ -295,6 +295,11 @@ test('metrics can be disabled', async t => {
     await app.close()
   })
 
+  let metricsEvent = 0
+  app.on('metrics', () => {
+    metricsEvent++
+  })
+
   // Wait for the prometheus server to start
   await sleep(2000)
 
@@ -304,6 +309,8 @@ test('metrics can be disabled', async t => {
       path: '/metrics'
     })
   )
+
+  strictEqual(metricsEvent, 0, 'metrics event should not be emitted')
 })
 
 test('readiness - should get 404 if readiness is not enabled', async t => {
