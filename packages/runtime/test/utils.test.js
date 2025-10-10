@@ -1,6 +1,7 @@
 import { deepEqual, equal, ok } from 'node:assert/strict'
 import { test } from 'node:test'
-import { getArrayDifference, getMemoryInfo } from '../lib/utils.js'
+import { getArrayDifference } from '../lib/utils.js'
+import { getMemoryInfo } from '../lib/metrics.js'
 
 test('getArrayDifference', async t => {
   const a = [1, 2, 3]
