@@ -1,11 +1,8 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { tmpdir, availableParallelism } from 'node:os'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { mkdtemp, readFile } from 'node:fs/promises'
 import { request } from 'undici'
-import { features } from '@platformatic/foundation'
 import { createRuntime } from './helpers.js'
 import { transform } from '../lib/config.js'
 
