@@ -2484,9 +2484,9 @@ export class Runtime extends EventEmitter {
     scalerConfig.cooldownSec ??= 60
     scalerConfig.scaleUpELU ??= 0.8
     scalerConfig.scaleDownELU ??= 0.2
-    scalerConfig.minELUDiff ??= 0.2
     scalerConfig.scaleIntervalSec ??= 60
     scalerConfig.timeWindowSec ??= 10
+    scalerConfig.scaleDownTimeWindowSec ??= 60
     scalerConfig.gracePeriod ??= 30 * 1000
     scalerConfig.applications ??= {}
 
@@ -2497,9 +2497,9 @@ export class Runtime extends EventEmitter {
     const cooldown = scalerConfig.cooldownSec
     const scaleUpELU = scalerConfig.scaleUpELU
     const scaleDownELU = scalerConfig.scaleDownELU
-    const minELUDiff = scalerConfig.minELUDiff
     const scaleIntervalSec = scalerConfig.scaleIntervalSec
     const timeWindowSec = scalerConfig.timeWindowSec
+    const scaleDownTimeWindowSec = scalerConfig.scaleDownTimeWindowSec
     const applicationsConfigs = scalerConfig.applications
     const gracePeriod = scalerConfig.gracePeriod
     const healthCheckInterval = 1000
@@ -2563,8 +2563,8 @@ export class Runtime extends EventEmitter {
       maxTotalWorkers,
       scaleUpELU,
       scaleDownELU,
-      minELUDiff,
-      timeWindowSec,
+      scaleUpTimeWindowSec: timeWindowSec,
+      scaleDownTimeWindowSec,
       applications: applicationsConfigs
     })
 

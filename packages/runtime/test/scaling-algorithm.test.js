@@ -132,7 +132,7 @@ test('ScalingAlgorithm - should scale up only one app per recommendation', async
   assert.strictEqual(recommendation.direction, 'up')
 })
 
-test('ScalingAlgorithm - should scale up the worth application and sclale down the best', async () => {
+test('ScalingAlgorithm - should not scale up there is not enough workers', async () => {
   const scaleUpELU = 0.8
   const scaleDownELU = 0.2
   const maxTotalWorkers = 8
@@ -155,51 +155,7 @@ test('ScalingAlgorithm - should scale up the worth application and sclale down t
   }
 
   const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
-  assert.strictEqual(recommendations.length, 2)
-
-  const scaleDownRecommendation = recommendations[0]
-  assert.strictEqual(scaleDownRecommendation.applicationId, 'app-4')
-  assert.strictEqual(scaleDownRecommendation.workersCount, 1)
-  assert.strictEqual(scaleDownRecommendation.direction, 'down')
-
-  const scaleUpRecommendation = recommendations[1]
-  assert.strictEqual(scaleUpRecommendation.applicationId, 'app-1')
-  assert.strictEqual(scaleUpRecommendation.workersCount, 3)
-  assert.strictEqual(scaleUpRecommendation.direction, 'up')
-})
-
-test('ScalingAlgorithm - should scale down app with more pods if elu are equal', async () => {
-  const scaleUpELU = 0.8
-  const scaleDownELU = 0.2
-  const maxTotalWorkers = 8
-
-  const scalingAlgorithm = new ScalingAlgorithm({
-    scaleUpELU,
-    scaleDownELU,
-    maxTotalWorkers
-  })
-
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId: 'app-1', elu: 0.99, workersCount: 7 },
-    { applicationId: 'app-2', elu: 0.99, workersCount: 1 },
-  ])
-
-  for (const health of healthInfo) {
-    scalingAlgorithm.addWorkerHealthInfo(health)
-  }
-
-  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
-  assert.strictEqual(recommendations.length, 2)
-
-  const scaleDownRecommendation = recommendations[0]
-  assert.strictEqual(scaleDownRecommendation.applicationId, 'app-1')
-  assert.strictEqual(scaleDownRecommendation.workersCount, 6)
-  assert.strictEqual(scaleDownRecommendation.direction, 'down')
-
-  const scaleUpRecommendation = recommendations[1]
-  assert.strictEqual(scaleUpRecommendation.applicationId, 'app-2')
-  assert.strictEqual(scaleUpRecommendation.workersCount, 2)
-  assert.strictEqual(scaleUpRecommendation.direction, 'up')
+  assert.strictEqual(recommendations.length, 0)
 })
 
 test('ScalingAlgorithm - should scale down many apps per recommendation', async () => {
@@ -259,47 +215,6 @@ test('ScalingAlgorithm - should not scale if the application max workers is reac
   assert.strictEqual(recommendation.applicationId, 'app-2')
   assert.strictEqual(recommendation.workersCount, 4)
   assert.strictEqual(recommendation.direction, 'up')
-})
-
-test('ScalingAlgorithm - should scale down the next best app if the min workers is reached', async () => {
-  const scaleUpELU = 0.8
-  const scaleDownELU = 0.2
-  const maxTotalWorkers = 8
-
-  const scalingAlgorithm = new ScalingAlgorithm({
-    scaleUpELU,
-    scaleDownELU,
-    maxTotalWorkers,
-    applications: {
-      'app-4': {
-        minWorkers: 2
-      }
-    }
-  })
-
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId: 'app-1', elu: 0.99, workersCount: 2 },
-    { applicationId: 'app-2', elu: 0.95, workersCount: 2 },
-    { applicationId: 'app-3', elu: 0.6, workersCount: 2 },
-    { applicationId: 'app-4', elu: 0.4, workersCount: 2 },
-  ])
-
-  for (const health of healthInfo) {
-    scalingAlgorithm.addWorkerHealthInfo(health)
-  }
-
-  const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo)
-  assert.strictEqual(recommendations.length, 2)
-
-  const scaleDownRecommendation = recommendations[0]
-  assert.strictEqual(scaleDownRecommendation.applicationId, 'app-3')
-  assert.strictEqual(scaleDownRecommendation.workersCount, 1)
-  assert.strictEqual(scaleDownRecommendation.direction, 'down')
-
-  const scaleUpRecommendation = recommendations[1]
-  assert.strictEqual(scaleUpRecommendation.applicationId, 'app-1')
-  assert.strictEqual(scaleUpRecommendation.workersCount, 3)
-  assert.strictEqual(scaleUpRecommendation.direction, 'up')
 })
 
 test('ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower', async () => {

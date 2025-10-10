@@ -87,11 +87,11 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     maxTotalMemory: 1000000,
     maxWorkers,
     minWorkers: 1,
-    minELUDiff: 0.2,
     scaleDownELU: 0.2,
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
     timeWindowSec: 10,
+    scaleDownTimeWindowSec: 60,
     cooldownSec: 60,
     gracePeriod: 30 * 1000
   })
@@ -147,11 +147,11 @@ test('should scale a standalone application if elu is higher than treshold', asy
     maxTotalMemory: 1000000,
     maxWorkers: 2,
     minWorkers: 1,
-    minELUDiff: 0.2,
     scaleDownELU: 0.2,
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
     timeWindowSec: 10,
+    scaleDownTimeWindowSec: 60,
     cooldownSec: 60,
     gracePeriod: 30 * 1000
   })

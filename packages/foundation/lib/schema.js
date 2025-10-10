@@ -59,8 +59,8 @@ const verticalScaler = {
     maxWorkers: { type: 'number', minimum: 1 },
     scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
     scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
-    minELUDiff: { type: 'number', minimum: 0, maximum: 1 },
     timeWindowSec: { type: 'number', minimum: 0 },
+    scaleDownTimeWindowSec: { type: 'number', minimum: 0 },
     cooldownSec: { type: 'number', minimum: 0 },
     scaleIntervalSec: { type: 'number', minimum: 0 },
     gracePeriod: { type: 'number', minimum: 0 }

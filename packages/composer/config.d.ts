@@ -471,8 +471,8 @@ export interface PlatformaticComposerConfig {
       maxWorkers?: number;
       scaleUpELU?: number;
       scaleDownELU?: number;
-      minELUDiff?: number;
       timeWindowSec?: number;
+      scaleDownTimeWindowSec?: number;
       cooldownSec?: number;
       scaleIntervalSec?: number;
       gracePeriod?: number;
