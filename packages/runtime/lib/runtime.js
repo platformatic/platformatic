@@ -2486,7 +2486,7 @@ export class Runtime extends EventEmitter {
     scalerConfig.scaleDownELU ??= 0.2
     scalerConfig.minELUDiff ??= 0.2
     scalerConfig.scaleIntervalSec ??= 60
-    scalerConfig.timeWindowSec ??= 60
+    scalerConfig.timeWindowSec ??= 10
     scalerConfig.gracePeriod ??= 30 * 1000
     scalerConfig.applications ??= {}
 
