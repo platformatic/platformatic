@@ -2538,12 +2538,11 @@
               "minimum": 0,
               "maximum": 1
             },
-            "minELUDiff": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
             "timeWindowSec": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scaleDownTimeWindowSec": {
               "type": "number",
               "minimum": 0
             },
