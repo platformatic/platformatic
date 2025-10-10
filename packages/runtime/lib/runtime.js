@@ -47,7 +47,7 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import { getMemoryInfo } from './utils.js'
+import { getMemoryInfo } from './metrics.js'
 import {
   kApplicationId,
   kConfig,
