@@ -40,6 +40,7 @@ import {
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
+import { getMemoryInfo } from './metrics.js'
 import { startPrometheusServer } from './prom-server.js'
 import ScalingAlgorithm from './scaling-algorithm.js'
 import { startScheduler } from './scheduler.js'
@@ -47,7 +48,6 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import { getMemoryInfo } from './metrics.js'
 import {
   kApplicationId,
   kConfig,
@@ -59,8 +59,8 @@ import {
   kStderrMarker,
   kWorkerId,
   kWorkersBroadcast,
-  kWorkerStatus,
-  kWorkerStartTime
+  kWorkerStartTime,
+  kWorkerStatus
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -2085,8 +2085,15 @@ export class Runtime extends EventEmitter {
         }
       }
 
-      const pinoLog =
-        typeof message?.level === 'number' && typeof message?.time === 'number' && typeof message?.msg === 'string'
+      let pinoLog
+
+      if (typeof message === 'object') {
+        pinoLog =
+          typeof message.level === 'number' &&
+          // We want to accept both pino raw time (number) and time as formatted string
+          (typeof message.time === 'number' || typeof message.time === 'string') &&
+          typeof message.msg === 'string'
+      }
 
       // Directly write to the Pino destination
       if (pinoLog) {
@@ -2467,9 +2474,7 @@ export class Runtime extends EventEmitter {
   async #setupVerticalScaler () {
     const fixedWorkersCount = this.#config.workers
     if (fixedWorkersCount !== undefined) {
-      this.logger.warn(
-        `Vertical scaler disabled because the "workers" configuration is set to ${fixedWorkersCount}`
-      )
+      this.logger.warn(`Vertical scaler disabled because the "workers" configuration is set to ${fixedWorkersCount}`)
       return
     }
 
@@ -2510,7 +2515,7 @@ export class Runtime extends EventEmitter {
       if (application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
           `The "${application.id}" application cannot be scaled because it is an entrypoint` +
-          ' and the "reusePort" feature is not available in your OS.'
+            ' and the "reusePort" feature is not available in your OS.'
         )
 
         applicationsConfigs[application.id] = {
@@ -2522,7 +2527,7 @@ export class Runtime extends EventEmitter {
       if (application.workers !== undefined) {
         this.logger.warn(
           `The "${application.id}" application cannot be scaled because` +
-          ` it has a fixed number of workers (${application.workers}).`
+            ` it has a fixed number of workers (${application.workers}).`
         )
         applicationsConfigs[application.id] = {
           minWorkers: application.workers,
@@ -2574,10 +2579,7 @@ export class Runtime extends EventEmitter {
       const now = Date.now()
 
       for (const worker of this.#workers.values()) {
-        if (
-          worker[kWorkerStatus] !== 'started' ||
-          worker[kWorkerStartTime] + gracePeriod > now
-        ) {
+        if (worker[kWorkerStatus] !== 'started' || worker[kWorkerStartTime] + gracePeriod > now) {
           continue
         }
 

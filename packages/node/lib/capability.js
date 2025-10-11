@@ -121,9 +121,8 @@ export class NodeCapability extends BaseCapability {
       this.logger.info(`Building application "${this.applicationId}" before starting in development mode ...`)
       try {
         await this.build()
-        this.childManager = null
       } catch (e) {
-        this.logger.error(`Error while building application "${this.applicationId}": ${e.message}`)
+        throw new Error(`Error while building application "${this.applicationId}": ${e.message}`, { cause: e })
       }
     }
 

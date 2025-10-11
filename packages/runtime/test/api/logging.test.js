@@ -269,8 +269,8 @@ test('isoTime support', async t => {
       .trim()
       .split('\n')
       .map(l => {
-        const { level, pid, hostname, name, msg, payload, stdout } = JSON.parse(l)
-        return { level, pid, hostname, name, msg, payload, stdout }
+        const { level, pid, hostname, name, msg, payload, time } = JSON.parse(l)
+        return { level, pid, hostname, name, msg, payload, time }
       })
 
     const expected = [{ level: 30, name: 'hello', msg: 'Request received' }]
@@ -278,7 +278,9 @@ test('isoTime support', async t => {
     for (const e of expected) {
       ok(
         messages.find(m => {
-          return m.level === e.level && m.name === e.name && m.stdout?.msg?.startsWith(e.msg)
+          return (
+            m.level === e.level && m.name === e.name && m.time.match(/^(\d{4}-\d{2}-\d{2})/) && m.msg?.startsWith(e.msg)
+          )
         })
       )
     }
