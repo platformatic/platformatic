@@ -234,7 +234,11 @@ test('config - should list configuration for an application', async t => {
       maxHeapUsed: 0.99,
       maxUnhealthyChecks: 10
     },
-    resolvedApplicationsBasePath: 'external'
+    resolvedApplicationsBasePath: 'external',
+    metrics: {
+      enabled: true,
+      timeout: 1000
+    }
   })
 })
 
