@@ -164,9 +164,12 @@ export async function managementApiPlugin (app, opts) {
           statusCode: 501,
           error: 'Not Implemented',
           message: 'Metrics are disabled.'
-        })
+        }),
+        () => {
+          socket.close()
+        }
       )
-      socket.terminate()
+
       return
     }
 

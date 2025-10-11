@@ -12,5 +12,6 @@
   "logger": {
     "level": "trace"
   },
-  "managementApi": true
+  "managementApi": true,
+  "metrics": true
 }
