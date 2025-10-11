@@ -1,4 +1,4 @@
-import { ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
@@ -131,4 +131,41 @@ test('should get prom metrics from the management api in the json format', async
   for (const metricName of expectedMetricNames) {
     ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
+})
+
+test('should only receive an error message if the metrics are disabled', async t => {
+  const projectDir = join(fixturesDir, 'management-api-without-metrics')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
+
+  t.after(async () => {
+    await client.close()
+    await app.close()
+  })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/metrics',
+    headers: {
+      Accept: 'application/json'
+    }
+  })
+  strictEqual(statusCode, 501)
+
+  const metrics = await body.json()
+  deepStrictEqual(metrics, { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
 })

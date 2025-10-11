@@ -1,4 +1,5 @@
-import { deepStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual } from 'node:assert'
+import { once } from 'node:events'
 import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -64,7 +65,7 @@ test('should get runtime metrics via management api', async t => {
   })
 })
 
-test('should not throw if metrics are not enabled', async t => {
+test('should only receive an error message if the metrics are disabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -80,31 +81,13 @@ test('should not throw if metrics are not enabled', async t => {
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/metrics/live')
 
-  await new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Timeout'))
-    }, 10000)
+  const messages = []
 
-    webSocket.on('error', err => {
-      reject(err)
-    })
-
-    let count = 0
-
-    webSocket.on('message', data => {
-      if (count++ > 3) {
-        clearTimeout(timeout)
-        webSocket.close()
-        resolve()
-      }
-
-      const records = data.toString().split('\n')
-
-      for (const record of records) {
-        if (!record) continue
-        const metrics = JSON.parse(record)
-        strictEqual(metrics, null)
-      }
-    })
+  webSocket.on('message', data => {
+    messages.push(JSON.parse(data))
   })
+
+  await once(webSocket, 'close')
+
+  deepStrictEqual(messages, [{ statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' }])
 })
