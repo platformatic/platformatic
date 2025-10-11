@@ -44,7 +44,7 @@ function handleSignal (runtime, config) {
 
   const cwg = closeWithGrace({ delay: config.gracefulShutdown?.runtime ?? 10000, onTimeout }, async event => {
     if (event.err instanceof Error) {
-      console.error(event.err)
+      console.error(new Error('@platformatic/runtime threw an unexpected error', { cause: event.err }))
     }
     await runtime.close()
   })

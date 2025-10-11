@@ -1,4 +1,4 @@
-import { deepEqual, equal, ok } from 'node:assert'
+import { deepEqual, equal, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
@@ -12,6 +12,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { version } from '../index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -75,6 +76,51 @@ test('should build the applications on start in dev', async t => {
   })
 
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
+})
+
+test('should not try to stop the application when build failed on start in dev', async t => {
+  const { root, runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
+    build: false,
+    production: false,
+    async additionalSetup (root, config) {
+      config.restartOnError = 0
+      process._rawDebug(root)
+      await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), () => 'this is not valid typescript')
+
+      await writeFile(
+        resolve(root, 'services/app-no-config/platformatic.json'),
+        JSON.stringify(
+          {
+            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
+            logger: { timestamp: 'isoTime' }
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      )
+
+      await writeFile(
+        resolve(root, 'services/app-no-config/logger-formatters.js'),
+        `
+        module.exports = {
+          timestamp: () => \`,"time":"${new Date(Date.now()).toISOString()}"\`
+        }
+        `,
+        'utf-8'
+      )
+    }
+  })
+
+  await rejects(
+    () => startRuntime(t, runtime),
+    /Error while building application "app-no-config": Process exited with non zero exit code 1./
+  )
+
+  const logs = await getLogsFromFile(root)
+  ok(!logs.find(l => l.caller === 'STDOUT' && typeof l.stdout?.level === 'number' && typeof l.stdout?.msg === 'string'))
 })
 
 for (const application of ['app-no-config', 'app-with-config']) {

@@ -425,6 +425,7 @@ export class BaseCapability extends EventEmitter {
     } finally {
       await this.childManager?.eject()
       await this.childManager?.close()
+      this.childManager = null
     }
   }
 
