@@ -2103,6 +2103,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      atomic-sleep:
+        specifier: ^1.0.0
+        version: 1.0.0
       eslint:
         specifier: '9'
         version: 9.36.0

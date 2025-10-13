@@ -19,3 +19,9 @@ export const NoProfileAvailableError = createError(
   'No profile available - wait for profiling to complete or trigger manual capture',
   400
 )
+
+export const NotEnoughELUError = createError(
+  `${ERROR_PREFIX}_NOT_ENOUGH_ELU`,
+  'No profile available - event loop utilization has been below threshold for too long',
+  400
+)

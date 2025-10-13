@@ -26,6 +26,7 @@
   "devDependencies": {
     "@platformatic/foundation": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "atomic-sleep": "^1.0.0",
     "eslint": "9",
     "neostandard": "^0.12.0"
   },
