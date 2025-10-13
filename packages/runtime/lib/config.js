@@ -335,9 +335,9 @@ export async function transform (config, _, context) {
     // like adding other applications.
   }
 
-  if (config.metrics === true) {
+  if (typeof config.metrics === 'boolean') {
     config.metrics = {
-      enabled: true,
+      enabled: config.metrics,
       timeout: 1000
     }
   }

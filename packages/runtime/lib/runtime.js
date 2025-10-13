@@ -275,7 +275,7 @@ export class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    if (this.#managementApi && typeof this.#metrics === 'undefined') {
+    if (this.#config.metrics?.enabled !== false && typeof this.#metrics === 'undefined') {
       this.startCollectingMetrics()
     }
 
@@ -1606,7 +1606,7 @@ export class Runtime extends EventEmitter {
       } else {
         worker[kHealthCheckTimer].refresh()
       }
-    }, interval)
+    }, interval).unref()
   }
 
   async #startWorker (
