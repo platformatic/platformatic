@@ -974,6 +974,9 @@ importers:
       '@platformatic/http-metrics':
         specifier: ^0.2.1
         version: 0.2.1
+      '@platformatic/promotel':
+        specifier: ^0.1.0
+        version: 0.1.0
       prom-client:
         specifier: ^15.1.2
         version: 15.1.3
@@ -3828,6 +3831,11 @@ packages:
 
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
+
+  '@platformatic/promotel@0.1.0':
+    resolution: {integrity: sha512-PpbXGiGef+zW9LAbD3JP1ehTDhRXXcrBz+cg1fd5kZamMqqf3leXSjOBlagqxaMk8e1M1GggnmB4RxGBvoAcGQ==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@platformatic/undici-cache-memory@0.8.4':
     resolution: {integrity: sha512-/JVfPhyUW0GQkmr5lGAGOgh0lpJbTcLG8VB2uNqgNgH1fhPPFAM0l4pLSyeDzpTj2r/GJPLqhzvCgangnSHfoQ==}
@@ -11723,6 +11731,13 @@ snapshots:
       ajv-draft-04: 1.0.0(ajv@8.17.1)
       ajv-formats: 3.0.1(ajv@8.17.1)
       js-yaml: 4.1.0
+
+  '@platformatic/promotel@0.1.0':
+    dependencies:
+      long: 5.3.2
+      prom-client: 15.1.3
+      protobufjs: 7.5.4
+      undici: 6.21.3
 
   '@platformatic/undici-cache-memory@0.8.4': {}
 

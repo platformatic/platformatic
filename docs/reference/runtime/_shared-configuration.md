@@ -384,6 +384,31 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
+- **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
+  - **`enabled`** (`boolean` or `string`): Enable or disable OTLP metrics export. Default: `true` if endpoint is configured.
+  - **`endpoint`** (**required**, `string`): OTLP endpoint URL for metrics (e.g., `http://localhost:4318/v1/metrics`).
+  - **`interval`** (`number` or `string`): Interval in milliseconds between metric pushes. Default: `60000` (60 seconds).
+  - **`headers`** (`object`): Additional HTTP headers for authentication or custom metadata. Common use cases include API keys or authentication tokens.
+  - **`serviceName`** (`string`): Service name for OTLP resource attributes. Defaults to the application ID.
+  - **`serviceVersion`** (`string`): Service version for OTLP resource attributes. Optional.
+
+```json title="Example OTLP Metrics Configuration"
+{
+  "metrics": {
+    "enabled": true,
+    "port": 9090,
+    "otlpExporter": {
+      "endpoint": "http://otel-collector:4318/v1/metrics",
+      "interval": 30000,
+      "headers": {
+        "x-api-key": "{OTLP_API_KEY}"
+      },
+      "serviceName": "my-platformatic-app",
+      "serviceVersion": "1.0.0"
+    }
+  }
+}
+```
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
 

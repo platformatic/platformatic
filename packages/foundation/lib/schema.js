@@ -1147,6 +1147,43 @@ export const runtimeProperties = {
           timeout: {
             anyOf: [{ type: 'integer' }, { type: 'string' }],
             default: 10000
+          },
+          otlpExporter: {
+            type: 'object',
+            description: 'Configuration for exporting metrics to an OTLP endpoint',
+            properties: {
+              enabled: {
+                anyOf: [
+                  { type: 'boolean' },
+                  { type: 'string' }
+                ],
+                description: 'Enable or disable OTLP metrics export'
+              },
+              endpoint: {
+                type: 'string',
+                description: 'OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)'
+              },
+              interval: {
+                anyOf: [{ type: 'integer' }, { type: 'string' }],
+                default: 60000,
+                description: 'Interval in milliseconds between metric pushes'
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Additional HTTP headers for authentication'
+              },
+              serviceName: {
+                type: 'string',
+                description: 'Service name for OTLP resource attributes'
+              },
+              serviceVersion: {
+                type: 'string',
+                description: 'Service version for OTLP resource attributes'
+              }
+            },
+            required: ['endpoint'],
+            additionalProperties: false
           }
         },
         additionalProperties: false
