@@ -1,19 +1,24 @@
+import { performance } from 'node:perf_hooks'
 import { time, heap } from '@datadog/pprof'
 import { NoProfileAvailableError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
+const { eventLoopUtilization } = performance
 const kITC = Symbol.for('plt.runtime.itc')
 
-// Track profiling state separately for each type
 const profilingState = {
   cpu: {
     isCapturing: false,
     latestProfile: null,
-    captureInterval: null
+    captureInterval: null,
+    eluTimeout: null,
+    options: null
   },
   heap: {
     isCapturing: false,
     latestProfile: null,
-    captureInterval: null
+    captureInterval: null,
+    eluTimeout: null,
+    options: null
   }
 }
 
@@ -33,47 +38,96 @@ function getProfiler (type) {
   return type === 'heap' ? heap : time
 }
 
-function rotateProfile (type) {
+function startProfiler (type, options) {
   const profiler = getProfiler(type)
-  const state = profilingState[type]
 
   if (type === 'heap') {
-    // Heap profiler needs to call profile() to get the current profile
-    state.latestProfile = profiler.profile()
+    const intervalBytes = options.intervalBytes || 512 * 1024
+    const stackDepth = options.stackDepth || 64
+    profiler.start(intervalBytes, stackDepth)
   } else {
-    // CPU time profiler: `true` immediately restarts profiling after stopping
-    state.latestProfile = profiler.stop(true)
+    profiler.start(options)
   }
+}
+
+function stopProfiler (type) {
+  const state = profilingState[type]
+  const profiler = getProfiler(type)
+
+  if (type === 'heap') {
+    state.latestProfile = profiler.profile()
+    profiler.stop()
+  } else {
+    state.latestProfile = profiler.stop()
+  }
+}
+
+function setupRotationInterval (type, options) {
+  const state = profilingState[type]
+
+  if (options.durationMillis) {
+    state.captureInterval = setInterval(() => {
+      if (!state.isCapturing) {
+        return
+      }
+
+      stopProfiler(type)
+      state.isCapturing = false
+
+      if (options.eluThreshold) {
+        waitForELUAndStart(type, options)
+      } else {
+        startProfiler(type, options)
+        state.isCapturing = true
+      }
+    }, options.durationMillis)
+    state.captureInterval.unref()
+  }
+}
+
+function waitForELUAndStart (type, options) {
+  const state = profilingState[type]
+
+  if (state.eluTimeout) {
+    clearTimeout(state.eluTimeout)
+    state.eluTimeout = null
+  }
+
+  let previousELU = eventLoopUtilization()
+
+  state.eluTimeout = setTimeout(() => {
+    const currentELU = eventLoopUtilization(previousELU)
+
+    if (currentELU.utilization >= options.eluThreshold) {
+      state.eluTimeout = null
+      startProfiler(type, options)
+      state.isCapturing = true
+    } else {
+      previousELU = eventLoopUtilization()
+      state.eluTimeout.refresh()
+    }
+  }, 1000)
+
+  state.eluTimeout.unref()
 }
 
 export function startProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
 
-  if (state.isCapturing) {
+  if (state.isCapturing || state.eluTimeout) {
     throw new ProfilingAlreadyStartedError()
   }
-  state.isCapturing = true
 
-  const profiler = getProfiler(type)
+  state.options = options
 
-  // Heap profiler has different API than time profiler
-  if (type === 'heap') {
-    // Heap profiler takes intervalBytes and stackDepth as positional arguments
-    // Default: 512KB interval, 64 stack depth
-    const intervalBytes = options.intervalBytes || 512 * 1024
-    const stackDepth = options.stackDepth || 64
-    profiler.start(intervalBytes, stackDepth)
+  if (options.eluThreshold) {
+    waitForELUAndStart(type, options)
+    setupRotationInterval(type, options)
   } else {
-    // CPU time profiler takes options object
-    profiler.start(options)
-  }
-
-  // Set up profile window rotation if durationMillis is provided
-  const timeout = options.durationMillis
-  if (timeout) {
-    state.captureInterval = setInterval(() => rotateProfile(type), timeout)
-    state.captureInterval.unref()
+    startProfiler(type, options)
+    state.isCapturing = true
+    setupRotationInterval(type, options)
   }
 }
 
@@ -81,25 +135,28 @@ export function stopProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
 
-  if (!state.isCapturing) {
+  if (!state.isCapturing && !state.eluTimeout) {
     throw new ProfilingNotStartedError()
   }
-  state.isCapturing = false
 
-  clearInterval(state.captureInterval)
-  state.captureInterval = null
-
-  const profiler = getProfiler(type)
-
-  // Heap and CPU profilers have different stop APIs
-  if (type === 'heap') {
-    // Get the profile before stopping
-    state.latestProfile = profiler.profile()
-    profiler.stop()
-  } else {
-    // CPU time profiler returns the profile when stopping
-    state.latestProfile = profiler.stop()
+  if (state.captureInterval) {
+    clearInterval(state.captureInterval)
+    state.captureInterval = null
   }
+
+  if (state.eluTimeout) {
+    clearTimeout(state.eluTimeout)
+    state.eluTimeout = null
+
+    if (state.latestProfile) {
+      return state.latestProfile.encode()
+    }
+    throw new NoProfileAvailableError()
+  }
+
+  stopProfiler(type)
+  state.isCapturing = false
+  state.options = null
 
   return state.latestProfile.encode()
 }
@@ -108,18 +165,19 @@ export function getLastProfile (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
 
-  // TODO: Should it be allowed to get last profile after stopping?
-  if (!state.isCapturing) {
+  if (!state.isCapturing && !state.eluTimeout) {
     throw new ProfilingNotStartedError()
+  }
+
+  if (state.eluTimeout) {
+    throw new NoProfileAvailableError()
   }
 
   const profiler = getProfiler(type)
 
-  // For heap profiler, always get the current profile
-  // For CPU profiler, use the cached profile if available
   if (type === 'heap') {
     state.latestProfile = profiler.profile()
-  } else if (state.latestProfile == null) {
+  } else if (!state.latestProfile) {
     throw new NoProfileAvailableError()
   }
 

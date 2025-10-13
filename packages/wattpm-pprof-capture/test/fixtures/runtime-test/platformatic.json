@@ -11,5 +11,11 @@
   },
   "logger": {
     "level": "error"
+  },
+  "health": {
+    "enabled": false
+  },
+  "verticalScaler": {
+    "enabled": false
   }
 }

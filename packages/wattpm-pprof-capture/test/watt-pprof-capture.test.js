@@ -316,3 +316,147 @@ test('CPU and heap profiling are independent', async t => {
   const heapProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
   assert.ok(heapProfile instanceof Uint8Array, 'Heap profile should work')
 })
+
+test('profiling with eluThreshold should defer start until threshold is reached', async t => {
+  const { app, url } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.5,
+    durationMillis: 500
+  })
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile'),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'Should not have profile yet as profiling is waiting for ELU threshold'
+  )
+
+  const { statusCode, body } = await request(`${url}/cpu-intensive?timeout=1000`, {
+    method: 'POST'
+  })
+  const error = await body.text()
+  assert.strictEqual(statusCode, 200, error)
+
+  await new Promise(resolve => setTimeout(resolve, 600))
+
+  const profile = await app.sendCommandToApplication('service', 'stopProfiling')
+  assert.ok(profile instanceof Uint8Array, 'Should get profile after ELU threshold reached')
+  assert.ok(profile.length > 0, 'Profile should have content')
+})
+
+test('stopping profiling while waiting for ELU should throw NoProfileAvailableError', async t => {
+  const { app } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.99
+  })
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile'),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'Should throw NoProfileAvailableError while waiting for ELU'
+  )
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling'),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'Should throw NoProfileAvailableError when stopping before profiling started'
+  )
+})
+
+test('multiple start attempts with eluThreshold should throw error', async t => {
+  const { app } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.5
+  })
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5 }),
+    { code: 'PLT_PPROF_PROFILING_ALREADY_STARTED' },
+    'Should throw ProfilingAlreadyStartedError while waiting for ELU'
+  )
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling'),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' }
+  )
+})
+
+test('heap profiling with eluThreshold should work', async t => {
+  const { app, url } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    type: 'heap',
+    eluThreshold: 0.5
+  })
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' }),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'Should not have heap profile yet'
+  )
+
+  const { statusCode } = await request(`${url}/cpu-intensive?timeout=1000`, {
+    method: 'POST'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  await new Promise(resolve => setTimeout(resolve, 600))
+
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' })
+  assert.ok(profile instanceof Uint8Array, 'Should get heap profile')
+
+  await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('CPU and heap profiling with eluThreshold are independent', async t => {
+  const { app } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    type: 'cpu',
+    eluThreshold: 0.99
+  })
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    type: 'heap',
+    eluThreshold: 0.99
+  })
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile', { type: 'cpu' }),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'CPU should be waiting for ELU'
+  )
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' }),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
+    'Heap should be waiting for ELU'
+  )
+
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling', { type: 'cpu' }),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' }
+  )
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' }),
+    { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' }
+  )
+})
+
+test('multiple rotations with eluThreshold should not leak timeouts', async t => {
+  const { app, url } = await createApp(t)
+
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.5,
+    durationMillis: 300
+  })
+
+  const req = request(`${url}/cpu-intensive?timeout=2000`, { method: 'POST' })
+
+  await req
+
+  await new Promise(resolve => setTimeout(resolve, 400))
+
+  const profile = await app.sendCommandToApplication('service', 'stopProfiling')
+  assert.ok(profile instanceof Uint8Array, 'Should get final profile')
+})
