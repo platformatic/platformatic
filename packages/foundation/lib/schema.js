@@ -678,6 +678,31 @@ export const telemetry = {
   additionalProperties: false
 }
 
+export const policies = {
+  type: 'object',
+  properties: {
+    deny: {
+      type: 'object',
+      patternProperties: {
+        '^.*$': {
+          oneOf: [
+            { type: 'string' },
+            {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              minItems: 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  required: ['deny'],
+  additionalProperties: false
+}
+
 export const applications = {
   type: 'array',
   items: {
@@ -1223,7 +1248,8 @@ export const runtimeProperties = {
       },
       required: ['name', 'cron', 'callbackUrl']
     }
-  }
+  },
+  policies
 }
 
 export const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
@@ -1248,6 +1274,7 @@ export const schemaComponents = {
   healthWithoutDefaults,
   telemetryExporter,
   telemetry,
+  policies,
   applications,
   runtimeProperties,
   wrappedRuntimeProperties,

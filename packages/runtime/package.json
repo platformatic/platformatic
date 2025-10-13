@@ -90,7 +90,7 @@
     "sonic-boom": "^4.2.0",
     "systeminformation": "^5.27.11",
     "undici": "^7.0.0",
-    "undici-thread-interceptor": "^0.14.0",
+    "undici-thread-interceptor": "^0.15.0",
     "ws": "^8.16.0"
   },
   "engines": {

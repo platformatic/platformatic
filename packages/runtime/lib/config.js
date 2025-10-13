@@ -342,6 +342,14 @@ export async function transform (config, _, context) {
     }
   }
 
+  if (config.policies?.deny) {
+    for (const [from, to] of Object.entries(config.policies.deny)) {
+      if (typeof to === 'string') {
+        config.policies.deny[from] = [to]
+      }
+    }
+  }
+
   config.applications = applications
   config.web = undefined
   config.services = undefined
