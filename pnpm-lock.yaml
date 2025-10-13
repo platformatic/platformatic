@@ -2041,9 +2041,6 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
-      create-wattpm:
-        specifier: workspace:*
-        version: link:../create-wattpm
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
