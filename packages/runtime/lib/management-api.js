@@ -134,7 +134,7 @@ export async function managementApiPlugin (app, opts) {
   app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
     const config = await runtime.getRuntimeConfig()
 
-    if (!config.metrics || config.metrics.enabled === false) {
+    if (config.metrics?.enabled === false) {
       reply.code(501)
       return {
         statusCode: 501,
@@ -158,7 +158,7 @@ export async function managementApiPlugin (app, opts) {
   app.get('/metrics/live', { websocket: true }, async socket => {
     const config = await runtime.getRuntimeConfig()
 
-    if (!config.metrics || config.metrics.enabled === false) {
+    if (config.metrics?.enabled === false) {
       socket.send(
         JSON.stringify({
           statusCode: 501,

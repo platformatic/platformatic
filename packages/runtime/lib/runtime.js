@@ -275,7 +275,7 @@ export class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    if (this.#config.metrics && this.#config.metrics.enabled !== false && typeof this.#metrics === 'undefined') {
+    if (this.#config.metrics?.enabled !== false && typeof this.#metrics === 'undefined') {
       this.startCollectingMetrics()
     }
 
