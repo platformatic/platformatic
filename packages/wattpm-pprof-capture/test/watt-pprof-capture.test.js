@@ -316,3 +316,79 @@ test('CPU and heap profiling are independent', async t => {
   const heapProfile = await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
   assert.ok(heapProfile instanceof Uint8Array, 'Heap profile should work')
 })
+
+test('profiling with eluThreshold should start immediately then stop when below threshold', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with a very high threshold (above 1.0, which is impossible)
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 2.0, durationMillis: 200 })
+
+  // Wait for monitor to check ELU and stop profiler (since we'll be below 2.0)
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  // getLastProfile should return the final profile captured when stopping
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Should return profile captured when stopping')
+  assert.ok(profile.length > 0, 'Profile should have content from brief run')
+
+  // Stop profiling
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('profiling with eluThreshold should start when utilization exceeds threshold', async t => {
+  const { app, url } = await createApp(t)
+
+  // Start profiling with a low threshold (should trigger eventually)
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.01, durationMillis: 200 })
+
+  // Generate some load to increase ELU
+  const loadPromises = []
+  for (let i = 0; i < 10; i++) {
+    loadPromises.push(request(`${url}/`))
+  }
+  await Promise.all(loadPromises)
+
+  // Wait for ELU check and rotation
+  await new Promise(resolve => setTimeout(resolve, 400))
+
+  // Profile should be available now
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Should get profile after threshold exceeded')
+  assert.ok(profile.length > 0, 'Profile should have content')
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('profiling with eluThreshold should work with heap profiling', async t => {
+  const { app } = await createApp(t)
+
+  // Start heap profiling with a very high threshold
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap', eluThreshold: 2.0 })
+
+  // Wait for monitor to stop profiler due to low ELU
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // getLastProfile should return the final heap snapshot captured when stopping
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' })
+  assert.ok(profile instanceof Uint8Array, 'Should return heap snapshot')
+  assert.ok(profile.length > 0, 'Heap snapshot should have content')
+
+  // Stop profiling
+  await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('eluThreshold profiling should allow double start error', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with eluThreshold
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5 })
+
+  // Try to start again - should throw ProfilingAlreadyStartedError
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5 }),
+    { code: 'PLT_PPROF_PROFILING_ALREADY_STARTED' },
+    'Should throw ProfilingAlreadyStartedError'
+  )
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
