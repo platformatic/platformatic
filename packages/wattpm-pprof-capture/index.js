@@ -5,11 +5,12 @@ import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedErro
 const kITC = Symbol.for('plt.runtime.itc')
 
 // Track ELU globally (shared across all profiler types)
-let lastELU = performance.eventLoopUtilization()
+const firstELU = performance.eventLoopUtilization()
+let lastELU = null
 
 // Start continuous ELU tracking immediately
 const eluUpdateInterval = setInterval(() => {
-  lastELU = performance.eventLoopUtilization(lastELU)
+  lastELU = performance.eventLoopUtilization(lastELU ?? firstELU)
 
   for (const type of ['cpu', 'heap']) {
     const state = profilingState[type]
@@ -149,28 +150,28 @@ function isBelowStopThreshold (state) {
 
 function rotateProfile (type) {
   const state = profilingState[type]
+  const wasRunning = state.profilerStarted
 
   stopProfiler(type, state)
-  maybeStartProfiler(type, state)
+  maybeStartProfiler(type, state, wasRunning)
 }
 
-function maybeStartProfiler (type, state) {
+function maybeStartProfiler (type, state, wasRunning) {
   // Check if we should start profiling based on current ELU (updated by global interval)
   if (state.eluThreshold != null) {
-    startIfOverThreshold(type, state)
+    startIfOverThreshold(type, state, wasRunning)
   } else if (state.isCapturing) {
     // No threshold, always start profiling
     startProfiler(type, state, state.options)
   }
 }
 
-function startIfOverThreshold (type, state) {
+function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) {
   // Only check if profiling is active and has an ELU threshold
   if (!state.isCapturing || state.eluThreshold == null) {
     return
   }
 
-  const wasRunning = state.profilerStarted
   const currentELU = lastELU?.utilization
 
   // Hysteresis logic:
@@ -185,21 +186,19 @@ function startIfOverThreshold (type, state) {
 
   if (shouldRun) {
     // ELU is high enough, start/restart profiling
-    if (!wasRunning && globalThis.platformatic?.logger) {
+    if (!wasRunning && !state.profilerStarted && globalThis.platformatic?.logger) {
       globalThis.platformatic.logger.info(
         { type, eluThreshold: state.eluThreshold, currentELU },
         'Starting profiler due to ELU threshold exceeded'
       )
     }
     startProfiler(type, state, state.options)
-  } else {
-    // ELU is too low, don't restart profiler
-    if (wasRunning && globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.info(
-        { type, eluThreshold: state.eluThreshold, currentELU },
-        'Pausing profiler due to ELU below threshold'
-      )
-    }
+  } else if (!shouldRun && wasRunning && globalThis.platformatic?.logger && state.eluThreshold != null) {
+    // Log when deciding not to restart after stopping (only in rotation context)
+    globalThis.platformatic.logger.info(
+      { type, eluThreshold: state.eluThreshold, currentELU },
+      'Pausing profiler due to ELU below threshold'
+    )
   }
 }
 
@@ -233,9 +232,6 @@ export function stopProfiling (options = {}) {
   state.eluThreshold = null
   state.durationMillis = null
   state.options = null
-
-  // Clear the profile clear timeout if it exists
-  unscheduleLastProfileCleanup(state)
 
   // Return the latest profile if available, otherwise return an empty profile
   // (e.g., when profiler never started due to ELU threshold not being exceeded)
