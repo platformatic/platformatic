@@ -188,7 +188,7 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
   if (shouldRun) {
     // ELU is high enough, start/restart profiling
     if (!wasRunning && !state.profilerStarted && globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.info(
+      globalThis.platformatic.logger.debug(
         { type, eluThreshold: state.eluThreshold, currentELU },
         'Starting profiler due to ELU threshold exceeded'
       )
@@ -196,7 +196,7 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
     startProfiler(type, state, state.options)
   } else if (!shouldRun && wasRunning && globalThis.platformatic?.logger && state.eluThreshold != null) {
     // Log when deciding not to restart after stopping (only in rotation context)
-    globalThis.platformatic.logger.info(
+    globalThis.platformatic.logger.debug(
       { type, eluThreshold: state.eluThreshold, currentELU },
       'Pausing profiler due to ELU below threshold'
     )
