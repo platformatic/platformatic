@@ -5,12 +5,13 @@ import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedErro
 const kITC = Symbol.for('plt.runtime.itc')
 
 // Track ELU globally (shared across all profiler types)
-const firstELU = performance.eventLoopUtilization()
 let lastELU = null
+let previousELU = performance.eventLoopUtilization()
 
 // Start continuous ELU tracking immediately
 const eluUpdateInterval = setInterval(() => {
-  lastELU = performance.eventLoopUtilization(lastELU ?? firstELU)
+  lastELU = performance.eventLoopUtilization(previousELU)
+  previousELU = performance.eventLoopUtilization()
 
   for (const type of ['cpu', 'heap']) {
     const state = profilingState[type]
