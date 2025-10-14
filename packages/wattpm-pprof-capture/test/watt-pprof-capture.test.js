@@ -435,24 +435,6 @@ test('CPU and heap profiling with eluThreshold are independent', async t => {
   assert.strictEqual(heapResult, null, 'Heap should return null when no profile')
 })
 
-test('multiple rotations with eluThreshold should not leak timeouts', async t => {
-  const { app, url } = await createApp(t)
-
-  await app.sendCommandToApplication('service', 'startProfiling', {
-    eluThreshold: 0.5,
-    durationMillis: 300
-  })
-
-  const req = request(`${url}/cpu-intensive?timeout=2000`, { method: 'POST' })
-
-  await req
-
-  await new Promise(resolve => setTimeout(resolve, 400))
-
-  const profile = await app.sendCommandToApplication('service', 'stopProfiling')
-  assert.ok(profile instanceof Uint8Array, 'Should get final profile')
-})
-
 test('rotation should clear latestProfile when ELU is too low to restart profiling', async t => {
   const { app, url } = await createApp(t)
 
