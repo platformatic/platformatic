@@ -10,6 +10,11 @@ let lastELU = performance.eventLoopUtilization()
 // Start continuous ELU tracking immediately
 const eluUpdateInterval = setInterval(() => {
   lastELU = performance.eventLoopUtilization(lastELU)
+
+  for (const type of ['cpu', 'heap']) {
+    const state = profilingState[type]
+    startIfOverThreshold(type, state)
+  }
 }, 1000)
 eluUpdateInterval.unref()
 
@@ -54,14 +59,51 @@ function getProfiler (type) {
   return type === 'heap' ? heap : time
 }
 
-function startProfiler (type, state, options) {
-  const profiler = getProfiler(type)
+function scheduleLastProfileCleanup (state) {
+  unscheduleLastProfileCleanup(state)
 
+  // Set up timer to clear profile after rotation duration
+  if (state.options?.durationMillis) {
+    state.clearProfileTimeout = setTimeout(() => {
+      state.latestProfile = undefined
+      state.clearProfileTimeout = null
+    }, state.options.durationMillis)
+    state.clearProfileTimeout.unref()
+  }
+}
+
+function unscheduleLastProfileCleanup (state) {
   // Clear any pending profile clear timeout
   if (state.clearProfileTimeout) {
     clearTimeout(state.clearProfileTimeout)
     state.clearProfileTimeout = null
   }
+}
+
+function scheduleProfileRotation (type, state, options) {
+  unscheduleProfileRotation(state)
+
+  // Set up profile window rotation if durationMillis is provided
+  if (options.durationMillis) {
+    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
+    state.captureInterval.unref()
+  }
+}
+
+function unscheduleProfileRotation (state) {
+  if (!state.captureInterval) return
+  clearInterval(state.captureInterval)
+  state.captureInterval = null
+}
+
+function startProfiler (type, state, options) {
+  if (state.profilerStarted) return
+
+  const profiler = getProfiler(type)
+
+  unscheduleLastProfileCleanup(state)
+  scheduleProfileRotation(type, state, options)
+  state.profilerStarted = true
 
   if (type === 'heap') {
     // Heap profiler takes intervalBytes and stackDepth as positional arguments
@@ -74,18 +116,16 @@ function startProfiler (type, state, options) {
     options.intervalMicros ??= 33333
     profiler.start(options)
   }
-
-  // Set up profile window rotation if durationMillis is provided
-  if (options.durationMillis) {
-    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
-    state.captureInterval.unref()
-  }
-
-  state.profilerStarted = true
 }
 
 function stopProfiler (type, state) {
+  if (!state.profilerStarted) return
+
   const profiler = getProfiler(type)
+
+  scheduleLastProfileCleanup(state)
+  unscheduleProfileRotation(state)
+  state.profilerStarted = false
 
   if (type === 'heap') {
     // Get the profile before stopping
@@ -95,21 +135,6 @@ function stopProfiler (type, state) {
     // CPU time profiler returns the profile when stopping
     state.latestProfile = profiler.stop()
   }
-
-  state.profilerStarted = false
-
-  clearInterval(state.captureInterval)
-  state.captureInterval = null
-
-  // Set up timer to clear profile after 60 seconds
-  if (state.clearProfileTimeout) {
-    clearTimeout(state.clearProfileTimeout)
-  }
-  state.clearProfileTimeout = setTimeout(() => {
-    state.latestProfile = undefined
-    state.clearProfileTimeout = null
-  }, state.durationMillis)
-  state.clearProfileTimeout.unref()
 }
 
 function isAboveThreshold (state) {
@@ -122,58 +147,59 @@ function isBelowStopThreshold (state) {
   return lastELU != null && lastELU.utilization < stopThreshold
 }
 
-function isProfilerRunning (state) {
-  // Check if profiler is actually started
-  return state.profilerStarted
-}
-
 function rotateProfile (type) {
   const state = profilingState[type]
-  const wasRunning = state.profilerStarted
 
-  // If profiler is running, stop it and capture the profile
-  if (wasRunning) {
-    stopProfiler(type, state)
+  stopProfiler(type, state)
+  maybeStartProfiler(type, state)
+}
+
+function maybeStartProfiler (type, state) {
+  // Check if we should start profiling based on current ELU (updated by global interval)
+  if (state.eluThreshold != null) {
+    startIfOverThreshold(type, state)
+  } else if (state.isCapturing) {
+    // No threshold, always start profiling
+    startProfiler(type, state, state.options)
+  }
+}
+
+function startIfOverThreshold (type, state) {
+  // Only check if profiling is active and has an ELU threshold
+  if (!state.isCapturing || state.eluThreshold == null) {
+    return
   }
 
-  // Check if we should start profiling again based on current ELU (updated by global interval)
-  if (state.eluThreshold != null) {
-    const currentELU = lastELU?.utilization
-    let shouldRun = false
+  const wasRunning = state.profilerStarted
+  const currentELU = lastELU?.utilization
 
-    // Hysteresis logic:
-    // - Start if ELU > threshold
-    // - Stop if ELU < threshold - 0.1
-    // - Between thresholds: maintain current state
-    if (wasRunning) {
-      // Was running: only stop if ELU drops below stop threshold
-      shouldRun = !isBelowStopThreshold(state)
-    } else {
-      // Was not running: only start if ELU rises above start threshold
-      shouldRun = isAboveThreshold(state)
-    }
+  // Hysteresis logic:
+  // - Start if ELU > threshold
+  // - Stop if ELU < threshold - 0.1
+  // - Between thresholds: maintain current state
+  const shouldRun = wasRunning
+    // Was running: only stop if ELU drops below stop threshold
+    ? !isBelowStopThreshold(state)
+    // Was not running: only start if ELU rises above start threshold
+    : isAboveThreshold(state)
 
-    if (shouldRun) {
-      // ELU is high enough, start/restart profiling
-      if (!wasRunning && globalThis.platformatic?.logger) {
-        globalThis.platformatic.logger.info(
-          { type, eluThreshold: state.eluThreshold, currentELU },
-          'Starting profiler due to ELU threshold exceeded'
-        )
-      }
-      startProfiler(type, state, state.options)
-    } else {
-      // ELU is too low, don't restart profiler
-      if (wasRunning && globalThis.platformatic?.logger) {
-        globalThis.platformatic.logger.info(
-          { type, eluThreshold: state.eluThreshold, currentELU },
-          'Pausing profiler due to ELU below threshold'
-        )
-      }
+  if (shouldRun) {
+    // ELU is high enough, start/restart profiling
+    if (!wasRunning && globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.info(
+        { type, eluThreshold: state.eluThreshold, currentELU },
+        'Starting profiler due to ELU threshold exceeded'
+      )
     }
-  } else {
-    // No threshold, always restart profiling
     startProfiler(type, state, state.options)
+  } else {
+    // ELU is too low, don't restart profiler
+    if (wasRunning && globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.info(
+        { type, eluThreshold: state.eluThreshold, currentELU },
+        'Pausing profiler due to ELU below threshold'
+      )
+    }
   }
 }
 
@@ -189,16 +215,7 @@ export function startProfiling (options = {}) {
   state.eluThreshold = options.eluThreshold
   state.durationMillis = options.durationMillis
 
-  // If using ELU threshold, check if we should start profiler immediately
-  if (options.eluThreshold != null) {
-    // Start profiler if ELU is already above threshold
-    if (lastELU != null && lastELU.utilization > options.eluThreshold) {
-      startProfiler(type, state, options)
-    }
-  } else {
-    // No threshold, start profiling immediately
-    startProfiler(type, state, options)
-  }
+  maybeStartProfiler(type, state)
 }
 
 export function stopProfiling (options = {}) {
@@ -210,10 +227,7 @@ export function stopProfiling (options = {}) {
   }
   state.isCapturing = false
 
-  // If the profiler is actually running, stop it and get the profile
-  if (isProfilerRunning(state)) {
-    stopProfiler(type, state)
-  }
+  stopProfiler(type, state)
 
   // Clean up state
   state.eluThreshold = null
@@ -221,10 +235,7 @@ export function stopProfiling (options = {}) {
   state.options = null
 
   // Clear the profile clear timeout if it exists
-  if (state.clearProfileTimeout) {
-    clearTimeout(state.clearProfileTimeout)
-    state.clearProfileTimeout = null
-  }
+  unscheduleLastProfileCleanup(state)
 
   // Return the latest profile if available, otherwise return an empty profile
   // (e.g., when profiler never started due to ELU threshold not being exceeded)
@@ -246,7 +257,7 @@ export function getLastProfile (options = {}) {
 
   // For heap profiler, always get the current profile (if actually profiling)
   // For CPU profiler, use the cached profile if available
-  if (type === 'heap' && isProfilerRunning(state)) {
+  if (type === 'heap' && state.profilerStarted) {
     const profiler = getProfiler(type)
     state.latestProfile = profiler.profile()
   }
@@ -273,8 +284,8 @@ export function getProfilingState (options = {}) {
   return {
     isCapturing: state.isCapturing,
     hasProfile: state.latestProfile != null,
-    isProfilerRunning: isProfilerRunning(state),
-    isPausedBelowThreshold: state.eluThreshold != null && !isProfilerRunning(state),
+    isProfilerRunning: state.profilerStarted,
+    isPausedBelowThreshold: state.eluThreshold != null && !state.profilerStarted,
     lastELU: lastELU?.utilization,
     eluThreshold: state.eluThreshold
   }
