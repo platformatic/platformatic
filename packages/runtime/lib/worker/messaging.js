@@ -1,5 +1,5 @@
-import { executeWithTimeout, ensureLoggableError, kTimeout } from '@platformatic/foundation'
-import { ITC, parseRequest, generateRequest, generateResponse, sanitize, errors } from '@platformatic/itc'
+import { ensureLoggableError, executeWithTimeout, kTimeout } from '@platformatic/foundation'
+import { errors, generateRequest, generateResponse, ITC, parseRequest, sanitize } from '@platformatic/itc'
 import { MessagingError } from '../errors.js'
 import { RoundRobinMap } from './round-robin-map.js'
 import { kITC, kWorkersBroadcast } from './symbols.js'
@@ -7,6 +7,7 @@ import { kITC, kWorkersBroadcast } from './symbols.js'
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
 
 export class MessagingITC extends ITC {
+  #id
   #timeout
   #listener
   #closeResolvers
@@ -22,6 +23,7 @@ export class MessagingITC extends ITC {
       name: `${id}-messaging`
     })
 
+    this.#id = id
     this.#timeout = runtimeConfig.messagingTimeout
     this.#workers = new RoundRobinMap()
     this.#sources = new Set()
@@ -67,7 +69,11 @@ export class MessagingITC extends ITC {
       // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
       // the request to the worker, using executeWithTimeout with the user set timeout value.
       const channel = await executeWithTimeout(
-        globalThis[kITC].send('getWorkerMessagingChannel', { application: worker.application, worker: worker.worker }),
+        globalThis[kITC].send('getWorkerMessagingChannel', {
+          id: this.#id,
+          application: worker.application,
+          worker: worker.worker
+        }),
         this.#timeout * 2
       )
 

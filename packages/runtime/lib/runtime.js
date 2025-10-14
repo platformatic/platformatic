@@ -41,6 +41,7 @@ import {
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { getMemoryInfo } from './metrics.js'
+import { createChannelCreationHook } from './policies.js'
 import { startPrometheusServer } from './prom-server.js'
 import ScalingAlgorithm from './scaling-algorithm.js'
 import { startScheduler } from './scheduler.js'
@@ -113,6 +114,8 @@ export class Runtime extends EventEmitter {
   #sharedHttpCache
   #scheduler
 
+  #channelCreationHook
+
   constructor (config, context) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
@@ -125,7 +128,12 @@ export class Runtime extends EventEmitter {
     this.#concurrency = this.#context.concurrency ?? MAX_CONCURRENCY
     this.#workers = new RoundRobinMap()
     this.#url = undefined
-    this.#meshInterceptor = createThreadInterceptor({ domain: '.plt.local', timeout: this.#config.applicationTimeout })
+    this.#channelCreationHook = createChannelCreationHook(this.#config)
+    this.#meshInterceptor = createThreadInterceptor({
+      domain: '.plt.local',
+      timeout: this.#config.applicationTimeout,
+      onChannelCreation: this.#channelCreationHook
+    })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingWorkers = new Map()
@@ -2003,7 +2011,14 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async #getWorkerMessagingChannel ({ application, worker }, context) {
+  async #getWorkerMessagingChannel ({ id, application, worker }, context) {
+    if (this.#channelCreationHook?.(id, application) === false) {
+      throw new MessagingError(
+        application,
+        `Communication channels are disabled between applications "${id}" and "${application}".`
+      )
+    }
+
     const target = await this.#getWorkerById(application, worker, true, true)
 
     const { port1, port2 } = new MessageChannel()

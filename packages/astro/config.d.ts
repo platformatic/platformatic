@@ -446,6 +446,15 @@ export interface PlatformaticAstroConfig {
       maxRetries?: number;
       [k: string]: unknown;
     }[];
+    policies?: {
+      deny: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: string | [string, ...string[]];
+      };
+    };
   };
   astro?: {
     configFile?: string | boolean;

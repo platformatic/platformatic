@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { parentPort, workerData } from 'node:worker_threads'
 import { Agent, Client, Pool, setGlobalDispatcher } from 'undici'
 import { wire } from 'undici-thread-interceptor'
+import { createChannelCreationHook } from '../policies.js'
 import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
 import { kInterceptors } from './symbols.js'
 
@@ -171,6 +172,7 @@ function createThreadInterceptor (runtimeConfig) {
     domain: '.plt.local',
     port: parentPort,
     timeout: runtimeConfig.applicationTimeout,
+    onChannelCreation: createChannelCreationHook(runtimeConfig),
     ...telemetryHooks
   })
   return threadDispatcher

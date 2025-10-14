@@ -2677,6 +2677,34 @@
               "callbackUrl"
             ]
           }
+        },
+        "policies": {
+          "type": "object",
+          "properties": {
+            "deny": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "deny"
+          ],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

@@ -446,6 +446,15 @@ export interface PlatformaticRemixConfig {
       maxRetries?: number;
       [k: string]: unknown;
     }[];
+    policies?: {
+      deny: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: string | [string, ...string[]];
+      };
+    };
   };
   vite?: {
     configFile?: string | boolean;
