@@ -72,13 +72,11 @@ function setupRotationInterval (type, options) {
       }
 
       stopProfiler(type)
-      state.isCapturing = false
 
       if (options.eluThreshold) {
         waitForELUAndStart(type, options)
       } else {
         startProfiler(type, options)
-        state.isCapturing = true
       }
     }, options.durationMillis)
     state.captureInterval.unref()
@@ -90,7 +88,6 @@ function waitForELUAndStart (type, options) {
 
   if (state.eluTimeout) {
     clearTimeout(state.eluTimeout)
-    state.eluTimeout = null
   }
 
   let previousELU = eventLoopUtilization()
@@ -109,6 +106,7 @@ function waitForELUAndStart (type, options) {
   }, 1000)
 
   state.eluTimeout.unref()
+  state.isCapturing = false
 }
 
 export function startProfiling (options = {}) {
