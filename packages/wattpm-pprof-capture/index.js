@@ -68,6 +68,8 @@ function setupRotationInterval (type, options) {
   if (options.durationMillis) {
     state.captureInterval = setInterval(() => {
       if (!state.isCapturing) {
+        // Not actively profiling, clear the lastProfile from previous rotation
+        state.latestProfile = null
         return
       }
 
@@ -145,11 +147,13 @@ export function stopProfiling (options = {}) {
   if (state.eluTimeout) {
     clearTimeout(state.eluTimeout)
     state.eluTimeout = null
+    state.isCapturing = false
+    state.options = null
 
     if (state.latestProfile) {
       return state.latestProfile.encode()
     }
-    throw new NoProfileAvailableError()
+    return null
   }
 
   stopProfiler(type)
@@ -167,15 +171,13 @@ export function getLastProfile (options = {}) {
     throw new ProfilingNotStartedError()
   }
 
-  if (state.eluTimeout) {
-    throw new NoProfileAvailableError()
-  }
-
   const profiler = getProfiler(type)
 
-  if (type === 'heap') {
+  if (type === 'heap' && state.isCapturing) {
     state.latestProfile = profiler.profile()
-  } else if (!state.latestProfile) {
+  }
+
+  if (!state.latestProfile) {
     throw new NoProfileAvailableError()
   }
 
