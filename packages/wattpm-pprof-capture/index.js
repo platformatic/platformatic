@@ -75,6 +75,12 @@ function startProfiler (type, state, options) {
     profiler.start(options)
   }
 
+  // Set up profile window rotation if durationMillis is provided
+  if (options.durationMillis) {
+    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
+    state.captureInterval.unref()
+  }
+
   state.profilerStarted = true
 }
 
@@ -91,6 +97,9 @@ function stopProfiler (type, state) {
   }
 
   state.profilerStarted = false
+
+  clearInterval(state.captureInterval)
+  state.captureInterval = null
 
   // Set up timer to clear profile after 60 seconds
   if (state.clearProfileTimeout) {
@@ -190,12 +199,6 @@ export function startProfiling (options = {}) {
     // No threshold, start profiling immediately
     startProfiler(type, state, options)
   }
-
-  // Set up profile window rotation if durationMillis is provided
-  if (options.durationMillis) {
-    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
-    state.captureInterval.unref()
-  }
 }
 
 export function stopProfiling (options = {}) {
@@ -206,9 +209,6 @@ export function stopProfiling (options = {}) {
     throw new ProfilingNotStartedError()
   }
   state.isCapturing = false
-
-  clearInterval(state.captureInterval)
-  state.captureInterval = null
 
   // If the profiler is actually running, stop it and get the profile
   if (isProfilerRunning(state)) {
