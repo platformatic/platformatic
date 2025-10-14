@@ -69,7 +69,7 @@ test('getLastProfile should throw error when profiling not started', async t => 
 })
 
 test('error types should be distinguishable throughout lifecycle', async t => {
-  const { app } = await createApp(t)
+  const { app, url } = await createApp(t)
 
   // Test ProfilingNotStartedError before starting
   await assert.rejects(
@@ -78,8 +78,36 @@ test('error types should be distinguishable throughout lifecycle', async t => {
     'Should throw ProfilingNotStartedError (not NoProfileAvailableError)'
   )
 
-  // Start profiling with profile rotation
+  // Test NotEnoughELUError when profiling with high threshold (no CPU load)
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 2.0, durationMillis: 200 })
+
+  // Wait for profiler to be paused below threshold
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPausedBelowThreshold && !state.isProfilerRunning
+  }, 2000)
+
+  // getLastProfile should throw NotEnoughELUError
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile'),
+    { code: 'PLT_PPROF_NOT_ENOUGH_ELU' },
+    'Should throw NotEnoughELUError when ELU threshold not exceeded'
+  )
+
+  // Stop profiling
+  await app.sendCommandToApplication('service', 'stopProfiling')
+
+  // Start CPU intensive task to generate load for profiler
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  // Start profiling with profile rotation (no threshold)
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500 })
+
+  // Wait for profiler to actually start running
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isProfilerRunning && !state.hasProfile
+  }, 1000)
 
   // Test NoProfileAvailableError (before any rotation happens)
   await assert.rejects(
@@ -100,6 +128,9 @@ test('error types should be distinguishable throughout lifecycle', async t => {
   const stopResult = await app.sendCommandToApplication('service', 'stopProfiling')
   assert.ok(stopResult instanceof Uint8Array, 'stopProfiling should return final profile')
   assert.ok(stopResult.length > 0, 'Final profile should have content')
+
+  // Stop CPU intensive task
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
 
   // Test ProfilingNotStartedError after stopping
   await assert.rejects(
