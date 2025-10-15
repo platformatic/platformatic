@@ -1,5 +1,6 @@
 import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc/lib/index.js'
+import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
@@ -17,7 +18,7 @@ export const isWindows = platform() === 'win32'
 // In theory we could use the context.id to namespace even more, but due to
 // UNIX socket length limitation on MacOS, we don't.
 export function generateChildrenId (context) {
-  return [process.pid, Date.now()].join('-')
+  return [process.pid, randomBytes(4).toString('hex')].join('-')
 }
 
 export function getSocketPath (id) {

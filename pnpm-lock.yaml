@@ -1136,6 +1136,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@watchable/unpromise':
+        specifier: ^1.0.2
+        version: 1.0.2
       json5:
         specifier: ^2.2.3
         version: 2.2.3

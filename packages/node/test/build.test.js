@@ -86,7 +86,6 @@ test('should not try to stop the application when build failed on start in dev',
     production: false,
     async additionalSetup (root, config) {
       config.restartOnError = 0
-      process._rawDebug(root)
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), () => 'this is not valid typescript')
 
       await writeFile(
@@ -121,6 +120,47 @@ test('should not try to stop the application when build failed on start in dev',
 
   const logs = await getLogsFromFile(root)
   ok(!logs.find(l => l.caller === 'STDOUT' && typeof l.stdout?.level === 'number' && typeof l.stdout?.msg === 'string'))
+})
+
+test('should not hang if the runtime forcefully stops during start in case of errors', async t => {
+  const { runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
+    build: false,
+    production: false,
+    async additionalSetup (root, config) {
+      config.restartOnError = 0
+      await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
+        content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
+
+      await writeFile(
+        resolve(root, 'services/app-no-config/platformatic.json'),
+        JSON.stringify(
+          {
+            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
+            logger: { timestamp: 'isoTime' }
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      )
+    }
+  })
+
+  const startingEvent = Promise.withResolvers()
+  runtime.on('application:worker:starting', event => {
+    if (event.application === 'app-no-config') {
+      startingEvent.resolve()
+    }
+  })
+
+  const promise = startRuntime(t, runtime)
+  runtime.error = new Error('This should not happen')
+  await startingEvent.promise
+
+  await runtime.stopApplication('app-no-config')
+  await promise
 })
 
 for (const application of ['app-no-config', 'app-with-config']) {
