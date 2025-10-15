@@ -1,6 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, symlink, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -67,6 +67,13 @@ server.listen(3000)
       `Application ${basename(rootDir)} is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.`
     )
   )
+
+  // Replace some dependences with symlinks to local packages
+  const modulesDir = resolve(rootDir, 'node_modules/@platformatic')
+  await safeRemove(resolve(modulesDir, 'basic'))
+  await safeRemove(resolve(modulesDir, 'node'))
+  await symlink(resolve(import.meta.dirname, '../../basic'), resolve(modulesDir, 'basic'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(modulesDir, 'node'), 'dir')
 
   // Check that the application can start
   const startProcess = wattpm('dev', rootDir)
