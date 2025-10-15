@@ -179,12 +179,8 @@ export class MessagingITC extends ITC {
     // Create a brand new map
     this.#workers = new RoundRobinMap()
 
-    const instances = []
     for (const [application, workers] of event.data) {
       const count = workers.length
-      const next = Math.floor(Math.random() * count)
-
-      instances.push({ id: application, next, workers: count })
 
       for (let i = 0; i < count; i++) {
         const worker = workers[i]
