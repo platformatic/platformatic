@@ -160,11 +160,12 @@ export class Controller extends EventEmitter {
       this.#logAndThrow(err)
     }
 
-    this.emit('starting')
-
     if (this.capability.status === 'stopped') {
       return
     }
+
+    this.capability.updateStatus('starting')
+    this.emit('starting')
 
     if (this.#watch) {
       const watchConfig = await this.capability.getWatchConfig()
@@ -187,6 +188,9 @@ export class Controller extends EventEmitter {
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
+      this.capability.updateStatus('start:error')
+      this.emit('start:error', err)
+
       this.capability.log({ message: err.message, level: 'debug' })
       this.#starting = false
       throw err
@@ -194,6 +198,8 @@ export class Controller extends EventEmitter {
 
     this.#started = true
     this.#starting = false
+
+    this.capability.updateStatus('started')
     this.emit('started')
   }
 
@@ -203,6 +209,10 @@ export class Controller extends EventEmitter {
     }
 
     this.emit('stopping')
+    // Do not update status of the capability to "stopping" here otherwise
+    // if stop is called before start is finished, the capability will not
+    // be able to wait for start to finish and it will create a race condition.
+
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
     await this.capability.stop()
@@ -210,6 +220,8 @@ export class Controller extends EventEmitter {
     this.#started = false
     this.#starting = false
     this.#listening = false
+
+    this.capability.updateStatus('stopped')
     this.emit('stopped')
   }
 

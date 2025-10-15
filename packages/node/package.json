@@ -26,6 +26,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/generators": "workspace:*",
+    "@watchable/unpromise": "^1.0.2",
     "json5": "^2.2.3",
     "light-my-request": "^6.0.0"
   },

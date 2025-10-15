@@ -8,7 +8,9 @@ import {
   injectViaRequest
 } from '@platformatic/basic'
 import { features } from '@platformatic/foundation'
+import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
+import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
@@ -149,10 +151,7 @@ export class NodeCapability extends BaseCapability {
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener(
-      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
-    )
+    const serverPromise = createServerListener(serverOptions?.port ?? true, serverOptions?.hostname ?? true)
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
@@ -200,6 +199,10 @@ export class NodeCapability extends BaseCapability {
 
   async stop () {
     await super.stop()
+
+    if (this.status === 'starting') {
+      await Unpromise.race([once(this, 'started'), once(this, 'start:error')])
+    }
 
     if (this.childManager) {
       return this.stopCommand()

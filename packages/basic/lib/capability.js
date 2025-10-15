@@ -135,7 +135,13 @@ export class BaseCapability extends EventEmitter {
     }
 
     await this.updateContext()
+    this.updateStatus('init')
     this.status = 'init'
+  }
+
+  updateStatus (status) {
+    this.status = status
+    this.emit(status)
   }
 
   updateContext (_context) {
@@ -150,8 +156,6 @@ export class BaseCapability extends EventEmitter {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
     }
-
-    this.status = 'stopped'
   }
 
   build () {
