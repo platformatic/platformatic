@@ -194,8 +194,6 @@ export class MessagingITC extends ITC {
         this.#workers.set(`${application}:${i}`, { ...worker, channel })
       }
     }
-
-    this.#workers.configure(instances)
   }
 
   async #handleNotification (messageEvent) {

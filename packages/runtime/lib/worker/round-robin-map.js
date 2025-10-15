@@ -1,62 +1,60 @@
 export class RoundRobinMap extends Map {
   #instances
 
-  constructor (iterable, instances = {}) {
-    super(iterable)
-    this.#instances = instances
-  }
-
-  get configuration () {
-    return { ...this.#instances }
-  }
-
-  configure (applications) {
+  constructor () {
+    super()
     this.#instances = {}
-
-    for (const application of applications) {
-      this.#instances[application.id] = { next: application.next ?? 0, count: application.workers }
-    }
   }
 
-  getCount (application) {
-    if (!this.#instances[application]) {
-      return null
+  set (key, worker) {
+    const hasKey = super.has(key)
+    if (!hasKey) {
+      const application = key.split(':')[0]
+
+      if (!this.#instances[application]) {
+        this.#instances[application] = { keys: [] }
+      }
+      this.#instances[application].next = null
+      this.#instances[application].keys.push(key)
     }
 
-    return this.#instances[application].count
+    return super.set(key, worker)
   }
 
-  setCount (application, count) {
-    if (!this.#instances[application]) {
-      throw new Error(`Application ${application} is not configured.`)
+  delete (key) {
+    const removed = super.delete(key)
+
+    if (removed) {
+      const application = key.split(':')[0]
+
+      if (this.#instances[application]) {
+        const keys = this.#instances[application].keys
+        if (keys.length <= 1) {
+          delete this.#instances[application]
+        } else {
+          const keys = this.#instances[application].keys
+          keys.splice(keys.indexOf(key), 1)
+          this.#instances[application].next = null
+        }
+      }
     }
 
-    this.#instances[application].count = count
+    return removed
+  }
+
+  getKeys (application) {
+    return this.#instances[application]?.keys ?? []
   }
 
   next (application) {
-    if (!this.#instances[application]) {
-      return null
+    if (!this.#instances[application]) return
+
+    let { next, keys } = this.#instances[application]
+    if (next === null) {
+      next = Math.floor(Math.random() * keys.length)
     }
+    this.#instances[application].next = (next + 1) % keys.length
 
-    let worker
-    let { next, count } = this.#instances[application]
-
-    // Try count times to get the next worker. This is to handle the case where a worker is being restarted.
-    for (let i = 0; i < count; i++) {
-      const current = next++
-      if (next >= count) {
-        next = 0
-      }
-
-      worker = this.get(`${application}:${current}`)
-
-      if (worker) {
-        break
-      }
-    }
-
-    this.#instances[application].next = next
-    return worker
+    return this.get(keys[next])
   }
 }

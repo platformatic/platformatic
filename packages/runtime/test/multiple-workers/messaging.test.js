@@ -80,7 +80,7 @@ test('should post updated workers list via broadcast channel', async t => {
   expected.second.push({ id: 'second:2', application: 'second', thread: threads['second:2'], worker: 2 })
   deepStrictEqual(events[5], new Map(Object.entries(expected)))
 
-  expected.composer = [{ id: 'composer', application: 'composer', thread: threads['composer'], worker: undefined }]
+  expected.composer = [{ id: 'composer', application: 'composer', thread: threads.composer, worker: undefined }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
   delete expected.composer
@@ -136,9 +136,9 @@ test('should post updated workers when something crashed', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[1], worker: undefined }]]]),
     new Map()
   ])
 })
@@ -170,9 +170,9 @@ test('should post updated workers when the application is updated', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[0], worker: undefined }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads['first'][1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[1], worker: undefined }]]]),
     new Map()
   ])
 })
@@ -377,10 +377,10 @@ test('should return an error if the target worker times out while saving the cha
       `
         module.exports = async function (app) {
           const existingHandler = globalThis[Symbol.for('plt.runtime.itc')].getHandler('saveMessagingChannel')
-          
+
           globalThis[Symbol.for('plt.runtime.itc')].handle('saveMessagingChannel', async function (...args) {
             await require('node:timers/promises').setTimeout(5000)
-            return existingHandler(...args)            
+            return existingHandler(...args)
           })
         \n
       `

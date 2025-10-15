@@ -21,19 +21,17 @@ const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 
 async function checkReadiness (runtime) {
   const workers = await runtime.getWorkers()
+  const applications = await runtime.getApplicationsIds()
 
   // Make sure there is at least one started worker
-  const applications = new Set()
   const started = new Set()
   for (const worker of Object.values(workers)) {
-    applications.add(worker.application)
-
     if (worker.status === 'started') {
       started.add(worker.application)
     }
   }
 
-  if (started.size !== applications.size) {
+  if (started.size !== applications.length) {
     return { status: false }
   }
 
