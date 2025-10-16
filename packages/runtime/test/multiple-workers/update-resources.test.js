@@ -22,6 +22,25 @@ async function prepareRuntime (t, applicationsId, fixture) {
 }
 
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
+  const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
+  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+
+  await runtime.updateApplicationsResources([
+    { application: 'service', workers: 2 }
+  ])
+  await runtime.updateApplicationsResources([
+    { application: 'service', workers: 1 }
+  ])
+
+  await runtime.getApplicationDetails('service', false)
+})
+
+test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const applicationId = 'node'
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
   const runtime = await createRuntime(join(appPath, 'platformatic.json'))

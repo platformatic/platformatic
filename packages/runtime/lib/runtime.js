@@ -107,6 +107,7 @@ export class Runtime extends EventEmitter {
 
   #applicationsConfigsPatches
   #workers
+  #workersConfigs
   #workersBroadcastChannel
   #workerITCHandlers
   #restartingWorkers
@@ -190,27 +191,24 @@ export class Runtime extends EventEmitter {
 
     this.#createWorkersBroadcastChannel()
 
-    const workersConfig = []
-    for (const application of config.applications) {
-      const count = application.workers ?? this.#config.workers ?? 1
+    this.#workersConfigs = {}
+    for (const application of this.#config.applications) {
+      let count = application.workers ?? this.#config.workers ?? 1
       if (count > 1 && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
+        `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
         )
-        workersConfig.push({ id: application.id, workers: 1 })
-      } else {
-        workersConfig.push({ id: application.id, workers: count })
+        count = 1
       }
+      this.#workersConfigs[application.id] = { count }
     }
 
-    this.#workers.configure(workersConfig)
-
     if (this.#isProduction) {
-      this.#env['PLT_DEV'] = 'false'
-      this.#env['PLT_ENVIRONMENT'] = 'production'
+      this.#env.PLT_DEV = 'false'
+      this.#env.PLT_ENVIRONMENT = 'production'
     } else {
-      this.#env['PLT_DEV'] = 'true'
-      this.#env['PLT_ENVIRONMENT'] = 'development'
+      this.#env.PLT_DEV = 'true'
+      this.#env.PLT_ENVIRONMENT = 'development'
     }
 
     await this.#setupApplications()
@@ -493,12 +491,11 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    const workersCount = await this.#workers.getCount(applicationConfig.id)
-
+    const workersConfigs = this.#workersConfigs[id]
     this.emitAndNotify('application:starting', id)
 
-    for (let i = 0; i < workersCount; i++) {
-      await this.#startWorker(config, applicationConfig, workersCount, id, i, silent)
+    for (let i = 0; i < workersConfigs.count; i++) {
+      await this.#startWorker(config, applicationConfig, workersConfigs.count, id, i, silent)
     }
 
     this.emitAndNotify('application:started', id)
@@ -512,13 +509,15 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    const workersCount = await this.#workers.getCount(applicationConfig.id)
+    const workersIds = this.#workers.getKeys(id)
+    const workersCount = workersIds.length
 
     this.emitAndNotify('application:stopping', id)
 
     if (typeof workersCount === 'number') {
       const stopInvocations = []
-      for (let i = 0; i < workersCount; i++) {
+      for (const workerId of workersIds) {
+        const i = parseInt(workerId.split(':')[1])
         stopInvocations.push([workersCount, id, i, silent, undefined, dependents])
       }
 
@@ -531,13 +530,15 @@ export class Runtime extends EventEmitter {
   async restartApplication (id) {
     const config = this.#config
     const applicationConfig = this.#config.applications.find(s => s.id === id)
-    const workersCount = await this.#workers.getCount(id)
+
+    const workersIds = await this.#workers.getKeys(id)
+    const workersCount = workersIds.length
 
     this.emitAndNotify('application:restarting', id)
 
     for (let i = 0; i < workersCount; i++) {
-      const label = `${id}:${i}`
-      const worker = this.#workers.get(label)
+      const workerId = workersIds[i]
+      const worker = this.#workers.get(workerId)
 
       if (i > 0 && config.workersRestartDelay > 0) {
         await sleep(config.workersRestartDelay)
@@ -861,14 +862,11 @@ export class Runtime extends EventEmitter {
   async getCustomHealthChecks () {
     const status = {}
 
-    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${application}:${i}`
-        const worker = this.#workers.get(label)
-
-        if (worker) {
-          status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
-        }
+    for (const application of this.#config.applications) {
+      const workersIds = this.#workers.getKeys(application.id)
+      for (const workerId of workersIds) {
+        const worker = this.#workers.get(workerId)
+        status[workerId] = await sendViaITC(worker, 'getCustomHealthCheck')
       }
     }
 
@@ -878,14 +876,11 @@ export class Runtime extends EventEmitter {
   async getCustomReadinessChecks () {
     const status = {}
 
-    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${application}:${i}`
-        const worker = this.#workers.get(label)
-
-        if (worker) {
-          status[label] = await sendViaITC(worker, 'getCustomReadinessCheck')
-        }
+    for (const application of this.#config.applications) {
+      const workersIds = this.#workers.getKeys(application.id)
+      for (const workerId of workersIds) {
+        const worker = this.#workers.get(workerId)
+        status[workerId] = await sendViaITC(worker, 'getCustomReadinessCheck')
       }
     }
 
@@ -1055,12 +1050,11 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationResourcesInfo (id) {
-    const workers = this.#workers.getCount(id)
-
+    const workersCount = this.#workers.getKeys(id).length
     const worker = await this.#getWorkerById(id, 0, false, false)
     const health = worker[kConfig].health
 
-    return { workers, health }
+    return { workers: workersCount, health }
   }
 
   getApplicationsIds () {
@@ -1080,17 +1074,13 @@ export class Runtime extends EventEmitter {
   async getWorkers () {
     const status = {}
 
-    for (const [application, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${application}:${i}`
-        const worker = this.#workers.get(label)
-
-        status[label] = {
-          application,
-          worker: i,
-          status: worker?.[kWorkerStatus] ?? 'exited',
-          thread: worker?.threadId
-        }
+    for (const [key, worker] of this.#workers.entries()) {
+      const [application, index] = key.split(':')
+      status[key] = {
+        application,
+        worker: index,
+        status: worker[kWorkerStatus],
+        thread: worker.threadId
       }
     }
 
@@ -1141,7 +1131,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.#isProduction) {
-      applicationDetails.workers = this.#workers.getCount(id)
+      applicationDetails.workers = this.#workers.getKeys(id).length
     }
 
     if (entrypoint) {
@@ -1273,12 +1263,13 @@ export class Runtime extends EventEmitter {
     }
 
     const config = this.#config
-    const workersCount = await this.#workers.getCount(applicationConfig.id)
+
+    const workersConfigs = this.#workersConfigs[applicationConfig.id]
     const id = applicationConfig.id
     const setupInvocations = []
 
-    for (let i = 0; i < workersCount; i++) {
-      setupInvocations.push([config, applicationConfig, workersCount, id, i])
+    for (let i = 0; i < workersConfigs.count; i++) {
+      setupInvocations.push([config, applicationConfig, workersConfigs.count, id, i])
     }
 
     await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
@@ -1344,9 +1335,9 @@ export class Runtime extends EventEmitter {
     const workerEnv = structuredClone(this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {
-      const originalNodeOptions = workerEnv['NODE_OPTIONS'] ?? ''
+      const originalNodeOptions = workerEnv.NODE_OPTIONS ?? ''
 
-      workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${applicationConfig.nodeOptions}`.trim()
+      workerEnv.NODE_OPTIONS = `${originalNodeOptions} ${applicationConfig.nodeOptions}`.trim()
     }
 
     const maxHeapTotal =
@@ -1953,8 +1944,7 @@ export class Runtime extends EventEmitter {
       }
 
       if (applicationsIds.includes(applicationId)) {
-        const availableWorkers = Array.from(this.#workers.keys())
-          .filter(key => key.startsWith(applicationId + ':'))
+        const availableWorkers = this.#workers.getKeys(applicationId)
           .map(key => key.split(':')[1])
           .join(', ')
         throw new WorkerNotFoundError(workerId, applicationId, availableWorkers)
@@ -2156,14 +2146,14 @@ export class Runtime extends EventEmitter {
 
     this.#config.applications.find(s => s.id === applicationId).workers = workers
     const application = await this.#getApplicationById(applicationId)
-    this.#workers.setCount(applicationId, workers)
     application[kConfig].workers = workers
 
+    const workersIds = this.#workers.getKeys(applicationId)
     const promises = []
-    for (const [workerId, worker] of this.#workers.entries()) {
-      if (workerId.startsWith(`${applicationId}:`)) {
-        promises.push(sendViaITC(worker, 'updateWorkersCount', { applicationId, workers }))
-      }
+
+    for (const workerId of workersIds) {
+      const worker = this.#workers.get(workerId)
+      promises.push(sendViaITC(worker, 'updateWorkersCount', { applicationId, workers }))
     }
 
     const results = await Promise.allSettled(promises)
@@ -2423,30 +2413,29 @@ export class Runtime extends EventEmitter {
   }
 
   async #updateApplicationWorkers (applicationId, config, applicationConfig, workers, currentWorkers) {
-    const report = {
-      current: currentWorkers,
-      new: workers
-    }
+    const report = { current: currentWorkers, new: workers }
+
+    let startedWorkersCount = 0
+    let stoppedWorkersCount = 0
+
     if (currentWorkers < workers) {
       report.started = []
       try {
-        await this.#updateApplicationConfigWorkers(applicationId, workers)
         for (let i = currentWorkers; i < workers; i++) {
           await this.#setupWorker(config, applicationConfig, workers, applicationId, i)
           await this.#startWorker(config, applicationConfig, workers, applicationId, i, false, 0)
           report.started.push(i)
+          startedWorkersCount++
         }
         report.success = true
       } catch (err) {
-        if (report.started.length < 1) {
+        if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
-          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers)
         } else {
           this.logger.error(
             { err },
-            `Cannot start application workers, started workers: ${report.started.length} out of ${workers}`
+            `Cannot start application workers, started workers: ${startedWorkersCount} out of ${workers}`
           )
-          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers + report.started.length)
         }
         report.success = false
       }
@@ -2459,22 +2448,27 @@ export class Runtime extends EventEmitter {
           await sendViaITC(worker, 'removeFromMesh')
           await this.#stopWorker(currentWorkers, applicationId, i, false, worker, [])
           report.stopped.push(i)
+          stoppedWorkersCount++
         }
-        await this.#updateApplicationConfigWorkers(applicationId, workers)
         report.success = true
       } catch (err) {
-        if (report.stopped.length < 1) {
+        if (stoppedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot stop application workers, no worker stopped')
         } else {
           this.logger.error(
             { err },
-            `Cannot stop application workers, stopped workers: ${report.stopped.length} out of ${workers}`
+            `Cannot stop application workers, stopped workers: ${stoppedWorkersCount} out of ${workers}`
           )
-          await this.#updateApplicationConfigWorkers(applicationId, currentWorkers - report.stopped)
         }
         report.success = false
       }
     }
+
+    const newWorkersCount = currentWorkers + startedWorkersCount - stoppedWorkersCount
+    if (newWorkersCount !== currentWorkers) {
+      await this.#updateApplicationConfigWorkers(applicationId, newWorkersCount)
+    }
+
     return report
   }
 
