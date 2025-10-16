@@ -127,3 +127,7 @@ export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
   'Please install @platformatic/wattpm-pprof-capture'
 )
+export const GetHeapStatisticUnavailable = createError(
+  `${ERROR_PREFIX}_GET_HEAP_STATISTIC_UNAVAILABLE`,
+  'The getHeapStatistics method is not available in your Node version'
+)

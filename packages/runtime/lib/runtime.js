@@ -36,7 +36,8 @@ import {
   MissingPprofCapture,
   RuntimeAbortedError,
   RuntimeExitedError,
-  WorkerNotFoundError
+  WorkerNotFoundError,
+  GetHeapStatisticUnavailable
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
@@ -56,7 +57,8 @@ import {
   kHealthCheckTimer,
   kId,
   kITC,
-  kLastELU,
+  kLastHealthCheckELU,
+  kLastVerticalScalerELU,
   kStderrMarker,
   kWorkerId,
   kWorkersBroadcast,
@@ -1521,17 +1523,21 @@ export class Runtime extends EventEmitter {
     return worker
   }
 
-  async #getHealth (worker) {
-    if (features.node.worker.getHeapStatistics) {
-      const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
-      const currentELU = worker.performance.eventLoopUtilization()
-      const elu = worker[kLastELU] ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]) : currentELU
-      worker[kLastELU] = currentELU
-      return { elu: elu.utilization, heapUsed, heapTotal }
+  async #getHealth (worker, options = {}) {
+    if (!features.node.worker.getHeapStatistics) {
+      throw new GetHeapStatisticUnavailable()
     }
 
-    const health = await worker[kITC].send('getHealth')
-    return health
+    const currentELU = worker.performance.eventLoopUtilization()
+    const previousELU = options.previousELU
+
+    let elu = currentELU
+    if (previousELU) {
+      elu = worker.performance.eventLoopUtilization(elu, previousELU)
+    }
+
+    const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
   }
 
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
@@ -1550,11 +1556,15 @@ export class Runtime extends EventEmitter {
 
       let health, unhealthy, memoryUsage
       try {
-        health = await this.#getHealth(worker)
+        health = await this.#getHealth(worker, {
+          previousELU: worker[kLastHealthCheckELU]
+        })
+        worker[kLastHealthCheckELU] = health.currentELU
         memoryUsage = health.heapUsed / maxHeapTotalNumber
         unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
+        worker[kLastHealthCheckELU] = null
         unhealthy = true
         memoryUsage = -1
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
@@ -2597,7 +2607,11 @@ export class Runtime extends EventEmitter {
         }
 
         try {
-          const health = await this.#getHealth(worker)
+          const health = await this.#getHealth(worker, {
+            previousELU: worker[kLastVerticalScalerELU]
+          })
+          worker[kLastVerticalScalerELU] = health.currentELU
+
           if (!health) continue
 
           scalingAlgorithm.addWorkerHealthInfo({

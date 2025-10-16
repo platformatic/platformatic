@@ -55,7 +55,8 @@ export module symbols {
   export declare const kWorkerId: unique symbol
   export declare const kITC: unique symbol
   export declare const kHealthCheckTimer: unique symbol
-  export declare const kLastELU: unique symbol
+  export declare const kLastHealthCheckELU: unique symbol
+  export declare const kLastVerticalScalerELU: unique symbol
   export declare const kWorkerStatus: unique symbol
   export declare const kStderrMarker: string
   export declare const kInterceptors: unique symbol

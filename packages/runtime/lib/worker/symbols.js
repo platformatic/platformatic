@@ -8,7 +8,8 @@ export const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer
 export const kWorkerStatus = Symbol('plt.runtime.worker.status')
 export const kWorkerStartTime = Symbol.for('plt.runtime.worker.startTime')
 export const kInterceptors = Symbol.for('plt.runtime.worker.interceptors')
-export const kLastELU = Symbol.for('plt.runtime.worker.lastELU')
+export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
+export const kLastVerticalScalerELU = Symbol.for('plt.runtime.worker.lastVerticalScalerELU')
 
 // This string marker should be safe to use since it belongs to Unicode private area
 export const kStderrMarker = '\ue002'
