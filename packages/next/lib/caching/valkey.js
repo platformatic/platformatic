@@ -317,7 +317,7 @@ export class CacheHandler {
       pinoOptions.name = `cache:${this.applicationId}`
     }
 
-    if (pinoOptions.base !== null && typeof globalThis.platformatic.workerId !== 'undefined') {
+    if (pinoOptions.base !== null) {
       pinoOptions.base = {
         ...(pinoOptions.base ?? {}),
         pid: process.pid,

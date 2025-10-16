@@ -1,8 +1,8 @@
 import { execa } from 'execa'
 import { ok } from 'node:assert'
 import { join } from 'node:path'
-import { test, afterEach } from 'node:test'
-import { request, Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { afterEach, test } from 'node:test'
+import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
 
 function stdioOutputToLogs (data) {
@@ -143,7 +143,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Starting the application "app"...'
+        log.msg === 'Starting the worker 0 of the application "app"...'
     )
   )
   ok(
@@ -152,7 +152,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Started the application "app"...'
+        log.msg === 'Started the worker 0 of the application "app"...'
     )
   )
   ok(
@@ -198,7 +198,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Starting the application "app"...'
+        log.msg === 'Starting the worker 0 of the application "app"...'
     )
   )
 
@@ -208,7 +208,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
         log.level === 'INFO' &&
         log.time.length === 24 && // isotime
         log.name === 'service' &&
-        log.msg === 'Started the application "app"...'
+        log.msg === 'Started the worker 0 of the application "app"...'
     )
   )
 
@@ -265,7 +265,7 @@ test('should inherit full logger options from runtime to different applications'
           log.level === 'INFO' &&
           log.time.length === 24 && // isotime
           log.name === 'service' &&
-          log.msg === `Started the application "${t}"...`
+          log.msg === `Started the worker 0 of the application "${t}"...`
       )
     )
   }
@@ -347,19 +347,19 @@ test('should handle logs from thread applications as they are with captureStdio:
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "node"...'
     })
   )
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "service"...'
     })
   )
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "composer"...'
     })
   )
 })
@@ -399,19 +399,19 @@ test('should handle logs from thread applications as they are with captureStdio:
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "node"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "node"...'
     })
   )
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "service"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "service"...'
     })
   )
 
   ok(
     logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the application "composer"...'
+      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "composer"...'
     })
   )
 })
@@ -500,7 +500,12 @@ test('should use custom config', async t => {
   ok(
     logs.every(log => {
       const keys = Object.keys(log)
-      return typeof log.severity === 'string' && log.message.length > 0 && !keys.includes('pid') && !keys.includes('hostname')
+      return (
+        typeof log.severity === 'string' &&
+        log.message.length > 0 &&
+        !keys.includes('pid') &&
+        !keys.includes('hostname')
+      )
     })
   )
 })

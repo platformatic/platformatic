@@ -213,24 +213,24 @@ test('should support custom metrics', async t => {
 
   ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
   ok(metrics.includes('# TYPE custom_service_1 counter'))
-  ok(metrics.includes('custom_service_1{applicationId="service"} 123'))
+  ok(metrics.includes('custom_service_1{applicationId="service",workerId="0"} 123'))
   ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
   ok(metrics.includes('# TYPE custom_service_2 gauge'))
-  ok(metrics.includes('custom_service_2{applicationId="service"} 456'))
+  ok(metrics.includes('custom_service_2{applicationId="service",workerId="0"} 456'))
 
   ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
   ok(metrics.includes('# TYPE custom_internal_1 counter'))
-  ok(metrics.includes('custom_internal_1{applicationId="internal"} 123'))
+  ok(metrics.includes('custom_internal_1{applicationId="internal",workerId="0"} 123'))
   ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
   ok(metrics.includes('# TYPE custom_internal_2 gauge'))
-  ok(metrics.includes('custom_internal_2{applicationId="internal"} 456'))
+  ok(metrics.includes('custom_internal_2{applicationId="internal",workerId="0"} 456'))
 
   ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
   ok(metrics.includes('# TYPE custom_external_1 counter'))
-  ok(metrics.includes('custom_external_1{applicationId="external"} 123'))
+  ok(metrics.includes('custom_external_1{applicationId="external",workerId="0"} 123'))
   ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
   ok(metrics.includes('# TYPE custom_external_2 gauge'))
-  ok(metrics.includes('custom_external_2{applicationId="external"} 456'))
+  ok(metrics.includes('custom_external_2{applicationId="external",workerId="0"} 456'))
 })
 
 test('should track http cache hits/misses', async t => {
@@ -274,14 +274,14 @@ test('should track http cache hits/misses', async t => {
 
   const metrics = await body.text()
 
-  ok(metrics.match(/http_cache_hit_count\{applicationId="main"\} \d+/))
-  ok(metrics.match(/http_cache_miss_count\{applicationId="main"\} \d+/))
+  ok(metrics.match(/http_cache_hit_count\{applicationId="main",workerId="0"\} \d+/))
+  ok(metrics.match(/http_cache_miss_count\{applicationId="main",workerId="0"\} \d+/))
 
-  ok(metrics.includes('http_cache_hit_count{applicationId="service-1"} 0'))
-  ok(metrics.includes('http_cache_miss_count{applicationId="service-1"} 0'))
+  ok(metrics.includes('http_cache_hit_count{applicationId="service-1",workerId="0"} 0'))
+  ok(metrics.includes('http_cache_miss_count{applicationId="service-1",workerId="0"} 0'))
 
-  ok(metrics.includes('http_cache_hit_count{applicationId="service-2"} 0'))
-  ok(metrics.includes('http_cache_miss_count{applicationId="service-2"} 1'))
+  ok(metrics.includes('http_cache_hit_count{applicationId="service-2",workerId="0"} 0'))
+  ok(metrics.includes('http_cache_miss_count{applicationId="service-2",workerId="0"} 1'))
 })
 
 test('metrics can be disabled', async t => {

@@ -362,7 +362,8 @@ export class NodeCapability extends BaseCapability {
 
     const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)
 
-    if (typeof this.workerId === 'undefined' || this.workerId === 0) {
+    // Only show the warning once
+    if (this.workerId === 0) {
       if (!entrypoint) {
         this.logger.error(
           `The application "${this.applicationId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`

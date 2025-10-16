@@ -327,7 +327,7 @@ export class ChildProcess extends ITC {
       pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
     }
 
-    if (loggerOptions.base !== null && typeof globalThis.platformatic.workerId !== 'undefined') {
+    if (loggerOptions.base !== null) {
       pinoOptions.base = {
         ...(pinoOptions.base ?? {}),
         pid: process.pid,
@@ -401,10 +401,7 @@ export class ChildProcess extends ITC {
   }
 
   #setupHandlers () {
-    const errorLabel =
-      typeof globalThis.platformatic.workerId !== 'undefined'
-        ? `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
-        : `application "${globalThis.platformatic.applicationId}"`
+    const errorLabel = `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)

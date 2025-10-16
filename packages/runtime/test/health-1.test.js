@@ -49,8 +49,8 @@ test('should not lose any connection when restarting the process', async t => {
   await waitPromise
   const messages = await readLogs(context.logsPath)
 
-  ok(messages.some(m => m.msg === 'The application "service" is unhealthy. Replacing it ...'))
-  ok(!messages.some(m => m.msg === 'The application "service" unexpectedly exited with code 1.'))
+  ok(messages.some(m => m.msg === 'The worker 0 of the application "service" is unhealthy. Replacing it ...'))
+  ok(!messages.some(m => m.msg === 'The worker 0 of the application "service" unexpectedly exited with code 1.'))
   ok(!messages.some(m => m.error?.message.includes('No target found for application.plt.local')))
   ok(!messages.some(m => m.error?.code === 'FST_REPLY_FROM_INTERNAL_SERVER_ERROR'))
   deepStrictEqual(results.errors, 0)

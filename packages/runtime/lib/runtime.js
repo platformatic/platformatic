@@ -196,7 +196,7 @@ export class Runtime extends EventEmitter {
       let count = application.workers ?? this.#config.workers ?? 1
       if (count > 1 && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
-        `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
+          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
         )
         count = 1
       }
@@ -477,13 +477,6 @@ export class Runtime extends EventEmitter {
   }
 
   async startApplication (id, silent = false) {
-    // Since when an application is stopped the worker is deleted, we consider an application start if its first application
-    // is no longer in the init phase
-    const firstWorker = this.#workers.get(`${id}:0`)
-    if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
-      throw new ApplicationAlreadyStartedError()
-    }
-
     const config = this.#config
     const applicationConfig = config.applications.find(s => s.id === id)
 
@@ -492,6 +485,16 @@ export class Runtime extends EventEmitter {
     }
 
     const workersConfigs = this.#workersConfigs[id]
+
+    for (let i = 0; i < workersConfigs.count; i++) {
+      const worker = this.#workers.get(`${id}:${i}`)
+      const status = worker?.[kWorkerStatus]
+
+      if (status && status !== 'boot' && status !== 'init') {
+        throw new ApplicationAlreadyStartedError()
+      }
+    }
+
     this.emitAndNotify('application:starting', id)
 
     for (let i = 0; i < workersConfigs.count; i++) {
@@ -1051,7 +1054,7 @@ export class Runtime extends EventEmitter {
 
   async getApplicationResourcesInfo (id) {
     const workersCount = this.#workers.getKeys(id).length
-    const worker = await this.#getWorkerById(id, 0, false, false)
+    const worker = await this.#getWorkerByIdOrNext(id, 0, false, false)
     const health = worker[kConfig].health
 
     return { workers: workersCount, health }
@@ -1382,7 +1385,7 @@ export class Runtime extends EventEmitter {
       stderr: true
     })
 
-    this.#handleWorkerStandardStreams(worker, applicationId, workersCount > 1 ? index : undefined)
+    this.#handleWorkerStandardStreams(worker, applicationId, index)
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
     worker.setMaxListeners(1e3)
@@ -1436,10 +1439,10 @@ export class Runtime extends EventEmitter {
       })
     })
 
-    worker[kId] = workersCount > 1 ? workerId : applicationId
+    worker[kId] = workerId
     worker[kFullId] = workerId
     worker[kApplicationId] = applicationId
-    worker[kWorkerId] = workersCount > 1 ? index : undefined
+    worker[kWorkerId] = index
     worker[kWorkerStatus] = 'boot'
 
     if (inspectorOptions) {
@@ -1626,7 +1629,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (!worker) {
-      worker = await this.#getWorkerById(id, index, false, false)
+      worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
 
     const eventPayload = { application: id, worker: index, workersCount }
@@ -1634,7 +1637,7 @@ export class Runtime extends EventEmitter {
     // The application was stopped, recreate the thread
     if (!worker) {
       await this.#setupApplication(applicationConfig, index)
-      worker = await this.#getWorkerById(id, index)
+      worker = await this.#getWorkerByIdOrNext(id, index)
     }
 
     worker[kWorkerStatus] = 'starting'
@@ -1737,7 +1740,7 @@ export class Runtime extends EventEmitter {
 
   async #stopWorker (workersCount, id, index, silent, worker, dependents) {
     if (!worker) {
-      worker = await this.#getWorkerById(id, index, false, false)
+      worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
 
     if (!worker) {
@@ -1818,10 +1821,8 @@ export class Runtime extends EventEmitter {
     return this.#cleanupWorker(worker)
   }
 
-  #workerExtendedLabel (applicationId, workerId, workersCount) {
-    return workersCount > 1
-      ? `worker ${workerId} of the application "${applicationId}"`
-      : `application "${applicationId}"`
+  #workerExtendedLabel (applicationId, workerId, _workersCount) {
+    return `worker ${workerId} of the application "${applicationId}"`
   }
 
   async #restartCrashedWorker (config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt) {
@@ -1915,7 +1916,6 @@ export class Runtime extends EventEmitter {
   }
 
   async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {
-    // If the applicationId includes the worker, properly split
     let workerId
     const matched = applicationId.match(/^(.+):(\d+)$/)
 
@@ -1924,16 +1924,19 @@ export class Runtime extends EventEmitter {
       workerId = matched[2]
     }
 
-    return this.#getWorkerById(applicationId, workerId, ensureStarted, mustExist)
+    return this.#getWorkerByIdOrNext(applicationId, workerId, ensureStarted, mustExist)
   }
 
-  async #getWorkerById (applicationId, workerId, ensureStarted = false, mustExist = true) {
+  // This method can work in two modes: when workerId is provided, it will return the specific worker
+  // otherwise it will return the next available worker for the application.
+  async #getWorkerByIdOrNext (applicationId, workerId, ensureStarted = false, mustExist = true) {
     let worker
 
-    if (typeof workerId !== 'undefined') {
-      worker = this.#workers.get(`${applicationId}:${workerId}`)
-    } else {
+    // Note that in this class "== null" is purposely used instead of "===" to check for both null and undefined
+    if (workerId == null) {
       worker = this.#workers.next(applicationId)
+    } else {
+      worker = this.#workers.get(`${applicationId}:${workerId}`)
     }
 
     const applicationsIds = this.getApplicationsIds()
@@ -1944,7 +1947,8 @@ export class Runtime extends EventEmitter {
       }
 
       if (applicationsIds.includes(applicationId)) {
-        const availableWorkers = this.#workers.getKeys(applicationId)
+        const availableWorkers = this.#workers
+          .getKeys(applicationId)
           .map(key => key.split(':')[1])
           .join(', ')
         throw new WorkerNotFoundError(workerId, applicationId, availableWorkers)
@@ -2009,7 +2013,7 @@ export class Runtime extends EventEmitter {
       )
     }
 
-    const target = await this.#getWorkerById(application, worker, true, true)
+    const target = await this.#getWorkerByIdOrNext(application, worker, true, true)
 
     const { port1, port2 } = new MessageChannel()
 
@@ -2381,7 +2385,7 @@ export class Runtime extends EventEmitter {
           `Restarting application "${applicationId}" worker ${i} to update config health heap...`
         )
 
-        const worker = await this.#getWorkerById(applicationId, i)
+        const worker = await this.#getWorkerByIdOrNext(applicationId, i)
         if (health.maxHeapTotal) {
           worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
         }
@@ -2444,7 +2448,7 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         for (let i = currentWorkers - 1; i >= workers; i--) {
-          const worker = await this.#getWorkerById(applicationId, i, false, false)
+          const worker = await this.#getWorkerByIdOrNext(applicationId, i, false, false)
           await sendViaITC(worker, 'removeFromMesh')
           await this.#stopWorker(currentWorkers, applicationId, i, false, worker, [])
           report.stopped.push(i)

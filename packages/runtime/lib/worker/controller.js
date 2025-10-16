@@ -26,10 +26,7 @@ function fetchApplicationUrl (application, key) {
 }
 
 function handleUnhandled (app, type, err) {
-  const label =
-    workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-      : `application "${workerData.applicationConfig.id}"`
+  const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
 
   globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
 

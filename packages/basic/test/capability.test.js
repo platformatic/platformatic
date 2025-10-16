@@ -221,6 +221,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
   const capability = await create(
     t,
     {
+      applicationId: 'application',
       isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
@@ -266,6 +267,8 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
           ignore: ['second']
         }
       },
+      applicationId: 'application',
+      workerId: 0,
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
@@ -342,6 +345,7 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
         }
       },
       applicationId: 'test-application-id',
+      workerId: 0,
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
@@ -398,6 +402,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
   const capability = await create(
     t,
     {
+      applicationId: 'application',
       isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
@@ -445,6 +450,8 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
         }
       },
       basePath: '/whatever',
+      applicationId: 'application',
+      workerId: 0,
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,

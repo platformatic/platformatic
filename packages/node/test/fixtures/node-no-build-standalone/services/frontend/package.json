@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@platformatic/basic": "^2.56.0",
+    "@platformatic/globals": "^2.56.0",
     "@platformatic/node": "^2.56.0"
   },
   "devDependencies": {

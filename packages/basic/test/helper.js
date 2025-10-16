@@ -866,14 +866,10 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
     const res = await request(url + '/')
     await integrityCheck?.(res)
 
-    if (workers > 1) {
-      const worker = res.headers['x-plt-worker-id']
-      ok(worker.match(/^[01234]$/))
+    const worker = res.headers['x-plt-worker-id']
+    ok(worker.match(/^[01234]$/))
 
-      usedWorkers.add(worker)
-    } else {
-      ok(res.headers['x-plt-worker-id'] === 'only' || typeof res.headers['x-plt-worker-id'] === 'undefined')
-    }
+    usedWorkers.add(worker)
   })
 
   await Promise.all(promises)

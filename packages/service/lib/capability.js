@@ -239,11 +239,10 @@ export class ServiceCapability extends BaseCapability {
       pinoOptions.name = this.context.applicationId
     }
 
-    if (this.context?.worker?.count > 1 && this.loggerConfig?.base !== null) {
-      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
-    } else if (this.loggerConfig?.base === null) {
-      pinoOptions.base = undefined
-    }
+    pinoOptions.base =
+      this.loggerConfig?.base !== null
+        ? { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
+        : undefined
 
     if (this.loggerConfig?.formatters) {
       pinoOptions.formatters = buildPinoFormatters(this.loggerConfig?.formatters)

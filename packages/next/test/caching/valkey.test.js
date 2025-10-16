@@ -1151,7 +1151,7 @@ test('should track Next.js cache hit and miss ratio in Prometheus', { skip: isCI
   deepStrictEqual(cacheMiss.values[0].value, 2) // One for the page (first request), one for the internal fetch
 })
 
-test.only(
+test(
   'should properly use the Valkey cache handler in development when using next.config.ts',
   { skip: isCIOnWindows },
   async t => {
@@ -1236,7 +1236,7 @@ test.only(
   }
 )
 
-test.only(
+test(
   'should properly use the Valkey cache handler in development when using next.config.ts',
   { skip: isCIOnWindows },
   async t => {

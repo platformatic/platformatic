@@ -51,12 +51,12 @@ test('starts applications according to their implicit or explicit dependencies',
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
   deepStrictEqual(startLogs, [
-    'Starting the application "composer"...',
-    'Starting the application "service-2"...',
-    'Starting the application "service-1"...',
-    'Started the application "service-1"...',
-    'Started the application "service-2"...',
-    'Started the application "composer"...'
+    'Starting the worker 0 of the application "composer"...',
+    'Starting the worker 0 of the application "service-2"...',
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-2"...',
+    'Started the worker 0 of the application "composer"...'
   ])
 })
 
@@ -81,12 +81,12 @@ test('can abort waiting for dependencies if the runtime is stopped', async t => 
 
   ok(hasLog(startLogs, 'composer', 'Waiting for dependencies to start.', ['service-2', 'service-3', 'service-1']))
   ok(hasLog(startLogs, 'service-2', 'Waiting for dependencies to start.', ['service-1']))
-  ok(hasLog(startLogs, 'runtime', 'Failed to start application "service-3": Service 3 failed to start'))
+  ok(hasLog(startLogs, 'runtime', 'Failed to start worker 0 of the application "service-3": Service 3 failed to start'))
   ok(
     hasLog(
       startLogs,
       'runtime',
-      'Failed to start application "composer": One of the service dependencies was unable to start.'
+      'Failed to start worker 0 of the application "composer": One of the service dependencies was unable to start.'
     )
   )
 
@@ -94,7 +94,7 @@ test('can abort waiting for dependencies if the runtime is stopped', async t => 
     hasLog(
       startLogs,
       'runtime',
-      'Failed to start application "service-2": One of the service dependencies was unable to start.'
+      'Failed to start worker 0 of the application "service-2": One of the service dependencies was unable to start.'
     )
   )
 })
@@ -118,10 +118,10 @@ test('does not wait for dependencies that have already been started', async t =>
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
   deepStrictEqual(startLogs, [
-    'Starting the application "service-1"...',
-    'Started the application "service-1"...',
-    'Starting the application "composer"...',
-    'Started the application "composer"...'
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
   ])
 })
 
@@ -141,12 +141,12 @@ test('applications wait for dependant applications before stopping', async t => 
   const logs = allLogs.filter(m => m.level === 30 && m.msg.match(/stop/i)).map(extractLogs)
 
   deepStrictEqual(logs, [
-    { source: 'runtime', msg: 'Stopping the application "composer"...' },
-    { source: 'runtime', msg: 'Stopped the application "composer"...' },
-    { source: 'runtime', msg: 'Stopping the application "service-2"...' },
-    { source: 'runtime', msg: 'Stopping the application "service-1"...' },
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "composer"...' },
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "composer"...' },
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-2"...' },
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-1"...' },
     { source: 'service-1', msg: 'Waiting for dependents to stop.', dependents: ['service-2'] },
-    { source: 'runtime', msg: 'Stopped the application "service-2"...' },
-    { source: 'runtime', msg: 'Stopped the application "service-1"...' }
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-2"...' },
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-1"...' }
   ])
 })
