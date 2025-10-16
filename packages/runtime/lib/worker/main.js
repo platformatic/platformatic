@@ -59,11 +59,8 @@ function createLogger () {
   const pinoOptions = {
     level: 'trace',
     name: workerData.applicationConfig.id,
+    base: { pid: process.pid, hostname: hostname(), worker: workerData.worker.index },
     ...workerData.config.logger
-  }
-
-  if (workerData.worker?.count > 1) {
-    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerData.worker.index }
   }
 
   if (pinoOptions.formatters) {
@@ -167,7 +164,7 @@ async function main () {
   const controller = new Controller(
     runtimeConfig,
     applicationConfig,
-    workerData.worker.count > 1 ? workerData.worker.index : undefined,
+    workerData.worker.index,
     serverConfig,
     metricsConfig
   )

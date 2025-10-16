@@ -69,7 +69,7 @@ export class BaseCapability extends EventEmitter {
     this.standardStreams = standardStreams
 
     this.applicationId = this.context.applicationId
-    this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
+    this.workerId = this.context.worker.index
     this.telemetryConfig = this.context.telemetryConfig
     this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
     this.openapiSchema = null

@@ -158,7 +158,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Starting the application "stdio"...',
+        msg: 'Starting the worker 0 of the application "stdio"...',
         payload: undefined,
         stdout: undefined
       },
@@ -167,7 +167,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Started the application "stdio"...',
+        msg: 'Started the worker 0 of the application "stdio"...',
         payload: undefined,
         stdout: undefined
       },

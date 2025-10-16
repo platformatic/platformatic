@@ -29,8 +29,8 @@ test('dev - should start in development mode', async t => {
     plt_environment: 'development'
   })
 
-  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
-  ok(parsed.some(p => p.msg?.includes('Started the application "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('dev - should start in development mode starting from an application file', async t => {
@@ -53,8 +53,8 @@ test('dev - should start in development mode starting from an application file',
     plt_environment: 'development'
   })
 
-  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
-  ok(!parsed.some(p => p.msg?.includes('Started the application "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('dev - should complain if no configuration file is found', async t => {
@@ -252,8 +252,8 @@ test('start - should start in production mode', async t => {
   deepStrictEqual(config.applications[1].id, 'main')
   ok(config.applications[0].watch === false)
 
-  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
-  ok(parsed.some(p => p.msg?.includes('Started the application "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('start - should start in production mode starting from an application file', async t => {
@@ -283,8 +283,8 @@ test('start - should start in production mode starting from an application file'
   deepStrictEqual(config.applications[0].id, 'main')
   ok(config.applications[0].watch === false)
 
-  ok(parsed.some(p => p.msg?.includes('Started the application "main"')))
-  ok(!parsed.some(p => p.msg?.includes('Started the application "alternative"')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('start - should start in production mode with the inspector', async t => {

@@ -32,7 +32,7 @@ test('start - should use default folders for resolved applications', async t => 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Started the application "resolved"')) {
+    if (parsed.msg.startsWith('Started the worker 0 of the application "resolved"')) {
       started = true
       break
     }

@@ -1,8 +1,8 @@
 import { deepStrictEqual, ok } from 'node:assert'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { tmpdir } from 'node:os'
-import { writeFile, readFile, rm, mkdtemp } from 'node:fs/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { kWorkersBroadcast } from '../../lib/worker/symbols.js'
@@ -80,7 +80,7 @@ test('should post updated workers list via broadcast channel', async t => {
   expected.second.push({ id: 'second:2', application: 'second', thread: threads['second:2'], worker: 2 })
   deepStrictEqual(events[5], new Map(Object.entries(expected)))
 
-  expected.composer = [{ id: 'composer', application: 'composer', thread: threads.composer, worker: undefined }]
+  expected.composer = [{ id: 'composer:0', application: 'composer', thread: threads['composer:0'], worker: 0 }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
   delete expected.composer
@@ -136,9 +136,9 @@ test('should post updated workers when something crashed', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][0], worker: 0 }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][1], worker: 0 }]]]),
     new Map()
   ])
 })
@@ -170,9 +170,9 @@ test('should post updated workers when the application is updated', async t => {
 
   // Verify that the broadcast happened in the right order
   deepStrictEqual(events, [
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[0], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][0], worker: 0 }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first', application: 'first', thread: threads.first[1], worker: undefined }]]]),
+    new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][1], worker: 0 }]]]),
     new Map()
   ])
 })
@@ -468,7 +468,8 @@ test('should notify all the workers', async t => {
         const { appendFileSync } = require('node:fs')
         const { workerData } = require('node:worker_threads')
         appendFileSync('${escapedTestFile}', workerData.worker.id + '\\n')
-      `)
+      `
+    )
   })
 
   const url = await app.start()
