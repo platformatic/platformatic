@@ -63,23 +63,33 @@ function decodeAndValidateProfile (encodedProfile, checkLocations) {
 
 // Build TypeScript service once before all tests
 test.before(async () => {
+  console.error('[CI-LOG] Starting TypeScript build in test.before hook')
   const serviceDir = resolve(import.meta.dirname, 'fixtures/sourcemap-test/service')
+  console.error(`[CI-LOG] Service directory: ${serviceDir}`)
 
   // Build the TypeScript (dependencies are in parent package devDependencies)
   try {
-    await execAsync('npx tsc', { cwd: serviceDir, timeout: 30000 })
+    console.error('[CI-LOG] Running npx tsc...')
+    const { stdout, stderr } = await execAsync('npx tsc', { cwd: serviceDir, timeout: 30000 })
+    console.error(`[CI-LOG] TypeScript build completed. Stdout: ${stdout}, Stderr: ${stderr}`)
   } catch (err) {
+    console.error(`[CI-LOG] TypeScript build FAILED: ${err.message}`)
     throw new Error(`Failed to build TypeScript service: ${err.message}\nStdout: ${err.stdout}\nStderr: ${err.stderr}`)
   }
 
   // Verify build artifacts exist
+  console.error('[CI-LOG] Verifying build artifacts...')
   const { access } = await import('node:fs/promises')
   const pluginPath = resolve(serviceDir, 'dist/plugin.js')
   const mapPath = resolve(serviceDir, 'dist/plugin.js.map')
+  console.error(`[CI-LOG] Checking for: ${pluginPath}`)
+  console.error(`[CI-LOG] Checking for: ${mapPath}`)
   try {
     await access(pluginPath)
     await access(mapPath)
+    console.error('[CI-LOG] Build artifacts verified successfully')
   } catch (err) {
+    console.error(`[CI-LOG] Build artifacts NOT FOUND: ${err.message}`)
     throw new Error(`Build artifacts not found: ${err.message}. Plugin: ${pluginPath}, Map: ${mapPath}`)
   }
 })
@@ -100,50 +110,79 @@ async function createApp (t) {
 }
 
 test('sourcemaps should be initialized and profiling should work with TypeScript', async t => {
+  console.error('[CI-LOG] Test started: sourcemaps with TypeScript')
   const { app, url } = await createApp(t)
+  console.error(`[CI-LOG] App created, URL: ${url}`)
 
   // Verify service is running
+  console.error('[CI-LOG] Verifying service is running...')
   const res = await request(`${url}/`)
   const json = await res.body.json()
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(json.message, 'Hello from TypeScript')
+  console.error('[CI-LOG] Service verified running')
 
   // Verify sourcemap files exist in service directory
+  console.error('[CI-LOG] Checking for sourcemap files via diagnostic endpoint...')
   const diagRes = await request(`${url}/diagnostic`)
   const diag = await diagRes.body.json()
+  console.error(`[CI-LOG] Diagnostic response: ${JSON.stringify(diag)}`)
   assert.strictEqual(diag.pluginMapExists, true, `Sourcemap file should exist at ${diag.serviceDir}/plugin.js.map`)
+  console.error('[CI-LOG] Sourcemap files verified')
 
   // Start profiling with sufficient duration to ensure we capture samples
+  console.error('[CI-LOG] Starting profiling...')
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 5000 })
+  console.error('[CI-LOG] Profiling start command sent')
 
   // Wait for profiler to actually start
+  console.error('[CI-LOG] Waiting for profiler to start...')
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    console.error(`[CI-LOG] Profiler state check: isProfilerRunning=${state.isProfilerRunning}`)
     return state.isProfilerRunning
   }, 2000)
+  console.error('[CI-LOG] Profiler started')
 
   // Make requests spread over time to ensure continuous CPU activity during profiling
   // Use shorter interval and add timeout to prevent hanging
+  console.error('[CI-LOG] Starting request interval for CPU activity...')
+  let requestCount = 0
   const requestInterval = setInterval(() => {
-    request(`${url}/compute`, { headersTimeout: 30000, bodyTimeout: 30000 }).catch(() => {}) // Fire and forget
+    requestCount++
+    console.error(`[CI-LOG] Sending compute request #${requestCount}`)
+    request(`${url}/compute`, { headersTimeout: 30000, bodyTimeout: 30000 })
+      .then(() => console.error(`[CI-LOG] Compute request #${requestCount} completed`))
+      .catch((err) => console.error(`[CI-LOG] Compute request #${requestCount} failed: ${err.message}`))
   }, 300)
 
   // Wait for profile to be captured
+  console.error('[CI-LOG] Waiting for profile to be captured...')
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    console.error(`[CI-LOG] Profile check: hasProfile=${state.hasProfile}`)
     return state.hasProfile
   }, 10000)
+  console.error('[CI-LOG] Profile captured')
 
   clearInterval(requestInterval)
+  console.error('[CI-LOG] Stopped request interval')
 
   // Get the profile - this should succeed with SourceMapper initialized
+  console.error('[CI-LOG] Getting last profile...')
   const encodedProfile = await app.sendCommandToApplication('service', 'getLastProfile')
+  console.error(`[CI-LOG] Got profile, size: ${encodedProfile.length} bytes`)
   const profile = decodeAndValidateProfile(encodedProfile, true)
+  console.error(`[CI-LOG] Profile decoded, functions: ${profile.function.length}`)
 
   // Verify sourcemaps are working by checking for .ts file extensions
+  console.error('[CI-LOG] Verifying TypeScript files in profile...')
   verifyTypeScriptFilesInProfile(profile)
+  console.error('[CI-LOG] TypeScript files verified in profile')
 
+  console.error('[CI-LOG] Stopping profiling...')
   await app.sendCommandToApplication('service', 'stopProfiling')
+  console.error('[CI-LOG] Test completed successfully')
 })
 
 // TODO: Re-enable once heap profiling + SourceMapper segfault is resolved

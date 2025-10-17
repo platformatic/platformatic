@@ -221,16 +221,21 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
 }
 
 async function initializeSourceMapper () {
+  console.error('[CI-LOG-IMPL] initializeSourceMapper called')
   if (sourceMapperInitialized) {
+    console.error('[CI-LOG-IMPL] SourceMapper already initialized, returning')
     return
   }
 
   sourceMapperInitialized = true
+  console.error('[CI-LOG-IMPL] Starting SourceMapper initialization')
 
   try {
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
+    console.error(`[CI-LOG-IMPL] Application path from workerData: ${appPath}`)
     if (!appPath) {
+      console.error('[CI-LOG-IMPL] No application path available, skipping SourceMapper')
       if (globalThis.platformatic?.logger) {
         globalThis.platformatic.logger.debug('No application path available for sourcemap resolution')
       }
@@ -240,10 +245,13 @@ async function initializeSourceMapper () {
     // Create SourceMapper to search for .map files in the app directory
     // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
     const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
+    console.error(`[CI-LOG-IMPL] Creating SourceMapper with path: ${appPath}, debug: ${debug}`)
     sourceMapper = await SourceMapper.create([appPath], debug)
+    console.error('[CI-LOG-IMPL] SourceMapper created')
 
     // Verify sourceMapper has mappings
     const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
+    console.error(`[CI-LOG-IMPL] SourceMapper hasMappings: ${hasMappings}`)
 
     if (globalThis.platformatic?.logger) {
       globalThis.platformatic.logger.info(
@@ -251,7 +259,10 @@ async function initializeSourceMapper () {
         'SourceMapper initialized for profiling'
       )
     }
+    console.error('[CI-LOG-IMPL] SourceMapper initialization completed successfully')
   } catch (err) {
+    console.error(`[CI-LOG-IMPL] SourceMapper initialization FAILED: ${err.message}`)
+    console.error(`[CI-LOG-IMPL] Stack: ${err.stack}`)
     if (globalThis.platformatic?.logger) {
       globalThis.platformatic.logger.warn(
         { err: err.message, stack: err.stack },
@@ -264,20 +275,26 @@ async function initializeSourceMapper () {
 export async function startProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
+  console.error(`[CI-LOG-IMPL] startProfiling called for type: ${type}, options: ${JSON.stringify(options)}`)
 
   if (state.isCapturing) {
+    console.error('[CI-LOG-IMPL] Profiling already started, throwing error')
     throw new ProfilingAlreadyStartedError()
   }
 
   // Initialize source mapper on first profiling start
+  console.error('[CI-LOG-IMPL] Initializing SourceMapper...')
   await initializeSourceMapper()
+  console.error('[CI-LOG-IMPL] SourceMapper initialization returned')
 
   state.isCapturing = true
   state.options = options
   state.eluThreshold = options.eluThreshold
   state.durationMillis = options.durationMillis
 
+  console.error('[CI-LOG-IMPL] Calling maybeStartProfiler...')
   maybeStartProfiler(type, state)
+  console.error('[CI-LOG-IMPL] startProfiling completed')
 }
 
 export function stopProfiling (options = {}) {
