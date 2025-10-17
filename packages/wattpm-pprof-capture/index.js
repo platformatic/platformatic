@@ -1,8 +1,62 @@
-import { time, heap } from '@datadog/pprof'
+import { time, heap, SourceMapper } from '@datadog/pprof'
 import { performance } from 'node:perf_hooks'
+import { workerData } from 'node:worker_threads'
 import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
+
+// SourceMapper for resolving transpiled code locations back to original source
+let sourceMapper = null
+let sourceMapperInitialized = false
+
+/**
+ * Wrapper around SourceMapper that fixes Windows path normalization issues.
+ *
+ * On Windows, V8 profiler returns paths like `file:///D:/path/to/file.js`.
+ * The @datadog/pprof library removes `file://` leaving `/D:/path/to/file.js`,
+ * but SourceMapper stores paths as `D:\path\to\file.js`.
+ *
+ * This wrapper normalizes Windows paths to match the internal format.
+ */
+class SourceMapperWrapper {
+  constructor (innerMapper) {
+    this.innerMapper = innerMapper
+    this.debug = innerMapper.debug
+  }
+
+  /**
+   * Normalize Windows-style paths from V8 profiler to match SourceMapper format.
+   * Handles paths like `/D:/path/to/file.js` -> `D:\path\to\file.js`
+   */
+  normalizePath (filePath) {
+    if (process.platform !== 'win32') {
+      return filePath
+    }
+
+    // Handle paths like /D:/path/to/file -> D:\path\to\file
+    // This happens because pprof removes 'file://' from 'file:///D:/path/to/file'
+    if (filePath.startsWith('/') && filePath.length > 2 && filePath[2] === ':') {
+      // Remove leading slash and convert forward slashes to backslashes
+      return filePath.slice(1).replace(/\//g, '\\')
+    }
+
+    // Also convert any forward slashes to backslashes on Windows
+    return filePath.replace(/\//g, '\\')
+  }
+
+  hasMappingInfo (inputPath) {
+    const normalized = this.normalizePath(inputPath)
+    return this.innerMapper.hasMappingInfo(normalized)
+  }
+
+  mappingInfo (location) {
+    const normalized = {
+      ...location,
+      file: this.normalizePath(location.file)
+    }
+    return this.innerMapper.mappingInfo(normalized)
+  }
+}
 
 // Track ELU globally (shared across all profiler types)
 let lastELU = null
@@ -30,7 +84,8 @@ const profilingState = {
     eluThreshold: null,
     options: null,
     profilerStarted: false,
-    clearProfileTimeout: null
+    clearProfileTimeout: null,
+    sourceMapsEnabled: false
   },
   heap: {
     isCapturing: false,
@@ -40,7 +95,8 @@ const profilingState = {
     eluThreshold: null,
     options: null,
     profilerStarted: false,
-    clearProfileTimeout: null
+    clearProfileTimeout: null,
+    sourceMapsEnabled: false
   }
 }
 
@@ -99,7 +155,9 @@ function unscheduleProfileRotation (state) {
 }
 
 function startProfiler (type, state, options) {
-  if (state.profilerStarted) return
+  if (state.profilerStarted) {
+    return
+  }
 
   const profiler = getProfiler(type)
 
@@ -115,8 +173,18 @@ function startProfiler (type, state, options) {
     profiler.start(intervalBytes, stackDepth)
   } else {
     // CPU time profiler takes options object
-    options.intervalMicros ??= 33333
-    profiler.start(options)
+    const profilerOptions = { ...options }
+    profilerOptions.intervalMicros ??= 33333
+
+    // Enable line numbers to get file information in the profile
+    profilerOptions.lineNumbers = true
+
+    // Add sourceMapper if enabled and available for transpiled source resolution
+    if (state.sourceMapsEnabled && sourceMapper) {
+      profilerOptions.sourceMapper = sourceMapper
+    }
+
+    profiler.start(profilerOptions)
   }
 }
 
@@ -131,10 +199,12 @@ function stopProfiler (type, state) {
 
   if (type === 'heap') {
     // Get the profile before stopping
-    state.latestProfile = profiler.profile()
+    // Pass sourceMapper if enabled and available for transpiled source resolution
+    state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
     profiler.stop()
   } else {
     // CPU time profiler returns the profile when stopping
+    // sourceMapper was already passed to start(), so it's applied automatically
     state.latestProfile = profiler.stop()
   }
 }
@@ -203,13 +273,62 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
   }
 }
 
-export function startProfiling (options = {}) {
+async function initializeSourceMapper () {
+  if (sourceMapperInitialized) {
+    return
+  }
+
+  sourceMapperInitialized = true
+
+  try {
+    // Get the application directory from workerData
+    const appPath = workerData?.applicationConfig?.path
+    if (!appPath) {
+      if (globalThis.platformatic?.logger) {
+        globalThis.platformatic.logger.debug('No application path available for sourcemap resolution')
+      }
+      return
+    }
+
+    // Create SourceMapper to search for .map files in the app directory
+    // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
+    const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
+    const innerMapper = await SourceMapper.create([appPath], debug)
+
+    // Wrap the SourceMapper to fix Windows path normalization
+    sourceMapper = new SourceMapperWrapper(innerMapper)
+
+    if (globalThis.platformatic?.logger) {
+      const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
+      globalThis.platformatic.logger.info(
+        { appPath, hasSourceMapper: !!sourceMapper, hasMappingInfo: hasMappings },
+        'SourceMapper initialized for profiling'
+      )
+    }
+  } catch (err) {
+    if (globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.warn(
+        { err: err.message, stack: err.stack },
+        'Failed to initialize SourceMapper'
+      )
+    }
+  }
+}
+
+export async function startProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
 
   if (state.isCapturing) {
     throw new ProfilingAlreadyStartedError()
   }
+
+  // Initialize source mapper if source maps are requested
+  state.sourceMapsEnabled = options.sourceMaps === true
+  if (state.sourceMapsEnabled) {
+    await initializeSourceMapper()
+  }
+
   state.isCapturing = true
   state.options = options
   state.eluThreshold = options.eluThreshold
@@ -233,6 +352,7 @@ export function stopProfiling (options = {}) {
   state.eluThreshold = null
   state.durationMillis = null
   state.options = null
+  state.sourceMapsEnabled = false
 
   // Return the latest profile if available, otherwise return an empty profile
   // (e.g., when profiler never started due to ELU threshold not being exceeded)
@@ -256,7 +376,8 @@ export function getLastProfile (options = {}) {
   // For CPU profiler, use the cached profile if available
   if (type === 'heap' && state.profilerStarted) {
     const profiler = getProfiler(type)
-    state.latestProfile = profiler.profile()
+    // Get heap profile with sourceMapper if enabled and available
+    state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
   }
 
   // Check if we have a profile

@@ -26,9 +26,12 @@
   "devDependencies": {
     "@platformatic/foundation": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@types/node": "^22.0.0",
     "atomic-sleep": "^1.0.0",
     "eslint": "9",
-    "neostandard": "^0.12.0"
+    "neostandard": "^0.12.0",
+    "pprof-format": "^2.1.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=22.19.0"
