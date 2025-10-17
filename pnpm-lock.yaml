@@ -2103,9 +2103,15 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.18.9
       atomic-sleep:
         specifier: ^1.0.0
         version: 1.0.0
@@ -2115,6 +2121,12 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.44.1(eslint@9.36.0)(typescript@5.9.2))(eslint@9.36.0)(typescript@5.9.2)
+      pprof-format:
+        specifier: ^2.1.0
+        version: 2.2.1
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.2
 
   packages/wattpm-utils:
     dependencies:

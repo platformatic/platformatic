@@ -1,8 +1,13 @@
-import { time, heap } from '@datadog/pprof'
+import { time, heap, SourceMapper } from '@datadog/pprof'
 import { performance } from 'node:perf_hooks'
+import { workerData } from 'node:worker_threads'
 import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
+
+// SourceMapper for resolving transpiled code locations back to original source
+let sourceMapper = null
+let sourceMapperInitialized = false
 
 // Track ELU globally (shared across all profiler types)
 let lastELU = null
@@ -115,8 +120,18 @@ function startProfiler (type, state, options) {
     profiler.start(intervalBytes, stackDepth)
   } else {
     // CPU time profiler takes options object
-    options.intervalMicros ??= 33333
-    profiler.start(options)
+    const profilerOptions = { ...options }
+    profilerOptions.intervalMicros ??= 33333
+
+    // Enable line numbers to get file information in the profile
+    profilerOptions.lineNumbers = true
+
+    // Add sourceMapper if available for transpiled source resolution
+    if (sourceMapper) {
+      profilerOptions.sourceMapper = sourceMapper
+    }
+
+    profiler.start(profilerOptions)
   }
 }
 
@@ -131,10 +146,12 @@ function stopProfiler (type, state) {
 
   if (type === 'heap') {
     // Get the profile before stopping
+    // Note: sourceMapper is not passed to heap profiler to avoid SIGSEGV
     state.latestProfile = profiler.profile()
     profiler.stop()
   } else {
     // CPU time profiler returns the profile when stopping
+    // sourceMapper was already passed to start(), so it's applied automatically
     state.latestProfile = profiler.stop()
   }
 }
@@ -203,13 +220,58 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
   }
 }
 
-export function startProfiling (options = {}) {
+async function initializeSourceMapper () {
+  if (sourceMapperInitialized) {
+    return
+  }
+
+  sourceMapperInitialized = true
+
+  try {
+    // Get the application directory from workerData
+    const appPath = workerData?.applicationConfig?.path
+    if (!appPath) {
+      if (globalThis.platformatic?.logger) {
+        globalThis.platformatic.logger.debug('No application path available for sourcemap resolution')
+      }
+      return
+    }
+
+    // Create SourceMapper to search for .map files in the app directory
+    // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
+    const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
+    sourceMapper = await SourceMapper.create([appPath], debug)
+
+    // Verify sourceMapper has mappings
+    const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
+
+    if (globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.info(
+        { appPath, hasSourceMapper: !!sourceMapper, hasMappingInfo: hasMappings },
+        'SourceMapper initialized for profiling'
+      )
+    }
+  } catch (err) {
+    if (globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.warn(
+        { err: err.message, stack: err.stack },
+        'Failed to initialize SourceMapper'
+      )
+    }
+  }
+}
+
+export async function startProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
 
   if (state.isCapturing) {
     throw new ProfilingAlreadyStartedError()
   }
+
+  // Initialize source mapper on first profiling start
+  await initializeSourceMapper()
+
   state.isCapturing = true
   state.options = options
   state.eluThreshold = options.eluThreshold
@@ -256,6 +318,8 @@ export function getLastProfile (options = {}) {
   // For CPU profiler, use the cached profile if available
   if (type === 'heap' && state.profilerStarted) {
     const profiler = getProfiler(type)
+    // Get heap profile
+    // Note: sourceMapper is not passed to heap profiler to avoid SIGSEGV
     state.latestProfile = profiler.profile()
   }
 
