@@ -310,7 +310,7 @@ async function initializeSourceMapper () {
         if (sourceMapper.infoMap && sourceMapper.infoMap.size > 0) {
           console.error(`[CI-LOG-IMPL] SourceMapper has ${sourceMapper.infoMap.size} mapping entries:`)
           let count = 0
-          for (const [key, value] of sourceMapper.infoMap.entries()) {
+          for (const [key] of sourceMapper.infoMap.entries()) {
             if (count < 10) { // Limit output
               console.error(`[CI-LOG-IMPL]   Mapping key: "${key}"`)
             }
