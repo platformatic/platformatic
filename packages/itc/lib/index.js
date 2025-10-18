@@ -97,39 +97,85 @@ export function sanitize (data, transferList) {
     return data
   }
 
-  let sanitized
-
   if (Buffer.isBuffer(data) || data instanceof Uint8Array) {
     // This will convert as Uint8Array
     return data
-  } else if (Array.isArray(data)) {
-    sanitized = []
+  }
 
-    for (const value of data) {
+  if (Array.isArray(data)) {
+    let sanitized = null
+    let needsSanitization = false
+
+    for (let i = 0; i < data.length; i++) {
+      const value = data[i]
       const valueType = typeof value
 
       /* c8 ignore next 3 */
       if (valueType === 'function' || valueType === 'symbol') {
+        if (!needsSanitization) {
+          sanitized = data.slice(0, i)
+          needsSanitization = true
+        }
         continue
       }
 
-      sanitized.push(value && typeof value === 'object' ? sanitize(value, transferList) : value)
+      let sanitizedValue = value
+      if (value && typeof value === 'object') {
+        sanitizedValue = sanitize(value, transferList)
+        if (sanitizedValue !== value && !needsSanitization) {
+          sanitized = data.slice(0, i)
+          needsSanitization = true
+        }
+      }
+
+      if (needsSanitization) {
+        sanitized.push(sanitizedValue)
+      }
     }
-  } else {
-    sanitized = {}
 
-    for (const [key, value] of Object.entries(data)) {
-      const valueType = typeof value
+    return needsSanitization ? sanitized : data
+  }
 
-      if (valueType === 'function' || valueType === 'symbol') {
-        continue
+  // Handle plain objects
+  let sanitized = null
+  let needsSanitization = false
+
+  for (const [key, value] of Object.entries(data)) {
+    const valueType = typeof value
+
+    if (valueType === 'function' || valueType === 'symbol') {
+      if (!needsSanitization) {
+        sanitized = {}
+        // Copy all previous properties
+        for (const [k] of Object.entries(data)) {
+          if (k === key) break
+          sanitized[k] = data[k]
+        }
+        needsSanitization = true
       }
+      continue
+    }
 
-      sanitized[key] = value && typeof value === 'object' ? sanitize(value, transferList) : value
+    let sanitizedValue = value
+    if (value && typeof value === 'object') {
+      sanitizedValue = sanitize(value, transferList)
+      if (sanitizedValue !== value && !needsSanitization) {
+        sanitized = {}
+        // Copy all previous properties
+        for (const [k] of Object.entries(data)) {
+          if (k === key) break
+          sanitized[k] = data[k]
+        }
+        needsSanitization = true
+      }
+    }
+
+    if (needsSanitization) {
+      sanitized[key] = sanitizedValue
     }
   }
 
-  return sanitized
+  return needsSanitization ? sanitized : data
 }
 
 export class ITC extends EventEmitter {
