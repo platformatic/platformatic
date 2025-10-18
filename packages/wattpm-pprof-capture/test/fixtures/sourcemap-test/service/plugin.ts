@@ -1,7 +1,10 @@
 import { FastifyInstance } from 'fastify'
 
+console.error('[CI-LOG-PLUGIN] TypeScript plugin module loading...')
+
 // A function with a distinctive name that we can find in the profile
 async function myTypeScriptFunction(value: number): Promise<number> {
+  console.error('[CI-LOG-PLUGIN] myTypeScriptFunction called with value:', value)
   let result = 0
   let i = 0
   const totalIterations = 1000000 // Reduced to complete faster
@@ -25,16 +28,22 @@ async function myTypeScriptFunction(value: number): Promise<number> {
 }
 
 export default async function (app: FastifyInstance) {
+  console.error('[CI-LOG-PLUGIN] Plugin export function called, registering routes...')
+
   app.get('/', async () => {
+    console.error('[CI-LOG-PLUGIN] GET / called')
     return { message: 'Hello from TypeScript' }
   })
 
   app.get('/compute', async () => {
+    console.error('[CI-LOG-PLUGIN] GET /compute called')
     const result = await myTypeScriptFunction(42)
+    console.error('[CI-LOG-PLUGIN] GET /compute returning result:', result)
     return { result }
   })
 
   app.get('/diagnostic', async () => {
+    console.error('[CI-LOG-PLUGIN] GET /diagnostic called')
     const fs = await import('node:fs/promises')
     const path = await import('node:path')
     const url = await import('node:url')
@@ -58,6 +67,9 @@ export default async function (app: FastifyInstance) {
       diagnostics.pluginMapExists = true
     } catch {}
 
+    console.error('[CI-LOG-PLUGIN] GET /diagnostic returning:', JSON.stringify(diagnostics))
     return diagnostics
   })
+
+  console.error('[CI-LOG-PLUGIN] All routes registered successfully')
 }

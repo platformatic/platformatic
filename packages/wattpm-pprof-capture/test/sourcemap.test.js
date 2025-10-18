@@ -95,21 +95,62 @@ test.before(async () => {
 })
 
 async function createApp (t) {
+  console.error('[CI-LOG] createApp: Loading runtime config...')
   const configFile = resolve(import.meta.dirname, 'fixtures/sourcemap-test/platformatic.json')
-  const app = await createRuntime(configFile)
+  console.error(`[CI-LOG] createApp: Config file: ${configFile}`)
 
+  const logsPath = resolve(import.meta.dirname, `../../tmp/sourcemap-test-${Date.now()}.log`)
+  console.error(`[CI-LOG] createApp: Runtime logs will be at: ${logsPath}`)
+
+  console.error('[CI-LOG] createApp: Creating runtime...')
+  const app = await createRuntime(configFile, null, { logsPath })
+  console.error('[CI-LOG] createApp: Runtime created')
+
+  // Read and dump logs on test failure
   t.after(async () => {
+    console.error('[CI-LOG] createApp: Cleanup - closing app...')
     await app.close()
+    console.error('[CI-LOG] createApp: Cleanup - app closed')
+
+    // Dump runtime logs for debugging
+    try {
+      const { readFile } = await import('node:fs/promises')
+      const logs = await readFile(logsPath, 'utf-8')
+      console.error('[CI-LOG] ===== RUNTIME LOGS START =====')
+      console.error(logs)
+      console.error('[CI-LOG] ===== RUNTIME LOGS END =====')
+    } catch (err) {
+      console.error(`[CI-LOG] Could not read runtime logs: ${err.message}`)
+    }
   })
 
+  console.error('[CI-LOG] createApp: Starting runtime...')
   const url = await app.start()
+  console.error(`[CI-LOG] createApp: Runtime started at ${url}`)
+
+  // Monitor worker exits
+  if (app.platformaticManagement?.operationManager?.workers) {
+    for (const [name, worker] of Object.entries(app.platformaticManagement.operationManager.workers)) {
+      console.error(`[CI-LOG] createApp: Monitoring worker ${name}`)
+      worker.on('exit', (code) => {
+        console.error(`[CI-LOG] WORKER EXIT: Worker ${name} exited with code ${code}`)
+      })
+      worker.on('error', (err) => {
+        console.error(`[CI-LOG] WORKER ERROR: Worker ${name} error: ${err.message}`)
+        console.error(`[CI-LOG] WORKER ERROR stack: ${err.stack}`)
+      })
+    }
+  }
+
   // Wait for services and handlers to register
+  console.error('[CI-LOG] createApp: Waiting for services to register...')
   await new Promise(resolve => setTimeout(resolve, 200))
+  console.error('[CI-LOG] createApp: Services registered')
 
   return { app, url }
 }
 
-test('sourcemaps should be initialized and profiling should work with TypeScript', { skip: process.platform === 'win32' }, async t => {
+test('sourcemaps should be initialized and profiling should work with TypeScript', async t => {
   console.error('[CI-LOG] Test started: sourcemaps with TypeScript')
   const { app, url } = await createApp(t)
   console.error(`[CI-LOG] App created, URL: ${url}`)

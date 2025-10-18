@@ -5,6 +5,36 @@ import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedErro
 
 const kITC = Symbol.for('plt.runtime.itc')
 
+// Add crash detection logging
+console.error('[CI-LOG-IMPL] wattpm-pprof-capture module loading...')
+console.error(`[CI-LOG-IMPL] Platform: ${process.platform}, Node: ${process.version}`)
+console.error(`[CI-LOG-IMPL] WorkerData present: ${!!workerData}, App path: ${workerData?.applicationConfig?.path}`)
+
+process.on('uncaughtException', (err) => {
+  console.error('[CI-LOG-IMPL] UNCAUGHT EXCEPTION in worker process!')
+  console.error(`[CI-LOG-IMPL] Error: ${err.message}`)
+  console.error(`[CI-LOG-IMPL] Stack: ${err.stack}`)
+  throw err // Re-throw to ensure process crashes as expected
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CI-LOG-IMPL] UNHANDLED REJECTION in worker process!')
+  console.error(`[CI-LOG-IMPL] Reason: ${reason}`)
+  console.error(`[CI-LOG-IMPL] Promise: ${promise}`)
+})
+
+process.on('exit', (code) => {
+  console.error(`[CI-LOG-IMPL] Worker process exiting with code: ${code}`)
+})
+
+process.on('SIGTERM', () => {
+  console.error('[CI-LOG-IMPL] Worker received SIGTERM')
+})
+
+process.on('SIGINT', () => {
+  console.error('[CI-LOG-IMPL] Worker received SIGINT')
+})
+
 // SourceMapper for resolving transpiled code locations back to original source
 let sourceMapper = null
 let sourceMapperInitialized = false
@@ -104,9 +134,14 @@ function unscheduleProfileRotation (state) {
 }
 
 function startProfiler (type, state, options) {
-  if (state.profilerStarted) return
+  console.error(`[CI-LOG-IMPL] startProfiler called for type: ${type}`)
+  if (state.profilerStarted) {
+    console.error('[CI-LOG-IMPL] Profiler already started, returning')
+    return
+  }
 
   const profiler = getProfiler(type)
+  console.error(`[CI-LOG-IMPL] Got profiler for type: ${type}`)
 
   unscheduleLastProfileCleanup(state)
   scheduleProfileRotation(type, state, options)
@@ -117,7 +152,9 @@ function startProfiler (type, state, options) {
     // Default: 512KB interval, 64 stack depth
     const intervalBytes = options.intervalBytes || 512 * 1024
     const stackDepth = options.stackDepth || 64
+    console.error(`[CI-LOG-IMPL] Starting heap profiler: intervalBytes=${intervalBytes}, stackDepth=${stackDepth}`)
     profiler.start(intervalBytes, stackDepth)
+    console.error('[CI-LOG-IMPL] Heap profiler started successfully')
   } else {
     // CPU time profiler takes options object
     const profilerOptions = { ...options }
@@ -128,11 +165,23 @@ function startProfiler (type, state, options) {
 
     // Add sourceMapper if available for transpiled source resolution
     if (sourceMapper) {
+      console.error('[CI-LOG-IMPL] Adding sourceMapper to CPU profiler options')
       profilerOptions.sourceMapper = sourceMapper
+    } else {
+      console.error('[CI-LOG-IMPL] No sourceMapper available for CPU profiler')
     }
 
-    profiler.start(profilerOptions)
+    console.error(`[CI-LOG-IMPL] Starting CPU profiler with options: ${JSON.stringify({ ...profilerOptions, sourceMapper: !!profilerOptions.sourceMapper })}`)
+    try {
+      profiler.start(profilerOptions)
+      console.error('[CI-LOG-IMPL] CPU profiler started successfully')
+    } catch (startErr) {
+      console.error(`[CI-LOG-IMPL] CPU profiler.start() threw error: ${startErr.message}`)
+      console.error(`[CI-LOG-IMPL] CPU profiler.start() error stack: ${startErr.stack}`)
+      throw startErr
+    }
   }
+  console.error(`[CI-LOG-IMPL] startProfiler completed for type: ${type}`)
 }
 
 function stopProfiler (type, state) {
@@ -228,19 +277,9 @@ async function initializeSourceMapper () {
   }
 
   sourceMapperInitialized = true
-  console.error('[CI-LOG-IMPL] Starting SourceMapper initialization')
+  console.error(`[CI-LOG-IMPL] Starting SourceMapper initialization on platform: ${process.platform}`)
 
   try {
-    // Skip SourceMapper on Windows due to instability issues
-    // TODO: Re-enable once @datadog/pprof SourceMapper is stable on Windows
-    if (process.platform === 'win32') {
-      console.error('[CI-LOG-IMPL] Skipping SourceMapper on Windows due to known instability')
-      if (globalThis.platformatic?.logger) {
-        globalThis.platformatic.logger.warn('SourceMapper disabled on Windows due to stability issues with @datadog/pprof')
-      }
-      return
-    }
-
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
     console.error(`[CI-LOG-IMPL] Application path from workerData: ${appPath}`)
@@ -256,7 +295,17 @@ async function initializeSourceMapper () {
     // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
     const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
     console.error(`[CI-LOG-IMPL] Creating SourceMapper with path: ${appPath}, debug: ${debug}`)
-    sourceMapper = await SourceMapper.create([appPath], debug)
+    console.error('[CI-LOG-IMPL] About to call SourceMapper.create()...')
+
+    try {
+      sourceMapper = await SourceMapper.create([appPath], debug)
+      console.error('[CI-LOG-IMPL] SourceMapper.create() returned successfully')
+    } catch (createErr) {
+      console.error(`[CI-LOG-IMPL] SourceMapper.create() threw an error: ${createErr.message}`)
+      console.error(`[CI-LOG-IMPL] SourceMapper.create() error stack: ${createErr.stack}`)
+      throw createErr
+    }
+
     console.error('[CI-LOG-IMPL] SourceMapper created')
 
     // Verify sourceMapper has mappings
