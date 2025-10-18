@@ -1,6 +1,7 @@
 import { time, heap, SourceMapper } from '@datadog/pprof'
 import { performance } from 'node:perf_hooks'
 import { workerData } from 'node:worker_threads'
+import { sep, isAbsolute } from 'node:path'
 import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
@@ -295,11 +296,23 @@ async function initializeSourceMapper () {
     // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
     const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
     console.error(`[CI-LOG-IMPL] Creating SourceMapper with path: ${appPath}, debug: ${debug}`)
+    console.error(`[CI-LOG-IMPL] Path separator: '${sep}'`)
+    console.error(`[CI-LOG-IMPL] Path is absolute: ${isAbsolute(appPath)}`)
     console.error('[CI-LOG-IMPL] About to call SourceMapper.create()...')
 
     try {
       sourceMapper = await SourceMapper.create([appPath], debug)
       console.error('[CI-LOG-IMPL] SourceMapper.create() returned successfully')
+
+      // Check if SourceMapper found any mappings
+      if (sourceMapper && typeof sourceMapper.hasMappingInfo === 'function') {
+        // Try a few common paths to see if SourceMapper has info
+        const testPaths = [appPath, appPath + '/dist', appPath + '\\dist']
+        for (const testPath of testPaths) {
+          const hasInfo = sourceMapper.hasMappingInfo(testPath)
+          console.error(`[CI-LOG-IMPL] SourceMapper.hasMappingInfo('${testPath}'): ${hasInfo}`)
+        }
+      }
     } catch (createErr) {
       console.error(`[CI-LOG-IMPL] SourceMapper.create() threw an error: ${createErr.message}`)
       console.error(`[CI-LOG-IMPL] SourceMapper.create() error stack: ${createErr.stack}`)

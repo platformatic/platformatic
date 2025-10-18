@@ -38,6 +38,11 @@ function verifyTypeScriptFilesInProfile (profile) {
   }
 
   const filenameList = Array.from(allFilenames).sort()
+  console.error(`[CI-LOG-VERIFY] Found ${allFilenames.size} unique filenames in profile:`)
+  for (const filename of filenameList) {
+    console.error(`[CI-LOG-VERIFY]   - ${filename}`)
+  }
+  console.error(`[CI-LOG-VERIFY] foundTypeScriptFile: ${foundTypeScriptFile}`)
   assert.ok(
     foundTypeScriptFile,
     `should contain .ts filenames. Found ${allFilenames.size} unique filenames:\n${filenameList.join('\n')}`
