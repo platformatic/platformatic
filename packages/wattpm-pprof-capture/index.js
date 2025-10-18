@@ -306,6 +306,23 @@ async function initializeSourceMapper () {
 
       // Check if SourceMapper found any mappings
       if (sourceMapper && typeof sourceMapper.hasMappingInfo === 'function') {
+        // Log what files SourceMapper actually has
+        if (sourceMapper.infoMap && sourceMapper.infoMap.size > 0) {
+          console.error(`[CI-LOG-IMPL] SourceMapper has ${sourceMapper.infoMap.size} mapping entries:`)
+          let count = 0
+          for (const [key, value] of sourceMapper.infoMap.entries()) {
+            if (count < 10) { // Limit output
+              console.error(`[CI-LOG-IMPL]   Mapping key: "${key}"`)
+            }
+            count++
+          }
+          if (count > 10) {
+            console.error(`[CI-LOG-IMPL]   ... and ${count - 10} more`)
+          }
+        } else {
+          console.error('[CI-LOG-IMPL] SourceMapper.infoMap is empty or unavailable')
+        }
+
         // Try a few common paths to see if SourceMapper has info
         const testPaths = [appPath, appPath + '/dist', appPath + '\\dist']
         for (const testPath of testPaths) {
