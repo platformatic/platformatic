@@ -24,7 +24,7 @@ process.on('exit', (code) => {
   console.error(`[MINIMAL-WORKER] Worker exiting with code: ${code}`)
 })
 
-async function test() {
+async function test () {
   try {
     console.error('[MINIMAL-WORKER] Creating SourceMapper...')
     const serviceDir = resolve(import.meta.dirname, 'sourcemap-test/service')
@@ -35,7 +35,7 @@ async function test() {
     time.start({
       intervalMicros: 33333,
       lineNumbers: true,
-      sourceMapper: sourceMapper
+      sourceMapper
     })
     console.error('[MINIMAL-WORKER] CPU profiler started')
 
