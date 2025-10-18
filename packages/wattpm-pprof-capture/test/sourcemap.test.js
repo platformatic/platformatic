@@ -99,7 +99,12 @@ async function createApp (t) {
   const configFile = resolve(import.meta.dirname, 'fixtures/sourcemap-test/platformatic.json')
   console.error(`[CI-LOG] createApp: Config file: ${configFile}`)
 
-  const logsPath = resolve(import.meta.dirname, `../../tmp/sourcemap-test-${Date.now()}.log`)
+  // Ensure tmp directory exists
+  const { mkdir } = await import('node:fs/promises')
+  const tmpDir = resolve(import.meta.dirname, '../../tmp')
+  await mkdir(tmpDir, { recursive: true })
+
+  const logsPath = resolve(tmpDir, `sourcemap-test-${Date.now()}.log`)
   console.error(`[CI-LOG] createApp: Runtime logs will be at: ${logsPath}`)
 
   console.error('[CI-LOG] createApp: Creating runtime...')
