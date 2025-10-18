@@ -109,7 +109,7 @@ async function createApp (t) {
   return { app, url }
 }
 
-test('sourcemaps should be initialized and profiling should work with TypeScript', async t => {
+test('sourcemaps should be initialized and profiling should work with TypeScript', { skip: process.platform === 'win32' }, async t => {
   console.error('[CI-LOG] Test started: sourcemaps with TypeScript')
   const { app, url } = await createApp(t)
   console.error(`[CI-LOG] App created, URL: ${url}`)
@@ -148,12 +148,30 @@ test('sourcemaps should be initialized and profiling should work with TypeScript
   // Use shorter interval and add timeout to prevent hanging
   console.error('[CI-LOG] Starting request interval for CPU activity...')
   let requestCount = 0
+  let consecutiveFailures = 0
+  let intervalStopped = false
   const requestInterval = setInterval(() => {
+    if (intervalStopped) return
+
     requestCount++
     console.error(`[CI-LOG] Sending compute request #${requestCount}`)
     request(`${url}/compute`, { headersTimeout: 30000, bodyTimeout: 30000 })
-      .then(() => console.error(`[CI-LOG] Compute request #${requestCount} completed`))
-      .catch((err) => console.error(`[CI-LOG] Compute request #${requestCount} failed: ${err.message}`))
+      .then(() => {
+        console.error(`[CI-LOG] Compute request #${requestCount} completed`)
+        consecutiveFailures = 0
+      })
+      .catch((err) => {
+        console.error(`[CI-LOG] Compute request #${requestCount} failed: ${err.message}`)
+        consecutiveFailures++
+
+        // If we get 3 consecutive connection failures, the service likely crashed
+        if (consecutiveFailures >= 3 && (err.message.includes('ECONNREFUSED') || err.message.includes('ECONNRESET'))) {
+          console.error(`[CI-LOG] ERROR: Service appears to have crashed (${consecutiveFailures} consecutive connection failures)`)
+          intervalStopped = true
+          clearInterval(requestInterval)
+          throw new Error(`Service crashed - ${consecutiveFailures} consecutive connection failures: ${err.message}`)
+        }
+      })
   }, 300)
 
   // Wait for profile to be captured

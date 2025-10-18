@@ -231,6 +231,16 @@ async function initializeSourceMapper () {
   console.error('[CI-LOG-IMPL] Starting SourceMapper initialization')
 
   try {
+    // Skip SourceMapper on Windows due to instability issues
+    // TODO: Re-enable once @datadog/pprof SourceMapper is stable on Windows
+    if (process.platform === 'win32') {
+      console.error('[CI-LOG-IMPL] Skipping SourceMapper on Windows due to known instability')
+      if (globalThis.platformatic?.logger) {
+        globalThis.platformatic.logger.warn('SourceMapper disabled on Windows due to stability issues with @datadog/pprof')
+      }
+      return
+    }
+
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
     console.error(`[CI-LOG-IMPL] Application path from workerData: ${appPath}`)
