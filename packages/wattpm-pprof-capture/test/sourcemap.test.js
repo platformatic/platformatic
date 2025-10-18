@@ -175,9 +175,17 @@ test('sourcemaps should be initialized and profiling should work with TypeScript
 
   // Verify sourcemap files exist in service directory
   console.error('[CI-LOG] Checking for sourcemap files via diagnostic endpoint...')
-  const diagRes = await request(`${url}/diagnostic`)
-  const diag = await diagRes.body.json()
-  console.error(`[CI-LOG] Diagnostic response: ${JSON.stringify(diag)}`)
+  let diag
+  try {
+    const diagRes = await request(`${url}/diagnostic`, { headersTimeout: 10000, bodyTimeout: 10000 })
+    console.error(`[CI-LOG] Diagnostic request completed with status: ${diagRes.statusCode}`)
+    diag = await diagRes.body.json()
+    console.error(`[CI-LOG] Diagnostic response: ${JSON.stringify(diag)}`)
+  } catch (err) {
+    console.error(`[CI-LOG] ERROR: Diagnostic request failed: ${err.message}`)
+    console.error(`[CI-LOG] ERROR stack: ${err.stack}`)
+    throw err
+  }
   assert.strictEqual(diag.pluginMapExists, true, `Sourcemap file should exist at ${diag.serviceDir}/plugin.js.map`)
   console.error('[CI-LOG] Sourcemap files verified')
 
