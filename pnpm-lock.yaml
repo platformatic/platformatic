@@ -38,7 +38,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^9.2.0
-        version: 9.4.6(astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.0)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1))
+        version: 9.4.6(astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.1)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1))
       '@platformatic/gateway':
         specifier: workspace:*
         version: link:../gateway
@@ -53,7 +53,7 @@ importers:
         version: 19.1.9(@types/react@19.1.14)
       astro:
         specifier: ^5.7.1
-        version: 5.13.10(@types/node@24.8.1)(ioredis@5.8.0)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
+        version: 5.13.10(@types/node@24.8.1)(ioredis@5.8.1)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1656,7 +1656,7 @@ importers:
         version: 5.6.1
       ioredis:
         specifier: ^5.3.2
-        version: 5.8.0
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.44.1(eslint@9.36.0)(typescript@5.9.2))(eslint@9.36.0)(typescript@5.9.2)
@@ -6462,8 +6462,8 @@ packages:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
     engines: {node: '>= 0.4'}
 
-  ioredis@5.8.0:
-    resolution: {integrity: sha512-AUXbKn9gvo9hHKvk6LbZJQSKn/qIfkWXrnsyL9Yrf+oeXmla9Nmf6XEumOddyhM8neynpK5oAV6r9r99KBuwzA==}
+  ioredis@5.8.1:
+    resolution: {integrity: sha512-Qho8TgIamqEPdgiMadJwzRMW3TudIg6vpg4YONokGDudy4eqRIJtDbVX72pfLBcWxvbn3qm/40TyGUObdW4tLQ==}
     engines: {node: '>=12.22.0'}
 
   iovalkey@0.3.3:
@@ -9993,10 +9993,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@9.4.6(astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.0)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1))':
+  '@astrojs/node@9.4.6(astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.1)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1))':
     dependencies:
       '@astrojs/internal-helpers': 0.7.4
-      astro: 5.13.10(@types/node@24.8.1)(ioredis@5.8.0)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
+      astro: 5.13.10(@types/node@24.8.1)(ioredis@5.8.1)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
       send: 1.2.0
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -12873,7 +12873,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.0)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1):
+  astro@5.13.10(@types/node@24.8.1)(ioredis@5.8.1)(rollup@4.52.2)(terser@5.44.0)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1):
     dependencies:
       '@astrojs/compiler': 2.13.0
       '@astrojs/internal-helpers': 0.7.3
@@ -12927,7 +12927,7 @@ snapshots:
       ultrahtml: 1.6.0
       unifont: 0.5.2
       unist-util-visit: 5.0.0
-      unstorage: 1.17.1(ioredis@5.8.0)
+      unstorage: 1.17.1(ioredis@5.8.1)
       vfile: 6.0.3
       vite: 6.3.6(@types/node@24.8.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
       vitefu: 1.1.1(vite@6.3.6(@types/node@24.8.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1))
@@ -15183,7 +15183,7 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.1.0
 
-  ioredis@5.8.0:
+  ioredis@5.8.1:
     dependencies:
       '@ioredis/commands': 1.4.0
       cluster-key-slot: 1.1.2
@@ -16637,7 +16637,7 @@ snapshots:
     dependencies:
       hyperid: 3.3.0
       inherits: 2.0.4
-      ioredis: 5.8.0
+      ioredis: 5.8.1
       lru-cache: 10.4.3
       mqemitter: 6.0.2
       msgpack-lite: 0.1.26
@@ -18922,7 +18922,7 @@ snapshots:
       '@unrs/resolver-binding-win32-ia32-msvc': 1.11.1
       '@unrs/resolver-binding-win32-x64-msvc': 1.11.1
 
-  unstorage@1.17.1(ioredis@5.8.0):
+  unstorage@1.17.1(ioredis@5.8.1):
     dependencies:
       anymatch: 3.1.3
       chokidar: 4.0.3
@@ -18933,7 +18933,7 @@ snapshots:
       ofetch: 1.4.1
       ufo: 1.6.1
     optionalDependencies:
-      ioredis: 5.8.0
+      ioredis: 5.8.1
 
   update-browserslist-db@1.1.3(browserslist@4.26.2):
     dependencies:
