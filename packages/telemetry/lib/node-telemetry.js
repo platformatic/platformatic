@@ -106,6 +106,12 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   })
 }
 
+// Create a promise that will be resolved when telemetry is initialized
+// This allows other parts of the system to wait for telemetry to be ready
+globalThis.platformatic = globalThis.platformatic || {}
+const { promise: telemetryReadyPromise, resolve: resolveTelemetryReady } = Promise.withResolvers()
+globalThis.platformatic.telemetryReady = telemetryReadyPromise
+
 async function main () {
   let data = null
   const useWorkerData = !!workerData
@@ -130,13 +136,18 @@ async function main () {
     const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
+      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
+      resolveTelemetryReady()
+    } else {
+      resolveTelemetryReady()
     }
+  } else {
+    resolveTelemetryReady()
   }
 }
 
-try {
-  main()
-} catch (e) {
+main().catch(e => {
   debuglog('Error in main %o', e)
-}
+  // Always resolve the promise even on error to prevent hanging
+  resolveTelemetryReady()
+})

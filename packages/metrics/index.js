@@ -189,6 +189,58 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   }
 
   return {
-    registry
+    registry,
+    otlpBridge: null
   }
+}
+
+export async function setupOtlpExporter (registry, otlpExporterConfig, applicationId) {
+  if (!otlpExporterConfig || !otlpExporterConfig.endpoint) {
+    return null
+  }
+
+  // Check if explicitly disabled
+  if (otlpExporterConfig.enabled === false || otlpExporterConfig.enabled === 'false') {
+    return null
+  }
+
+  // Dynamically import PromClientBridge to defer loading until after telemetry is initialized
+  const { PromClientBridge } = await import('@platformatic/promotel')
+
+  const {
+    endpoint,
+    headers,
+    interval = 60000,
+    serviceName = applicationId,
+    serviceVersion
+  } = otlpExporterConfig
+
+  const otlpEndpointOptions = {
+    url: endpoint
+  }
+
+  if (headers) {
+    otlpEndpointOptions.headers = headers
+  }
+
+  const conversionOptions = {
+    serviceName
+  }
+
+  if (serviceVersion) {
+    conversionOptions.serviceVersion = serviceVersion
+  }
+
+  const bridge = new PromClientBridge({
+    registry,
+    otlpEndpoint: otlpEndpointOptions,
+    interval,
+    conversionOptions,
+    onError: (error) => {
+      // Log error but don't crash the application
+      console.error('OTLP metrics export error:', error)
+    }
+  })
+
+  return bridge
 }

@@ -325,6 +325,37 @@ export interface PlatformaticViteConfig {
               };
           plugins?: string[];
           timeout?: number | string;
+          /**
+           * Configuration for exporting metrics to an OTLP endpoint
+           */
+          otlpExporter?: {
+            /**
+             * Enable or disable OTLP metrics export
+             */
+            enabled?: boolean | string;
+            /**
+             * OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)
+             */
+            endpoint: string;
+            /**
+             * Interval in milliseconds between metric pushes
+             */
+            interval?: number | string;
+            /**
+             * Additional HTTP headers for authentication
+             */
+            headers?: {
+              [k: string]: string;
+            };
+            /**
+             * Service name for OTLP resource attributes
+             */
+            serviceName?: string;
+            /**
+             * Service version for OTLP resource attributes
+             */
+            serviceVersion?: string;
+          };
         };
     telemetry?: {
       enabled?: boolean | string;

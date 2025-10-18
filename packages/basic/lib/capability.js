@@ -6,7 +6,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { client, collectMetrics, ensureMetricsGroup } from '@platformatic/metrics'
+import { client, collectMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'
@@ -50,7 +50,8 @@ export class BaseCapability extends EventEmitter {
   subprocessForceClose
   subprocessTerminationSignal
   logger
-  metricsRegistr
+  metricsRegistry
+  otlpBridge
 
   #subprocessStarted
   #metricsCollected
@@ -118,6 +119,7 @@ export class BaseCapability extends EventEmitter {
       this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
     }
 
+    this.otlpBridge = null
     this.#metricsCollected = false
     this.#pendingDependenciesWaits = new Set()
   }
@@ -155,6 +157,12 @@ export class BaseCapability extends EventEmitter {
   async stop () {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
+    }
+
+    // Stop OTLP bridge if running
+    if (this.otlpBridge) {
+      this.otlpBridge.stop()
+      this.otlpBridge = null
     }
   }
 
@@ -620,6 +628,7 @@ export class BaseCapability extends EventEmitter {
 
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
+    await this.#setupOtlpExporter()
   }
 
   async #collectMetrics () {
@@ -734,6 +743,33 @@ export class BaseCapability extends EventEmitter {
       registers: [registry]
     })
     globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
+  }
+
+  async #setupOtlpExporter () {
+    const metricsConfig = this.context.metricsConfig
+    if (!metricsConfig || !metricsConfig.otlpExporter) {
+      return
+    }
+
+    // Wait for telemetry to be ready before loading promotel to avoid race condition
+    if (globalThis.platformatic?.telemetryReady) {
+      await globalThis.platformatic.telemetryReady
+    }
+
+    // Setup and start OTLP exporter bridge
+    this.otlpBridge = await setupOtlpExporter(
+      this.metricsRegistry,
+      metricsConfig.otlpExporter,
+      this.applicationId
+    )
+
+    if (this.otlpBridge) {
+      this.otlpBridge.start()
+      this.logger.info({
+        endpoint: metricsConfig.otlpExporter.endpoint,
+        interval: metricsConfig.otlpExporter.interval || 60000
+      }, 'OTLP metrics exporter started')
+    }
   }
 
   async #invalidateHttpCache (opts = {}) {
