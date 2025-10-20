@@ -1,13 +1,12 @@
 import assert from 'node:assert'
-import { test } from 'node:test'
+import { mkdtemp } from 'node:fs/promises'
+import { availableParallelism, tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { tmpdir, availableParallelism } from 'node:os'
+import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { mkdtemp, readFile } from 'node:fs/promises'
 import { request } from 'undici'
-import { features } from '@platformatic/foundation'
-import { createRuntime } from './helpers.js'
 import { transform } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -17,7 +16,6 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
   const logsPath = join(tmpDir, 'log.txt')
 
-  let runtimeConfig = null
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -30,7 +28,7 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
         },
         maxTotalMemory: 1000000
       }
-      runtimeConfig = config
+
       return config
     },
     logsPath
@@ -68,20 +66,15 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
   assert.strictEqual(service1Workers.length, 1)
   assert.strictEqual(service2Workers.length, 1)
 
-  const logs = await readFile(logsPath, 'utf-8')
-  assert.ok(logs.includes(
-    'Vertical scaler configuration has a configuration for non-existing application \\"non-existing-app\\"'
-  ))
-
   const maxTotalWorkers = availableParallelism()
   const maxWorkers = maxTotalWorkers
 
-  const verticalScalerConfig = runtimeConfig?.verticalScaler
+  const verticalScalerConfig = app.getVerticalScaler().getConfig()
   assert.deepStrictEqual(verticalScalerConfig, {
-    enabled: true,
     applications: {
-      'service-1': { minWorkers: 1, maxWorkers: 1 },
-      'service-2': { minWorkers: 1, maxWorkers: 1 }
+      'non-existing-app': { maxWorkers: 1 },
+      'service-1': { maxWorkers: 1 },
+      'service-2': { maxWorkers: 1 }
     },
     maxTotalWorkers,
     maxTotalMemory: 1000000,
@@ -90,9 +83,9 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
     scaleDownELU: 0.2,
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
-    timeWindowSec: 10,
+    scaleUpTimeWindowSec: 10,
     scaleDownTimeWindowSec: 60,
-    cooldownSec: 60,
+    cooldown: 60,
     gracePeriod: 30 * 1000
   })
 })
@@ -100,12 +93,11 @@ test('should not scale an applications when the app maxWorkers is reached', asyn
 test('should scale a standalone application if elu is higher than treshold', async t => {
   const configFile = join(fixturesDir, 'vertical-scaler-service', 'platformatic.json')
 
-  let runtimeConfig = null
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.verticalScaler.maxTotalMemory = 1000000
-      runtimeConfig = config
+
       return config
     }
   })
@@ -135,14 +127,10 @@ test('should scale a standalone application if elu is higher than treshold', asy
   }
 
   const maxTotalWorkers = availableParallelism()
-  const maxWorkers = features.node.reusePort ? 2 : 1
-  const verticalScalerConfig = runtimeConfig?.verticalScaler
+  const verticalScalerConfig = app.getVerticalScaler().getConfig()
 
   assert.deepStrictEqual(verticalScalerConfig, {
-    enabled: true,
-    applications: {
-      'service-1': { minWorkers: 1, maxWorkers }
-    },
+    applications: {},
     maxTotalWorkers,
     maxTotalMemory: 1000000,
     maxWorkers: 2,
@@ -150,9 +138,9 @@ test('should scale a standalone application if elu is higher than treshold', asy
     scaleDownELU: 0.2,
     scaleIntervalSec: 60,
     scaleUpELU: 0.8,
-    timeWindowSec: 10,
+    scaleUpTimeWindowSec: 10,
     scaleDownTimeWindowSec: 60,
-    cooldownSec: 60,
+    cooldown: 60,
     gracePeriod: 30 * 1000
   })
 })

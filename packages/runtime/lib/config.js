@@ -162,6 +162,72 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
   config.watch = false
 }
 
+export async function prepareApplication (config, application) {
+  // We need to have absolute paths here, ot the `loadConfig` will fail
+  // Make sure we don't resolve if env var was not replaced
+  if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
+    application.path = resolvePath(config[kMetadata].root, application.path)
+  }
+
+  if (application.path && application.config) {
+    application.config = resolvePath(application.path, application.config)
+  }
+
+  try {
+    let pkg
+
+    if (application.config) {
+      const config = await loadConfiguration(application.config)
+      pkg = await loadConfigurationModule(application.path, config)
+
+      application.type = extractModuleFromSchemaUrl(config, true).module
+      application.skipTelemetryHooks = pkg.skipTelemetryHooks
+    } else {
+      const { moduleName, capability } = await importCapabilityAndConfig(application.path)
+      pkg = capability
+
+      application.type = moduleName
+    }
+
+    application.skipTelemetryHooks = pkg.skipTelemetryHooks
+
+    // This is needed to work around Rust bug on dylibs:
+    // https://github.com/rust-lang/rust/issues/91979
+    // https://github.com/rollup/rollup/issues/5761
+    const _require = createRequire(application.path)
+    for (const m of pkg.modulesToLoad ?? []) {
+      const toLoad = _require.resolve(m)
+      loadModule(_require, toLoad).catch(() => {})
+    }
+  } catch (err) {
+    // This should not happen, it happens on running some unit tests if we prepare the runtime
+    // when not all the applications configs are available. Given that we are running this only
+    // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
+    application.type = 'unknown'
+  }
+
+  // Validate and coerce per-service workers
+  if (typeof application.workers !== 'undefined') {
+    const coerced = coercePositiveInteger(application.workers)
+    if (coerced === null) {
+      const raw = application.workers
+      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+      raiseInvalidWorkersError(`Service "${application.id}"`, application.workers, hint)
+    }
+    application.workers = coerced
+  }
+
+  application.entrypoint = application.id === config.entrypoint
+  application.dependencies ??= []
+  application.localUrl = `http://${application.id}.plt.local`
+
+  if (typeof application.watch === 'undefined') {
+    application.watch = config.watch
+  }
+
+  return application
+}
+
 export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
   const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
@@ -226,69 +292,7 @@ export async function transform (config, _, context) {
   }
 
   for (let i = 0; i < applications.length; ++i) {
-    const application = applications[i]
-
-    // We need to have absolute paths here, ot the `loadConfig` will fail
-    // Make sure we don't resolve if env var was not replaced
-    if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
-      application.path = resolvePath(config[kMetadata].root, application.path)
-    }
-
-    if (application.path && application.config) {
-      application.config = resolvePath(application.path, application.config)
-    }
-
-    try {
-      let pkg
-
-      if (application.config) {
-        const config = await loadConfiguration(application.config)
-        pkg = await loadConfigurationModule(application.path, config)
-
-        application.type = extractModuleFromSchemaUrl(config, true).module
-        application.skipTelemetryHooks = pkg.skipTelemetryHooks
-      } else {
-        const { moduleName, capability } = await importCapabilityAndConfig(application.path)
-        pkg = capability
-
-        application.type = moduleName
-      }
-
-      application.skipTelemetryHooks = pkg.skipTelemetryHooks
-
-      // This is needed to work around Rust bug on dylibs:
-      // https://github.com/rust-lang/rust/issues/91979
-      // https://github.com/rollup/rollup/issues/5761
-      const _require = createRequire(application.path)
-      for (const m of pkg.modulesToLoad ?? []) {
-        const toLoad = _require.resolve(m)
-        loadModule(_require, toLoad).catch(() => {})
-      }
-    } catch (err) {
-      // This should not happen, it happens on running some unit tests if we prepare the runtime
-      // when not all the applications configs are available. Given that we are running this only
-      // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
-      application.type = 'unknown'
-    }
-
-    // Validate and coerce per-service workers
-    if (typeof application.workers !== 'undefined') {
-      const coerced = coercePositiveInteger(application.workers)
-      if (coerced === null) {
-        const raw = config.application?.[i]?.workers
-        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-        raiseInvalidWorkersError(`Service "${application.id}"`, application.workers, hint)
-      }
-      application.workers = coerced
-    }
-
-    application.entrypoint = application.id === config.entrypoint
-    application.dependencies ??= []
-    application.localUrl = `http://${application.id}.plt.local`
-
-    if (typeof application.watch === 'undefined') {
-      application.watch = config.watch
-    }
+    const application = await prepareApplication(config, applications[i])
 
     if (application.entrypoint) {
       hasValidEntrypoint = true

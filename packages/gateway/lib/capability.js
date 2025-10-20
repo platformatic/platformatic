@@ -8,6 +8,7 @@ const kITC = Symbol.for('plt.runtime.itc')
 
 export class GatewayCapability extends ServiceCapability {
   #meta
+  #runtimeEventHandler
 
   constructor (root, config, context) {
     super(root, config, context)
@@ -33,6 +34,27 @@ export class GatewayCapability extends ServiceCapability {
     this.dependencies = Array.from(new Set([...this.dependencies, ...composedApplications]))
 
     await super.init()
+  }
+
+  start () {
+    if (this.url) {
+      return this.url
+    }
+
+    const url = super.start()
+
+    this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
+    globalThis[kITC].on('runtime:event', this.#runtimeEventHandler)
+
+    return url
+  }
+
+  stop () {
+    if (this.#runtimeEventHandler) {
+      globalThis[kITC].removeListener('runtime:event', this.#runtimeEventHandler)
+    }
+
+    return super.stop()
   }
 
   registerMeta (meta) {
@@ -77,5 +99,11 @@ export class GatewayCapability extends ServiceCapability {
     }
 
     return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
+  }
+
+  #handleRuntimeEvent ({ event }) {
+    if (event === 'application:added' || event === 'application:removed') {
+      globalThis[kITC].notify('request:restart')
+    }
   }
 }

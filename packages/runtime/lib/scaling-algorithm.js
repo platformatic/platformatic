@@ -18,6 +18,15 @@ class ScalingAlgorithm {
     this.#appsMetrics = {}
   }
 
+  addApplication (id, config) {
+    this.#appsConfigs[id] = config
+  }
+
+  removeApplication (id) {
+    delete this.#appsConfigs[id]
+    delete this.#appsMetrics[id]
+  }
+
   addWorkerHealthInfo (healthInfo) {
     const { workerId, applicationId, elu, heapUsed } = healthInfo
     const timestamp = Date.now()
@@ -50,7 +59,7 @@ class ScalingAlgorithm {
       appsInfo.push({
         applicationId,
         workersCount,
-        avgHeapUsed: heapUsed,
+        avgHeapUsed: heapUsed
       })
 
       totalWorkersCount += workersCount
@@ -112,9 +121,7 @@ class ScalingAlgorithm {
         if (workersCount >= appMaxWorkers) continue
         if (avgHeapUsed >= totalAvailableMemory) continue
 
-        const isScaled = recommendations.some(
-          r => r.applicationId === applicationId
-        )
+        const isScaled = recommendations.some(r => r.applicationId === applicationId)
         if (isScaled) continue
 
         const recommendation = this.#getApplicationScaleRecommendation(applicationId)
@@ -122,10 +129,8 @@ class ScalingAlgorithm {
 
         if (
           !scaleUpCandidate ||
-          (recommendation.scaleUpELU > scaleUpCandidate.scaleUpELU) ||
-          (recommendation.scaleUpELU === scaleUpCandidate.scaleUpELU &&
-            workersCount < scaleUpCandidate.workersCount
-          )
+          recommendation.scaleUpELU > scaleUpCandidate.scaleUpELU ||
+          (recommendation.scaleUpELU === scaleUpCandidate.scaleUpELU && workersCount < scaleUpCandidate.workersCount)
         ) {
           scaleUpCandidate = {
             applicationId,
@@ -186,8 +191,8 @@ class ScalingAlgorithm {
       count++
     }
 
-    const elu = Math.round(eluSum / count * 100) / 100
-    const heapUsed = Math.round(heapUsedSum / count * 100) / 100
+    const elu = Math.round((eluSum / count) * 100) / 100
+    const heapUsed = Math.round((heapUsedSum / count) * 100) / 100
     return { elu, heapUsed }
   }
 
