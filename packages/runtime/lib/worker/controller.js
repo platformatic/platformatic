@@ -161,7 +161,7 @@ export class Controller extends EventEmitter {
       return
     }
 
-    this.capability.updateStatus('starting')
+    this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
     if (this.#watch) {
@@ -185,7 +185,7 @@ export class Controller extends EventEmitter {
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.capability.updateStatus('start:error')
+      this.#updateCapabilityStatus('start:error')
       this.emit('start:error', err)
 
       this.capability.log({ message: err.message, level: 'debug' })
@@ -196,7 +196,7 @@ export class Controller extends EventEmitter {
     this.#started = true
     this.#starting = false
 
-    this.capability.updateStatus('started')
+    this.#updateCapabilityStatus('started')
     this.emit('started')
   }
 
@@ -218,7 +218,7 @@ export class Controller extends EventEmitter {
     this.#starting = false
     this.#listening = false
 
-    this.capability.updateStatus('stopped')
+    this.#updateCapabilityStatus('stopped')
     this.emit('stopped')
   }
 
@@ -332,5 +332,15 @@ export class Controller extends EventEmitter {
         )
       }
     })
+  }
+
+  #updateCapabilityStatus (status) {
+    if (typeof this.capability.updateStatus === 'function') {
+      this.capability.updateStatus(status)
+    } else {
+      // This is horrible but needed for backward compatibility
+      this.capability.status = status
+      this.capability.emit(status)
+    }
   }
 }
