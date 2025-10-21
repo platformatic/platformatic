@@ -30,7 +30,6 @@ export function initHealthSignalsApi (options = {}) {
   const queue = new HealthSignalsQueue()
   const timeout = options.timeout ?? 1000
   const workerId = options.workerId
-  const applicationId = options.applicationId
 
   let isSending = false
   let promise = null
@@ -46,9 +45,6 @@ export function initHealthSignalsApi (options = {}) {
       signal.timestamp = Date.now()
     }
 
-    signal.workerId = workerId
-    signal.application = applicationId
-
     queue.add(signal)
 
     if (!isSending) {
@@ -58,7 +54,10 @@ export function initHealthSignalsApi (options = {}) {
           isSending = false
           try {
             const signals = queue.getAll()
-            await globalThis.platformatic.itc.send('sendHealthSignals', { signals })
+            await globalThis.platformatic.itc.send('sendHealthSignals', {
+              workerId,
+              signals
+            })
           } catch (err) {
             reject(err)
             return

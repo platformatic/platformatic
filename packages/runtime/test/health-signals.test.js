@@ -12,9 +12,9 @@ test('should send a custom health signal', async t => {
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
-  const receivedSignals = []
-  app.on('application:worker:health-signals', (signals) => {
-    receivedSignals.push(...signals)
+  const healthChecks = []
+  app.on('application:worker:health', (health) => {
+    healthChecks.push(health)
   })
 
   t.after(() => app.close())
@@ -32,11 +32,19 @@ test('should send a custom health signal', async t => {
   })
   assert.strictEqual(statusCode, 200)
 
-  assert.strictEqual(receivedSignals.length, 1)
+  await sleep(1000)
 
-  const signal = receivedSignals[0]
-  assert.strictEqual(signal.application, 'service-1')
-  assert.strictEqual(signal.workerId, 'service-1:0')
+  const healthChecksWithSignals = healthChecks.filter(
+    c => c.healthSignals.length > 0
+  )
+  assert.strictEqual(healthChecksWithSignals.length, 1)
+
+  const healthCheck = healthChecksWithSignals[0]
+  assert.strictEqual(healthCheck.id, 'service-1:0')
+  assert.strictEqual(healthCheck.application, 'service-1')
+  assert.strictEqual(healthCheck.healthSignals.length, 1)
+
+  const signal = healthCheck.healthSignals[0]
   assert.strictEqual(signal.type, 'custom')
   assert.strictEqual(signal.value, 0.42)
   assert.strictEqual(signal.description, 'custom health signal')
@@ -48,9 +56,9 @@ test('should send a batch of custom health signal', async t => {
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
-  const receivedBatches = []
-  app.on('application:worker:health-signals', (signals) => {
-    receivedBatches.push(signals)
+  const healthSignals = []
+  app.on('application:worker:health', (health) => {
+    healthSignals.push(...health.healthSignals)
   })
 
   t.after(() => app.close())
@@ -79,7 +87,7 @@ test('should send a batch of custom health signal', async t => {
 
   {
     const promises = []
-    for (let i = 0; i < 10; i++) {
+    for (let i = 10; i < 20; i++) {
       promises.push(
         request(entryUrl + '/custom-health-signal', {
           method: 'POST',
@@ -88,7 +96,7 @@ test('should send a batch of custom health signal', async t => {
           },
           body: JSON.stringify({
             type: `custom-${i}`,
-            value: 0.43,
+            value: 0.42,
             description: 'custom health signal'
           })
         })
@@ -97,26 +105,14 @@ test('should send a batch of custom health signal', async t => {
     await Promise.all(promises)
   }
 
-  assert.strictEqual(receivedBatches.length, 2)
+  await sleep(1000)
 
-  const batch1 = receivedBatches[0]
-  const batch2 = receivedBatches[1]
+  assert.strictEqual(healthSignals.length, 20)
 
-  assert.strictEqual(batch1.length, 10)
-  assert.strictEqual(batch2.length, 10)
-
-  for (let i = 0; i < 10; i++) {
-    const signal = batch1.find(s => s.type === `custom-${i}`)
+  for (let i = 0; i < 20; i++) {
+    const signal = healthSignals.find(s => s.type === `custom-${i}`)
     assert.strictEqual(signal.type, `custom-${i}`)
     assert.strictEqual(signal.value, 0.42)
-    assert.strictEqual(signal.description, 'custom health signal')
-    assert.strictEqual(typeof signal.timestamp, 'number')
-  }
-
-  for (let i = 0; i < 10; i++) {
-    const signal = batch2.find(s => s.type === `custom-${i}`)
-    assert.strictEqual(signal.type, `custom-${i}`)
-    assert.strictEqual(signal.value, 0.43)
     assert.strictEqual(signal.description, 'custom health signal')
     assert.strictEqual(typeof signal.timestamp, 'number')
   }
@@ -128,8 +124,8 @@ test('should send elu health signal', async t => {
   const entryUrl = await app.start()
 
   const receivedSignals = []
-  app.on('application:worker:health-signals', (signals) => {
-    receivedSignals.push(...signals)
+  app.on('application:worker:health', (health) => {
+    receivedSignals.push(...health.healthSignals)
   })
 
   t.after(() => app.close())
@@ -147,8 +143,6 @@ test('should send elu health signal', async t => {
   assert.strictEqual(receivedSignals.length, 1)
 
   const signal = receivedSignals[0]
-  assert.strictEqual(signal.application, 'service-2')
-  assert.strictEqual(signal.workerId, 'service-2:0')
   assert.strictEqual(signal.type, 'elu')
   assert.ok(signal.value > 0.9)
   assert.strictEqual(typeof signal.timestamp, 'number')
@@ -160,8 +154,8 @@ test('should throw if signal type is not a string', async t => {
   const entryUrl = await app.start()
 
   const receivedSignals = []
-  app.on('application:worker:health-signals', (signals) => {
-    receivedSignals.push(...signals)
+  app.on('application:worker:health-signals', (health) => {
+    receivedSignals.push(...health.healthSignals)
   })
 
   t.after(() => app.close())

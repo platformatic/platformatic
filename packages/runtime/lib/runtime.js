@@ -1571,24 +1571,15 @@ export class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      this.emitAndNotify('application:worker:health', {
-        id: worker[kId],
-        application: id,
-        worker: index,
-        currentHealth: health,
-        unhealthy,
-        healthConfig: worker[kConfig].health
-      })
+      const healthSignals = worker.kHealthSignals ?? []
+      worker.kHealthSignals = []
 
       if (unhealthy) {
-        const healthSignals = []
         if (health.elu > maxELU) {
           const message = `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
           this.logger.error(message)
 
           healthSignals.push({
-            workerId: worker[kId],
-            application: id,
             type: 'elu',
             value: health.elu,
             description: message,
@@ -1601,8 +1592,6 @@ export class Runtime extends EventEmitter {
           this.logger.error(message)
 
           healthSignals.push({
-            workerId: worker[kId],
-            application: id,
             type: 'heap-used',
             value: memoryUsage,
             description: message,
@@ -1610,12 +1599,20 @@ export class Runtime extends EventEmitter {
           })
         }
 
-        this.emitAndNotify('application:worker:health-signals', healthSignals)
-
         unhealthyChecks++
       } else {
         unhealthyChecks = 0
       }
+
+      this.emitAndNotify('application:worker:health', {
+        id: worker[kId],
+        application: id,
+        worker: index,
+        currentHealth: health,
+        healthSignals,
+        unhealthy,
+        healthConfig: worker[kConfig].health
+      })
 
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
@@ -2755,7 +2752,12 @@ export class Runtime extends EventEmitter {
     return argv
   }
 
-  #processHealthSignals ({ signals }) {
-    this.emitAndNotify('application:worker:health-signals', signals)
+  #processHealthSignals ({ workerId, signals }) {
+    const worker = this.#workers.get(workerId)
+    worker.kHealthSignals ??= []
+    worker.kHealthSignals.push(...signals)
+    if (worker.kHealthSignals.length > 100) {
+      worker.kHealthSignals.splice(0, worker.kHealthSignals.length - 100)
+    }
   }
 }
