@@ -1449,8 +1449,8 @@ importers:
         specifier: ^5.5.4
         version: 5.9.2
       undici-oidc-interceptor:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.8.0
+        version: 0.8.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
@@ -4769,6 +4769,9 @@ packages:
   async-cache-dedupe@2.2.0:
     resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
 
+  async-cache-dedupe@3.2.0:
+    resolution: {integrity: sha512-ph+yHMXCZNtfst8SrDBsQpqTN8fpx+uIhz23DoqElIVZTXSsy7BdV+/MM7kX9ZC2dqka5+UGG97+l0qCkO0l8w==}
+
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
@@ -5863,12 +5866,12 @@ packages:
   fast-json-stringify@6.0.1:
     resolution: {integrity: sha512-s7SJE83QKBZwg54dIbD5rCtzOBVD43V1ReWXXYqBgwCwHLYAAT0RQc/FmrQglXqWPpz6omtryJQOau5jI4Nrvg==}
 
-  fast-jwt@4.0.5:
-    resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
-    engines: {node: '>=16'}
-
   fast-jwt@5.0.6:
     resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
+    engines: {node: '>=20'}
+
+  fast-jwt@6.0.2:
+    resolution: {integrity: sha512-dTF4bhYnuXhZYQUaxsHKqAyA5y/L/kQc4fUu0wQ0BSA0dMfcNrcv0aqR2YnVi4f7e1OnzDVU7sDsNdzl1O5EVA==}
     engines: {node: '>=20'}
 
   fast-levenshtein@2.0.6:
@@ -9318,8 +9321,8 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
-  undici-oidc-interceptor@0.5.0:
-    resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
+  undici-oidc-interceptor@0.8.0:
+    resolution: {integrity: sha512-SbWdP7i2yIBnoM3rLFO8/kwAfYZMlw18IgkPfniUv6X/EeQVJ0PwTm9RRwwc5zUHyHZo/dBlwSk9g+6Kv8nJ0Q==}
 
   undici-thread-interceptor@0.15.0:
     resolution: {integrity: sha512-OQZsQhcND8IJy1Qt3z8AfGX2Z6A4lPgY6dOUo73417dJot7RGpTx8rPJh2Fz5lpQODoXbfLaiGCxpyPw9UtDpw==}
@@ -13004,6 +13007,11 @@ snapshots:
       mnemonist: 0.39.8
       safe-stable-stringify: 2.5.0
 
+  async-cache-dedupe@3.2.0:
+    dependencies:
+      mnemonist: 0.40.3
+      safe-stable-stringify: 2.5.0
+
   async-function@1.0.0: {}
 
   asynckit@0.4.0: {}
@@ -14401,14 +14409,14 @@ snapshots:
       json-schema-ref-resolver: 2.0.1
       rfdc: 1.4.1
 
-  fast-jwt@4.0.5:
+  fast-jwt@5.0.6:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.39.8
+      mnemonist: 0.40.3
 
-  fast-jwt@5.0.6:
+  fast-jwt@6.0.2:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
@@ -18774,10 +18782,11 @@ snapshots:
 
   uncrypto@0.1.3: {}
 
-  undici-oidc-interceptor@0.5.0:
+  undici-oidc-interceptor@0.8.0:
     dependencies:
-      fast-jwt: 4.0.5
-      undici: 6.21.3
+      async-cache-dedupe: 3.2.0
+      fast-jwt: 6.0.2
+      undici: 7.11.0
 
   undici-thread-interceptor@0.15.0:
     dependencies:
