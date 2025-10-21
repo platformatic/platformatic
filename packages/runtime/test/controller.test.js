@@ -1,5 +1,6 @@
+import { BaseCapability } from '@platformatic/basic'
 import { abstractLogger } from '@platformatic/foundation'
-import { notStrictEqual, rejects, strictEqual } from 'node:assert'
+import { deepStrictEqual, notStrictEqual, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { utimes } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -201,4 +202,49 @@ test('supports configuration overrides', async t => {
   const capabilityConfig = await app.capability.getConfig()
   strictEqual(capabilityConfig.server.keepAliveTimeout, 1)
   strictEqual(capabilityConfig.server.port, 2222)
+})
+
+test('can update status of a capability with updateStatus support', async t => {
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+    dependencies: []
+  }
+
+  const app = new Controller({}, config)
+  app.capability = new BaseCapability('base', '0.1', appPath, {})
+  app.capability.start = async function () {}
+
+  await app.start()
+
+  deepStrictEqual(app.capability.status, 'started')
+})
+
+test('can update status of a capability without updateStatus support', async t => {
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+    dependencies: []
+  }
+
+  const app = new Controller({}, config)
+  app.capability = new BaseCapability('base', '0.1', appPath, {})
+  app.capability.start = async function () {}
+  delete app.capability.updateStatus
+
+  await app.start()
+
+  deepStrictEqual(app.capability.status, 'started')
 })
