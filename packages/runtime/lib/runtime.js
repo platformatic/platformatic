@@ -161,7 +161,8 @@ export class Runtime extends EventEmitter {
       deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
       invalidateHttpCache: this.invalidateHttpCache.bind(this),
       updateSharedContext: this.updateSharedContext.bind(this),
-      getSharedContext: this.getSharedContext.bind(this)
+      getSharedContext: this.getSharedContext.bind(this),
+      sendHealthSignals: this.#processHealthSignals.bind(this)
     }
     this.#sharedContext = {}
   }
@@ -1580,17 +1581,36 @@ export class Runtime extends EventEmitter {
       })
 
       if (unhealthy) {
+        const healthSignals = []
         if (health.elu > maxELU) {
-          this.logger.error(
-            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
-          )
+          const message = `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+          this.logger.error(message)
+
+          healthSignals.push({
+            workerId: worker[kId],
+            application: id,
+            type: 'elu',
+            value: health.elu,
+            description: message,
+            timestamp: Date.now()
+          })
         }
 
         if (memoryUsage > maxHeapUsed) {
-          this.logger.error(
-            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
-          )
+          const message = `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
+          this.logger.error(message)
+
+          healthSignals.push({
+            workerId: worker[kId],
+            application: id,
+            type: 'heap-used',
+            value: memoryUsage,
+            description: message,
+            timestamp: Date.now()
+          })
         }
+
+        this.emitAndNotify('application:worker:health-signals', healthSignals)
 
         unhealthyChecks++
       } else {
@@ -2733,5 +2753,9 @@ export class Runtime extends EventEmitter {
 
     argv.push('--permission', ...allows)
     return argv
+  }
+
+  #processHealthSignals ({ signals }) {
+    this.emitAndNotify('application:worker:health-signals', signals)
   }
 }

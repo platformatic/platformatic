@@ -20,6 +20,7 @@ import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
 import { kId, kITC, kStderrMarker } from './symbols.js'
+import { initHealthSignalsApi } from './health-signals.js'
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -189,6 +190,11 @@ async function main () {
   const itc = setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
   globalThis.platformatic.itc = itc
+
+  initHealthSignalsApi({
+    workerId: workerData.worker.id,
+    applicationId: applicationConfig.id
+  })
 
   itc.notify('init')
 }
