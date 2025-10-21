@@ -58,6 +58,7 @@ export module symbols {
   export declare const kLastHealthCheckELU: unique symbol
   export declare const kLastVerticalScalerELU: unique symbol
   export declare const kWorkerStatus: unique symbol
+  export declare const kWorkerHealthSignals: unique symbol
   export declare const kStderrMarker: string
   export declare const kInterceptors: unique symbol
   export declare const kWorkersBroadcast: unique symbol

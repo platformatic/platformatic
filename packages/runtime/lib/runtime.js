@@ -63,7 +63,8 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerHealthSignals
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -1571,8 +1572,8 @@ export class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      const healthSignals = worker.kHealthSignals ?? []
-      worker.kHealthSignals = []
+      const healthSignals = worker[kWorkerHealthSignals] ?? []
+      worker[kWorkerHealthSignals] = []
 
       if (unhealthy) {
         if (health.elu > maxELU) {
@@ -2754,10 +2755,15 @@ export class Runtime extends EventEmitter {
 
   #processHealthSignals ({ workerId, signals }) {
     const worker = this.#workers.get(workerId)
-    worker.kHealthSignals ??= []
-    worker.kHealthSignals.push(...signals)
-    if (worker.kHealthSignals.length > 100) {
-      worker.kHealthSignals.splice(0, worker.kHealthSignals.length - 100)
+    const healthSignalsLimit = 100
+
+    worker[kWorkerHealthSignals] ??= []
+
+    const healthSignals = worker[kWorkerHealthSignals]
+    healthSignals.push(...signals)
+
+    if (healthSignals.length > healthSignalsLimit) {
+      healthSignals.splice(0, healthSignals.length - healthSignalsLimit)
     }
   }
 }
