@@ -126,7 +126,7 @@ test('should scale a standalone application if elu is higher than treshold', asy
     }
   }
 
-  const maxTotalWorkers = availableParallelism()
+  const maxTotalWorkers = 10
   const verticalScalerConfig = app.getVerticalScaler().getConfig()
 
   assert.deepStrictEqual(verticalScalerConfig, {
