@@ -90,7 +90,7 @@ Dynamically removes applications from the runtime. This will stop the applicatio
 ```js
 import { create } from '@platformatic/runtime'
 
-const app = await create('path/to/platformatic.runtime.json')
+const app = await create('path/to/watt.json')
 await app.start()
 
 // Remove applications by ID
