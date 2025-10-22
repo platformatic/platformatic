@@ -16,7 +16,6 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
-import os from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -30,24 +29,24 @@ import {
   ApplicationNotFoundError,
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
+  CannotRemoveEntrypointError,
+  GetHeapStatisticUnavailable,
   InvalidArgumentError,
   MessagingError,
   MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
   RuntimeExitedError,
-  WorkerNotFoundError,
-  GetHeapStatisticUnavailable
+  WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
-import { getMemoryInfo } from './metrics.js'
 import { createChannelCreationHook } from './policies.js'
 import { startPrometheusServer } from './prom-server.js'
-import ScalingAlgorithm from './scaling-algorithm.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
+import { kOriginalWorkers, VerticalScaler } from './vertical-scaler.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import {
@@ -58,7 +57,6 @@ import {
   kId,
   kITC,
   kLastHealthCheckELU,
-  kLastVerticalScalerELU,
   kStderrMarker,
   kWorkerId,
   kWorkersBroadcast,
@@ -108,11 +106,13 @@ export class Runtime extends EventEmitter {
   #metricsLabelName
 
   #applicationsConfigsPatches
+  #applications
   #workers
-  #workersConfigs
   #workersBroadcastChannel
   #workerITCHandlers
+  #restartingApplications
   #restartingWorkers
+  #verticalScaler
 
   #sharedHttpCache
   #scheduler
@@ -129,6 +129,7 @@ export class Runtime extends EventEmitter {
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
     this.#concurrency = this.#context.concurrency ?? MAX_CONCURRENCY
+    this.#applications = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
@@ -139,6 +140,7 @@ export class Runtime extends EventEmitter {
     })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
+    this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
@@ -164,6 +166,14 @@ export class Runtime extends EventEmitter {
       getSharedContext: this.getSharedContext.bind(this)
     }
     this.#sharedContext = {}
+
+    if (this.#isProduction) {
+      this.#env.PLT_DEV = 'false'
+      this.#env.PLT_ENVIRONMENT = 'production'
+    } else {
+      this.#env.PLT_DEV = 'true'
+      this.#env.PLT_ENVIRONMENT = 'development'
+    }
   }
 
   async init () {
@@ -193,28 +203,17 @@ export class Runtime extends EventEmitter {
 
     this.#createWorkersBroadcastChannel()
 
-    this.#workersConfigs = {}
-    for (const application of this.#config.applications) {
-      let count = application.workers ?? this.#config.workers ?? 1
-      if (count > 1 && application.entrypoint && !features.node.reusePort) {
+    if (this.#config.verticalScaler?.enabled) {
+      if (typeof this.#config.workers !== 'undefined') {
         this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
+          `Vertical scaler disabled because the "workers" configuration is set to ${this.#config.workers}`
         )
-        count = 1
+      } else {
+        this.#verticalScaler = new VerticalScaler(this, this.#config.verticalScaler)
       }
-      this.#workersConfigs[application.id] = { count }
     }
 
-    if (this.#isProduction) {
-      this.#env.PLT_DEV = 'false'
-      this.#env.PLT_ENVIRONMENT = 'production'
-    } else {
-      this.#env.PLT_DEV = 'true'
-      this.#env.PLT_ENVIRONMENT = 'development'
-    }
-
-    await this.#setupApplications()
-
+    await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
     if (config.scheduler) {
@@ -236,12 +235,7 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     try {
-      const startInvocations = []
-      for (const application of this.getApplicationsIds()) {
-        startInvocations.push([application, silent])
-      }
-
-      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+      await this.startApplications(this.getApplicationsIds(), silent)
 
       if (this.#config.inspectorOptions) {
         const { port } = this.#config.inspectorOptions
@@ -287,66 +281,34 @@ export class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
-    if (this.#config.verticalScaler?.enabled) {
-      await this.#setupVerticalScaler()
-    }
-
+    await this.#verticalScaler?.start()
     this.#showUrl()
     return this.#url
   }
 
   async stop (silent = false) {
-    if (this.#scheduler) {
-      await this.#scheduler.stop()
-    }
-
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
 
     this.#updateStatus('stopping')
 
+    if (this.#scheduler) {
+      await this.#scheduler.stop()
+    }
+
     if (this.#inspectorServer) {
       await this.#inspectorServer.close()
     }
+
+    await this.#verticalScaler?.stop()
 
     // Stop the entrypoint first so that no new requests are accepted
     if (this.#entrypointId) {
       await this.stopApplication(this.#entrypointId, silent)
     }
 
-    const stopInvocations = []
-
-    // Construct the reverse dependency graph
-    const dependents = {}
-
-    try {
-      const allApplications = await this.getApplications(true)
-      for (const application of allApplications.applications) {
-        for (const dependency of application.dependencies ?? []) {
-          let applicationDependents = dependents[dependency]
-          if (!applicationDependents) {
-            applicationDependents = new Set()
-            dependents[dependency] = applicationDependents
-          }
-
-          applicationDependents.add(application.id)
-        }
-      }
-    } catch (e) {
-      // Noop - This only happens if stop is invoked after a failed start, in which case we don't care about deps
-    }
-
-    for (const application of this.getApplicationsIds()) {
-      // The entrypoint has been stopped above
-      if (application === this.#entrypointId) {
-        continue
-      }
-
-      stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
-    }
-
-    await executeInParallel(this.stopApplication.bind(this), stopInvocations, this.#concurrency)
+    await this.stopApplications(this.getApplicationsIds(), silent)
 
     await this.#meshInterceptor.close()
     this.#workersBroadcastChannel?.close()
@@ -357,14 +319,13 @@ export class Runtime extends EventEmitter {
   async restart (applications = []) {
     this.emitAndNotify('restarting')
 
-    const restartInvocations = []
+    const toRestart = []
     for (const application of this.getApplicationsIds()) {
       if (applications.length === 0 || applications.includes(application)) {
-        restartInvocations.push([application])
+        toRestart.push(application)
       }
     }
-
-    await executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+    await this.restartApplications(toRestart)
 
     this.emitAndNotify('restarted')
 
@@ -478,17 +439,120 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  async addApplications (applications, start = false) {
+    const setupInvocations = []
+
+    const toStart = []
+    for (const application of applications) {
+      const originalWorkers = application.workers
+      let workers = originalWorkers ?? this.#config.workers ?? 1
+      if (workers > 1 && application.entrypoint && !features.node.reusePort) {
+        this.logger.warn(
+          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers}`
+        )
+        workers = 1
+      }
+
+      const originalConfig = structuredClone(application)
+      const applicationConfig = { ...originalConfig, workers, [kOriginalWorkers]: originalWorkers }
+      this.#applications.set(application.id, applicationConfig)
+      setupInvocations.push([applicationConfig])
+      toStart.push(application.id)
+    }
+
+    await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
+
+    for (const application of applications) {
+      this.emitAndNotify('application:added', application)
+    }
+
+    if (start) {
+      await this.startApplications(toStart)
+    }
+  }
+
+  async removeApplications (applications, silent = false) {
+    if (applications.includes(this.#entrypointId)) {
+      throw new CannotRemoveEntrypointError()
+    }
+
+    await this.stopApplications(applications, silent, true)
+
+    for (const application of applications) {
+      this.#verticalScaler?.remove(application)
+      this.#applications.delete(application)
+    }
+
+    for (const application of applications) {
+      this.emitAndNotify('application:removed', application)
+    }
+  }
+
+  async startApplications (applicationsToStart, silent = false) {
+    const startInvocations = []
+    for (const application of applicationsToStart) {
+      startInvocations.push([application, silent])
+    }
+
+    return executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+  }
+
+  async stopApplications (applicationsToStop, silent = false, skipDependencies = false) {
+    const stopInvocations = []
+
+    // Construct the reverse dependency graph
+    const dependents = {}
+
+    if (!skipDependencies) {
+      try {
+        const { applications } = await this.getApplications(true)
+        for (const application of applications) {
+          for (const dependency of application.dependencies ?? []) {
+            let applicationDependents = dependents[dependency]
+            if (!applicationDependents) {
+              applicationDependents = new Set()
+              dependents[dependency] = applicationDependents
+            }
+
+            applicationDependents.add(application.id)
+          }
+        }
+      } catch (e) {
+        // Noop - This only happens if stop is invoked after a failed start, in which case we don't care about deps
+      }
+    }
+
+    for (const application of applicationsToStop) {
+      // The entrypoint has been stopped above
+      if (application === this.#entrypointId) {
+        continue
+      }
+
+      stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
+    }
+
+    return executeInParallel(this.stopApplication.bind(this), stopInvocations, this.#concurrency)
+  }
+
+  async restartApplications (applicationsToRestart) {
+    const restartInvocations = []
+
+    for (const application of applicationsToRestart) {
+      restartInvocations.push([application])
+    }
+
+    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+  }
+
   async startApplication (id, silent = false) {
     const config = this.#config
-    const applicationConfig = config.applications.find(s => s.id === id)
+    const applicationConfig = this.#applications.get(id)
 
     if (!applicationConfig) {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    const workersConfigs = this.#workersConfigs[id]
-
-    for (let i = 0; i < workersConfigs.count; i++) {
+    for (let i = 0; i < applicationConfig.workers; i++) {
       const worker = this.#workers.get(`${id}:${i}`)
       const status = worker?.[kWorkerStatus]
 
@@ -499,18 +563,15 @@ export class Runtime extends EventEmitter {
 
     this.emitAndNotify('application:starting', id)
 
-    for (let i = 0; i < workersConfigs.count; i++) {
-      await this.#startWorker(config, applicationConfig, workersConfigs.count, id, i, silent)
+    for (let i = 0; i < applicationConfig.workers; i++) {
+      await this.#startWorker(config, applicationConfig, applicationConfig.workers, id, i, silent)
     }
 
     this.emitAndNotify('application:started', id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {
-    const config = this.#config
-    const applicationConfig = config.applications.find(s => s.id === id)
-
-    if (!applicationConfig) {
+    if (!this.#applications.has(id)) {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
@@ -533,26 +594,39 @@ export class Runtime extends EventEmitter {
   }
 
   async restartApplication (id) {
-    const config = this.#config
-    const applicationConfig = this.#config.applications.find(s => s.id === id)
+    const applicationConfig = this.#applications.get(id)
 
-    const workersIds = await this.#workers.getKeys(id)
-    const workersCount = workersIds.length
-
-    this.emitAndNotify('application:restarting', id)
-
-    for (let i = 0; i < workersCount; i++) {
-      const workerId = workersIds[i]
-      const worker = this.#workers.get(workerId)
-
-      if (i > 0 && config.workersRestartDelay > 0) {
-        await sleep(config.workersRestartDelay)
-      }
-
-      await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+    if (!applicationConfig) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    this.emitAndNotify('application:restarted', id)
+    if (this.#restartingApplications.has(id)) {
+      return
+    }
+    this.#restartingApplications.add(id)
+
+    try {
+      const config = this.#config
+      const workersIds = await this.#workers.getKeys(id)
+      const workersCount = workersIds.length
+
+      this.emitAndNotify('application:restarting', id)
+
+      for (let i = 0; i < workersCount; i++) {
+        const workerId = workersIds[i]
+        const worker = this.#workers.get(workerId)
+
+        if (i > 0 && config.workersRestartDelay > 0) {
+          await sleep(config.workersRestartDelay)
+        }
+
+        await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+      }
+
+      this.emitAndNotify('application:restarted', id)
+    } finally {
+      this.#restartingApplications.delete(id)
+    }
   }
 
   async buildApplication (id) {
@@ -804,7 +878,7 @@ export class Runtime extends EventEmitter {
     this.#concurrency = concurrency
   }
 
-  async getUrl () {
+  getUrl () {
     return this.#url
   }
 
@@ -867,8 +941,8 @@ export class Runtime extends EventEmitter {
   async getCustomHealthChecks () {
     const status = {}
 
-    for (const application of this.#config.applications) {
-      const workersIds = this.#workers.getKeys(application.id)
+    for (const id of this.#applications.keys()) {
+      const workersIds = this.#workers.getKeys(id)
       for (const workerId of workersIds) {
         const worker = this.#workers.get(workerId)
         status[workerId] = await sendViaITC(worker, 'getCustomHealthCheck')
@@ -881,8 +955,8 @@ export class Runtime extends EventEmitter {
   async getCustomReadinessChecks () {
     const status = {}
 
-    for (const application of this.#config.applications) {
-      const workersIds = this.#workers.getKeys(application.id)
+    for (const id of this.#applications.keys()) {
+      const workersIds = this.#workers.getKeys(id)
       for (const workerId of workersIds) {
         const worker = this.#workers.get(workerId)
         status[workerId] = await sendViaITC(worker, 'getCustomReadinessCheck')
@@ -1063,7 +1137,7 @@ export class Runtime extends EventEmitter {
   }
 
   getApplicationsIds () {
-    return this.#config.applications.map(application => application.id)
+    return Array.from(this.#applications.keys())
   }
 
   async getApplications (allowUnloaded = false) {
@@ -1074,22 +1148,6 @@ export class Runtime extends EventEmitter {
         this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
       )
     }
-  }
-
-  async getWorkers () {
-    const status = {}
-
-    for (const [key, worker] of this.#workers.entries()) {
-      const [application, index] = key.split(':')
-      status[key] = {
-        application,
-        worker: index,
-        status: worker[kWorkerStatus],
-        thread: worker.threadId
-      }
-    }
-
-    return status
   }
 
   async getApplicationMeta (id) {
@@ -1174,6 +1232,45 @@ export class Runtime extends EventEmitter {
     return sendViaITC(application, 'getApplicationGraphQLSchema')
   }
 
+  async getWorkers (includeRaw = false) {
+    const status = {}
+
+    for (const [key, worker] of this.#workers.entries()) {
+      const [application, index] = key.split(':')
+
+      status[key] = {
+        application,
+        worker: index,
+        status: worker[kWorkerStatus],
+        thread: worker.threadId,
+        raw: includeRaw ? worker : undefined
+      }
+    }
+
+    return status
+  }
+
+  async getWorkerHealth (worker, options = {}) {
+    if (!features.node.worker.getHeapStatistics) {
+      throw new GetHeapStatisticUnavailable()
+    }
+
+    const currentELU = worker.performance.eventLoopUtilization()
+    const previousELU = options.previousELU
+
+    let elu = currentELU
+    if (previousELU) {
+      elu = worker.performance.eventLoopUtilization(elu, previousELU)
+    }
+
+    const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
+  }
+
+  getVerticalScaler () {
+    return this.#verticalScaler
+  }
+
   #getHttpCacheValue ({ request }) {
     if (!this.#sharedHttpCache) {
       return
@@ -1225,60 +1322,49 @@ export class Runtime extends EventEmitter {
     this.logger.info(`Platformatic is now listening at ${this.#url}`)
   }
 
-  async #setupApplications () {
-    const config = this.#config
-    const setupInvocations = []
-
-    // Parse all applications and verify we're not missing any path or resolved application
-    for (const applicationConfig of config.applications) {
-      // If there is no application path, check if the application was resolved
-      if (!applicationConfig.path) {
-        if (applicationConfig.url) {
-          // Try to backfill the path for external applications
-          applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, applicationConfig.id)
-
-          if (!existsSync(applicationConfig.path)) {
-            const executable = globalThis.platformatic?.executable ?? 'platformatic'
-            this.logger.error(
-              `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
-              applicationConfig.id
-            )
-
-            await this.closeAndThrow(new RuntimeAbortedError())
-          }
-        } else {
-          this.logger.error(
-            'The application "%s" has no path defined. Please check your configuration and try again.',
-            applicationConfig.id
-          )
-
-          await this.closeAndThrow(new RuntimeAbortedError())
-        }
-      }
-
-      setupInvocations.push([applicationConfig])
-    }
-
-    await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
-  }
-
   async #setupApplication (applicationConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') {
       return
     }
 
+    const id = applicationConfig.id
     const config = this.#config
 
-    const workersConfigs = this.#workersConfigs[applicationConfig.id]
-    const id = applicationConfig.id
+    if (!applicationConfig.path) {
+      // If there is no application path, check if the application was resolved
+      if (applicationConfig.url) {
+        // Try to backfill the path for external applications
+        applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
+
+        if (!existsSync(applicationConfig.path)) {
+          const executable = globalThis.platformatic?.executable ?? 'platformatic'
+          this.logger.error(
+            `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+            id
+          )
+
+          await this.closeAndThrow(new RuntimeAbortedError())
+        }
+      } else {
+        this.logger.error(
+          'The application "%s" has no path defined. Please check your configuration and try again.',
+          id
+        )
+
+        await this.closeAndThrow(new RuntimeAbortedError())
+      }
+    }
+
+    const workers = applicationConfig.workers
     const setupInvocations = []
 
-    for (let i = 0; i < workersConfigs.count; i++) {
-      setupInvocations.push([config, applicationConfig, workersConfigs.count, id, i])
+    for (let i = 0; i < workers; i++) {
+      setupInvocations.push([config, applicationConfig, workers, id, i])
     }
 
     await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
 
+    await this.#verticalScaler?.add(applicationConfig)
     this.emitAndNotify('application:init', id)
   }
 
@@ -1472,6 +1558,14 @@ export class Runtime extends EventEmitter {
       this.logger.trace({ event, payload }, 'Runtime event')
     })
 
+    worker[kITC].on('request:restart', async () => {
+      try {
+        await this.restartApplication(applicationId)
+      } catch (e) {
+        this.logger.error(e)
+      }
+    })
+
     // Only activate watch for the first instance
     if (index === 0) {
       // Handle applications changes
@@ -1523,23 +1617,6 @@ export class Runtime extends EventEmitter {
     return worker
   }
 
-  async #getHealth (worker, options = {}) {
-    if (!features.node.worker.getHeapStatistics) {
-      throw new GetHeapStatisticUnavailable()
-    }
-
-    const currentELU = worker.performance.eventLoopUtilization()
-    const previousELU = options.previousELU
-
-    let elu = currentELU
-    if (previousELU) {
-      elu = worker.performance.eventLoopUtilization(elu, previousELU)
-    }
-
-    const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
-    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
-  }
-
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
@@ -1556,7 +1633,7 @@ export class Runtime extends EventEmitter {
 
       let health, unhealthy, memoryUsage
       try {
-        health = await this.#getHealth(worker, {
+        health = await this.getWorkerHealth(worker, {
           previousELU: worker[kLastHealthCheckELU]
         })
         worker[kLastHealthCheckELU] = health.currentELU
@@ -1934,6 +2011,10 @@ export class Runtime extends EventEmitter {
       workerId = matched[2]
     }
 
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
     return this.#getWorkerByIdOrNext(applicationId, workerId, ensureStarted, mustExist)
   }
 
@@ -2158,9 +2239,7 @@ export class Runtime extends EventEmitter {
   async #updateApplicationConfigWorkers (applicationId, workers) {
     this.logger.info(`Updating application "${applicationId}" config workers to ${workers}`)
 
-    this.#config.applications.find(s => s.id === applicationId).workers = workers
-    const application = await this.#getApplicationById(applicationId)
-    application[kConfig].workers = workers
+    this.#applications.get(applicationId).workers = workers
 
     const workersIds = this.#workers.getKeys(applicationId)
     const promises = []
@@ -2183,7 +2262,7 @@ export class Runtime extends EventEmitter {
     this.logger.info(`Updating application "${applicationId}" config health heap to ${JSON.stringify(health)}`)
     const { maxHeapTotal, maxYoungGeneration } = health
 
-    const application = this.#config.applications.find(s => s.id === applicationId)
+    const application = this.#applications.get(applicationId)
     if (maxHeapTotal) {
       application.health.maxHeapTotal = maxHeapTotal
     }
@@ -2200,7 +2279,6 @@ export class Runtime extends EventEmitter {
       throw new InvalidArgumentError('updates', 'must have at least one element')
     }
 
-    const config = this.#config
     const validatedUpdates = []
     for (const update of updates) {
       const { application: applicationId } = update
@@ -2208,7 +2286,7 @@ export class Runtime extends EventEmitter {
       if (!applicationId) {
         throw new InvalidArgumentError('application', 'must be a string')
       }
-      const applicationConfig = config.applications.find(s => s.id === applicationId)
+      const applicationConfig = this.#applications.get(applicationId)
       if (!applicationConfig) {
         throw new ApplicationNotFoundError(applicationId, Array.from(this.getApplicationsIds()).join(', '))
       }
@@ -2492,203 +2570,6 @@ export class Runtime extends EventEmitter {
     if (!found) {
       throw new MissingPprofCapture()
     }
-  }
-
-  async #setupVerticalScaler () {
-    const fixedWorkersCount = this.#config.workers
-    if (fixedWorkersCount !== undefined) {
-      this.logger.warn(`Vertical scaler disabled because the "workers" configuration is set to ${fixedWorkersCount}`)
-      return
-    }
-
-    const scalerConfig = this.#config.verticalScaler
-    const memInfo = await getMemoryInfo()
-    const memScope = memInfo.scope
-
-    scalerConfig.maxTotalWorkers ??= os.availableParallelism()
-    scalerConfig.maxTotalMemory ??= memInfo.total * 0.9
-    scalerConfig.maxWorkers ??= scalerConfig.maxTotalWorkers
-    scalerConfig.minWorkers ??= 1
-    scalerConfig.cooldownSec ??= 60
-    scalerConfig.scaleUpELU ??= 0.8
-    scalerConfig.scaleDownELU ??= 0.2
-    scalerConfig.scaleIntervalSec ??= 60
-    scalerConfig.timeWindowSec ??= 10
-    scalerConfig.scaleDownTimeWindowSec ??= 60
-    scalerConfig.gracePeriod ??= 30 * 1000
-    scalerConfig.applications ??= {}
-
-    const maxTotalWorkers = scalerConfig.maxTotalWorkers
-    const maxTotalMemory = scalerConfig.maxTotalMemory
-    const maxWorkers = scalerConfig.maxWorkers
-    const minWorkers = scalerConfig.minWorkers
-    const cooldown = scalerConfig.cooldownSec
-    const scaleUpELU = scalerConfig.scaleUpELU
-    const scaleDownELU = scalerConfig.scaleDownELU
-    const scaleIntervalSec = scalerConfig.scaleIntervalSec
-    const timeWindowSec = scalerConfig.timeWindowSec
-    const scaleDownTimeWindowSec = scalerConfig.scaleDownTimeWindowSec
-    const applicationsConfigs = scalerConfig.applications
-    const gracePeriod = scalerConfig.gracePeriod
-    const healthCheckInterval = 1000
-
-    const initialResourcesUpdates = []
-
-    for (const application of this.#config.applications) {
-      if (application.entrypoint && !features.node.reusePort) {
-        this.logger.warn(
-          `The "${application.id}" application cannot be scaled because it is an entrypoint` +
-            ' and the "reusePort" feature is not available in your OS.'
-        )
-
-        applicationsConfigs[application.id] = {
-          minWorkers: 1,
-          maxWorkers: 1
-        }
-        continue
-      }
-      if (application.workers !== undefined) {
-        this.logger.warn(
-          `The "${application.id}" application cannot be scaled because` +
-            ` it has a fixed number of workers (${application.workers}).`
-        )
-        applicationsConfigs[application.id] = {
-          minWorkers: application.workers,
-          maxWorkers: application.workers
-        }
-        continue
-      }
-
-      applicationsConfigs[application.id] ??= {}
-      applicationsConfigs[application.id].minWorkers ??= minWorkers
-      applicationsConfigs[application.id].maxWorkers ??= maxWorkers
-
-      const appMinWorkers = applicationsConfigs[application.id].minWorkers
-      if (appMinWorkers > 1) {
-        initialResourcesUpdates.push({
-          application: application.id,
-          workers: minWorkers
-        })
-      }
-    }
-
-    if (initialResourcesUpdates.length > 0) {
-      await this.updateApplicationsResources(initialResourcesUpdates)
-    }
-
-    for (const applicationId in applicationsConfigs) {
-      const application = this.#config.applications.find(app => app.id === applicationId)
-      if (!application) {
-        delete applicationsConfigs[applicationId]
-
-        this.logger.warn(
-          `Vertical scaler configuration has a configuration for non-existing application "${applicationId}"`
-        )
-      }
-    }
-
-    const scalingAlgorithm = new ScalingAlgorithm({
-      maxTotalWorkers,
-      scaleUpELU,
-      scaleDownELU,
-      scaleUpTimeWindowSec: timeWindowSec,
-      scaleDownTimeWindowSec,
-      applications: applicationsConfigs
-    })
-
-    const healthCheckTimeout = setTimeout(async () => {
-      let shouldCheckForScaling = false
-
-      const now = Date.now()
-
-      for (const worker of this.#workers.values()) {
-        if (worker[kWorkerStatus] !== 'started' || worker[kWorkerStartTime] + gracePeriod > now) {
-          continue
-        }
-
-        try {
-          const health = await this.#getHealth(worker, {
-            previousELU: worker[kLastVerticalScalerELU]
-          })
-          worker[kLastVerticalScalerELU] = health.currentELU
-
-          if (!health) continue
-
-          scalingAlgorithm.addWorkerHealthInfo({
-            workerId: worker[kId],
-            applicationId: worker[kApplicationId],
-            elu: health.elu,
-            heapUsed: health.heapUsed,
-            heapTotal: health.heapTotal
-          })
-
-          if (health.elu > scaleUpELU) {
-            shouldCheckForScaling = true
-          }
-        } catch (err) {
-          this.logger.error({ err }, 'Failed to get health for worker')
-        }
-      }
-
-      if (shouldCheckForScaling) {
-        await checkForScaling()
-      }
-
-      healthCheckTimeout.refresh()
-    }, healthCheckInterval).unref()
-
-    let isScaling = false
-    let lastScaling = 0
-
-    const checkForScaling = async () => {
-      const isInCooldown = Date.now() < lastScaling + cooldown * 1000
-      if (isScaling || isInCooldown) return
-      isScaling = true
-
-      try {
-        const workersInfo = await this.getWorkers()
-        const mem = await getMemoryInfo({ scope: memScope })
-
-        const appsWorkersInfo = {}
-        for (const worker of Object.values(workersInfo)) {
-          if (worker.status === 'exited') continue
-
-          const applicationId = worker.application
-          appsWorkersInfo[applicationId] ??= 0
-          appsWorkersInfo[applicationId]++
-        }
-
-        const availableMemory = maxTotalMemory - mem.used
-        const recommendations = scalingAlgorithm.getRecommendations(appsWorkersInfo, {
-          availableMemory
-        })
-        if (recommendations.length > 0) {
-          await applyRecommendations(recommendations)
-          lastScaling = Date.now()
-        }
-      } catch (err) {
-        this.logger.error({ err }, 'Failed to scale applications')
-      } finally {
-        isScaling = false
-      }
-    }
-
-    const applyRecommendations = async recommendations => {
-      const resourcesUpdates = []
-      for (const recommendation of recommendations) {
-        const { applicationId, workersCount, direction } = recommendation
-        this.logger.info(`Scaling ${direction} the "${applicationId}" app to ${workersCount} workers`)
-
-        resourcesUpdates.push({
-          application: applicationId,
-          workers: workersCount
-        })
-      }
-      await this.updateApplicationsResources(resourcesUpdates)
-    }
-
-    // Interval for periodic scaling checks
-    setInterval(checkForScaling, scaleIntervalSec * 1000).unref()
   }
 
   #setupPermissions (applicationConfig) {

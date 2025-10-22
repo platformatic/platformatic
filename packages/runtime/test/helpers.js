@@ -5,6 +5,8 @@ import { join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { create, transform } from '../index.js'
 
+export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
+
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
 export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
