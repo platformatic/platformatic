@@ -102,7 +102,7 @@ for (const [name, file] of Object.entries(configurations)) {
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
-        config.workers = 1
+        config.workers = { static: 1, dynamic: false }
         return config
       }
     })

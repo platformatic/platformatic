@@ -62,6 +62,7 @@ runtime. Each application object supports the following settings:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
     - **`static`** (`number`) - A fixed number of workers
+    - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
     - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
 - **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
@@ -161,20 +162,20 @@ publicly. This value must be the `ID` of an application defined via the `autoloa
 
 ### `workers`
 
-Configures the default number of workers to start per each application. It can be overridden at the application level.
+Configures the default number of workers to start per each application. Some values can be overridden at the application level.
 
 This can be specified as:
 
 - **`number`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
   - **`static`** (`number`) - A fixed number of workers
-  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`)
-  - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
-  - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
-  - **`total`** (`number`) - Total number of workers across all applications
-  - **`maxMemory`** (`number`) - Maximum memory allocation for workers in bytes
-  - **`cooldown`** (`number`) - Cooldown period in milliseconds between scaling operations (default is `60000`)
-  - **`gracePeriod`** (`number`) - Grace period in milliseconds for worker stabilization (default is `30000`)
+  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory. It can be overridden at the application level.
+  - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
+  - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: global `total` value.
+  - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
+  - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
+  - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60000`.
+  - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 

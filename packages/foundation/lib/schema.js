@@ -745,7 +745,7 @@ export const applications = {
         type: 'boolean'
       },
       workers: {
-        oneOf: [
+        anyOf: [
           {
             type: 'number'
           },

@@ -843,7 +843,7 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Create the runtime
   const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
     config.server = { port }
-    config.applications[0].workers = 5
+    config.applications[0].workers = { static: 5, dynamic: false }
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
     await additionalSetup?.(root, config)

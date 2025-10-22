@@ -204,7 +204,7 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     if (this.#config.workers.dynamic) {
-      if (typeof this.#config.workers.isStatic !== 'undefined') {
+      if (this.#config.workers.dynamic === false) {
         this.logger.warn(
           `Vertical scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
         )

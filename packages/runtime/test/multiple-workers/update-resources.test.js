@@ -30,12 +30,8 @@ test('should throw error for invalid parameters of updateApplicationsResources',
 
   await runtime.start()
 
-  await runtime.updateApplicationsResources([
-    { application: 'service', workers: 2 }
-  ])
-  await runtime.updateApplicationsResources([
-    { application: 'service', workers: 1 }
-  ])
+  await runtime.updateApplicationsResources([{ application: 'service', workers: 2 }])
+  await runtime.updateApplicationsResources([{ application: 'service', workers: 1 }])
 
   await runtime.getApplicationDetails('service', false)
 })
@@ -202,13 +198,13 @@ for (const variation of variations) {
     const update = {}
     for (const applicationId of applicationsId) {
       current[applicationId] = currentConfig.applications.find(s => s.id === applicationId)
-      update[applicationId] = current[applicationId].workers + variation
+      update[applicationId] = current[applicationId].workers.static + variation
     }
 
     for (const applicationId of applicationsId) {
       assert.equal(
         resourcesInfo[applicationId].workers,
-        current[applicationId].workers,
+        current[applicationId].workers.static,
         `Application "${applicationId}" should have ${current[applicationId].workers} workers on start`
       )
     }
