@@ -8,10 +8,10 @@
     "paths": ["./routes"]
   },
   "runtime": {
-    "workers": {
-      "dynamic": true,
-      "maximum": 2,
-      "total": 10
+    "verticalScaler": {
+      "enabled": true,
+      "maxWorkers": 2,
+      "maxTotalWorkers": 10
     }
   }
 }

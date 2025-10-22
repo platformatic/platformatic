@@ -45,6 +45,39 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
+function parseWorkers (config, prefix) {
+  if (typeof config.workers !== 'undefined') {
+    if (typeof config.workers !== 'object') {
+      const coerced = coercePositiveInteger(config.workers)
+
+      if (coerced === null) {
+        const raw = config.workers
+        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+        raiseInvalidWorkersError(prefix, config.workers, hint)
+      } else {
+        config.workers = { static: 1, isStatic: true }
+      }
+    } else {
+      for (const key of ['minimum', 'maximum', 'static']) {
+        if (typeof config.workers[key] === 'undefined') {
+          continue
+        }
+
+        const coerced = coercePositiveInteger(config.workers[key])
+        if (coerced === null) {
+          const raw = config.workers
+          const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+          raiseInvalidWorkersError(`${prefix} ${key}`, config.workers, hint)
+        } else {
+          config.workers[key] = coerced
+        }
+      }
+    }
+  } else {
+    config.workers = { static: 1 }
+  }
+}
+
 export function pprofCapturePreloadPath () {
   const require = createRequire(import.meta.url)
 
@@ -207,15 +240,7 @@ export async function prepareApplication (config, application) {
   }
 
   // Validate and coerce per-service workers
-  if (typeof application.workers !== 'undefined') {
-    const coerced = coercePositiveInteger(application.workers)
-    if (coerced === null) {
-      const raw = application.workers
-      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-      raiseInvalidWorkersError(`Service "${application.id}"`, application.workers, hint)
-    }
-    application.workers = coerced
-  }
+  parseWorkers(application, `Service "${application.id}"`)
 
   application.entrypoint = application.id === config.entrypoint
   application.dependencies ??= []
@@ -281,15 +306,7 @@ export async function transform (config, _, context) {
   let hasValidEntrypoint = false
 
   // Root-level workers
-  if (typeof config.workers !== 'undefined') {
-    const coerced = coercePositiveInteger(config.workers)
-    if (coerced === null) {
-      const raw = config.workers
-      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-      raiseInvalidWorkersError('Runtime', config.workers, hint)
-    }
-    config.workers = coerced
-  }
+  parseWorkers(config, 'Runtime')
 
   for (let i = 0; i < applications.length; ++i) {
     const application = await prepareApplication(config, applications[i])
@@ -358,6 +375,25 @@ export async function transform (config, _, context) {
   config.web = undefined
   config.services = undefined
   config.logger ??= {}
+
+  // Migrate the old verticalScaler property, only applied if the new settings are not set, otherwise workers takes precedence
+  if (config.verticalScaler) {
+    config.workers.dynamic ??= config.verticalScaler.enabled
+    config.workers.minimum ??= config.verticalScaler.minWorkers
+    config.workers.maximum ??= config.verticalScaler.maxWorkers
+    config.workers.total ??= config.verticalScaler.maxTotalWorkers
+    config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
+
+    if (typeof config.workers.cooldown === 'undefined' && typeof config.verticalScaler.cooldownSec === 'number') {
+      config.workers.cooldown = config.verticalScaler.cooldownSec * 1000
+    }
+
+    if (typeof config.workers.gracePeriod === 'undefined' && typeof config.verticalScaler.gracePeriod === 'number') {
+      config.workers.gracePeriod = config.verticalScaler.gracePeriod
+    }
+
+    config.verticalScaler = undefined
+  }
 
   if (production) {
     // Any value below 10 is considered as "immediate restart" and won't be processed via setTimeout or similar

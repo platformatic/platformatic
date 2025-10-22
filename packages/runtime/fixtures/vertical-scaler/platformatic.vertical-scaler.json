@@ -16,9 +16,9 @@
   "health": {
     "enabled": false
   },
-  "workers": {
-    "dynamic": true,
+  "verticalScaler": {
+    "enabled": true,
     "gracePeriod": 1000,
-    "total": 10
+    "maxTotalWorkers": 10
   }
 }

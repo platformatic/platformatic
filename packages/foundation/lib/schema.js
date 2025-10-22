@@ -45,7 +45,20 @@ export const workers = {
       type: 'number',
       minimum: 1
     },
-    { type: 'string' }
+    { type: 'string' },
+    {
+      type: 'object',
+      properties: {
+        static: { type: 'number', minimum: 1 },
+        dynamic: { type: 'boolean', default: false },
+        minimum: { type: 'number', minimum: 1 },
+        maximum: { type: 'number', minimum: 0 },
+        total: { type: 'number', minimum: 1 },
+        maxMemory: { type: 'number', minimum: 0 },
+        cooldown: { type: 'number', minimum: 0 },
+        gracePeriod: { type: 'number', minimum: 0 }
+      }
+    }
   ]
 }
 
@@ -57,13 +70,13 @@ const verticalScaler = {
     maxTotalMemory: { type: 'number', minimum: 0 },
     minWorkers: { type: 'number', minimum: 1 },
     maxWorkers: { type: 'number', minimum: 1 },
-    scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-    scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
-    timeWindowSec: { type: 'number', minimum: 0 },
-    scaleDownTimeWindowSec: { type: 'number', minimum: 0 },
     cooldownSec: { type: 'number', minimum: 0 },
-    scaleIntervalSec: { type: 'number', minimum: 0 },
-    gracePeriod: { type: 'number', minimum: 0 }
+    gracePeriod: { type: 'number', minimum: 0 },
+    scaleUpELU: { type: 'number', minimum: 0, maximum: 1, deprecated: true },
+    scaleDownELU: { type: 'number', minimum: 0, maximum: 1, deprecated: true },
+    timeWindowSec: { type: 'number', minimum: 0, deprecated: true },
+    scaleDownTimeWindowSec: { type: 'number', minimum: 0, deprecated: true },
+    scaleIntervalSec: { type: 'number', minimum: 0, deprecated: true }
   },
   additionalProperties: false
 }
@@ -731,7 +744,24 @@ export const applications = {
       useHttp: {
         type: 'boolean'
       },
-      workers,
+      workers: {
+        oneOf: [
+          {
+            type: 'number'
+          },
+          {
+            type: 'string'
+          },
+          {
+            type: 'object',
+            properties: {
+              static: { type: 'number', minimum: 1 },
+              minimum: { type: 'number', minimum: 1 },
+              maximum: { type: 'number', minimum: 0 }
+            }
+          }
+        ]
+      },
       health: { ...healthWithoutDefaults },
       dependencies: {
         type: 'array',
@@ -1153,10 +1183,7 @@ export const runtimeProperties = {
             description: 'Configuration for exporting metrics to an OTLP endpoint',
             properties: {
               enabled: {
-                anyOf: [
-                  { type: 'boolean' },
-                  { type: 'string' }
-                ],
+                anyOf: [{ type: 'boolean' }, { type: 'string' }],
                 description: 'Enable or disable OTLP metrics export'
               },
               endpoint: {

@@ -20,7 +20,15 @@ export type PlatformaticRuntimeConfig = {
         id: string;
         config?: string;
         useHttp?: boolean;
-        workers?: number | string;
+        workers?:
+          | number
+          | string
+          | {
+              static?: number;
+              minimum?: number;
+              maximum?: number;
+              [k: string]: unknown;
+            };
         health?: {
           enabled?: boolean | string;
           interval?: number | string;
@@ -76,7 +84,20 @@ export type PlatformaticRuntimeConfig = {
   web?: {
     [k: string]: unknown;
   }[];
-  workers?: number | string;
+  workers?:
+    | number
+    | string
+    | {
+        static?: number;
+        dynamic?: boolean;
+        minimum?: number;
+        maximum?: number;
+        total?: number;
+        maxMemory?: number;
+        cooldown?: number;
+        gracePeriod?: number;
+        [k: string]: unknown;
+      };
   workersRestartDelay?: number | string;
   logger?: {
     level: (
@@ -399,13 +420,28 @@ export type PlatformaticRuntimeConfig = {
     maxTotalMemory?: number;
     minWorkers?: number;
     maxWorkers?: number;
-    scaleUpELU?: number;
-    scaleDownELU?: number;
-    timeWindowSec?: number;
-    scaleDownTimeWindowSec?: number;
     cooldownSec?: number;
-    scaleIntervalSec?: number;
     gracePeriod?: number;
+    /**
+     * @deprecated
+     */
+    scaleUpELU?: number;
+    /**
+     * @deprecated
+     */
+    scaleDownELU?: number;
+    /**
+     * @deprecated
+     */
+    timeWindowSec?: number;
+    /**
+     * @deprecated
+     */
+    scaleDownTimeWindowSec?: number;
+    /**
+     * @deprecated
+     */
+    scaleIntervalSec?: number;
     applications?: {
       [k: string]: {
         minWorkers?: number;

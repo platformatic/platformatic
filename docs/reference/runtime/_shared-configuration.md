@@ -58,7 +58,12 @@ runtime. Each application object supports the following settings:
   the microservice.
 - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-- **`workers`** (`number`) - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
+- **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
+  - **`number`** - A fixed number of workers
+  - **`object`** - Advanced worker configuration with the following properties:
+    - **`static`** (`number`) - A fixed number of workers
+    - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
+    - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
 - **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
 - **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
@@ -156,7 +161,20 @@ publicly. This value must be the `ID` of an application defined via the `autoloa
 
 ### `workers`
 
-The default number of workers to start per each application. It can be overriden at application level.
+Configures the default number of workers to start per each application. It can be overridden at the application level.
+
+This can be specified as:
+
+- **`number`** - A fixed number of workers (minimum 1)
+- **`object`** - Advanced worker configuration with the following properties:
+  - **`static`** (`number`) - A fixed number of workers
+  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`)
+  - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
+  - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
+  - **`total`** (`number`) - Total number of workers across all applications
+  - **`maxMemory`** (`number`) - Maximum memory allocation for workers in bytes
+  - **`cooldown`** (`number`) - Cooldown period in milliseconds between scaling operations (default is `60000`)
+  - **`gracePeriod`** (`number`) - Grace period in milliseconds for worker stabilization (default is `30000`)
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
@@ -453,6 +471,10 @@ _Every object_ has:
 
 ### verticalScaler
 
+:::warning
+The `verticalScaler` configuration is deprecated and will be removed in a future version. These options are now mapped to the equivalent properties in the `workers` configuration. Please use the `workers` configuration instead.
+:::
+
 The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime. The vertical scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
 
 The scaler operates in two modes:
@@ -470,12 +492,12 @@ Configuration options:
 - **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
 - **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
 - **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
-- **`scaleUpELU`** (`number`). The ELU (Event Loop Utilization) threshold that an application must reach before scaling up. The scaler compares the average ELU an application collects over the `timeWindowSec` period. Must be between 0 and 1. Default: `0.8`.
-- **`scaleDownELU`** (`number`). The ELU (Event Loop Utilization) threshold below which an application can be scaled down. The scaler compares the average ELU an application collects over the `scaleDownTimeWindowSec` period. Must be between 0 and 1. Default: `0.2`.
-- **`timeWindowSec`** (`number`). The time window in seconds over which ELU and memory metrics are collected and averaged for scale-up decisions. A shorter window enables faster reaction to high load. Default: `10`.
-- **`scaleDownTimeWindowSec`** (`number`). The time window in seconds over which ELU and memory metrics are collected and averaged for scale-down decisions. A longer window prevents premature worker removal during temporary load drops. Default: `60`.
+- **`scaleUpELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling up is hardcoded to `0.8`.
+- **`scaleDownELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling down is hardcoded to `0.2`.
+- **`timeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-up decisions is hardcoded to `10` seconds.
+- **`scaleDownTimeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-down decisions is hardcoded to `60` seconds.
 - **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
-- **`scaleIntervalSec`** (`number`). The interval in seconds for periodic scaling checks. The scaler will also run reactively when ELU thresholds are exceeded. Default: `60`.
+- **`scaleIntervalSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The interval for periodic scaling checks is hardcoded to `60` seconds.
 - **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
   - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
   - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.

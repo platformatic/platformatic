@@ -8,174 +8,181 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('should scale an application if elu is higher than treshold', async t => {
-  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
-  const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+const configurations = {
+  default: 'platformatic.json',
+  'vertical-scaler': 'platformatic.vertical-scaler.json'
+}
 
-  t.after(() => app.close())
+for (const [name, file] of Object.entries(configurations)) {
+  test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
+    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const app = await createRuntime(configFile)
+    const entryUrl = await app.start()
 
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
-  })
-  assert.strictEqual(statusCode, 200)
+    t.after(() => app.close())
 
-  await sleep(10000)
+    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timeout: 1000 })
+    })
+    assert.strictEqual(statusCode, 200)
 
-  const workers = await app.getWorkers()
+    await sleep(10000)
 
-  const service1Workers = []
-  const service2Workers = []
+    const workers = await app.getWorkers()
 
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-1') {
-      service1Workers.push(worker)
-    }
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
+    const service1Workers = []
+    const service2Workers = []
 
-  assert.strictEqual(service1Workers.length, 1)
-  assert.strictEqual(service2Workers.length, 2)
-})
-
-test('should not scale an application when the scaler is the cooldown', async t => {
-  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
-  const app = await createRuntime(configFile, null, {
-    async transform (config, ...args) {
-      config = await transform(config, ...args)
-      config.verticalScaler = {
-        enabled: true,
-        maxTotalWorkers: 5,
-        gracePeriod: 1
+    for (const worker of Object.values(workers)) {
+      if (worker.application === 'service-1') {
+        service1Workers.push(worker)
       }
-      return config
+      if (worker.application === 'service-2') {
+        service2Workers.push(worker)
+      }
     }
+
+    assert.strictEqual(service1Workers.length, 1)
+    assert.strictEqual(service2Workers.length, 2)
   })
 
-  const entryUrl = await app.start()
+  test(`should not scale an application when the scaler is the cooldown(configuration ${name})`, async t => {
+    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const app = await createRuntime(configFile, null, {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        config.verticalScaler = {
+          enabled: true,
+          maxTotalWorkers: 5,
+          gracePeriod: 1
+        }
+        return config
+      }
+    })
 
-  t.after(() => app.close())
+    const entryUrl = await app.start()
 
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
-  })
-  assert.strictEqual(statusCode, 200)
+    t.after(() => app.close())
 
-  await sleep(10000)
+    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timeout: 1000 })
+    })
+    assert.strictEqual(statusCode, 200)
 
-  const workers = await app.getWorkers()
+    await sleep(10000)
 
-  const service1Workers = []
-  const service2Workers = []
+    const workers = await app.getWorkers()
 
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-1') {
-      service1Workers.push(worker)
+    const service1Workers = []
+    const service2Workers = []
+
+    for (const worker of Object.values(workers)) {
+      if (worker.application === 'service-1') {
+        service1Workers.push(worker)
+      }
+      if (worker.application === 'service-2') {
+        service2Workers.push(worker)
+      }
     }
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
 
-  assert.strictEqual(service1Workers.length, 1)
-  assert.strictEqual(service2Workers.length, 2)
-})
-
-test('should not scale applications when the worker property is set', async t => {
-  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
-  const app = await createRuntime(configFile, null, {
-    async transform (config, ...args) {
-      config = await transform(config, ...args)
-      config.workers = 1
-      return config
-    }
-  })
-
-  const entryUrl = await app.start()
-
-  t.after(() => app.close())
-
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
-  })
-  assert.strictEqual(statusCode, 200)
-
-  await sleep(10000)
-
-  const workers = await app.getWorkers()
-
-  const service1Workers = []
-  const service2Workers = []
-
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-1') {
-      service1Workers.push(worker)
-    }
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
-
-  assert.strictEqual(service1Workers.length, 1)
-  assert.strictEqual(service2Workers.length, 1)
-})
-
-test('should not scale an applications when the worker property is set', async t => {
-  const configFile = join(fixturesDir, 'vertical-scaler', 'platformatic.json')
-  const app = await createRuntime(configFile, null, {
-    async transform (config, ...args) {
-      config.applications = [
-        { id: 'service-1', workers: 1 },
-        { id: 'service-2', workers: 1 }
-      ]
-      config = await transform(config, ...args)
-      return config
-    }
+    assert.strictEqual(service1Workers.length, 1)
+    assert.strictEqual(service2Workers.length, 2)
   })
 
-  const entryUrl = await app.start()
+  test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
+    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const app = await createRuntime(configFile, null, {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        config.workers = 1
+        return config
+      }
+    })
 
-  t.after(() => app.close())
+    const entryUrl = await app.start()
 
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
+    t.after(() => app.close())
+
+    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timeout: 1000 })
+    })
+    assert.strictEqual(statusCode, 200)
+
+    await sleep(10000)
+
+    const workers = await app.getWorkers()
+
+    const service1Workers = []
+    const service2Workers = []
+
+    for (const worker of Object.values(workers)) {
+      if (worker.application === 'service-1') {
+        service1Workers.push(worker)
+      }
+      if (worker.application === 'service-2') {
+        service2Workers.push(worker)
+      }
+    }
+
+    assert.strictEqual(service1Workers.length, 1)
+    assert.strictEqual(service2Workers.length, 1)
   })
-  assert.strictEqual(statusCode, 200)
 
-  await sleep(10000)
+  test(`should not scale an applications when the worker property is set (configuration ${name})`, async t => {
+    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const app = await createRuntime(configFile, null, {
+      async transform (config, ...args) {
+        config.applications = [
+          { id: 'service-1', workers: 1 },
+          { id: 'service-2', workers: 1 }
+        ]
+        config = await transform(config, ...args)
+        return config
+      }
+    })
 
-  const workers = await app.getWorkers()
+    const entryUrl = await app.start()
 
-  const service1Workers = []
-  const service2Workers = []
+    t.after(() => app.close())
 
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-1') {
-      service1Workers.push(worker)
+    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timeout: 1000 })
+    })
+    assert.strictEqual(statusCode, 200)
+
+    await sleep(10000)
+
+    const workers = await app.getWorkers()
+
+    const service1Workers = []
+    const service2Workers = []
+
+    for (const worker of Object.values(workers)) {
+      if (worker.application === 'service-1') {
+        service1Workers.push(worker)
+      }
+      if (worker.application === 'service-2') {
+        service2Workers.push(worker)
+      }
     }
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
 
-  assert.strictEqual(service1Workers.length, 1)
-  assert.strictEqual(service2Workers.length, 1)
-})
+    assert.strictEqual(service1Workers.length, 1)
+    assert.strictEqual(service2Workers.length, 1)
+  })
+}
