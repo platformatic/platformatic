@@ -65,7 +65,7 @@
                 "type": "boolean"
               },
               "workers": {
-                "oneOf": [
+                "anyOf": [
                   {
                     "type": "number"
                   },
@@ -343,7 +343,7 @@
             "type": "boolean"
           },
           "workers": {
-            "oneOf": [
+            "anyOf": [
               {
                 "type": "number"
               },
@@ -619,7 +619,7 @@
             "type": "boolean"
           },
           "workers": {
-            "oneOf": [
+            "anyOf": [
               {
                 "type": "number"
               },
@@ -895,7 +895,7 @@
             "type": "boolean"
           },
           "workers": {
-            "oneOf": [
+            "anyOf": [
               {
                 "type": "number"
               },
