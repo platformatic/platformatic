@@ -3,7 +3,7 @@ import {
   HealthSignalTypeMustBeStringError
 } from '../errors.js'
 
-class HealthSignalsQueue {
+export class HealthSignalsQueue {
   #size
   #values
 
@@ -13,7 +13,11 @@ class HealthSignalsQueue {
   }
 
   add (value) {
-    this.#values.push(value)
+    if (Array.isArray(value)) {
+      this.#values.push(...value)
+    } else {
+      this.#values.push(value)
+    }
     if (this.#values.length > this.#size) {
       this.#values.splice(0, this.#values.length - this.#size)
     }

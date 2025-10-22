@@ -13,7 +13,7 @@ test('should send a custom health signal', async t => {
   const entryUrl = await app.start()
 
   const healthChecks = []
-  app.on('application:worker:health', (health) => {
+  app.on('application:worker:health-metrics', (health) => {
     healthChecks.push(health)
   })
 
@@ -57,7 +57,7 @@ test('should send a batch of custom health signal', async t => {
   const entryUrl = await app.start()
 
   const healthSignals = []
-  app.on('application:worker:health', (health) => {
+  app.on('application:worker:health-metrics', (health) => {
     healthSignals.push(...health.healthSignals)
   })
 
@@ -118,43 +118,13 @@ test('should send a batch of custom health signal', async t => {
   }
 })
 
-test('should send elu health signal', async t => {
-  const configFile = join(fixturesDir, 'health-signals', 'platformatic.json')
-  const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
-
-  const receivedSignals = []
-  app.on('application:worker:health', (health) => {
-    receivedSignals.push(...health.healthSignals)
-  })
-
-  t.after(() => app.close())
-
-  const { statusCode, body } = await request(entryUrl + '/service-2/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
-  })
-  const error = await body.text()
-  assert.strictEqual(statusCode, 200, error)
-
-  assert.strictEqual(receivedSignals.length, 1)
-
-  const signal = receivedSignals[0]
-  assert.strictEqual(signal.type, 'elu')
-  assert.ok(signal.value > 0.9)
-  assert.strictEqual(typeof signal.timestamp, 'number')
-})
-
 test('should throw if signal type is not a string', async t => {
   const configFile = join(fixturesDir, 'health-signals', 'platformatic.json')
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   const receivedSignals = []
-  app.on('application:worker:health-signals', (health) => {
+  app.on('application:worker:health-metrics', (health) => {
     receivedSignals.push(...health.healthSignals)
   })
 
