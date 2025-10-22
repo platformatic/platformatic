@@ -98,8 +98,9 @@ export async function waitForStart (startProcess) {
 
 export function executeCommand (cmd, ...args) {
   const options = typeof args.at(-1) === 'object' ? args.pop() : {}
-
-  return execa(cmd, args, { env: { NO_COLOR: 'true' }, ...options })
+  const env = options.env
+  delete options.env
+  return execa(cmd, args, { env: { NO_COLOR: 'true', ...env }, ...options })
 }
 
 export function wattpm (...args) {
