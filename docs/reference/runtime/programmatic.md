@@ -108,7 +108,7 @@ If `silent` is `true`, then logging will be suppressed during the removal proces
 ```js
 import { create, prepareApplication } from '@platformatic/runtime'
 
-const app = await create('path/to/platformatic.runtime.json')
+const app = await create('path/to/watt.json')
 await app.start()
 
 // Add a new service dynamically
