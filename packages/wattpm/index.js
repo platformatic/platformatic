@@ -19,9 +19,11 @@ export * from './lib/schema.js'
 export async function main () {
   globalThis.platformatic = { executable: getExecutableId() }
 
-  const logger = createCliLogger('info')
-
   const options = {
+    'no-pretty': {
+      short: 'r',
+      type: 'boolean'
+    },
     verbose: {
       short: 'v',
       type: 'boolean'
@@ -37,6 +39,8 @@ export async function main () {
   }
 
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
+
+  const logger = createCliLogger('info', values['no-pretty'])
 
   if (values.version || unparsed[0] === 'version') {
     console.log(version)

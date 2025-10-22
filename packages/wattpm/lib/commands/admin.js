@@ -32,7 +32,7 @@ export const help = {
         description: 'Use the latest version of @platformatic/watt-admin from'
       },
       {
-        usage: 'P, --package-manager <executable>',
+        usage: '-P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ]

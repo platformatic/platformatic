@@ -583,7 +583,7 @@ export const help = {
         description: 'Do not install applications dependencies'
       },
       {
-        usage: 'P, --package-manager <executable>',
+        usage: '-P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ]
@@ -615,7 +615,7 @@ export const help = {
         description: 'Do not install applications dependencies'
       },
       {
-        usage: 'P, --package-manager <executable>',
+        usage: '-P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ],

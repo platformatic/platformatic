@@ -23,6 +23,15 @@ npm install wattpm
 npx wattpm --help
 ```
 
+## Global Options
+
+These options are available for all `wattpm` commands:
+
+- `-r, --no-pretty` - Disable pretty-printed output for logs and console messages
+- `-v, --verbose` - Enable verbose output for detailed information
+- `-V, --version` - Display the current wattpm version
+- `-h, --help` - Show help information
+
 ## Core Watt Commands (`wattpm`)
 
 These are the primary commands for working with Watt applications:

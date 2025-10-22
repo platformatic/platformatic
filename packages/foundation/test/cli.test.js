@@ -18,7 +18,9 @@ import {
   parseArgs,
   setExecutableId,
   setExecutableName,
-  setVerbose
+  setPrettyPrint,
+  setVerbose,
+  usePrettyPrint
 } from '../lib/cli.js'
 
 const mockAgent = new MockAgent()
@@ -29,6 +31,12 @@ test('isVerbose - should return false by default', () => {
   // Reset to default state
   setVerbose(false)
   strictEqual(isVerbose(), false)
+})
+
+test('usePrettyPrint - should return true by default', () => {
+  // Reset to default state
+  setPrettyPrint(true)
+  strictEqual(usePrettyPrint(), true)
 })
 
 test('getExecutableId - should return empty string by default', () => {
@@ -49,6 +57,14 @@ test('setVerbose - should set verbose state', () => {
 
   setVerbose(false)
   strictEqual(isVerbose(), false)
+})
+
+test('setPrettyPrint - should set pretty print state', () => {
+  setPrettyPrint(true)
+  strictEqual(usePrettyPrint(), true)
+
+  setPrettyPrint(false)
+  strictEqual(usePrettyPrint(), false)
 })
 
 test('setExecutableId - should set executable ID', () => {
