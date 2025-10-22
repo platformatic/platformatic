@@ -19,7 +19,7 @@
     "scaleDownELU": 0.2,
     "timeWindowSec": 1,
     "scaleIntervalSec": 3,
-    "gracePeriod": 5,
+    "gracePeriod": 5000,
     "cooldownSec": 5
   }
 }
