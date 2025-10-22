@@ -14,6 +14,7 @@
   "verticalScaler": {
     "enabled": true,
     "maxWorkers": 2,
+    "maxTotalWorkers": 10,
     "scaleUpELU": 0.1,
     "scaleDownELU": 0.2,
     "timeWindowSec": 1,

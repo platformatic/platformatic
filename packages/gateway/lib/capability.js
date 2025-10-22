@@ -44,14 +44,14 @@ export class GatewayCapability extends ServiceCapability {
     const url = super.start()
 
     this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
-    globalThis[kITC].on('runtime:event', this.#runtimeEventHandler)
+    globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)
 
     return url
   }
 
   stop () {
     if (this.#runtimeEventHandler) {
-      globalThis[kITC].removeListener('runtime:event', this.#runtimeEventHandler)
+      globalThis[kITC]?.removeListener('runtime:event', this.#runtimeEventHandler)
     }
 
     return super.stop()

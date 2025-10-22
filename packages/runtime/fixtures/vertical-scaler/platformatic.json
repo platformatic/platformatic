@@ -18,6 +18,7 @@
   },
   "verticalScaler": {
     "enabled": true,
-    "gracePeriod": 1
+    "gracePeriod": 1,
+    "maxTotalWorkers": 10
   }
 }

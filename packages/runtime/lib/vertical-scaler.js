@@ -8,6 +8,7 @@ const healthCheckInterval = 1000
 export const kOriginalWorkers = Symbol('plt.runtime.application.verticalScalerOriginalWorkers')
 
 export class VerticalScaler {
+  #status
   #runtime
   #algorithm
 
@@ -24,6 +25,7 @@ export class VerticalScaler {
   #gracePeriod
   #applications
 
+  #initialUpdates
   #memoryInfo
   #healthCheckTimeout
   #checkScalingInterval
@@ -56,6 +58,8 @@ export class VerticalScaler {
 
     this.#isScaling = false
     this.#lastScaling = 0
+    this.#initialUpdates = []
+    this.#status = 'init'
   }
 
   getConfig () {
@@ -81,11 +85,19 @@ export class VerticalScaler {
 
     this.#checkScalingInterval = setInterval(this.#checkScaling.bind(this), this.#scaleIntervalSec * 1000)
     this.#healthCheckTimeout = setTimeout(this.#chechHealth.bind(this), healthCheckInterval)
+
+    if (this.#initialUpdates.length > 0) {
+      await this.#runtime.updateApplicationsResources(this.#initialUpdates)
+      this.#initialUpdates = []
+    }
+
+    this.#status = 'started'
   }
 
   stop () {
     clearTimeout(this.#healthCheckTimeout)
     clearInterval(this.#checkScalingInterval)
+    this.#status = 'stopped'
   }
 
   async add (application) {
@@ -113,8 +125,14 @@ export class VerticalScaler {
     config.minWorkers ??= this.#minWorkers
     config.maxWorkers ??= this.#maxWorkers
 
-    if (config.minWorkers > 0) {
-      await this.#runtime.updateApplicationsResources([{ application: application.id, workers: config.minWorkers }])
+    if (config.minWorkers > 1) {
+      const update = { application: application.id, workers: config.minWorkers }
+
+      if (!this.#status === 'started') {
+        await this.#runtime.updateApplicationsResources([update])
+      } else {
+        this.#initialUpdates.push(update)
+      }
     }
 
     this.#algorithm.addApplication(application.id, config)
@@ -192,9 +210,7 @@ export class VerticalScaler {
       }
 
       const availableMemory = this.#maxTotalMemory - mem.used
-      const recommendations = this.#algorithm.getRecommendations(appsWorkersInfo, {
-        availableMemory
-      })
+      const recommendations = this.#algorithm.getRecommendations(appsWorkersInfo, { availableMemory })
 
       if (recommendations.length > 0) {
         await this.#applyRecommendations(recommendations)

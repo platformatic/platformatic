@@ -10,7 +10,8 @@
   "runtime": {
     "verticalScaler": {
       "enabled": true,
-      "maxWorkers": 2
+      "maxWorkers": 2,
+      "maxTotalWorkers": 10
     }
   }
 }

@@ -1,7 +1,13 @@
+import sleep from 'atomic-sleep'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify()
+  let interval
+
+  app.addHook('onClose', async () => {
+    clearInterval(interval)
+  })
 
   app.get('/hello', async () => {
     return { from: 'application-2' }
@@ -13,15 +19,9 @@ export function create () {
   })
 
   app.get('/stress', () => {
-    const interval = setInterval(() => {
-      for (let i = 0; i < 1e7; i++) {
-        Math.sqrt(Math.random())
-      }
-    }, 10)
-
-    setTimeout(() => {
-      clearInterval(interval)
-    }, 10000)
+    interval = setInterval(() => {
+      sleep(900)
+    }, 1000)
 
     return { ok: true }
   })
