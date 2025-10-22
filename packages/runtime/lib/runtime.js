@@ -1621,23 +1621,6 @@ export class Runtime extends EventEmitter {
     return worker
   }
 
-  async #getHealth (worker, options = {}) {
-    if (!features.node.worker.getHeapStatistics) {
-      throw new GetHeapStatisticUnavailable()
-    }
-
-    const currentELU = worker.performance.eventLoopUtilization()
-    const previousELU = options.previousELU
-
-    let elu = currentELU
-    if (previousELU) {
-      elu = worker.performance.eventLoopUtilization(elu, previousELU)
-    }
-
-    const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
-    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
-  }
-
   #setupHealthMetrics (id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthMetricsTimer]))
