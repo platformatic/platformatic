@@ -72,6 +72,7 @@ If `start` is `true`, then the new application will immediately be started in pa
 import { create, prepareApplication } from '@platformatic/runtime'
 
 const app = await create('path/to/platformatic.runtime.json')
+// const app = await create('path/to/watt.json')
 await app.start()
 
 // Prepare and add new applications dynamically
