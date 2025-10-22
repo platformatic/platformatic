@@ -7,13 +7,18 @@ import { findConfigurationFileRecursive, loadConfigurationModule, saveConfigurat
 import { hasJavascriptFiles } from './file-system.js'
 import { detectApplicationType, getPlatformaticVersion } from './module.js'
 
-/* c8 ignore next 3 - else branches */
+/* c8 ignore next 4 - else branches */
 let verbose = false
+let prettyPrint = true
 let executableId = ''
 let executableName = ''
 
 export function isVerbose () {
   return verbose
+}
+
+export function usePrettyPrint () {
+  return prettyPrint
 }
 
 export function getExecutableId () {
@@ -26,6 +31,10 @@ export function getExecutableName () {
 
 export function setVerbose (value) {
   verbose = value
+}
+
+export function setPrettyPrint (value) {
+  prettyPrint = value
 }
 
 export function setExecutableId (id) {
@@ -76,15 +85,13 @@ export function logo (color = true) {
   return color && isColorSupported ? str.replace(/\//g, s => green(s)) : str
 }
 
-export function createCliLogger (level) {
-  return pino(
-    {
-      level,
-      customLevels: {
-        done: 35
-      }
-    },
-    pinoPretty({
+export function createCliLogger (level, noPretty) {
+  let pretty
+
+  if (noPretty) {
+    setPrettyPrint(false)
+  } else {
+    pretty = pinoPretty({
       colorize: process.env.NO_COLOR !== 'true',
       customPrettifiers: {
         level (logLevel, _u1, _u2, { label, labelColorized }) {
@@ -94,6 +101,16 @@ export function createCliLogger (level) {
       },
       sync: true
     })
+  }
+
+  return pino(
+    {
+      level,
+      customLevels: {
+        done: 35
+      }
+    },
+    pretty
   )
 }
 
@@ -112,7 +129,7 @@ export function parseArgs (args, options, stopAtFirstPositional = true, strict =
       args,
       options,
       allowPositionals: true,
-      allowNegative: true,
+      allowNegative: false,
       strict: false,
       tokens: true
     })
@@ -129,7 +146,7 @@ export function parseArgs (args, options, stopAtFirstPositional = true, strict =
     args,
     options,
     allowPositionals: true,
-    allowNegative: true,
+    allowNegative: false,
     strict,
     tokens: true
   })

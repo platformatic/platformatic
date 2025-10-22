@@ -168,7 +168,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return runtime
 }
 
-export { transform, wrapInRuntimeConfig } from './lib/config.js'
+export { prepareApplication, transform, wrapInRuntimeConfig } from './lib/config.js'
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
 export { Runtime } from './lib/runtime.js'

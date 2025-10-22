@@ -127,6 +127,7 @@ export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
   'Please install @platformatic/wattpm-pprof-capture'
 )
+
 export const GetHeapStatisticUnavailable = createError(
   `${ERROR_PREFIX}_GET_HEAP_STATISTIC_UNAVAILABLE`,
   'The getHeapStatistics method is not available in your Node version'
@@ -142,4 +143,8 @@ export const HealthSignalMustBeObjectError = createError(
 export const HealthSignalTypeMustBeStringError = createError(
   `${ERROR_PREFIX}_HEALTH_SIGNAL_TYPE_MUST_BE_STRING`,
   'Health signal type must be a string, received "%s"'
+)
+export const CannotRemoveEntrypointError = createError(
+  `${ERROR_PREFIX}_CANNOT_REMOVE_ENTRYPOINT`,
+  'Cannot remove the entrypoint application.'
 )

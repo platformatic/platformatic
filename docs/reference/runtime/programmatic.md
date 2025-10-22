@@ -54,4 +54,74 @@ import { loadConfiguration } from '@platformatic/runtime'
 const config = await loadConfiguration('/path/to/platformatic.config.json')
 ```
 
+## Adding and Removing applications at runtime
+
+The Runtime object provides methods to dynamically add and remove applications during runtime execution.
+
+### API Documentation
+
+### `runtime.addApplications(applications, start = false)`
+
+Dynamically adds new applications to a running runtime instance. This allows you to register applications after the runtime has been initialized.
+
+If `start` is `true`, then the new application will immediately be started in parallel. Defaults to `false`.
+
+**Important**: Application objects passed in the `applications` argument should always be processed via `prepareApplication` first to ensure proper options normalization.
+
+```js
+import { create, prepareApplication } from '@platformatic/runtime'
+
+const app = await create('path/to/platformatic.runtime.json')
+// const app = await create('path/to/watt.json')
+await app.start()
+
+// Prepare and add new applications dynamically
+const newApplications = [
+  await prepareApplication(app.getRuntimeConfig(true), { id: 'my-new-service', path: './new-service' })
+]
+
+await app.addApplications(newApplications, true) // true to start immediately
+```
+
+#### `runtime.removeApplications(applications, silent = false)`
+
+Dynamically removes applications from the runtime. This will stop the applications and clean up their resources.
+
+```js
+import { create } from '@platformatic/runtime'
+
+const app = await create('path/to/watt.json')
+await app.start()
+
+// Remove applications by ID
+const applicationsToRemove = ['service-1', 'service-2']
+
+await app.removeApplications(applicationsToRemove)
+```
+
+If `silent` is `true`, then logging will be suppressed during the removal process. Defaults to `false`.
+
+**Important**: The entrypoint application cannot be removed, attempting to do so will throw a `CannotRemoveEntrypointError`.
+
+### Example: Dynamic Service Management
+
+```js
+import { create, prepareApplication } from '@platformatic/runtime'
+
+const app = await create('path/to/watt.json')
+await app.start()
+
+// Add a new service dynamically
+const newService = await prepareApplication(app.getRuntimeConfig(true), {
+  id: 'analytics-service',
+  path: './analytics',
+  workers: 2
+})
+
+await app.addApplications([newService], true)
+
+// Later, remove it when no longer needed
+await app.removeApplications(['analytics-service'])
+```
+
 <Issues />
