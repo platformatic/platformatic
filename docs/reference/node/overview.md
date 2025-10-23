@@ -169,6 +169,8 @@ let server
 let database
 
 export async function close () {
+  console.log('Cleaning up...')
+
   // Clean up your resources
   if (database) {
     await database.close()
@@ -176,6 +178,7 @@ export async function close () {
   if (server) {
     await server.close()
   }
+
   console.log('Application closed gracefully')
 }
 ```
@@ -185,9 +188,9 @@ export async function close () {
 Alternatively, you can register a close event handler using the global Platformatic events:
 
 ```js
-globalThis.platformatic.events.on('close', async () => {
-  // Handle cleanup here
+globalThis.platformatic.events.on('close', () => {
   console.log('Received close event, cleaning up...')
+
   // Perform your cleanup operations
 })
 ```
@@ -198,10 +201,10 @@ Fastify applications are handled automatically by Platformatic, but custom clean
 
 ### General behavior
 
-The Platformatic runtime automatically handles closing the main application components:
+Platformatic Node handles closing the main application components:
 
-- **Applications with `create` function**: The runtime will close the application instance returned by the `create` function.
-- **Applications without `create` function**: The runtime will close the first HTTP server that listened on a port.
+- **Applications with `create` function**: It will invoke the `close` method on the server returned by the function.
+- **Applications without `create` function**: It will invoke the `close` method on the first `node:http` server that listened on a TCP port.
 
 However, **additional resources must be manually closed** using the mechanisms described above, otherwise the application will hang during shutdown and eventually timeout.
 
