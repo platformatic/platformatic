@@ -1641,7 +1641,7 @@ export class Runtime extends EventEmitter {
 
       const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
 
-      this.emitAndNotify('application:worker:health-metrics', {
+      this.emitAndNotify('application:worker:health:metrics', {
         id: worker[kId],
         application: id,
         worker: index,
@@ -1660,7 +1660,7 @@ export class Runtime extends EventEmitter {
     worker.on('exit', () => {
       clearTimeout(worker[kHealthCheckTimer])
       if (healthMetricsListener) {
-        this.removeListener('application:worker:health-metrics', healthMetricsListener)
+        this.removeListener('application:worker:health:metrics', healthMetricsListener)
       }
     })
 
@@ -1694,7 +1694,7 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    this.on('application:worker:health-metrics', healthMetricsListener)
+    this.on('application:worker:health:metrics', healthMetricsListener)
 
     let unhealthyChecks = 0
 

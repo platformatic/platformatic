@@ -13,7 +13,7 @@ test('should send a custom health signal', async t => {
   const entryUrl = await app.start()
 
   const healthChecks = []
-  app.on('application:worker:health-metrics', (health) => {
+  app.on('application:worker:health:metrics', (health) => {
     healthChecks.push(health)
   })
 
@@ -57,7 +57,7 @@ test('should send a batch of custom health signal', async t => {
   const entryUrl = await app.start()
 
   const healthSignals = []
-  app.on('application:worker:health-metrics', (health) => {
+  app.on('application:worker:health:metrics', (health) => {
     healthSignals.push(...health.healthSignals)
   })
 
@@ -124,7 +124,7 @@ test('should throw if signal type is not a string', async t => {
   const entryUrl = await app.start()
 
   const receivedSignals = []
-  app.on('application:worker:health-metrics', (health) => {
+  app.on('application:worker:health:metrics', (health) => {
     receivedSignals.push(...health.healthSignals)
   })
 

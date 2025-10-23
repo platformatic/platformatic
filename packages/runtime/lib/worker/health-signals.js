@@ -14,7 +14,9 @@ export class HealthSignalsQueue {
 
   add (value) {
     if (Array.isArray(value)) {
-      this.#values.push(...value)
+      for (const v of value) {
+        this.#values.push(v)
+      }
     } else {
       this.#values.push(value)
     }
