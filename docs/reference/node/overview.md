@@ -150,10 +150,66 @@ globalThis.platformatic.messaging.handle('ping', () => 'pong')
 const timeoutId = setTimeout(() => console.log('done'), 10_000)
 
 // Optionally provide a close function
-export async function close() {
+export async function close () {
   clearTimeout(timeoutId)
 }
 ```
+
+## Handling Application Shutdown
+
+When your Node.js application needs to gracefully shut down, Platformatic provides several mechanisms to ensure resources are properly cleaned up:
+
+### `close` Function
+
+Export a `close` function from your application entry point to handle cleanup when the application shuts down:
+
+```js
+// Store references to resources that need cleanup
+let server
+let database
+
+export async function close () {
+  // Clean up your resources
+  if (database) {
+    await database.close()
+  }
+  if (server) {
+    await server.close()
+  }
+  console.log('Application closed gracefully')
+}
+```
+
+### `close` Event Handler
+
+Alternatively, you can register a close event handler using the global Platformatic events:
+
+```js
+globalThis.platformatic.events.on('close', async () => {
+  // Handle cleanup here
+  console.log('Received close event, cleaning up...')
+  // Perform your cleanup operations
+})
+```
+
+### Fastify Applications
+
+Fastify applications are handled automatically by Platformatic, but custom cleanup logic can still be implemented using the other mechanisms above if needed.
+
+### General behavior
+
+The Platformatic runtime automatically handles closing the main application components:
+
+- **Applications with `create` function**: The runtime will close the application instance returned by the `create` function.
+- **Applications without `create` function**: The runtime will close the first HTTP server that listened on a port.
+
+However, **additional resources must be manually closed** using the mechanisms described above, otherwise the application will hang during shutdown and eventually timeout.
+
+In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
+
+:::warn
+If your application is not using Fastify, doesn't export a `close` function and doesn't handle the `close` event, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts.
+:::
 
 ### Typescript
 
