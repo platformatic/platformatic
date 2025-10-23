@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
-import ScalingAlgorithm from '../lib/scaling-algorithm.js'
+import { ScalingAlgorithm } from '../lib/scaling-algorithm.js'
 
 test('ScalingAlgorithm - should scale down if app ELUs are lower the treshold', async () => {
   const scaleDownELU = 0.2
@@ -9,9 +9,7 @@ test('ScalingAlgorithm - should scale down if app ELUs are lower the treshold', 
   const applicationId = 'app-1'
   const workersCount = 2
 
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId, maxELU: scaleDownELU, workersCount }
-  ])
+  const { appsWorkersInfo, healthInfo } = generateMetadata([{ applicationId, maxELU: scaleDownELU, workersCount }])
 
   for (const health of healthInfo) {
     scalingAlgorithm.addWorkerHealthInfo(health)
@@ -32,9 +30,7 @@ test('ScalingAlgorithm - should not scale down if there is 1 worker', async () =
 
   const applicationId = 'app-1'
 
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId, maxELU: scaleDownELU, workersCount: 1 }
-  ])
+  const { appsWorkersInfo, healthInfo } = generateMetadata([{ applicationId, maxELU: scaleDownELU, workersCount: 1 }])
 
   for (const health of healthInfo) {
     scalingAlgorithm.addWorkerHealthInfo(health)
@@ -51,9 +47,7 @@ test('ScalingAlgorithm - should scale up if the max workers is reached', async (
   const applicationId = 'app-1'
   const workersCount = maxTotalWorkers
 
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId, maxELU: 1, workersCount }
-  ])
+  const { appsWorkersInfo, healthInfo } = generateMetadata([{ applicationId, maxELU: 1, workersCount }])
 
   for (const health of healthInfo) {
     scalingAlgorithm.addWorkerHealthInfo(health)
@@ -69,9 +63,7 @@ test('ScalingAlgorithm - should scale up if elu is higher than treshold', async 
 
   const applicationId = 'app-1'
 
-  const { appsWorkersInfo, healthInfo } = generateMetadata([
-    { applicationId, minELU: scaleUpELU, workersCount: 1 }
-  ])
+  const { appsWorkersInfo, healthInfo } = generateMetadata([{ applicationId, minELU: scaleUpELU, workersCount: 1 }])
 
   for (const health of healthInfo) {
     scalingAlgorithm.addWorkerHealthInfo(health)
@@ -117,7 +109,7 @@ test('ScalingAlgorithm - should scale up only one app per recommendation', async
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', minELU: scaleUpELU, workersCount: 1 },
     { applicationId: 'app-2', minELU: scaleUpELU, workersCount: 1 },
-    { applicationId: 'app-3', minELU: scaleUpELU, workersCount: 1 },
+    { applicationId: 'app-3', minELU: scaleUpELU, workersCount: 1 }
   ])
 
   for (const health of healthInfo) {
@@ -147,7 +139,7 @@ test('ScalingAlgorithm - should not scale up there is not enough workers', async
     { applicationId: 'app-1', elu: 0.99, workersCount: 2 },
     { applicationId: 'app-2', elu: 0.95, workersCount: 2 },
     { applicationId: 'app-3', elu: 0.6, workersCount: 2 },
-    { applicationId: 'app-4', elu: 0.4, workersCount: 2 },
+    { applicationId: 'app-4', elu: 0.4, workersCount: 2 }
   ])
 
   for (const health of healthInfo) {
@@ -168,7 +160,7 @@ test('ScalingAlgorithm - should scale down many apps per recommendation', async 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', maxELU: scaleDownELU, workersCount },
     { applicationId: 'app-2', maxELU: scaleDownELU, workersCount },
-    { applicationId: 'app-3', maxELU: scaleDownELU, workersCount },
+    { applicationId: 'app-3', maxELU: scaleDownELU, workersCount }
   ])
 
   for (const health of healthInfo) {
@@ -179,7 +171,7 @@ test('ScalingAlgorithm - should scale down many apps per recommendation', async 
   assert.strictEqual(recommendations.length, appsCount)
 
   for (let i = 1; i <= appsCount; i++) {
-    const recommendation = recommendations.find((r) => r.applicationId === `app-${i}`)
+    const recommendation = recommendations.find(r => r.applicationId === `app-${i}`)
     assert.strictEqual(recommendation.workersCount, workersCount - 1)
     assert.strictEqual(recommendation.direction, 'down')
   }

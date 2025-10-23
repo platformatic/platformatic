@@ -268,6 +268,7 @@ export async function transform (config, _, context) {
   }
 
   // Migrate the old verticalScaler property, only applied if the new settings are not set, otherwise workers takes precedence
+  // TODO: Remove in the next major version
   if (config.verticalScaler) {
     config.workers ??= {}
     config.workers.dynamic ??= config.verticalScaler.enabled
