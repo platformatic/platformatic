@@ -45,6 +45,42 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
+function parseWorkers (config, prefix, defaultWorkers = 1) {
+  if (typeof config.workers !== 'undefined') {
+    // Number
+    if (typeof config.workers !== 'object') {
+      const coerced = coercePositiveInteger(config.workers)
+
+      if (coerced === null) {
+        const raw = config.workers
+        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+        raiseInvalidWorkersError(prefix, config.workers, hint)
+      } else {
+        config.workers = { static: coerced, dynamic: false }
+      }
+      // Object
+    } else {
+      for (const key of ['minimum', 'maximum', 'static']) {
+        if (typeof config.workers[key] === 'undefined') {
+          continue
+        }
+
+        const coerced = coercePositiveInteger(config.workers[key])
+        if (coerced === null) {
+          const raw = config.workers
+          const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+          raiseInvalidWorkersError(`${prefix} ${key}`, config.workers, hint)
+        } else {
+          config.workers[key] = coerced
+        }
+      }
+    }
+    // No value, inherit from runtime
+  } else {
+    config.workers = { static: defaultWorkers }
+  }
+}
+
 export function pprofCapturePreloadPath () {
   const require = createRequire(import.meta.url)
 
@@ -162,7 +198,7 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
   config.watch = false
 }
 
-export async function prepareApplication (config, application) {
+export async function prepareApplication (config, application, defaultWorkers) {
   // We need to have absolute paths here, ot the `loadConfig` will fail
   // Make sure we don't resolve if env var was not replaced
   if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
@@ -207,15 +243,7 @@ export async function prepareApplication (config, application) {
   }
 
   // Validate and coerce per-service workers
-  if (typeof application.workers !== 'undefined') {
-    const coerced = coercePositiveInteger(application.workers)
-    if (coerced === null) {
-      const raw = application.workers
-      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-      raiseInvalidWorkersError(`Service "${application.id}"`, application.workers, hint)
-    }
-    application.workers = coerced
-  }
+  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
   application.entrypoint = application.id === config.entrypoint
   application.dependencies ??= []
@@ -237,6 +265,27 @@ export async function transform (config, _, context) {
     config.watch = config.watch === 'true'
   } else if (watchType === 'undefined') {
     config.watch = !production
+  }
+
+  // Migrate the old verticalScaler property, only applied if the new settings are not set, otherwise workers takes precedence
+  // TODO: Remove in the next major version
+  if (config.verticalScaler) {
+    config.workers ??= {}
+    config.workers.dynamic ??= config.verticalScaler.enabled
+    config.workers.minimum ??= config.verticalScaler.minWorkers
+    config.workers.maximum ??= config.verticalScaler.maxWorkers
+    config.workers.total ??= config.verticalScaler.maxTotalWorkers
+    config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
+
+    if (typeof config.workers.cooldown === 'undefined' && typeof config.verticalScaler.cooldownSec === 'number') {
+      config.workers.cooldown = config.verticalScaler.cooldownSec * 1000
+    }
+
+    if (typeof config.workers.gracePeriod === 'undefined' && typeof config.verticalScaler.gracePeriod === 'number') {
+      config.workers.gracePeriod = config.verticalScaler.gracePeriod
+    }
+
+    config.verticalScaler = undefined
   }
 
   if (config.autoload) {
@@ -281,18 +330,11 @@ export async function transform (config, _, context) {
   let hasValidEntrypoint = false
 
   // Root-level workers
-  if (typeof config.workers !== 'undefined') {
-    const coerced = coercePositiveInteger(config.workers)
-    if (coerced === null) {
-      const raw = config.workers
-      const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-      raiseInvalidWorkersError('Runtime', config.workers, hint)
-    }
-    config.workers = coerced
-  }
+  parseWorkers(config, 'Runtime')
+  const defaultWorkers = config.workers.static
 
   for (let i = 0; i < applications.length; ++i) {
-    const application = await prepareApplication(config, applications[i])
+    const application = await prepareApplication(config, applications[i], defaultWorkers)
 
     if (application.entrypoint) {
       hasValidEntrypoint = true

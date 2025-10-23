@@ -483,7 +483,20 @@ export interface PlatformaticDatabaseConfig {
     services?: {
       [k: string]: unknown;
     }[];
-    workers?: number | string;
+    workers?:
+      | number
+      | string
+      | {
+          static?: number;
+          dynamic?: boolean;
+          minimum?: number;
+          maximum?: number;
+          total?: number;
+          maxMemory?: number;
+          cooldown?: number;
+          gracePeriod?: number;
+          [k: string]: unknown;
+        };
     workersRestartDelay?: number | string;
     logger?: {
       level: (
@@ -805,13 +818,28 @@ export interface PlatformaticDatabaseConfig {
       maxTotalMemory?: number;
       minWorkers?: number;
       maxWorkers?: number;
-      scaleUpELU?: number;
-      scaleDownELU?: number;
-      timeWindowSec?: number;
-      scaleDownTimeWindowSec?: number;
       cooldownSec?: number;
-      scaleIntervalSec?: number;
       gracePeriod?: number;
+      /**
+       * @deprecated
+       */
+      scaleUpELU?: number;
+      /**
+       * @deprecated
+       */
+      scaleDownELU?: number;
+      /**
+       * @deprecated
+       */
+      timeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleDownTimeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleIntervalSec?: number;
     };
     inspectorOptions?: {
       host?: string;

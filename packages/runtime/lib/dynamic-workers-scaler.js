@@ -1,13 +1,17 @@
 import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
-import ScalingAlgorithm from './scaling-algorithm.js'
+import { ScalingAlgorithm, scaleUpELUThreshold } from './scaling-algorithm.js'
 import { kApplicationId, kId, kLastVerticalScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
 const healthCheckInterval = 1000
-export const kOriginalWorkers = Symbol('plt.runtime.application.verticalScalerOriginalWorkers')
+export const kOriginalWorkers = Symbol('plt.runtime.application.dynamicWorkersScalerOriginalWorkers')
 
-export class VerticalScaler {
+const defaultCooldown = 60_000
+const defaultGracePeriod = 30_000
+const scaleIntervalPeriod = 60_000
+
+export class DynamicWorkersScaler {
   #status
   #runtime
   #algorithm
@@ -17,13 +21,7 @@ export class VerticalScaler {
   #maxWorkers
   #minWorkers
   #cooldown
-  #scaleUpELU
-  #scaleDownELU
-  #scaleIntervalSec
-  #scaleUpTimeWindowSec
-  #scaleDownTimeWindowSec
   #gracePeriod
-  #applications
 
   #initialUpdates
   #memoryInfo
@@ -35,26 +33,14 @@ export class VerticalScaler {
   constructor (runtime, config) {
     this.#runtime = runtime
 
-    this.#maxTotalMemory = config.maxTotalMemory // This is defaulted in start()
-    this.#maxTotalWorkers = config.maxTotalWorkers ?? availableParallelism()
-    this.#maxWorkers = config.maxWorkers ?? this.#maxTotalWorkers
-    this.#minWorkers = config.minWorkers ?? 1
-    this.#cooldown = config.cooldownSec ?? 60
-    this.#scaleUpELU = config.scaleUpELU ?? 0.8
-    this.#scaleDownELU = config.scaleDownELU ?? 0.2
-    this.#scaleIntervalSec = config.scaleIntervalSec ?? 60
-    this.#scaleUpTimeWindowSec = config.timeWindowSec ?? 10
-    this.#scaleDownTimeWindowSec = config.scaleDownTimeWindowSec ?? 60
-    this.#gracePeriod = config.gracePeriod ?? 30 * 1000
-    this.#applications = config.applications ?? {}
+    this.#maxTotalMemory = config.maxMemory // This is defaulted in start()
+    this.#maxTotalWorkers = config.total ?? availableParallelism()
+    this.#maxWorkers = config.maximum ?? this.#maxTotalWorkers
+    this.#minWorkers = config.minimum ?? 1
+    this.#cooldown = config.cooldown ?? defaultCooldown
+    this.#gracePeriod = config.gracePeriod ?? defaultGracePeriod
 
-    this.#algorithm = new ScalingAlgorithm({
-      maxTotalWorkers: this.#maxTotalWorkers,
-      scaleUpELU: this.#scaleUpELU,
-      scaleDownELU: this.#scaleDownELU,
-      scaleUpTimeWindowSec: this.#scaleUpTimeWindowSec,
-      scaleDownTimeWindowSec: this.#scaleDownTimeWindowSec
-    })
+    this.#algorithm = new ScalingAlgorithm({ maxTotalWorkers: this.#maxTotalWorkers })
 
     this.#isScaling = false
     this.#lastScaling = 0
@@ -69,13 +55,7 @@ export class VerticalScaler {
       maxWorkers: this.#maxWorkers,
       minWorkers: this.#minWorkers,
       cooldown: this.#cooldown,
-      scaleUpELU: this.#scaleUpELU,
-      scaleDownELU: this.#scaleDownELU,
-      scaleIntervalSec: this.#scaleIntervalSec,
-      scaleUpTimeWindowSec: this.#scaleUpTimeWindowSec,
-      scaleDownTimeWindowSec: this.#scaleDownTimeWindowSec,
-      gracePeriod: this.#gracePeriod,
-      applications: this.#applications
+      gracePeriod: this.#gracePeriod
     }
   }
 
@@ -83,7 +63,7 @@ export class VerticalScaler {
     this.#memoryInfo = await getMemoryInfo()
     this.#maxTotalMemory ??= this.#memoryInfo.total * 0.9
 
-    this.#checkScalingInterval = setInterval(this.#checkScaling.bind(this), this.#scaleIntervalSec * 1000)
+    this.#checkScalingInterval = setInterval(this.#checkScaling.bind(this), scaleIntervalPeriod)
     this.#healthCheckTimeout = setTimeout(this.#chechHealth.bind(this), healthCheckInterval)
 
     if (this.#initialUpdates.length > 0) {
@@ -110,16 +90,16 @@ export class VerticalScaler {
 
       config.minWorkers = 1
       config.maxWorkers = 1
-    } else if (typeof application[kOriginalWorkers] !== 'undefined') {
+    } else if (application.workers.dynamic === false) {
       this.#runtime.logger.warn(
-        `The "${application.id}" application cannot be scaled because it has a fixed number of workers (${application.workers}).`
+        `The "${application.id}" application cannot be scaled because it has a fixed number of workers (${application.workers.static}).`
       )
 
-      config.minWorkers = application.workers
-      config.maxWorkers = application.workers
+      config.minWorkers = application.workers.static
+      config.maxWorkers = application.workers.static
     } else {
-      config.minWorkers = this.#applications[application.id]?.minWorkers
-      config.maxWorkers = this.#applications[application.id]?.maxWorkers
+      config.minWorkers = application.workers.minimum
+      config.maxWorkers = application.workers.maximum
     }
 
     config.minWorkers ??= this.#minWorkers
@@ -171,7 +151,7 @@ export class VerticalScaler {
           heapTotal: health.heapTotal
         })
 
-        if (health.elu > this.#scaleUpELU) {
+        if (health.elu > scaleUpELUThreshold) {
           shouldCheckForScaling = true
         }
       } catch (err) {
@@ -187,7 +167,7 @@ export class VerticalScaler {
   }
 
   async #checkScaling () {
-    const isInCooldown = Date.now() < this.#lastScaling + this.#cooldown * 1000
+    const isInCooldown = Date.now() < this.#lastScaling + this.#cooldown
     if (this.#isScaling || isInCooldown) {
       return
     }
