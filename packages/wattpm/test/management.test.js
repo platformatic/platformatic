@@ -204,6 +204,9 @@ test('config - should list configuration for an application', async t => {
         config: resolve(alternativeApplicationDir, 'watt.json'),
         entrypoint: false,
         watch: false,
+        workers: {
+          static: 1
+        },
         dependencies: [],
         localUrl: 'http://alternative.plt.local'
       },
@@ -214,11 +217,17 @@ test('config - should list configuration for an application', async t => {
         config: resolve(mainApplicationDir, 'watt.json'),
         entrypoint: true,
         watch: false,
+        workers: {
+          static: 1
+        },
         dependencies: [],
         localUrl: 'http://main.plt.local'
       }
     ],
     applicationTimeout: 300000,
+    workers: {
+      static: 1
+    },
     workersRestartDelay: 0,
     watch: false,
     gracefulShutdown: {

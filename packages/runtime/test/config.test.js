@@ -190,7 +190,10 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       sourceMaps: false,
       type: '@platformatic/db',
       watch: false,
-      skipTelemetryHooks: true
+      skipTelemetryHooks: true,
+      workers: {
+        static: 1
+      }
     },
     {
       dependencies: [],
@@ -202,7 +205,10 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       path: resolve(dirname(configFile), 'another'),
       sourceMaps: false,
       type: 'unknown',
-      watch: false
+      watch: false,
+      workers: {
+        static: 1
+      }
     }
   ])
 })

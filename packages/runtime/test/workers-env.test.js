@@ -1,4 +1,4 @@
-import { rejects, strictEqual } from 'node:assert'
+import { deepStrictEqual, rejects } from 'node:assert'
 import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -95,7 +95,7 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
 
   await withEnv({ PLT_WORKERS: '2' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
-    strictEqual(loaded.workers, 2)
+    deepStrictEqual(loaded.workers, { dynamic: false, static: 2 })
   })
 })
 
@@ -137,6 +137,6 @@ test('service workers: valid PLT_WORKERS coerces to number', async () => {
   await withEnv({ PLT_WORKERS: '3' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
     const svc = loaded.applications.find(s => s.id === 'svc')
-    strictEqual(svc.workers, 3)
+    deepStrictEqual(svc.workers, { dynamic: false, static: 3 })
   })
 })

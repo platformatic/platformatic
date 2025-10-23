@@ -24,6 +24,7 @@ import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
+import { DynamicWorkersScaler } from './dynamic-workers-scaler.js'
 import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
@@ -46,7 +47,6 @@ import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
-import { kOriginalWorkers, VerticalScaler } from './vertical-scaler.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
@@ -115,7 +115,7 @@ export class Runtime extends EventEmitter {
   #workerITCHandlers
   #restartingApplications
   #restartingWorkers
-  #verticalScaler
+  #dynamicWorkersScaler
 
   #sharedHttpCache
   #scheduler
@@ -207,13 +207,13 @@ export class Runtime extends EventEmitter {
 
     this.#createWorkersBroadcastChannel()
 
-    if (this.#config.verticalScaler?.enabled) {
-      if (typeof this.#config.workers !== 'undefined') {
+    if (this.#config.workers.dynamic) {
+      if (this.#config.workers.dynamic === false) {
         this.logger.warn(
-          `Vertical scaler disabled because the "workers" configuration is set to ${this.#config.workers}`
+          `Vertical scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
         )
       } else {
-        this.#verticalScaler = new VerticalScaler(this, this.#config.verticalScaler)
+        this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
       }
     }
 
@@ -285,7 +285,7 @@ export class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
-    await this.#verticalScaler?.start()
+    await this.#dynamicWorkersScaler?.start()
     this.#showUrl()
     return this.#url
   }
@@ -305,7 +305,7 @@ export class Runtime extends EventEmitter {
       await this.#inspectorServer.close()
     }
 
-    await this.#verticalScaler?.stop()
+    await this.#dynamicWorkersScaler?.stop()
 
     // Stop the entrypoint first so that no new requests are accepted
     if (this.#entrypointId) {
@@ -448,19 +448,18 @@ export class Runtime extends EventEmitter {
 
     const toStart = []
     for (const application of applications) {
-      const originalWorkers = application.workers
-      let workers = originalWorkers ?? this.#config.workers ?? 1
-      if (workers > 1 && application.entrypoint && !features.node.reusePort) {
+      const workers = application.workers
+
+      if ((workers.static > 1 || workers.minimum > 1) && application.entrypoint && !features.node.reusePort) {
         this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers}`
+          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
         )
-        workers = 1
+        workers.static = 1
+        workers.minimum = 1
       }
 
-      const originalConfig = structuredClone(application)
-      const applicationConfig = { ...originalConfig, workers, [kOriginalWorkers]: originalWorkers }
-      this.#applications.set(application.id, applicationConfig)
-      setupInvocations.push([applicationConfig])
+      this.#applications.set(application.id, application)
+      setupInvocations.push([application])
       toStart.push(application.id)
     }
 
@@ -483,7 +482,7 @@ export class Runtime extends EventEmitter {
     await this.stopApplications(applications, silent, true)
 
     for (const application of applications) {
-      this.#verticalScaler?.remove(application)
+      this.#dynamicWorkersScaler?.remove(application)
       this.#applications.delete(application)
     }
 
@@ -556,7 +555,8 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    for (let i = 0; i < applicationConfig.workers; i++) {
+    const workers = applicationConfig.workers.static
+    for (let i = 0; i < workers; i++) {
       const worker = this.#workers.get(`${id}:${i}`)
       const status = worker?.[kWorkerStatus]
 
@@ -567,8 +567,8 @@ export class Runtime extends EventEmitter {
 
     this.emitAndNotify('application:starting', id)
 
-    for (let i = 0; i < applicationConfig.workers; i++) {
-      await this.#startWorker(config, applicationConfig, applicationConfig.workers, id, i, silent)
+    for (let i = 0; i < workers; i++) {
+      await this.#startWorker(config, applicationConfig, workers, id, i, silent)
     }
 
     this.emitAndNotify('application:started', id)
@@ -1271,8 +1271,8 @@ export class Runtime extends EventEmitter {
     return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
   }
 
-  getVerticalScaler () {
-    return this.#verticalScaler
+  getDynamicWorkersScaler () {
+    return this.#dynamicWorkersScaler
   }
 
   #getHttpCacheValue ({ request }) {
@@ -1359,7 +1359,7 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    const workers = applicationConfig.workers
+    const workers = applicationConfig.workers.static
     const setupInvocations = []
 
     for (let i = 0; i < workers; i++) {
@@ -1368,7 +1368,7 @@ export class Runtime extends EventEmitter {
 
     await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
 
-    await this.#verticalScaler?.add(applicationConfig)
+    await this.#dynamicWorkersScaler?.add(applicationConfig)
     this.emitAndNotify('application:init', id)
   }
 
@@ -2303,7 +2303,7 @@ export class Runtime extends EventEmitter {
   async #updateApplicationConfigWorkers (applicationId, workers) {
     this.logger.info(`Updating application "${applicationId}" config workers to ${workers}`)
 
-    this.#applications.get(applicationId).workers = workers
+    this.#applications.get(applicationId).workers.static = workers
 
     const workersIds = this.#workers.getKeys(applicationId)
     const promises = []
@@ -2553,6 +2553,10 @@ export class Runtime extends EventEmitter {
         )
       }
       report.success = true
+
+      if (report.success) {
+        this.emitAndNotify('application:resources:health:updated', { application: applicationId, health })
+      }
     } catch (err) {
       if (report.updated.length < 1) {
         this.logger.error({ err }, 'Cannot update application health heap, no worker updated')
@@ -2623,6 +2627,10 @@ export class Runtime extends EventEmitter {
     const newWorkersCount = currentWorkers + startedWorkersCount - stoppedWorkersCount
     if (newWorkersCount !== currentWorkers) {
       await this.#updateApplicationConfigWorkers(applicationId, newWorkersCount)
+    }
+
+    if (report.success) {
+      this.emitAndNotify('application:resources:workers:updated', { application: applicationId, workers })
     }
 
     return report

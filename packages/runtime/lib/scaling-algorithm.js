@@ -1,20 +1,16 @@
-class ScalingAlgorithm {
-  #scaleUpELU
-  #scaleDownELU
+export const scaleUpELUThreshold = 0.8
+export const scaleDownELUThreshold = 0.2
+export const scaleUpTimeWindow = 10_000
+export const scaleDownTimeWindow = 60_000
+
+export class ScalingAlgorithm {
   #maxTotalWorkers
-  #scaleUpTimeWindowSec
-  #scaleDownTimeWindowSec
   #appsMetrics
   #appsConfigs
 
   constructor (options = {}) {
-    this.#scaleUpELU = options.scaleUpELU ?? 0.8
-    this.#scaleDownELU = options.scaleDownELU ?? 0.2
     this.#maxTotalWorkers = options.maxTotalWorkers ?? Infinity
-    this.#scaleUpTimeWindowSec = options.scaleUpTimeWindowSec ?? 10
-    this.#scaleDownTimeWindowSec = options.scaleDownTimeWindowSec ?? 60
     this.#appsConfigs = options.applications ?? {}
-
     this.#appsMetrics = {}
   }
 
@@ -231,28 +227,22 @@ class ScalingAlgorithm {
   }
 
   #getMetricsTimeWindow () {
-    return Math.max(this.#scaleUpTimeWindowSec, this.#scaleDownTimeWindowSec) * 1000
+    return Math.max(scaleUpTimeWindow, scaleDownTimeWindow) * 1000
   }
 
   #getApplicationScaleRecommendation (applicationId) {
-    const { elu: scaleUpELU } = this.#calculateAppAvgMetrics(applicationId, {
-      timeWindow: this.#scaleUpTimeWindowSec * 1000
-    })
-    const { elu: scaleDownELU } = this.#calculateAppAvgMetrics(applicationId, {
-      timeWindow: this.#scaleDownTimeWindowSec * 1000
-    })
+    const { elu: scaleUpELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleUpTimeWindow })
+    const { elu: scaleDownELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleDownTimeWindow })
     const { heapUsed: avgHeapUsage } = this.#calculateAppAvgMetrics(applicationId)
 
     let recommendation = null
-    if (scaleUpELU > this.#scaleUpELU) {
+    if (scaleUpELU > scaleUpELUThreshold) {
       recommendation = 'scaleUp'
     }
-    if (scaleDownELU < this.#scaleDownELU) {
+    if (scaleDownELU < scaleDownELUThreshold) {
       recommendation = 'scaleDown'
     }
 
     return { recommendation, scaleUpELU, scaleDownELU, avgHeapUsage }
   }
 }
-
-export default ScalingAlgorithm
