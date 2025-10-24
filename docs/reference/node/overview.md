@@ -211,7 +211,7 @@ However, **additional resources must be manually closed** using the mechanisms d
 In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
 
 :::warn
-If your application is not using Fastify, doesn't export a `close` function and doesn't handle the `close` event, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts.
+If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function or handle the `close` event. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify. 
 :::
 
 ### Typescript
