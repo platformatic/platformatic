@@ -15,6 +15,11 @@ During application execution some APIs are made available in the `globalThis.pla
   - `status`: a boolean indicating if the health check is successful
   - `statusCode`: an optional HTTP status code
   - `body`: an optional body to return
+- **`globalThis.platformatic.sendHealthSignal(signal)`**: This function can be used to send a health signal from the application to the runtime.
+  - `signal`: an object with the following properties:
+    - `type`: a string with the type of the signal
+    - `value`: an optional value to send with the signal.
+    - `description`: an optional description of the signal.
 
 The healthcheck function will ensure the readiness of the application, and the readiness check function will ensure the readiness of the application dependencies; if the healthcheck fails, the readiness check will fail, and the application will be marked as unhealthy; in this case, the liveness probe will return the readiness check response in the body.
 

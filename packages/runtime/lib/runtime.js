@@ -49,11 +49,13 @@ import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
+import { HealthSignalsQueue } from './worker/health-signals.js'
 import {
   kApplicationId,
   kConfig,
   kFullId,
   kHealthCheckTimer,
+  kHealthMetricsTimer,
   kId,
   kITC,
   kLastHealthCheckELU,
@@ -61,7 +63,8 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerHealthSignals
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -163,7 +166,8 @@ export class Runtime extends EventEmitter {
       deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
       invalidateHttpCache: this.invalidateHttpCache.bind(this),
       updateSharedContext: this.updateSharedContext.bind(this),
-      getSharedContext: this.getSharedContext.bind(this)
+      getSharedContext: this.getSharedContext.bind(this),
+      sendHealthSignals: this.#processHealthSignals.bind(this)
     }
     this.#sharedContext = {}
 
@@ -1617,83 +1621,141 @@ export class Runtime extends EventEmitter {
     return worker
   }
 
-  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
+  #setupHealthMetrics (id, index, worker, errorLabel) {
     // Clear the timeout when exiting
-    worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
+    worker.on('exit', () => clearTimeout(worker[kHealthMetricsTimer]))
 
-    const { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
-    const maxHeapTotalNumber = typeof maxHeapTotal === 'string' ? parseMemorySize(maxHeapTotal) : maxHeapTotal
+    worker[kHealthMetricsTimer] = setTimeout(async () => {
+      if (worker[kWorkerStatus] !== 'started') return
 
-    let unhealthyChecks = 0
-
-    worker[kHealthCheckTimer] = setTimeout(async () => {
-      if (worker[kWorkerStatus] !== 'started') {
-        return
-      }
-
-      let health, unhealthy, memoryUsage
+      let health = null
       try {
         health = await this.getWorkerHealth(worker, {
           previousELU: worker[kLastHealthCheckELU]
         })
-        worker[kLastHealthCheckELU] = health.currentELU
-        memoryUsage = health.heapUsed / maxHeapTotalNumber
-        unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
-        worker[kLastHealthCheckELU] = null
-        unhealthy = true
-        memoryUsage = -1
-        health = { elu: -1, heapUsed: -1, heapTotal: -1 }
+      } finally {
+        worker[kLastHealthCheckELU] = health?.currentELU ?? null
       }
 
-      this.emitAndNotify('application:worker:health', {
+      const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
+
+      this.emitAndNotify('application:worker:health:metrics', {
         id: worker[kId],
         application: id,
         worker: index,
         currentHealth: health,
-        unhealthy,
-        healthConfig: worker[kConfig].health
+        healthSignals
       })
 
-      if (unhealthy) {
+      worker[kHealthMetricsTimer].refresh()
+    }, 1000).unref()
+  }
+
+  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
+    let healthMetricsListener = null
+
+    // Clear the timeout and listener when exiting
+    worker.on('exit', () => {
+      clearTimeout(worker[kHealthCheckTimer])
+      if (healthMetricsListener) {
+        this.removeListener('application:worker:health:metrics', healthMetricsListener)
+      }
+    })
+
+    const healthConfig = worker[kConfig].health
+
+    let {
+      maxELU,
+      maxHeapUsed,
+      maxHeapTotal,
+      maxUnhealthyChecks,
+      interval
+    } = worker[kConfig].health
+
+    if (typeof maxHeapTotal === 'string') {
+      maxHeapTotal = parseMemorySize(maxHeapTotal)
+    }
+
+    if (interval < 1000) {
+      interval = 1000
+      this.logger.warn(
+        `The health check interval for the "${errorLabel}" is set to ${healthConfig.interval}ms. ` +
+        'The minimum health check interval is 1s. It will be set to 1000ms.'
+      )
+    }
+
+    let lastHealthMetrics = null
+
+    healthMetricsListener = healthCheck => {
+      if (healthCheck.id === worker[kId]) {
+        lastHealthMetrics = healthCheck
+      }
+    }
+
+    this.on('application:worker:health:metrics', healthMetricsListener)
+
+    let unhealthyChecks = 0
+
+    worker[kHealthCheckTimer] = setTimeout(async () => {
+      if (worker[kWorkerStatus] !== 'started') return
+
+      if (lastHealthMetrics) {
+        const health = lastHealthMetrics.currentHealth
+        const memoryUsage = health.heapUsed / maxHeapTotal
+        const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
+
+        this.emitAndNotify('application:worker:health', {
+          id: worker[kId],
+          application: id,
+          worker: index,
+          currentHealth: health,
+          unhealthy,
+          healthConfig
+        })
+
         if (health.elu > maxELU) {
           this.logger.error(
-            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
+              `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
           )
         }
 
         if (memoryUsage > maxHeapUsed) {
           this.logger.error(
-            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
+            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
+              `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
           )
         }
 
-        unhealthyChecks++
-      } else {
-        unhealthyChecks = 0
-      }
+        if (unhealthy) {
+          unhealthyChecks++
+        } else {
+          unhealthyChecks = 0
+        }
 
-      if (unhealthyChecks === maxUnhealthyChecks) {
-        try {
-          this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
+        if (unhealthyChecks === maxUnhealthyChecks) {
+          try {
+            this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
 
-          this.logger.error(
-            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+            this.logger.error(
+              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
-          )
+            )
 
-          await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
-        } catch (e) {
-          this.logger.error(
-            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+            await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
+          } catch (e) {
+            this.logger.error(
+              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
-          )
+            )
 
-          worker.terminate()
+            worker.terminate()
+          }
+        } else {
+          worker[kHealthCheckTimer].refresh()
         }
-      } else {
-        worker[kHealthCheckTimer].refresh()
       }
     }, interval).unref()
   }
@@ -1760,6 +1822,8 @@ export class Runtime extends EventEmitter {
       if (!silent) {
         this.logger.info(`Started the ${label}...`)
       }
+
+      this.#setupHealthMetrics(id, index, worker, label)
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
@@ -2622,5 +2686,12 @@ export class Runtime extends EventEmitter {
 
     argv.push('--permission', ...allows)
     return argv
+  }
+
+  #processHealthSignals ({ workerId, signals }) {
+    const worker = this.#workers.get(workerId)
+
+    worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
+    worker[kWorkerHealthSignals].add(signals)
   }
 }

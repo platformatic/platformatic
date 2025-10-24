@@ -132,7 +132,18 @@ export const GetHeapStatisticUnavailable = createError(
   `${ERROR_PREFIX}_GET_HEAP_STATISTIC_UNAVAILABLE`,
   'The getHeapStatistics method is not available in your Node version'
 )
-
+export const FailedToSendHealthSignalsError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_SEND_HEALTH_SIGNALS`,
+  'Cannot send health signals from application "%s": %s'
+)
+export const HealthSignalMustBeObjectError = createError(
+  `${ERROR_PREFIX}_HEALTH_SIGNAL_MUST_BE_OBJECT`,
+  'Health signal must be an object'
+)
+export const HealthSignalTypeMustBeStringError = createError(
+  `${ERROR_PREFIX}_HEALTH_SIGNAL_TYPE_MUST_BE_STRING`,
+  'Health signal type must be a string, received "%s"'
+)
 export const CannotRemoveEntrypointError = createError(
   `${ERROR_PREFIX}_CANNOT_REMOVE_ENTRYPOINT`,
   'Cannot remove the entrypoint application.'

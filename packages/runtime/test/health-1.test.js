@@ -120,7 +120,7 @@ test('should continously monitor workers health', async t => {
     events.push(event)
   })
 
-  await sleep(5000)
+  await sleep(10000)
 
   const applicationEvents = events.filter(e => e.application === 'serviceApp')
   ok(applicationEvents.length > 8, `Expected more than 8 events, got ${applicationEvents.length}`)
