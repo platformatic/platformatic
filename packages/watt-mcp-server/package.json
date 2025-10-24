@@ -1,0 +1,52 @@
+{
+  "name": "@platformatic/watt-mcp-server",
+  "version": "3.11.0",
+  "description": "MCP server for Watt application configuration management",
+  "main": "index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "keywords": [
+    "watt",
+    "platformatic",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "bin": {
+    "watt-mcp-server": "./bin/server.js"
+  },
+  "scripts": {
+    "start": "node bin/server.js",
+    "test": "npm run lint && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "lint": "eslint"
+  },
+  "files": [
+    "bin",
+    "index.js",
+    "lib",
+    "README.md",
+    "TUTORIAL.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "wattpm": "workspace:*",
+    "ajv": "^8.12.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "neostandard": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
