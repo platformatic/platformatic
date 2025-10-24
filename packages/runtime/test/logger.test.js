@@ -523,7 +523,7 @@ test('should use colors when printing applications logs', async t => {
   })
 
   const child = execa(process.execPath, [startPath, configFile], {
-    env: { FORCE_TTY: 'true', PLT_USE_PLAIN_CREATE: true },
+    env: { FORCE_TTY: 'true', FORCE_COLOR: 'true', PLT_USE_PLAIN_CREATE: true },
     cwd: root
   })
   child.catch(() => {})
@@ -543,8 +543,8 @@ test('should use colors when printing applications logs', async t => {
 
   ok(
     stdout.match(
-      // eslint-disable-next-line no-control-regex
-      /\n(\u001b\[38;5;\d+m)\[\d{2}:\d{2}:\d{2}\.\d+ \d+\] composer:0\u001b\[0m \u001b\[32m {2}INFO\u001b\[39m\1: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
+      // eslint-disable-next-line no-control-regex, no-regex-spaces
+      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) composer:0 \| \u001b\[0m \u001b\[32m  INFO\u001b\[39m: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
     )
   )
 })

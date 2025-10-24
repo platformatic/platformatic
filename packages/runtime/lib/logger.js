@@ -5,11 +5,59 @@ import pretty from 'pino-pretty'
 
 export { abstractLogger } from '@platformatic/foundation'
 
-// Extracted from https://github.com/debug-js/debug/blob/master/src/node.js
+// A valid color in the ANSI 256 color palette - Adiacent colors are purposely different
 const colors = [
-  20, 21, 26, 27, 32, 33, 38, 39, 40, 41, 42, 43, 44, 45, 56, 57, 62, 63, 68, 69, 74, 75, 76, 77, 78, 79, 80, 81, 92,
-  93, 98, 99, 112, 113, 128, 129, 134, 135, 148, 149, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
-  173, 178, 179, 184, 185, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 214, 215, 220, 221
+  196, // bright red
+  46, // bright green
+  33, // light blue
+  226, // bright yellow
+  201, // bright magenta
+  51, // cyan
+  208, // orange
+  118, // lime
+  39, // deep sky blue
+  220, // gold
+  129, // violet
+  82, // spring green
+  33, // blue
+  214, // amber
+  99, // orchid
+  190, // light yellow-green
+  45, // turquoise
+  197, // rose
+  50, // aqua
+  202, // orange-red
+  141, // lavender
+  154, // pale green
+  93, // pink
+  33, // light blue again (for spacing)
+  220, // gold
+  201, // magenta
+  46, // green
+  27, // navy blue
+  214, // amber
+  99, // orchid
+  190, // light yellow-green
+  39, // cyan-blue
+  200, // violet
+  82, // neon green
+  208, // orange
+  135, // purple
+  118, // lime
+  33, // bright blue
+  220, // gold
+  201, // bright magenta
+  46, // bright green
+  21, // bright blue
+  202, // orange-red
+  141, // purple
+  118, // spring green
+  208, // orange
+  93, // pink
+  190, // yellow-green
+  39, // cyan
+  196, // bright red
+  226 // bright yellow
 ]
 
 function createLoggerContext () {
@@ -24,7 +72,7 @@ function createLoggerContext () {
         context.maxLength = Math.max(context.maxLength, id.length)
         let hash = 0
 
-        if (!pretty.isColorSupported) {
+        if (!pretty.isColorSupported && process.env.FORCE_COLOR !== 'true') {
           context.colors[id] = ''
           continue
         }
@@ -58,16 +106,15 @@ function createPrettifier (context) {
         worker
       }
 
-      const pidString = `${pid}]`
-      let prefix = pidString
+      let prefix = ''
       let color = ''
 
       if (name) {
-        prefix = `${pidString} ${name}:${worker}`
+        prefix = `${name}:${worker}`
         color = context.colors[`${name}:${worker}`] ?? ''
       }
 
-      context.current.prefix = prefix.padEnd(context.maxLength + pidString.length + 1, ' ')
+      context.current.prefix = `(${pid}) ` + prefix.padStart(context.maxLength, ' ')
       context.current.color = color
 
       // We need to nullify all these so that prettifierMetadata in pino-pretty returns an empty string
@@ -81,15 +128,18 @@ function createPrettifier (context) {
     },
     customPrettifiers: {
       time (time) {
-        return `${context.current.color}[${time}`
+        return `${context.current.color}[${time}]`
       },
-      level (_u1, _u2, _u3, { label, labelColorized, colors }) {
-        const current = context.current
-        const level = current.caller
-          ? colors.gray(current.caller)
-          : labelColorized.replace(label, label.padStart(6, ' '))
+      level (_u1, _u2, _u3, { label, labelColorized }) {
+        // No applications registered yet, no need to pad
+        if (context.maxLength === 0) {
+          return context.current.prefix + labelColorized
+        }
 
-        return `${current.prefix}\u001B[0m ${level}${current.color}`
+        const current = context.current
+        const level = current.caller ? current.caller : labelColorized.replace(label, label.padStart(6, ' '))
+
+        return `${current.prefix} | \u001B[0m ${level}`
       }
     }
   })
