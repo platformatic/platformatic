@@ -158,6 +158,15 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
+        msg: 'Added application "stdio" (entrypoint).',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
         msg: 'Starting the worker 0 of the application "stdio"...',
         payload: undefined,
         stdout: undefined

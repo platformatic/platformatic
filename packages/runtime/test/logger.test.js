@@ -1,9 +1,11 @@
 import { execa } from 'execa'
 import { ok } from 'node:assert'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
+import { updateFile } from './helpers.js'
+import { prepareRuntime } from './multiple-workers/helper.js'
 
 function stdioOutputToLogs (data) {
   const logs = data
@@ -507,5 +509,42 @@ test('should use custom config', async t => {
         !keys.includes('hostname')
       )
     })
+  )
+})
+
+test('should use colors when printing applications logs', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await updateFile(configFile, data => {
+    const config = JSON.parse(data)
+    config.logger.level = 'info'
+    return JSON.stringify(config, null, 2)
+  })
+
+  const child = execa(process.execPath, [startPath, configFile], {
+    env: { FORCE_TTY: 'true', PLT_USE_PLAIN_CREATE: true },
+    cwd: root
+  })
+  child.catch(() => {})
+
+  const promise = Promise.withResolvers()
+  let stdout = ''
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString()
+
+    if (stdout.includes('Platformatic is now listening')) {
+      child.kill('SIGKILL')
+      promise.resolve()
+    }
+  })
+
+  await promise.promise
+
+  ok(
+    stdout.match(
+      // eslint-disable-next-line no-control-regex
+      /\n(\u001b\[38;5;\d+m)\[\d{2}:\d{2}:\d{2}\.\d+ \d+\] composer:0\u001b\[0m \u001b\[32m {2}INFO\u001b\[39m\1: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
+    )
   )
 })
