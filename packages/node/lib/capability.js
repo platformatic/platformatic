@@ -100,6 +100,7 @@ export class NodeCapability extends BaseCapability {
   #isKoa
   #appClose
   #useHttpForDispatch
+  #factory
 
   constructor (root, config, context) {
     super('nodejs', version, root, config, context)
@@ -156,15 +157,15 @@ export class NodeCapability extends BaseCapability {
     this.#module = this.#module.default || this.#module
 
     // Deal with application
-    const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
+    this.#factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
     this.#appClose = this.#module['close']
 
     if (this.#hasServer()) {
-      if (factory) {
+      if (this.#factory) {
         // We have build function, this Capability will not use HTTP unless it is the entrypoint
         serverPromise.cancel()
 
-        this.#app = await this.#module[factory]()
+        this.#app = await this.#module[this.#factory]()
         this.#isFastify = isFastify(this.#app)
         this.#isKoa = isKoa(this.#app)
 
@@ -194,11 +195,20 @@ export class NodeCapability extends BaseCapability {
   }
 
   #hasServer () {
-    return this.config.node?.hasServer !== false && this.#module.hasServer !== false
+    return this.config.node?.hasServer !== false && this.#module?.hasServer !== false
   }
 
   async stop () {
     await super.stop()
+
+    // Emit the close event so that an application can handle it
+    const closeHandled = globalThis.platformatic.events.emit('close')
+
+    if (!this.#isFastify && !this.#appClose && !closeHandled) {
+      this.logger.warn(
+        `Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+      )
+    }
 
     if (this.status === 'starting') {
       await Unpromise.race([once(this, 'started'), once(this, 'start:error')])
@@ -208,9 +218,14 @@ export class NodeCapability extends BaseCapability {
       return this.stopCommand()
     }
 
-    // for no-server apps, we support custom close method
-    if (this.#appClose && !this.#hasServer()) {
-      return this.#appClose()
+    // If we have a close function, always invoke it
+    if (this.#appClose) {
+      await this.#appClose()
+    }
+
+    // for no-server apps, nothing else to do
+    if (!this.#hasServer()) {
+      return
     }
 
     // This is needed if the capability was subclassed

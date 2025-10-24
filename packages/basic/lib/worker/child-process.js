@@ -100,6 +100,10 @@ export class ChildProcess extends ITC {
           }
 
           if (!handled) {
+            this.#logger.warn(
+              `Please register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+            )
+
             // No user event, just exit without errors
             setImmediate(() => {
               process.exit(process.exitCode ?? 0)
