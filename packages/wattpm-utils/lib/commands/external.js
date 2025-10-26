@@ -13,11 +13,11 @@ import {
 } from '@platformatic/foundation'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
-import { parse } from 'dotenv'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { parseEnv } from 'node:util'
 import { version } from '../version.js'
 import { installDependencies } from './dependencies.js'
 
@@ -225,7 +225,7 @@ async function importApplication (logger, configurationFile, id, path, url, bran
 
     // Make sure the environment variable is not already defined
     if (existsSync(envFile)) {
-      const env = parse(await readFile(envFile, 'utf-8'))
+      const env = parseEnv(await readFile(envFile, 'utf-8'))
 
       if (env[envVariable]) {
         return logFatalError(
