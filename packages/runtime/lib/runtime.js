@@ -47,9 +47,9 @@ import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
+import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
-import { HealthSignalsQueue } from './worker/health-signals.js'
 import {
   kApplicationId,
   kConfig,
@@ -60,11 +60,11 @@ import {
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
+  kWorkerHealthSignals,
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus,
-  kWorkerHealthSignals
+  kWorkerStatus
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -84,6 +84,7 @@ export class Runtime extends EventEmitter {
   error
 
   #loggerDestination
+  #loggerContext
   #stdio
 
   #status // starting, started, stopping, stopped, closed
@@ -201,9 +202,10 @@ export class Runtime extends EventEmitter {
     }
 
     // Create the logger
-    const [logger, destination] = await createLogger(config)
+    const [logger, destination, context] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
+    this.#loggerContext = context
 
     this.#createWorkersBroadcastChannel()
 
@@ -358,6 +360,7 @@ export class Runtime extends EventEmitter {
 
       this.logger = abstractLogger
       this.#loggerDestination = null
+      this.#loggerContext = null
     }
 
     this.#updateStatus('closed')
@@ -466,12 +469,15 @@ export class Runtime extends EventEmitter {
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
     for (const application of applications) {
+      this.logger.info(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
       this.emitAndNotify('application:added', application)
     }
 
     if (start) {
       await this.startApplications(toStart)
     }
+
+    this.#updateLoggingPrefixes()
   }
 
   async removeApplications (applications, silent = false) {
@@ -487,8 +493,11 @@ export class Runtime extends EventEmitter {
     }
 
     for (const application of applications) {
+      this.logger.info(`Removed application "${application}".`)
       this.emitAndNotify('application:removed', application)
     }
+
+    this.#updateLoggingPrefixes()
   }
 
   async startApplications (applicationsToStart, silent = false) {
@@ -1666,13 +1675,7 @@ export class Runtime extends EventEmitter {
 
     const healthConfig = worker[kConfig].health
 
-    let {
-      maxELU,
-      maxHeapUsed,
-      maxHeapTotal,
-      maxUnhealthyChecks,
-      interval
-    } = worker[kConfig].health
+    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
 
     if (typeof maxHeapTotal === 'string') {
       maxHeapTotal = parseMemorySize(maxHeapTotal)
@@ -1682,7 +1685,7 @@ export class Runtime extends EventEmitter {
       interval = 1000
       this.logger.warn(
         `The health check interval for the "${errorLabel}" is set to ${healthConfig.interval}ms. ` +
-        'The minimum health check interval is 1s. It will be set to 1000ms.'
+          'The minimum health check interval is 1s. It will be set to 1000ms.'
       )
     }
 
@@ -1741,14 +1744,14 @@ export class Runtime extends EventEmitter {
 
             this.logger.error(
               { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
-            `The ${errorLabel} is unhealthy. Replacing it ...`
+              `The ${errorLabel} is unhealthy. Replacing it ...`
             )
 
             await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
           } catch (e) {
             this.logger.error(
               { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
-            `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
+              `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
             )
 
             worker.terminate()
@@ -2320,6 +2323,8 @@ export class Runtime extends EventEmitter {
         throw result.reason
       }
     }
+
+    this.#updateLoggingPrefixes()
   }
 
   async #updateApplicationConfigHealth (applicationId, health) {
@@ -2693,5 +2698,18 @@ export class Runtime extends EventEmitter {
 
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
+  }
+
+  #updateLoggingPrefixes () {
+    if (!this.#loggerContext) {
+      return
+    }
+
+    const ids = []
+    for (const worker of this.#workers.values()) {
+      ids.push(`${worker[kFullId]}`)
+    }
+
+    this.#loggerContext.updatePrefixes(ids)
   }
 }

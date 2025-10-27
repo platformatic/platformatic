@@ -1,4 +1,4 @@
-import { deepEqual, equal, ok, rejects } from 'node:assert'
+import { equal, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
@@ -38,7 +38,7 @@ test('should inject Platformatic code by default when building', async t => {
   await runtime.close()
 
   const logs = await getLogsFromFile(root)
-  deepEqual(logs[1].msg, 'INJECTED true')
+  ok(logs.find(l => l.msg === 'INJECTED true'))
 })
 
 test('should not inject Platformatic code when building if asked to', async t => {
@@ -64,7 +64,7 @@ test('should not inject Platformatic code when building if asked to', async t =>
   await runtime.close()
 
   const logs = await getLogsFromFile(root)
-  deepEqual(logs[1].msg, 'INJECTED false')
+  ok(logs.find(l => l.msg === 'INJECTED false'))
 })
 
 test('should build the applications on start in dev', async t => {
