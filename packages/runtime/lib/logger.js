@@ -110,8 +110,8 @@ function createPrettifier (context) {
       let color = ''
 
       if (name) {
-        prefix = `${name}:${worker}`
-        color = context.colors[`${name}:${worker}`] ?? ''
+        prefix = name.match(/:\d+$/) ? name : `${name}:${worker}`
+        color = context.colors[prefix] ?? ''
       }
 
       context.current.prefix = `(${pid}) ` + prefix.padStart(context.maxLength, ' ')
