@@ -126,7 +126,8 @@ export async function loadApplicationsCommands () {
   return { applications, commands, help }
 }
 
-export async function create (configOrRoot, sourceOrConfig, context, setUpSignals = true) {
+export async function create (configOrRoot, sourceOrConfig, context) {
+  const setUpSignals = context?.setUpSignals ?? true
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
 
   if (inspector.url() && !config[kMetadata].env.VSCODE_INSPECTOR_OPTIONS) {
