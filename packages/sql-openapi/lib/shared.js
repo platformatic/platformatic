@@ -132,7 +132,7 @@ export function rootEntityRoutes (
 
         for (let i = 0; i < queryKeys.length; i++) {
           const key = queryKeys[i]
-          if (key.startsWith('where.or')) {
+          if (key === 'where.or') {
             const orParam = query[key][0]
             // NOTE: Remove the first and last character which are the brackets
             // each or condition is separated by a pipe '|'
