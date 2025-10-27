@@ -127,7 +127,7 @@ export async function loadApplicationsCommands () {
 }
 
 export async function create (configOrRoot, sourceOrConfig, context) {
-  const setUpSignals = context?.setUpSignals ?? true
+  const setupSignals = context?.setupSignals ?? true
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
 
   if (inspector.url() && !config[kMetadata].env.VSCODE_INSPECTOR_OPTIONS) {
@@ -135,7 +135,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   }
 
   let runtime = new Runtime(config, context)
-  if (setUpSignals) {
+  if (setupSignals) {
     handleSignal(runtime, config)
   }
 
@@ -163,7 +163,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 
         config.server.port = ++port
         runtime = new Runtime(config, context)
-        if (setUpSignals) {
+        if (setupSignals) {
           handleSignal(runtime, config)
         }
       }

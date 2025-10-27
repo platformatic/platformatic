@@ -9,7 +9,7 @@ test('do not install additional process signals if requested', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-single-service.json')
   const listenersBefore = process.listenerCount('SIGINT')
   const app = await createRuntime(configFile, undefined, {
-    setUpSignals: false
+    setupSignals: false
   })
   await app.init()
 
