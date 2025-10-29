@@ -179,7 +179,7 @@ export function sanitize (data, transferList) {
 }
 
 export class ITC extends EventEmitter {
-  #requestEmitter
+  #waitingRequests
   #handlers
   #listening
   #handling
@@ -200,15 +200,12 @@ export class ITC extends EventEmitter {
     // Without it, it's impossible to know which "side" of the ITC is being used.
     this.name = name
     this.port = port
-    this.#requestEmitter = new EventEmitter()
+    this.#waitingRequests = new Map()
     this.#handlers = new Map()
     this.#listening = false
     this.#handling = false
     this.#closeAfterCurrentRequest = false
     this.#throwOnMissingHandler = throwOnMissingHandler ?? true
-
-    // Make sure the emitter handle a lot of listeners at once before raising a warning
-    this.#requestEmitter.setMaxListeners(1e3)
 
     /*
       There some contexts in which a message is sent and the event loop empties up while waiting for a response.
@@ -243,19 +240,24 @@ export class ITC extends EventEmitter {
       throw new SendBeforeListen()
     }
 
+    let reqId
     try {
       this._enableKeepAlive()
 
       const request = generateRequest(name, message)
       this._send(request, options)
 
-      const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
+      const promiseWithResolvers = Promise.withResolvers()
+      reqId = request.reqId
+      this.#waitingRequests.set(request.reqId, promiseWithResolvers)
 
-      const { error, data } = await Unpromise.race([responsePromise, this.#closePromise])
+      const { error, data } = await Unpromise.race([promiseWithResolvers.promise, this.#closePromise])
 
       if (error !== null) throw error
       return data
     } finally {
+      // Clean up the waiting requests map even if an error occurred
+      this.#waitingRequests.delete(reqId)
       this._manageKeepAlive()
     }
   }
@@ -388,7 +390,12 @@ export class ITC extends EventEmitter {
   }
 
   _emitResponse (response) {
-    this.#requestEmitter.emit(response.reqId, response)
+    const pending = this.#waitingRequests.get(response.reqId)
+    if (!pending) {
+      return
+    }
+
+    pending.resolve(response)
   }
 
   _enableKeepAlive () {
