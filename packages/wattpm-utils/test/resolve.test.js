@@ -201,3 +201,45 @@ test('install - should respect the application package manager, if any', async t
 
   ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
 })
+
+test('resolve - should parse branch from git URL fragment', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  // Use git URL with #branch fragment
+  const gitUrlWithBranch = `${repo}#another`
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', gitUrlWithBranch)
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+
+  const resolveProcess = await wattpmUtils('resolve', rootDir)
+
+  ok(resolveProcess.stdout.includes(`Cloning ${repo}`))
+  ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
+
+  // Verify it cloned the 'another' branch, not 'main'
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'another')
+})
+
+test('resolve - branch flag should take precedence over URL fragment', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  // Use git URL with #main fragment, but specify -b another
+  const gitUrlWithBranch = `${repo}#main`
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '-b', 'another', gitUrlWithBranch)
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+
+  const resolveProcess = await wattpmUtils('resolve', rootDir)
+
+  ok(resolveProcess.stdout.includes(`Cloning ${repo}`))
+  ok(resolveProcess.stdout.includes('branch another'))
+
+  // Verify it cloned 'another' branch (from -b flag), not 'main' (from fragment)
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'another')
+})

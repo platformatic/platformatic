@@ -233,7 +233,10 @@ wattpm import [directory] [url]
 **Arguments:**
 
 - `directory` - Application directory (default: current directory)
-- `url` - URL or GitHub repository to import (format: `user/repo` for GitHub)
+- `url` - URL or GitHub repository to import. Supports multiple formats:
+  - GitHub shorthand: `user/repo`
+  - Git URL: `https://github.com/user/repo.git`
+  - Git URL with branch fragment: `https://github.com/user/repo.git#branch-name`
 
 **Options:**
 
@@ -241,16 +244,36 @@ wattpm import [directory] [url]
 - `-i, --id <name>` - Service ID (default: repository basename)
 - `-p, --path <path>` - Local path for the application (default: application ID)
 - `-H, --http` - Use HTTP instead of SSH for GitHub URLs
-- `-b, --branch <name>` - Branch to clone (default: `main`)
+- `-b, --branch <name>` - Branch to clone (overrides URL fragment, default: `main`)
 - `-s, --skip-dependencies` - Don't install application dependencies
 - `-P, --package-manager <manager>` - Package manager to use
+
+**Branch Specification:**
+
+You can specify a branch in two ways during import:
+
+1. **URL Fragment**: Append `#branch-name` to the git URL
+2. **Flag**: Use the `-b/--branch` flag (takes precedence over URL fragment)
+
+**Note:** When manually editing the configuration file to add applications with URLs, you must use the URL fragment syntax (`url#branch`) to specify a branch, as the `-b` flag is only available during the `import` command.
 
 **Examples:**
 
 ```bash
+# Import using GitHub shorthand
 wattpm import platformatic/hello-world
+
+# Import with explicit ID
 wattpm import https://github.com/user/my-application.git --id my-application
+
+# Import specific branch using URL fragment
+wattpm import https://github.com/user/repo.git#develop
+
+# Import specific branch using flag
 wattpm import --http --branch develop user/repo
+
+# Flag overrides URL fragment (will clone 'main' branch)
+wattpm import https://github.com/user/repo.git#develop -b main
 ```
 
 ### `wattpm-utils resolve`
@@ -268,6 +291,21 @@ wattpm-utils resolve [directory]
 - `-p, --password <token>` - Password/token for private repositories
 - `-s, --skip-dependencies` - Don't install application dependencies
 - `-P, --package-manager <manager>` - Package manager to use
+
+**Branch Specification in Configuration:**
+
+When manually editing your configuration file to add applications with git URLs, specify branches using the URL fragment syntax (`url#branch`):
+
+```json
+{
+  "web": [
+    {
+      "id": "my-app",
+      "url": "https://github.com/user/repo.git#develop"
+    }
+  ]
+}
+```
 
 **Example:**
 
