@@ -23,6 +23,19 @@ import { installDependencies } from './dependencies.js'
 
 const originCandidates = ['origin', 'upstream']
 
+function parseGitUrl (url) {
+  const fragmentIndex = url.indexOf('#')
+
+  if (fragmentIndex === -1) {
+    return { url, branch: null }
+  }
+
+  const baseUrl = url.substring(0, fragmentIndex)
+  const branch = url.substring(fragmentIndex + 1)
+
+  return { url: baseUrl, branch }
+}
+
 async function parseLocalFolder (path) {
   // Read the package.json, if any
   const packageJsonPath = resolve(path, 'package.json')
@@ -256,7 +269,10 @@ async function importURL (logger, _, configurationFile, rawUrl, id, http, branch
     url = http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
   }
 
-  await importApplication(logger, configurationFile, id ?? basename(rawUrl, '.git'), null, url, branch)
+  const parsed = parseGitUrl(url)
+  const effectiveBranch = branch ?? parsed.branch
+
+  await importApplication(logger, configurationFile, id ?? basename(parsed.url, '.git'), null, parsed.url, effectiveBranch)
 }
 
 async function importLocal (logger, root, configurationFile, path, overridenId) {
@@ -371,10 +387,12 @@ export async function resolveApplications (
       const absolutePath = application.path
       const relativePath = relative(root, absolutePath)
 
-      // Clone and install dependencies
       childLogger.info(`Resolving application ${bold(application.id)} ...`)
 
-      let url = application.url
+      const parsedGitUrl = parseGitUrl(application.url)
+      let url = parsedGitUrl.url
+      const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch
+
       if (url.startsWith('http') && username && password) {
         const parsed = new URL(url)
         parsed.username ||= username
@@ -385,9 +403,9 @@ export async function resolveApplications (
       const cloneArgs = ['clone', url, absolutePath, '--single-branch', '--depth', 1]
 
       let branchLabel = ''
-      if (application.gitBranch && application.gitBranch !== 'main') {
-        cloneArgs.push('--branch', application.gitBranch)
-        branchLabel = ` (branch ${bold(application.gitBranch)})`
+      if (effectiveBranch && effectiveBranch !== 'main') {
+        cloneArgs.push('--branch', effectiveBranch)
+        branchLabel = ` (branch ${bold(effectiveBranch)})`
       }
 
       if (username) {
