@@ -244,7 +244,7 @@ wattpm applications:add [id] <file>
 Removes applications from a running application.
 
 ```bash
-wattpm applications:remove [id] [applications...]
+wattpm applications:remove [id] application1 [application2] [...]
 ```
 
 **Arguments:**
