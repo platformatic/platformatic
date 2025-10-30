@@ -38,7 +38,7 @@ export class EnvFileTool {
       const escapedValue = this._escapeValue(value)
       lines.push(`${key}=${escapedValue}`)
     }
-    await writeFile(this.path, lines.join('\n') + '\n', 'utf-8')
+    await writeFile(this.path, lines.join('\n') + '\n', { encoding: 'utf-8', flush: true })
   }
 
   /**
