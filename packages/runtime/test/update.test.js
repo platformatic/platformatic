@@ -1,11 +1,11 @@
-import { createDirectory } from '@platformatic/foundation'
+import { createDirectory, createEnvFileTool } from '@platformatic/foundation'
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import assert from 'node:assert'
 import { cp, readFile, stat, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import test, { after } from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { RuntimeGenerator, createDotenvTool } from '../lib/generator.js'
+import { RuntimeGenerator } from '../lib/generator.js'
 import { moveToTmpdir } from './helpers.js'
 
 const mockAgent = new MockAgent()
@@ -58,7 +58,7 @@ test('should remove an application', async t => {
     applications: [updatedFoobar] // the original application was removed
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
@@ -68,7 +68,7 @@ test('should remove an application', async t => {
   runtimeDotEnv.getKeys().forEach(k => assert.ok(!k.startsWith('PLT_RIVAL')))
 
   // the other plugin values should be there
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_TYPESCRIPT'), 'true')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_TYPESCRIPT'), 'true')
   // the only dependency has been removed
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -138,14 +138,14 @@ test('should add a new application with new env variables', async t => {
     }
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -223,21 +223,21 @@ test("should update existing application's plugin options", async t => {
   assert.deepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), 'sample_client_id_updated')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), 'sample_client_id_updated')
   assert.equal(
-    runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'),
+    runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'),
     'sample_client_secret_updated'
   )
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), '/login/google')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), '/login/google')
   assert.equal(
-    runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'),
+    runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'),
     'http://localhost:3000/login/google/callback'
   )
 })
@@ -348,13 +348,13 @@ test("should add new application's plugin and options", async t => {
     option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}'
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION'), 'new_options_value')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION'), 'new_options_value')
   // ensure the sample file is still there
   assert.equal(await readFile(sampleRouteFilePath, 'utf-8'), samplerouteFileContents)
 
@@ -406,20 +406,20 @@ test('should remove a plugin from an existing application', async t => {
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
   // new value
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
   // removed values
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), null)
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
 
@@ -509,15 +509,15 @@ test('should remove a plugin from an application and add the same on the other',
   })
 
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -582,14 +582,14 @@ test('should handle new fields on new application', async t => {
   assert.equal(applicationConfigFile.plugins.packages, undefined)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = createDotenvTool({
+  const runtimeDotEnv = createEnvFileTool({
     path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_DATABASE_URL'), 'sqlite://./db.sqlite')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_APPLY_MIGRATIONS'), 'true')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_DATABASE_URL'), 'sqlite://./db.sqlite')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_APPLY_MIGRATIONS'), 'true')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
