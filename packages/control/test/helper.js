@@ -45,7 +45,7 @@ export async function startRuntime (configPath, env = {}, additionalArgs = []) {
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
-        const url = message.url ?? message.msg.match(/server listening at (.+)/i)?.[1]
+        const url = message.url ?? message.msg.match(/listening at (.+)/i)?.[1]
 
         if (url !== undefined) {
           clearTimeout(errorTimeout)
@@ -65,7 +65,7 @@ export async function kill (runtime, signal = 'SIGKILL') {
   await once(runtime, 'exit')
 }
 
-export async function safeKill (child, signal = 'SIGINT') {
+export async function safeKill (child) {
   child.catch(() => {})
   child.kill('SIGINT')
   if (os.platform() === 'win32') {

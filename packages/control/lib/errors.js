@@ -97,3 +97,13 @@ export const FailedToStopProfiling = createError(
   `${ERROR_PREFIX}_FAILED_TO_STOP_PROFILING`,
   'Failed to stop profiling for service "%s": %s'
 )
+
+export const FailedToAddApplications = createError(
+  `${ERROR_PREFIX}_FAILED_TO_ADD_APPLICATIONS`,
+  'Failed to add applications: %s'
+)
+
+export const FailedToRemoveApplications = createError(
+  `${ERROR_PREFIX}_FAILED_TO_REMOVE_APPLICATIONS`,
+  'Failed to remove applications: %s'
+)

@@ -3,15 +3,14 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 
 export async function metricsCommand (logger, args) {
+  const client = new RuntimeApiClient()
   try {
     const { values, positionals } = parseArgs(args, { format: { type: 'string', short: 'f', default: 'json' } }, false)
 
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
     const metrics = await client.getRuntimeMetrics(runtime.pid, { format: values.format })
     const result = values.format === 'text' ? metrics : JSON.stringify(metrics, null, 2)
     console.log(result)
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} have been stopped.`)
   } catch (error) {
@@ -21,6 +20,8 @@ export async function metricsCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
+  } finally {
+    client.close()
   }
 }
 

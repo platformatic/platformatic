@@ -18,8 +18,8 @@ export async function logsCommand (logger, args) {
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
   let application
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]
 
@@ -54,6 +54,8 @@ export async function logsCommand (logger, args) {
         `Cannot stream ${application ? 'application' : 'runtime'} logs: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 

@@ -316,6 +316,30 @@ export function createValidator (schema, validationOptions, context = {}) {
   return ajv.compile(schema)
 }
 
+export function validate (schema, config, validationOptions = {}, fixPaths = true, root = '') {
+  const validator = createValidator(schema, validationOptions, { root, fixPaths })
+  const valid = validator(config)
+
+  if (!valid) {
+    const validationErrors = []
+    let errors = ':'
+
+    for (const validationError of validator.errors) {
+      /* c8 ignore next - else */
+      const path = validationError.instancePath === '' ? '/' : validationError.instancePath
+
+      validationErrors.push({ path, message: validationError.message, params: validationError.params })
+      errors += `\n  - ${path}: ${validationError.message}`
+    }
+
+    const error = new ConfigurationDoesNotValidateAgainstSchemaError()
+    error.message += errors + '\n'
+    Object.defineProperty(error, 'validationErrors', { value: validationErrors })
+
+    throw error
+  }
+}
+
 export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {}) {
   if (!isAbsolute(root)) {
     root = resolve(process.cwd(), root)
@@ -411,7 +435,7 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
 
 export async function loadConfiguration (source, schema, options = {}) {
   const {
-    validate,
+    validate: shouldValidate,
     validationOptions,
     transform,
     upgrade,
@@ -470,32 +494,12 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
   }
 
-  if (validate) {
+  if (shouldValidate) {
     if (typeof schema === 'undefined') {
       throw new SourceMissingError()
     }
 
-    const validator = createValidator(schema, validationOptions, { root, fixPaths })
-    const valid = validator(config)
-
-    if (!valid) {
-      const validationErrors = []
-      let errors = ':'
-
-      for (const validationError of validator.errors) {
-        /* c8 ignore next - else */
-        const path = validationError.instancePath === '' ? '/' : validationError.instancePath
-
-        validationErrors.push({ path, message: validationError.message, params: validationError.params })
-        errors += `\n  - ${path}: ${validationError.message}`
-      }
-
-      const error = new ConfigurationDoesNotValidateAgainstSchemaError()
-      error.message += errors + '\n'
-      Object.defineProperty(error, 'validationErrors', { value: validationErrors })
-
-      throw error
-    }
+    validate(schema, config, validationOptions, fixPaths, root)
   }
 
   if (!skipMetadata) {

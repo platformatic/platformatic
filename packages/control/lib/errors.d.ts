@@ -19,3 +19,7 @@ export declare const FailedToGetRuntimeHistoryLogs: (value: string) => FastifyEr
 export declare const FailedToGetRuntimeAllLogs: (value: string) => FastifyError
 export declare const FailedToGetRuntimeLogIndexes: (value: string) => FastifyError
 export declare const FailedToGetRuntimeMetrics: (value: string) => FastifyError
+export declare const FailedToStartProfiling: (value: string) => FastifyError
+export declare const FailedToStopProfiling: (value: string) => FastifyError
+export declare const FailedToAddApplications: (value: string) => FastifyError
+export declare const FailedToRemoveApplications: (value: string) => FastifyError

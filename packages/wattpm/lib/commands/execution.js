@@ -83,12 +83,11 @@ export async function startCommand (logger, args) {
 export async function stopCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
 
     await client.stopRuntime(runtime.pid)
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} have been stopped.`)
   } catch (error) {
@@ -98,18 +97,19 @@ export async function stopCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
 export async function restartCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
     await client.restartRuntime(runtime.pid, ...applications)
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
   } catch (error) {
@@ -123,14 +123,16 @@ export async function restartCommand (logger, args) {
         `Cannot restart the runtime: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 
 export async function reloadCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
 
     // Stop the previous runtime
@@ -147,7 +149,6 @@ export async function reloadCommand (logger, args) {
     })
 
     child.unref()
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} have been reloaded and it is now running as PID ${child.pid}.`)
   } catch (error) {
@@ -157,6 +158,8 @@ export async function reloadCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
@@ -221,8 +224,7 @@ export const help = {
       },
       {
         name: 'application',
-        description:
-          'The name of the application to restart (if omitted, all applications are restarted)'
+        description: 'The name of the application to restart (if omitted, all applications are restarted)'
       }
     ]
   },

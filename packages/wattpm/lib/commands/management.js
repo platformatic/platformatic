@@ -61,10 +61,9 @@ function formatDuration (duration) {
 }
 
 export async function psCommand (logger) {
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const runtimes = await client.getRuntimes()
-    await client.close()
 
     if (runtimes.length === 0) {
       logger.warn('No runtimes found.')
@@ -86,17 +85,18 @@ export async function psCommand (logger) {
     /* c8 ignore next 3 - Hard to test */
   } catch (error) {
     return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot list runtime: ${error.message}`)
+  } finally {
+    await client.close()
   }
 }
 
 export async function applicationsCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
+  const client = new RuntimeApiClient()
 
   try {
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
     const { production, applications } = await client.getRuntimeApplications(runtime.pid)
-    await client.close()
 
     const headers = production
       ? [bold('Name'), bold('Workers'), bold('Type'), bold('Entrypoint')]
@@ -121,6 +121,8 @@ export async function applicationsCommand (logger, args) {
         `Cannot list runtime applications: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 
@@ -128,15 +130,14 @@ export async function envCommand (logger, args) {
   const { values, positionals: allPositionals } = parseArgs(args, { table: { type: 'boolean', short: 't' } }, false)
 
   let application
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]
 
     const env = application
       ? await client.getRuntimeApplicationEnv(runtime.pid, application)
       : await client.getRuntimeEnv(runtime.pid)
-    await client.close()
 
     if (values.table) {
       console.log(
@@ -166,6 +167,8 @@ export async function envCommand (logger, args) {
         `Cannot get ${application ? 'application' : 'runtime'} environment variables: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 
@@ -173,15 +176,14 @@ export async function configCommand (logger, args) {
   const { positionals: allPositionals } = parseArgs(args, {}, false)
 
   let application
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]
 
     const config = application
       ? await client.getRuntimeApplicationConfig(runtime.pid, application)
       : await client.getRuntimeConfig(runtime.pid)
-    await client.close()
 
     console.log(JSON.stringify(config, null, 2))
   } catch (error) {
@@ -197,6 +199,8 @@ export async function configCommand (logger, args) {
         `Cannot get ${application ? 'application' : 'runtime'} configuration: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 

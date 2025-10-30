@@ -101,6 +101,13 @@ export declare function replaceEnv (
   onMissingEnv?: (key: string) => string | undefined,
   ignore?: string[]
 ): RawConfiguration
+export declare function validate (
+  schema: JSONSchemaType<any>,
+  config: RawConfiguration,
+  validationOptions?: object,
+  fixPaths?: boolean,
+  root?: string
+): void
 export declare function loadConfiguration (
   source: string | RawConfiguration,
   schema?: any,

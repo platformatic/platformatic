@@ -8,6 +8,7 @@ import { Client } from 'undici'
 import WebSocket from 'ws'
 import {
   ApplicationNotFound,
+  FailedToAddApplications,
   FailedToGetRuntimeAllLogs,
   FailedToGetRuntimeApplicationConfig,
   FailedToGetRuntimeApplicationEnv,
@@ -20,6 +21,7 @@ import {
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
   FailedToReloadRuntime,
+  FailedToRemoveApplications,
   FailedToStartProfiling,
   FailedToStopProfiling,
   FailedToStopRuntime,
@@ -167,11 +169,11 @@ export class RuntimeApiClient {
     return runtimeApplications
   }
 
-  async getRuntimeConfig (pid) {
+  async getRuntimeConfig (pid, metadata = false) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/v1/config',
+      path: `/api/v1/config?metadata=${metadata ? 'true' : 'false'}`,
       method: 'GET'
     })
 
@@ -402,6 +404,44 @@ export class RuntimeApiClient {
       const error = await body.text()
       throw new FailedToStopRuntime(error)
     }
+  }
+
+  async addApplications (pid, applications, start = true) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/applications?start=${start ? 'true' : 'false'}`,
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(applications)
+    })
+
+    if (statusCode !== 201) {
+      const error = await body.text()
+      throw new FailedToAddApplications(error)
+    }
+
+    const apps = await body.json()
+    return apps
+  }
+
+  async removeApplications (pid, applications) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/applications',
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(applications)
+    })
+
+    if (statusCode !== 202) {
+      const error = await body.text()
+      throw new FailedToRemoveApplications(error)
+    }
+
+    const apps = await body.json()
+    return apps
   }
 
   async getRuntimeMetrics (pid, options = {}) {

@@ -24,7 +24,8 @@ import {
   safeRemove,
   saveConfigurationFile,
   stringifyJSON,
-  stringifyJSON5
+  stringifyJSON5,
+  validate
 } from '../index.js'
 
 test('envVariablePattern - should match environment variable patterns', () => {
@@ -905,7 +906,7 @@ test('loadConfiguration - should apply transform function', async t => {
   deepEqual(result, { name: 'test', transformed: true })
 })
 
-test('loadConfiguration - should throw SourceMissingError when source is undefined', async t => {
+test('loadConfiguration - should throw SourceMissingError when source is undefined', async () => {
   const schema = { type: 'object' }
 
   await rejects(
@@ -916,7 +917,7 @@ test('loadConfiguration - should throw SourceMissingError when source is undefin
   )
 })
 
-test('loadConfiguration - should throw RootMissingError when root is missing for env replacement', async t => {
+test('loadConfiguration - should throw RootMissingError when root is missing for env replacement', async () => {
   const config = { host: '{DB_HOST}' }
   const schema = { type: 'object' }
 
@@ -928,7 +929,7 @@ test('loadConfiguration - should throw RootMissingError when root is missing for
   )
 })
 
-test('loadConfiguration - should handle upgrade with config.module version', async t => {
+test('loadConfiguration - should handle upgrade with config.module version', async () => {
   const config = {
     module: '@platformatic/db@1.0.0',
     name: 'test'
@@ -953,7 +954,7 @@ test('loadConfiguration - should handle upgrade with config.module version', asy
   deepEqual(result, { module: '@platformatic/db@1.0.0', name: 'test', upgraded: true })
 })
 
-test('loadConfiguration - should skip upgrade when no version found', async t => {
+test('loadConfiguration - should skip upgrade when no version found', async () => {
   const config = {
     $schema: 'https://schemas.platformatic.dev/@platformatic/db/.json',
     name: 'test'
@@ -966,7 +967,7 @@ test('loadConfiguration - should skip upgrade when no version found', async t =>
   }
 
   const context = {
-    upgrade: async (config, version) => {
+    upgrade: async config => {
       return { ...config, upgraded: true }
     }
   }
@@ -980,7 +981,7 @@ test('loadConfiguration - should skip upgrade when no version found', async t =>
   ok(!result.upgraded)
 })
 
-test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is true', async t => {
+test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is true', async () => {
   const config = { name: 'test' }
 
   await rejects(
@@ -991,7 +992,7 @@ test('loadConfiguration - should throw SourceMissingError when schema is undefin
   )
 })
 
-test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is default true', async t => {
+test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is default true', async () => {
   const config = { name: 'test' }
 
   await rejects(
@@ -1002,7 +1003,7 @@ test('loadConfiguration - should throw SourceMissingError when schema is undefin
   )
 })
 
-test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is explicitly true', async t => {
+test('loadConfiguration - should throw SourceMissingError when schema is undefined and validate is explicitly true', async () => {
   const config = { name: 'test' }
 
   await rejects(
@@ -1013,7 +1014,7 @@ test('loadConfiguration - should throw SourceMissingError when schema is undefin
   )
 })
 
-test('loadConfigurationModule - should load capability from matched schema', async t => {
+test('loadConfigurationModule - should load capability from matched schema', async () => {
   const config = { module: '@platformatic/db' }
 
   try {
@@ -1031,7 +1032,7 @@ test('loadConfigurationModule - should load capability from matched schema', asy
   }
 })
 
-test('loadConfigurationModule - should extract module from schema URL when pkg not provided', async t => {
+test('loadConfigurationModule - should extract module from schema URL when pkg not provided', async () => {
   const config = { $schema: 'https://schemas.platformatic.dev/@platformatic/db/1.0.0.json' }
 
   try {
@@ -1048,7 +1049,7 @@ test('loadConfigurationModule - should extract module from schema URL when pkg n
   }
 })
 
-test('loadConfigurationModule - should throw when extracting module fails', async t => {
+test('loadConfigurationModule - should throw when extracting module fails', async () => {
   const config = { someProperty: 'value' }
 
   throws(() => loadConfigurationModule(process.cwd(), config), {
@@ -1245,7 +1246,7 @@ test('loadConfiguration - should format validation errors correctly', async t =>
   }
 })
 
-test('loadConfiguration - should handle upgrade when no version in moduleInfo but config.module exists', async t => {
+test('loadConfiguration - should handle upgrade when no version in moduleInfo but config.module exists', async () => {
   const config = {
     $schema: 'https://schemas.platformatic.dev/@platformatic/db/.json',
     module: '@platformatic/db@1.2.3',
@@ -1261,7 +1262,7 @@ test('loadConfiguration - should handle upgrade when no version in moduleInfo bu
 
   const result = await loadConfiguration(config, schema, {
     root: process.cwd(),
-    upgrade: (logger, config, version) => {
+    upgrade: (_, config, version) => {
       equal(version, '1.2.3')
       return { ...config, upgraded: true }
     }
@@ -1370,4 +1371,146 @@ test('loadEnv - should handle .env file not found in any directory', async t => 
   // Should return empty object since ignoreProcessEnv=true and no .env file found
   ok(typeof result === 'object')
   equal(Object.keys(result).length, 0)
+})
+
+test('validate - should validate successfully with valid config', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      port: { type: 'number' }
+    },
+    required: ['name']
+  }
+
+  const config = { name: 'test', port: 3000 }
+
+  // Should not throw for valid config
+  validate(schema, config)
+})
+
+test('validate - should throw ConfigurationDoesNotValidateAgainstSchemaError for invalid config', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      port: { type: 'number' }
+    },
+    required: ['name', 'port']
+  }
+
+  const config = { port: 'invalid' }
+
+  throws(() => validate(schema, config), {
+    name: 'FastifyError',
+    code: 'PLT_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
+  })
+})
+
+test('validate - should format validation errors with paths and messages', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      port: { type: 'number' }
+    },
+    required: ['name']
+  }
+
+  const config = { port: 'invalid' }
+
+  try {
+    validate(schema, config)
+    throw new Error('Should have thrown validation error')
+  } catch (error) {
+    equal(error.name, 'FastifyError')
+    ok(error.message.includes(':'))
+    ok(error.validationErrors)
+    ok(error.validationErrors.length > 0)
+
+    // Check validation error structure
+    const firstError = error.validationErrors[0]
+    ok(firstError.path)
+    ok(firstError.message)
+    ok(firstError.params !== undefined)
+  }
+})
+
+test('validate - should handle fixPaths parameter', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      path: { type: 'string', resolvePath: true }
+    }
+  }
+
+  const config = { path: 'relative/path' }
+  const root = '/tmp'
+
+  validate(schema, config, {}, true, root)
+
+  // Path should be resolved when fixPaths is true
+  ok(isAbsolute(config.path))
+})
+
+test('validate - should not modify paths when fixPaths is false', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      path: { type: 'string', resolvePath: true }
+    }
+  }
+
+  const config = { path: 'relative/path' }
+  const root = '/tmp'
+
+  validate(schema, config, {}, false, root)
+
+  // Path should remain relative when fixPaths is false
+  equal(config.path, 'relative/path')
+})
+
+test('validate - should use default parameters when not provided', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' }
+    }
+  }
+
+  const config = { name: 'test' }
+
+  // Should not throw when using defaults
+  validate(schema, config)
+})
+
+test('validate - should handle resolveModule validation', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      module: { type: 'string', resolveModule: true }
+    }
+  }
+
+  const config = { module: 'node:path' }
+  const root = process.cwd()
+
+  // Should validate successfully with valid module
+  validate(schema, config, {}, true, root)
+})
+
+test('validate - should fail resolveModule validation for invalid module', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      module: { type: 'string', resolveModule: true }
+    }
+  }
+
+  const config = { module: 'non-existent-module-12345' }
+  const root = process.cwd()
+
+  throws(() => validate(schema, config, {}, true, root), {
+    name: 'FastifyError'
+  })
 })

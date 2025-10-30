@@ -1,11 +1,18 @@
 import fastifyAccepts from '@fastify/accepts'
 import fastifyWebsocket from '@fastify/websocket'
-import { createDirectory, safeRemove } from '@platformatic/foundation'
+import {
+  applications as applicationSchema,
+  createDirectory,
+  kMetadata,
+  safeRemove,
+  validate
+} from '@platformatic/foundation'
 import fastify from 'fastify'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
+import { prepareApplication } from './config.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -13,6 +20,26 @@ export async function managementApiPlugin (app, opts) {
   app.register(fastifyAccepts)
 
   const runtime = opts.runtime
+
+  async function deleteApplications (ids, reply) {
+    const validIds = runtime.getApplicationsIds()
+
+    for (const id of ids) {
+      if (!validIds.includes(id)) {
+        reply.code(404)
+
+        return {
+          error: 'Not Found',
+          message: `Application with id "${id}" not found.`,
+          statusCode: 404
+        }
+      }
+    }
+
+    const removed = await runtime.removeApplications(ids)
+    reply.code(202)
+    return removed
+  }
 
   app.get('/status', async () => {
     const status = runtime.getRuntimeStatus()
@@ -23,8 +50,16 @@ export async function managementApiPlugin (app, opts) {
     return runtime.getRuntimeMetadata()
   })
 
-  app.get('/config', async () => {
-    return runtime.getRuntimeConfig()
+  app.get('/config', async request => {
+    const metadata = request.query.metadata === 'true'
+    const rawConfig = await runtime.getRuntimeConfig(metadata)
+
+    if (metadata) {
+      const { [kMetadata]: __metadata, ...config } = rawConfig
+      return { ...config, __metadata }
+    }
+
+    return rawConfig
   })
 
   app.get('/env', async () => {
@@ -46,10 +81,58 @@ export async function managementApiPlugin (app, opts) {
     return runtime.getApplications()
   })
 
+  app.post('/applications', async (request, reply) => {
+    let applications = request.body
+
+    if (!Array.isArray(applications)) {
+      applications = [applications]
+    }
+
+    const config = runtime.getRuntimeConfig(true)
+
+    try {
+      validate(applicationSchema, applications, {}, true, config[kMetadata].root)
+    } catch (err) {
+      reply.code(400)
+
+      return {
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Invalid applications configuration.',
+        validationErrors: err.validationErrors
+      }
+    }
+
+    for (let i = 0; i < applications.length; i++) {
+      applications[i] = await prepareApplication(config, applications[i])
+    }
+
+    const created = await runtime.addApplications(applications, request.query.start !== 'false')
+    reply.code(201)
+    return created
+  })
+
+  app.delete('/applications', async (request, reply) => {
+    if (!Array.isArray(request.body)) {
+      reply.code(404)
+      return {
+        statusCode: 404,
+        error: 'Bad Request',
+        message: 'Invalid applications IDs.'
+      }
+    }
+
+    return deleteApplications(request.body, reply)
+  })
+
   app.get('/applications/:id', async request => {
     const { id } = request.params
     app.log.debug('get application details', { id })
     return runtime.getApplicationDetails(id)
+  })
+
+  app.delete('/applications/:id', async (request, reply) => {
+    return deleteApplications([request.params.id], reply)
   })
 
   app.get('/applications/:id/config', async request => {
@@ -195,7 +278,7 @@ export async function managementApiPlugin (app, opts) {
     })
   })
 
-  app.get('/logs/live', { websocket: true }, async (socket, req) => {
+  app.get('/logs/live', { websocket: true }, async socket => {
     runtime.addLoggerDestination(createWebSocketStream(socket))
   })
 }
