@@ -6,7 +6,6 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/foundation'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
@@ -59,6 +58,8 @@ export class RemixCapability extends ViteCapability {
     if (this.url) {
       return this.url
     }
+
+    await this._start()
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
@@ -156,6 +157,7 @@ export class RemixCapability extends ViteCapability {
       await preloadVite()
     }
 
+    await super._start({ listen })
     await super.start({ listen })
 
     /* c8 ignore next 3 */
@@ -171,10 +173,6 @@ export class RemixCapability extends ViteCapability {
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
-
-      if (this.isProduction && features.node.reusePort) {
-        listenOptions.reusePort = true
-      }
 
       this.#server = await new Promise((resolve, reject) => {
         return this.#app

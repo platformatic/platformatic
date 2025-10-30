@@ -53,6 +53,7 @@ runtime. Each application object supports the following settings:
   the application.
 - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
@@ -303,6 +304,10 @@ An object with the following settings:
   - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
   - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
   - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
+
+### `reuseTcpPorts`
+
+Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. This setting can be overridden at the application level.
 
 ### `logger`
 

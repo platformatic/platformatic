@@ -1,3 +1,4 @@
+import { features } from '@platformatic/foundation'
 import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { hostname as getHostname } from 'node:os'
 import { join } from 'node:path'
@@ -40,116 +41,130 @@ test('logs stdio from the application thread', async t => {
     const applicationMessages = messages.filter(m => m.name === 'stdio')
     const runtimeMessages = messages.filter(m => m.name === undefined)
 
-    deepStrictEqual(applicationMessages, [
-      {
-        level: 20,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'Loading envfile...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'This is an info',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 40,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'This is a warn',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 50,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'This is an error',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: `Server listening at ${url}`,
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'incoming request',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'This is a\n console.log',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 50,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'This is a\n console.error',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: undefined,
-        payload: undefined,
-        stdout: { ts: '123', foo: 'bar' }
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: '#'.repeat(1e4),
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: '<Buffer 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31 ... 50 more bytes>',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'request completed',
-        payload: undefined,
-        stdout: undefined
-      }
-    ])
+    deepStrictEqual(
+      applicationMessages,
+      [
+        {
+          level: 20,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'Loading envfile...',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'This is an info',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 40,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'This is a warn',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 50,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'This is an error',
+          payload: undefined,
+          stdout: undefined
+        },
+        features.node.reusePort
+          ? undefined
+          : {
+              level: 40,
+              pid,
+              hostname,
+              name: 'stdio',
+              msg: 'Cannot enable reusePort as it is not available in your OS.',
+              payload: undefined,
+              stdout: undefined
+            },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: `Server listening at ${url}`,
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'incoming request',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'This is a\n console.log',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 50,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'This is a\n console.error',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: undefined,
+          payload: undefined,
+          stdout: { ts: '123', foo: 'bar' }
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: '#'.repeat(1e4),
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: '<Buffer 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31 ... 50 more bytes>',
+          payload: undefined,
+          stdout: undefined
+        },
+        {
+          level: 30,
+          pid,
+          hostname,
+          name: 'stdio',
+          msg: 'request completed',
+          payload: undefined,
+          stdout: undefined
+        }
+      ].filter(l => l)
+    )
 
     // Do not use deepStrictEqual as some other message might be logged but we don't care about all of them
     deepEqual(runtimeMessages, [

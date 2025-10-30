@@ -19,7 +19,10 @@ test(
       }),
       null,
       {
-        production: true
+        production: true,
+        config: {
+          reuseTcpPorts: true
+        }
       }
     )
 
@@ -34,7 +37,10 @@ test(
       }),
       null,
       {
-        production: true
+        production: true,
+        config: {
+          reuseTcpPorts: true
+        }
       }
     )
 

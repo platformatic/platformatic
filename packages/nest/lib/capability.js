@@ -7,7 +7,6 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/foundation'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -61,6 +60,8 @@ export class NestCapability extends BaseCapability {
     if (this.url) {
       return this.url
     }
+
+    await super._start({ listen })
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
@@ -224,10 +225,6 @@ export class NestCapability extends BaseCapability {
   async #listen () {
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
-
-    if (this.isProduction && features.node.reusePort) {
-      listenOptions.reusePort = true
-    }
 
     await this.#app.listen(listenOptions)
     this.url = getServerUrl(this.#isFastify ? this.#server.server : this.#server)

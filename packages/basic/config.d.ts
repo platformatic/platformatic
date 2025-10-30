@@ -110,6 +110,7 @@ export interface PlatformaticBasicConfig {
         rejectUnauthorized?: boolean;
       };
     };
+    reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;

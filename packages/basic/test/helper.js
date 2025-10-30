@@ -516,61 +516,61 @@ async function ensureExists (path) {
   )
 }
 
-export function verifyPlatformaticGateway (t, url) {
+export function verifyPlatformaticGateway (_, url) {
   return verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
 }
 
-export function verifyPlatformaticGatewayWithProxy (t, url) {
+export function verifyPlatformaticGatewayWithProxy (_, url) {
   return verifyJSONViaHTTP(url, '/external-proxy/example', 200, { hello: 'foobar' })
 }
 
-export async function verifyPlatformaticService (t, url) {
+export async function verifyPlatformaticService (_, url) {
   await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/backend/time', 200, body => {
     ok(typeof body.time === 'number')
   })
 }
 
-export async function verifyPlatformaticServiceWithProxy (t, url) {
+export async function verifyPlatformaticServiceWithProxy (_, url) {
   await verifyJSONViaHTTP(url, '/external-proxy/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/external-proxy/backend/time', 200, body => {
     ok(typeof body.time === 'number')
   })
 }
 
-export async function verifyPlatformaticDB (t, url) {
+export async function verifyPlatformaticDB (_, url) {
   await verifyJSONViaHTTP(url, '/db/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/db/movies/', 200, [])
 }
 
-export async function verifyFrontendOnRoot (t, url) {
+export async function verifyFrontendOnRoot (_, url) {
   await verifyHTMLViaHTTP(url, '/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnPrefix (t, url) {
+export async function verifyFrontendOnPrefix (_, url) {
   await verifyHTMLViaHTTP(url, '/frontend', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/frontend/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnPrefixWithProxy (t, url) {
+export async function verifyFrontendOnPrefixWithProxy (_, url) {
   await verifyHTMLViaHTTP(url, '/external-proxy/frontend', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/external-proxy/frontend/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnAutodetectedPrefix (t, url) {
+export async function verifyFrontendOnAutodetectedPrefix (_, url) {
   await verifyHTMLViaHTTP(url, '/nested/base/dir', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', [htmlHelloMatcher])
 }
 
-export function verifyFrontendAPIOnRoot (t, url) {
+export function verifyFrontendAPIOnRoot (_, url) {
   return verifyJSONViaHTTP(url, '/direct', 200, { ok: true })
 }
 
-export function verifyFrontendAPIOnPrefix (t, url) {
+export function verifyFrontendAPIOnPrefix (_, url) {
   return verifyJSONViaHTTP(url, '/frontend/direct', 200, { ok: true })
 }
 
-export function verifyFrontendAPIOnAutodetectedPrefix (t, url) {
+export function verifyFrontendAPIOnAutodetectedPrefix (_, url) {
   return verifyJSONViaHTTP(url, '/nested/base/dir/direct', 200, { ok: true })
 }
 

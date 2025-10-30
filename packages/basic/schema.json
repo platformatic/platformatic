@@ -68,6 +68,10 @@
               "useHttp": {
                 "type": "boolean"
               },
+              "reuseTcpPorts": {
+                "type": "boolean",
+                "default": true
+              },
               "workers": {
                 "anyOf": [
                   {
@@ -633,6 +637,10 @@
             }
           },
           "additionalProperties": false
+        },
+        "reuseTcpPorts": {
+          "type": "boolean",
+          "default": true
         },
         "startTimeout": {
           "default": 30000,

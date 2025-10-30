@@ -63,6 +63,8 @@ export class NextCapability extends BaseCapability {
       return this.url
     }
 
+    await super._start({ listen })
+
     this.on('config', config => {
       this.#basePath = config.basePath
     })

@@ -10,7 +10,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { ensureLoggableError, features } from '@platformatic/foundation'
+import { ensureLoggableError } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -50,6 +50,8 @@ export class AstroCapability extends BaseCapability {
     if (this.url) {
       return this.url
     }
+
+    await super._start({ listen })
 
     if (this.isProduction) {
       await this.#startProduction(listen)
@@ -248,10 +250,6 @@ export class AstroCapability extends BaseCapability {
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
-
-      if (this.isProduction && features.node.reusePort) {
-        listenOptions.reusePort = true
-      }
 
       await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)

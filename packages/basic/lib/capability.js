@@ -2,6 +2,7 @@ import {
   buildPinoOptions,
   deepmerge,
   executeWithTimeout,
+  features,
   kHandledError,
   kMetadata,
   kTimeout
@@ -9,6 +10,7 @@ import {
 import { client, collectMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
+import { tracingChannel } from 'node:diagnostics_channel'
 import EventEmitter, { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
@@ -34,6 +36,7 @@ export class BaseCapability extends EventEmitter {
   workerId
   telemetryConfig
   serverConfig
+  reuseTcpPorts
   openapiSchema
   graphqlSchema
   connectionString
@@ -56,6 +59,7 @@ export class BaseCapability extends EventEmitter {
   #subprocessStarted
   #metricsCollected
   #pendingDependenciesWaits
+  #reuseTcpPortsSubscribers
 
   constructor (type, version, root, config, context, standardStreams = {}) {
     super()
@@ -89,6 +93,7 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
+    this.reuseTcpPorts = this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 
@@ -129,6 +134,8 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
+    // TODO@PI: Handle reusePort
+
     // Wait for explicit dependencies to start
     await this.waitForDependenciesStart(this.dependencies)
 
@@ -157,6 +164,11 @@ export class BaseCapability extends EventEmitter {
   async stop () {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
+    }
+
+    if (this.#reuseTcpPortsSubscribers) {
+      tracingChannel('net.server.listen').unsubscribe(this.#reuseTcpPortsSubscribers)
+      this.#reuseTcpPortsSubscribers = null
     }
 
     // Stop OTLP bridge if running
@@ -562,6 +574,7 @@ export class BaseCapability extends EventEmitter {
       basePath,
       logLevel: this.logger.level,
       isEntrypoint: this.isEntrypoint,
+      reuseTcpPorts: this.reuseTcpPorts,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
@@ -613,6 +626,23 @@ export class BaseCapability extends EventEmitter {
     )
 
     return pino(pinoOptions, this.standardStreams?.stdout)
+  }
+
+  _start () {
+    if (this.reuseTcpPorts) {
+      if (!features.node.reusePort) {
+        this.reuseTcpPorts = false
+        this.logger.warn('Cannot enable reusePort as it is not available in your OS.')
+      } else {
+        this.#reuseTcpPortsSubscribers = {
+          asyncStart ({ options }) {
+            options.reusePort = true
+          }
+        }
+
+        tracingChannel('net.server.listen').subscribe(this.#reuseTcpPortsSubscribers)
+      }
+    }
   }
 
   async _collectMetrics () {
@@ -757,18 +787,17 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Setup and start OTLP exporter bridge
-    this.otlpBridge = await setupOtlpExporter(
-      this.metricsRegistry,
-      metricsConfig.otlpExporter,
-      this.applicationId
-    )
+    this.otlpBridge = await setupOtlpExporter(this.metricsRegistry, metricsConfig.otlpExporter, this.applicationId)
 
     if (this.otlpBridge) {
       this.otlpBridge.start()
-      this.logger.info({
-        endpoint: metricsConfig.otlpExporter.endpoint,
-        interval: metricsConfig.otlpExporter.interval || 60000
-      }, 'OTLP metrics exporter started')
+      this.logger.info(
+        {
+          endpoint: metricsConfig.otlpExporter.endpoint,
+          interval: metricsConfig.otlpExporter.interval || 60000
+        },
+        'OTLP metrics exporter started'
+      )
     }
   }
 

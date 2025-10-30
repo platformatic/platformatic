@@ -744,6 +744,10 @@ export const applications = {
       useHttp: {
         type: 'boolean'
       },
+      reuseTcpPorts: {
+        type: 'boolean',
+        default: true
+      },
       workers: {
         anyOf: [
           {
@@ -916,6 +920,10 @@ export const runtimeProperties = {
   },
   logger,
   server,
+  reuseTcpPorts: {
+    type: 'boolean',
+    default: true
+  },
   startTimeout: {
     default: 30000,
     type: 'number',
