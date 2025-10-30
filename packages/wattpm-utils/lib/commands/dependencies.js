@@ -9,11 +9,11 @@ import {
 } from '@platformatic/foundation'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
-import { parse } from 'dotenv'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { parseEnv } from 'node:util'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -22,7 +22,7 @@ async function executeCommand (root, ...args) {
   const npmrc = resolve(root, '.npmrc')
   if (existsSync(npmrc)) {
     try {
-      const env = parse(await readFile(npmrc, 'utf-8'))
+      const env = parseEnv(await readFile(npmrc, 'utf-8'))
 
       if (env['dry-run'] === 'true') {
         return

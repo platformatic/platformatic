@@ -4,7 +4,6 @@ import {
   disablePinoDirectWrite,
   getPrivateSymbol
 } from '@platformatic/foundation'
-import dotenv from 'dotenv'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
 import { ServerResponse } from 'node:http'
@@ -110,9 +109,11 @@ async function main () {
 
   globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
 
-  dotenv.config({
-    path: envfile
-  })
+  try {
+    process.loadEnvFile(envfile)
+  } catch {
+    // Ignore if the file doesn't exist, similar to dotenv behavior
+  }
 
   if (runtimeConfig.env) {
     Object.assign(process.env, runtimeConfig.env)

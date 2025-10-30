@@ -663,9 +663,6 @@ importers:
       colorette:
         specifier: ^2.0.19
         version: 2.0.20
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -1321,12 +1318,6 @@ importers:
       debounce:
         specifier: ^2.0.0
         version: 2.2.0
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      dotenv-tool:
-        specifier: ^0.1.1
-        version: 0.1.1
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
@@ -5463,9 +5454,6 @@ packages:
   dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
-
-  dotenv-tool@0.1.1:
-    resolution: {integrity: sha512-72oQ+k8fWjKPCu/WfP+aiCPLtcsyqYLSa2s8ezFmI77jzgtF21bep6yvSj4q2d69o6b24W9BDU857zGuD7bh6w==}
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
@@ -13682,8 +13670,6 @@ snapshots:
       esutils: 2.0.3
 
   dotenv-expand@10.0.0: {}
-
-  dotenv-tool@0.1.1: {}
 
   dotenv@16.6.1: {}
 

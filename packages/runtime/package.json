@@ -76,8 +76,6 @@
     "colorette": "^2.0.20",
     "cron": "^4.1.0",
     "debounce": "^2.0.0",
-    "dotenv": "^16.4.5",
-    "dotenv-tool": "^0.1.1",
     "fastest-levenshtein": "^1.0.16",
     "fastify": "^5.0.0",
     "graphql": "^16.8.1",

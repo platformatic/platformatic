@@ -1,11 +1,11 @@
 import toml from '@iarna/toml'
 import Ajv from 'ajv'
-import { parse as parseEnvFile } from 'dotenv'
 import jsonPatch from 'fast-json-patch'
 import JSON5 from 'json5'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, parse, resolve } from 'node:path'
+import { parseEnv } from 'node:util'
 import { parse as rawParseYAML, stringify as stringifyYAML } from 'yaml'
 import {
   AddAModulePropertyToTheConfigOrAddAKnownSchemaError,
@@ -347,7 +347,7 @@ export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {
   }
 
   const baseEnv = ignoreProcessEnv ? {} : process.env
-  const envFromFile = envFile ? parseEnvFile(await readFile(envFile, 'utf-8')) : {}
+  const envFromFile = envFile ? parseEnv(await readFile(envFile, 'utf-8')) : {}
 
   return {
     ...baseEnv,
