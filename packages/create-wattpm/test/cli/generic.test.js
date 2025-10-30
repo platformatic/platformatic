@@ -139,8 +139,9 @@ test('Support packages without generator via importing (existing applications)',
   const envFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
 
   // Check that all original env variables are still present
-  const originalLines = originalEnvFile.trim().split('\n').filter(line => line.trim())
-  const envLines = envFile.trim().split('\n').filter(line => line.trim())
+  // Normalize line endings to handle Windows (CRLF) vs Unix (LF)
+  const originalLines = originalEnvFile.replace(/\r\n/g, '\n').trim().split('\n').filter(line => line.trim())
+  const envLines = envFile.replace(/\r\n/g, '\n').trim().split('\n').filter(line => line.trim())
 
   for (const line of originalLines) {
     ok(envLines.includes(line), `Expected env file to contain: ${line}`)
