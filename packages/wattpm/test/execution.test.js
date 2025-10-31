@@ -226,6 +226,51 @@ test('dev - should restart an application if the application configuration file 
   }
 })
 
+test('dev - should restart an application if "rs" is typed', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', rootDir)
+  let { url } = await waitForStart(startProcess)
+
+  {
+    const { statusCode, body } = await request(new URL('/version', url))
+    deepStrictEqual(statusCode, 200)
+    deepStrictEqual(await body.json(), { version: 123 })
+  }
+
+  startProcess.stdin.write('abc\nrs\n')
+
+  // Wait for the server to restart
+  let reloaded = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('The application has been successfully reloaded')) {
+      reloaded = true
+      continue
+    }
+
+    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    if (mo) {
+      url = mo[1]
+      break
+    }
+  }
+
+  ok(reloaded)
+
+  {
+    const { statusCode, body } = await request(new URL('/version', url))
+    deepStrictEqual(statusCode, 200)
+    deepStrictEqual(await body.json(), { version: 123 })
+  }
+})
+
 test('start - should start in production mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 

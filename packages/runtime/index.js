@@ -143,6 +143,12 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   if (context?.start) {
     let port = config.server?.port
 
+    await runtime.init()
+
+    if (context.reloaded) {
+      runtime.logger.info('The application has been successfully reloaded.')
+    }
+
     while (true) {
       try {
         await runtime.start()
