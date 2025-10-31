@@ -2,7 +2,7 @@ import { loadConfigurationFile } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
 import { writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
@@ -153,7 +153,7 @@ test('applications:add - supports both JSON file and paths', async t => {
     },
     {
       id: 'application-3',
-      path: 'services/application-3'
+      path: join('services', 'application-3')
     }
   ])
 })
