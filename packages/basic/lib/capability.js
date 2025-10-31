@@ -632,7 +632,6 @@ export class BaseCapability extends EventEmitter {
     if (this.reuseTcpPorts) {
       if (!features.node.reusePort) {
         this.reuseTcpPorts = false
-        this.logger.warn('Cannot enable reusePort as it is not available in your OS.')
       } else {
         this.#reuseTcpPortsSubscribers = {
           asyncStart ({ options }) {

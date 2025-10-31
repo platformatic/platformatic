@@ -1,4 +1,3 @@
-import { features } from '@platformatic/foundation'
 import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { hostname as getHostname } from 'node:os'
 import { join } from 'node:path'
@@ -80,17 +79,6 @@ test('logs stdio from the application thread', async t => {
           payload: undefined,
           stdout: undefined
         },
-        features.node.reusePort
-          ? undefined
-          : {
-              level: 40,
-              pid,
-              hostname,
-              name: 'stdio',
-              msg: 'Cannot enable reusePort as it is not available in your OS.',
-              payload: undefined,
-              stdout: undefined
-            },
         {
           level: 30,
           pid,
@@ -163,7 +151,7 @@ test('logs stdio from the application thread', async t => {
           payload: undefined,
           stdout: undefined
         }
-      ].filter(l => l)
+      ]
     )
 
     // Do not use deepStrictEqual as some other message might be logged but we don't care about all of them
