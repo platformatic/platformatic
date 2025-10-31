@@ -32,7 +32,7 @@ test('should send a custom health signal', async t => {
   })
   assert.strictEqual(statusCode, 200)
 
-  await sleep(1000)
+  await sleep(2000)
 
   const healthChecksWithSignals = healthChecks.filter(
     c => c.healthSignals.length > 0
@@ -83,7 +83,7 @@ test('should send a batch of custom health signal', async t => {
     await Promise.all(promises)
   }
 
-  await sleep(1000)
+  await sleep(2000)
 
   {
     const promises = []
@@ -105,7 +105,7 @@ test('should send a batch of custom health signal', async t => {
     await Promise.all(promises)
   }
 
-  await sleep(1000)
+  await sleep(2000)
 
   assert.strictEqual(healthSignals.length, 20)
 
