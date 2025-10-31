@@ -1,5 +1,5 @@
 import { BaseCapability, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
-import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/foundation'
+import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
 import { telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
@@ -68,6 +68,8 @@ export class ServiceCapability extends BaseCapability {
     if (this.url) {
       return this.url
     }
+
+    await super._start()
 
     // Create the application if needed
     if (!this.#app) {
@@ -263,10 +265,6 @@ export class ServiceCapability extends BaseCapability {
   async _listen () {
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
-
-    if (this.isProduction && features.node.reusePort) {
-      listenOptions.reusePort = true
-    }
 
     await this.#app.listen(listenOptions)
     this.url = getServerUrl(this.#app.server)

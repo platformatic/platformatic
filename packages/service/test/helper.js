@@ -1,6 +1,7 @@
+import { kMetadata } from '@platformatic/foundation'
 import { Agent, setGlobalDispatcher } from 'undici'
 import { createTemporaryDirectory } from '../../basic/test/helper.js'
-import { create } from '../index.js'
+import { loadConfiguration, ServiceCapability } from '../index.js'
 
 const agent = new Agent({
   keepAliveTimeout: 10,
@@ -22,13 +23,20 @@ export function buildConfig (options) {
 
 export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const directory = await createTemporaryDirectory(t)
-
-  const service = await create(directory, options, {
+  const context = {
     applicationFactory,
     isStandalone: true,
     isEntrypoint: true,
     isProduction: creationOptions.production
-  })
+  }
+
+  const config = await loadConfiguration(directory, options, context)
+
+  if (creationOptions.config) {
+    Object.assign(config, creationOptions.config)
+  }
+
+  const service = new ServiceCapability(config[kMetadata].root, config, context)
 
   if (!creationOptions.skipInit) {
     await service.init()

@@ -188,6 +188,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
       sourceMaps: false,
+      reuseTcpPorts: true,
       type: '@platformatic/db',
       watch: false,
       skipTelemetryHooks: true,
@@ -204,6 +205,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       localUrl: 'http://another.plt.local',
       path: resolve(dirname(configFile), 'another'),
       sourceMaps: false,
+      reuseTcpPorts: true,
       type: 'unknown',
       watch: false,
       workers: {

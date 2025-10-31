@@ -36,12 +36,13 @@ export class GatewayCapability extends ServiceCapability {
     await super.init()
   }
 
-  start () {
+  async start () {
     if (this.url) {
       return this.url
     }
 
-    const url = super.start()
+    await super._start()
+    const url = await super.start()
 
     this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
     globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)

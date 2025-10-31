@@ -2,8 +2,7 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureLoggableError,
-  features
+  ensureLoggableError
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { client, collectMetrics } from '@platformatic/metrics'
@@ -130,6 +129,10 @@ export class ChildProcess extends ITC {
 
     this.#setupServer()
     this.#setupInterceptors()
+
+    if (globalThis.platformatic.reuseTcpPorts) {
+      this.#setupTcpPortsHandling()
+    }
 
     this.registerGlobals({
       logger: this.#logger,
@@ -359,10 +362,6 @@ export class ChildProcess extends ITC {
         if (port !== false) {
           const hasFixedPort = typeof port === 'number'
           options.port = hasFixedPort ? port : 0
-
-          if (hasFixedPort && features.node.reusePort) {
-            options.reusePort = true
-          }
         }
 
         if (typeof host === 'string') {
@@ -397,6 +396,14 @@ export class ChildProcess extends ITC {
     if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
+  }
+
+  #setupTcpPortsHandling () {
+    tracingChannel('net.server.listen').subscribe({
+      asyncStart ({ options }) {
+        options.reusePort = true
+      }
+    })
   }
 
   #setupInterceptors () {

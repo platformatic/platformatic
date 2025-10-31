@@ -7,7 +7,6 @@ import {
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
-import { features } from '@platformatic/foundation'
 import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
 import { once } from 'node:events'
@@ -111,6 +110,8 @@ export class NodeCapability extends BaseCapability {
     if (this.url) {
       return this.url
     }
+
+    await super._start({ listen })
 
     // Listen if entrypoint
     if (this.#app && listen) {
@@ -340,10 +341,6 @@ export class NodeCapability extends BaseCapability {
 
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
-
-    if (this.isProduction && features.node.reusePort) {
-      listenOptions.reusePort = true
-    }
 
     if (this.#isFastify) {
       await this.#app.listen(listenOptions)

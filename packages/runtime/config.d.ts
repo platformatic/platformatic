@@ -20,6 +20,7 @@ export type PlatformaticRuntimeConfig = {
         id: string;
         config?: string;
         useHttp?: boolean;
+        reuseTcpPorts?: boolean;
         workers?:
           | number
           | string
@@ -182,6 +183,7 @@ export type PlatformaticRuntimeConfig = {
       rejectUnauthorized?: boolean;
     };
   };
+  reuseTcpPorts?: boolean;
   startTimeout?: number;
   restartOnError?: boolean | number;
   exitOnUnhandledErrors?: boolean;

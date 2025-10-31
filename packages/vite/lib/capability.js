@@ -9,7 +9,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { ensureLoggableError, features } from '@platformatic/foundation'
+import { ensureLoggableError } from '@platformatic/foundation'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
@@ -54,6 +54,8 @@ export class ViteCapability extends BaseCapability {
   }
 
   async start ({ listen }) {
+    await super._start({ listen })
+
     // Make this idempotent
     if (this.url) {
       return this.url
@@ -236,10 +238,6 @@ export class ViteCapability extends BaseCapability {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
 
-      if (this.isProduction && features.node.reusePort) {
-        listenOptions.reusePort = true
-      }
-
       await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)
       return this.url
@@ -301,6 +299,8 @@ export class ViteSSRCapability extends NodeCapability {
     if (this.url) {
       return this.url
     }
+
+    await super._start({ listen })
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']

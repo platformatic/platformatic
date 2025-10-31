@@ -214,6 +214,7 @@ export interface PlatformaticNodeJsConfig {
         rejectUnauthorized?: boolean;
       };
     };
+    reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;

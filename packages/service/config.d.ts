@@ -410,6 +410,7 @@ export interface PlatformaticServiceConfig {
         rejectUnauthorized?: boolean;
       };
     };
+    reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;
