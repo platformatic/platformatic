@@ -19,6 +19,7 @@ export async function runDelegatedCommand (logger, packageManager, args) {
 
   const options = { stdio: 'inherit' }
 
+  /* c8 ignore next 4 - Covered by CI */
   if (platform() === 'win32') {
     options.shell = true
     options.windowsVerbatimArguments = true

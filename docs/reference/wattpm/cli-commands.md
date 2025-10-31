@@ -227,17 +227,19 @@ wattpm applications [id]
 Adds new applications to a running application from a configuration file.
 
 ```bash
-wattpm applications:add [id] <file>
+wattpm applications:add [id] path1 [path2] [...]
 ```
 
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `file` - JSON file containing the applications to add
+- `paths` - A folder containing an application or a JSON file containing the applications to add
 
 **Options:**
 
 - `-s, --save` - Save the added applications to the application configuration file
+
+**Note:** If the `paths` argument is a path to a JSON file, it should be an array. The contents follow the same format of the [application](../runtime/configuration#applications) property.
 
 ### `wattpm applications:remove`
 

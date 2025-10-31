@@ -88,6 +88,7 @@ export function logo (color = true) {
 export function createCliLogger (level, noPretty) {
   let pretty
 
+  /* c8 ignore next 3 - Covered elsewhere */
   if (noPretty) {
     setPrettyPrint(false)
   } else {

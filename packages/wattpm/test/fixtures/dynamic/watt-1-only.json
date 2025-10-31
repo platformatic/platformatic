@@ -9,6 +9,6 @@
   "entrypoint": "composer",
   "autoload": {
     "path": "./services",
-    "exclude": ["application-2"]
+    "exclude": ["application-2", "application-3"]
   }
 }

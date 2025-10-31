@@ -1,0 +1,6 @@
+{
+  "main": "index.mjs",
+  "dependencies": {
+    "@platformatic/node": "^2.3.1"
+  }
+}

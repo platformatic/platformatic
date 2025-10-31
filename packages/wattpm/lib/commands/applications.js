@@ -1,7 +1,8 @@
 import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
-import { readFile, writeFile } from 'node:fs/promises'
-import { relative, resolve } from 'node:path'
+import { bold } from 'colorette'
+import { readFile, stat, writeFile } from 'node:fs/promises'
+import { basename, isAbsolute, relative, resolve } from 'node:path'
 
 async function updateConfigFile (path, update) {
   const contents = JSON.parse(await readFile(path, 'utf-8'))
@@ -26,21 +27,48 @@ export async function applicationsAddCommand (logger, args) {
 
   const client = new RuntimeApiClient()
   try {
-    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
+    const [runtime, applications] = await getMatchingRuntime(client, allPositionals)
+    const config = await client.getRuntimeConfig(runtime.pid, true)
+    const root = config.__metadata.root
 
-    const toAdd = JSON.parse(await readFile(positionals[0], 'utf-8'))
+    let toAdd = []
+    let added = 0
 
-    const added = await client.addApplications(runtime.pid, toAdd, true)
+    for (let app of applications) {
+      let spec
+
+      // Determine if app is a path to a directory or file, and load accordingly
+      try {
+        if (!isAbsolute(app)) {
+          app = resolve(root, app)
+        }
+
+        const pathStat = await stat(app)
+        if (pathStat.isDirectory()) {
+          spec = {
+            id: basename(app),
+            path: relative(root, app)
+          }
+        } else {
+          spec = JSON.parse(await readFile(app, 'utf-8'))
+        }
+      } catch (err) {
+        logFatalError(logger, `The path "${bold(app)}" does not exist or is not valid JSON.`)
+        return
+      }
+
+      const response = await client.addApplications(runtime.pid, spec, true)
+      added += response.length
+      toAdd = toAdd.concat(spec)
+    }
 
     if (save) {
-      const config = await client.getRuntimeConfig(runtime.pid, true)
-
       await updateConfigFile(config.__metadata.path, async config => {
-        config.applications = (config.applications ?? []).concat(Array.isArray(toAdd) ? toAdd : [toAdd])
+        config.applications = (config.applications ?? []).concat(toAdd)
       })
     }
 
-    logger.done(`Successfully added ${added.length} application${added.length > 1 ? 's' : ''} to the application.`)
+    logger.done(`Successfully added ${added} application${added > 1 ? 's' : ''} to the application.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
@@ -122,7 +150,7 @@ export async function applicationsRemoveCommand (logger, args) {
 
 export const help = {
   'applications:add': {
-    usage: 'applications:add [id] <file>',
+    usage: 'applications:add [id] <path>',
     description: 'Add new applications to a running application',
     args: [
       {
@@ -131,8 +159,8 @@ export const help = {
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
-        name: 'file',
-        description: 'The file containing the applications to add'
+        name: 'path',
+        description: 'A folder containing an application or a JSON file containing the applications to add'
       }
     ],
     options: [
