@@ -64,6 +64,8 @@ wattpm init --skip-dependencies --package-manager pnpm
 
 Starts your Watt application in development mode with hot reloading.
 
+You can also trigger manual reloading by typing `rs` followed by a carriage return.
+
 ```bash
 wattpm dev [directory]
 ```

@@ -10,7 +10,7 @@ import {
 import { create } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
-import { on } from 'node:events'
+import { createInterface } from 'node:readline'
 
 export async function devCommand (logger, args) {
   const {
@@ -38,16 +38,32 @@ export async function devCommand (logger, args) {
 
   let runtime = await create(root, configurationFile, { start: true })
 
-  // Add a watcher on the configurationFile so that we can eventually restart the runtime
+  // Handle reloading via either file changes or stdin "rs" command
+  const { promise, reject } = Promise.withResolvers()
+
+  async function reloadApplication () {
+    await runtime.close()
+    runtime = await create(root, configurationFile, { start: true, reloaded: true })
+  }
+
   const watcher = new FileWatcher({ path: configurationFile })
   watcher.startWatching()
-
-  // eslint-disable-next-line no-unused-vars
-  for await (const _ of on(watcher, 'update')) {
+  watcher.on('update', () => {
     runtime.logger.info('The configuration file has changed, reloading the application ...')
-    await runtime.close()
-    runtime = await create(root, configurationFile, { start: true })
-  }
+    reloadApplication().catch(reject)
+  })
+
+  const rl = createInterface({ input: process.stdin })
+  rl.on('line', line => {
+    if (line.trim() !== 'rs') {
+      return
+    }
+
+    runtime.logger.info('Received "rs" from the stdin, Reloading the application ...')
+    reloadApplication().catch(reject)
+  })
+
+  return promise
 }
 
 export async function startCommand (logger, args) {
@@ -221,8 +237,7 @@ export const help = {
       },
       {
         name: 'application',
-        description:
-          'The name of the application to restart (if omitted, all applications are restarted)'
+        description: 'The name of the application to restart (if omitted, all applications are restarted)'
       }
     ]
   },

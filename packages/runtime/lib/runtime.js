@@ -1596,7 +1596,7 @@ export class Runtime extends EventEmitter {
             await this.startApplication(applicationId)
           }
 
-          this.logger.info(`The application "${applicationId}" has been successfully reloaded ...`)
+          this.logger.info(`The application "${applicationId}" has been successfully reloaded.`)
           this.emitAndNotify('application:worker:reloaded', eventPayload)
 
           if (applicationConfig.entrypoint) {
