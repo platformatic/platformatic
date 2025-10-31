@@ -2,10 +2,11 @@ import { safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert'
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
+import { version } from '../../runtime/index.js'
 import { RuntimeApiClient } from '../lib/index.js'
 import { kill, startRuntime } from './helper.js'
 
@@ -236,4 +237,49 @@ test('should only restart certain applications', async t => {
   logsStream.destroy()
   assert.ok(logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-1'))
   assert.ok(!logs.find(l => l.event === 'application:restarting' && l.payload[0] === 'service-2'))
+})
+
+test('should be able to add and remove applications', async t => {
+  const projectDir = join(fixturesDir, 'runtime-4')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+
+  const added = await runtimeClient.addApplications(runtime.pid, [
+    {
+      id: 'service-2',
+      path: './services/service-2'
+    }
+  ])
+
+  assert.deepStrictEqual(added, [
+    {
+      dependencies: [],
+      entrypoint: false,
+      id: 'service-2',
+      localUrl: 'http://service-2.plt.local',
+      path: resolve(projectDir, 'services', 'service-2'),
+      status: 'started',
+      type: 'service',
+      version
+    }
+  ])
+
+  const removed = await runtimeClient.removeApplications(runtime.pid, ['service-2'])
+  assert.deepStrictEqual(removed, [
+    {
+      dependencies: [],
+      entrypoint: false,
+      id: 'service-2',
+      localUrl: 'http://service-2.plt.local',
+      path: resolve(projectDir, 'services', 'service-2'),
+      status: 'removed',
+      type: 'service',
+      version
+    }
+  ])
 })

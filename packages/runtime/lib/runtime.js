@@ -477,12 +477,25 @@ export class Runtime extends EventEmitter {
       await this.startApplications(toStart)
     }
 
+    const created = []
+    for (const { id } of applications) {
+      created.push(await this.getApplicationDetails(id))
+    }
+
     this.#updateLoggingPrefixes()
+    return created
   }
 
   async removeApplications (applications, silent = false) {
     if (applications.includes(this.#entrypointId)) {
       throw new CannotRemoveEntrypointError()
+    }
+
+    const removed = []
+    for (const application of applications) {
+      const details = await this.getApplicationDetails(application)
+      details.status = 'removed'
+      removed.push(details)
     }
 
     await this.stopApplications(applications, silent, true)
@@ -498,6 +511,7 @@ export class Runtime extends EventEmitter {
     }
 
     this.#updateLoggingPrefixes()
+    return removed
   }
 
   async startApplications (applicationsToStart, silent = false) {
@@ -1191,7 +1205,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { entrypoint, localUrl } = application[kConfig]
+    const { entrypoint, localUrl, config, path } = application[kConfig]
 
     const status = await sendViaITC(application, 'getStatus')
     const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')
@@ -1199,6 +1213,8 @@ export class Runtime extends EventEmitter {
     const applicationDetails = {
       id,
       type,
+      config,
+      path,
       status,
       dependencies,
       version,

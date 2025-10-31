@@ -1,5 +1,5 @@
 import { deepStrictEqual, strictEqual } from 'node:assert'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
@@ -47,6 +47,8 @@ test('should get application details', async t => {
     entrypoint: true,
     url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
+    config: resolve(configFile, '../../management-api/services/service-1/platformatic.json'),
+    path: resolve(configFile, '../../management-api/services/service-1'),
     dependencies: []
   })
 })

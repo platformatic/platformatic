@@ -3,6 +3,7 @@ import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
 import { adminCommand } from './lib/commands/admin.js'
+import { applicationsAddCommand, applicationsRemoveCommand } from './lib/commands/applications.js'
 import { buildCommand } from './lib/commands/build.js'
 import { createCommand } from './lib/commands/create.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
@@ -104,6 +105,12 @@ export async function main () {
       break
     case 'pprof':
       command = pprofCommand
+      break
+    case 'applications:add':
+      command = applicationsAddCommand
+      break
+    case 'applications:remove':
+      command = applicationsRemoveCommand
       break
     case 'admin':
       command = adminCommand

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "server": {
+    "hostname": "127.0.0.1"
+  },
+  "logger": {
+    "level": "info"
+  },
+  "entrypoint": "composer",
+  "autoload": {
+    "path": "./services",
+    "exclude": ["non-existent"]
+  }
+}

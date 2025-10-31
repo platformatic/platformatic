@@ -4,10 +4,16 @@ import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
 
 export async function pprofStartCommand (logger, args) {
+  const client = new RuntimeApiClient()
+
   try {
-    const { positionals, values } = parseArgs(args, {
-      type: { type: 'string', short: 't', default: 'cpu' }
-    }, false)
+    const { positionals, values } = parseArgs(
+      args,
+      {
+        type: { type: 'string', short: 't', default: 'cpu' }
+      },
+      false
+    )
 
     // Validate profile type
     const type = values.type
@@ -15,7 +21,6 @@ export async function pprofStartCommand (logger, args) {
       return logFatalError(logger, `Invalid profile type: ${type}. Must be 'cpu' or 'heap'.`)
     }
 
-    const client = new RuntimeApiClient()
     const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { applications: runtimeApplications } = await client.getRuntimeApplications(runtime.pid)
 
@@ -28,7 +33,6 @@ export async function pprofStartCommand (logger, args) {
       // Start profiling for specific application
       const application = runtimeApplications.find(s => s.id === applicationId)
       if (!application) {
-        await client.close()
         return logFatalError(logger, `Application not found: ${applicationId}`)
       }
 
@@ -45,8 +49,6 @@ export async function pprofStartCommand (logger, args) {
         }
       }
     }
-
-    await client.close()
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
@@ -55,14 +57,22 @@ export async function pprofStartCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot start profiling: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
 export async function pprofStopCommand (logger, args) {
+  const client = new RuntimeApiClient()
+
   try {
-    const { positionals, values } = parseArgs(args, {
-      type: { type: 'string', short: 't', default: 'cpu' }
-    }, false)
+    const { positionals, values } = parseArgs(
+      args,
+      {
+        type: { type: 'string', short: 't', default: 'cpu' }
+      },
+      false
+    )
 
     // Validate profile type
     const type = values.type
@@ -70,7 +80,6 @@ export async function pprofStopCommand (logger, args) {
       return logFatalError(logger, `Invalid profile type: ${type}. Must be 'cpu' or 'heap'.`)
     }
 
-    const client = new RuntimeApiClient()
     const [runtime, remainingPositionals] = await getMatchingRuntime(client, positionals)
     const { applications: runtimeApplications } = await client.getRuntimeApplications(runtime.pid)
 
@@ -84,14 +93,15 @@ export async function pprofStopCommand (logger, args) {
       // Stop profiling for specific application
       const application = runtimeApplications.find(s => s.id === applicationId)
       if (!application) {
-        await client.close()
         return logFatalError(logger, `Application not found: ${applicationId}`)
       }
 
       const profileData = await client.stopApplicationProfiling(runtime.pid, applicationId, options)
       const filename = `pprof-${type}-${applicationId}-${timestamp}.pb`
       await writeFile(filename, Buffer.from(profileData))
-      logger.info(`${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filename)}`)
+      logger.info(
+        `${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filename)}`
+      )
     } else {
       // Stop profiling for all applications
       for (const application of runtimeApplications) {
@@ -99,14 +109,14 @@ export async function pprofStopCommand (logger, args) {
           const profileData = await client.stopApplicationProfiling(runtime.pid, application.id, options)
           const filename = `pprof-${type}-${application.id}-${timestamp}.pb`
           await writeFile(filename, Buffer.from(profileData))
-          logger.info(`${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filename)}`)
+          logger.info(
+            `${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filename)}`
+          )
         } catch (error) {
           logger.warn(`Failed to stop profiling for application ${application.id}: ${error.message}`)
         }
       }
     }
-
-    await client.close()
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
@@ -115,6 +125,8 @@ export async function pprofStopCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot stop profiling: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 

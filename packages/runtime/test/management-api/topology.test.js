@@ -1,5 +1,5 @@
 import { deepStrictEqual, strictEqual } from 'node:assert'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
@@ -48,6 +48,8 @@ test('should get applications topology', async t => {
         id: 'service-1',
         type: 'service',
         status: 'started',
+        config: resolve(projectDir, 'services/service-1', 'platformatic.json'),
+        path: resolve(projectDir, 'services/service-1'),
         version,
         entrypoint: true,
         url: entrypointDetails.url,
@@ -58,6 +60,8 @@ test('should get applications topology', async t => {
         id: 'service-2',
         type: 'service',
         status: 'started',
+        config: resolve(projectDir, 'services/service-2', 'platformatic.json'),
+        path: resolve(projectDir, 'services/service-2'),
         version,
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
@@ -67,6 +71,8 @@ test('should get applications topology', async t => {
         id: 'service-db',
         type: 'db',
         status: 'started',
+        config: resolve(projectDir, 'services/service-db', 'platformatic.db.json'),
+        path: resolve(projectDir, 'services/service-db'),
         version,
         entrypoint: false,
         localUrl: 'http://service-db.plt.local',

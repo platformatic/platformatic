@@ -224,6 +224,48 @@ wattpm applications [id]
 
 - `id` - Process ID or application name (optional if only one app is running)
 
+### `wattpm applications:add`
+
+Adds new applications to a running application from a configuration file.
+
+```bash
+wattpm applications:add [id] path1 [path2] [...]
+```
+
+**Arguments:**
+
+- `id` - Process ID or application name (optional if only one app is running)
+- `paths` - A folder containing an application or a JSON file containing the applications to add
+
+**Options:**
+
+- `-s, --save` - Save the added applications to the application configuration file
+
+**Note:** If the `paths` argument is a path to a JSON file, it should be an array. The contents follow the same format of the [application](../runtime/configuration#applications) property.
+
+### `wattpm applications:remove`
+
+Removes applications from a running application.
+
+```bash
+wattpm applications:remove [id] application1 [application2] [...]
+```
+
+**Arguments:**
+
+- `id` - Process ID or application name (optional if only one app is running)
+- `applications` - List of application IDs to remove
+
+**Options:**
+
+- `-s, --save` - Remove the applications from the application configuration file
+
+**Example:**
+
+```bash
+wattpm applications:remove my-app api-app database-app --save
+```
+
 ### `wattpm import`
 
 Imports an external application into your Watt application.

@@ -70,8 +70,8 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]
 
@@ -137,8 +137,6 @@ export async function injectCommand (logger, args) {
       outputStream.end()
       await finished(outputStream)
     }
-
-    await client.close()
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
@@ -148,6 +146,8 @@ export async function injectCommand (logger, args) {
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 

@@ -1,5 +1,5 @@
 import { deepStrictEqual } from 'node:assert'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { version } from '../../lib/version.js'
 import { createRuntime } from '../helpers.js'
@@ -24,6 +24,8 @@ test('should get application details', async t => {
     version,
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
+    config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
+    path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
     dependencies: []
   })
 })
