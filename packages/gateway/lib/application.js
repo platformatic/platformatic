@@ -44,7 +44,7 @@ async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema
   }
 
   if (!changed && graphqlApplications.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlGatewayOptions, app)
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlComposerOptions, app)
     if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
       changed = true
       app.graphqlSupergraph = graphqlSupergraph
