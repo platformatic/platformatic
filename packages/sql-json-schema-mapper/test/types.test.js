@@ -198,3 +198,38 @@ referenceTest('enums', {
   },
   required: ['title']
 })
+
+test('bytea fields are mapped to Buffer type', async t => {
+  const schema = {
+    id: 'FileData',
+    title: 'FileData',
+    description: 'A FileData',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'integer'
+      },
+      content: {
+        type: 'string'
+      },
+      metadata: {
+        type: 'string'
+      }
+    },
+    required: ['id']
+  }
+
+  const fieldDefinitions = {
+    id: { primaryKey: true },
+    content: { sqlType: 'bytea' },
+    metadata: { sqlType: 'text' }
+  }
+
+  const result = mapOpenAPItoTypes(schema, fieldDefinitions)
+
+  // Verify that bytea field is mapped to Buffer
+  same(result.includes('content?: Buffer;'), true, 'bytea field should be mapped to Buffer type')
+  // Verify that non-bytea fields are mapped normally
+  same(result.includes('metadata?: string;'), true, 'non-bytea string field should be mapped to string type')
+  same(result.includes('id: number;'), true, 'id field should be mapped to number type')
+})
