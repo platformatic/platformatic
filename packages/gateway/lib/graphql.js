@@ -19,7 +19,7 @@ export async function graphqlPlugin (app, opts) {
   })
   app.decorate('graphqlComposerOptions', {
     getter () {
-      return opts
+      return opts?.graphql
     }
   })
 
