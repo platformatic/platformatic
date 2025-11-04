@@ -2,7 +2,7 @@
 
 import { fastify, FastifyInstance } from 'fastify'
 import { expectType } from 'tsd'
-import { Graph } from './__generated__/types/graph'
+import { Graph } from './__generated__/types/graph.ts'
 
 const app: FastifyInstance = fastify()
 

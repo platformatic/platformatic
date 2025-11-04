@@ -9,7 +9,7 @@ async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
   const entityNames = Object.keys(entities)
   const removedEntityNames = entityTypes.filter(
-    file => file !== 'index.d.ts' && !entityNames.includes(basename(file, '.d.ts'))
+    file => file !== 'index.d.ts' && !entityNames.includes(basename(file, '.ts'))
   )
   await Promise.all(removedEntityNames.map(file => unlink(join(dir, file))))
 }
@@ -20,10 +20,10 @@ async function generateEntityType (entity) {
     Object.entries(entity.fields).map(([, value]) => [value.camelcase, value])
   )
 
-  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 })
+  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 }).replaceAll(/^declare interface/gm, 'export interface')
 
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
-  return tsCode.replaceAll(/^declare interface/gm, 'export interface')
+  return `${tsCode}\nexport const ${entity.name} = ${JSON.stringify(jsonSchema, undefined, 2)} as const\n`
 }
 
 async function generateIndexTypes (entities) {
@@ -39,8 +39,8 @@ async function generateIndexTypes (entities) {
     .sort((a, b) => a[0].localeCompare(b[0]))
 
   for (const [name, type] of values) {
-    allImports.push(`import { ${type} } from './${name}'`)
-    allExports.push(`export { ${type} } from './${name}'`)
+    allImports.push(`import type { ${type} } from './${name}.ts'`)
+    allExports.push(`export { ${type} } from './${name}.ts'`)
     entityMembers.push(`  ${name}: Entity<${type}>`)
     entityTypesMembers.push(`  ${name}: ${type}`)
     entitiesHooks.push(`  addEntityHooks(entityName: '${name}', hooks: EntityHooks<${type}>): any`)
@@ -54,9 +54,9 @@ async function generateIndexTypes (entities) {
   }`)
   }
 
-  const content = `import { Entity, EntityHooks, Entities as DatabaseEntities, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
-import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
-import { type FastifyInstance } from 'fastify'
+  const content = `import type { Entities as DatabaseEntities, Entity, EntityHooks, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
+import type { PlatformaticApplication } from '@platformatic/service'
+import type { FastifyInstance } from 'fastify'
 
 ${allImports.join('\n')}
 
@@ -135,7 +135,7 @@ export async function execute ({ logger, config }) {
   // Generate all entities
   for (const [name, entity] of Object.entries(entities)) {
     const types = await generateEntityType(entity)
-    const pathToFile = join(typesFolderPath, name + '.d.ts')
+    const pathToFile = join(typesFolderPath, name + '.ts')
 
     if (await writeFileIfChanged(pathToFile, types)) {
       logger.info(`Generated type for ${entity.name} entity.`)
@@ -143,10 +143,10 @@ export async function execute ({ logger, config }) {
   }
 
   // Generate index.d.ts
-  const indexFilePath = join(typesFolderPath, 'index.d.ts')
+  const indexFilePath = join(typesFolderPath, 'index.ts')
   const indexTypes = await generateIndexTypes(entities)
   if (await writeFileIfChanged(indexFilePath, indexTypes)) {
-    logger.info('Regenerated index.d.ts.')
+    logger.info('Regenerated index.ts.')
   }
 
   // Generate plt-env.d.ts

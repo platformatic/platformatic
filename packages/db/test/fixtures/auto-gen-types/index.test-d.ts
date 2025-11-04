@@ -2,8 +2,8 @@
 
 import { fastify, FastifyInstance } from 'fastify'
 import { expectType } from 'tsd'
-import { AggregateRating } from './types/aggregateRating'
-import { Movie } from './types/movie'
+import { AggregateRating } from './types/aggregateRating.ts'
+import { Movie } from './types/movie.ts'
 
 const app: FastifyInstance = fastify()
 
