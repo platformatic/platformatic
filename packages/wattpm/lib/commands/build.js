@@ -36,7 +36,7 @@ export async function buildCommand (logger, args) {
     }
 
     try {
-      runtime = await create(configurationFile)
+      runtime = await create(configurationFile, undefined, { build: true })
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {
