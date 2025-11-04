@@ -43,6 +43,10 @@ function createMapper (
     let db = opts?.tx || defaultDb
     if (opts?.ctx?.app?.openTelemetry && opts?.ctx?.reply?.request) {
       const req = opts.ctx.reply.request
+      if (db !== defaultDb && !db.connectionInfo) {
+        const { connectionInfo } = defaultDb
+        db.connectionInfo = connectionInfo
+      }
       db = wrapDB(opts.ctx.app, db, req)
     }
     return db
