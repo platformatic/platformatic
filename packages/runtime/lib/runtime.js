@@ -222,7 +222,7 @@ export class Runtime extends EventEmitter {
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
-    if (config.scheduler) {
+    if (config.scheduler && !this.#context.build) {
       this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
     }
 
