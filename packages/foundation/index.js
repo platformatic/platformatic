@@ -1,5 +1,6 @@
 export * from './lib/cli.js'
 export * from './lib/configuration.js'
+export * from './lib/env-file-tool.js'
 export * from './lib/errors.js'
 export * as errors from './lib/errors.js'
 export * from './lib/execution.js'
