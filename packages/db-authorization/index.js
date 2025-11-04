@@ -218,7 +218,8 @@ async function auth (app, opts) {
             const found = await type.find({
               where,
               ctx,
-              fields
+              fields,
+              tx: restOpts.tx
             })
 
             if (found.length === 0) {
