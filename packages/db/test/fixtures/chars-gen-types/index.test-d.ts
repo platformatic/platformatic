@@ -1,6 +1,6 @@
 import { FastifyInstance, fastify } from 'fastify'
 import { expectType } from 'tsd'
-import { PltDb } from './types/PltDb.ts'
+import { PltDb } from './types/PltDb'
 
 const app: FastifyInstance = fastify()
 

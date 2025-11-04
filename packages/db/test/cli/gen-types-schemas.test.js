@@ -34,19 +34,25 @@ test('generated types include JSON schema const exports', async t => {
     await applyMigrations(logger, configFile, [], context)
   })()
 
-  // Read and parse the generated Movie type file
-  const movieDTs = await readFile(resolve(cwd, 'types', 'movie.ts'), 'utf8')
+  // Read the generated Movie .d.ts file (interface only)
+  const movieDTs = await readFile(resolve(cwd, 'types', 'movie.d.ts'), 'utf8')
 
   // Verify interface export exists
   assert.ok(movieDTs.includes('export interface Movie'), 'Should export Movie interface')
 
-  // Verify const schema export exists
-  assert.ok(movieDTs.includes('export const Movie ='), 'Should export Movie const')
-  assert.ok(movieDTs.includes('as const'), 'Should have as const assertion')
+  // Verify no const in .d.ts (only interface)
+  assert.ok(!movieDTs.includes('export const'), 'Should not have const exports in .d.ts')
+
+  // Read the generated Movie schema file
+  const movieSchema = await readFile(resolve(cwd, 'types', 'movie-schema.ts'), 'utf8')
+
+  // Verify named const schema export exists
+  assert.ok(movieSchema.includes('export const Movie'), 'Should export Movie schema as named const')
+  assert.ok(movieSchema.includes('as const'), 'Should have as const assertion')
 
   // Extract and parse the JSON schema
-  const schemaMatch = movieDTs.match(/export const Movie = ({[\s\S]*?}) as const/)
-  assert.ok(schemaMatch, 'Should be able to extract Movie schema')
+  const schemaMatch = movieSchema.match(/export const Movie = ({[\s\S]*?}) as const/)
+  assert.ok(schemaMatch, 'Should be able to extract schema')
 
   const schema = JSON.parse(schemaMatch[1])
 
@@ -72,14 +78,17 @@ test('generated types include JSON schema const exports', async t => {
   assert.ok(schema.required.includes('title'), 'title should be in required array')
   assert.ok(schema.required.includes('year'), 'year should be in required array')
 
-  // Verify AggregateRating
-  const aggregateRatingDTs = await readFile(resolve(cwd, 'types', 'aggregateRating.ts'), 'utf8')
-
+  // Verify AggregateRating interface
+  const aggregateRatingDTs = await readFile(resolve(cwd, 'types', 'aggregateRating.d.ts'), 'utf8')
   assert.ok(aggregateRatingDTs.includes('export interface AggregateRating'), 'Should export AggregateRating interface')
-  assert.ok(aggregateRatingDTs.includes('export const AggregateRating ='), 'Should export AggregateRating const')
+  assert.ok(!aggregateRatingDTs.includes('export const'), 'Should not have const exports in .d.ts')
 
-  const aggregateRatingSchemaMatch = aggregateRatingDTs.match(/export const AggregateRating = ({[\s\S]*?}) as const/)
-  assert.ok(aggregateRatingSchemaMatch, 'Should be able to extract AggregateRating schema')
+  // Verify AggregateRating schema
+  const aggregateRatingSchemaFile = await readFile(resolve(cwd, 'types', 'aggregateRating-schema.ts'), 'utf8')
+  assert.ok(aggregateRatingSchemaFile.includes('export const AggregateRating'), 'Should export AggregateRating schema as named const')
+
+  const aggregateRatingSchemaMatch = aggregateRatingSchemaFile.match(/export const AggregateRating = ({[\s\S]*?}) as const/)
+  assert.ok(aggregateRatingSchemaMatch, 'Should be able to extract schema')
 
   const aggregateRatingSchema = JSON.parse(aggregateRatingSchemaMatch[1])
   assert.equal(aggregateRatingSchema.$id, 'AggregateRating', 'Schema $id should be AggregateRating')
@@ -89,7 +98,7 @@ test('generated types include JSON schema const exports', async t => {
   assert.ok(aggregateRatingSchema.properties.ratingType, 'Should have ratingType property')
 })
 
-test('index file uses type-only imports with .ts extensions', async t => {
+test('index file uses type-only imports without extensions', async t => {
   const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
@@ -101,19 +110,19 @@ test('index file uses type-only imports with .ts extensions', async t => {
     await applyMigrations(logger, configFile, [], context)
   })()
 
-  const indexDTs = await readFile(resolve(cwd, 'types', 'index.ts'), 'utf8')
+  const indexDTs = await readFile(resolve(cwd, 'types', 'index.d.ts'), 'utf8')
 
-  // Verify type-only imports
-  assert.ok(indexDTs.includes("import type { AggregateRating } from './aggregateRating.ts'"),
-    'Should have type-only import for AggregateRating with .ts extension')
-  assert.ok(indexDTs.includes("import type { Movie } from './movie.ts'"),
-    'Should have type-only import for Movie with .ts extension')
+  // Verify type-only imports without extensions
+  assert.ok(indexDTs.includes("import type { AggregateRating } from './aggregateRating'"),
+    'Should have type-only import for AggregateRating without extension')
+  assert.ok(indexDTs.includes("import type { Movie } from './movie'"),
+    'Should have type-only import for Movie without extension')
 
-  // Verify exports with .ts extensions
-  assert.ok(indexDTs.includes("export { AggregateRating } from './aggregateRating.ts'"),
-    'Should export AggregateRating with .ts extension')
-  assert.ok(indexDTs.includes("export { Movie } from './movie.ts'"),
-    'Should export Movie with .ts extension')
+  // Verify type-only exports without extensions
+  assert.ok(indexDTs.includes("export type { AggregateRating } from './aggregateRating'"),
+    'Should export type AggregateRating without extension')
+  assert.ok(indexDTs.includes("export type { Movie } from './movie'"),
+    'Should export type Movie without extension')
 
   // Verify framework imports use type-only syntax
   assert.ok(indexDTs.includes('import type { Entities as DatabaseEntities'),

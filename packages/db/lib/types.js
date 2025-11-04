@@ -2,15 +2,17 @@ import { createDirectory, isFileAccessible, kMetadata } from '@platformatic/foun
 import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
-import { basename, join, relative, resolve, sep } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { setupDB } from './utils.js'
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
   const entityNames = Object.keys(entities)
-  const removedEntityNames = entityTypes.filter(
-    file => file !== 'index.d.ts' && !entityNames.includes(basename(file, '.ts'))
-  )
+  const removedEntityNames = entityTypes.filter(file => {
+    if (file === 'index.d.ts') return false
+    const baseName = file.replace(/\.d\.ts$/, '').replace(/-schema\.ts$/, '')
+    return !entityNames.includes(baseName)
+  })
   await Promise.all(removedEntityNames.map(file => unlink(join(dir, file))))
 }
 
@@ -20,10 +22,14 @@ async function generateEntityType (entity) {
     Object.entries(entity.fields).map(([, value]) => [value.camelcase, value])
   )
 
-  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 }).replaceAll(/^declare interface/gm, 'export interface')
+  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 })
 
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
-  return `${tsCode}\nexport const ${entity.name} = ${JSON.stringify(jsonSchema, undefined, 2)} as const\n`
+
+  return {
+    types: tsCode.replaceAll(/^declare interface/gm, 'export interface'),
+    schema: jsonSchema
+  }
 }
 
 async function generateIndexTypes (entities) {
@@ -39,8 +45,8 @@ async function generateIndexTypes (entities) {
     .sort((a, b) => a[0].localeCompare(b[0]))
 
   for (const [name, type] of values) {
-    allImports.push(`import type { ${type} } from './${name}.ts'`)
-    allExports.push(`export { ${type} } from './${name}.ts'`)
+    allImports.push(`import type { ${type} } from './${name}'`)
+    allExports.push(`export type { ${type} } from './${name}'`)
     entityMembers.push(`  ${name}: Entity<${type}>`)
     entityTypesMembers.push(`  ${name}: ${type}`)
     entitiesHooks.push(`  addEntityHooks(entityName: '${name}', hooks: EntityHooks<${type}>): any`)
@@ -134,19 +140,27 @@ export async function execute ({ logger, config }) {
 
   // Generate all entities
   for (const [name, entity] of Object.entries(entities)) {
-    const types = await generateEntityType(entity)
-    const pathToFile = join(typesFolderPath, name + '.ts')
+    const { types, schema } = await generateEntityType(entity)
 
+    // Write interface to .d.ts file
+    const pathToFile = join(typesFolderPath, name + '.d.ts')
     if (await writeFileIfChanged(pathToFile, types)) {
       logger.info(`Generated type for ${entity.name} entity.`)
+    }
+
+    // Write schema to .ts file
+    const schemaContent = `export const ${entity.name} = ${JSON.stringify(schema, undefined, 2)} as const\n`
+    const schemaPath = join(typesFolderPath, name + '-schema.ts')
+    if (await writeFileIfChanged(schemaPath, schemaContent)) {
+      logger.info(`Generated schema for ${entity.name} entity.`)
     }
   }
 
   // Generate index.d.ts
-  const indexFilePath = join(typesFolderPath, 'index.ts')
+  const indexFilePath = join(typesFolderPath, 'index.d.ts')
   const indexTypes = await generateIndexTypes(entities)
   if (await writeFileIfChanged(indexFilePath, indexTypes)) {
-    logger.info('Regenerated index.ts.')
+    logger.info('Regenerated index.d.ts.')
   }
 
   // Generate plt-env.d.ts

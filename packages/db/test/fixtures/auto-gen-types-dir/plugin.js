@@ -1,1 +1,1 @@
-export default async function (app) {}
+module.exports = async function (app) {}
