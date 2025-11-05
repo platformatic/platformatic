@@ -14,10 +14,10 @@ import {
   verifyPlatformaticGatewayWithProxy,
   verifyPlatformaticService,
   verifyPlatformaticServiceWithProxy
-} from '../../basic/test/helper.js'
+} from '../../../basic/test/helper.js'
 
 process.setMaxListeners(100)
-setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 
 const files = ['services/frontend/.next/server/app/index.html']
 const filesSSR = ['services/frontend/.next/server/app/direct/route.js']

@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url'
 import { parse, satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = ['^14.0.0', '^15.0.0']
+const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
 export class NextCapability extends BaseCapability {
   #basePath
@@ -235,7 +235,7 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async #startProduction (listen) {
+  async #startProduction () {
     const config = this.config
     const loaderUrl = new URL('./loader.js', import.meta.url)
     const command = this.config.application.commands.production
