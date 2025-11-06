@@ -651,7 +651,7 @@ export class BaseCapability extends EventEmitter {
 
     this.#metricsCollected = true
 
-    if (this.context.metricsConfig === false) {
+    if (this.context.metricsConfig === false || this.context.metricsConfig?.enabled === false) {
       return
     }
 
