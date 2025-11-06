@@ -9,8 +9,9 @@ import { createRuntime, readLogs } from './helpers.js'
 import { waitForEvents } from './multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+const isWindows = process.platform === 'win32'
 
-test('should continously monitor workers health', async t => {
+test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
   const server = await createRuntime(configFile)
 
@@ -25,7 +26,7 @@ test('should continously monitor workers health', async t => {
   }
 })
 
-test('should not lose any connection when restarting the process', async t => {
+test('should not lose any connection when restarting the process', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
   const context = {}
 
@@ -57,7 +58,7 @@ test('should not lose any connection when restarting the process', async t => {
   deepStrictEqual(results.non2xx, 0)
 })
 
-test('set the spaces memory correctly', async t => {
+test('set the spaces memory correctly', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
   const server = await createRuntime(configFile)
 
@@ -76,7 +77,7 @@ test('set the spaces memory correctly', async t => {
   }
 })
 
-test('set the spaces memory correctly when maxHeapTotal is a string', async t => {
+test('set the spaces memory correctly when maxHeapTotal is a string', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
   const server = await createRuntime(configFile)
 
@@ -95,7 +96,7 @@ test('set the spaces memory correctly when maxHeapTotal is a string', async t =>
   }
 })
 
-test('should continously monitor workers health', async t => {
+test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
   const server = await createRuntime(configFile)
 
