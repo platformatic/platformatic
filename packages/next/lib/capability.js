@@ -13,7 +13,6 @@ import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve as resolvePath } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { parse, satisfies } from 'semver'
 import { version } from './schema.js'
 
@@ -164,7 +163,11 @@ export class NextCapability extends BaseCapability {
   async getChildManagerContext (basePath) {
     const context = await super.getChildManagerContext(basePath)
 
+    const { major, minor } = this.#nextVersion
     context.exitOnUnhandledErrors = false
+    context.wantsAbsoluteUrls = true
+    context.nextVersion = { major, minor }
+    context.instrumentAllThreads = true
 
     return context
   }
@@ -190,16 +193,13 @@ export class NextCapability extends BaseCapability {
 
     this.childManager = new ChildManager({
       loader: loaderUrl,
-      context: {
-        ...context,
-        port: false,
-        wantsAbsoluteUrls: true
-      },
+      context: { ...context, port: false },
       scripts: this.#getChildManagerScripts()
     })
 
     const promise = once(this.childManager, 'url')
     await this.#startDevelopmentNext(serverOptions)
+
     const [url, clientWs] = await promise
     this.url = url
     this.clientWs = clientWs
@@ -253,19 +253,7 @@ export class NextCapability extends BaseCapability {
 
     this.childManager = new ChildManager({
       loader: loaderUrl,
-      context: {
-        config: this.config,
-        applicationId: this.applicationId,
-        workerId: this.workerId,
-        // Always use URL to avoid serialization problem in Windows
-        root: pathToFileURL(this.root).toString(),
-        basePath: this.#basePath,
-        logLevel: this.logger.level,
-        isEntrypoint: this.isEntrypoint,
-        runtimeBasePath: this.runtimeConfig.basePath,
-        wantsAbsoluteUrls: true,
-        telemetryConfig: this.telemetryConfig
-      },
+      context: await this.getChildManagerContext(this.#basePath),
       scripts: this.#getChildManagerScripts()
     })
 
@@ -312,7 +300,7 @@ export class NextCapability extends BaseCapability {
   #getChildManagerScripts () {
     const scripts = []
 
-    if (this.#nextVersion.major === 15) {
+    if (this.#nextVersion.major >= 15) {
       scripts.push(new URL('./loader-next-15.cjs', import.meta.url))
     }
 

@@ -811,7 +811,7 @@ jobs:
         run: cd packages/node && pnpm test && pnpm run lint
 
   next:
-    name: 'next - ${{ matrix.node }}'
+    name: 'next - ${{ matrix.node }} - ${{ matrix.suite }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ubuntu-24.04
