@@ -99,6 +99,10 @@ async function setupOpenAPI (app, opts) {
         sourceEntity: relation.entityName,
         relation
       }
+      if (!targetEntity) {
+        app.log.warn(`Entity "${entity.singularName}" has a reverse relation to unknown entity "${targetEntityName}". Skipped.`)
+        continue
+      }
       /* istanbul ignore next */
       targetEntity.reverseRelationships = targetEntity.reverseRelationships || []
       targetEntity.reverseRelationships.push(reverseRelationship)
