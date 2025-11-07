@@ -102,6 +102,7 @@ export async function pprofStopCommand (logger, args) {
       logger.info(
         `${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filename)}`
       )
+      logger.info(`Run ${bold(`npx @platformatic/flame generate ${filename}`)} to generate the flamegraph`)
     } else {
       // Stop profiling for all applications
       for (const application of runtimeApplications) {
@@ -112,6 +113,7 @@ export async function pprofStopCommand (logger, args) {
           logger.info(
             `${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filename)}`
           )
+          logger.info(`Run ${bold(`npx @platformatic/flame generate ${filename}`)} to generate the flamegraph`)
         } catch (error) {
           logger.warn(`Failed to stop profiling for application ${application.id}: ${error.message}`)
         }
