@@ -548,3 +548,127 @@ test('pprof --type with short option -t', async t => {
   const profileFiles = files.filter(file => file.startsWith('pprof-heap-main-') && file.endsWith('.pb'))
   ok(profileFiles.length > 0, 'Should create at least one heap profile file')
 })
+
+test('pprof start --source-maps - should start profiling with source maps enabled', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start profiling with source maps enabled
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '--source-maps', 'main')
+
+  ok(
+    pprofStartProcess.stdout.includes('CPU profiling started') || pprofStartProcess.stdout.includes('profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start profiling with source maps'
+  )
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Wait a bit for some profile data
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Stop profiling and get file
+  const pprofStopProcess = await wattpmInDir(tempDir, 'pprof', 'stop', 'main')
+
+  strictEqual(pprofStopProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Check that a profile file was created
+  const files = await readdir(tempDir)
+  const profileFiles = files.filter(file => file.startsWith('pprof-cpu-main-') && file.endsWith('.pb'))
+  ok(profileFiles.length > 0, 'Should create at least one profile file')
+
+  // Check that the file has content
+  const profileFile = profileFiles[0]
+  const stats = await stat(join(tempDir, profileFile))
+  ok(stats.size > 0, 'Profile file should not be empty')
+})
+
+test('pprof start --source-maps with short option -s', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start profiling with source maps enabled using short option
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '-s', 'main')
+
+  ok(
+    pprofStartProcess.stdout.includes('CPU profiling started') || pprofStartProcess.stdout.includes('profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start profiling with source maps using short option'
+  )
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Clean up
+  await wattpmInDir(tempDir, 'pprof', 'stop', 'main')
+})
+
+test('pprof start --type=heap --source-maps - should work with both options', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start heap profiling with source maps
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '--type=heap', '--source-maps', 'main')
+
+  ok(
+    pprofStartProcess.stdout.includes('HEAP profiling started') || pprofStartProcess.stdout.length === 0,
+    'Should start heap profiling with source maps'
+  )
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Wait a bit for some allocations
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Stop profiling
+  const pprofStopProcess = await wattpmInDir(tempDir, 'pprof', 'stop', '--type=heap', 'main')
+
+  strictEqual(pprofStopProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Check that a heap profile file was created
+  const files = await readdir(tempDir)
+  const profileFiles = files.filter(file => file.startsWith('pprof-heap-main-') && file.endsWith('.pb'))
+  ok(profileFiles.length > 0, 'Should create at least one heap profile file')
+})

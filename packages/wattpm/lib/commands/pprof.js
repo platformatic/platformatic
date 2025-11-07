@@ -10,7 +10,8 @@ export async function pprofStartCommand (logger, args) {
     const { positionals, values } = parseArgs(
       args,
       {
-        type: { type: 'string', short: 't', default: 'cpu' }
+        type: { type: 'string', short: 't', default: 'cpu' },
+        'source-maps': { type: 'boolean', short: 's', default: false }
       },
       false
     )
@@ -28,6 +29,11 @@ export async function pprofStartCommand (logger, args) {
     const applicationId = remainingPositionals[0]
 
     const options = { intervalMicros: 1000, type }
+
+    // Add sourceMaps option if enabled
+    if (values['source-maps']) {
+      options.sourceMaps = true
+    }
 
     if (applicationId) {
       // Start profiling for specific application
@@ -151,6 +157,10 @@ export const help = {
       {
         name: '--type, -t',
         description: 'Profile type: "cpu" for CPU wall time (default) or "heap" for heap memory'
+      },
+      {
+        name: '--source-maps, -s',
+        description: 'Enable source map support to resolve TypeScript and other transpiled code locations in profiles'
       }
     ],
     args: [
@@ -171,9 +181,11 @@ export const help = {
     footer:
       'Use "pprof start [application]" to start profiling and "pprof stop [application]" to stop and save profile data.\n' +
       'Examples:\n' +
-      '  wattpm pprof start --type=cpu my-app     # Start CPU profiling\n' +
-      '  wattpm pprof start --type=heap my-app    # Start heap profiling\n' +
-      '  wattpm pprof stop --type=cpu my-app      # Stop CPU profiling\n' +
-      '  wattpm pprof stop --type=heap my-app     # Stop heap profiling'
+      '  wattpm pprof start --type=cpu my-app                # Start CPU profiling\n' +
+      '  wattpm pprof start --type=heap my-app               # Start heap profiling\n' +
+      '  wattpm pprof start --source-maps my-app             # Start CPU profiling with source maps\n' +
+      '  wattpm pprof start --type=cpu --source-maps my-app  # Start CPU profiling with source maps\n' +
+      '  wattpm pprof stop --type=cpu my-app                 # Stop CPU profiling\n' +
+      '  wattpm pprof stop --type=heap my-app                # Stop heap profiling'
   }
 }
