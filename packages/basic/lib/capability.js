@@ -564,6 +564,11 @@ export class BaseCapability extends EventEmitter {
   async getChildManagerContext (basePath) {
     const meta = await this.getMeta()
 
+    // This is needed to correctly handle reusePort in child processes when using build
+    if (this.reuseTcpPorts && !features.node.reusePort) {
+      this.reuseTcpPorts = false
+    }
+
     return {
       id: this.id,
       config: this.config,

@@ -19,6 +19,9 @@ export const cache = {
     prefix: {
       type: 'string'
     },
+    cacheComponents: {
+      type: 'boolean'
+    },
     maxTTL: {
       default: 86400 * 7, // One week
       anyOf: [

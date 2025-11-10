@@ -176,7 +176,11 @@ export async function loadModule (require, path) {
       /* c8 ignore next 4 */
       if (err.code === 'ERR_REQUIRE_ESM') {
         const toLoad = require.resolve(path)
-        loaded = await import('file://' + toLoad)
+
+        // Given require(esm) this is unlikely to happen, but we leave it just in case.
+        // The reason for eval is that some tools like Turbopack might do static analysis and complain.
+        // eslint-disable-next-line no-eval
+        return await eval(`import('file://${toLoad}')`)
       } else {
         throw err
       }

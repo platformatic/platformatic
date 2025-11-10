@@ -42,8 +42,7 @@ fsPromises.readFile = async function readAndPatchNextConfigTS (url, options) {
 
   const { code } = transformSync(contents.toString('utf-8'), { mode: 'strip-only' })
 
-  const { transformESM, transformCJS, setLoaderData } = await import('./loader.js')
-  setLoaderData({ basePath: globalThis.platformatic.basePath, config: globalThis.platformatic.config })
+  const { transformESM, transformCJS } = await import('./loader.js')
   const transformer = detectFormat(code) === 'esm' ? transformESM : transformCJS
   const transformed = transformer(code)
 
