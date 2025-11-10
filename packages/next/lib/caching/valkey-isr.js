@@ -42,7 +42,7 @@ export class CacheHandler {
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
-    if (!this.#standalone && globalThis.platformatic) {
+    if (!this.#standalone && globalThis.platformatic?.config) {
       this.#config ??= globalThis.platformatic.config.cache
       this.#logger ??= createPlatformaticLogger()
       this.#store ??= getConnection(this.#config.url)
@@ -70,7 +70,7 @@ export class CacheHandler {
       throw new Error('Please provide a the "store" option.')
     }
 
-    if (globalThis.platformatic) {
+    if (globalThis.platformatic?.prometheus) {
       this.#registerMetrics()
     }
   }
