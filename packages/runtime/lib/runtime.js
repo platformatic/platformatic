@@ -54,7 +54,6 @@ import {
   kConfig,
   kFullId,
   kHealthCheckTimer,
-  kHealthMetricsTimer,
   kId,
   kITC,
   kLastHealthCheckELU,
@@ -99,6 +98,7 @@ export class Runtime extends EventEmitter {
 
   #metrics
   #metricsTimeout
+  #healthMetricsTimer
 
   #meshInterceptor
   #dispatcher
@@ -286,6 +286,9 @@ export class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
+    // Start the global health metrics timer for all workers if needed
+    this.#startHealthMetricsCollectionIfNeeded()
+
     await this.#dynamicWorkersScaler?.start()
     this.#showUrl()
     return this.#url
@@ -339,6 +342,7 @@ export class Runtime extends EventEmitter {
 
   async close (silent = false) {
     clearInterval(this.#metricsTimeout)
+    clearTimeout(this.#healthMetricsTimer)
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -1651,43 +1655,75 @@ export class Runtime extends EventEmitter {
     return worker
   }
 
-  #setupHealthMetrics (id, index, worker, errorLabel) {
-    // Clear the timeout when exiting
-    worker.on('exit', () => clearTimeout(worker[kHealthMetricsTimer]))
+  #startHealthMetricsCollectionIfNeeded () {
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
+    // or if any worker has health checks enabled
+    let needsHealthMetrics = !!this.#dynamicWorkersScaler
 
-    const check = async () => {
-      if (worker[kWorkerStatus] !== 'started') return
+    if (!needsHealthMetrics) {
+      // Check if any worker has health checks enabled
+      for (const worker of this.#workers.values()) {
+        const healthConfig = worker[kConfig]?.health
+        if (healthConfig?.enabled && this.#config.restartOnError > 0) {
+          needsHealthMetrics = true
+          break
+        }
+      }
+    }
 
-      let health = null
-      try {
-        health = await this.getWorkerHealth(worker, {
-          previousELU: worker[kLastHealthCheckELU]
-        })
-      } catch (err) {
-        this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
-      } finally {
-        worker[kLastHealthCheckELU] = health?.currentELU ?? null
+    if (needsHealthMetrics) {
+      this.#startHealthMetricsCollection()
+    }
+  }
+
+  #startHealthMetricsCollection () {
+    const collectHealthMetrics = async () => {
+      if (this.#status !== 'started') {
+        return
       }
 
-      const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
+      // Iterate through all workers and collect health metrics
+      for (const worker of this.#workers.values()) {
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
 
-      // We use emit instead of emitAndNotify to avoid sending a postMessages
-      // to each workers even if they they are not interested in health metrics.
-      // No one of the known capabilities use this event yet.
-      this.emit('application:worker:health:metrics', {
-        id: worker[kId],
-        application: id,
-        worker: index,
-        currentHealth: health,
-        healthSignals
-      })
+        const id = worker[kApplicationId]
+        const index = worker[kWorkerId]
+        const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
+
+        let health = null
+        try {
+          health = await this.getWorkerHealth(worker, {
+            previousELU: worker[kLastHealthCheckELU]
+          })
+        } catch (err) {
+          this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
+        } finally {
+          worker[kLastHealthCheckELU] = health?.currentELU ?? null
+        }
+
+        const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
+
+        // We use emit instead of emitAndNotify to avoid sending a postMessages
+        // to each workers even if they are not interested in health metrics.
+        // No one of the known capabilities use this event yet.
+        this.emit('application:worker:health:metrics', {
+          id: worker[kId],
+          application: id,
+          worker: index,
+          currentHealth: health,
+          healthSignals
+        })
+      }
 
       // Reschedule the next check. We are not using .refresh() because it's more
       // expensive (weird).
-      worker[kHealthMetricsTimer] = setTimeout(check, 1000).unref()
+      this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
     }
 
-    worker[kHealthMetricsTimer] = setTimeout(check, 1000).unref()
+    // Start the collection
+    this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
   }
 
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
@@ -1853,8 +1889,6 @@ export class Runtime extends EventEmitter {
       if (!silent) {
         this.logger.info(`Started the ${label}...`)
       }
-
-      this.#setupHealthMetrics(id, index, worker, label)
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
