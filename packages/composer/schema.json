@@ -1444,8 +1444,7 @@
                 {
                   "type": "string"
                 }
-              ],
-              "default": 4294967296
+              ]
             },
             "maxYoungGeneration": {
               "anyOf": [
