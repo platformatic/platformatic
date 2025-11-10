@@ -1676,7 +1676,8 @@ export class Runtime extends EventEmitter {
         healthSignals
       })
 
-      // Reschedule the next check
+      // Reschedule the next check. We are not using .refresh() because it's more
+      // expensive (weird).
       worker[kHealthMetricsTimer] = setTimeout(check, 1000).unref()
     }
 
