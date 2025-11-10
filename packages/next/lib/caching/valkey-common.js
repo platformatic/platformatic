@@ -7,20 +7,35 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pino } from 'pino'
 
-const clients = new Map()
+globalThis.platformatic ??= {}
+globalThis.platformatic.valkeyClients = new Map()
 
 export function keyFor (prefix, subprefix, section, key) {
-  return [prefix, 'cache:next', subprefix, section, key ? Buffer.from(key).toString('base64url') : undefined]
-    .filter(c => c)
-    .join(':')
+  let result = prefix?.length ? prefix + ':' : ''
+
+  result += 'cache:next'
+
+  if (subprefix?.length) {
+    result += ':' + subprefix
+  }
+
+  if (section?.length) {
+    result += ':' + section
+  }
+
+  if (key?.length) {
+    result += Buffer.from(key).toString('base64url')
+  }
+
+  return result
 }
 
 export function getConnection (url) {
-  let client = clients.get(url)
+  let client = globalThis.platformatic.valkeyClients.get(url)
 
   if (!client) {
     client = new Redis(url, { enableAutoPipelining: true })
-    clients.set(url, client)
+    globalThis.platformatic.valkeyClients.set(url, client)
 
     globalThis.platformatic.events.on('plt:next:close', () => {
       client.disconnect(false)

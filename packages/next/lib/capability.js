@@ -167,7 +167,6 @@ export class NextCapability extends BaseCapability {
     context.exitOnUnhandledErrors = false
     context.wantsAbsoluteUrls = true
     context.nextVersion = { major, minor }
-    context.instrumentAllThreads = true
 
     return context
   }

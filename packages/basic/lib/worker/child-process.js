@@ -13,7 +13,6 @@ import { ServerResponse } from 'node:http'
 import { register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
-import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -122,7 +121,7 @@ export class ChildProcess extends ITC {
 
     this.listen()
 
-    if (!isMainThread || globalThis.platformatic.instrumentAllThreads || windowsNpmExecutables.includes(executable)) {
+    if (!windowsNpmExecutables.includes(executable)) {
       this.#setupLogger()
 
       if (globalThis.platformatic.exitOnUnhandledErrors) {
