@@ -256,9 +256,6 @@ export async function managementApiPlugin (app, opts) {
       return
     }
 
-    // eslint-disable-next-line prefer-const
-    let pollingInterval
-
     const pollAndSendMetrics = async () => {
       try {
         const metrics = await runtime.getFormattedMetrics()
@@ -268,29 +265,22 @@ export async function managementApiPlugin (app, opts) {
         }
       } catch (error) {
         // If there's an error, stop polling
-        if (pollingInterval) {
-          clearInterval(pollingInterval)
-        }
+        clearInterval(pollingInterval)
       }
     }
 
     // Poll every second
-    pollingInterval = setInterval(pollAndSendMetrics, 1000)
+    const pollingInterval = setInterval(pollAndSendMetrics, 1000)
 
     // Send initial metrics immediately
     await pollAndSendMetrics()
 
-    socket.on('error', () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval)
-      }
-    })
+    const cleanup = () => {
+      clearInterval(pollingInterval)
+    }
 
-    socket.on('close', () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval)
-      }
-    })
+    socket.on('error', cleanup)
+    socket.on('close', cleanup)
   })
 
   app.get('/logs/live', { websocket: true }, async socket => {
