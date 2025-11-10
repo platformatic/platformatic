@@ -1,5 +1,5 @@
 import { ensureLoggableError } from '@platformatic/foundation'
-import { Readable } from 'node:stream'
+import { ReadableStream } from 'node:stream/web'
 import {
   createPlatformaticLogger,
   deserialize,
@@ -107,7 +107,15 @@ export class CacheHandler {
       }
     }
 
-    value.value = Readable.toWeb(Readable.from(value.value))
+    // Convert the value back to a web ReadableStream. Sob.
+    const buffer = value.value
+    value.value = new ReadableStream({
+      start (controller) {
+        controller.enqueue(buffer)
+        controller.close()
+      }
+    })
+
     this.#cacheHitMetric?.inc()
     return value
   }
