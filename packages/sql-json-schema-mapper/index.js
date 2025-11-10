@@ -206,6 +206,8 @@ function renderProperties (
             .map(v => `"${v}"`)
             .join(' | ')
         )
+      } else if (fieldDefinitions[name]?.sqlType === 'bytea') {
+        writer.write('Buffer')
       } else {
         writer.write(JSONSchemaToTsType(type))
       }

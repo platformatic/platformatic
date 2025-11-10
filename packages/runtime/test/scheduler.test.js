@@ -263,3 +263,45 @@ test('Works with the mesh network', async t => {
   const { counter } = body
   ok(counter > 0)
 })
+
+test('Should not start scheduler in build mode', async t => {
+  const ee = new EventEmitter()
+  const target = Fastify()
+  let callCount = 0
+
+  target.get('/test', async (req, reply) => {
+    callCount++
+    ee.emit('target called')
+    return { ok: true }
+  })
+  t.after(() => target.close())
+
+  await target.listen({ port: 0 })
+  const callbackUrl = `http://localhost:${target.server.address().port}/test`
+
+  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    build: true,
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.scheduler = [
+        {
+          name: 'test',
+          cron: '*/1 * * * * *', // every second
+          callbackUrl,
+          method: 'GET'
+        }
+      ]
+      return config
+    }
+  })
+
+  t.after(() => app.close())
+  await app.init()
+
+  // Wait for 2 seconds - scheduler should not run in build mode
+  await sleep(2000)
+
+  // Verify the endpoint was never called
+  strictEqual(callCount, 0, 'Scheduler should not run in build mode')
+})

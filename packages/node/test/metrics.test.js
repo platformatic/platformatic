@@ -106,3 +106,8 @@ test('should configure metrics correctly with both node and http metrics', async
   // We expect to find both entrypoint and internal applications in metrics
   assert.deepEqual(applicationIds, ['api', 'internal'])
 })
+
+test('should disable metrics correctly', async t => {
+  const { runtime } = await createRuntime(t, 'express-api-no-metrics')
+  await t.assert.rejects(runtime.getMetrics())
+})

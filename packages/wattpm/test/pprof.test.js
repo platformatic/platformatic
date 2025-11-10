@@ -86,6 +86,16 @@ test('pprof stop - should stop profiling and create profile file', async t => {
   const profileFile = profileFiles[0]
   const stats = await stat(join(tempDir, profileFile))
   ok(stats.size > 0, 'Profile file should not be empty')
+
+  // Check that the flamegraph generation instruction is in the output
+  ok(
+    pprofStopProcess.stdout.includes('npx @platformatic/flame generate'),
+    'Should include flamegraph generation instruction'
+  )
+  ok(
+    pprofStopProcess.stdout.includes(profileFile),
+    'Should include the profile filename in the instruction'
+  )
 })
 
 test('pprof start - should start profiling on all services when no service specified', async t => {
@@ -463,6 +473,16 @@ test('pprof stop --type=heap - should stop heap profiling and create profile fil
   const profileFile = profileFiles[0]
   const stats = await stat(join(tempDir, profileFile))
   ok(stats.size > 0, 'Heap profile file should not be empty')
+
+  // Check that the flamegraph generation instruction is in the output
+  ok(
+    pprofStopProcess.stdout.includes('npx @platformatic/flame generate'),
+    'Should include flamegraph generation instruction'
+  )
+  ok(
+    pprofStopProcess.stdout.includes(profileFile),
+    'Should include the profile filename in the instruction'
+  )
 })
 
 test('pprof concurrent cpu and heap profiling', async t => {

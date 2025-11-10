@@ -1,5 +1,7 @@
 export function wrapQuery (app, db, request) {
   const { startSpan, endSpan, SpanKind } = app.openTelemetry
+  // Bind the query method to preserve the correct 'this' context for private class fields
+  const originalQuery = db.query.bind(db)
   async function wrappedQuery () {
     const query = arguments[0]
     const connectionInfo = db.connectionInfo
@@ -44,7 +46,8 @@ export function wrapQuery (app, db, request) {
     let span
     try {
       span = startSpan(spanName, ctx, telemetryAttributes, SpanKind.CLIENT)
-      const result = await db.query.apply(db, arguments)
+      // Call the bound query method with the original arguments
+      const result = await originalQuery(...arguments)
       endSpan(span)
       return result
     } catch (err) /* istanbul ignore next */ {
@@ -59,13 +62,15 @@ export function wrapDB (app, db, request) {
   const newDb = Object.create(db)
   const connectionInfo = db.connectionInfo
   newDb.query = wrapQuery(app, db, request)
-  newDb.tx = function wrappedTx (func) {
-    return db.tx(db => {
-      db.connectionInfo = connectionInfo
-      const _newDb = Object.create(db)
-      _newDb.query = wrapQuery(app, db, request)
-      return func(_newDb)
-    })
+  if (typeof db.tx === 'function') {
+    newDb.tx = function wrappedTx (func) {
+      return db.tx(txDb => {
+        txDb.connectionInfo = connectionInfo
+        const _newDb = Object.create(txDb)
+        _newDb.query = wrapQuery(app, txDb, request)
+        return func(_newDb)
+      })
+    }
   }
   return newDb
 }

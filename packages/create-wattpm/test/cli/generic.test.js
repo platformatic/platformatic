@@ -138,7 +138,17 @@ test('Support packages without generator via importing (existing applications)',
   // Verify that the .env file was updated
   const envFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
 
-  deepStrictEqual(envFile, `${originalEnvFile}\nPLT_APPLICATION_ALTERNATE_PATH=${applicationPath}`)
+  // Check that all original env variables are still present
+  // Normalize line endings to handle Windows (CRLF) vs Unix (LF)
+  const originalLines = originalEnvFile.replace(/\r\n/g, '\n').trim().split('\n').filter(line => line.trim())
+  const envLines = envFile.replace(/\r\n/g, '\n').trim().split('\n').filter(line => line.trim())
+
+  for (const line of originalLines) {
+    ok(envLines.includes(line), `Expected env file to contain: ${line}`)
+  }
+
+  // Check that the new variable was added
+  ok(envFile.includes(`PLT_APPLICATION_ALTERNATE_PATH=${applicationPath}`), 'Expected env file to contain PLT_APPLICATION_ALTERNATE_PATH')
 })
 
 test('Support packages without generator via copy (new application)', async t => {

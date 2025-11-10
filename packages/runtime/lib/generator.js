@@ -1,5 +1,6 @@
 import createError from '@fastify/error'
 import {
+  createEnvFileTool,
   defaultPackageManager,
   findConfigurationFile,
   generateDashedName,
@@ -48,12 +49,6 @@ function getRuntimeBaseEnvVars (config) {
     PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
     PLT_MANAGEMENT_API: true
   }
-}
-
-// This is needed as dotenv-tool is not loading with ESM currently
-export function createDotenvTool (...args) {
-  const { DotEnvTool } = createRequire(import.meta.url)('dotenv-tool')
-  return new DotEnvTool(...args)
 }
 
 export class RuntimeGenerator extends BaseGenerator {
@@ -371,8 +366,8 @@ export class RuntimeGenerator extends BaseGenerator {
     // check all applications are present with the same template
     const allCurrentApplicationsNames = this.applications.map(s => s.name)
     const allNewApplicationsNames = newConfig.applications.map(s => s.name)
-    // load dotenv tool
-    const envTool = createDotenvTool({
+    // load env file tool
+    const envTool = createEnvFileTool({
       path: join(this.targetDirectory, '.env')
     })
 
