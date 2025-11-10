@@ -238,6 +238,7 @@ export async function managementApiPlugin (app, opts) {
     return metrics
   })
 
+  // TODO: Remove in next major version - deprecated endpoint
   app.get('/metrics/live', { websocket: true }, async socket => {
     const config = await runtime.getRuntimeConfig()
 
