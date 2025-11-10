@@ -178,7 +178,20 @@ export interface PlatformaticComposerConfig {
     services?: {
       [k: string]: unknown;
     }[];
-    workers?: number | string;
+    workers?:
+      | number
+      | string
+      | {
+          static?: number;
+          dynamic?: boolean;
+          minimum?: number;
+          maximum?: number;
+          total?: number;
+          maxMemory?: number;
+          cooldown?: number;
+          gracePeriod?: number;
+          [k: string]: unknown;
+        };
     workersRestartDelay?: number | string;
     logger?: {
       level: (
@@ -262,6 +275,7 @@ export interface PlatformaticComposerConfig {
         rejectUnauthorized?: boolean;
       };
     };
+    reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;
@@ -500,13 +514,28 @@ export interface PlatformaticComposerConfig {
       maxTotalMemory?: number;
       minWorkers?: number;
       maxWorkers?: number;
-      scaleUpELU?: number;
-      scaleDownELU?: number;
-      timeWindowSec?: number;
-      scaleDownTimeWindowSec?: number;
       cooldownSec?: number;
-      scaleIntervalSec?: number;
       gracePeriod?: number;
+      /**
+       * @deprecated
+       */
+      scaleUpELU?: number;
+      /**
+       * @deprecated
+       */
+      scaleDownELU?: number;
+      /**
+       * @deprecated
+       */
+      timeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleDownTimeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleIntervalSec?: number;
     };
     inspectorOptions?: {
       host?: string;
@@ -538,6 +567,15 @@ export interface PlatformaticComposerConfig {
       maxRetries?: number;
       [k: string]: unknown;
     }[];
+    policies?: {
+      deny: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: string | [string, ...string[]];
+      };
+    };
   };
   telemetry?: {
     enabled?: boolean | string;

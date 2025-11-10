@@ -236,7 +236,7 @@ The object supports the following settings:
 - `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
 - `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
-- `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units. Default: `4G`.
+- `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units.
 - `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. The default is calculated from the `maxHeapTotal`.
 
 ### `telemetry`
