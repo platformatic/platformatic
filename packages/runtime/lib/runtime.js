@@ -286,8 +286,8 @@ export class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
-    // Start the global health metrics timer for all workers
-    this.#startHealthMetricsCollection()
+    // Start the global health metrics timer for all workers if needed
+    this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
     this.#showUrl()
@@ -1647,6 +1647,27 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:worker:init', eventPayload)
 
     return worker
+  }
+
+  #startHealthMetricsCollectionIfNeeded () {
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
+    // or if any worker has health checks enabled
+    let needsHealthMetrics = !!this.#dynamicWorkersScaler
+
+    if (!needsHealthMetrics) {
+      // Check if any worker has health checks enabled
+      for (const worker of this.#workers.values()) {
+        const healthConfig = worker[kConfig]?.health
+        if (healthConfig?.enabled && this.#config.restartOnError > 0) {
+          needsHealthMetrics = true
+          break
+        }
+      }
+    }
+
+    if (needsHealthMetrics) {
+      this.#startHealthMetricsCollection()
+    }
   }
 
   #startHealthMetricsCollection () {
