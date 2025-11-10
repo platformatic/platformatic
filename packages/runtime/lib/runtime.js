@@ -36,7 +36,6 @@ import {
   MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
-  RuntimeExitedError,
   WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
@@ -70,8 +69,6 @@ const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 
 const MAX_LISTENERS_COUNT = 100
-const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
-const COLLECT_METRICS_TIMEOUT = 1000
 
 const MAX_CONCURRENCY = 5
 const MAX_BOOTSTRAP_ATTEMPTS = 5
@@ -96,9 +93,6 @@ export class Runtime extends EventEmitter {
   #concurrency
   #entrypointId
   #url
-
-  #metrics
-  #metricsTimeout
 
   #meshInterceptor
   #dispatcher
@@ -282,10 +276,6 @@ export class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    if (this.#config.metrics?.enabled !== false && typeof this.#metrics === 'undefined') {
-      this.startCollectingMetrics()
-    }
-
     await this.#dynamicWorkersScaler?.start()
     this.#showUrl()
     return this.#url
@@ -338,8 +328,6 @@ export class Runtime extends EventEmitter {
   }
 
   async close (silent = false) {
-    clearInterval(this.#metricsTimeout)
-
     await this.stop(silent)
     this.#updateStatus('closing')
 
@@ -702,29 +690,15 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  // TODO: Remove in next major version
   startCollectingMetrics () {
-    this.#metrics = []
-    this.#metricsTimeout = setInterval(async () => {
-      if (this.#status !== 'started') {
-        return
-      }
+    this.logger.warn('startCollectingMetrics() is deprecated and no longer collects metrics. Metrics are now polled on-demand by the management API.')
+  }
 
-      let metrics = null
-      try {
-        metrics = await this.getFormattedMetrics()
-      } catch (error) {
-        if (!(error instanceof RuntimeExitedError)) {
-          this.logger.error({ err: ensureLoggableError(error) }, 'Error collecting metrics')
-        }
-        return
-      }
-
-      this.emitAndNotify('metrics', metrics)
-      this.#metrics.push(metrics)
-      if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
-        this.#metrics.shift()
-      }
-    }, COLLECT_METRICS_TIMEOUT).unref()
+  // TODO: Remove in next major version
+  getCachedMetrics () {
+    this.logger.warn('getCachedMetrics() is deprecated and returns an empty array. Metrics are no longer cached.')
+    return []
   }
 
   invalidateHttpCache (options = {}) {
@@ -1033,10 +1007,6 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
-  }
-
-  getCachedMetrics () {
-    return this.#metrics
   }
 
   async getFormattedMetrics () {

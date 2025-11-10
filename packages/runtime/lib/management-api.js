@@ -256,25 +256,40 @@ export async function managementApiPlugin (app, opts) {
       return
     }
 
-    const cachedMetrics = runtime.getCachedMetrics()
-    if (cachedMetrics.length > 0) {
-      const serializedMetrics = cachedMetrics.map(metric => JSON.stringify(metric)).join('\n')
-      socket.send(serializedMetrics + '\n')
+    // eslint-disable-next-line prefer-const
+    let pollingInterval
+
+    const pollAndSendMetrics = async () => {
+      try {
+        const metrics = await runtime.getFormattedMetrics()
+        if (metrics) {
+          const serializedMetrics = JSON.stringify(metrics)
+          socket.send(serializedMetrics + '\n')
+        }
+      } catch (error) {
+        // If there's an error, stop polling
+        if (pollingInterval) {
+          clearInterval(pollingInterval)
+        }
+      }
     }
 
-    const eventHandler = metrics => {
-      const serializedMetrics = JSON.stringify(metrics)
-      socket.send(serializedMetrics + '\n')
-    }
+    // Poll every second
+    pollingInterval = setInterval(pollAndSendMetrics, 1000)
 
-    runtime.on('metrics', eventHandler)
+    // Send initial metrics immediately
+    await pollAndSendMetrics()
 
     socket.on('error', () => {
-      runtime.off('metrics', eventHandler)
+      if (pollingInterval) {
+        clearInterval(pollingInterval)
+      }
     })
 
     socket.on('close', () => {
-      runtime.off('metrics', eventHandler)
+      if (pollingInterval) {
+        clearInterval(pollingInterval)
+      }
     })
   })
 

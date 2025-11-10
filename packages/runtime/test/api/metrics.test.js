@@ -281,7 +281,7 @@ test('should get formatted runtime metrics', async t => {
   }
 })
 
-test('should get cached formatted runtime metrics', async t => {
+test('should get formatted runtime metrics multiple times', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
@@ -297,12 +297,13 @@ test('should get cached formatted runtime metrics', async t => {
     strictEqual(statusCode, 200)
   }
 
-  // wait for the metrics to be cached
-  await sleep(5000)
+  // wait for the metrics to be collected
+  await sleep(2000)
 
-  const metricsHistory = await app.getCachedMetrics()
+  // Collect metrics multiple times to ensure polling works
+  for (let i = 0; i < 3; i++) {
+    const { applications } = await app.getFormattedMetrics()
 
-  for (const { applications } of metricsHistory) {
     deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
     for (const applicationMetrics of Object.values(applications)) {
@@ -314,6 +315,10 @@ test('should get cached formatted runtime metrics', async t => {
       const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
       deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    }
+
+    if (i < 2) {
+      await sleep(1000)
     }
   }
 })
@@ -332,11 +337,11 @@ test('should get metrics after reloading one of the applications', async t => {
   await app.stopApplication('service-2')
   await app.startApplication('service-2')
 
-  await sleep(5000)
+  await sleep(2000)
 
-  const metricsHistory = await app.getCachedMetrics()
-
-  for (const { applications } of metricsHistory) {
+  // Collect metrics multiple times after reloading
+  for (let i = 0; i < 3; i++) {
+    const { applications } = await app.getFormattedMetrics()
     const applicationsNames = Object.keys(applications)
     ok(applicationsNames.includes('service-1'))
     ok(applicationsNames.includes('service-db'))
@@ -350,6 +355,10 @@ test('should get metrics after reloading one of the applications', async t => {
       const latencyMetrics = applicationMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
       deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    }
+
+    if (i < 2) {
+      await sleep(1000)
     }
   }
 })
