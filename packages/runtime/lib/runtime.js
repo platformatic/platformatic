@@ -31,7 +31,6 @@ import {
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
   CannotRemoveEntrypointError,
-  GetHeapStatisticUnavailable,
   InvalidArgumentError,
   MessagingError,
   MissingEntrypointError,
@@ -1280,16 +1279,16 @@ export class Runtime extends EventEmitter {
   }
 
   async getWorkerHealth (worker, options = {}) {
-    if (!features.node.worker.getHeapStatistics) {
-      throw new GetHeapStatisticUnavailable()
-    }
-
     const currentELU = worker.performance.eventLoopUtilization()
     const previousELU = options.previousELU
 
     let elu = currentELU
     if (previousELU) {
       elu = worker.performance.eventLoopUtilization(elu, previousELU)
+    }
+
+    if (!features.node.worker.getHeapStatistics) {
+      return { elu: elu.utilization, currentELU }
     }
 
     const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
@@ -1650,7 +1649,7 @@ export class Runtime extends EventEmitter {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthMetricsTimer]))
 
-    worker[kHealthMetricsTimer] = setTimeout(async () => {
+    const check = async () => {
       if (worker[kWorkerStatus] !== 'started') return
 
       let health = null
@@ -1666,7 +1665,10 @@ export class Runtime extends EventEmitter {
 
       const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
 
-      this.emitAndNotify('application:worker:health:metrics', {
+      // We use emit instead of emitAndNotify to avoid sending a postMessages
+      // to each workers even if they they are not interested in health metrics.
+      // No one of the known capabilities use this event yet.
+      this.emit('application:worker:health:metrics', {
         id: worker[kId],
         application: id,
         worker: index,
@@ -1674,8 +1676,11 @@ export class Runtime extends EventEmitter {
         healthSignals
       })
 
-      worker[kHealthMetricsTimer].refresh()
-    }, 1000).unref()
+      // Reschedule the next check
+      worker[kHealthMetricsTimer] = setTimeout(check, 1000).unref()
+    }
+
+    worker[kHealthMetricsTimer] = setTimeout(check, 1000).unref()
   }
 
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {

@@ -128,10 +128,6 @@ export const MissingPprofCapture = createError(
   'Please install @platformatic/wattpm-pprof-capture'
 )
 
-export const GetHeapStatisticUnavailable = createError(
-  `${ERROR_PREFIX}_GET_HEAP_STATISTIC_UNAVAILABLE`,
-  'The getHeapStatistics method is not available in your Node version'
-)
 export const FailedToSendHealthSignalsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_SEND_HEALTH_SIGNALS`,
   'Cannot send health signals from application "%s": %s'
