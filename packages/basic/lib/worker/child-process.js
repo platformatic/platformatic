@@ -13,7 +13,6 @@ import { ServerResponse } from 'node:http'
 import { register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
-import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -77,7 +76,7 @@ export class ChildProcess extends ITC {
   #metricsRegistry
   #pendingMessages
 
-  constructor () {
+  constructor (executable) {
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -121,17 +120,20 @@ export class ChildProcess extends ITC {
     this.#metricsRegistry = new client.Registry()
 
     this.listen()
-    this.#setupLogger()
 
-    if (globalThis.platformatic.exitOnUnhandledErrors) {
-      this.#setupHandlers()
-    }
+    if (!windowsNpmExecutables.includes(executable)) {
+      this.#setupLogger()
 
-    this.#setupServer()
-    this.#setupInterceptors()
+      if (globalThis.platformatic.exitOnUnhandledErrors) {
+        this.#setupHandlers()
+      }
 
-    if (globalThis.platformatic.reuseTcpPorts) {
-      this.#setupTcpPortsHandling()
+      this.#setupServer()
+      this.#setupInterceptors()
+
+      if (globalThis.platformatic.reuseTcpPorts) {
+        this.#setupTcpPortsHandling()
+      }
     }
 
     this.registerGlobals({
@@ -487,14 +489,11 @@ function stripBasePath (basePath) {
 
 async function main () {
   const executable = basename(process.argv[1] ?? '')
-  if (!isMainThread || windowsNpmExecutables.includes(executable)) {
-    return
-  }
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
-  globalThis.platformatic = data
+  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, data)
   globalThis.platformatic.events = new ForwardingEventEmitter()
 
   if (loader) {
@@ -505,7 +504,7 @@ async function main () {
     await importFile(script)
   }
 
-  const childProcess = new ChildProcess()
+  const childProcess = new ChildProcess(executable)
   globalThis[Symbol.for('plt.children.itc')] = childProcess
   globalThis.platformatic.itc = childProcess
   globalThis.platformatic.events.target = childProcess

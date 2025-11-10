@@ -1,104 +1,28 @@
-import { loadConfiguration, saveConfigurationFile } from '@platformatic/foundation'
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
-import { cp, readFile, writeFile } from 'node:fs/promises'
+import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { parse } from 'semver'
+import { fixturesDir, getLogsFromFile, isCIOnWindows, setFixturesDir } from '../../../basic/test/helper.js'
+import { keyFor } from '../../lib/caching/valkey-common.js'
+import { CacheHandler } from '../../lib/caching/valkey-isr.js'
 import {
-  commonFixturesRoot,
-  fixturesDir,
-  getLogsFromFile,
-  isCIOnWindows,
-  prepareRuntime,
-  setFixturesDir,
-  startRuntime
-} from '../../../basic/test/helper.js'
-import CacheHandler, { keyFor } from '../../lib/caching/valkey.js'
+  base64ValueMatcher,
+  cleanupCache,
+  getValkeyUrl,
+  prepareRuntimeWithBackend,
+  setCacheSettings,
+  valkeyPrefix,
+  valkeyUser,
+  verifyValkeySequence
+} from './helper.js'
 
 process.setMaxListeners(100)
 
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
-
-const valkeyPrefix = 'plt:test:caching-valkey'
 const configuration = 'caching-valkey'
-const valkeyUser = 'plt-caching-test'
-
-async function prepareRuntimeWithBackend (
-  t,
-  configuration,
-  production = false,
-  pauseAfterCreation = false,
-  applicationsToBuild = false,
-  additionalSetup = null
-) {
-  const { runtime, root } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-      recursive: true
-    })
-
-    await additionalSetup?.(root, config, args)
-  })
-
-  const url = await startRuntime(t, runtime, pauseAfterCreation, applicationsToBuild)
-
-  return { runtime, url, root }
-}
-
-async function cleanupCache (valkey, valkeyUser) {
-  const keys = await valkey.keys(keyFor('plt:test:caching-valkey', '*'))
-
-  if (keys.length === 0) {
-    return
-  }
-
-  await valkey.acl('delUser', valkeyUser)
-  return valkey.del(...keys)
-}
-
-async function getCacheSettings (root) {
-  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
-    skipMetadata: true
-  })
-  return config.cache
-}
-
-async function setCacheSettings (root, settings) {
-  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
-    skipMetadata: true
-  })
-
-  if (typeof settings === 'function') {
-    settings(config.cache)
-  } else {
-    Object.assign(config.cache, settings)
-  }
-
-  await saveConfigurationFile(resolve(root, 'services/frontend/platformatic.json'), config)
-}
-
-async function getValkeyUrl (root) {
-  return (await getCacheSettings(root)).url
-}
-
-function verifyValkeySequence (actual, expected) {
-  actual = actual.filter(c => c[0] !== 'info')
-
-  // Get stored values
-  const storedValues = actual.filter(c => c[0] === 'set').map(c => c[2])
-  let current = 0
-
-  // Replace in the expected set
-  for (const command of expected) {
-    if (command[0] === 'set') {
-      command[2] = storedValues[current++]
-    }
-  }
-  deepStrictEqual(actual, expected)
-
-  return storedValues
-}
 
 test(
   'should properly use the Valkey cache handler in development to cache fetch calls but not pages',
@@ -141,17 +65,11 @@ test(
       deepStrictEqual(mo[2], time)
     }
 
-    const key = keyFor(
-      valkeyPrefix,
-      'development',
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-    )
+    const key = new RegExp('^' + keyFor(valkeyPrefix, 'development', 'values'))
 
     const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', key],
-      ['set', key, null, 'EX', '120'],
+      ['set', key, base64ValueMatcher, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -233,48 +151,40 @@ test(
       deepStrictEqual(mo[2], time)
     }
 
-    const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
-
-    const fetchKey = keyFor(
-      valkeyPrefix,
-      prefix,
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-    )
+    const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
 
     let storedValues
 
     switch (nextMajor) {
       case 14:
         storedValues = verifyValkeySequence(valkeyCalls, [
-          ['get', pageKey],
-          ['get', fetchKey],
-          ['set', fetchKey, null, 'EX', '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
+          ['get', key],
+          ['get', key],
+          ['set', key, base64ValueMatcher, 'EX', '120'],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-          ['get', fetchKey],
-          ['set', pageKey, null, 'EX', '120'],
-          ['get', pageKey]
+          ['get', key],
+          ['set', key, base64ValueMatcher, 'EX', '120'],
+          ['get', key]
         ])
         break
-      case 15:
+      default:
         storedValues = verifyValkeySequence(valkeyCalls, [
-          ['get', pageKey],
-          ['get', fetchKey],
-          ['set', fetchKey, null, 'EX', '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
+          ['get', key],
+          ['get', key],
+          ['set', key, base64ValueMatcher, 'EX', '120'],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
-          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
+          ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-          ['set', pageKey, null, 'EX', '120'],
-          ['get', pageKey]
+          ['set', key, base64ValueMatcher, 'EX', '120'],
+          ['get', key]
         ])
         break
     }
@@ -319,6 +229,10 @@ test(
         case 15:
           deepStrictEqual(kind, 'APP_PAGE')
           deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,first,second,third')
+          break
+        default:
+          deepStrictEqual(kind, 'APP_PAGE')
+          deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,_N_T_/index,first,second,third')
           break
       }
 
@@ -371,16 +285,11 @@ test(
       deepStrictEqual(data.time, time)
     }
 
-    const key = keyFor(
-      valkeyPrefix,
-      'development',
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
-    )
+    const key = new RegExp('^' + keyFor(valkeyPrefix, 'development', 'values'))
+
     const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', key],
-      ['set', key, null, 'EX', '120'],
+      ['set', key, base64ValueMatcher, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -460,28 +369,20 @@ test(
       deepStrictEqual(data.time, time)
     }
 
-    const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
-
-    const fetchKey = keyFor(
-      valkeyPrefix,
-      prefix,
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
-    )
+    const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
 
     const storedValues = verifyValkeySequence(valkeyCalls, [
-      ['get', routeKey],
-      ['get', fetchKey],
-      ['set', fetchKey, null, 'EX', '120'],
-      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
+      ['get', key],
+      ['get', key],
+      ['set', key, base64ValueMatcher, 'EX', '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
-      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
-      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-      ['set', routeKey, null, 'EX', '120'],
-      ['get', routeKey]
+      ['set', key, base64ValueMatcher, 'EX', '120'],
+      ['get', key]
     ])
 
     {
@@ -527,6 +428,10 @@ test(
             headers['x-next-cache-tags'],
             '_N_T_/layout,_N_T_/route,_N_T_/route/route,_N_T_/route,first,second,third'
           )
+          break
+        default:
+          deepStrictEqual(kind, 'APP_ROUTE')
+          deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/route,_N_T_/route/route,first,second,third')
           break
       }
 
@@ -582,17 +487,11 @@ test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async
     notDeepStrictEqual(mo[2], time)
   }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-  )
+  const key = new RegExp('^' + keyFor(valkeyPrefix, 'development', 'values'))
 
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, null, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -609,7 +508,7 @@ test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async
     ['del', key],
     ['del', keyFor(valkeyPrefix, 'development', 'tags', 'third')],
     ['get', key],
-    ['set', key, null, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -671,7 +570,7 @@ test('should extend TTL when our limit is smaller than the user one', { skip: is
   )
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, null, 'EX', '20'],
+    ['set', key, base64ValueMatcher, 'EX', '20'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '20'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -759,7 +658,7 @@ test('should not extend the TTL over the original intended one', { skip: isCIOnW
 
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, null, 'EX', '10'],
+    ['set', key, base64ValueMatcher, 'EX', '10'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '10'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -1005,13 +904,13 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
 
   const key = `${valkeyPrefix}:key`
   await handler.set(key, 'value', { revalidate: 120, tags: ['first'] }, true)
-  const cached = await handler.get(key, null, true)
+  const cached = await handler.get(key, base64ValueMatcher, true)
   await handler.remove(key, true)
   await logsPromise.promise
   await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
-    ['set', key, null, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
     ['get', key],
@@ -1083,7 +982,7 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
-    ['set', key, null, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
     ['get', key],
@@ -1155,7 +1054,12 @@ test(
   'should properly use the Valkey cache handler in development when using next.config.ts',
   { skip: isCIOnWindows },
   async t => {
-    const { url } = await prepareRuntimeWithBackend(t, 'caching-valkey-ts')
+    const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+      await rename(
+        resolve(root, 'services/frontend/next.config.mjs'),
+        resolve(root, 'services/frontend/next.config.ts')
+      )
+    })
     const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
     await cleanupCache(valkey)
     const monitor = await valkey.monitor()
@@ -1192,17 +1096,11 @@ test(
       deepStrictEqual(mo[2], time)
     }
 
-    const key = keyFor(
-      valkeyPrefix,
-      'development',
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-    )
+    const key = new RegExp('^' + keyFor(valkeyPrefix, 'development', 'values'))
 
     const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', key],
-      ['set', key, null, 'EX', '120'],
+      ['set', key, base64ValueMatcher, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -1237,10 +1135,15 @@ test(
 )
 
 test(
-  'should properly use the Valkey cache handler in development when using next.config.ts',
+  'should properly use the Valkey cache handler in production when using next.config.ts',
   { skip: isCIOnWindows },
   async t => {
-    const { url, root } = await prepareRuntimeWithBackend(t, 'caching-valkey-ts', true, false, ['frontend'])
+    const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
+      await rename(
+        resolve(root, 'services/frontend/next.config.mjs'),
+        resolve(root, 'services/frontend/next.config.ts')
+      )
+    })
 
     const nextPackageJson = JSON.parse(
       await readFile(resolve(root, 'services/frontend/node_modules/next/package.json'), 'utf-8')
@@ -1286,13 +1189,7 @@ test(
 
     const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
 
-    const fetchKey = keyFor(
-      valkeyPrefix,
-      prefix,
-      'values',
-      // This might change in different versions of Next.js, keep in sync
-      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-    )
+    const fetchKey = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
 
     let storedValues
 
@@ -1301,7 +1198,7 @@ test(
         storedValues = verifyValkeySequence(valkeyCalls, [
           ['get', pageKey],
           ['get', fetchKey],
-          ['set', fetchKey, null, 'EX', '120'],
+          ['set', fetchKey, base64ValueMatcher, 'EX', '120'],
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
@@ -1309,22 +1206,22 @@ test(
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
           ['get', fetchKey],
-          ['set', pageKey, null, 'EX', '120'],
+          ['set', pageKey, base64ValueMatcher, 'EX', '120'],
           ['get', pageKey]
         ])
         break
-      case 15:
+      default:
         storedValues = verifyValkeySequence(valkeyCalls, [
           ['get', pageKey],
           ['get', fetchKey],
-          ['set', fetchKey, null, 'EX', '120'],
+          ['set', fetchKey, base64ValueMatcher, 'EX', '120'],
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
           ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
           ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-          ['set', pageKey, null, 'EX', '120'],
+          ['set', pageKey, base64ValueMatcher, 'EX', '120'],
           ['get', pageKey]
         ])
         break
@@ -1370,6 +1267,10 @@ test(
         case 15:
           deepStrictEqual(kind, 'APP_PAGE')
           deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,first,second,third')
+          break
+        default:
+          deepStrictEqual(kind, 'APP_PAGE')
+          deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,_N_T_/index,first,second,third')
           break
       }
 

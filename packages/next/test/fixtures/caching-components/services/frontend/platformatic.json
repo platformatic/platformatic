@@ -9,6 +9,7 @@
   "cache": {
     "adapter": "valkey",
     "url": "valkey://{VALKEY_URL}",
-    "prefix": "plt:test:caching-valkey"
+    "prefix": "plt:test:caching-valkey",
+    "cacheComponents": true
   }
 }

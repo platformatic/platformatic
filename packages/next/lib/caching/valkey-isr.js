@@ -1,43 +1,21 @@
-import { buildPinoFormatters, buildPinoTimestamp, ensureLoggableError } from '@platformatic/foundation'
-import { Redis } from 'iovalkey'
-import { pack, unpack } from 'msgpackr'
-import { existsSync, readFileSync } from 'node:fs'
-import { hostname } from 'node:os'
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { pino } from 'pino'
+import { ensureLoggableError } from '@platformatic/foundation'
+import {
+  createPlatformaticLogger,
+  deserialize,
+  getConnection,
+  getPlatformaticMeta,
+  getPlatformaticSubprefix,
+  keyFor,
+  serialize
+} from './valkey-common.js'
 
-const CACHE_HIT_METRIC = { name: 'next_cache_valkey_hit_count', help: 'Next.js Cache (Valkey) Hit Count' }
-const CACHE_MISS_METRIC = { name: 'next_cache_valkey_miss_count', help: 'Next.js Cache (Valkey) Miss Count' }
-
-const clients = new Map()
-
+export const CACHE_HIT_METRIC = { name: 'next_cache_valkey_hit_count', help: 'Next.js Cache (Valkey) Hit Count' }
+export const CACHE_MISS_METRIC = { name: 'next_cache_valkey_miss_count', help: 'Next.js Cache (Valkey) Miss Count' }
 export const MAX_BATCH_SIZE = 100
 
 export const sections = {
   values: 'values',
   tags: 'tags'
-}
-
-export function keyFor (prefix, subprefix, section, key) {
-  return [prefix, 'cache:next', subprefix, section, key ? Buffer.from(key).toString('base64url') : undefined]
-    .filter(c => c)
-    .join(':')
-}
-
-export function getConnection (url) {
-  let client = clients.get(url)
-
-  if (!client) {
-    client = new Redis(url, { enableAutoPipelining: true })
-    clients.set(url, client)
-
-    globalThis.platformatic.events.on('plt:next:close', () => {
-      client.disconnect(false)
-    })
-  }
-
-  return client
 }
 
 export class CacheHandler {
@@ -64,14 +42,14 @@ export class CacheHandler {
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
-    if (!this.#standalone && globalThis.platformatic) {
+    if (!this.#standalone && globalThis.platformatic?.config) {
       this.#config ??= globalThis.platformatic.config.cache
-      this.#logger ??= this.#createPlatformaticLogger()
+      this.#logger ??= createPlatformaticLogger()
       this.#store ??= getConnection(this.#config.url)
       this.#maxTTL ??= this.#config.maxTTL
       this.#prefix ??= this.#config.prefix
-      this.#subprefix ??= this.#getPlatformaticSubprefix()
-      this.#meta ??= this.#getPlatformaticMeta()
+      this.#subprefix ??= getPlatformaticSubprefix()
+      this.#meta ??= getPlatformaticMeta()
     } else {
       this.#config ??= {}
       this.#maxTTL ??= 86_400
@@ -92,7 +70,7 @@ export class CacheHandler {
       throw new Error('Please provide a the "store" option.')
     }
 
-    if (globalThis.platformatic) {
+    if (globalThis.platformatic?.prometheus) {
       this.#registerMetrics()
     }
   }
@@ -118,7 +96,7 @@ export class CacheHandler {
 
     let value
     try {
-      value = this.#deserialize(rawValue)
+      value = deserialize(rawValue)
     } catch (e) {
       this.#cacheMissMetric?.inc()
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot deserialize cache value from Valkey')
@@ -155,7 +133,7 @@ export class CacheHandler {
 
     try {
       // Compute the parameters to save
-      const data = this.#serialize({
+      const data = serialize({
         value,
         tags,
         lastModified: Date.now(),
@@ -170,7 +148,6 @@ export class CacheHandler {
       }
 
       // Enqueue all the operations to perform in Valkey
-
       const promises = []
       promises.push(this.#store.set(key, data, 'EX', expire))
 
@@ -210,7 +187,7 @@ export class CacheHandler {
 
     let value
     try {
-      value = this.#deserialize(rawValue)
+      value = deserialize(rawValue)
     } catch (e) {
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot deserialize cache value from Valkey')
 
@@ -299,63 +276,8 @@ export class CacheHandler {
     await Promise.all(promises)
   }
 
-  #createPlatformaticLogger () {
-    const loggerConfig = globalThis.platformatic?.config?.logger
-
-    const pinoOptions = {
-      ...loggerConfig,
-      level: globalThis.platformatic?.logLevel ?? loggerConfig?.level ?? 'info'
-    }
-    if (pinoOptions.formatters) {
-      pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
-    }
-    if (pinoOptions.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
-    }
-
-    if (this.applicationId) {
-      pinoOptions.name = `cache:${this.applicationId}`
-    }
-
-    if (pinoOptions.base !== null) {
-      pinoOptions.base = {
-        ...(pinoOptions.base ?? {}),
-        pid: process.pid,
-        hostname: hostname(),
-        worker: this.workerId
-      }
-    } else if (pinoOptions.base === null) {
-      pinoOptions.base = undefined
-    }
-
-    return pino(pinoOptions)
-  }
-
-  #getPlatformaticSubprefix () {
-    const root = fileURLToPath(globalThis.platformatic.root)
-
-    return existsSync(resolve(root, '.next/BUILD_ID'))
-      ? (this.#subprefix = readFileSync(resolve(root, '.next/BUILD_ID'), 'utf-8').trim())
-      : 'development'
-  }
-
-  #getPlatformaticMeta () {
-    return {
-      applicationId: globalThis.platformatic.applicationId,
-      workerId: globalThis.platformatic.workerId
-    }
-  }
-
   #keyFor (key, section) {
     return keyFor(this.#prefix, this.#subprefix, section, key)
-  }
-
-  #serialize (data) {
-    return pack(data).toString('base64url')
-  }
-
-  #deserialize (data) {
-    return unpack(Buffer.from(data, 'base64url'))
   }
 
   #registerMetrics () {

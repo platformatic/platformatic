@@ -12,15 +12,16 @@ import {
   verifyHTMLViaInject,
   verifyJSONViaHTTP,
   verifyJSONViaInject
-} from '../../basic/test/helper.js'
+} from '../../../basic/test/helper.js'
 
 process.setMaxListeners(100)
-setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 
 const hmrTriggerFile = 'services/frontend/src/app/page.js'
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
-  switch (message.action) {
+  // Type is used in Next.js 16.0+, action in earlier versions.
+  switch (message.type ?? message.action) {
     case 'sync':
       resolveConnection()
       break
@@ -72,7 +73,7 @@ const configurations = [
     id: 'standalone',
     name: 'Next.js (standalone)',
     check: verifyDevelopmentFrontendStandalone,
-    htmlContents: ['<script src="/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   },
@@ -80,7 +81,7 @@ const configurations = [
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'ts'
   },
@@ -88,7 +89,7 @@ const configurations = [
     id: 'composer-with-external-proxy',
     name: 'Next.js (in composer with external proxy)',
     check: verifyDevelopmentFrontendWithExternalProxy,
-    htmlContents: ['<script src="/external-proxy/frontend/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/external-proxy\/frontend\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   },
@@ -96,7 +97,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'Next.js (in composer without prefix)',
     check: verifyDevelopmentFrontendWithoutPrefix,
-    htmlContents: ['<script src="/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   },
@@ -104,7 +105,7 @@ const configurations = [
     id: 'composer-autodetect-prefix',
     name: 'Next.js (in composer with autodetected prefix)',
     check: verifyDevelopmentFrontendWithAutodetectPrefix,
-    htmlContents: ['<script src="/nested/base/dir/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/nested\/base\/dir\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   },
@@ -112,7 +113,7 @@ const configurations = [
     id: 'server-side',
     name: 'Next.js RSC (in composer with prefix)',
     check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   },
@@ -120,7 +121,7 @@ const configurations = [
     id: 'composer-custom-commands',
     name: 'Next.js (in composer with prefix using custom commands)',
     check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
     hmrTriggerFile,
     language: 'js'
   }

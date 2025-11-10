@@ -811,7 +811,7 @@ jobs:
         run: cd packages/node && pnpm test && pnpm run lint
 
   next:
-    name: 'next - ${{ matrix.node }}'
+    name: 'next - ${{ matrix.node }} - ${{ matrix.suite }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ubuntu-24.04
@@ -819,6 +819,7 @@ jobs:
     strategy:
       matrix:
         node: [22, 24]
+        suite: [main, caching, compatibility, integration]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
@@ -839,7 +840,7 @@ jobs:
       - name: Start docker containers for testing
         run: docker compose up -d valkey
       - name: Run next package test suite
-        run: cd packages/next && pnpm test && pnpm run lint
+        run: cd packages/next && pnpm test:${{ matrix.suite }} && pnpm run lint
 
   vite:
     name: 'vite - ${{ matrix.os }} - ${{ matrix.node }}'

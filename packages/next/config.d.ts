@@ -523,6 +523,7 @@ export interface PlatformaticNextJsConfig {
     adapter: "redis" | "valkey";
     url: string;
     prefix?: string;
+    cacheComponents?: boolean;
     maxTTL?: number | string;
   };
 }

@@ -1914,6 +1914,9 @@
         "prefix": {
           "type": "string"
         },
+        "cacheComponents": {
+          "type": "boolean"
+        },
         "maxTTL": {
           "default": 604800,
           "anyOf": [
