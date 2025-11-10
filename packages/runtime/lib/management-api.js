@@ -264,8 +264,9 @@ export async function managementApiPlugin (app, opts) {
           socket.send(serializedMetrics + '\n')
         }
       } catch (error) {
-        // If there's an error, stop polling
+        // If there's an error, stop polling and close the connection
         clearInterval(pollingInterval)
+        socket.close()
       }
     }
 
