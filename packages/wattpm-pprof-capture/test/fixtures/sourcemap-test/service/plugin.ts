@@ -2,13 +2,14 @@ import { FastifyInstance } from 'fastify'
 
 // A function with a distinctive name that we can find in the profile
 // This function allocates significant memory to ensure heap profiler captures samples
-async function myTypeScriptFunction(value: number): Promise<number> {
+function myTypeScriptFunction(value: number): number {
   let result = 0
   const allocations: Array<{ data: number[], metadata: object }> = []
 
   // Allocate memory in chunks larger than heap profiler sampling interval (512KB)
   // Each iteration allocates ~1MB to ensure we trigger heap profiler sampling
-  for (let i = 0; i < 10; i++) {
+  // Reduced to 3 iterations to make test faster while still generating enough samples
+  for (let i = 0; i < 3; i++) {
     // Allocate a large array (~800KB of numbers)
     const largeArray = new Array(100000)
     for (let j = 0; j < largeArray.length; j++) {
@@ -25,9 +26,6 @@ async function myTypeScriptFunction(value: number): Promise<number> {
     }
 
     allocations.push({ data: largeArray, metadata })
-
-    // Small delay to allow heap profiler to sample
-    await new Promise(resolve => setTimeout(resolve, 10))
   }
 
   // Keep allocations alive until we're done computing
@@ -40,7 +38,7 @@ export default async function (app: FastifyInstance) {
   })
 
   app.get('/compute', async () => {
-    const result = await myTypeScriptFunction(42)
+    const result = myTypeScriptFunction(42)
     return { result }
   })
 

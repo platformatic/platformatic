@@ -185,10 +185,11 @@ test('sourcemaps should work with heap profiling', async t => {
     return state.isProfilerRunning
   }, 2000)
 
-  // Make many requests to ensure enough allocations for heap profiler to capture
+  // Make multiple requests to ensure enough allocations for heap profiler to capture
   // Heap profiler samples at 512KB intervals by default
-  // Each request allocates ~10MB of memory which should trigger multiple samples
-  for (let i = 0; i < 50; i++) {
+  // Each request allocates ~3MB of memory which should trigger multiple samples
+  // 10 requests = ~30MB total, more than enough for reliable heap profiling
+  for (let i = 0; i < 10; i++) {
     await request(`${url}/compute`, { headersTimeout: 30000, bodyTimeout: 30000 })
   }
 
