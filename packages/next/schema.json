@@ -1154,7 +1154,8 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 134217728
             }
           },
           "additionalProperties": false
