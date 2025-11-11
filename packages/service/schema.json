@@ -1310,9 +1310,14 @@
                   "type": "number",
                   "minimum": 1
                 },
-                "dynamic": {
+                "adaptive": {
                   "type": "boolean",
                   "default": false
+                },
+                "dynamic": {
+                  "type": "boolean",
+                  "default": false,
+                  "deprecated": true
                 },
                 "minimum": {
                   "type": "number",

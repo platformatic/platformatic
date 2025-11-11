@@ -318,6 +318,10 @@ export interface PlatformaticServiceConfig {
       | string
       | {
           static?: number;
+          adaptive?: boolean;
+          /**
+           * @deprecated
+           */
           dynamic?: boolean;
           minimum?: number;
           maximum?: number;

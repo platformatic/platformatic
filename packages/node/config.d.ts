@@ -122,6 +122,10 @@ export interface PlatformaticNodeJsConfig {
       | string
       | {
           static?: number;
+          adaptive?: boolean;
+          /**
+           * @deprecated
+           */
           dynamic?: boolean;
           minimum?: number;
           maximum?: number;

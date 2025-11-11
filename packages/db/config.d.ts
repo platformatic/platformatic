@@ -488,6 +488,10 @@ export interface PlatformaticDatabaseConfig {
       | string
       | {
           static?: number;
+          adaptive?: boolean;
+          /**
+           * @deprecated
+           */
           dynamic?: boolean;
           minimum?: number;
           maximum?: number;

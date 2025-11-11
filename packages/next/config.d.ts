@@ -122,6 +122,10 @@ export interface PlatformaticNextJsConfig {
       | string
       | {
           static?: number;
+          adaptive?: boolean;
+          /**
+           * @deprecated
+           */
           dynamic?: boolean;
           minimum?: number;
           maximum?: number;
