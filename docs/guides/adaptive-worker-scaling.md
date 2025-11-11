@@ -1,8 +1,8 @@
-# Vertical Scaler
+# Adaptive Worker Scaling
 
 ## Overview
 
-The Vertical Scaler is an automatic resource allocation algorithm that dynamically adjusts the number of workers for applications based on their Event Loop Utilization (ELU) metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
+Adaptive Worker Scaling is an automatic resource allocation algorithm that dynamically adjusts the number of workers for applications based on their Event Loop Utilization (ELU) metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
 
 ## How It Works
 
@@ -81,7 +81,7 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 
 ## Configuration
 
-### Vertical scaler parameters
+### Adaptive Worker Scaling Parameters
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|

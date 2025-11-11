@@ -50,7 +50,8 @@ export const workers = {
       type: 'object',
       properties: {
         static: { type: 'number', minimum: 1 },
-        dynamic: { type: 'boolean', default: false },
+        adaptive: { type: 'boolean', default: false },
+        dynamic: { type: 'boolean', default: false, deprecated: true },
         minimum: { type: 'number', minimum: 1 },
         maximum: { type: 'number', minimum: 0 },
         total: { type: 'number', minimum: 1 },

@@ -17,7 +17,7 @@
     "enabled": false
   },
   "workers": {
-    "dynamic": true,
+    "adaptive": true,
     "gracePeriod": 1000,
     "total": 10
   }

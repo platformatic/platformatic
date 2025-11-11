@@ -271,7 +271,7 @@ export async function transform (config, _, context) {
   // TODO: Remove in the next major version
   if (config.verticalScaler) {
     config.workers ??= {}
-    config.workers.dynamic ??= config.verticalScaler.enabled
+    config.workers.adaptive ??= config.verticalScaler.enabled
     config.workers.minimum ??= config.verticalScaler.minWorkers
     config.workers.maximum ??= config.verticalScaler.maxWorkers
     config.workers.total ??= config.verticalScaler.maxTotalWorkers
@@ -286,6 +286,15 @@ export async function transform (config, _, context) {
     }
 
     config.verticalScaler = undefined
+  }
+
+  // Migrate the old 'dynamic' property to 'adaptive'
+  // TODO: Remove in the next major version
+  if (typeof config.workers === 'object' && config.workers !== null) {
+    if (typeof config.workers.dynamic !== 'undefined' && typeof config.workers.adaptive === 'undefined') {
+      config.workers.adaptive = config.workers.dynamic
+      delete config.workers.dynamic
+    }
   }
 
   if (config.autoload) {

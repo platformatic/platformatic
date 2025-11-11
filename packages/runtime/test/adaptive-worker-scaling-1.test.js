@@ -10,12 +10,12 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 const configurations = {
   default: 'platformatic.json',
-  'vertical-scaler': 'platformatic.vertical-scaler.json'
+  'adaptive-worker-scaling': 'platformatic.adaptive-worker-scaling.json'
 }
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'adaptive-worker-scaling', file)
     const app = await createRuntime(configFile)
     const entryUrl = await app.start()
 
@@ -51,7 +51,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application when the scaler is the cooldown(configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'adaptive-worker-scaling', file)
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -98,7 +98,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'adaptive-worker-scaling', file)
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -141,7 +141,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'adaptive-worker-scaling', file)
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.applications = [

@@ -57,7 +57,7 @@ const sidebars = {
             'guides/using-watt-with-node-config',
             'guides/use-watt-multiple-repository',
             'guides/scheduler',
-            'guides/vertical-scaler'
+            'guides/adaptive-worker-scaling'
           ]
         },
         {

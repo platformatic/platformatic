@@ -58,9 +58,10 @@ runtime. Each application object supports the following settings:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
     - **`static`** (`number`) - A fixed number of workers
-    - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
-    - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
-    - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
+    - **`adaptive`** (`boolean`) - Enable adaptive worker scaling. This is only meaningful when set to `false` to disable adaptive scaling for this application.
+    - **`dynamic`** (`boolean`) - **Deprecated**. Use `adaptive` instead.
+    - **`minimum`** (`number`) - Minimum number of workers when using adaptive scaling
+    - **`maximum`** (`number`) - Maximum number of workers when using adaptive scaling
 - **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
 - **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
@@ -165,7 +166,8 @@ This can be specified as:
 - **`number`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
   - **`static`** (`number`) - A fixed number of workers
-  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory. It can be overridden at the application level.
+  - **`adaptive`** (`boolean`) - Enable adaptive worker scaling (default: `false`). Adaptive worker scaling automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory. It can be overridden at the application level.
+  - **`dynamic`** (`boolean`) - **Deprecated**. Use `adaptive` instead. This property is maintained for backward compatibility.
   - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
   - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: global `total` value.
   - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
@@ -476,7 +478,7 @@ _Every object_ has:
 The `verticalScaler` configuration is deprecated and will be removed in a future version. These options are now mapped to the equivalent properties in the `workers` configuration. Please use the `workers` configuration instead.
 :::
 
-The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime. The vertical scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
+The `verticalScaler` configuration was used to enable adaptive worker scaling for the Platformatic Runtime. Adaptive worker scaling automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
 
 The scaler operates in two modes:
 

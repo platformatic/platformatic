@@ -9,7 +9,7 @@
   },
   "runtime": {
     "workers": {
-      "dynamic": true,
+      "adaptive": true,
       "maximum": 2,
       "total": 10
     }

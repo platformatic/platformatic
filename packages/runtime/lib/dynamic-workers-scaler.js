@@ -90,7 +90,7 @@ export class DynamicWorkersScaler {
 
       config.minWorkers = 1
       config.maxWorkers = 1
-    } else if (application.workers.dynamic === false) {
+    } else if (application.workers.adaptive === false) {
       this.#runtime.logger.warn(
         `The "${application.id}" application cannot be scaled because it has a fixed number of workers (${application.workers.static}).`
       )
