@@ -238,6 +238,7 @@ export async function managementApiPlugin (app, opts) {
     return metrics
   })
 
+  // TODO: Remove in next major version - deprecated endpoint
   app.get('/metrics/live', { websocket: true }, async socket => {
     const config = await runtime.getRuntimeConfig()
 
@@ -256,26 +257,32 @@ export async function managementApiPlugin (app, opts) {
       return
     }
 
-    const cachedMetrics = runtime.getCachedMetrics()
-    if (cachedMetrics.length > 0) {
-      const serializedMetrics = cachedMetrics.map(metric => JSON.stringify(metric)).join('\n')
-      socket.send(serializedMetrics + '\n')
+    const pollAndSendMetrics = async () => {
+      try {
+        const metrics = await runtime.getFormattedMetrics()
+        if (metrics) {
+          const serializedMetrics = JSON.stringify(metrics)
+          socket.send(serializedMetrics + '\n')
+        }
+      } catch (error) {
+        // If there's an error, stop polling and close the connection
+        clearInterval(pollingInterval)
+        socket.close()
+      }
     }
 
-    const eventHandler = metrics => {
-      const serializedMetrics = JSON.stringify(metrics)
-      socket.send(serializedMetrics + '\n')
+    // Poll every second
+    const pollingInterval = setInterval(pollAndSendMetrics, 1000)
+
+    // Send initial metrics immediately
+    await pollAndSendMetrics()
+
+    const cleanup = () => {
+      clearInterval(pollingInterval)
     }
 
-    runtime.on('metrics', eventHandler)
-
-    socket.on('error', () => {
-      runtime.off('metrics', eventHandler)
-    })
-
-    socket.on('close', () => {
-      runtime.off('metrics', eventHandler)
-    })
+    socket.on('error', cleanup)
+    socket.on('close', cleanup)
   })
 
   app.get('/logs/live', { websocket: true }, async socket => {
