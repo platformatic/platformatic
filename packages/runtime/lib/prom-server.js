@@ -85,7 +85,7 @@ export async function startPrometheusServer (runtime, opts) {
   const metricsEndpoint = opts.endpoint ?? DEFAULT_METRICS_ENDPOINT
   const auth = opts.auth ?? null
 
-  const promServer = fastify({ name: 'Prometheus server' })
+  const promServer = fastify({ name: 'Prometheus server', loggerInstance: runtime.logger })
   promServer.register(fastifyAccepts)
 
   let onRequestHook
@@ -151,7 +151,7 @@ export async function startPrometheusServer (runtime, opts) {
       url: readinessEndpoint,
       method: 'GET',
       logLevel: 'warn',
-      handler: async (req, reply) => {
+      handler: async (_req, reply) => {
         reply.type('text/plain')
 
         const { status, response } = await checkReadiness(runtime)
@@ -190,7 +190,7 @@ export async function startPrometheusServer (runtime, opts) {
       url: livenessEndpoint,
       method: 'GET',
       logLevel: 'warn',
-      handler: async (req, reply) => {
+      handler: async (_req, reply) => {
         reply.type('text/plain')
 
         const { status, response, readiness } = await checkLiveness(runtime)

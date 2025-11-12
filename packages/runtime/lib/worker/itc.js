@@ -75,10 +75,10 @@ export async function sendMultipleViaITC (
   timeoutFallbackValue = kTimeout
 ) {
   const results = await executeInParallel(
-    async ([id, worker]) => {
+    async (id, worker) => {
       return [
         id,
-        await executeWithTimeout(sendViaITC(worker, name, message, transferList), timeoutFallbackValue, timeout)
+        await executeWithTimeout(sendViaITC(worker, name, message, transferList), timeout, timeoutFallbackValue)
       ]
     },
     idsAndWorkerPairs,
