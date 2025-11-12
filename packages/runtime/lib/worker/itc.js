@@ -1,4 +1,4 @@
-import { ensureLoggableError } from '@platformatic/foundation'
+import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
@@ -63,6 +63,29 @@ async function closeITC (dispatcher, itc, messaging) {
 
 export async function sendViaITC (worker, name, message, transferList) {
   return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
+}
+
+export async function sendMultipleViaITC (
+  idsAndWorkerPairs,
+  name,
+  message,
+  transferList,
+  concurrency,
+  timeout = 5000,
+  timeoutFallbackValue = kTimeout
+) {
+  const results = await executeInParallel(
+    async ([id, worker]) => {
+      return [
+        id,
+        await executeWithTimeout(sendViaITC(worker, name, message, transferList), timeoutFallbackValue, timeout)
+      ]
+    },
+    idsAndWorkerPairs,
+    concurrency
+  )
+
+  return Object.fromEntries(results)
 }
 
 export async function waitEventFromITC (worker, event) {
