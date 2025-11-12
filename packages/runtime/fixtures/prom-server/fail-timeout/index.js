@@ -16,7 +16,6 @@ export function create () {
 
   app.post('/fail', (req, res) => {
     globalThis.platformatic.setCustomHealthCheck(() => {
-
       return new Promise((resolve) => {
         const t = setTimeout(() => {
           resolve(false)
