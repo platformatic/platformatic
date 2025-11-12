@@ -49,6 +49,8 @@ const vite = {
 
 const on404 = {
   oneOf: [
+    { type: 'boolean' },
+    { type: 'string' },
     {
       type: 'object',
       properties: {
@@ -70,11 +72,8 @@ const on404 = {
       },
       required: ['path'],
       additionalProperties: false
-    },
-    { type: 'string' },
-    { type: 'boolean' }
-  ],
-  default: false
+    }
+  ]
 }
 
 export const schemaComponents = { vite, on404 }

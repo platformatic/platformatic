@@ -1950,6 +1950,12 @@
     "on404": {
       "oneOf": [
         {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
           "type": "object",
           "properties": {
             "enabled": {
@@ -1996,15 +2002,8 @@
             "path"
           ],
           "additionalProperties": false
-        },
-        {
-          "type": "string"
-        },
-        {
-          "type": "boolean"
         }
-      ],
-      "default": false
+      ]
     }
   },
   "additionalProperties": false
