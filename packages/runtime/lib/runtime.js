@@ -1745,7 +1745,7 @@ export class Runtime extends EventEmitter {
         const memoryUsage = health.heapUsed / maxHeapTotal
         const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
 
-        this.emitAndNotify('application:worker:health', {
+        this.emit('application:worker:health', {
           id: worker[kId],
           application: id,
           worker: index,
