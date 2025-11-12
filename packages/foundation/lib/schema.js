@@ -1170,7 +1170,7 @@ export const runtimeProperties = {
                 additionalProperties: false
               }
             ],
-            customHealthChecksTimeout: {
+            healthChecksTimeouts: {
               anyOf: [{ type: 'integer' }, { type: 'string' }],
               default: 5000
             }

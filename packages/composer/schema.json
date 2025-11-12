@@ -1770,7 +1770,7 @@
                       "additionalProperties": false
                     }
                   ],
-                  "customHealthChecksTimeout": {
+                  "healthChecksTimeouts": {
                     "anyOf": [
                       {
                         "type": "integer"

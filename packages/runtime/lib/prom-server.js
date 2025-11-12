@@ -68,7 +68,7 @@ async function checkLiveness (runtime) {
       return check
     } else if (typeof check === 'object') {
       response = check
-      return check.status
+      return check.status || false
     }
     return false
   })

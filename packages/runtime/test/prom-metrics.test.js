@@ -841,3 +841,36 @@ test('should not wait for a blocked worker for metrics', async t => {
   strictEqual(metrics.trim(), '')
   ok(Date.now() - start < 3000, 'should not take more than 3 seconds to respond')
 })
+
+test('liveness - should get a fail if the custom health check times out', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-timeout.json')
+  const app = await createRuntime(configFile)
+
+  const entryUrl = await app.start()
+  console.log('App started at', entryUrl)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request(entryUrl + '/fail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: Buffer.from('{"fail": true}'),
+    })
+    strictEqual(statusCode, 200)
+    await body.dump()
+  }
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  strictEqual(statusCode, 500)
+  strictEqual(await body.text(), 'ERR')
+})

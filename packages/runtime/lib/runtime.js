@@ -960,7 +960,7 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.customHealthChecksTimeout,
+      this.#config.metrics.healthChecksTimeout,
       {}
     )
   }
@@ -981,7 +981,7 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.customHealthChecksTimeout,
+      this.#config.metrics.healthChecksTimeout,
       {}
     )
   }
