@@ -59,18 +59,6 @@ const on404 = {
         type: { type: 'string', default: 'text/html' },
         code: { type: 'number', default: 200 }
       },
-      required: ['enabled'],
-      additionalProperties: false
-    },
-    {
-      type: 'object',
-      properties: {
-        enabled: { type: 'boolean' },
-        path: { type: 'string', default: 'index.html' },
-        type: { type: 'string', default: 'text/html' },
-        code: { type: 'number', default: 200 }
-      },
-      required: ['path'],
       additionalProperties: false
     }
   ]
