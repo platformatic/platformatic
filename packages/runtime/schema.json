@@ -187,6 +187,17 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "codeRangeSize": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -460,6 +471,17 @@
                 ]
               },
               "maxYoungGeneration": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "codeRangeSize": {
                 "anyOf": [
                   {
                     "type": "number",
@@ -749,6 +771,17 @@
                     "type": "string"
                   }
                 ]
+              },
+              "codeRangeSize": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -1020,6 +1053,17 @@
                 ]
               },
               "maxYoungGeneration": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "codeRangeSize": {
                 "anyOf": [
                   {
                     "type": "number",
@@ -1640,6 +1684,18 @@
             }
           ],
           "default": 134217728
+        },
+        "codeRangeSize": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 268435456
         }
       },
       "additionalProperties": false

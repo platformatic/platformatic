@@ -528,7 +528,8 @@ test('should report on failures', async t => {
           maxELU: 0.99,
           maxHeapUsed: 0.99,
           maxHeapTotal: 536870912,
-          maxYoungGeneration: 134217728
+          maxYoungGeneration: 134217728,
+          codeRangeSize: 268435456
         },
         new: {
           maxHeapTotal: 536870912

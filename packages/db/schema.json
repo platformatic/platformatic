@@ -1488,6 +1488,17 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "codeRangeSize": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -2095,6 +2106,18 @@
                 }
               ],
               "default": 134217728
+            },
+            "codeRangeSize": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 268435456
             }
           },
           "additionalProperties": false

@@ -39,6 +39,7 @@ export type PlatformaticRuntimeConfig = {
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
           maxYoungGeneration?: number | string;
+          codeRangeSize?: number | string;
         };
         dependencies?: string[];
         arguments?: string[];
@@ -200,6 +201,7 @@ export type PlatformaticRuntimeConfig = {
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
     maxYoungGeneration?: number | string;
+    codeRangeSize?: number | string;
   };
   undici?: {
     agentOptions?: {

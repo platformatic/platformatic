@@ -96,6 +96,24 @@ test('set the spaces memory correctly when maxHeapTotal is a string', { skip: is
   }
 })
 
+test('set the code range size correctly', { skip: isWindows && 'Skipping on Windows' }, async t => {
+  const configFile = join(fixturesDir, 'health-code-range', 'platformatic.json')
+  const server = await createRuntime(configFile)
+
+  const url = await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  {
+    const res = await request(url + '/')
+
+    const { resourceLimits } = await res.body.json()
+    strictEqual(resourceLimits.codeRangeSizeMb, 256)
+  }
+})
+
 test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
   const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
   const server = await createRuntime(configFile)

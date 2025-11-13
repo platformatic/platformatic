@@ -24,7 +24,6 @@ import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
-import { DynamicWorkersScaler } from './worker-scaler.js'
 import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
@@ -45,6 +44,7 @@ import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
+import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -698,7 +698,9 @@ export class Runtime extends EventEmitter {
 
   // TODO: Remove in next major version
   startCollectingMetrics () {
-    this.logger.warn('startCollectingMetrics() is deprecated and no longer collects metrics. Metrics are now polled on-demand by the management API.')
+    this.logger.warn(
+      'startCollectingMetrics() is deprecated and no longer collects metrics. Metrics are now polled on-demand by the management API.'
+    )
   }
 
   // TODO: Remove in next major version
@@ -1455,11 +1457,14 @@ export class Runtime extends EventEmitter {
       typeof health.maxYoungGeneration === 'string'
         ? parseMemorySize(health.maxYoungGeneration)
         : health.maxYoungGeneration
+    const codeRangeSize =
+      typeof health.codeRangeSize === 'string' ? parseMemorySize(health.codeRangeSize) : health.codeRangeSize
 
     const maxOldGenerationSizeMb = Math.floor(
       (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
     )
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
+    const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
@@ -1485,7 +1490,8 @@ export class Runtime extends EventEmitter {
       env: workerEnv,
       resourceLimits: {
         maxOldGenerationSizeMb,
-        maxYoungGenerationSizeMb
+        maxYoungGenerationSizeMb,
+        codeRangeSizeMb
       },
       stdout: true,
       stderr: true

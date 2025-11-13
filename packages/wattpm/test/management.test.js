@@ -243,7 +243,8 @@ test('config - should list configuration for an application', async t => {
       maxHeapTotal: 4294967296,
       maxHeapUsed: 0.99,
       maxUnhealthyChecks: 10,
-      maxYoungGeneration: 134217728
+      maxYoungGeneration: 134217728,
+      codeRangeSize: 268435456
     },
     resolvedApplicationsBasePath: 'external',
     metrics: {
