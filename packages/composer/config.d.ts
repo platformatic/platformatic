@@ -292,6 +292,7 @@ export interface PlatformaticComposerConfig {
       maxHeapUsed?: number | string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
+      codeRangeSize?: number | string;
     };
     undici?: {
       agentOptions?: {
