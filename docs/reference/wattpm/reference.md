@@ -67,6 +67,7 @@ Arguments:
 Options:
 
 - `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
+- `-e, --env <path>`: Path to a custom .env file to load environment variables from
 
 ## `start`
 
@@ -79,6 +80,7 @@ Arguments:
 Options:
 
 - `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
+- `-e, --env <path>`: Path to a custom .env file to load environment variables from
 - `-i, --inspect`: Start the inspector
 
 ## `stop`

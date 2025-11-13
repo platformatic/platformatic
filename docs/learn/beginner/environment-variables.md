@@ -79,7 +79,7 @@ PORT=4042 LOG_LEVEL=debug npx wattpm dev
 
 ## Step 4: Environment-Specific Configuration
 
-Create different `.env` files for different environments:
+You can create different `.env` files for different environments and specify which one to use with the `--env` flag:
 
 ```plaintext title=".env.development"
 PORT=3042
@@ -93,15 +93,17 @@ LOG_LEVEL=warn
 DATABASE_URL=postgresql://user:pass@prod-db:5432/myapp
 ```
 
-**Load specific environments:**
+**Load specific environment files:**
 
 ```bash
 # Development
-NODE_ENV=development npx wattpm start
+npx wattpm dev --env .env.development
 
 # Production
-NODE_ENV=production npx wattpm start
+npx wattpm start --env .env.production
 ```
+
+**Note:** By default, Watt only loads `.env` files automatically. To use environment-specific files like `.env.development` or `.env.production`, you must explicitly specify them using the `--env` flag.
 
 ## Step 5: Common Configuration Patterns
 
@@ -171,6 +173,7 @@ Now that you understand environment variables, you might want to:
 
 **Environment-specific file not loading?**
 
-- Check `NODE_ENV` value: `echo $NODE_ENV`
-- Ensure file naming: `.env.development`, `.env.production`
+- Make sure you're using the `--env` flag: `wattpm start --env .env.production`
+- Check that the file path is correct (relative or absolute)
+- Verify the file exists: `ls -la .env.production`
 - Remember: command line variables override `.env` files
