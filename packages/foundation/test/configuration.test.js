@@ -1373,6 +1373,69 @@ test('loadEnv - should handle .env file not found in any directory', async t => 
   equal(Object.keys(result).length, 0)
 })
 
+test('loadEnv - should load from custom env file with absolute path', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const customEnvFile = join(tmpDir, 'custom.env')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(customEnvFile, 'CUSTOM_VAR=from_custom_file\nANOTHER_VAR=test123', 'utf8')
+
+  const result = await loadEnv(tmpDir, true, {}, customEnvFile)
+
+  equal(result.CUSTOM_VAR, 'from_custom_file')
+  equal(result.ANOTHER_VAR, 'test123')
+})
+
+test('loadEnv - should load from custom env file with relative path', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const customEnvFile = 'my-custom.env'
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(join(tmpDir, customEnvFile), 'RELATIVE_VAR=from_relative_file', 'utf8')
+
+  const result = await loadEnv(tmpDir, true, {}, customEnvFile)
+
+  equal(result.RELATIVE_VAR, 'from_relative_file')
+})
+
+test('loadEnv - should throw error when custom env file does not exist', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const nonExistentFile = join(tmpDir, 'non-existent.env')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await rejects(async () => {
+    await loadEnv(tmpDir, true, {}, nonExistentFile)
+  }, /Custom env file not found/)
+})
+
+test('loadEnv - should prioritize custom env file over default .env', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const defaultEnvFile = join(tmpDir, '.env')
+  const customEnvFile = join(tmpDir, 'custom.env')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(defaultEnvFile, 'SHARED_VAR=from_default\nDEFAULT_ONLY=default_value', 'utf8')
+  await writeFile(customEnvFile, 'SHARED_VAR=from_custom\nCUSTOM_ONLY=custom_value', 'utf8')
+
+  const result = await loadEnv(tmpDir, true, {}, customEnvFile)
+
+  equal(result.SHARED_VAR, 'from_custom')
+  equal(result.CUSTOM_ONLY, 'custom_value')
+  equal(result.DEFAULT_ONLY, undefined)
+})
+
 test('validate - should validate successfully with valid config', () => {
   const schema = {
     type: 'object',

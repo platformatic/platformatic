@@ -338,6 +338,7 @@ export interface PlatformaticNestJSConfig {
                   body?: string;
                 };
               };
+          healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
           /**

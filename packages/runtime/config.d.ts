@@ -308,6 +308,7 @@ export type PlatformaticRuntimeConfig = {
                 body?: string;
               };
             };
+        healthChecksTimeouts?: number | string;
         plugins?: string[];
         timeout?: number | string;
         /**

@@ -234,6 +234,7 @@ export interface PlatformaticBasicConfig {
                   body?: string;
                 };
               };
+          healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
           /**

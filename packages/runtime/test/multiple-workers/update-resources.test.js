@@ -248,14 +248,14 @@ for (const variation of variations) {
 }
 
 const heapCases = [
-  { maxHeapTotal: 512 * 1024 * 1024, maxYoungGeneration: 128 * 1024 * 1024 },
-  { maxHeapTotal: '512MB', maxYoungGeneration: '128MB' },
+  { maxHeapTotal: 512 * 1024 * 1024, maxYoungGeneration: 64 * 1024 * 1024 },
+  { maxHeapTotal: '512MB', maxYoungGeneration: '64MB' },
   { maxHeapTotal: '512MB' },
-  { maxYoungGeneration: '128MB' }
+  { maxYoungGeneration: '64MB' }
 ]
 
 const expectedNewHeap = 512 * 1024 * 1024
-const expectedNewYoungGeneration = 128 * 1024 * 1024
+const expectedNewYoungGeneration = 64 * 1024 * 1024
 
 function testLabel (newHeapTotal, newYoungGeneration) {
   const label = []
@@ -528,6 +528,7 @@ test('should report on failures', async t => {
           maxELU: 0.99,
           maxHeapUsed: 0.99,
           maxHeapTotal: 536870912,
+          maxYoungGeneration: 134217728,
           codeRangeSize: 268435456
         },
         new: {

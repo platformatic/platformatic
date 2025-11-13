@@ -13,12 +13,12 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 const configurations = {
   default: 'platformatic.json',
-  'vertical-scaler': 'platformatic.vertical-scaler.json'
+  'worker-scaler': 'platformatic.worker-scaler.json'
 }
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file)
 
     const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
     const logsPath = join(tmpDir, 'log.txt')
@@ -83,7 +83,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale a standalone application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler-service', file)
+    const configFile = join(fixturesDir, 'worker-scaler-service', file)
 
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
@@ -132,7 +132,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale applications to their min workers at start (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file)
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -160,7 +160,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application is there is not enough memory (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'vertical-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file)
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)

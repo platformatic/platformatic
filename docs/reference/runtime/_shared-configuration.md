@@ -236,8 +236,8 @@ The object supports the following settings:
 - `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
 - `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
-- `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units.
-- `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. The default is calculated from the `maxHeapTotal`.
+- `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units. Default: `4GB`.
+- `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. Default: `128MB`
 - `codeRangeSize` (`number` or `string`): The maximum amount of memory that can be used for code range (compiled code). The value must be an amount in bytes or in memory units. Default: `268435456` (256MB).
 
 ### `telemetry`
@@ -401,6 +401,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
   - **`fail`** (`object`). The failure criteria for the Prometheus server liveness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
+- **`healthChecksTimeouts`**: The number of milliseconds to wait for Prometheus liveness or readiness checks before considering them timed out. Default: `5000` (5 seconds).
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.

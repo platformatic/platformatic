@@ -338,6 +338,7 @@ export interface PlatformaticRemixConfig {
                   body?: string;
                 };
               };
+          healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
           /**
@@ -530,6 +531,15 @@ export interface PlatformaticRemixConfig {
           serverDirectory?: string;
         }
       | boolean;
+    notFoundHandler?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean;
+          path?: string;
+          contentType?: string;
+          statusCode?: number;
+        };
   };
   remix?: {
     outputDirectory?: string;

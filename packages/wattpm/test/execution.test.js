@@ -464,3 +464,49 @@ test('reload - should complain when a runtime is not found', async t => {
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))
 })
+
+test('start - should load custom env file with --env flag', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  // Create a custom env file
+  const customEnvFile = resolve(rootDir, 'custom.env')
+  await writeFile(customEnvFile, 'CUSTOM_VAR=from_custom_env\nTEST_VAR=test123', 'utf8')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('start', rootDir, '--env', customEnvFile)
+  const { url, parsed } = await waitForStart(startProcess)
+
+  const { statusCode } = await request(url)
+  deepStrictEqual(statusCode, 200)
+
+  // Verify that the custom env vars are available
+  ok(parsed.some(p => p.msg?.includes('Loading envfile')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+})
+
+test('dev - should load custom env file with --env flag', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  // Create a custom env file
+  const customEnvFile = resolve(rootDir, 'custom-dev.env')
+  await writeFile(customEnvFile, 'DEV_CUSTOM_VAR=from_dev_custom\nDEV_TEST=abc456', 'utf8')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', rootDir, '--env', customEnvFile)
+  const { url, parsed } = await waitForStart(startProcess)
+
+  const { statusCode } = await request(url)
+  deepStrictEqual(statusCode, 200)
+
+  // Verify that the custom env vars are available
+  ok(parsed.some(p => p.msg?.includes('Loading envfile')))
+  ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
+})

@@ -599,8 +599,8 @@ export const health = {
     maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
-    maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }),
-    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }),
+    maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)), // 4GB
+    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }, 128 * Math.pow(1024, 2)), // 128MB,
     codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456)
   },
   additionalProperties: false
@@ -1171,6 +1171,10 @@ export const runtimeProperties = {
                 additionalProperties: false
               }
             ]
+          },
+          healthChecksTimeouts: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }],
+            default: 5000
           },
           plugins: {
             type: 'array',
