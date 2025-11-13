@@ -1171,6 +1171,10 @@ export const runtimeProperties = {
               }
             ]
           },
+          healthChecksTimeouts: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }],
+            default: 5000
+          },
           plugins: {
             type: 'array',
             items: {

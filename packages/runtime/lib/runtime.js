@@ -46,7 +46,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { version } from './version.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
-import { sendViaITC, waitEventFromITC } from './worker/itc.js'
+import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import {
   kApplicationId,
@@ -945,31 +945,45 @@ export class Runtime extends EventEmitter {
   }
 
   async getCustomHealthChecks () {
-    const status = {}
+    const invocations = []
 
     for (const id of this.#applications.keys()) {
       const workersIds = this.#workers.getKeys(id)
       for (const workerId of workersIds) {
-        const worker = this.#workers.get(workerId)
-        status[workerId] = await sendViaITC(worker, 'getCustomHealthCheck')
+        invocations.push([workerId, this.#workers.get(workerId)])
       }
     }
 
-    return status
+    return sendMultipleViaITC(
+      invocations,
+      'getCustomHealthCheck',
+      undefined,
+      [],
+      this.#concurrency,
+      this.#config.metrics.healthChecksTimeout,
+      {}
+    )
   }
 
   async getCustomReadinessChecks () {
-    const status = {}
+    const invocations = []
 
     for (const id of this.#applications.keys()) {
       const workersIds = this.#workers.getKeys(id)
       for (const workerId of workersIds) {
-        const worker = this.#workers.get(workerId)
-        status[workerId] = await sendViaITC(worker, 'getCustomReadinessCheck')
+        invocations.push([workerId, this.#workers.get(workerId)])
       }
     }
 
-    return status
+    return sendMultipleViaITC(
+      invocations,
+      'getCustomReadinessCheck',
+      undefined,
+      [],
+      this.#concurrency,
+      this.#config.metrics.healthChecksTimeout,
+      {}
+    )
   }
 
   async getMetrics (format = 'json') {

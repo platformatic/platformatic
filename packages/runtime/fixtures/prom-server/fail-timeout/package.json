@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "name": "test-service-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@platformatic/node": "^2.48.0"
+  }
+}

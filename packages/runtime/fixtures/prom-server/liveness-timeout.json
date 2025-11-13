@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "main",
+  "watch": false,
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "metrics": {
+    "hostname": "127.0.0.1",
+    "port": 9090
+  },
+  "applications": [{
+    "id": "main",
+    "path": "./fail-timeout"
+  }]
+}
