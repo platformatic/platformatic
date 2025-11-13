@@ -1449,26 +1449,17 @@ export class Runtime extends EventEmitter {
       workerEnv.NODE_OPTIONS = `${originalNodeOptions} ${applicationConfig.nodeOptions}`.trim()
     }
 
-    let resourceLimits
+    const maxHeapTotal =
+      typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration =
+      typeof health.maxYoungGeneration === 'string'
+        ? parseMemorySize(health.maxYoungGeneration)
+        : health.maxYoungGeneration
 
-    {
-      const maxHeapTotal =
-        typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
-      const maxYoungGeneration =
-        typeof health.maxYoungGeneration === 'string'
-          ? parseMemorySize(health.maxYoungGeneration)
-          : health.maxYoungGeneration
-
-      const maxOldGenerationSizeMb = maxHeapTotal ? Math.floor((maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)) : undefined
-      const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
-
-      if (maxOldGenerationSizeMb || maxYoungGenerationSizeMb) {
-        resourceLimits = {
-          maxOldGenerationSizeMb,
-          maxYoungGenerationSizeMb
-        }
-      }
-    }
+    const maxOldGenerationSizeMb = Math.floor(
+      (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
+    )
+    const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
@@ -1492,7 +1483,10 @@ export class Runtime extends EventEmitter {
       argv: applicationConfig.arguments,
       execArgv,
       env: workerEnv,
-      resourceLimits,
+      resourceLimits: {
+        maxOldGenerationSizeMb,
+        maxYoungGenerationSizeMb
+      },
       stdout: true,
       stderr: true
     })
