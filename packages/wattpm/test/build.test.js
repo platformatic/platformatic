@@ -51,3 +51,21 @@ test('build - should handle build errors', async t => {
 
   ok(!existsSync(resolve(applicationDir, 'dist/index.js')))
 })
+
+test('build - should build with custom env file', async t => {
+  const { writeFile } = await import('node:fs/promises')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const applicationDir = resolve(buildDir, 'web/main')
+
+  // Create a custom env file
+  const customEnvFile = resolve(buildDir, 'custom-build.env')
+  await writeFile(customEnvFile, 'BUILD_CUSTOM_VAR=from_custom_build\nBUILD_TEST=xyz789', 'utf8')
+
+  t.after(async () => {
+    await safeRemove(resolve(applicationDir, 'dist'))
+  })
+
+  await wattpm('build', buildDir, '--env', customEnvFile)
+
+  ok(existsSync(resolve(applicationDir, 'dist/index.js')))
+})

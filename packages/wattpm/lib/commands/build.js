@@ -14,7 +14,7 @@ export async function buildCommand (logger, args) {
 
   try {
     const {
-      values: { config },
+      values: { config, env },
       positionals
     } = parseArgs(
       args,
@@ -22,6 +22,10 @@ export async function buildCommand (logger, args) {
         config: {
           type: 'string',
           short: 'c'
+        },
+        env: {
+          type: 'string',
+          short: 'e'
         }
       },
       false
@@ -36,7 +40,7 @@ export async function buildCommand (logger, args) {
     }
 
     try {
-      runtime = await create(configurationFile, undefined, { build: true })
+      runtime = await create(configurationFile, undefined, { build: true, envFile: env })
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {
@@ -90,6 +94,10 @@ export const help = {
       {
         usage: '-c, --config <config>',
         description: 'Name of the configuration file to use (the default is to autodetect it)'
+      },
+      {
+        usage: '-e, --env <path>',
+        description: 'Path to a custom .env file to load environment variables from'
       }
     ]
   }
