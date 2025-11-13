@@ -265,6 +265,14 @@ export class ViteCapability extends BaseCapability {
       schemaHide: true
     })
 
+    if (config.vite.notFoundHandler?.enabled) {
+      const { statusCode, contentType, path } = config.vite.notFoundHandler
+
+      this.#app.setNotFoundHandler((_, reply) => {
+        return reply.code(statusCode).type(contentType).sendFile(path, { contentType: false })
+      })
+    }
+
     await this.#app.ready()
   }
 }

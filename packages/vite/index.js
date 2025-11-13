@@ -18,6 +18,29 @@ export async function transform (config, schema, options) {
     }
   }
 
+  if (typeof config.vite.notFoundHandler !== 'undefined') {
+    let enabled = false
+    let path = 'index.html'
+    let statusCode = 200
+    let contentType = 'text/html; charset=utf-8'
+
+    if (typeof config.vite.notFoundHandler === 'boolean') {
+      enabled = config.vite.notFoundHandler
+    } else if (typeof config.vite.notFoundHandler === 'string') {
+      enabled = true
+      path = config.vite.notFoundHandler
+    } else {
+      enabled = config.vite.notFoundHandler.enabled ?? false
+      path = config.vite.notFoundHandler.path ?? path
+      statusCode = config.vite.notFoundHandler.statusCode ?? statusCode
+      contentType = config.vite.notFoundHandler.contentType ?? contentType
+    }
+
+    config.vite.notFoundHandler = { enabled, path, statusCode, contentType }
+  } else {
+    config.vite.notFoundHandler = { enabled: false }
+  }
+
   return config
 }
 

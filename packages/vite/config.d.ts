@@ -530,5 +530,14 @@ export interface PlatformaticViteConfig {
           serverDirectory?: string;
         }
       | boolean;
+    notFoundHandler?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean;
+          path?: string;
+          contentType?: string;
+          statusCode?: number;
+        };
   };
 }

@@ -26,7 +26,7 @@ const vite = {
       default: {}
     },
     ssr: {
-      oneOf: [
+      anyOf: [
         {
           type: 'object',
           properties: {
@@ -39,6 +39,23 @@ const vite = {
           additionalProperties: false
         },
         { type: 'boolean' }
+      ],
+      default: false
+    },
+    notFoundHandler: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            path: { type: 'string', default: 'index.html' },
+            contentType: { type: 'string', default: 'text/html; charset=utf-8' },
+            statusCode: { type: 'number', default: 200 }
+          },
+          additionalProperties: false
+        }
       ],
       default: false
     }
