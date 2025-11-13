@@ -2,7 +2,7 @@ import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
 import { ScalingAlgorithm, scaleUpELUThreshold } from './scaling-algorithm.js'
-import { kApplicationId, kId, kLastVerticalScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
+import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
 const healthCheckInterval = 1000
 export const kOriginalWorkers = Symbol('plt.runtime.application.dynamicWorkersScalerOriginalWorkers')
@@ -135,13 +135,13 @@ export class DynamicWorkersScaler {
       }
 
       try {
-        const health = await this.#runtime.getWorkerHealth(worker, { previousELU: worker[kLastVerticalScalerELU] })
+        const health = await this.#runtime.getWorkerHealth(worker, { previousELU: worker[kLastWorkerScalerELU] })
 
         if (!health) {
           continue
         }
 
-        worker[kLastVerticalScalerELU] = health.currentELU
+        worker[kLastWorkerScalerELU] = health.currentELU
 
         this.#algorithm.addWorkerHealthInfo({
           workerId: worker[kId],

@@ -24,7 +24,7 @@ import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
-import { DynamicWorkersScaler } from './dynamic-workers-scaler.js'
+import { DynamicWorkersScaler } from './worker-scaler.js'
 import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
@@ -206,7 +206,7 @@ export class Runtime extends EventEmitter {
     if (this.#config.workers.dynamic) {
       if (this.#config.workers.dynamic === false) {
         this.logger.warn(
-          `Vertical scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
+          `Worker scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
         )
       } else {
         this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
