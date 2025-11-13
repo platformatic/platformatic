@@ -1,9 +1,9 @@
-import { version } from '@platformatic/runtime'
-import { deepStrictEqual, ok } from 'node:assert'
-import { resolve } from 'node:path'
-import { test } from 'node:test'
-import { prepareRuntime } from '../../basic/test/helper.js'
-import { waitForStart, wattpm } from './helper.js'
+import {version} from '@platformatic/runtime'
+import {deepStrictEqual, ok} from 'node:assert'
+import {resolve} from 'node:path'
+import {test} from 'node:test'
+import {prepareRuntime} from '../../basic/test/helper.js'
+import {waitForStart, wattpm} from './helper.js'
 
 test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -242,7 +242,8 @@ test('config - should list configuration for an application', async t => {
       maxELU: 0.99,
       maxHeapTotal: 4294967296,
       maxHeapUsed: 0.99,
-      maxUnhealthyChecks: 10
+      maxUnhealthyChecks: 10,
+      maxYoungGeneration: 134217728
     },
     resolvedApplicationsBasePath: 'external',
     metrics: {
