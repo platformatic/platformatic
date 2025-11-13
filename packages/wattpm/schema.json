@@ -31,7 +31,9 @@
     "autoload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path"],
+      "required": [
+        "path"
+      ],
       "properties": {
         "path": {
           "type": "string",
@@ -49,7 +51,9 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "properties": {
               "id": {
                 "type": "string"
@@ -226,7 +230,11 @@
               },
               "packageManager": {
                 "type": "string",
-                "enum": ["npm", "pnpm", "yarn"]
+                "enum": [
+                  "npm",
+                  "pnpm",
+                  "yarn"
+                ]
               },
               "preload": {
                 "anyOf": [
@@ -295,7 +303,9 @@
                               "additionalProperties": true
                             }
                           },
-                          "required": ["package"]
+                          "required": [
+                            "package"
+                          ]
                         }
                       ]
                     }
@@ -313,10 +323,16 @@
         "type": "object",
         "anyOf": [
           {
-            "required": ["id", "path"]
+            "required": [
+              "id",
+              "path"
+            ]
           },
           {
-            "required": ["id", "url"]
+            "required": [
+              "id",
+              "url"
+            ]
           }
         ],
         "properties": {
@@ -507,7 +523,11 @@
           },
           "packageManager": {
             "type": "string",
-            "enum": ["npm", "pnpm", "yarn"]
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           },
           "preload": {
             "anyOf": [
@@ -576,7 +596,9 @@
                           "additionalProperties": true
                         }
                       },
-                      "required": ["package"]
+                      "required": [
+                        "package"
+                      ]
                     }
                   ]
                 }
@@ -592,10 +614,16 @@
         "type": "object",
         "anyOf": [
           {
-            "required": ["id", "path"]
+            "required": [
+              "id",
+              "path"
+            ]
           },
           {
-            "required": ["id", "url"]
+            "required": [
+              "id",
+              "url"
+            ]
           }
         ],
         "properties": {
@@ -786,7 +814,11 @@
           },
           "packageManager": {
             "type": "string",
-            "enum": ["npm", "pnpm", "yarn"]
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           },
           "preload": {
             "anyOf": [
@@ -855,7 +887,9 @@
                           "additionalProperties": true
                         }
                       },
-                      "required": ["package"]
+                      "required": [
+                        "package"
+                      ]
                     }
                   ]
                 }
@@ -871,10 +905,16 @@
         "type": "object",
         "anyOf": [
           {
-            "required": ["id", "path"]
+            "required": [
+              "id",
+              "path"
+            ]
           },
           {
-            "required": ["id", "url"]
+            "required": [
+              "id",
+              "url"
+            ]
           }
         ],
         "properties": {
@@ -1065,7 +1105,11 @@
           },
           "packageManager": {
             "type": "string",
-            "enum": ["npm", "pnpm", "yarn"]
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           },
           "preload": {
             "anyOf": [
@@ -1134,7 +1178,9 @@
                           "additionalProperties": true
                         }
                       },
-                      "required": ["package"]
+                      "required": [
+                        "package"
+                      ]
                     }
                   ]
                 }
@@ -1212,7 +1258,15 @@
           "default": "info",
           "oneOf": [
             {
-              "enum": ["fatal", "error", "warn", "info", "debug", "trace", "silent"]
+              "enum": [
+                "fatal",
+                "error",
+                "warn",
+                "info",
+                "debug",
+                "trace",
+                "silent"
+              ]
             },
             {
               "pattern": "^\\{.+\\}$"
@@ -1293,11 +1347,18 @@
               "resolvePath": true
             }
           },
-          "required": ["path"],
+          "required": [
+            "path"
+          ],
           "additionalProperties": false
         },
         "timestamp": {
-          "enum": ["epochTime", "unixTime", "nullTime", "isoTime"]
+          "enum": [
+            "epochTime",
+            "unixTime",
+            "nullTime",
+            "isoTime"
+          ]
         },
         "redact": {
           "type": "object",
@@ -1313,7 +1374,9 @@
               "default": "[redacted]"
             }
           },
-          "required": ["paths"],
+          "required": [
+            "paths"
+          ],
           "additionalProperties": false
         },
         "base": {
@@ -1339,7 +1402,9 @@
           "default": true
         }
       },
-      "required": ["level"],
+      "required": [
+        "level"
+      ],
       "default": {},
       "additionalProperties": true
     },
@@ -1451,7 +1516,10 @@
             }
           },
           "additionalProperties": false,
-          "required": ["key", "cert"]
+          "required": [
+            "key",
+            "cert"
+          ]
         }
       },
       "additionalProperties": false
@@ -1510,7 +1578,10 @@
         }
       },
       "default": {},
-      "required": ["runtime", "application"],
+      "required": [
+        "runtime",
+        "application"
+      ],
       "additionalProperties": false
     },
     "health": {
@@ -1651,7 +1722,10 @@
                     "additionalProperties": true
                   }
                 },
-                "required": ["module", "options"]
+                "required": [
+                  "module",
+                  "options"
+                ]
               }
             },
             {
@@ -1670,7 +1744,10 @@
                         "additionalProperties": true
                       }
                     },
-                    "required": ["module", "options"]
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 },
                 "Pool": {
@@ -1686,7 +1763,10 @@
                         "additionalProperties": true
                       }
                     },
-                    "required": ["module", "options"]
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 },
                 "Agent": {
@@ -1702,7 +1782,10 @@
                         "additionalProperties": true
                       }
                     },
-                    "required": ["module", "options"]
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 }
               }
@@ -1727,7 +1810,10 @@
               "items": {
                 "type": "string"
               },
-              "default": ["GET", "HEAD"],
+              "default": [
+                "GET",
+                "HEAD"
+              ],
               "minItems": 1
             },
             "cacheTagsHeader": {
@@ -1829,7 +1915,10 @@
                 }
               },
               "additionalProperties": false,
-              "required": ["username", "password"]
+              "required": [
+                "username",
+                "password"
+              ]
             },
             "labels": {
               "type": "object",
@@ -2002,7 +2091,9 @@
                   "description": "Service version for OTLP resource attributes"
                 }
               },
-              "required": ["endpoint"],
+              "required": [
+                "endpoint"
+              ],
               "additionalProperties": false
             }
           },
@@ -2044,7 +2135,15 @@
               "method": {
                 "description": "HTTP method to skip",
                 "type": "string",
-                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "HEAD",
+                  "OPTIONS"
+                ]
               }
             }
           }
@@ -2058,7 +2157,13 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["console", "otlp", "zipkin", "memory", "file"],
+                    "enum": [
+                      "console",
+                      "otlp",
+                      "zipkin",
+                      "memory",
+                      "file"
+                    ],
                     "default": "console"
                   },
                   "options": {
@@ -2088,7 +2193,13 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "enum": ["console", "otlp", "zipkin", "memory", "file"],
+                  "enum": [
+                    "console",
+                    "otlp",
+                    "zipkin",
+                    "memory",
+                    "file"
+                  ],
                   "default": "console"
                 },
                 "options": {
@@ -2115,7 +2226,9 @@
           ]
         }
       },
-      "required": ["applicationName"],
+      "required": [
+        "applicationName"
+      ],
       "additionalProperties": false
     },
     "verticalScaler": {
@@ -2278,7 +2391,13 @@
           },
           "method": {
             "type": "string",
-            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ],
             "default": "GET"
           },
           "headers": {
@@ -2304,7 +2423,11 @@
             "default": 3
           }
         },
-        "required": ["name", "cron", "callbackUrl"]
+        "required": [
+          "name",
+          "cron",
+          "callbackUrl"
+        ]
       }
     },
     "policies": {
@@ -2330,22 +2453,32 @@
           }
         }
       },
-      "required": ["deny"],
+      "required": [
+        "deny"
+      ],
       "additionalProperties": false
     }
   },
   "anyOf": [
     {
-      "required": ["autoload"]
+      "required": [
+        "autoload"
+      ]
     },
     {
-      "required": ["applications"]
+      "required": [
+        "applications"
+      ]
     },
     {
-      "required": ["services"]
+      "required": [
+        "services"
+      ]
     },
     {
-      "required": ["web"]
+      "required": [
+        "web"
+      ]
     }
   ],
   "additionalProperties": false
