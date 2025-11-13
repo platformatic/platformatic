@@ -2406,18 +2406,18 @@
                       },
                       "additionalProperties": false
                     }
+                  ]
+                },
+                "healthChecksTimeouts": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
                   ],
-                  "healthChecksTimeouts": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "default": 5000
-                  }
+                  "default": 5000
                 },
                 "plugins": {
                   "type": "array",

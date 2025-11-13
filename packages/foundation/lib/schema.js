@@ -1169,11 +1169,11 @@ export const runtimeProperties = {
                 },
                 additionalProperties: false
               }
-            ],
-            healthChecksTimeouts: {
-              anyOf: [{ type: 'integer' }, { type: 'string' }],
-              default: 5000
-            }
+            ]
+          },
+          healthChecksTimeouts: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }],
+            default: 5000
           },
           plugins: {
             type: 'array',
