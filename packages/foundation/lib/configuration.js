@@ -340,33 +340,42 @@ export function validate (schema, config, validationOptions = {}, fixPaths = tru
   }
 }
 
-export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {}) {
+export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {}, customEnvFile = null) {
   if (!isAbsolute(root)) {
     root = resolve(process.cwd(), root)
   }
 
-  let currentPath = root
-  const rootPath = parse(root).root
+  let envFile = customEnvFile
 
-  // Search for the .env file in the current directory and its parents
-  let envFile
-  while (currentPath !== rootPath) {
-    const candidate = resolve(currentPath, '.env')
+  // If a custom env file is provided, resolve it and check if it exists
+  if (customEnvFile) {
+    envFile = isAbsolute(customEnvFile) ? customEnvFile : resolve(root, customEnvFile)
+    if (!(await isFileAccessible(envFile))) {
+      throw new Error(`Custom env file not found: ${envFile}`)
+    }
+  } else {
+    // Default behavior: search for .env file in the current directory and its parents
+    let currentPath = root
+    const rootPath = parse(root).root
 
-    if (await isFileAccessible(candidate)) {
-      envFile = candidate
-      break
+    while (currentPath !== rootPath) {
+      const candidate = resolve(currentPath, '.env')
+
+      if (await isFileAccessible(candidate)) {
+        envFile = candidate
+        break
+      }
+
+      currentPath = dirname(currentPath)
     }
 
-    currentPath = dirname(currentPath)
-  }
+    // If not found, check the current working directory
+    if (!envFile) {
+      const cwdCandidate = resolve(process.cwd(), '.env')
 
-  // If not found, check the current working directory
-  if (!envFile) {
-    const cwdCandidate = resolve(process.cwd(), '.env')
-
-    if (await isFileAccessible(cwdCandidate)) {
-      envFile = cwdCandidate
+      if (await isFileAccessible(cwdCandidate)) {
+        envFile = cwdCandidate
+      }
     }
   }
 
@@ -446,7 +455,8 @@ export async function loadConfiguration (source, schema, options = {}) {
     onMissingEnv,
     fixPaths,
     logger,
-    skipMetadata
+    skipMetadata,
+    envFile: customEnvFile
   } = {
     validate: !!schema,
     validationOptions: {},
@@ -473,7 +483,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     throw new RootMissingError()
   }
 
-  const env = await loadEnv(root, ignoreProcessEnv, additionalEnv)
+  const env = await loadEnv(root, ignoreProcessEnv, additionalEnv, customEnvFile)
   env.PLT_ROOT = root
 
   if (shouldReplaceEnv) {

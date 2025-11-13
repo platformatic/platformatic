@@ -14,7 +14,7 @@ import { createInterface } from 'node:readline'
 
 export async function devCommand (logger, args) {
   const {
-    values: { config },
+    values: { config, env },
     positionals
   } = parseArgs(
     args,
@@ -22,6 +22,10 @@ export async function devCommand (logger, args) {
       config: {
         type: 'string',
         short: 'c'
+      },
+      env: {
+        type: 'string',
+        short: 'e'
       }
     },
     false
@@ -36,7 +40,7 @@ export async function devCommand (logger, args) {
   }
   /* c8 ignore next 15 - covered */
 
-  let runtime = await create(root, configurationFile, { start: true })
+  let runtime = await create(root, configurationFile, { start: true, envFile: env })
 
   // Handle reloading via either file changes or stdin "rs" command
   const { promise, reject } = Promise.withResolvers()
@@ -69,7 +73,7 @@ export async function devCommand (logger, args) {
 export async function startCommand (logger, args) {
   const {
     positionals,
-    values: { inspect, config }
+    values: { inspect, config, env }
   } = parseArgs(
     args,
     {
@@ -80,6 +84,10 @@ export async function startCommand (logger, args) {
       inspect: {
         type: 'boolean',
         short: 'i'
+      },
+      env: {
+        type: 'string',
+        short: 'e'
       }
     },
     false
@@ -93,7 +101,7 @@ export async function startCommand (logger, args) {
     return
   }
 
-  await create(root, configurationFile, { start: true, production: true, inspect })
+  await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
 }
 
 export async function stopCommand (logger, args) {
@@ -193,6 +201,10 @@ export const help = {
       {
         usage: '-c, --config <config>',
         description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
+      {
+        usage: '-e, --env <path>',
+        description: 'Path to a custom .env file to load environment variables from'
       }
     ]
   },
@@ -213,6 +225,10 @@ export const help = {
       {
         usage: '-i --inspect',
         description: 'Enables the inspector for each application'
+      },
+      {
+        usage: '-e, --env <path>',
+        description: 'Path to a custom .env file to load environment variables from'
       }
     ]
   },

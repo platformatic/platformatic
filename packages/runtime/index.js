@@ -63,7 +63,10 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
 
   // First of all, load the configuration without any validation
-  const config = await utilsLoadConfiguration(source)
+  const config = await utilsLoadConfiguration(source, null, {
+    root,
+    envFile: context?.envFile
+  })
   const mod = extractModuleFromSchemaUrl(config)
   if (mod?.module !== '@platformatic/runtime') {
     return wrapInRuntimeConfig(config, context)
