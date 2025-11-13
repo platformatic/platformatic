@@ -529,14 +529,14 @@ export interface PlatformaticViteConfig {
           serverDirectory?: string;
         }
       | boolean;
+    notFoundHandler?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean;
+          path?: string;
+          contentType?: string;
+          statusCode?: number;
+        };
   };
-  on404?:
-    | boolean
-    | string
-    | {
-        enabled?: boolean;
-        path?: string;
-        type?: string;
-        code?: number;
-      };
 }

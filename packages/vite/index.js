@@ -18,29 +18,30 @@ export async function transform (config, schema, options) {
     }
   }
 
-  return config
-}
+  if (typeof config.vite.notFoundHandler !== 'undefined') {
+    let enabled = false
+    let path = 'index.html'
+    let statusCode = 200
+    let contentType = 'text/html; charset=utf-8'
 
-export function normalizeOn404 (on404, code = 200, type = 'text/html', path = 'index.html') {
-  if (!on404) {
-    return { enabled: false, code, type, path }
-  }
-  if (on404 === true) {
-    return { enabled: true, code, type, path }
-  }
-  if (typeof on404 === 'string') {
-    return { enabled: !!on404, code, type, path: on404 ?? path }
-  }
-  if (typeof on404 === 'object') {
-    return {
-      enabled: on404.enabled ?? !!on404.path,
-      code: on404.code ?? code,
-      type: on404.type ?? type,
-      path: on404.path ?? path,
+    if (typeof config.vite.notFoundHandler === 'boolean') {
+      enabled = config.vite.notFoundHandler
+    } else if (typeof config.vite.notFoundHandler === 'string') {
+      enabled = true
+      path = config.vite.notFoundHandler
+    } else {
+      enabled = config.vite.notFoundHandler.enabled ?? false
+      path = config.vite.notFoundHandler.path ?? path
+      statusCode = config.vite.notFoundHandler.statusCode ?? statusCode
+      contentType = config.vite.notFoundHandler.contentType ?? contentType
     }
+
+    config.vite.notFoundHandler = { enabled, path, statusCode, contentType }
+  } else {
+    config.vite.notFoundHandler = { enabled: false }
   }
-  // schema says unreachable, but let's be safe
-  return { enabled: false, code, type, path }
+
+  return config
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {

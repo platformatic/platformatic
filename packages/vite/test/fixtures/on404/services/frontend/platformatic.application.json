@@ -1,7 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0.json",
-  "on404": {
-    "enabled": true,
-    "path": "404.html"
-  }
-}

@@ -17,7 +17,6 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parse, satisfies } from 'semver'
 import { version } from './schema.js'
-import { normalizeOn404 } from '../index.js'
 
 const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0']
 
@@ -266,10 +265,11 @@ export class ViteCapability extends BaseCapability {
       schemaHide: true
     })
 
-    const on404 = normalizeOn404(config.on404)
-    if (on404.enabled) {
+    if (config.vite.notFoundHandler?.enabled) {
+      const { statusCode, contentType, path } = config.vite.notFoundHandler
+
       this.#app.setNotFoundHandler((_, reply) => {
-        return reply.code(on404.code).type(on404.type).sendFile(on404.path)
+        return reply.code(statusCode).type(contentType).sendFile(path, { contentType: false })
       })
     }
 

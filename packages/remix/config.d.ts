@@ -529,6 +529,15 @@ export interface PlatformaticRemixConfig {
           serverDirectory?: string;
         }
       | boolean;
+    notFoundHandler?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean;
+          path?: string;
+          contentType?: string;
+          statusCode?: number;
+        };
   };
   remix?: {
     outputDirectory?: string;

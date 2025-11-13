@@ -1912,7 +1912,7 @@
           "default": {}
         },
         "ssr": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "object",
               "properties": {
@@ -1942,41 +1942,42 @@
             }
           ],
           "default": false
+        },
+        "notFoundHandler": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "path": {
+                  "type": "string",
+                  "default": "index.html"
+                },
+                "contentType": {
+                  "type": "string",
+                  "default": "text/html"
+                },
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "default": false
         }
       },
       "default": {},
       "additionalProperties": false
-    },
-    "on404": {
-      "oneOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "string"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "path": {
-              "type": "string",
-              "default": "index.html"
-            },
-            "type": {
-              "type": "string",
-              "default": "text/html"
-            },
-            "code": {
-              "type": "number",
-              "default": 200
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
     }
   },
   "additionalProperties": false

@@ -26,7 +26,7 @@ const vite = {
       default: {}
     },
     ssr: {
-      oneOf: [
+      anyOf: [
         {
           type: 'object',
           properties: {
@@ -41,30 +41,30 @@ const vite = {
         { type: 'boolean' }
       ],
       default: false
+    },
+    notFoundHandler: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            path: { type: 'string', default: 'index.html' },
+            contentType: { type: 'string', default: 'text/html; charset=utf-8' },
+            statusCode: { type: 'number', default: 200 }
+          },
+          additionalProperties: false
+        }
+      ],
+      default: false
     }
   },
   default: {},
   additionalProperties: false
 }
 
-const on404 = {
-  oneOf: [
-    { type: 'boolean' },
-    { type: 'string' },
-    {
-      type: 'object',
-      properties: {
-        enabled: { type: 'boolean' },
-        path: { type: 'string', default: 'index.html' },
-        type: { type: 'string', default: 'text/html' },
-        code: { type: 'number', default: 200 }
-      },
-      additionalProperties: false
-    }
-  ]
-}
-
-export const schemaComponents = { vite, on404 }
+export const schemaComponents = { vite }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
@@ -80,8 +80,7 @@ export const schema = {
     watch: basicSchemaComponents.watch,
     application: basicSchemaComponents.buildableApplication,
     runtime: utilsSchemaComponents.wrappedRuntime,
-    vite,
-    on404
+    vite
   },
   additionalProperties: false
 }
