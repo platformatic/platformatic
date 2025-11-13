@@ -238,6 +238,7 @@ The object supports the following settings:
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units.
 - `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. The default is calculated from the `maxHeapTotal`.
+- `codeRangeSize` (`number` or `string`): The maximum amount of memory that can be used for code range (compiled code). The value must be an amount in bytes or in memory units. Default: `268435456` (256MB).
 
 ### `telemetry`
 

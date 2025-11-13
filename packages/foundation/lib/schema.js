@@ -600,7 +600,8 @@ export const health = {
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }),
-    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 })
+    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }),
+    codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456)
   },
   additionalProperties: false
 }

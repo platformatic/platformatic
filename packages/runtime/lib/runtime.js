@@ -1444,14 +1444,20 @@ export class Runtime extends EventEmitter {
         typeof health.maxYoungGeneration === 'string'
           ? parseMemorySize(health.maxYoungGeneration)
           : health.maxYoungGeneration
+      const codeRangeSize =
+        typeof health.codeRangeSize === 'string'
+          ? parseMemorySize(health.codeRangeSize)
+          : health.codeRangeSize
 
       const maxOldGenerationSizeMb = maxHeapTotal ? Math.floor((maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)) : undefined
       const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
+      const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
-      if (maxOldGenerationSizeMb || maxYoungGenerationSizeMb) {
+      if (maxOldGenerationSizeMb || maxYoungGenerationSizeMb || codeRangeSizeMb) {
         resourceLimits = {
           maxOldGenerationSizeMb,
-          maxYoungGenerationSizeMb
+          maxYoungGenerationSizeMb,
+          codeRangeSizeMb
         }
       }
     }

@@ -392,7 +392,8 @@ Workers are created with specific resource constraints:
 const worker = new Worker(workerFile, {
   resourceLimits: {
     maxOldGenerationSizeMb: calculatedMemoryLimit,
-    maxYoungGenerationSizeMb: youngGenerationLimit
+    maxYoungGenerationSizeMb: youngGenerationLimit,
+    codeRangeSizeMb: codeRangeLimit
   },
   execArgv: nodeOptions,
   env: workerEnvironment

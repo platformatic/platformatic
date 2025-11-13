@@ -502,6 +502,7 @@ export interface PlatformaticGatewayConfig {
       maxHeapUsed?: number | string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
+      codeRangeSize?: number | string;
     };
     undici?: {
       agentOptions?: {
