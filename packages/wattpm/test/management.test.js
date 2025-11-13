@@ -241,7 +241,8 @@ test('config - should list configuration for an application', async t => {
       interval: 30000,
       maxELU: 0.99,
       maxHeapUsed: 0.99,
-      maxUnhealthyChecks: 10
+      maxUnhealthyChecks: 10,
+      codeRangeSize: 268435456
     },
     resolvedApplicationsBasePath: 'external',
     metrics: {
