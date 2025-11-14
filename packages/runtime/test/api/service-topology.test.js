@@ -33,7 +33,8 @@ test('should get applications topology', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'serviceApp',
@@ -45,7 +46,8 @@ test('should get applications topology', async t => {
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'with-logger',
@@ -56,7 +58,8 @@ test('should get applications topology', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'multi-plugin-service',
@@ -67,7 +70,8 @@ test('should get applications topology', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       }
     ]
   })
@@ -100,7 +104,8 @@ test('should get applications topology (gateway)', async t => {
         localUrl: 'http://composerApp.plt.local',
         entrypoint: true,
         dependencies: ['with-logger', 'multi-plugin-service', 'serviceApp'],
-        url: entrypointDetails.url
+        url: entrypointDetails.url,
+        sourceMaps: false
       },
       {
         id: 'dbApp',
@@ -111,7 +116,8 @@ test('should get applications topology (gateway)', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://dbApp.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'serviceApp',
@@ -122,7 +128,8 @@ test('should get applications topology (gateway)', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://serviceApp.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'with-logger',
@@ -133,7 +140,8 @@ test('should get applications topology (gateway)', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'multi-plugin-service',
@@ -144,7 +152,8 @@ test('should get applications topology (gateway)', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       }
     ],
     entrypoint: 'composerApp'
