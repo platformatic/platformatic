@@ -54,7 +54,8 @@ test('should get applications topology', async t => {
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'service-2',
@@ -65,7 +66,8 @@ test('should get applications topology', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'service-db',
@@ -76,7 +78,8 @@ test('should get applications topology', async t => {
         version,
         entrypoint: false,
         localUrl: 'http://service-db.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       }
     ]
   })

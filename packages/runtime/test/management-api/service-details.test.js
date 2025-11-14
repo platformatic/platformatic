@@ -49,6 +49,7 @@ test('should get application details', async t => {
     localUrl: 'http://service-1.plt.local',
     config: resolve(configFile, '../../management-api/services/service-1/platformatic.json'),
     path: resolve(configFile, '../../management-api/services/service-1'),
-    dependencies: []
+    dependencies: [],
+    sourceMaps: false
   })
 })

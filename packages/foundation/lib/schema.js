@@ -785,8 +785,7 @@ export const applications = {
         type: 'string'
       },
       sourceMaps: {
-        type: 'boolean',
-        default: false
+        type: 'boolean'
       },
       packageManager: {
         type: 'string',

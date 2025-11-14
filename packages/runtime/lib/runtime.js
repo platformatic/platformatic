@@ -1206,6 +1206,7 @@ export class Runtime extends EventEmitter {
 
     const { entrypoint, localUrl, config, path } = application[kConfig]
 
+    const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps ?? false
     const status = await sendViaITC(application, 'getStatus')
     const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')
 
@@ -1218,7 +1219,8 @@ export class Runtime extends EventEmitter {
       dependencies,
       version,
       localUrl,
-      entrypoint
+      entrypoint,
+      sourceMaps
     }
 
     if (this.#isProduction) {

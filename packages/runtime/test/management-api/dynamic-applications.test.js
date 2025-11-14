@@ -74,7 +74,8 @@ test('should be able to add and remove applications using the management API', a
         localUrl: 'http://application-2.plt.local',
         status: 'started',
         type: 'nodejs',
-        version
+        version,
+        sourceMaps: false
       }
     ])
 
@@ -121,7 +122,8 @@ test('should be able to add and remove applications using the management API', a
         path: resolve(fixturesDir, 'dynamic-applications', 'application-1'),
         status: 'removed',
         type: 'nodejs',
-        version
+        version,
+        sourceMaps: false
       }
     ])
 
@@ -169,7 +171,8 @@ test('should be able to add and remove applications using the management API', a
         path: resolve(fixturesDir, 'dynamic-applications', 'application-2'),
         status: 'removed',
         type: 'nodejs',
-        version
+        version,
+        sourceMaps: false
       }
     ])
 

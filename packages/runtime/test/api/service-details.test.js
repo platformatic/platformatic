@@ -26,6 +26,7 @@ test('should get application details', async t => {
     localUrl: 'http://with-logger.plt.local',
     config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
     path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
-    dependencies: []
+    dependencies: [],
+    sourceMaps: false
   })
 })

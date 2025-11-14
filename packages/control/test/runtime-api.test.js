@@ -265,7 +265,8 @@ test('should be able to add and remove applications', async t => {
       path: resolve(projectDir, 'services', 'service-2'),
       status: 'started',
       type: 'service',
-      version
+      version,
+      sourceMaps: false
     }
   ])
 
@@ -279,7 +280,8 @@ test('should be able to add and remove applications', async t => {
       path: resolve(projectDir, 'services', 'service-2'),
       status: 'removed',
       type: 'service',
-      version
+      version,
+      sourceMaps: false
     }
   ])
 })
