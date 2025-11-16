@@ -68,6 +68,9 @@
                 "type": "boolean",
                 "default": true
               },
+              "devOnly": {
+                "type": "boolean"
+              },
               "workers": {
                 "anyOf": [
                   {
@@ -360,6 +363,9 @@
             "type": "boolean",
             "default": true
           },
+          "devOnly": {
+            "type": "boolean"
+          },
           "workers": {
             "anyOf": [
               {
@@ -650,6 +656,9 @@
             "type": "boolean",
             "default": true
           },
+          "devOnly": {
+            "type": "boolean"
+          },
           "workers": {
             "anyOf": [
               {
@@ -939,6 +948,9 @@
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
+          },
+          "devOnly": {
+            "type": "boolean"
           },
           "workers": {
             "anyOf": [

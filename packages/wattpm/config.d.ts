@@ -21,6 +21,7 @@ export type PlatformaticRuntimeConfig = {
         config?: string;
         useHttp?: boolean;
         reuseTcpPorts?: boolean;
+        devOnly?: boolean;
         workers?:
           | number
           | string

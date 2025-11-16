@@ -749,6 +749,9 @@ export const applications = {
         type: 'boolean',
         default: true
       },
+      devOnly: {
+        type: 'boolean'
+      },
       workers: {
         anyOf: [
           {
