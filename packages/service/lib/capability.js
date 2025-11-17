@@ -266,6 +266,10 @@ export class ServiceCapability extends BaseCapability {
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
 
+    if (typeof serverOptions?.backlog === 'number') {
+      listenOptions.backlog = serverOptions.backlog
+    }
+
     await this.#app.listen(listenOptions)
     this.url = getServerUrl(this.#app.server)
 
