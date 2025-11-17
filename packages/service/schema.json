@@ -1535,6 +1535,10 @@
                 }
               ]
             },
+            "backlog": {
+              "type": "integer",
+              "description": "The maximum length of the queue of pending connections"
+            },
             "http2": {
               "type": "boolean"
             },

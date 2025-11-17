@@ -360,6 +360,7 @@ export class ChildProcess extends ITC {
 
         const port = globalThis.platformatic.port
         const host = globalThis.platformatic.host
+        const backlog = globalThis.platformatic.backlog
 
         if (port !== false) {
           const hasFixedPort = typeof port === 'number'
@@ -368,6 +369,10 @@ export class ChildProcess extends ITC {
 
         if (typeof host === 'string') {
           options.host = host
+        }
+
+        if (typeof backlog === 'number') {
+          options.backlog = backlog
         }
       },
       asyncEnd: ({ server }) => {
