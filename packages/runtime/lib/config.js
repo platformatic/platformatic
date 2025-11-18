@@ -12,6 +12,7 @@ import {
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+
 import {
   InspectAndInspectBrkError,
   InspectorHostError,
@@ -336,7 +337,7 @@ export async function transform (config, _, context) {
   let hasValidEntrypoint = false
 
   // Root-level workers
-  parseWorkers(config, 'Runtime')
+  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
