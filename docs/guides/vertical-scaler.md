@@ -93,7 +93,7 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 | **scaleDownELU** | ELU threshold to trigger scaling down (0-1) | 0.2 |
 | **timeWindowSec** | Time window for averaging ELU metrics for scale-up decisions (seconds) | 10 |
 | **scaleDownTimeWindowSec** | Time window for averaging ELU metrics for scale-down decisions (seconds) | 60 |
-| **cooldownSec** | Cooldown period between scaling operations (seconds) | 60 |
+| **cooldownSec** | Cooldown period between scaling operations (seconds) | 20 |
 | **gracePeriod** | Delay after worker startup before collecting metrics (milliseconds) | 30000 |
 | **scaleIntervalSec** | Interval for periodic scaling checks (seconds) | 60 |
 

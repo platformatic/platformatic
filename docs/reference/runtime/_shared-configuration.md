@@ -170,7 +170,7 @@ This can be specified as:
   - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: global `total` value.
   - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
-  - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60000`.
+  - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.

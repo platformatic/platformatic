@@ -7,7 +7,7 @@ import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerSta
 const healthCheckInterval = 1000
 export const kOriginalWorkers = Symbol('plt.runtime.application.dynamicWorkersScalerOriginalWorkers')
 
-const defaultCooldown = 60_000
+const defaultCooldown = 20_000
 const defaultGracePeriod = 30_000
 const scaleIntervalPeriod = 60_000
 
