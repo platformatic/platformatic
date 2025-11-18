@@ -104,7 +104,7 @@ export async function managementApiPlugin (app, opts) {
     }
 
     for (let i = 0; i < applications.length; i++) {
-      applications[i] = await prepareApplication(config, applications[i])
+      applications[i] = await prepareApplication(config, applications[i], config.workers)
     }
 
     const created = await runtime.addApplications(applications, request.query.start !== 'false')

@@ -206,6 +206,7 @@ test('config - should list configuration for an application', async t => {
         entrypoint: false,
         watch: false,
         workers: {
+          dynamic: false,
           static: 1
         },
         dependencies: [],
@@ -219,6 +220,7 @@ test('config - should list configuration for an application', async t => {
         entrypoint: true,
         watch: false,
         workers: {
+          dynamic: false,
           static: 1
         },
         dependencies: [],
@@ -227,6 +229,7 @@ test('config - should list configuration for an application', async t => {
     ],
     applicationTimeout: 300000,
     workers: {
+      dynamic: false,
       static: 1
     },
     workersRestartDelay: 0,
