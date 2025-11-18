@@ -77,7 +77,13 @@ function parseWorkers (config, prefix, defaultWorkers = 1) {
     }
     // No value, inherit from runtime
   } else {
-    config.workers = { static: defaultWorkers }
+    config.workers = { ...defaultWorkers }
+  }
+
+  if (config.workers.maximum < config.workers.minimum) {
+    const t = config.workers.minimum
+    config.workers.minimum = config.workers.maximum
+    config.workers.maximum = t
   }
 }
 
@@ -331,7 +337,7 @@ export async function transform (config, _, context) {
 
   // Root-level workers
   parseWorkers(config, 'Runtime')
-  const defaultWorkers = config.workers.static
+  const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
     const application = await prepareApplication(config, applications[i], defaultWorkers)

@@ -450,8 +450,7 @@ export class Runtime extends EventEmitter {
         this.logger.warn(
           `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
         )
-        workers.static = 1
-        workers.minimum = 1
+        application.workers = { dynamic: false, static: 1 }
       }
 
       this.#applications.set(application.id, application)
