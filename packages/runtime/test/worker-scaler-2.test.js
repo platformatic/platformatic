@@ -77,7 +77,7 @@ for (const [name, file] of Object.entries(configurations)) {
       maxTotalMemory: 1000000,
       maxWorkers,
       minWorkers: 1,
-      cooldown: 60000,
+      cooldown: 20000,
       gracePeriod: 1000
     })
   })
@@ -126,7 +126,7 @@ for (const [name, file] of Object.entries(configurations)) {
       maxTotalMemory: 1000000,
       maxWorkers: 2,
       minWorkers: 1,
-      cooldown: 60000,
+      cooldown: 20000,
       gracePeriod: 30000
     })
   })
