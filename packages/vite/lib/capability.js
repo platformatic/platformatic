@@ -180,7 +180,7 @@ export class ViteCapability extends BaseCapability {
     }
 
     // Prepare options
-    const { hostname, port, https, cors } = this.serverConfig ?? {}
+    const { hostname, port, https, cors, backlog } = this.serverConfig ?? {}
     const configFile = config.vite.configFile ? resolve(this.root, config.vite.configFile) : undefined
 
     const serverOptions = {
@@ -194,6 +194,10 @@ export class ViteCapability extends BaseCapability {
       fs: {
         strict: config.vite.devServer.strict
       }
+    }
+
+    if (typeof backlog === 'number') {
+      serverOptions.backlog = backlog
     }
 
     // Require Vite
@@ -237,6 +241,10 @@ export class ViteCapability extends BaseCapability {
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+      if (typeof serverOptions?.backlog === 'number') {
+        listenOptions.backlog = serverOptions.backlog
+      }
 
       await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)
