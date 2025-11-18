@@ -27,7 +27,8 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 ### Deployment
 - **[Dockerize a Watt App](./guides/deployment/dockerize-a-watt-app.md)** - Create Docker containers for your Watt applications
 - **[Kubernetes Readiness & Liveness](./guides/deployment/k8s-readiness-liveness.md)** - Configure health checks for Kubernetes deployments
-- **[TypeScript Deployment](./guides/deployment/typescript.md)** - Deploy TypeScript-based Platformatic applications
+- **[TypeScript Deployment](./guides/deployment/compiling-typescript.md)** - Deploy TypeScript-based Platformatic applications
+- **[Deploy Next.js in Kubernetes with Watt](./guides/deployment/nextjs-in-k8s.md)** - Deploy Next.js in Kubernetes with Watt
 
 ## Monitoring & Observability
 
@@ -47,11 +48,11 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 
 If you can't find what you're looking for in these guides:
 
-1. Check the [Reference Documentation](../reference-overview.md) for detailed API specifications
-2. Try the [Getting Started tutorials](../getting-started/quick-start.md) for step-by-step learning
+1. Check the [Reference Documentation](./reference.md) for detailed API specifications
+2. Try the [Getting Started tutorials](./getting-started/quick-start.md) for step-by-step learning
 3. Visit our [GitHub repository](https://github.com/platformatic/platformatic) for community support
 4. Join our [Discord community](https://discord.gg/platformatic) for real-time help
 
 ## Contributing
 
-Found an issue with a guide or want to contribute a new one? Check out our [Contributing Guide](../contributing/contributing.md) to learn how to help improve the documentation.
+Found an issue with a guide or want to contribute a new one? Check out our [Contributing Guide](./contributing/contributing.md) to learn how to help improve the documentation.

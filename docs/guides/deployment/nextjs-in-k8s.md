@@ -1,4 +1,4 @@
-# Deploying Next.js in K8s with Watt
+# Deploy Next.js in Kubernetes with Watt
 
 In this guide, we are configuring and setting up a Next.js application in
 very common enterprise environment: Kubernetes.
