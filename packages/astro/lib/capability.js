@@ -177,12 +177,16 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Prepare options
-    const { hostname, port } = this.serverConfig ?? {}
+    const { hostname, port, backlog } = this.serverConfig ?? {}
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
     const serverOptions = {
       host: hostname || '127.0.0.1',
       port: port || 0
+    }
+
+    if (typeof backlog === 'number') {
+      serverOptions.backlog = backlog
     }
 
     // Require Astro
@@ -250,6 +254,10 @@ export class AstroCapability extends BaseCapability {
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+      if (typeof serverOptions?.backlog === 'number') {
+        listenOptions.backlog = serverOptions.backlog
+      }
 
       await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)

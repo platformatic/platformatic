@@ -182,10 +182,14 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
-    const { hostname, port } = this.serverConfig ?? {}
+    const { hostname, port, backlog } = this.serverConfig ?? {}
     const serverOptions = {
       host: hostname || '127.0.0.1',
       port: port || 0
+    }
+
+    if (typeof backlog === 'number') {
+      serverOptions.backlog = backlog
     }
 
     const context = await this.getChildManagerContext(this.#basePath)
@@ -266,10 +270,14 @@ export class NextCapability extends BaseCapability {
       await this.childManager.inject()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
-      const { hostname, port } = this.serverConfig ?? {}
+      const { hostname, port, backlog } = this.serverConfig ?? {}
       const serverOptions = {
         hostname: hostname || '127.0.0.1',
         port: port || 0
+      }
+
+      if (typeof backlog === 'number') {
+        serverOptions.backlog = backlog
       }
 
       await this.childManager.register()
