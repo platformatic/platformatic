@@ -119,7 +119,190 @@ PORT=3001 npx wattpm start
 
 ## Deploy Prometheus and Valkey in K8s
 
+### Start a K8S Cluster
+In this example we will use Docker Desktop's built-in kubernetes cluster.
+
+Enable the cluster from Docker Desktop main page 
+
+![Docker Desktop Cluster](./images/docker-desktop-cluster.png)
+
+### Helm
+
+Install [helm](https://helm.sh/) for your system
+
+### Deploy Valkey in the cluster
+
+Create a file `valkey-overrides.yaml` to configure Valkey deploy configuration
+
+```yaml
+service:
+  type: "NodePort"
+auth:
+  enabled: false
+```
+
+Then deploy valkey with the following command
+
+```bash
+helm upgrade --install valkey oci://registry-1.docker.io/cloudpirates/valkey \
+  --values=valkey-overrides.yaml \
+  --version=0.3.2
+```
+
+### Deploy Prometheus in the cluster
+
+First, add the Prometheus community Helm repository:
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+Create a file `prometheus-overrides.yaml` to configure Prometheus deploy configuration
+
+```yaml
+prometheus:
+  service:
+    type: NodePort
+    nodePort: 30090
+
+```
+
+```bash
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+  --values=helm/prometheus-overrides.yaml \
+  --namespace=monitoring \
+  --create-namespace
+```
+
 ## Deploy the application
+You need 3 files to have a minimal installation
+
+`deployment.yaml`
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: next-app
+  labels:
+    app: next-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: next-app
+  template:
+    metadata:
+      labels:
+        app: next-app
+        platformatic.dev/monitor: prometheus
+    spec:
+      containers:
+      - name: next-app
+        image: next-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+```
+
+`service.yaml`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: next-app-service
+  labels:
+    app: next-app
+spec:
+  type: NodePort
+  selector:
+    app: next-app
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 32100
+    protocol: TCP
+    name: http
+```
+
+`podMonitor.yaml`
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: next-app-pod-monitor
+  namespace: default
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      # app: next-app
+      platformatic.dev/monitor: prometheus
+  podMetricsEndpoints:
+  - honorLabels: false
+    interval: 15s
+    port: metrics
+    path: /metrics
+    relabelings:
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_pod_label_app_kubernetes_io_name
+      targetLabel: name
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_pod_label_app_kubernetes_io_instance
+      targetLabel: instance
+```
+
+Then you can apply all these files with the command
+
+```bash
+kubectl apply -f service.yaml -f deployment.yaml -f podMonitor.yaml
+```
 
 ## Verify metrics
 
+Open [http://localhost:32100](http://localhost:32100) to see your app running
+
+Then open [http://localhost:30090](http://localhost:30090) to open Prometheus Dashboard
+
+Start to type `nodejs` and if you see an autocomplete like the following image
+
+![Prometheus Query](./images/prometheus-query.png)
+
+you're done! 
+
+Prometheus is now monitoring your app and collecting metrics!
