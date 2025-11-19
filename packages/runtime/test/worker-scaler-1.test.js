@@ -1,10 +1,13 @@
-import assert from 'node:assert'
+import { features, safeRemove } from '@platformatic/foundation'
+import assert, { deepStrictEqual } from 'node:assert'
+import { cp, mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -186,3 +189,96 @@ for (const [name, file] of Object.entries(configurations)) {
     assert.strictEqual(service2Workers.length, 1)
   })
 }
+
+test('should properly apply runtime workers configuration to the applications (number)', async t => {
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  await cp(originalConfigFile, configFile)
+  t.after(() => safeRemove(configFile))
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
+  const logsPath = join(tmpDir, 'log.txt')
+
+  await updateConfigFile(configFile, contents => {
+    contents.workers = 3
+    return contents
+  })
+
+  const app = await createRuntime(configFile, null, { logsPath })
+
+  await app.start()
+  t.after(() => app.close())
+
+  const config = await app.getRuntimeConfig()
+
+  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: features.node.reusePort ? 3 : 1 }) // Entrypoint
+  deepStrictEqual(config.applications[1].workers, { dynamic: false, static: 3 })
+})
+
+test('should properly apply runtime workers configuration to the applications (object)', async t => {
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  await cp(originalConfigFile, configFile)
+  t.after(() => safeRemove(configFile))
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
+  const logsPath = join(tmpDir, 'log.txt')
+
+  await updateConfigFile(configFile, contents => {
+    contents.workers = {
+      dynamic: true,
+      static: 1,
+      minimum: 2,
+      maximum: 3
+    }
+    return contents
+  })
+
+  const app = await createRuntime(configFile, null, { logsPath })
+
+  await app.start()
+  t.after(() => app.close())
+
+  const config = await app.getRuntimeConfig()
+
+  // Entrypoint
+  deepStrictEqual(
+    config.applications[0].workers,
+    features.node.reusePort ? { dynamic: true, static: 2, minimum: 2, maximum: 3 } : { dynamic: false, static: 1 }
+  )
+  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
+})
+
+test('should ensure the right order for minimum and maximum', async t => {
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  await cp(originalConfigFile, configFile)
+  t.after(() => safeRemove(configFile))
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
+  const logsPath = join(tmpDir, 'log.txt')
+
+  await updateConfigFile(configFile, contents => {
+    contents.workers = {
+      dynamic: true,
+      static: 1,
+      minimum: 4,
+      maximum: 3
+    }
+    return contents
+  })
+
+  const app = await createRuntime(configFile, null, { logsPath })
+
+  await app.start()
+  t.after(() => app.close())
+
+  const config = await app.getRuntimeConfig()
+
+  // Entrypoint
+  deepStrictEqual(
+    config.applications[0].workers,
+    features.node.reusePort ? { dynamic: true, static: 3, minimum: 3, maximum: 4 } : { dynamic: false, static: 1 }
+  )
+  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
+})

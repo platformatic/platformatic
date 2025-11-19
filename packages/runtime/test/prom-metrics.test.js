@@ -848,7 +848,6 @@ test('liveness - should get a fail if the custom health check times out', async 
   const app = await createRuntime(configFile)
 
   const entryUrl = await app.start()
-  console.log('App started at', entryUrl)
 
   t.after(async () => {
     await app.close()
@@ -861,7 +860,7 @@ test('liveness - should get a fail if the custom health check times out', async 
     const { statusCode, body } = await request(entryUrl + '/fail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: Buffer.from('{"fail": true}'),
+      body: Buffer.from('{"fail": true}')
     })
     strictEqual(statusCode, 200)
     await body.dump()

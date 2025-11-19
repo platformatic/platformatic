@@ -12,6 +12,7 @@ import {
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+
 import {
   InspectAndInspectBrkError,
   InspectorHostError,
@@ -45,7 +46,7 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
-function parseWorkers (config, prefix, defaultWorkers = 1) {
+function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
   if (typeof config.workers !== 'undefined') {
     // Number
     if (typeof config.workers !== 'object') {
@@ -75,9 +76,26 @@ function parseWorkers (config, prefix, defaultWorkers = 1) {
         }
       }
     }
-    // No value, inherit from runtime
   } else {
-    config.workers = { static: defaultWorkers }
+    config.workers = {}
+  }
+
+  // Fill missing values from defaults
+  for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
+    if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
+      config.workers[key] = defaultWorkers[key]
+    }
+  }
+
+  // Additional validations
+  if (config.workers.maximum < config.workers.minimum) {
+    const t = config.workers.minimum
+    config.workers.minimum = config.workers.maximum
+    config.workers.maximum = t
+  }
+
+  if (typeof config.workers.static === 'undefined') {
+    config.workers.static = config.workers.minimum
   }
 }
 
@@ -271,10 +289,10 @@ export async function transform (config, _, context) {
   // TODO: Remove in the next major version
   if (config.verticalScaler) {
     config.workers ??= {}
-    config.workers.dynamic ??= config.verticalScaler.enabled
-    config.workers.minimum ??= config.verticalScaler.minWorkers
-    config.workers.maximum ??= config.verticalScaler.maxWorkers
     config.workers.total ??= config.verticalScaler.maxTotalWorkers
+    config.workers.dynamic ??= config.verticalScaler.enabled
+    config.workers.minimum ??= config.verticalScaler.minWorkers ?? 1
+    config.workers.maximum ??= config.verticalScaler.maxWorkers ?? config.verticalScaler.maxTotalWorkers ?? 1
     config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
 
     if (typeof config.workers.cooldown === 'undefined' && typeof config.verticalScaler.cooldownSec === 'number') {
@@ -330,8 +348,8 @@ export async function transform (config, _, context) {
   let hasValidEntrypoint = false
 
   // Root-level workers
-  parseWorkers(config, 'Runtime')
-  const defaultWorkers = config.workers.static
+  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
+  const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
     const application = await prepareApplication(config, applications[i], defaultWorkers)

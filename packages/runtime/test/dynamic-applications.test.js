@@ -303,12 +303,22 @@ test('vertical autoscaler should work properly when adding and removing applicat
 
     const addPromise = once(runtime, 'application:started')
     const restartPromise = once(runtime, 'application:restarted')
+
+    const config = runtime.getRuntimeConfig(true)
+
     await runtime.addApplications(
       [
-        await prepareApplication(runtime.getRuntimeConfig(true), {
-          id: 'application-2',
-          path: './application-2'
-        })
+        await prepareApplication(
+          config,
+          {
+            id: 'application-2',
+            path: './application-2',
+            workers: {
+              dynamic: true
+            }
+          },
+          config.workers
+        )
       ],
       true
     )
