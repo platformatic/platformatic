@@ -145,16 +145,16 @@ following:
   "runtime": {
     "server": {
       "host": "0.0.0.0",
-      "port": "{{PORT}}" 
+      "port": "{PORT}" 
     },
     "workers": {
-      "static": "{{PLT_NEXT_WORKERS}}"
+      "static": "{PLT_NEXT_WORKERS}"
     }
   }
 }
 ```
 
-The `{{MYENV}}` syntax tells Watt to take that value from the process environment; `.env` loading is also fully supported.
+The `{MYENV}` syntax tells Watt to take that value from the process environment; `.env` loading is also fully supported.
 
 You will also need to configure the Valkey connection string. Edit it and add:
 
@@ -164,7 +164,7 @@ You will also need to configure the Valkey connection string. Edit it and add:
   ...
   "cache": {
     "adapter": "valkey"
-    "url": "{{PLT_VALKEY_HOST}}
+    "url": "{PLT_VALKEY_HOST}"
   }
 }
 ```
@@ -177,15 +177,15 @@ At the end, your `watt.json` should match:
   "runtime": {
     "server": {
       "host": "0.0.0.0",
-      "port": "{{PORT}}" 
+      "port": "{PORT}" 
     },
     "workers": {
-      "static": "{{PLT_NEXT_WORKERS}}"
+      "static": "{PLT_NEXT_WORKERS}"
     }
   },
   "cache": {
     "adapter": "valkey"
-    "url": "{{PLT_VALKEY_HOST}}
+    "url": "{PLT_VALKEY_HOST}"
   }
 }
 ```
