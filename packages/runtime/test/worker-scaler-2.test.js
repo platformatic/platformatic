@@ -137,6 +137,11 @@ for (const [name, file] of Object.entries(configurations)) {
       async transform (config, ...args) {
         config = await transform(config, ...args)
         config.workers.minimum = 3
+
+        for (const app of config.applications) {
+          app.workers.minimum = 3
+        }
+
         return config
       }
     })
@@ -167,6 +172,10 @@ for (const [name, file] of Object.entries(configurations)) {
 
         config.workers.maxMemory = 1
         config.workers.maximum = 5
+
+        for (const app of config.applications) {
+          app.workers.maximum = 5
+        }
 
         return config
       }
