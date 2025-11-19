@@ -74,8 +74,9 @@ test('httpMetrics creates histogram and summary with collect functions', async (
 test('httpMetrics histogram resets after metric collection', async () => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
 
-  const metricObjects = result.registry._metrics
-  const histogramMetric = metricObjects.http_request_all_duration_seconds
+  // Get the histogram metric using the public API
+  const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
+  assert.ok(histogramMetric, 'histogram metric should exist')
 
   histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.1)
   histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.2)
@@ -101,8 +102,9 @@ test('httpMetrics histogram resets after metric collection', async () => {
 test('httpMetrics summary resets after metric collection', async () => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
 
-  const metricObjects = result.registry._metrics
-  const summaryMetric = metricObjects.http_request_all_summary_seconds
+  // Get the summary metric using the public API
+  const summaryMetric = result.registry.getSingleMetric('http_request_all_summary_seconds')
+  assert.ok(summaryMetric, 'summary metric should exist')
 
   summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.15)
   summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.25)
