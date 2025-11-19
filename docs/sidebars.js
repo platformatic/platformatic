@@ -67,7 +67,8 @@ const sidebars = {
           items: [
             'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/k8s-readiness-liveness',
-            'guides/deployment/compiling-typescript'
+            'guides/deployment/compiling-typescript',
+            'guides/deployment/nextjs-in-k8s'
           ]
         },
         {
