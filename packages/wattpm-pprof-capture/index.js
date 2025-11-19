@@ -54,7 +54,24 @@ class SourceMapperWrapper {
       ...location,
       file: this.normalizePath(location.file)
     }
-    return this.innerMapper.mappingInfo(normalized)
+
+    const protocols = ['webpack:']
+    const mappedInfo = this.innerMapper.mappingInfo(normalized)
+    // The @datadog/pprof SourceMapper uses path.resolve() which treats webpack: URLs
+    // as relative paths, creating malformed paths like:
+    // /path/to/.next/server/app/api/heavy/webpack:/next/src/app/api/heavy/route.js
+    // We need to extract just the webpack: URL part
+
+    for (const protocol of protocols) {
+      if (!mappedInfo.file) continue
+
+      const webpackIndex = mappedInfo.file.indexOf(protocol)
+      if (webpackIndex > 0) {
+        // Extract just the webpack: URL
+        mappedInfo.file = mappedInfo.file.substring(webpackIndex)
+      }
+    }
+    return mappedInfo
   }
 }
 
