@@ -487,7 +487,7 @@ export class BaseCapability extends EventEmitter {
     })
 
     this.childManager.on('event', event => {
-      globalThis[kITC].notify('event', event)
+      globalThis[kITC]?.notify('event', event)
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
