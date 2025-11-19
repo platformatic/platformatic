@@ -1580,8 +1580,8 @@ export class Runtime extends EventEmitter {
     worker[kITC].on('event', ({ event, payload }) => {
       event = `application:worker:event:${event}`
 
-      this.emit(event, ...payload)
-      this.logger.trace({ event, payload }, 'Runtime event')
+      this.emit(event, ...payload, workerId, applicationId, index)
+      this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
     })
 
     worker[kITC].on('request:restart', async () => {

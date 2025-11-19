@@ -185,14 +185,11 @@ export class AstroCapability extends BaseCapability {
       port: port || 0
     }
 
-    if (typeof backlog === 'number') {
-      serverOptions.backlog = backlog
-    }
-
     // Require Astro
     const serverPromise = createServerListener(
       (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+      typeof backlog === 'number' ? { backlog } : {}
     )
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
@@ -256,7 +253,7 @@ export class AstroCapability extends BaseCapability {
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
 
       if (typeof serverOptions?.backlog === 'number') {
-        listenOptions.backlog = serverOptions.backlog
+        createServerListener(false, false, { backlog: serverOptions.backlog })
       }
 
       await this.#app.listen(listenOptions)

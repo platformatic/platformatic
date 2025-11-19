@@ -16,6 +16,7 @@ import { dirname, resolve as resolvePath } from 'node:path'
 import { parse, satisfies } from 'semver'
 import { version } from './schema.js'
 
+const kITC = Symbol.for('plt.runtime.itc')
 const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
 export class NextCapability extends BaseCapability {
@@ -182,23 +183,15 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
-    const { hostname, port, backlog } = this.serverConfig ?? {}
+    const { hostname, port } = this.serverConfig ?? {}
     const serverOptions = {
       host: hostname || '127.0.0.1',
       port: port || 0
     }
 
-    if (typeof backlog === 'number') {
-      serverOptions.backlog = backlog
-    }
-
     const context = await this.getChildManagerContext(this.#basePath)
 
-    this.childManager = new ChildManager({
-      loader: loaderUrl,
-      context: { ...context, port: false },
-      scripts: this.#getChildManagerScripts()
-    })
+    this.childManager = this.#createChildManager(loaderUrl, { ...context, port: false }, this.#getChildManagerScripts())
 
     const promise = once(this.childManager, 'url')
     await this.#startDevelopmentNext(serverOptions)
@@ -254,11 +247,11 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, childManagerScripts)
     }
 
-    this.childManager = new ChildManager({
-      loader: loaderUrl,
-      context: await this.getChildManagerContext(this.#basePath),
-      scripts: this.#getChildManagerScripts()
-    })
+    this.childManager = this.#createChildManager(
+      loaderUrl,
+      await this.getChildManagerContext(this.#basePath),
+      this.#getChildManagerScripts()
+    )
 
     this.verifyOutputDirectory(resolvePath(this.root, '.next'))
     await this.#startProductionNext()
@@ -276,15 +269,12 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      if (typeof backlog === 'number') {
-        serverOptions.backlog = backlog
-      }
-
       await this.childManager.register()
 
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+        typeof backlog === 'number' ? { backlog } : {}
       )
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
@@ -335,5 +325,20 @@ export class NextCapability extends BaseCapability {
 
       return originalSpawn.call(this, options)
     }
+  }
+
+  #createChildManager (loader, context, scripts) {
+    const childManager = new ChildManager({
+      loader,
+      context,
+      scripts
+    })
+
+    childManager.on('event', event => {
+      globalThis[kITC].notify('event', event)
+      this.emit('application:worker:event:' + event.event, event.payload)
+    })
+
+    return childManager
   }
 }

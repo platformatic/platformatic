@@ -1,6 +1,6 @@
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
-export function createServerListener (overridePort = true, overrideHost) {
+export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
   const { promise, resolve, reject } = Promise.withResolvers()
 
   const subscribers = {
@@ -18,6 +18,9 @@ export function createServerListener (overridePort = true, overrideHost) {
       if (typeof overrideHost === 'string') {
         options.host = overrideHost
       }
+
+      Object.assign(options, additionalOptions)
+      globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
     },
     asyncEnd ({ server }) {
       cancel()

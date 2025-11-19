@@ -196,14 +196,11 @@ export class ViteCapability extends BaseCapability {
       }
     }
 
-    if (typeof backlog === 'number') {
-      serverOptions.backlog = backlog
-    }
-
     // Require Vite
     const serverPromise = createServerListener(
       (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+      typeof backlog === 'number' ? { backlog } : {}
     )
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
@@ -243,7 +240,7 @@ export class ViteCapability extends BaseCapability {
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
 
       if (typeof serverOptions?.backlog === 'number') {
-        listenOptions.backlog = serverOptions.backlog
+        createServerListener(false, false, { backlog: serverOptions.backlog })
       }
 
       await this.#app.listen(listenOptions)

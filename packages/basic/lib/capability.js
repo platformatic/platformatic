@@ -586,7 +586,12 @@ export class BaseCapability extends EventEmitter {
       /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      backlog: (this.isEntrypoint ? this.serverConfig?.backlog : undefined) ?? true,
+      additionalServerOptions:
+        typeof this.serverConfig?.backlog === 'number'
+          ? {
+              backlog: this.serverConfig.backlog
+            }
+          : {},
       telemetryConfig: this.telemetryConfig
     }
   }

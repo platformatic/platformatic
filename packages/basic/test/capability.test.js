@@ -273,6 +273,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
+      additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
       isEntrypoint: true,
@@ -350,6 +351,7 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
+      additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {
         applicationName: 'test-telemetry',
@@ -455,6 +457,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
+      additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
       isEntrypoint: true,
