@@ -13,9 +13,115 @@ Here is the highlight of the architecture:
 
 ![Next.js with Watt Architecture](./images/next-in-k8s.png)
 
+**Complete Working Example**: The full code for this guide is available at [https://github.com/platformatic/k8s-watt-next-example](https://github.com/platformatic/k8s-watt-next-example). You can clone it and follow along, or use it as a reference while building your own application.
+
 ## Create a new Next.js application (or use your own)
 
-### Add Incremental Site Regeneration or 'use cache'
+To follow this guide, you can either create a new Next.js application or use an existing one. If you want to see a complete working example, check out our [k8s-watt-next-example repository](https://github.com/platformatic/k8s-watt-next-example).
+
+### Create a New Next.js App
+
+Create a new Next.js application using the official CLI:
+
+```bash
+npx create-next-app@15 my-next-app
+cd my-next-app
+```
+
+When prompted, select your preferences. We recommend:
+- TypeScript: Yes
+- ESLint: Yes
+- Tailwind CSS: Yes (optional)
+- App Router: Yes (recommended)
+
+### Add Incremental Static Regeneration or 'use cache'
+
+To demonstrate the benefits of distributed caching with Watt and Valkey, you should add either Incremental Static Regeneration (ISR) or the new `use cache` directive to your application.
+
+Let's modify the home page to show cached data that demonstrates how caching works across multiple pods:
+
+```tsx
+// src/app/page.tsx
+import { hostname } from "os";
+
+export const revalidate = 10; // Revalidate every 10 seconds
+
+export default async function Home() {
+  const name = hostname();
+  const version = Date.now();
+
+  return (
+    <div>
+      <h1>Welcome to Next.js + Platformatic!</h1>
+
+      <h3>
+        Last server date is <strong>{version}</strong>, served by{" "}
+        <strong>{name}</strong>
+      </h3>
+    </div>
+  );
+}
+```
+
+In this example:
+- `export const revalidate = 10` enables time-based revalidation every 10 seconds
+- `hostname()` shows which pod is serving the request (useful when you have multiple replicas)
+- `Date.now()` generates a timestamp that will be cached and shared across all pods
+
+**What happens with caching:**
+
+1. When the first request comes in, Next.js renders the page and stores the result in the cache (Valkey)
+2. For the next 10 seconds, all requests to any pod will receive the same cached version with the same timestamp
+3. After 10 seconds, the next request triggers a revalidation, updates the cache, and all pods get the new version
+4. The hostname shows you which pod served the request, but the timestamp stays the same across all pods (proving the cache is shared)
+
+#### Other Caching Options
+
+**Option 2: On-demand Revalidation**
+
+Use `revalidateTag` or `revalidatePath` to manually trigger cache revalidation:
+
+```tsx
+// src/app/actions.ts
+'use server'
+import { revalidatePath } from 'next/cache';
+
+export async function updateData() {
+  // Update your data...
+  revalidatePath('/');
+}
+```
+
+**Option 3: React Cache (Next.js 15+)**
+
+With Next.js 15+, you can use the new `unstable_cache` for more granular caching:
+
+```tsx
+// src/app/page.tsx
+import { unstable_cache } from 'next/cache';
+
+const getCachedData = unstable_cache(
+  async () => {
+    return fetch('https://api.example.com/data').then(res => res.json());
+  },
+  ['data-key'],
+  { revalidate: 10 }
+);
+
+export default async function Page() {
+  const data = await getCachedData();
+  // Your component logic
+}
+```
+
+**Why is caching important?**
+
+When you deploy multiple replicas of your Next.js application in Kubernetes, each pod maintains its own cache by default. With Watt's Valkey integration, all pods share a single distributed cache, which means:
+
+- Faster response times across all pods
+- Reduced load on your backend APIs and databases
+- Consistent data across all replicas
+- Better resource utilization
 
 ## Add `watt.json`
 
