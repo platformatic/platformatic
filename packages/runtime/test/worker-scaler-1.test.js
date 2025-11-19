@@ -211,10 +211,7 @@ test('should properly apply runtime workers configuration to the applications (n
 
   const config = await app.getRuntimeConfig()
 
-  deepStrictEqual(config.applications[0].workers, {
-    dynamic: features.node.reusePort,
-    static: features.node.reusePort ? 3 : 1
-  }) // Entrypoint
+  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: features.node.reusePort ? 3 : 1 }) // Entrypoint
   deepStrictEqual(config.applications[1].workers, { dynamic: false, static: 3 })
 })
 
