@@ -245,7 +245,6 @@ async function initializeSourceMapper () {
     // Create SourceMapper to search for .map files in the app directory
     // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
     const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
-    process._rawDebug('---------- sourceMapper APP PATH----------', appPath)
     const innerMapper = await SourceMapper.create([appPath], debug)
 
     // Wrap the SourceMapper to fix Windows path normalization
