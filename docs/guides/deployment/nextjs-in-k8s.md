@@ -1,7 +1,7 @@
 # Deploy Next.js in Kubernetes with Watt
 
 In this guide, we are configuring and setting up a Next.js application in
-very common enterprise environment: Kubernetes.
+very common enterprise environment: Kubernetes (K8s).
 
 We will use Watt, the application server for Node.js, to set up:
 
@@ -38,10 +38,11 @@ following:
   ...
   "runtime": {
     "server": {
+      "host": "0.0.0.0",
       "port": "{{PORT}}" 
     },
     "workers": {
-      "static": "{{WORKERS}}"
+      "static": "{{PLT_NEXT_WORKERS}}"
     }
   }
 }
@@ -57,7 +58,7 @@ You will also need to configure the Valkey connection string. Edit it and add:
   ...
   "cache": {
     "adapter": "valkey"
-    "url": "{{VALKEY_URL}}
+    "url": "{{PLT_VALKEY_HOST}}
   }
 }
 ```
@@ -69,15 +70,16 @@ At the end, your `watt.json` should match:
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.8.0.json",
   "runtime": {
     "server": {
+      "host": "0.0.0.0",
       "port": "{{PORT}}" 
     },
     "workers": {
-      "static": "{{WORKERS}}"
+      "static": "{{PLT_NEXT_WORKERS}}"
     }
   },
   "cache": {
     "adapter": "valkey"
-    "url": "{{VALKEY_URL}}
+    "url": "{{PLT_VALKEY_HOST}}
   }
 }
 ```
@@ -96,8 +98,8 @@ Then write a `.env` file in your project, like so:
 
 ```
 PORT=3000
-VALKEY_URL=valkey://localhost:6379
-WORKERS=1
+PLT_VALKEY_HOST=localhost
+PLT_NEXT_WORKERS=1
 ```
 
 Then, run:
@@ -115,7 +117,72 @@ PORT=3001 npx wattpm start
 
 (You can also run `wattpm dev` for development mode)
 
-## Create Docker file
+## Create and build the Docker image
+
+In order to run our application inside Kubernetes, we need to build our Docker image first.
+The most basic Dockerfile needed is:
+
+```Dockerfile
+FROM node:22-alpine
+
+ENV APP_HOME=/home/app
+ENV PORT=3042
+ENV PLT_SERVER_LOGGER_LEVEL="info"
+ENV PLT_NEXT_WORKERS="1"
+ENV PLT_VALKEY_HOST="valkey"
+
+RUN npm install -g pnpm
+WORKDIR $APP_HOME
+COPY ./ ./
+
+RUN pnpm install && pnpm run build
+EXPOSE 3042
+
+CMD [ "pnpm", "run", "start" ]
+```
+
+Note that you might want to keep some of those environment variables loose and configure them via K8s.
+
+### Building the image
+
+There are a few different ways to build the image, depending on where your K8s cluster is running.
+Assuming you are following this guide with a locally running k8s, these are the most common options.
+
+#### Option A: Build using Docker Desktop or Local Docker
+
+If you're using Docker Desktop or a local Docker daemon:
+
+```bash
+docker build -t next-app:latest .
+```
+
+#### Option B: Build using Minikube
+
+If you're using Minikube, you need to use Minikube's Docker daemon:
+
+```bash
+eval $(minikube docker-env)
+docker build -t next-app:latest .
+```
+
+#### Option C: Build using Kind
+
+If you're using Kind, load the image into the cluster:
+
+```bash
+docker build -t next-app:latest .
+kind load docker-image next-app:latest
+```
+
+### Verify the Image was Built
+
+Check that the image exists:
+
+```bash
+docker images | grep next-app
+```
+
+You should see `next-app:latest` in the list.
 
 ## Deploy Prometheus and Valkey in K8s
 
@@ -176,9 +243,14 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 ```
 
 ## Deploy the application
-You need 3 files to have a minimal installation
 
-`deployment.yaml`
+You need 3 files to have a minimal installation: `deployment.yaml`, `service.yaml` and `podMonitor.yaml`.
+
+### `deployment.yaml`
+
+This file describe the deployment of your application.
+
+TODO: add a description of the various configurations (limits, liveness and readiness)  and link to the other places
 
 ```yaml
 apiVersion: apps/v1
@@ -217,10 +289,10 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "250m"
+            cpu: "1000m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "1024Mi"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /
@@ -235,7 +307,9 @@ spec:
           periodSeconds: 5
 ```
 
-`service.yaml`
+### `service.yaml`
+
+TODO: add description
 
 ```yaml
 apiVersion: v1
@@ -256,7 +330,9 @@ spec:
     name: http
 ```
 
-`podMonitor.yaml`
+### `podMonitor.yaml`
+
+TODO: add description
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -306,3 +382,5 @@ Start to type `nodejs` and if you see an autocomplete like the following image
 you're done! 
 
 Prometheus is now monitoring your app and collecting metrics!
+
+TODO: add conclusion and recap
