@@ -248,9 +248,28 @@ You need 3 files to have a minimal installation: `deployment.yaml`, `service.yam
 
 ### `deployment.yaml`
 
-This file describe the deployment of your application.
+This file describes the deployment of your application. Let's break down the key configuration sections:
 
-TODO: add a description of the various configurations (limits, liveness and readiness)  and link to the other places
+**Resource Management:**
+- `resources.requests`: The minimum CPU (1000m = 1 core) and memory (256Mi) guaranteed for each pod
+- `resources.limits`: The maximum CPU (1000m) and memory (1024Mi) a pod can consume before being throttled or restarted
+- Setting appropriate limits prevents resource starvation and ensures fair resource allocation across pods
+- **Important**: If you increase the number of workers via `PLT_NEXT_WORKERS` environment variable, you should proportionally increase the CPU limit. For example, setting `PLT_NEXT_WORKERS=4` would require approximately 4000m (4 cores) CPU limit to ensure each worker has adequate resources
+
+**Health Checks:**
+- `livenessProbe`: Determines if the container is still running. If it fails, Kubernetes will restart the pod
+  - `initialDelaySeconds: 30`: Wait 30 seconds after startup before checking (gives time for app initialization)
+  - `periodSeconds: 10`: Check every 10 seconds
+- `readinessProbe`: Determines if the container is ready to accept traffic. If it fails, the pod is removed from service endpoints
+  - `initialDelaySeconds: 10`: Wait 10 seconds before first check
+  - `periodSeconds: 5`: Check every 5 seconds
+
+**Ports:**
+- Port `3000`: The main HTTP port for your Next.js application
+- Port `9090`: The metrics endpoint for Prometheus to scrape
+
+**Labels:**
+The `platformatic.dev/monitor: prometheus` label is crucial - it allows the PodMonitor to discover and scrape metrics from your application.
 
 ```yaml
 apiVersion: apps/v1
@@ -309,7 +328,21 @@ spec:
 
 ### `service.yaml`
 
-TODO: add description
+This file creates a Kubernetes Service that exposes your application to the outside world:
+
+**Service Type:**
+- `type: NodePort`: Exposes the service on a static port on each node in the cluster. This makes your app accessible from outside the cluster via `<NodeIP>:<NodePort>`
+
+**Port Configuration:**
+- `port: 3000`: The port that the service listens on within the cluster
+- `targetPort: 3000`: The port on the pod that traffic is forwarded to (matches the container port in deployment.yaml)
+- `nodePort: 32100`: The external port exposed on each node (range: 30000-32767)
+- `protocol: TCP`: The network protocol used
+
+**Selector:**
+The `app: next-app` selector ensures the service routes traffic only to pods with the matching label.
+
+With this configuration, your Next.js application will be accessible at `http://localhost:32100` when using a local Kubernetes cluster.
 
 ```yaml
 apiVersion: v1
@@ -332,7 +365,27 @@ spec:
 
 ### `podMonitor.yaml`
 
-TODO: add description
+This file configures Prometheus to automatically discover and scrape metrics from your application pods. PodMonitor is a custom resource provided by the Prometheus Operator:
+
+**Selector:**
+The `platformatic.dev/monitor: prometheus` label selector tells Prometheus which pods to monitor. This must match the label in your deployment.yaml template.
+
+**Metrics Endpoint Configuration:**
+- `port: metrics`: Scrape from the port named "metrics" (port 9090 in the deployment)
+- `path: /metrics`: The HTTP path where metrics are exposed
+- `interval: 15s`: How often Prometheus scrapes metrics (every 15 seconds)
+- `honorLabels: false`: Prometheus labels take precedence over scraped labels
+
+**Relabeling:**
+The `relabelings` section customizes how metrics are labeled in Prometheus:
+- Extracts Kubernetes pod metadata (app name, instance)
+- Makes metrics easier to query and correlate in Prometheus
+
+**Namespace and Labels:**
+- `namespace: default`: The PodMonitor runs in the default namespace
+- `release: prometheus`: This label is required for the Prometheus Operator to discover this PodMonitor
+
+With this configuration, Prometheus will automatically start collecting Node.js runtime metrics, HTTP request metrics, and other performance data from your Watt-powered Next.js application.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -379,8 +432,35 @@ Start to type `nodejs` and if you see an autocomplete like the following image
 
 ![Prometheus Query](./images/prometheus-query.png)
 
-you're done! 
+you're done!
 
 Prometheus is now monitoring your app and collecting metrics!
 
-TODO: add conclusion and recap
+## Conclusion
+
+Congratulations! You've successfully deployed a production-ready Next.js application in Kubernetes with enterprise-grade features:
+
+**What You've Accomplished:**
+
+1. **Multithreaded Server-Side Rendering**: Configured Watt workers to handle multiple concurrent SSR requests efficiently
+2. **Distributed Caching**: Integrated Valkey (Redis-compatible) for shared cache across multiple pod replicas
+3. **Observability**: Set up Prometheus monitoring with automatic metrics collection for Node.js runtime and HTTP requests
+4. **Production Deployment**: Created proper Kubernetes manifests with health checks, resource limits, and service discovery
+5. **Scalability**: Built a foundation that can scale horizontally by increasing pod replicas
+
+**Key Takeaways:**
+
+- The `watt.json` configuration enables seamless integration of Next.js with enterprise infrastructure
+- Resource limits should be adjusted based on the number of workers (`PLT_NEXT_WORKERS`)
+- The `platformatic.dev/monitor: prometheus` label connects your application to the monitoring stack
+- Health probes ensure Kubernetes can detect and recover from application failures automatically
+
+**Next Steps:**
+
+- Scale your deployment by increasing `spec.replicas` in deployment.yaml
+- Add an Ingress resource to handle external traffic routing and TLS termination
+- Configure horizontal pod autoscaling (HPA) based on CPU/memory or custom metrics
+- Set up persistent storage if your application needs stateful data
+- Implement CI/CD pipelines to automate the build and deployment process
+
+Your Next.js application is now running in a production-grade Kubernetes environment with full observability!
