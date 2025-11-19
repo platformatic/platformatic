@@ -487,7 +487,7 @@ export class BaseCapability extends EventEmitter {
     })
 
     this.childManager.on('event', event => {
-      globalThis[kITC].notify('event', event)
+      globalThis[kITC]?.notify('event', event)
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
@@ -586,6 +586,12 @@ export class BaseCapability extends EventEmitter {
       /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      additionalServerOptions:
+        typeof this.serverConfig?.backlog === 'number'
+          ? {
+              backlog: this.serverConfig.backlog
+            }
+          : {},
       telemetryConfig: this.telemetryConfig
     }
   }

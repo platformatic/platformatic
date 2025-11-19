@@ -153,7 +153,13 @@ export class NodeCapability extends BaseCapability {
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener(serverOptions?.port ?? true, serverOptions?.hostname ?? true)
+
+    const serverPromise = createServerListener(
+      serverOptions?.port ?? true,
+      serverOptions?.hostname ?? true,
+      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+    )
+
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
@@ -341,6 +347,12 @@ export class NodeCapability extends BaseCapability {
 
     const serverOptions = this.serverConfig
     const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+    createServerListener(
+      false,
+      false,
+      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+    )
 
     if (this.#isFastify) {
       await this.#app.listen(listenOptions)

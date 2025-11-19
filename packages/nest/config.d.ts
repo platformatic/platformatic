@@ -60,6 +60,10 @@ export interface PlatformaticNestJSConfig {
   server?: {
     hostname?: string;
     port?: number | string;
+    /**
+     * The maximum length of the queue of pending connections
+     */
+    backlog?: number;
     http2?: boolean;
     https?: {
       allowHTTP1?: boolean;
@@ -185,6 +189,10 @@ export interface PlatformaticNestJSConfig {
     server?: {
       hostname?: string;
       port?: number | string;
+      /**
+       * The maximum length of the queue of pending connections
+       */
+      backlog?: number;
       http2?: boolean;
       https?: {
         allowHTTP1?: boolean;

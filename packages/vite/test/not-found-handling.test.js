@@ -254,7 +254,7 @@ test(
   }
 )
 
-test.only('should still serve existing routes', { skip: isCIOnWindows }, async t => {
+test('should still serve existing routes', { skip: isCIOnWindows }, async t => {
   const { runtime, url } = await createRuntime({
     t,
     root: resolve(import.meta.dirname, './fixtures/not-found-handling'),

@@ -1,5 +1,6 @@
 import {
   cleanBasePath,
+  createServerListener,
   ensureTrailingSlash,
   errors,
   getServerUrl,
@@ -173,6 +174,10 @@ export class RemixCapability extends ViteCapability {
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+      if (typeof serverOptions?.backlog === 'number') {
+        createServerListener(false, false, { backlog: serverOptions.backlog })
+      }
 
       this.#server = await new Promise((resolve, reject) => {
         return this.#app

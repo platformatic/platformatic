@@ -360,6 +360,7 @@ export class ChildProcess extends ITC {
 
         const port = globalThis.platformatic.port
         const host = globalThis.platformatic.host
+        const additionalOptions = globalThis.platformatic.additionalServerOptions ?? {}
 
         if (port !== false) {
           const hasFixedPort = typeof port === 'number'
@@ -369,6 +370,9 @@ export class ChildProcess extends ITC {
         if (typeof host === 'string') {
           options.host = host
         }
+
+        Object.assign(options, additionalOptions)
+        globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
       },
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)

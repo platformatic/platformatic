@@ -204,6 +204,33 @@ test('supports configuration overrides', async t => {
   strictEqual(capabilityConfig.server.port, 2222)
 })
 
+test('supports backlog configuration override', async t => {
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+    dependencies: []
+  }
+
+  const app = new Controller({}, config)
+
+  await app.init()
+
+  app.updateContext({
+    serverConfig: {
+      port: 0,
+      backlog: 1024
+    }
+  })
+
+  const capabilityConfig = await app.capability.getConfig()
+  strictEqual(capabilityConfig.server.backlog, 1024)
+})
+
 test('can update status of a capability with updateStatus support', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')

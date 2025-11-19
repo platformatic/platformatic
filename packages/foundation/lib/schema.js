@@ -350,6 +350,10 @@ export const server = {
     port: {
       anyOf: [{ type: 'integer' }, { type: 'string' }]
     },
+    backlog: {
+      type: 'integer',
+      description: 'The maximum length of the queue of pending connections'
+    },
     http2: {
       type: 'boolean'
     },
