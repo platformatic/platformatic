@@ -399,6 +399,7 @@ export interface PlatformaticComposerConfig {
                   body?: string;
                 };
               };
+          healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
           /**

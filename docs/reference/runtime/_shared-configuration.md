@@ -49,6 +49,7 @@ runtime. Each application object supports the following settings:
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
+- **`enable`** (`boolean`) - By default, the application is enabled. If set to false, the application will not start.
 - **`config`** (`string`) - The configuration file used to start
   the application.
 - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
