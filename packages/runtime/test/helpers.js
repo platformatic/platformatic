@@ -100,15 +100,19 @@ export async function createRuntime (configOrRoot, sourceOrConfig, context) {
     ...context,
     async transform (config, ...args) {
       config = await originalTransform(config, ...args)
-
       config.logger ??= {}
 
-      if (process.env.PLT_TESTS_DEBUG === 'true') {
-        config.logger.level = 'trace'
-        process._rawDebug('Runtime logs:', context.logsPath)
-      }
+      const debug = process.env.PLT_TESTS_DEBUG === 'true'
+      const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
 
-      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
+      if (verbose) {
+        config.logger.level = debug ? 'trace' : 'info'
+      } else {
+        if (debug) {
+          config.logger.level = 'trace'
+          process._rawDebug('Runtime logs:', context.logsPath)
+        }
+
         config.logger.transport ??= {
           target: 'pino/file',
           options: { destination: context.logsPath }

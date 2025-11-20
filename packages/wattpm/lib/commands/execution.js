@@ -40,7 +40,19 @@ export async function devCommand (logger, args) {
   }
   /* c8 ignore next 15 - covered */
 
-  let runtime = await create(root, configurationFile, { start: true, envFile: env })
+  let runtime
+  try {
+    runtime = await create(root, configurationFile, { start: true, envFile: env })
+  } catch (err) {
+    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
+      return logFatalError(
+        logger,
+        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
+      )
+    }
+
+    throw err
+  }
 
   // Handle reloading via either file changes or stdin "rs" command
   const { promise, reject } = Promise.withResolvers()
@@ -101,7 +113,18 @@ export async function startCommand (logger, args) {
     return
   }
 
-  await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
+  try {
+    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
+  } catch (err) {
+    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
+      return logFatalError(
+        logger,
+        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
+      )
+    }
+
+    throw err
+  }
 }
 
 export async function stopCommand (logger, args) {
