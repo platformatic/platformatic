@@ -42,7 +42,7 @@ export async function devCommand (logger, args) {
 
   let runtime
   try {
-    await create(root, configurationFile, { start: true, envFile: env })
+    runtime = await create(root, configurationFile, { start: true, envFile: env })
   } catch (err) {
     if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
       return logFatalError(

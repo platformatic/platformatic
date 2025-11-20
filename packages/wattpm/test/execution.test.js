@@ -71,7 +71,7 @@ test('dev - should complain if no configuration file is found', async t => {
   )
 })
 
-test.only('dev - should complain if no entrypoint is defined', async t => {
+test('dev - should complain if no entrypoint is defined', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
@@ -414,7 +414,7 @@ test('start - should throw an error when an application has no path and it is no
   )
 })
 
-test.only('start - should complain if no entrypoint is defined', async t => {
+test('start - should complain if no entrypoint is defined', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
