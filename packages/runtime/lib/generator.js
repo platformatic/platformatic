@@ -611,7 +611,7 @@ export class WrappedGenerator extends BaseGenerator {
 
   async #createConfigFile () {
     const config = {
-      $schema: `https://schemas.platformatic.dev/wattpm/${this.platformaticVersion}.json`,
+      $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
       runtime: wrappableProperties
     }
 

@@ -465,13 +465,13 @@ test('WrappedGenerator - should create a valid watt.json', async t => {
   const version = await getPlatformaticVersion()
   const root = await createTemporaryDirectory(t)
 
-  const generator = new WrappedGenerator({ module: '@platformatic/runtime', targetDirectory: root })
+  const generator = new WrappedGenerator({ module: '@platformatic/next', targetDirectory: root })
   await generator.prepare()
 
   const wattJson = generator.getFileObject('watt.json')
 
   assert.deepStrictEqual(JSON.parse(wattJson.contents), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
     runtime: {
       logger: {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
