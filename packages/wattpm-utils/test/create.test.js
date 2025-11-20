@@ -501,13 +501,10 @@ test('create - correctly write package.json and watt.json when importing a local
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  const { stdout, stderr } = await wattpmUtils('create', '-s', {
+  const { stdout } = await wattpmUtils('create', '-s', {
     cwd: temporaryFolder,
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
-
-  process._rawDebug('STDOUT:', stdout)
-  process._rawDebug('STDERR:', stderr)
 
   ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/watt.json written!`))
   ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/package.json written!`))
@@ -545,7 +542,7 @@ test('create - should not use a URL when importing a local application within th
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
