@@ -818,6 +818,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/prom-client':
+        specifier: ^1.0.0
+        version: 1.0.0
       c8:
         specifier: ^10.0.0
         version: 10.1.3
@@ -842,9 +845,6 @@ importers:
       pino-test:
         specifier: ^1.0.1
         version: 1.1.0
-      prom-client:
-        specifier: ^15.1.2
-        version: 15.1.3
       self-cert:
         specifier: ^2.0.0
         version: 2.0.1
@@ -915,12 +915,12 @@ importers:
 
   packages/globals:
     dependencies:
+      '@platformatic/prom-client':
+        specifier: ^1.0.0
+        version: 1.0.0
       pino:
         specifier: ^9.9.0
         version: 9.11.0
-      prom-client:
-        specifier: ^15.1.3
-        version: 15.1.3
     devDependencies:
       '@types/node':
         specifier: ^22.10.6
@@ -969,14 +969,14 @@ importers:
   packages/metrics:
     dependencies:
       '@platformatic/http-metrics':
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.3.0
+        version: 0.3.0
+      '@platformatic/prom-client':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@platformatic/promotel':
         specifier: ^0.1.0
         version: 0.1.0
-      prom-client:
-        specifier: ^15.1.2
-        version: 15.1.3
     devDependencies:
       cleaner-spec-reporter:
         specifier: ^0.5.0
@@ -1294,6 +1294,9 @@ importers:
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics
+      '@platformatic/prom-client':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -1339,9 +1342,6 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.1.2
-      prom-client:
-        specifier: ^15.1.2
-        version: 15.1.3
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -3989,11 +3989,15 @@ packages:
   '@platformatic/graphql-composer@0.10.1':
     resolution: {integrity: sha512-c10wlGoAOgD8dMP1HyyCOK5qUi9o+TPlMZ1fj0AL8D49aDKZczkMsR6V+rNa4jPrujxWPGQlylJNEgF7HXOGsg==}
 
-  '@platformatic/http-metrics@0.2.1':
-    resolution: {integrity: sha512-Gy3NHUQT250MrJMlwzcSniVc+71DmCN1BpsuJcBlxyDpNacsH9axNonNWSNJqcWg8WOrv7tS6miBql2cugVuAg==}
+  '@platformatic/http-metrics@0.3.0':
+    resolution: {integrity: sha512-e+wQJDCd9v7yKeV4u30ibAe5uGB14k+jDw1w9FqsM3tDgFY0UEHb24hJR9j2bVa6091e+ppGy3L4LhyUR92M0w==}
 
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
+
+  '@platformatic/prom-client@1.0.0':
+    resolution: {integrity: sha512-O7NfmdBWAm1QJ0LMrtcyCSgWmA+FQEiCyRqvouccmyAuydwLxLdmhcTTW3sEmO5f7bRfXpUVVgTtnFbIqEiHyw==}
+    engines: {node: ^20 || ^22 || >=24}
 
   '@platformatic/promotel@0.1.0':
     resolution: {integrity: sha512-PpbXGiGef+zW9LAbD3JP1ehTDhRXXcrBz+cg1fd5kZamMqqf3leXSjOBlagqxaMk8e1M1GggnmB4RxGBvoAcGQ==}
@@ -11973,9 +11977,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@platformatic/http-metrics@0.2.1':
+  '@platformatic/http-metrics@0.3.0':
     dependencies:
-      prom-client: 15.1.3
+      '@platformatic/prom-client': 1.0.0
 
   '@platformatic/openapi-schema-validator@3.0.0':
     dependencies:
@@ -11983,6 +11987,10 @@ snapshots:
       ajv-draft-04: 1.0.0(ajv@8.17.1)
       ajv-formats: 3.0.1(ajv@8.17.1)
       js-yaml: 4.1.0
+
+  '@platformatic/prom-client@1.0.0':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
 
   '@platformatic/promotel@0.1.0':
     dependencies:

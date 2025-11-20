@@ -83,7 +83,7 @@
     "minimist": "^1.2.8",
     "pino": "^9.9.0",
     "pino-pretty": "^13.0.0",
-    "prom-client": "^15.1.2",
+    "@platformatic/prom-client": "^1.0.0",
     "semgrator": "^0.3.0",
     "sonic-boom": "^4.2.0",
     "systeminformation": "^5.27.11",

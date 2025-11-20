@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { type EventEmitter } from 'node:events'
 import { type Level, type Logger } from 'pino'
-import * as Client from 'prom-client'
+import * as Client from '@platformatic/prom-client'
 
 type Optional<T> = T | undefined
 

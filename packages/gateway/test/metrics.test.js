@@ -1,6 +1,6 @@
 import { ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
-import promClient from 'prom-client'
+import promClient from '@platformatic/prom-client'
 import { initMetrics } from '../lib/metrics.js'
 
 test('initMetrics should return null when prometheus is not provided', async () => {

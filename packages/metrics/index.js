@@ -1,9 +1,9 @@
 import collectHttpMetrics from '@platformatic/http-metrics'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
-import client from 'prom-client'
+import client from '@platformatic/prom-client'
 
-export * as client from 'prom-client'
+export * as client from '@platformatic/prom-client'
 
 const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client

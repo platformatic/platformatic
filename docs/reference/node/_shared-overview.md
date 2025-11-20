@@ -118,7 +118,7 @@ const response = await globalThis.platformatic.messaging.send(
 
 Custom metrics can be registered and exported by accessing the same Prometheus registry that the rest of the Platformatic runtime is using via `globalThis.platformatic.prometheus.registry`.
 
-In order to ensure the maximum compatibility the client package (`prom-client`) is available in `globalThis.platformatic.prometheus.client`.
+In order to ensure the maximum compatibility the client package (`@platformatic/prom-client`) is available in `globalThis.platformatic.prometheus.client`. This package is API compatible with the standard `prom-client` package but significantly faster.
 
 Here is an example of how to register a custom metric:
 
