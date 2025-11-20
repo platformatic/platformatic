@@ -189,7 +189,7 @@ export class RuntimeGenerator extends BaseGenerator {
 
   async _getConfigFileContents () {
     const config = {
-      $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${this.platformaticVersion}.json`,
+      $schema: `https://schemas.platformatic.dev/wattpm/${this.platformaticVersion}.json`,
       entrypoint: this.entryPoint.name,
       watch: true,
       autoload: {

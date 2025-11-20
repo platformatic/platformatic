@@ -31,7 +31,7 @@ test('create - should create a new project using watt.json by default', async t 
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -73,7 +73,7 @@ test('create - should create a new project with two applications', async t => {
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -91,7 +91,7 @@ test('create - should create a new project with two applications', async t => {
   })
 })
 
-test('create - should not install @platformatic/runtime as it is already available', async t => {
+test('create - should not install wattpm as it is already available', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
@@ -110,7 +110,7 @@ test('create - should not install @platformatic/runtime as it is already availab
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  ok(!createProcess.stdout.includes('Installing @platformatic/runtime'))
+  ok(!createProcess.stdout.includes('Installing wattpm'))
 })
 
 test('create - should use a custom configuration file', async t => {
@@ -133,7 +133,7 @@ test('create - should use a custom configuration file', async t => {
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt-alternative.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -170,7 +170,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'

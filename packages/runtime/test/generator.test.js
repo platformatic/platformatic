@@ -26,6 +26,8 @@ async function createTemporaryDirectory (t, prefix) {
 }
 
 test('RuntimeGenerator - should create a runtime with 2 applications', async () => {
+  const version = await getPlatformaticVersion()
+
   const rg = new RuntimeGenerator({
     targetDirectory: '/tmp/runtime'
   })
@@ -79,6 +81,17 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   const envSample = rg.getFileObject('.env.sample')
 
   assert.notDeepStrictEqual(env.contents.split(/\r?\n/), envSample.contents.split(/\r?\n/))
+
+  const schemaJson = rg.getFileObject('platformatic.json')
+  assert.deepStrictEqual(JSON.parse(schemaJson.contents), {
+    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
+    entrypoint: 'first-service',
+    watch: true,
+    autoload: { path: 'applications', exclude: ['docs'] },
+    logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
+    server: { hostname: '{PLT_SERVER_HOSTNAME}', port: '{PORT}' },
+    managementApi: '{PLT_MANAGEMENT_API}'
+  })
 })
 
 test('RuntimeGenerator - should have a valid package.json', async () => {
@@ -452,13 +465,13 @@ test('WrappedGenerator - should create a valid watt.json', async t => {
   const version = await getPlatformaticVersion()
   const root = await createTemporaryDirectory(t)
 
-  const generator = new WrappedGenerator({ module: '@platformatic/runtime', targetDirectory: root })
+  const generator = new WrappedGenerator({ module: '@platformatic/next', targetDirectory: root })
   await generator.prepare()
 
   const wattJson = generator.getFileObject('watt.json')
 
   assert.deepStrictEqual(JSON.parse(wattJson.contents), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
     runtime: {
       logger: {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
