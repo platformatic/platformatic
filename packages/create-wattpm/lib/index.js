@@ -506,11 +506,18 @@ export async function createApplication (
   const pnpmWorkspacePath = join(projectDir, 'pnpm-workspace.yaml')
   if (packageManager === 'pnpm' && !existsSync(pnpmWorkspacePath)) {
     // add pnpm-workspace.yaml file if needed
-    const content = `packages:
-# all packages in direct subdirs of packages/
+    let content = `packages:
 - 'applications/*'
 - 'services/*'
 - 'web/*'`
+
+    // Add imported applications
+    for (const { application } of generator.applications) {
+      if (application.config.pnpmWorkspacePath) {
+        content += `\n- ${application.config.pnpmWorkspacePath}`
+      }
+    }
+
     await writeFile(pnpmWorkspacePath, content)
   }
 
