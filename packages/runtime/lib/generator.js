@@ -102,12 +102,7 @@ export class RuntimeGenerator extends BaseGenerator {
         build: this.config.buildCommand ?? 'wattpm build',
         start: this.config.startCommand ?? 'wattpm start'
       },
-      devDependencies: {
-        fastify: `^${this.fastifyVersion}`
-      },
       dependencies: {
-        '@platformatic/runtime': `^${this.platformaticVersion}`,
-        platformatic: `^${this.platformaticVersion}`,
         wattpm: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },

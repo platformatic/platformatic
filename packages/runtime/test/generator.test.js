@@ -122,8 +122,6 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
     build: 'wattpm build'
   })
   assert.deepStrictEqual(packageJson.workspaces, ['applications/*'])
-
-  assert.ok(packageJson.dependencies['@platformatic/runtime'])
 })
 
 test('RuntimeGenerator - should have applications plugin dependencies in package.json', async () => {
