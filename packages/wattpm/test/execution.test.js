@@ -1,4 +1,5 @@
 import { safeRemove } from '@platformatic/foundation'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { connect } from 'inspector-client'
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
@@ -66,6 +67,24 @@ test('dev - should complain if no configuration file is found', async t => {
   ok(
     devstartProcess.stdout.includes(
       `Cannot find a supported Watt configuration file (like watt.json, a wattpm.json or a platformatic.json) in ${nonExistentDirectory}.`
+    )
+  )
+})
+
+test.only('dev - should complain if no entrypoint is defined', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+    delete config.entrypoint
+  })
+
+  const devstartProcess = await wattpm('dev', rootDir, { reject: false })
+
+  deepStrictEqual(devstartProcess.exitCode, 1)
+
+  ok(
+    devstartProcess.stdout.includes(
+      'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
     )
   )
 })
@@ -392,6 +411,24 @@ test('start - should throw an error when an application has no path and it is no
         )
       }),
     startProcess.stdout
+  )
+})
+
+test.only('start - should complain if no entrypoint is defined', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+    delete config.entrypoint
+  })
+
+  const devstartProcess = await wattpm('start', rootDir, { reject: false })
+
+  deepStrictEqual(devstartProcess.exitCode, 1)
+
+  ok(
+    devstartProcess.stdout.includes(
+      'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
+    )
   )
 })
 

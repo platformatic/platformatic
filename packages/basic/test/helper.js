@@ -297,19 +297,25 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     production,
     async transform (config, ...args) {
       config = await transform(config, ...args)
+      config.logger ??= {}
+      config.server ??= {}
+
       // Assign the port
       if (typeof port === 'number') {
-        config.server = { port }
+        config.server.port = port
       }
 
-      config.logger ??= {}
+      const debug = process.env.PLT_TESTS_DEBUG === 'true'
+      const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
 
-      if (process.env.PLT_TESTS_DEBUG === 'true') {
-        config.logger.level = 'trace'
-        process._rawDebug('Runtime logs:', resolve(root, 'logs.txt'))
-      }
+      if (verbose) {
+        config.logger.level = debug ? 'trace' : 'info'
+      } else {
+        if (debug) {
+          config.logger.level = 'trace'
+          process._rawDebug('Runtime logs:', resolve(root, 'logs.txt'))
+        }
 
-      if (process.env.PLT_TESTS_VERBOSE !== 'true') {
         config.logger.transport ??= {
           target: 'pino/file',
           options: { destination: resolve(root, 'logs.txt') }
