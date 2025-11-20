@@ -395,3 +395,43 @@ test('import - should use different applications keys', async t => {
   ok(Array.isArray(runtime.config.applications))
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
+
+test('import - when importing folders already in the project root, should not create useless file and should update the right files', async t => {
+  const targetDir = await createTemporaryDirectory(t)
+  const sourceDir = join(targetDir, 'my-app')
+
+  const runtime = createMockedRuntimeGenerator({
+    getRuntimeConfigFileObject () {
+      return {
+        contents: JSON.stringify({
+          applications: [{ id: 'test-application', path: '/existing/path' }]
+        })
+      }
+    },
+    getRuntimeEnvFileObject () {
+      return { contents: '' }
+    }
+  })
+
+  const gen = createGenerator(runtime, { targetDirectory: targetDir })
+  gen.setConfig({ applicationPath: sourceDir, operation: 'import' })
+
+  await gen._beforeWriteFiles(runtime)
+
+  deepStrictEqual(gen.files, [
+    {
+      path: '',
+      file: `${targetDir}/my-app/platformatic.json`,
+      contents: '{\n' + '  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.0.0.json"\n' + '}',
+      options: {},
+      tags: []
+    },
+    {
+      path: '',
+      file: `${targetDir}/my-app/package.json`,
+      contents: '{\n  "dependencies": {\n    "@platformatic/service": "^1.0.0"\n  }\n}',
+      options: {},
+      tags: []
+    }
+  ])
+})

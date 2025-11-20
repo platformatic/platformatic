@@ -51,7 +51,10 @@ async function parseLocalFolder (path) {
   // Detect if there is a git folder and eventually get the remote
   for (const candidate of originCandidates) {
     try {
-      const result = await execa('git', ['remote', 'get-url', candidate], { cwd: path })
+      const result = await execa('git', ['remote', 'get-url', candidate], {
+        cwd: path,
+        env: { GIT_DIR: join(path, '.git') }
+      })
       url = result.stdout.trim()
       break
     } catch (e) {
@@ -272,7 +275,14 @@ async function importURL (logger, _, configurationFile, rawUrl, id, http, branch
   const parsed = parseGitUrl(url)
   const effectiveBranch = branch ?? parsed.branch
 
-  await importApplication(logger, configurationFile, id ?? basename(parsed.url, '.git'), null, parsed.url, effectiveBranch)
+  await importApplication(
+    logger,
+    configurationFile,
+    id ?? basename(parsed.url, '.git'),
+    null,
+    parsed.url,
+    effectiveBranch
+  )
 }
 
 async function importLocal (logger, root, configurationFile, path, overridenId) {

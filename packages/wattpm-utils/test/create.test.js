@@ -1,10 +1,11 @@
+import { createDirectory } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setupUserInputHandler } from '../../create-wattpm/test/cli/helper.js'
 import { version } from '../lib/version.js'
-import { createTemporaryDirectory, wattpmUtils } from './helper.js'
+import { createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.js'
 
 const createEnv = {
   NO_COLOR: 'true',
@@ -474,5 +475,95 @@ test('create - should wrap existing frontend applications into Watt', async t =>
         port: '{PORT}'
       }
     }
+  })
+})
+
+test('create - correctly write package.json and watt.json when importing a local application within the same folder', async t => {
+  const temporaryFolder = await createTemporaryDirectory(t, 'create')
+
+  await createDirectory(resolve(temporaryFolder, 'my-app'))
+  await writeFile(resolve(temporaryFolder, 'my-app/index.js'), '', 'utf-8')
+
+  const userInputHandler = await setupUserInputHandler(t, [
+    {
+      type: 'list',
+      question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
+      reply: 'no'
+    },
+    { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
+    { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
+    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
+    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+  ])
+
+  const { stdout, stderr } = await wattpmUtils('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
+
+  process._rawDebug('STDOUT:', stdout)
+  process._rawDebug('STDERR:', stderr)
+
+  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/watt.json written!`))
+  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/package.json written!`))
+})
+
+test('create - should not use a URL when importing a local application within the same folder', async t => {
+  const temporaryFolder = await createTemporaryDirectory(t, 'create')
+
+  await executeCommand('git', 'init', { cwd: temporaryFolder })
+  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: temporaryFolder })
+
+  await createDirectory(resolve(temporaryFolder, 'my-app'))
+  await writeFile(resolve(temporaryFolder, 'my-app/index.js'), '', 'utf-8')
+
+  const userInputHandler = await setupUserInputHandler(t, [
+    {
+      type: 'list',
+      question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
+      reply: 'no'
+    },
+    { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
+    { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
+    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
+    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+  ])
+
+  await wattpmUtils('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
+
+  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'watt.json'), 'utf-8')), {
+    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
+    autoload: {
+      exclude: ['docs'],
+      path: 'web'
+    },
+    logger: {
+      level: '{PLT_SERVER_LOGGER_LEVEL}'
+    },
+    managementApi: '{PLT_MANAGEMENT_API}',
+    server: {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}'
+    },
+    web: [
+      {
+        id: 'main',
+        path: '{PLT_APPLICATION_MAIN_PATH}'
+      }
+    ],
+    watch: true
   })
 })

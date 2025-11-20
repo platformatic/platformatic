@@ -1,7 +1,7 @@
 import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
 import { spawnSync } from 'node:child_process'
 import { readFile, readdir, stat } from 'node:fs/promises'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { BaseGenerator } from './base-generator.js'
 
 export class ImportGenerator extends BaseGenerator {
@@ -63,7 +63,12 @@ export class ImportGenerator extends BaseGenerator {
   }
 
   async _beforeWriteFiles (runtime) {
-    const { module: pkg, version, applicationPath: path } = this.config
+    const { module: pkg, version } = this.config
+    let path = this.config.applicationPath
+
+    if (!isAbsolute(path)) {
+      path = resolve(this.runtime.targetDirectory, this.config.applicationPath)
+    }
 
     const packageJsonPath = join(path, 'package.json')
 
@@ -72,6 +77,8 @@ export class ImportGenerator extends BaseGenerator {
       await this.#generateConfigFile(path, '')
       await this.#updatePackageJson(packageJsonPath, 'package.json', pkg, version)
     } else {
+      this.config.pnpmWorkspacePath = path
+
       await this.#detectGitUrl(path)
       await this.#generateConfigFile(path, path)
 
@@ -94,7 +101,10 @@ export class ImportGenerator extends BaseGenerator {
     // Detect if there is a git folder and eventually get the remote
     for (const candidate of ['origin', 'upstream']) {
       try {
-        const result = spawnSync('git', ['remote', 'get-url', candidate], { cwd: path })
+        const result = spawnSync('git', ['remote', 'get-url', candidate], {
+          cwd: path,
+          env: { GIT_DIR: join(path, '.git') }
+        })
 
         /* c8 ignore next 3 - Hard to test */
         if (result.error || result.status !== 0) {
