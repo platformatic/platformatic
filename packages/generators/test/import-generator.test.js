@@ -421,14 +421,14 @@ test('import - when importing folders already in the project root, should not cr
   deepStrictEqual(gen.files, [
     {
       path: '',
-      file: `${targetDir}/my-app/platformatic.json`,
+      file: join(targetDir, 'my-app', 'platformatic.json'),
       contents: '{\n' + '  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.0.0.json"\n' + '}',
       options: {},
       tags: []
     },
     {
       path: '',
-      file: `${targetDir}/my-app/package.json`,
+      file: join(targetDir, 'my-app', 'package.json'),
       contents: '{\n  "dependencies": {\n    "@platformatic/service": "^1.0.0"\n  }\n}',
       options: {},
       tags: []
