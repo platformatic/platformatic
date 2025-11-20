@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.22.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.24.0-alpha0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Gateway Config",
   "type": "object",
