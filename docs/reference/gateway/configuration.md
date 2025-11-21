@@ -35,9 +35,26 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
-  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled.
-    - `prefix` (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
-    - `hostname` (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header.
+  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
+    - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
+    - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
+    - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
+    - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
+      - **`upstream`** (`string`, **required**) - The WebSocket upstream URL (e.g., `ws://localhost:3000`).
+      - **`reconnect`** (`object`) - WebSocket reconnection settings:
+        - **`pingInterval`** (`number`) - Interval in milliseconds between ping messages to keep the connection alive.
+        - **`maxReconnectionRetries`** (`number`) - Maximum number of reconnection attempts.
+        - **`reconnectInterval`** (`number`) - Initial delay in milliseconds between reconnection attempts.
+        - **`reconnectDecay`** (`number`) - Multiplier for the reconnection interval on each retry.
+        - **`connectionTimeout`** (`number`) - Timeout in milliseconds for establishing a connection.
+        - **`reconnectOnClose`** (`boolean`) - Whether to reconnect when the connection is closed.
+        - **`logs`** (`boolean`) - Enable logging for WebSocket reconnection events.
+      - **`hooks`** (`object`) - WebSocket hooks configuration:
+        - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
+    - **`custom`** (`object`) - Custom proxy logic configuration:
+      - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
+        - **`preValidation`** (`function`) - A function `(request, reply) => Promise<boolean> | (request, reply, done)` that runs before proxying. Return `false` to stop the request proxying and return error. Note the function must be async. See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
+        - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further informaion.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
@@ -50,6 +67,86 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     When none of the criteria above successfully lead to a prefix, the application ID is chosen as last fallback to ensure there are not routing conflicts.
     :::
+
+    **Example: Basic HTTP Proxy**
+    ```json
+    {
+      "id": "external-api",
+      "proxy": {
+        "prefix": "/api",
+        "upstream": "https://api.example.com"
+      }
+    }
+    ```
+
+    **Example: WebSocket Proxy with Reconnection**
+    ```json
+    {
+      "id": "ws-service",
+      "proxy": {
+        "prefix": "/ws",
+        "upstream": "http://localhost:3000",
+        "ws": {
+          "upstream": "ws://localhost:3000",
+          "reconnect": {
+            "pingInterval": 5000,
+            "maxReconnectionRetries": 10,
+            "reconnectInterval": 1000,
+            "reconnectDecay": 1.5,
+            "connectionTimeout": 5000,
+            "reconnectOnClose": true,
+            "logs": true
+          }
+        }
+      }
+    }
+    ```
+
+    **Example: Custom Proxy Logic**
+    ```json
+    {
+      "id": "dynamic-router",
+      "proxy": {
+        "prefix": "/",
+        "upstream": "http://default-service.com",
+        "custom": {
+          "path": "./custom-proxy.js"
+        }
+      }
+    }
+    ```
+
+    Where `custom-proxy.js` exports:
+    ```javascript
+    export default {
+      preValidation: async (request, reply) => {
+        // Validate request before proxying
+        if (!request.headers['authorization']) {
+          reply.code(401).send({ error: 'Unauthorized' })
+          return false
+        }
+        return true
+      },
+      getUpstream: (request, base) => {
+        // Route to different upstreams based on request
+        if (request.url.startsWith('/v2')) {
+          return 'http://api-v2.example.com'
+        }
+        return base
+      }
+    }
+    ```
+
+    **Example: Hostname-based Routing**
+    ```json
+    {
+      "id": "multi-tenant",
+      "proxy": {
+        "hostname": "tenant1.example.com",
+        "upstream": "http://tenant1-service"
+      }
+    }
+    ```
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
 - **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus

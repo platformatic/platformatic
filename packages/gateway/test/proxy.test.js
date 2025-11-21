@@ -13,6 +13,7 @@ import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici
 import { WebSocket } from 'ws'
 import { create as createRuntime } from '../../runtime/index.js'
 import {
+  createApplication,
   createFromConfig,
   createGatewayInRuntime,
   createOpenApiApplication,
@@ -1537,4 +1538,114 @@ test('should proxy to a websocket application with reconnect options', async t =
   client.close()
 
   await once(globalThis.platformatic.events, 'onDisconnect')
+})
+
+test('should dynamically proxy a using custom logic', async t => {
+  const one = await createApplication(t, [
+    {
+      method: 'POST',
+      path: '/',
+      handler: async (_req, res) => {
+        return res.send({ message: 'from one' })
+      }
+    }
+  ])
+  const two = await createApplication(t, [
+    {
+      method: 'POST',
+      path: '/',
+      handler: async (_req, res) => {
+        return res.send({ message: 'from two' })
+      }
+    }
+  ])
+  const oneOrigin = await one.listen({ port: 0 })
+  const twoOrigin = await two.listen({ port: 0 })
+
+  globalThis.customProxyServiceOne = oneOrigin
+  globalThis.customProxyServiceTwo = twoOrigin
+
+  const { application: wsApplication, wsServer } = await createWebsocketApplication(t, { autoPong: false })
+  wsServer.on('connection', socket => {
+    socket.on('message', message => {
+      socket.send(message)
+    })
+  })
+  const wsUpstream = `ws://127.0.0.1:${wsApplication.address().port}`
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'the-proxy',
+          proxy: {
+            custom: { path: resolve(import.meta.dirname, './proxy/fixtures/custom.ts') },
+            upstream: oneOrigin,
+            prefix: '/',
+            ws: { upstream: wsUpstream }
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  {
+    // run preValidation
+    const { statusCode, body: rawBody } = await request(gatewayOrigin, {
+      method: 'POST',
+      path: '/',
+      body: 'go to one',
+      headers: {
+        'content-type': 'text/plain'
+      }
+    })
+    assert.equal(statusCode, 400)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { error: 'Content-Type must be application/json' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(gatewayOrigin, {
+      method: 'POST',
+      path: '/',
+      body: JSON.stringify({ message: 'go to one' }),
+      headers: {
+        'content-type': 'application/json'
+      }
+    })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { message: 'from one' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(gatewayOrigin, {
+      method: 'POST',
+      path: '/',
+      body: JSON.stringify({ message: 'go to two' }),
+      headers: {
+        'content-type': 'application/json'
+      }
+    })
+
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { message: 'from two' })
+  }
+
+  {
+    const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
+    await once(client, 'open')
+    client.send('hello')
+    const [message] = await once(client, 'message')
+    assert.deepStrictEqual(message.toString(), 'hello')
+    client.close()
+  }
 })
