@@ -53,8 +53,11 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
     - **`custom`** (`object`) - Custom proxy logic configuration:
       - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
-        - **`preValidation`** (`function`) - A function `(request, reply) => Promise<boolean> | (request, reply, done)` that runs before proxying. Return `false` to stop the request proxying and return error. Note the function must be async. See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
-        - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further informaion.
+        - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
+          - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
+          - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
+          See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
+        - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
