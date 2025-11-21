@@ -192,6 +192,45 @@ test(
   }
 )
 
+test('formats schema in entity names correctly ', { skip: isSQLite }, async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    await db.query(sql`CREATE SCHEMA IF NOT EXISTS test_3;`)
+    if (isMysql || isMysql8) {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS \`test_3\`.\`users\` (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(255) NOT NULL
+    );`)
+    } else {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS "test_3"."users" (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(255) NOT NULL
+    );`)
+    }
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {},
+    schema: ['test_3']
+  })
+
+  const userEntity = mapper.entities.test3User
+  equal(userEntity.name, 'Test3User')
+  equal(userEntity.singularName, 'test3User')
+  equal(userEntity.pluralName, 'test3Users')
+  equal(userEntity.schema, 'test_3')
+  ok(true)
+})
+
 test(
   "[pg] if schema is empty array, should find entities only in default 'public' schema",
   { skip: !isPg },
