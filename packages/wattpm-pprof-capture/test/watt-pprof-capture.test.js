@@ -647,3 +647,158 @@ test('profiling with eluThreshold should continue rotating while above threshold
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
+
+test('profiling with progressive intervals should increase with exponential backoff', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with exponential progressive intervals
+  // Formula: minDurationMillis * 2^rotationCount
+  // Expected: 100ms -> 200ms -> 400ms -> 800ms (capped at 2000ms)
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    minDurationMillis: 100,
+    maxDurationMillis: 2000
+  })
+
+  const rotationTimes = []
+
+  // Wait and record when profiles change
+  let lastProfile = null
+  const startTime = Date.now()
+
+  // Poll for profile changes for up to 2 seconds to catch 3 rotations
+  for (let i = 0; i < 20; i++) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    try {
+      const currentProfile = await app.sendCommandToApplication('service', 'getLastProfile')
+      if (!lastProfile || !arraysEqual(lastProfile, currentProfile)) {
+        const elapsedTime = Date.now() - startTime
+        rotationTimes.push(elapsedTime)
+        lastProfile = currentProfile
+      }
+    } catch (err) {
+      // Profile not available yet
+    }
+  }
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+
+  // Should have at least 3 rotations to verify the exponential formula
+  assert.ok(rotationTimes.length >= 3, `Expected at least 3 rotations, got ${rotationTimes.length}: ${rotationTimes.join(', ')}`)
+
+  // Calculate intervals between rotations
+  const intervals = []
+  for (let i = 0; i < rotationTimes.length; i++) {
+    if (i === 0) {
+      intervals.push(rotationTimes[0])
+    } else {
+      intervals.push(rotationTimes[i] - rotationTimes[i - 1])
+    }
+  }
+
+  // Verify EXPONENTIAL progression: 100ms -> 200ms -> 400ms
+  // Formula: minDurationMillis * 2^rotationCount
+  // rotationCount=0: 100 * 2^0 = 100ms
+  // rotationCount=1: 100 * 2^1 = 200ms
+  // rotationCount=2: 100 * 2^2 = 400ms
+  // Allow 60ms tolerance for overhead
+  assert.ok(intervals[0] >= 80 && intervals[0] <= 160, `First interval (2^0 * 100) should be ~100ms, was ${intervals[0]}ms`)
+  assert.ok(intervals[1] >= 180 && intervals[1] <= 260, `Second interval (2^1 * 100) should be ~200ms, was ${intervals[1]}ms`)
+  assert.ok(intervals[2] >= 360 && intervals[2] <= 460, `Third interval (2^2 * 100) should be ~400ms, not ~300ms (linear), was ${intervals[2]}ms`)
+})
+
+test('profiling rotation count should reset after stop/start', async t => {
+  const { app } = await createApp(t)
+
+  // First profiling session with exponential progressive intervals
+  // Formula: minDurationMillis * 2^rotationCount
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    minDurationMillis: 100,
+    maxDurationMillis: 800
+  })
+
+  // Wait for first rotation (should be at ~100ms, rotationCount=0)
+  await new Promise(resolve => setTimeout(resolve, 150))
+  await app.sendCommandToApplication('service', 'getLastProfile')
+
+  // Stop profiling - this should reset rotationCount to 0
+  await app.sendCommandToApplication('service', 'stopProfiling')
+
+  // Start profiling again - rotation count should be reset to 0
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    minDurationMillis: 100,
+    maxDurationMillis: 800
+  })
+
+  // First rotation should happen at ~100ms again (2^0 * 100), not 200ms (2^1 * 100)
+  await new Promise(resolve => setTimeout(resolve, 150))
+  const profileAfterRestart = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profileAfterRestart instanceof Uint8Array, 'Profile should be available after restart')
+  assert.ok(profileAfterRestart.length > 0, 'Profile should have content after restart')
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('progressive intervals should work with eluThreshold', async t => {
+  const { app, url } = await createApp(t)
+
+  // Start CPU intensive task
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  // Wait for ELU to rise
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.lastELU != null && state.lastELU > 0.5
+  }, 3000)
+
+  // Start profiling with exponential progressive intervals and ELU threshold
+  // Formula: minDurationMillis * 2^rotationCount
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.5,
+    minDurationMillis: 100,
+    maxDurationMillis: 800
+  })
+
+  // Wait for profiler to start
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isProfilerRunning
+  }, 2000)
+
+  // Wait for first profile
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 2000)
+
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Profile should be available with progressive intervals and threshold')
+  assert.ok(profile.length > 0, 'Profile should have content')
+
+  // Clean up
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('fixed durationMillis should take precedence over progressive intervals', async t => {
+  const { app } = await createApp(t)
+
+  // Start with both durationMillis and min/max - durationMillis should win
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    durationMillis: 200,
+    minDurationMillis: 100,
+    maxDurationMillis: 500
+  })
+
+  // Wait for rotation at fixed interval (~200ms)
+  await new Promise(resolve => setTimeout(resolve, 250))
+  const profile1 = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile1 instanceof Uint8Array, 'Profile should be available with fixed duration')
+
+  // Second rotation should also be at ~200ms (not progressive)
+  await new Promise(resolve => setTimeout(resolve, 250))
+  const profile2 = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile2 instanceof Uint8Array, 'Second profile should be available')
+  assert.ok(!arraysEqual(profile1, profile2), 'Profiles should be different')
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
