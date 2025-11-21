@@ -31,6 +31,7 @@ const profilingState = {
   cpu: {
     isCapturing: false,
     latestProfile: null,
+    latestProfileTimestamp: null,
     captureInterval: null,
     durationMillis: null,
     rotationCount: 0,
@@ -45,6 +46,7 @@ const profilingState = {
   heap: {
     isCapturing: false,
     latestProfile: null,
+    latestProfileTimestamp: null,
     captureInterval: null,
     durationMillis: null,
     rotationCount: 0,
@@ -103,6 +105,7 @@ function scheduleLastProfileCleanup (state) {
   if (durationMillis) {
     state.clearProfileTimeout = setTimeout(() => {
       state.latestProfile = undefined
+      state.latestProfileTimestamp = null
       state.clearProfileTimeout = null
     }, durationMillis)
     state.clearProfileTimeout.unref()
@@ -176,6 +179,7 @@ function stopProfiler (type, state) {
   scheduleLastProfileCleanup(state)
   unscheduleProfileRotation(state)
   state.profilerStarted = false
+  state.latestProfileTimestamp = Date.now()
 
   if (type === 'heap') {
     // Get the profile before stopping
@@ -370,6 +374,7 @@ export function getLastProfile (options = {}) {
     const profiler = getProfiler(type)
     // Get heap profile with sourceMapper if enabled and available
     state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
+    state.latestProfileTimestamp = Date.now()
   }
 
   // Check if we have a profile
@@ -397,7 +402,8 @@ export function getProfilingState (options = {}) {
     isProfilerRunning: state.profilerStarted,
     isPausedBelowThreshold: state.eluThreshold != null && !state.profilerStarted,
     lastELU: lastELU?.utilization,
-    eluThreshold: state.eluThreshold
+    eluThreshold: state.eluThreshold,
+    latestProfileTimestamp: state.latestProfileTimestamp
   }
 }
 

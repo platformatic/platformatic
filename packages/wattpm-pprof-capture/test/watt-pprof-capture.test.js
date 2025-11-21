@@ -802,3 +802,124 @@ test('fixed durationMillis should take precedence over progressive intervals', a
 
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
+
+test('latestProfileTimestamp should be set after profile rotation', async t => {
+  const { app } = await createApp(t)
+
+  // Check initial state - timestamp should be null
+  const initialState = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.strictEqual(initialState.latestProfileTimestamp, null, 'Timestamp should be null before profiling')
+
+  // Start profiling with rotation
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
+
+  // Wait for first rotation
+  await new Promise(resolve => setTimeout(resolve, 250))
+
+  // Get state and verify timestamp is set
+  const stateAfterRotation = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(stateAfterRotation.latestProfileTimestamp != null, 'Timestamp should be set after rotation')
+  assert.ok(typeof stateAfterRotation.latestProfileTimestamp === 'number', 'Timestamp should be a number')
+  assert.ok(stateAfterRotation.latestProfileTimestamp <= Date.now(), 'Timestamp should not be in the future')
+  assert.ok(stateAfterRotation.latestProfileTimestamp > Date.now() - 5000, 'Timestamp should be recent')
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('latestProfileTimestamp should be set after stopProfiling', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling without rotation
+  await app.sendCommandToApplication('service', 'startProfiling', {})
+
+  // Get state before stop - timestamp should be null (no rotation occurred)
+  const stateBeforeStop = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.strictEqual(stateBeforeStop.latestProfileTimestamp, null, 'Timestamp should be null before stop')
+
+  // Stop profiling
+  const beforeStopTime = Date.now()
+  await app.sendCommandToApplication('service', 'stopProfiling')
+  const afterStopTime = Date.now()
+
+  // Get state after stop - timestamp should be set
+  const stateAfterStop = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(stateAfterStop.latestProfileTimestamp != null, 'Timestamp should be set after stopProfiling')
+  assert.ok(stateAfterStop.latestProfileTimestamp >= beforeStopTime, 'Timestamp should be >= time before stop')
+  assert.ok(stateAfterStop.latestProfileTimestamp <= afterStopTime, 'Timestamp should be <= time after stop')
+})
+
+test('latestProfileTimestamp should be cleared after profile cleanup timeout', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with short rotation interval
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
+
+  // Wait for first rotation
+  await new Promise(resolve => setTimeout(resolve, 250))
+
+  // Verify timestamp is set
+  const stateWithProfile = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(stateWithProfile.latestProfileTimestamp != null, 'Timestamp should be set after rotation')
+  assert.ok(stateWithProfile.hasProfile, 'Should have profile')
+
+  // Stop profiling - this schedules cleanup after durationMillis (200ms)
+  await app.sendCommandToApplication('service', 'stopProfiling')
+
+  // Wait for cleanup timeout (durationMillis after stop)
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  // Verify timestamp is cleared after cleanup
+  const stateAfterCleanup = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.strictEqual(stateAfterCleanup.latestProfileTimestamp, null, 'Timestamp should be cleared after cleanup')
+  assert.ok(!stateAfterCleanup.hasProfile, 'Profile should be cleared')
+})
+
+test('latestProfileTimestamp should be set for heap profiling', async t => {
+  const { app } = await createApp(t)
+
+  // Check initial state for heap - timestamp should be null
+  const initialState = await app.sendCommandToApplication('service', 'getProfilingState', { type: 'heap' })
+  assert.strictEqual(initialState.latestProfileTimestamp, null, 'Heap timestamp should be null before profiling')
+
+  // Start heap profiling
+  await app.sendCommandToApplication('service', 'startProfiling', { type: 'heap' })
+
+  // Wait a bit
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Get last profile (for heap, this captures a snapshot)
+  const beforeGetProfile = Date.now()
+  await app.sendCommandToApplication('service', 'getLastProfile', { type: 'heap' })
+  const afterGetProfile = Date.now()
+
+  // Verify timestamp is set after getLastProfile for heap
+  const stateAfterGet = await app.sendCommandToApplication('service', 'getProfilingState', { type: 'heap' })
+  assert.ok(stateAfterGet.latestProfileTimestamp != null, 'Heap timestamp should be set after getLastProfile')
+  assert.ok(stateAfterGet.latestProfileTimestamp >= beforeGetProfile, 'Timestamp should be >= time before get')
+  assert.ok(stateAfterGet.latestProfileTimestamp <= afterGetProfile, 'Timestamp should be <= time after get')
+
+  await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('latestProfileTimestamp should update with each rotation', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with short rotation interval
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
+
+  // Wait for first rotation
+  await new Promise(resolve => setTimeout(resolve, 250))
+  const stateAfterFirst = await app.sendCommandToApplication('service', 'getProfilingState')
+  const firstTimestamp = stateAfterFirst.latestProfileTimestamp
+  assert.ok(firstTimestamp != null, 'Timestamp should be set after first rotation')
+
+  // Wait for second rotation
+  await new Promise(resolve => setTimeout(resolve, 250))
+  const stateAfterSecond = await app.sendCommandToApplication('service', 'getProfilingState')
+  const secondTimestamp = stateAfterSecond.latestProfileTimestamp
+
+  // Second timestamp should be greater than first
+  assert.ok(secondTimestamp > firstTimestamp, 'Timestamp should update with each rotation')
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
