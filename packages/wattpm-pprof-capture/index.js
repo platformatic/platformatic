@@ -38,7 +38,9 @@ const profilingState = {
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
-    sourceMapsEnabled: false
+    sourceMapsEnabled: false,
+    forceCaptureOnce: false,
+    forceDurationMillis: null
   },
   heap: {
     isCapturing: false,
@@ -50,7 +52,9 @@ const profilingState = {
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
-    sourceMapsEnabled: false
+    sourceMapsEnabled: false,
+    forceCaptureOnce: false,
+    forceDurationMillis: null
   }
 }
 
@@ -69,6 +73,15 @@ const registerInterval = setInterval(() => {
 
 function getProfiler (type) {
   return type === 'heap' ? heap : time
+}
+
+function getDurationMillis (state) {
+  // Force capture uses its own duration
+  if (state.forceCaptureOnce && state.forceDurationMillis != null) {
+    return state.forceDurationMillis
+  }
+
+  return state.options?.durationMillis ?? null
 }
 
 function scheduleLastProfileCleanup (state) {
@@ -93,19 +106,20 @@ function unscheduleLastProfileCleanup (state) {
   }
 }
 
-function scheduleProfileRotation (type, state, options) {
+function scheduleProfileRotation (type, state) {
   unscheduleProfileRotation(state)
 
+  const durationMillis = getDurationMillis(state)
   // Set up profile window rotation if durationMillis is provided
-  if (options.durationMillis) {
-    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
+  if (durationMillis) {
+    state.captureInterval = setTimeout(() => rotateProfile(type), durationMillis)
     state.captureInterval.unref()
   }
 }
 
 function unscheduleProfileRotation (state) {
   if (!state.captureInterval) return
-  clearInterval(state.captureInterval)
+  clearTimeout(state.captureInterval)
   state.captureInterval = null
 }
 
@@ -117,7 +131,7 @@ function startProfiler (type, state, options) {
   const profiler = getProfiler(type)
 
   unscheduleLastProfileCleanup(state)
-  scheduleProfileRotation(type, state, options)
+  scheduleProfileRotation(type, state)
   state.profilerStarted = true
 
   if (type === 'heap') {
@@ -178,6 +192,9 @@ function isBelowStopThreshold (state) {
 function rotateProfile (type) {
   const state = profilingState[type]
   const wasRunning = state.profilerStarted
+
+  state.forceCaptureOnce = false
+  state.forceDurationMillis = null
 
   stopProfiler(type, state)
   maybeStartProfiler(type, state, wasRunning)
@@ -274,9 +291,26 @@ async function initializeSourceMapper () {
 export async function startProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
+  const force = options.force === true
 
   if (state.isCapturing) {
-    throw new ProfilingAlreadyStartedError()
+    if (!force || state.profilerStarted) {
+      throw new ProfilingAlreadyStartedError()
+    }
+
+    // Start forced capture
+    state.forceCaptureOnce = true
+    state.forceDurationMillis = options.durationMillis
+
+    if (globalThis.platformatic?.logger) {
+      globalThis.platformatic.logger.debug(
+        { type, forceDurationMillis: state.forceDurationMillis },
+        'Starting forced profile capture'
+      )
+    }
+
+    startProfiler(type, state, state.options)
+    return
   }
 
   // Initialize source mapper if source maps are requested
@@ -309,6 +343,8 @@ export function stopProfiling (options = {}) {
   state.durationMillis = null
   state.options = null
   state.sourceMapsEnabled = false
+  state.forceCaptureOnce = false
+  state.forceDurationMillis = null
 
   // Return the latest profile if available, otherwise return an empty profile
   // (e.g., when profiler never started due to ELU threshold not being exceeded)
