@@ -768,3 +768,88 @@ test('latestProfileTimestamp should update with each rotation', async t => {
 
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
+
+test('force flag should capture profile when paused below ELU threshold', async t => {
+  const { app } = await createApp(t)
+
+  // Start profiling with max threshold (impossible to reach)
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 1,
+    durationMillis: 500
+  })
+
+  // Wait for state to show we're paused below threshold
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPausedBelowThreshold && !state.isProfilerRunning
+  }, 2000)
+
+  // Verify profiler is paused and no profile available
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'getLastProfile'),
+    { code: 'PLT_PPROF_NOT_ENOUGH_ELU' },
+    'Should throw NotEnoughELUError when paused below threshold'
+  )
+
+  // Force capture a profile
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    force: true,
+    durationMillis: 200
+  })
+
+  // Profiler should now be running
+  const stateAfterForce = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(stateAfterForce.isProfilerRunning, 'Profiler should be running after force')
+
+  // Wait for forced capture to complete
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  // Profile should be available
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Profile should be available after forced capture')
+  assert.ok(profile.length > 0, 'Profile should have content')
+
+  // Profiler should be paused again (ELU is still below threshold)
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPausedBelowThreshold && !state.isProfilerRunning
+  }, 2000)
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('force flag should throw when profiler is already running', async t => {
+  const { app, url } = await createApp(t)
+
+  // Start CPU intensive task to raise ELU
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  // Wait for ELU to rise
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.lastELU != null && state.lastELU > 0.5
+  }, 3000)
+
+  // Start profiling with threshold - profiler should start immediately
+  await app.sendCommandToApplication('service', 'startProfiling', {
+    eluThreshold: 0.5,
+    durationMillis: 500
+  })
+
+  // Wait for profiler to start
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isProfilerRunning
+  }, 2000)
+
+  // Force should throw because profiler is already running
+  await assert.rejects(
+    () => app.sendCommandToApplication('service', 'startProfiling', { force: true, durationMillis: 200 }),
+    { code: 'PLT_PPROF_PROFILING_ALREADY_STARTED' },
+    'Should throw ProfilingAlreadyStartedError when profiler is already running'
+  )
+
+  // Clean up
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
