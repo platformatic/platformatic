@@ -31,8 +31,12 @@ const profilingState = {
   cpu: {
     isCapturing: false,
     latestProfile: null,
+    latestProfileTimestamp: null,
     captureInterval: null,
     durationMillis: null,
+    rotationCount: 0,
+    minDurationMillis: null,
+    maxDurationMillis: null,
     eluThreshold: null,
     options: null,
     profilerStarted: false,
@@ -42,8 +46,12 @@ const profilingState = {
   heap: {
     isCapturing: false,
     latestProfile: null,
+    latestProfileTimestamp: null,
     captureInterval: null,
     durationMillis: null,
+    rotationCount: 0,
+    minDurationMillis: null,
+    maxDurationMillis: null,
     eluThreshold: null,
     options: null,
     profilerStarted: false,
@@ -69,15 +77,37 @@ function getProfiler (type) {
   return type === 'heap' ? heap : time
 }
 
+function getDurationMillis (state) {
+  const {
+    durationMillis,
+    minDurationMillis,
+    maxDurationMillis,
+    rotationCount
+  } = state
+
+  if (durationMillis != null) {
+    return durationMillis
+  }
+
+  if (minDurationMillis != null && maxDurationMillis != null) {
+    return Math.min(minDurationMillis * 2 ** rotationCount, maxDurationMillis)
+  }
+
+  return null
+}
+
 function scheduleLastProfileCleanup (state) {
   unscheduleLastProfileCleanup(state)
 
+  const durationMillis = getDurationMillis(state)
+
   // Set up timer to clear profile after rotation duration
-  if (state.options?.durationMillis) {
+  if (durationMillis) {
     state.clearProfileTimeout = setTimeout(() => {
       state.latestProfile = undefined
+      state.latestProfileTimestamp = null
       state.clearProfileTimeout = null
-    }, state.options.durationMillis)
+    }, durationMillis)
     state.clearProfileTimeout.unref()
   }
 }
@@ -90,19 +120,20 @@ function unscheduleLastProfileCleanup (state) {
   }
 }
 
-function scheduleProfileRotation (type, state, options) {
+function scheduleProfileRotation (type, state) {
   unscheduleProfileRotation(state)
 
+  const durationMillis = getDurationMillis(state)
   // Set up profile window rotation if durationMillis is provided
-  if (options.durationMillis) {
-    state.captureInterval = setInterval(() => rotateProfile(type), options.durationMillis)
+  if (durationMillis) {
+    state.captureInterval = setTimeout(() => rotateProfile(type), durationMillis)
     state.captureInterval.unref()
   }
 }
 
 function unscheduleProfileRotation (state) {
   if (!state.captureInterval) return
-  clearInterval(state.captureInterval)
+  clearTimeout(state.captureInterval)
   state.captureInterval = null
 }
 
@@ -114,7 +145,7 @@ function startProfiler (type, state, options) {
   const profiler = getProfiler(type)
 
   unscheduleLastProfileCleanup(state)
-  scheduleProfileRotation(type, state, options)
+  scheduleProfileRotation(type, state)
   state.profilerStarted = true
 
   if (type === 'heap') {
@@ -148,6 +179,7 @@ function stopProfiler (type, state) {
   scheduleLastProfileCleanup(state)
   unscheduleProfileRotation(state)
   state.profilerStarted = false
+  state.latestProfileTimestamp = Date.now()
 
   if (type === 'heap') {
     // Get the profile before stopping
@@ -175,6 +207,7 @@ function rotateProfile (type) {
   const state = profilingState[type]
   const wasRunning = state.profilerStarted
 
+  state.rotationCount++
   stopProfiler(type, state)
   maybeStartProfiler(type, state, wasRunning)
 }
@@ -216,12 +249,18 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
       )
     }
     startProfiler(type, state, state.options)
-  } else if (!shouldRun && wasRunning && globalThis.platformatic?.logger && state.eluThreshold != null) {
-    // Log when deciding not to restart after stopping (only in rotation context)
-    globalThis.platformatic.logger.debug(
-      { type, eluThreshold: state.eluThreshold, currentELU },
-      'Pausing profiler due to ELU below threshold'
-    )
+  } else if (!shouldRun && wasRunning) {
+    // Profiler was running but now ELU is below threshold - pause it
+    // Reset rotation count so that when profiler resumes, it starts from minDurationMillis again
+    state.rotationCount = 0
+
+    if (globalThis.platformatic?.logger && state.eluThreshold != null) {
+      // Log when deciding not to restart after stopping (only in rotation context)
+      globalThis.platformatic.logger.debug(
+        { type, eluThreshold: state.eluThreshold, currentELU },
+        'Pausing profiler due to ELU below threshold'
+      )
+    }
   }
 }
 
@@ -285,6 +324,8 @@ export async function startProfiling (options = {}) {
   state.options = options
   state.eluThreshold = options.eluThreshold
   state.durationMillis = options.durationMillis
+  state.minDurationMillis = options.minDurationMillis
+  state.maxDurationMillis = options.maxDurationMillis
 
   maybeStartProfiler(type, state)
 }
@@ -301,8 +342,11 @@ export function stopProfiling (options = {}) {
   stopProfiler(type, state)
 
   // Clean up state
+  state.rotationCount = 0
   state.eluThreshold = null
   state.durationMillis = null
+  state.minDurationMillis = null
+  state.maxDurationMillis = null
   state.options = null
   state.sourceMapsEnabled = false
 
@@ -330,6 +374,7 @@ export function getLastProfile (options = {}) {
     const profiler = getProfiler(type)
     // Get heap profile with sourceMapper if enabled and available
     state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
+    state.latestProfileTimestamp = Date.now()
   }
 
   // Check if we have a profile
@@ -357,7 +402,8 @@ export function getProfilingState (options = {}) {
     isProfilerRunning: state.profilerStarted,
     isPausedBelowThreshold: state.eluThreshold != null && !state.profilerStarted,
     lastELU: lastELU?.utilization,
-    eluThreshold: state.eluThreshold
+    eluThreshold: state.eluThreshold,
+    latestProfileTimestamp: state.latestProfileTimestamp
   }
 }
 
