@@ -20,8 +20,6 @@ export function findRule (rules, roles) {
     return matchingRules[0]
   }
 
-  // Filter out platformatic-admin when other roles are present
-  // This enables user impersonation: admin can test with user's exact permissions
   const nonAdminRules = matchingRules.filter(rule => rule.role !== PLT_ADMIN_ROLE)
   const rulesToMerge = nonAdminRules.length > 0 ? nonAdminRules : matchingRules
 
