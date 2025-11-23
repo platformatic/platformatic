@@ -39,8 +39,8 @@ async function generateIndexTypes (entities) {
     .sort((a, b) => a[0].localeCompare(b[0]))
 
   for (const [name, type] of values) {
-    allImports.push(`import { ${type} } from './${name}'`)
-    allExports.push(`export { ${type} } from './${name}'`)
+    allImports.push(`import { type ${type} } from './${name}.ts'`)
+    allExports.push(`export { type ${type} } from './${name}.ts'`)
     entityMembers.push(`  ${name}: Entity<${type}>`)
     entityTypesMembers.push(`  ${name}: ${type}`)
     entitiesHooks.push(`  addEntityHooks(entityName: '${name}', hooks: EntityHooks<${type}>): any`)
