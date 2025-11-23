@@ -64,6 +64,9 @@
               "useHttp": {
                 "type": "boolean"
               },
+              "enable": {
+                "type": "boolean"
+              },
               "reuseTcpPorts": {
                 "type": "boolean",
                 "default": true
@@ -356,6 +359,9 @@
           "useHttp": {
             "type": "boolean"
           },
+          "enable": {
+            "type": "boolean"
+          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -646,6 +652,9 @@
           "useHttp": {
             "type": "boolean"
           },
+          "enable": {
+            "type": "boolean"
+          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -934,6 +943,9 @@
             "default": "main"
           },
           "useHttp": {
+            "type": "boolean"
+          },
+          "enable": {
             "type": "boolean"
           },
           "reuseTcpPorts": {

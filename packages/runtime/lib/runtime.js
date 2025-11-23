@@ -444,6 +444,7 @@ export class Runtime extends EventEmitter {
 
     const toStart = []
     for (const application of applications) {
+      if (application.enable === false) continue
       const workers = application.workers
 
       if ((workers.static > 1 || workers.minimum > 1) && application.entrypoint && !features.node.reusePort) {
@@ -455,22 +456,22 @@ export class Runtime extends EventEmitter {
 
       this.#applications.set(application.id, application)
       setupInvocations.push([application])
-      toStart.push(application.id)
+      toStart.push(application)
     }
 
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
-    for (const application of applications) {
+    for (const application of toStart) {
       this.logger.info(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
       this.emitAndNotify('application:added', application)
     }
 
     if (start) {
-      await this.startApplications(toStart)
+      await this.startApplications(toStart.map(application => application.id))
     }
 
     const created = []
-    for (const { id } of applications) {
+    for (const { id } of toStart) {
       created.push(await this.getApplicationDetails(id))
     }
 
