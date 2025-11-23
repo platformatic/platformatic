@@ -399,6 +399,17 @@ export async function createWebsocketApplication (t, wsServerOptions = {}, port)
   return { application, wsServer }
 }
 
+export async function createApplication (t, routes = []) {
+  const app = fastify({ logger: false, port: 0 })
+  t.after(async () => {
+    await app.close()
+  })
+  for (const route of routes) {
+    app.route(route)
+  }
+  return app
+}
+
 export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const defaultConfig = {
     $schema: 'https://schemas.platformatic.dev/@platformatic/gateway/2.0.0.json',
