@@ -295,7 +295,7 @@ test('moderators can delete user pages', async () => {
   }
 })
 
-test('blocked users cannot update', async () => {
+test('multi-role: most permissive wins - user with blocked role can still save', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -483,6 +483,94 @@ test('blocked users cannot update', async () => {
       body: {
         query: `
           mutation {
+            savePage(input: { title: "Hello2" }) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 2,
+            title: 'Hello2',
+            userId: 42
+          }
+        }
+      },
+      'savePage response - most permissive wins allows save'
+    )
+  }
+})
+
+test('truly blocked users (only blocked role) cannot save', async () => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      ok('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [
+      {
+        role: 'blocked',
+        entity: 'page',
+        find: true,
+        delete: false,
+        save: false
+      },
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
+      }
+    ]
+  })
+  test.after(() => {
+    app.close()
+  })
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'blocked'
+  })
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        query: `
+          mutation {
             savePage(input: { title: "Hello" }) {
               id
               title
@@ -512,7 +600,7 @@ test('blocked users cannot update', async () => {
           }
         ]
       },
-      'savePage response'
+      'savePage response - blocked user cannot save'
     )
   }
 })
