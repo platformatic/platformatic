@@ -2,15 +2,17 @@ import { createDirectory, isFileAccessible, kMetadata } from '@platformatic/foun
 import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
-import { basename, join, relative, resolve, sep } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { setupDB } from './utils.js'
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
   const entityNames = Object.keys(entities)
-  const removedEntityNames = entityTypes.filter(
-    file => file !== 'index.d.ts' && !entityNames.includes(basename(file, '.d.ts'))
-  )
+  const removedEntityNames = entityTypes.filter(file => {
+    if (file === 'index.d.ts') return false
+    const baseName = file.replace(/\.d\.ts$/, '').replace(/-schema\.ts$/, '')
+    return !entityNames.includes(baseName)
+  })
   await Promise.all(removedEntityNames.map(file => unlink(join(dir, file))))
 }
 
@@ -23,7 +25,11 @@ async function generateEntityType (entity) {
   const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 })
 
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
-  return tsCode.replaceAll(/^declare interface/gm, 'export interface')
+
+  return {
+    types: tsCode.replaceAll(/^declare interface/gm, 'export interface'),
+    schema: jsonSchema
+  }
 }
 
 async function generateIndexTypes (entities) {
@@ -39,8 +45,8 @@ async function generateIndexTypes (entities) {
     .sort((a, b) => a[0].localeCompare(b[0]))
 
   for (const [name, type] of values) {
-    allImports.push(`import { ${type} } from './${name}'`)
-    allExports.push(`export { ${type} } from './${name}'`)
+    allImports.push(`import type { ${type} } from './${name}'`)
+    allExports.push(`export type { ${type} } from './${name}'`)
     entityMembers.push(`  ${name}: Entity<${type}>`)
     entityTypesMembers.push(`  ${name}: ${type}`)
     entitiesHooks.push(`  addEntityHooks(entityName: '${name}', hooks: EntityHooks<${type}>): any`)
@@ -54,9 +60,9 @@ async function generateIndexTypes (entities) {
   }`)
   }
 
-  const content = `import { Entity, EntityHooks, Entities as DatabaseEntities, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
-import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
-import { type FastifyInstance } from 'fastify'
+  const content = `import type { Entities as DatabaseEntities, Entity, EntityHooks, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
+import type { PlatformaticApplication } from '@platformatic/service'
+import type { FastifyInstance } from 'fastify'
 
 ${allImports.join('\n')}
 
@@ -134,11 +140,19 @@ export async function execute ({ logger, config }) {
 
   // Generate all entities
   for (const [name, entity] of Object.entries(entities)) {
-    const types = await generateEntityType(entity)
-    const pathToFile = join(typesFolderPath, name + '.d.ts')
+    const { types, schema } = await generateEntityType(entity)
 
+    // Write interface to .d.ts file
+    const pathToFile = join(typesFolderPath, name + '.d.ts')
     if (await writeFileIfChanged(pathToFile, types)) {
       logger.info(`Generated type for ${entity.name} entity.`)
+    }
+
+    // Write schema to .ts file
+    const schemaContent = `export const ${entity.name} = ${JSON.stringify(schema, undefined, 2)} as const\n`
+    const schemaPath = join(typesFolderPath, name + '-schema.ts')
+    if (await writeFileIfChanged(schemaPath, schemaContent)) {
+      logger.info(`Generated schema for ${entity.name} entity.`)
     }
   }
 
