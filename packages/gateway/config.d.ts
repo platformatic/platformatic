@@ -247,6 +247,9 @@ export interface PlatformaticGatewayConfig {
             upstream?: string;
             prefix?: string;
             hostname?: string;
+            custom?: {
+              path: string;
+            };
             ws?: {
               upstream?: string;
               reconnect?: {

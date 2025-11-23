@@ -40,7 +40,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -64,7 +64,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -160,7 +160,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -190,7 +190,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -217,7 +217,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -244,7 +244,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -271,7 +271,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -299,7 +299,7 @@ jobs:
         node: [22, 24]
         suite: [main, api, cli, start, multiple-workers]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -326,7 +326,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -354,7 +354,7 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -380,7 +380,7 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -407,7 +407,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v4
@@ -438,7 +438,7 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -467,7 +467,7 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -506,7 +506,7 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -541,7 +541,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -568,7 +568,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -595,7 +595,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -622,7 +622,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -655,7 +655,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -688,7 +688,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -715,7 +715,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -740,7 +740,7 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v4
@@ -767,7 +767,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -794,7 +794,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -824,7 +824,7 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -853,7 +853,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -880,7 +880,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -907,7 +907,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
@@ -934,7 +934,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:

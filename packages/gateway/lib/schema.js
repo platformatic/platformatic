@@ -139,6 +139,14 @@ export const gateway = {
                   upstream: { type: 'string' },
                   prefix: { type: 'string' },
                   hostname: { type: 'string' },
+                  custom: {
+                    type: 'object',
+                    properties: {
+                      path: { type: 'string' }
+                    },
+                    required: ['path'],
+                    additionalProperties: false
+                  },
                   ws: {
                     type: 'object',
                     properties: {
