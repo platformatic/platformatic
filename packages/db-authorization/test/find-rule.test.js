@@ -223,3 +223,53 @@ test('single role: returns exact rule', t => {
   deepEqual(found.save, true)
   deepEqual(found.delete, true)
 })
+
+test('platformatic-admin is excluded when other roles present (user impersonation)', t => {
+  const roles = ['user', 'platformatic-admin']
+  const rules = [
+    {
+      _id: 'USER',
+      role: 'user',
+      entity: 'page',
+      find: true,
+      save: true,
+      delete: false
+    },
+    {
+      _id: 'PLT_ADMIN',
+      role: 'platformatic-admin',
+      entity: 'page',
+      find: true,
+      save: true,
+      delete: true
+    }
+  ]
+  const found = findRule(rules, roles)
+  deepEqual(found._id, 'USER')
+  deepEqual(found.delete, false)
+})
+
+test('platformatic-admin is used when it is the only role', t => {
+  const roles = ['platformatic-admin']
+  const rules = [
+    {
+      _id: 'USER',
+      role: 'user',
+      entity: 'page',
+      find: true,
+      save: true,
+      delete: false
+    },
+    {
+      _id: 'PLT_ADMIN',
+      role: 'platformatic-admin',
+      entity: 'page',
+      find: true,
+      save: true,
+      delete: true
+    }
+  ]
+  const found = findRule(rules, roles)
+  deepEqual(found._id, 'PLT_ADMIN')
+  deepEqual(found.delete, true)
+})

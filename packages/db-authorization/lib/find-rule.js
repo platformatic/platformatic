@@ -1,3 +1,5 @@
+const PLT_ADMIN_ROLE = 'platformatic-admin'
+
 export function findRule (rules, roles) {
   const matchingRules = []
 
@@ -18,10 +20,19 @@ export function findRule (rules, roles) {
     return matchingRules[0]
   }
 
-  const mergedRule = { ...matchingRules[0] }
+  // Filter out platformatic-admin when other roles are present
+  // This enables user impersonation: admin can test with user's exact permissions
+  const nonAdminRules = matchingRules.filter(rule => rule.role !== PLT_ADMIN_ROLE)
+  const rulesToMerge = nonAdminRules.length > 0 ? nonAdminRules : matchingRules
 
-  for (let i = 1; i < matchingRules.length; i++) {
-    const rule = matchingRules[i]
+  if (rulesToMerge.length === 1) {
+    return rulesToMerge[0]
+  }
+
+  const mergedRule = { ...rulesToMerge[0] }
+
+  for (let i = 1; i < rulesToMerge.length; i++) {
+    const rule = rulesToMerge[i]
 
     for (const key of Object.keys(rule)) {
       if (key === 'role' || key === 'entity') {
