@@ -32,7 +32,7 @@ function createMapper (
   constraintsList
 ) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
-  const entityName = useSchemaInName ? toUpperFirst(`${schema}${toSingular(table)}`) : toSingular(table)
+  const entityName = useSchemaInName ? toUpperFirst(`${camelcase(schema)}${toSingular(table)}`) : toSingular(table)
   /* istanbul ignore next */
   const pluralName = camelcase(useSchemaInName ? camelcase(`${schema} ${table}`) : table)
   const singularName = camelcase(entityName)

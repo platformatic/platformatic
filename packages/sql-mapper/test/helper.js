@@ -50,7 +50,7 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
 
 export async function clear (db, sql) {
   await dropAllTables(db, sql)
-  await dropAllTables(db, sql, ['test1', 'test2'])
+  await dropAllTables(db, sql, ['test1', 'test2', 'test_3'])
 }
 
 const fakeLogger = {
