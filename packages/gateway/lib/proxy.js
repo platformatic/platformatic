@@ -35,6 +35,11 @@ async function resolveApplicationProxyParameters (application) {
     internalRewriteLocationHeader = false
   }
 
+  if (application.proxy?.custom) {
+    const custom = await loadModule(createRequire(import.meta.filename), application.proxy.custom.path)
+    application.proxy.custom = custom
+  }
+
   if (application.proxy?.ws?.hooks) {
     const hooks = await loadModule(createRequire(import.meta.filename), application.proxy.ws.hooks.path)
     application.proxy.ws.hooks = hooks
@@ -152,11 +157,16 @@ async function proxyPlugin (app, opts) {
       metrics = initMetrics(globalThis.platformatic?.prometheus)
     }
 
+    const getUpstream = application.proxy?.custom?.getUpstream
+    // When getUpstream is provided, upstream ust be undefined, otherwise the getUpstream will be ignored
+    const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
+
     const proxyOptions = {
       prefix,
       rewritePrefix,
-      upstream: application.proxy?.upstream ?? origin,
+      upstream,
       preRewrite,
+      preValidation: application.proxy?.custom?.preValidation,
 
       websocket: true,
       wsUpstream: ws?.upstream ?? url ?? origin,
@@ -234,7 +244,8 @@ async function proxyPlugin (app, opts) {
         onError: (reply, { error }) => {
           app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')
           return reply.send(error)
-        }
+        },
+        getUpstream
       }
     }
 
