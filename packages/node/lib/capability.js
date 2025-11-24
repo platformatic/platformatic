@@ -121,7 +121,11 @@ export class NodeCapability extends BaseCapability {
 
     const config = this.config
 
-    if (!this.isProduction && (await isApplicationBuildable(this.root, config))) {
+    if (
+      !this.isProduction &&
+      config.node?.disableBuildInDevelopment !== true &&
+      (await isApplicationBuildable(this.root, config))
+    ) {
       this.logger.info(`Building application "${this.applicationId}" before starting in development mode ...`)
       try {
         await this.build()

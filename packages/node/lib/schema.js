@@ -25,6 +25,10 @@ const node = {
       type: 'boolean',
       default: false
     },
+    disableBuildInDevelopment: {
+      type: 'boolean',
+      default: false
+    },
     hasServer: {
       type: 'boolean',
       default: true

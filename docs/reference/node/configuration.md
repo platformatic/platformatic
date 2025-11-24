@@ -25,6 +25,7 @@ Configures Node. Supported object properties:
 - **`main`**: The entrypoint of the application. This is only needed if the `main` property is not set in the application `package.json` file.
 - **`absoluteUrl`**: If set to `true`, then the application will receive the full URL from a Platformatic Gateway. The default is `false`.
 - **`dispatchViaHttp`**: If set to `true`, then the application will serve requests coming from the mesh network via a TCP port.
+- **`disableBuildInDevelopment`**: If set to `true`, it will not automatically build an application in development mode.
 - **`disablePlatformaticInBuild`**: If set to `true`, then no Platformatic code will be started when running the `build` command.
 - **`hasServer`**: If set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port.
 
