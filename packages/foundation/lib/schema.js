@@ -749,6 +749,9 @@ export const applications = {
       useHttp: {
         type: 'boolean'
       },
+      enable: {
+        type: 'boolean'
+      },
       reuseTcpPorts: {
         type: 'boolean',
         default: true
