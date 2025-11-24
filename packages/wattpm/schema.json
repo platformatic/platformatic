@@ -253,6 +253,12 @@
               "nodeOptions": {
                 "type": "string"
               },
+              "execArgv": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "permissions": {
                 "type": "object",
                 "properties": {
@@ -545,6 +551,12 @@
           "nodeOptions": {
             "type": "string"
           },
+          "execArgv": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "permissions": {
             "type": "object",
             "properties": {
@@ -835,6 +847,12 @@
           "nodeOptions": {
             "type": "string"
           },
+          "execArgv": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "permissions": {
             "type": "object",
             "properties": {
@@ -1124,6 +1142,12 @@
           },
           "nodeOptions": {
             "type": "string"
+          },
+          "execArgv": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "permissions": {
             "type": "object",

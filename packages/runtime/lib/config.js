@@ -147,19 +147,22 @@ export async function wrapInRuntimeConfig (config, context) {
   const server = { hostname, port, http2, https }
   const production = context?.isProduction ?? context?.production
 
+  const runtimeConfig = config.runtime ?? {}
+
   // Important: do not change the order of the properties in this object
   /* c8 ignore next */
   const wrapped = {
     $schema: schema.$id,
     server,
     watch: !production,
-    ...omitProperties(config.runtime ?? {}, runtimeUnwrappablePropertiesList),
+    ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
     entrypoint: applicationId,
     applications: [
       {
         id: applicationId,
         path: config[kMetadata].root,
-        config: config[kMetadata].path
+        config: config[kMetadata].path,
+        ...(runtimeConfig.application ?? {})
       }
     ]
   }

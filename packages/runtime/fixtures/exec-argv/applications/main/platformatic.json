@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
+  "runtime": {
+    "application": {
+      "execArgv": ["--import", "./fixtures/exec-argv/applications/main/import.js"]
+    }
+  }
+}

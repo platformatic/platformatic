@@ -51,6 +51,7 @@ export type PlatformaticRuntimeConfig = {
         packageManager?: "npm" | "pnpm" | "yarn";
         preload?: string | string[];
         nodeOptions?: string;
+        execArgv?: string[];
         permissions?: {
           fs?: {
             read?: string[];

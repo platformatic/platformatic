@@ -1415,7 +1415,7 @@ export class Runtime extends EventEmitter {
     const errorLabel = this.#workerExtendedLabel(applicationId, index, workersCount)
     const health = deepmerge(config.health ?? {}, applicationConfig.health ?? {})
 
-    const execArgv = []
+    const execArgv = applicationConfig.execArgv ?? []
 
     if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
       const require = createRequire(import.meta.url)
