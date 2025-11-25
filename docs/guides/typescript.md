@@ -7,7 +7,7 @@ You have a standalone TypeScript application using ts-node for development, and 
 - Retain ts-node for direct TypeScript execution in development
 - Maintain your current development experience without requiring builds
 - Take advantage of Watt's features (hot reload, multi-application support, etc.)
-- Keep production builds working as before
+- Keep development production builds working as before
 
 Your TypeScript code uses modern `import` and `export` statements, but you might not be familiar with the differences between JavaScript module systems (like "ESM" and "CommonJS"). This guide will help you understand what's needed without assuming prior knowledge.
 
