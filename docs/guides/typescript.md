@@ -169,7 +169,7 @@ npm install -D @platformatic/tsconfig
   },
   "runtime": {
     "application": {
-      "execArgv": ["-r", "ts-node/register", "--loader", "ts-node/esm"]
+      "execArgv": ["-r", "ts-node/register"]
     },
     "server": {
       "port": 3000
@@ -186,8 +186,6 @@ Key configuration details:
 - `node.disableBuildInDevelopment: true` ensures TypeScript runs directly in dev mode without needing to build first
 - `runtime.application.execArgv` configures how Node.js runs your TypeScript files:
   - `"-r", "ts-node/register"` registers ts-node for CommonJS module loading
-  - `"--loader", "ts-node/esm"` registers ts-node for ESM module loading
-  - Having both allows ts-node to handle both CommonJS and ESM modules transparently
 - `runtime.server.port: 3000` sets the default server port
 
 This configuration provides maximum compatibility - it works whether your TypeScript compiles to CommonJS or ESM, automatically handling both module systems.
@@ -221,6 +219,130 @@ Update your package.json to use Watt commands:
 
 Notice: We kept everything the same as your original setup - no `"type": "module"` field, since we're sticking with CommonJS mode. The main changes are just the npm scripts to use `wattpm` commands instead of running ts-node directly.
 
+## Migrating to True ESM
+
+If you want to use true ECMAScript Modules (ESM) instead of CommonJS, you'll need to update several configuration files. This section shows you how to convert your application to use native ESM.
+
+### When to Use ESM
+
+Consider migrating to ESM if you:
+
+- Want to use modern JavaScript features and native module syntax
+- Need to import ESM-only packages (many newer npm packages only support ESM)
+- Prefer the standardized module system over CommonJS
+
+### ESM Migration Steps
+
+**1. Update package.json to enable ESM:**
+
+Add `"type": "module"` to tell Node.js to treat `.js` files as ESM:
+
+```json
+{
+  "name": "my-app",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/globals": "^3.25.0",
+    "@platformatic/node": "^3.25.0",
+    "wattpm": "^3.25.0"
+  },
+  "devDependencies": {
+    "@platformatic/tsconfig": "^0.1.0",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+**2. Update tsconfig.json for ESM output:**
+
+Change your TypeScript configuration to compile to ESM:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+```
+
+Key changes:
+
+- `"module": "NodeNext"` tells TypeScript to emit ESM-compatible code
+- `"moduleResolution": "NodeNext"` uses Node.js's ESM resolution algorithm
+
+**3. Update watt.json to use ESM loader:**
+
+Change the `execArgv` configuration to use ts-node's ESM loader:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
+  "application": {
+    "commands": {
+      "build": "tsc -p ."
+    }
+  },
+  "node": {
+    "disableBuildInDevelopment": true
+  },
+  "runtime": {
+    "application": {
+      "execArgv": ["--loader", "ts-node/esm"]
+    },
+    "server": {
+      "port": 3000
+    }
+  }
+}
+```
+
+The key change is `"execArgv": ["--loader", "ts-node/esm"]` which registers ts-node's ESM loader instead of the CommonJS register hook.
+
+**4. Update your imports (if needed):**
+
+With ESM, you may need to add file extensions to relative imports in some cases. However, TypeScript typically handles this for you:
+
+```typescript
+// This works in ESM
+import { myFunction } from './myModule.js' // Note: .js extension even though source is .ts
+```
+
+Your TypeScript code doesn't need to change if you're already using `import`/`export` syntax, but be aware that:
+
+- File extensions may be required for relative imports (TypeScript config handles this) and `index.js` files are not resolved automatically
+- `__dirname` and `__filename` are not available in ESM (use `import.meta.filename` or `import.meta.dirname` instead)
+- Top-level `await` is supported in ESM
+
+**5. Test your application:**
+
+Run your development server to ensure everything works:
+
+```bash
+npm run dev
+```
+
+Your application should now be running with true ESM! The behavior should be identical to before, but you're now using the native JavaScript module system.
+
+### Important ESM Notes
+
+- **File extensions:** When importing local files in ESM, you reference the compiled `.js` extension even though your source files are `.ts`
+- **No `__dirname` or `__filename`:** Use `import.meta.filename` or `import.meta.dirname` instead. For example:
+- **Named imports:** ESM is more strict about named vs. default imports. You may need to adjust how you import some packages
+- **Top-level await:** You can use `await` at the top level of your modules without wrapping in an async function
+
 ## Faster Development Startup
 
 By default, ts-node checks your TypeScript for errors every time it runs. This is helpful but can slow down startup, especially in large projects. If you want faster startup, you can use "transpile-only" mode, which skips the type checking.
@@ -228,13 +350,13 @@ By default, ts-node checks your TypeScript for errors every time it runs. This i
 **For CommonJS mode (the default setup in this guide):**
 
 ```json
-"execArgv": ["-r", "ts-node/register/transpile-only", "--loader", "ts-node/esm/transpile-only"]
+"execArgv": ["-r", "ts-node/register/transpile-only"]
 ```
 
 **For ESM mode (if you migrated to true ESM):**
 
 ```json
-"execArgv": ["--no-warnings", "--loader", "ts-node/esm/transpile-only"]
+"execArgv": ["--loader", "ts-node/esm/transpile-only"]
 ```
 
 When using transpile-only mode, ts-node will just convert your TypeScript to JavaScript without checking for errors. You should run `npx tsc --noEmit` separately (e.g., in a pre-commit hook or CI pipeline) to catch type errors.
