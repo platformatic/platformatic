@@ -2,7 +2,7 @@
 
 ## Problem
 
-You have a standalone TypeScript application using ts-node for development, and you want to migrate it to Platformatic Watt while preserving your existing TypeScript workflow. You need to:
+You have a standalone [TypeScript](https://typescriptlang.org) application using ts-node for development, and you want to migrate it to Platformatic Watt while preserving your existing TypeScript workflow. You need to:
 
 - Retain ts-node for direct TypeScript execution in development
 - Maintain your current development experience without requiring builds
@@ -32,7 +32,7 @@ This guide walks you through migrating a standalone TypeScript application to Wa
 
 This section shows an example of a typical standalone TypeScript application structure. Your actual setup may differ, but the principles in this guide apply regardless of your specific configuration.
 
-Most TypeScript applications use modern `import` and `export` syntax in their TypeScript files. However, many of these applications are configured to compile down to an older JavaScript module format called "CommonJS" for runtime execution. This is what we call a "faux ESM" setup - your TypeScript code looks modern, but it runs as CommonJS.
+Most TypeScript applications use modern `import` and `export` syntax in their TypeScript files as defined in the [ESM module format](https://nodejs.org/dist/latest/docs/api/modules.html). However, many of these applications are configured to compile down to an older JavaScript module format called "CommonJS" for runtime execution. This is what we call a ["faux ESM"](#understanding-javascript-module-systems) setup - your TypeScript code looks modern, but it runs as [CommonJS module format](https://nodejs.org/dist/latest/docs/api/modules.html).
 
 Let's look at a typical standalone TypeScript application structure:
 
@@ -450,8 +450,7 @@ const Environment = {
 
 ### Important Notes
 
-- This feature is **experimental** and may change in future Node.js versions
-- It only strips types - no transpilation of other TypeScript features like legacy enums or decorators
+- It only strips types - no transpilation of other TypeScript features like legacy enums, decorators or JSX
 - Type checking is not performed (similar to transpile-only mode), so run `npx tsc --noEmit` separately to catch type errors
 - Works with both CommonJS and ESM (configured via your package.json and tsconfig.json as usual)
 - The `dist` folder is still created during production builds via `tsc`, so you don't need to update any deployment configurations
