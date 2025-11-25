@@ -721,138 +721,141 @@ export const policies = {
   additionalProperties: false
 }
 
-export const applications = {
-  type: 'array',
-  items: {
-    type: 'object',
-    anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
-    properties: {
-      id: {
-        type: 'string'
-      },
-      path: {
-        type: 'string',
-        // This is required for the resolve command to allow empty paths after environment variable replacement
-        allowEmptyPaths: true,
-        resolvePath: true
-      },
-      config: {
-        type: 'string'
-      },
-      url: {
-        type: 'string'
-      },
-      gitBranch: {
-        type: 'string',
-        default: 'main'
-      },
-      useHttp: {
-        type: 'boolean'
-      },
-      reuseTcpPorts: {
-        type: 'boolean',
-        default: true
-      },
-      workers: {
-        anyOf: [
-          {
-            type: 'number'
-          },
-          {
-            type: 'string'
-          },
-          {
-            type: 'object',
-            properties: {
-              static: { type: 'number', minimum: 1 },
-              minimum: { type: 'number', minimum: 1 },
-              maximum: { type: 'number', minimum: 0 }
-            }
-          }
-        ]
-      },
-      health: { ...healthWithoutDefaults },
-      dependencies: {
-        type: 'array',
-        items: {
+export const application = {
+  type: 'object',
+  anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+  properties: {
+    id: {
+      type: 'string'
+    },
+    path: {
+      type: 'string',
+      // This is required for the resolve command to allow empty paths after environment variable replacement
+      allowEmptyPaths: true,
+      resolvePath: true
+    },
+    config: {
+      type: 'string'
+    },
+    url: {
+      type: 'string'
+    },
+    gitBranch: {
+      type: 'string',
+      default: 'main'
+    },
+    useHttp: {
+      type: 'boolean'
+    },
+    reuseTcpPorts: {
+      type: 'boolean',
+      default: true
+    },
+    workers: {
+      anyOf: [
+        {
+          type: 'number'
+        },
+        {
           type: 'string'
         },
-        default: []
-      },
-      arguments: {
-        type: 'array',
-        items: {
-          type: 'string'
+        {
+          type: 'object',
+          properties: {
+            static: { type: 'number', minimum: 1 },
+            minimum: { type: 'number', minimum: 1 },
+            maximum: { type: 'number', minimum: 0 }
+          }
         }
-      },
-      env,
-      envfile: {
+      ]
+    },
+    health: { ...healthWithoutDefaults },
+    dependencies: {
+      type: 'array',
+      items: {
         type: 'string'
       },
-      sourceMaps: {
-        type: 'boolean'
-      },
-      packageManager: {
-        type: 'string',
-        enum: ['npm', 'pnpm', 'yarn']
-      },
-      preload,
-      nodeOptions: {
+      default: []
+    },
+    arguments: {
+      type: 'array',
+      items: {
         type: 'string'
-      },
-      permissions: {
-        type: 'object',
-        properties: {
-          fs: {
-            type: 'object',
-            properties: {
-              read: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
-              },
-              write: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
+      }
+    },
+    env,
+    envfile: {
+      type: 'string'
+    },
+    sourceMaps: {
+      type: 'boolean'
+    },
+    packageManager: {
+      type: 'string',
+      enum: ['npm', 'pnpm', 'yarn']
+    },
+    preload,
+    nodeOptions: {
+      type: 'string'
+    },
+    execArgv: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
+    permissions: {
+      type: 'object',
+      properties: {
+        fs: {
+          type: 'object',
+          properties: {
+            read: {
+              type: 'array',
+              items: {
+                type: 'string'
               }
             },
-            additionalProperties: false
-          }
-        },
-        additionalProperties: false
-      },
-      telemetry: {
-        type: 'object',
-        properties: {
-          instrumentations: {
-            type: 'array',
-            description: 'An array of instrumentations loaded if telemetry is enabled',
-            items: {
-              oneOf: [
-                {
-                  type: 'string'
-                },
-                {
-                  type: 'object',
-                  properties: {
-                    package: {
-                      type: 'string'
-                    },
-                    exportName: {
-                      type: 'string'
-                    },
-                    options: {
-                      type: 'object',
-                      additionalProperties: true
-                    }
-                  },
-                  required: ['package']
-                }
-              ]
+            write: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
             }
+          },
+          additionalProperties: false
+        }
+      },
+      additionalProperties: false
+    },
+    telemetry: {
+      type: 'object',
+      properties: {
+        instrumentations: {
+          type: 'array',
+          description: 'An array of instrumentations loaded if telemetry is enabled',
+          items: {
+            oneOf: [
+              {
+                type: 'string'
+              },
+              {
+                type: 'object',
+                properties: {
+                  package: {
+                    type: 'string'
+                  },
+                  exportName: {
+                    type: 'string'
+                  },
+                  options: {
+                    type: 'object',
+                    additionalProperties: true
+                  }
+                },
+                required: ['package']
+              }
+            ]
           }
         }
       }
@@ -860,15 +863,10 @@ export const applications = {
   }
 }
 
-export const runtimeUnwrappablePropertiesList = [
-  '$schema',
-  'entrypoint',
-  'applications',
-  'autoload',
-  'applications',
-  'web',
-  'resolvedApplicationsBasePath'
-]
+export const applications = {
+  type: 'array',
+  items: application
+}
 
 export const runtimeProperties = {
   $schema: {
@@ -1332,7 +1330,38 @@ export const runtimeProperties = {
   policies
 }
 
+export const runtimeUnwrappablePropertiesList = [
+  '$schema',
+  'entrypoint',
+  'applications',
+  'application',
+  'autoload',
+  'applications',
+  'web',
+  'resolvedApplicationsBasePath'
+]
+
+export const applicationsUnwrappablePropertiesList = [
+  'id',
+  'path',
+  'config',
+  'url',
+  'gitBranch',
+  'dependencies',
+  'useHttp'
+]
+
 export const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
+export const wrappedApplicationProperties = omitProperties(
+  application.properties,
+  applicationsUnwrappablePropertiesList
+)
+
+wrappedRuntimeProperties.application = {
+  type: 'object',
+  properties: wrappedApplicationProperties,
+  additionalProperties: false
+}
 
 export const wrappedRuntime = {
   type: 'object',

@@ -13,7 +13,8 @@ import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
-import { resolve as resolvePath } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, resolve as resolvePath } from 'node:path'
 import { version } from './schema.js'
 import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
@@ -121,7 +122,11 @@ export class NodeCapability extends BaseCapability {
 
     const config = this.config
 
-    if (!this.isProduction && (await isApplicationBuildable(this.root, config))) {
+    if (
+      !this.isProduction &&
+      config.node?.disableBuildInDevelopment !== true &&
+      (await isApplicationBuildable(this.root, config))
+    ) {
       this.logger.info(`Building application "${this.applicationId}" before starting in development mode ...`)
       try {
         await this.build()
@@ -160,7 +165,18 @@ export class NodeCapability extends BaseCapability {
       typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
     )
 
-    this.#module = await importFile(finalEntrypoint)
+    try {
+      const require = createRequire(dirname(finalEntrypoint))
+      this.#module = require(finalEntrypoint)
+    } catch (e) {
+      // If there is top-leve await or unsupported TS syntax, we try to import the file instead
+      if (e.code !== 'ERR_REQUIRE_ASYNC_MODULE' && e.code !== 'ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX') {
+        throw e
+      }
+
+      this.#module = await importFile(finalEntrypoint)
+    }
+
     this.#module = this.#module.default || this.#module
 
     // Deal with application

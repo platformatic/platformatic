@@ -287,6 +287,7 @@ test('config - should list configuration for an application', async t => {
       main: 'index.js',
       dispatchViaHttp: false,
       disablePlatformaticInBuild: false,
+      disableBuildInDevelopment: false,
       hasServer: true
     },
     watch: {

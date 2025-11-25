@@ -56,6 +56,7 @@ const sidebars = {
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',
             'guides/using-watt-with-node-config',
             'guides/use-watt-multiple-repository',
+            'guides/use-watt-with-ts-node',
             'guides/scheduler',
             'guides/vertical-scaler'
           ]

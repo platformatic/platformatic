@@ -1517,6 +1517,12 @@
               "nodeOptions": {
                 "type": "string"
               },
+              "execArgv": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "permissions": {
                 "type": "object",
                 "properties": {
@@ -2823,6 +2829,258 @@
           "required": [
             "deny"
           ],
+          "additionalProperties": false
+        },
+        "application": {
+          "type": "object",
+          "properties": {
+            "reuseTcpPorts": {
+              "type": "boolean",
+              "default": true
+            },
+            "workers": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "static": {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "minimum": {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "maximum": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  }
+                }
+              ]
+            },
+            "health": {
+              "type": "object",
+              "default": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "interval": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "gracePeriod": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxUnhealthyChecks": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxELU": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxHeapUsed": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxHeapTotal": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxYoungGeneration": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "codeRangeSize": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "envfile": {
+              "type": "string"
+            },
+            "sourceMaps": {
+              "type": "boolean"
+            },
+            "packageManager": {
+              "type": "string",
+              "enum": [
+                "npm",
+                "pnpm",
+                "yarn"
+              ]
+            },
+            "preload": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "resolvePath": true
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "resolvePath": true
+                  }
+                }
+              ]
+            },
+            "nodeOptions": {
+              "type": "string"
+            },
+            "execArgv": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "permissions": {
+              "type": "object",
+              "properties": {
+                "fs": {
+                  "type": "object",
+                  "properties": {
+                    "read": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "write": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "telemetry": {
+              "type": "object",
+              "properties": {
+                "instrumentations": {
+                  "type": "array",
+                  "description": "An array of instrumentations loaded if telemetry is enabled",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "package": {
+                            "type": "string"
+                          },
+                          "exportName": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": [
+                          "package"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
           "additionalProperties": false
         }
       },
