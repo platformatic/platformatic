@@ -25,8 +25,10 @@ export async function createTemporaryDirectory (t, prefix) {
   const directory = join(tempPath, `test-runtime-${prefix}-${process.pid}-${tempDirCounter++}`)
 
   t.after(async () => {
-    if (!process.env.PLT_TESTS_KEEP_TMP) {
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
       return safeRemove(directory)
+    } else {
+      process._rawDebug(`Keeping temporary folder: ${directory}`)
     }
   })
 

@@ -24,7 +24,7 @@ test('logger options', async t => {
         log.stdout.name === 'remix' &&
         log.stdout.level === 'INFO' &&
         log.stdout.time.length === 24 && // isotime
-        log.stdout.msg === 'Log from remix App page'
+        log.stdout.msg === 'Log from Remix App page'
       )
     })
   )

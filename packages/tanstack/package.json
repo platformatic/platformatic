@@ -1,0 +1,57 @@
+{
+  "name": "@platformatic/tanstack",
+  "version": "3.26.0",
+  "description": "Platformatic TanStack Capability",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@platformatic/basic": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
+    "@platformatic/vite": "workspace:*",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@platformatic/gateway": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@tanstack/react-router": "^1.139.7",
+    "@tanstack/react-start": "^1.139.8",
+    "@tanstack/solid-router": "^1.139.12",
+    "@tanstack/solid-start": "^1.139.12",
+    "@vitejs/plugin-react": "^5.1.1",
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "fastify": "^5.0.0",
+    "json-schema-to-typescript": "^15.0.1",
+    "neostandard": "^0.12.0",
+    "nitro": "3.0.1-alpha.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "solid-js": "^1.9.10",
+    "typescript": "^5.5.4",
+    "vite": "^7.2.4",
+    "vite-plugin-solid": "^2.11.10",
+    "vite-tsconfig-paths": "^5.1.4",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

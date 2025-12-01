@@ -38,7 +38,7 @@ export class ViteCapability extends BaseCapability {
       return
     }
 
-    this.#vite = dirname(resolvePackage(this.root, 'vite'))
+    this.#vite = dirname(await resolvePackage(this.root, 'vite'))
 
     // In Vite 6, module resolving changed, adjust it
     if (!existsSync(resolve(this.#vite, 'dist/node/index.js'))) {
@@ -95,12 +95,12 @@ export class ViteCapability extends BaseCapability {
     }
 
     await this.init()
-    const { build } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
+    const { build, createBuilder } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
     try {
       globalThis.platformatic.isBuilding = true
 
-      await build({
+      const buildOptions = {
         root: this.root,
         base: basePath,
         mode: 'production',
@@ -118,7 +118,15 @@ export class ViteCapability extends BaseCapability {
             }
           }
         ]
-      })
+      }
+
+      // createBuilder was added in Vite 6 and might be needed for multi environment frameworks like TanStack
+      if (createBuilder) {
+        const builder = await createBuilder(buildOptions, null)
+        await builder.buildApp()
+      } else {
+        await build(buildOptions)
+      }
     } finally {
       globalThis.platformatic.isBuilding = false
     }
@@ -361,19 +369,19 @@ export class ViteSSRCapability extends NodeCapability {
 
     await this.init()
 
-    let vite = dirname(resolvePackage(this.root, 'vite'))
+    let vite = dirname(await resolvePackage(this.root, 'vite'))
     // In Vite 6, module resolving changed, adjust it
     if (!existsSync(resolve(vite, 'dist/node/index.js'))) {
       vite = resolve(vite, '../..')
     }
 
-    const { build } = await importFile(resolve(vite, 'dist/node/index.js'))
+    const { build, createBuilder } = await importFile(resolve(vite, 'dist/node/index.js'))
 
     // Build the client
     try {
       globalThis.platformatic.isBuilding = true
 
-      await build({
+      const buildOptions = {
         root: resolve(this.root, clientDirectory),
         base: basePath,
         mode: 'production',
@@ -392,7 +400,15 @@ export class ViteSSRCapability extends NodeCapability {
             }
           }
         ]
-      })
+      }
+
+      // createBuilder was added in Vite 6 and might be needed for multi environment frameworks like TanStack
+      if (createBuilder) {
+        const builder = await createBuilder(buildOptions, null)
+        await builder.buildApp()
+      } else {
+        await build(buildOptions)
+      }
     } finally {
       globalThis.platformatic.isBuilding = false
     }

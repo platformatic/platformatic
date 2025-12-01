@@ -25,6 +25,7 @@ export const packages = [
   '@platformatic/sql-json-schema-mapper',
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',
+  '@platformatic/tanstack',
   '@platformatic/telemetry',
   '@platformatic/vite',
   '@platformatic/wattpm-pprof-capture',

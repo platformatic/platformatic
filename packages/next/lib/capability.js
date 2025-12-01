@@ -43,7 +43,7 @@ export class NextCapability extends BaseCapability {
     // PS by Paolo: Sob.
     process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
 
-    this.#next = resolvePath(dirname(resolvePackage(this.root, 'next')), '../..')
+    this.#next = resolvePath(dirname(await resolvePackage(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
 

@@ -1,13 +1,13 @@
 import { Links, Meta, Outlet, Scripts } from '@remix-run/react'
 
 const version = 123
-globalThis.platformatic.logger?.info('Log from remix App page')
+globalThis.platformatic.logger?.info('Log from Remix App page')
 
 export default function App () {
   return (
     <html>
       <head>
-        <link rel='icon' href='data:image/x-icon;base64,AA' />
+        <link rel="icon" href="data:image/x-icon;base64,AA" />
         <Meta />
         <Links />
       </head>

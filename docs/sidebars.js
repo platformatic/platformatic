@@ -196,6 +196,12 @@ const sidebars = {
             },
             {
               type: 'category',
+              label: 'Tanstack',
+              collapsed: true,
+              items: ['reference/tanstack/overview', 'reference/tanstack/configuration']
+            },
+            {
+              type: 'category',
               label: 'Astro',
               collapsed: true,
               items: ['reference/astro/overview', 'reference/astro/configuration', 'reference/astro/caching']

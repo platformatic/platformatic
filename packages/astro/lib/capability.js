@@ -37,7 +37,7 @@ export class AstroCapability extends BaseCapability {
       return
     }
 
-    this.#astro = resolve(dirname(resolvePackage(this.root, 'astro')), '../..')
+    this.#astro = resolve(dirname(await resolvePackage(this.root, 'astro')), '../..')
     const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
 
     if (!satisfies(astroPackage.version, supportedVersions)) {
