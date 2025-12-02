@@ -61,7 +61,7 @@ function decodeAndValidateProfile (encodedProfile, checkLocations) {
   return profile
 }
 
-async function compile(serviceDir) {
+async function compile (serviceDir) {
   // Build the TypeScript (dependencies are in parent package devDependencies)
   try {
     await execAsync('npx tsc', { cwd: serviceDir, timeout: 30000 })
