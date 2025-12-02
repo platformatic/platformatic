@@ -1,7 +1,6 @@
 import { ok } from 'node:assert/strict'
 import { resolve } from 'node:path'
 import {
-  isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
   verifyJSONViaHTTP,
@@ -90,7 +89,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'NestJS application (in composer with prefix)',
     files,

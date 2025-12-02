@@ -2,7 +2,6 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
   verifyJSONViaHTTP,
@@ -146,7 +145,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer with a prefix)',
     files,
@@ -211,7 +209,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer with a prefix)',
     files,
@@ -276,7 +273,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer with a prefix)',
     files,
@@ -341,7 +337,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'koa-with-build-composer-with-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer with a prefix)',
     files,

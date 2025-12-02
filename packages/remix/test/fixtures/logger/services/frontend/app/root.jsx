@@ -1,7 +1,7 @@
 import { Links, Meta, Outlet, Scripts } from '@remix-run/react'
 
 const version = 123
-globalThis.platformatic.logger?.info('Log from remix App page')
+globalThis.platformatic.logger?.info('Log from Remix App page')
 
 export default function App () {
   return (

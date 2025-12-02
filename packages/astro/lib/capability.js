@@ -7,9 +7,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
@@ -37,7 +37,7 @@ export class AstroCapability extends BaseCapability {
       return
     }
 
-    this.#astro = resolve(dirname(resolvePackage(this.root, 'astro')), '../..')
+    this.#astro = resolve(dirname(await resolvePackageViaCJS(this.root, 'astro')), '../..')
     const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
 
     if (!satisfies(astroPackage.version, supportedVersions)) {

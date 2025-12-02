@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   isWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -59,7 +58,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
@@ -84,7 +82,6 @@ const configurations = [
     prefix: '/nested/base/dir'
   },
   {
-    only: isCIOnWindows,
     id: 'composer-custom-commands',
     name: 'Vite (in composer with prefix using custom commands)',
     files,

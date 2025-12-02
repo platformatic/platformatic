@@ -134,8 +134,6 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    // TODO@PI: Handle reusePort
-
     // Wait for explicit dependencies to start
     await this.waitForDependenciesStart(this.dependencies)
 

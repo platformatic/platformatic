@@ -280,6 +280,11 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
   const originalCwd = process.cwd()
   const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
+
+  if (process.env.PLT_TESTS_PRINT_TMP === 'true') {
+    process._rawDebug(`Runtime root: ${root}`)
+  }
+
   currentWorkingDirectory = root
 
   await createDirectory(root)
@@ -337,8 +342,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     process.chdir(originalCwd)
     await runtime.close()
 
-    if (process.env.PLT_TESTS_DEBUG !== 'true') {
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
       await safeRemove(root)
+    } else {
+      process._rawDebug(`Keeping temporary folder: ${root}`)
     }
   })
 
@@ -461,14 +468,13 @@ export async function verifyHTMLViaInject (app, applicationId, url, contents) {
   }
 }
 
-export async function verifyHMR (baseUrl, path, protocol, handler) {
+export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const connection = Promise.withResolvers()
   const reload = Promise.withResolvers()
   const ac = new AbortController()
   const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
 
-  const url = baseUrl.replace('http:', 'ws:') + path
-  const webSocket = new WebSocket(url, protocol)
+  const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
     clearTimeout(timeout)
@@ -477,7 +483,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
   })
 
   webSocket.on('message', data => {
-    handler(JSON.parse(data), connection.resolve, reload.resolve)
+    handler(JSON.parse(data), connection.resolve, reload.resolve, { root, runtime, url, path, protocol })
   })
 
   const hmrTriggerFile = resolve(currentWorkingDirectory, hmrTriggerFileRelative)
@@ -636,10 +642,10 @@ export async function verifyDevelopmentFrontendStandalone (
   pauseTimeout,
   additionalSetup
 ) {
-  const { url } = await createRuntime(t, configuration, pauseTimeout, false, null, additionalSetup)
+  const { root, runtime, url } = await createRuntime(t, configuration, pauseTimeout, false, null, additionalSetup)
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
-  await verifyHMR(url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
+  await verifyHMR(root, runtime, url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
 }
 
 export async function verifyDevelopmentFrontendWithPrefix (
@@ -653,7 +659,7 @@ export async function verifyDevelopmentFrontendWithPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithApplications(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -665,7 +671,7 @@ export async function verifyDevelopmentFrontendWithPrefix (
 
   await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
   await verifyHTMLViaInject(runtime, 'composer', '/frontend', htmlContents)
-  await verifyHMR(url, '/frontend/' + hmrUrl, hmrProtocol, websocketHMRHandler)
+  await verifyHMR(root, runtime, url, '/frontend/' + hmrUrl, hmrProtocol, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/frontend/on-composer', 200, { ok: true })
@@ -687,7 +693,7 @@ export async function verifyDevelopmentFrontendWithoutPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithApplications(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -699,7 +705,7 @@ export async function verifyDevelopmentFrontendWithoutPrefix (
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
   await verifyHTMLViaInject(runtime, 'composer', '/', htmlContents)
-  await verifyHMR(url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
+  await verifyHMR(root, runtime, url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/on-composer', 200, { ok: true })
@@ -721,7 +727,7 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
   pauseTimeout,
   additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithApplications(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     configuration,
     false,
@@ -733,7 +739,7 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
 
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', htmlContents)
   await verifyHTMLViaInject(runtime, 'composer', '/nested/base/dir', htmlContents)
-  await verifyHMR(url, '/nested/base/dir/' + hmrUrl, hmrProtocol, websocketHMRHandler)
+  await verifyHMR(root, runtime, url, '/nested/base/dir/' + hmrUrl, hmrProtocol, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/nested/base/dir/on-composer', 200, { ok: true })
@@ -776,12 +782,6 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
       async t => {
         let args
         const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
-          t.after(async () => {
-            if (process.env.PLT_TESTS_DEBUG !== 'true') {
-              await safeRemove(root)
-            }
-          })
-
           for (const type of ['backend', 'composer']) {
             await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
               recursive: true

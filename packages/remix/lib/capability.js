@@ -4,9 +4,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
@@ -36,7 +36,7 @@ export class RemixCapability extends ViteCapability {
     await super.init()
 
     if (!this.isProduction) {
-      this.#remix = resolve(dirname(resolvePackage(this.root, '@remix-run/dev')), '..')
+      this.#remix = resolve(dirname(await resolvePackageViaCJS(this.root, '@remix-run/dev')), '..')
       const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 
       if (!satisfies(remixPackage.version, supportedVersions)) {
@@ -158,15 +158,12 @@ export class RemixCapability extends ViteCapability {
       await preloadVite()
     }
 
-    await super._start({ listen })
     await super.start({ listen })
 
     /* c8 ignore next 3 */
     if (!this._getVite().config.plugins.some(p => p.name === 'remix')) {
       this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
     }
-
-    await this._collectMetrics()
   }
 
   async #startProduction (listen) {

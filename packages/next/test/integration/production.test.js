@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   setFixturesDir,
   updateFile,
   verifyBuildAndProductionMode,
@@ -25,7 +24,6 @@ const filesSSR = ['services/frontend/.next/server/app/direct/route.js']
 const configurations = [
   { id: 'standalone', name: 'Next.js (standalone)', files, checks: [verifyFrontendOnRoot], language: 'js', prefix: '' },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],

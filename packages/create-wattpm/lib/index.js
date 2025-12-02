@@ -32,6 +32,7 @@ const internalCapabilities = [
   '@platformatic/astro',
   '@platformatic/remix',
   '@platformatic/nest',
+  '@platformatic/tanstack',
   '@platformatic/service',
   '@platformatic/db'
 ]

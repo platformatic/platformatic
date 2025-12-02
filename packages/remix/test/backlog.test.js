@@ -32,7 +32,7 @@ function waitServerOptions (runtime) {
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`remix application should properly use backlog option in ${env}`, async t => {
+  test(`Remix application should properly use backlog option in ${env}`, async t => {
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/standalone'),
@@ -53,7 +53,7 @@ for (const [env, options] of Object.entries(envs)) {
     deepStrictEqual(serverOptions.backlog, 100)
   })
 
-  test(`remix application should properly use backlog option in ${env} when using custom commands`, async t => {
+  test(`Remix application should properly use backlog option in ${env} when using custom commands`, async t => {
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/composer-custom-commands'),
