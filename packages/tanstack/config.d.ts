@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticTanstackConfig {
+export interface PlatformaticTanStackConfig {
   $schema?: string;
   logger?: {
     level: (
@@ -604,8 +604,5 @@ export interface PlatformaticTanstackConfig {
           contentType?: string;
           statusCode?: number;
         };
-  };
-  tanstack?: {
-    outputDirectory?: string;
   };
 }
