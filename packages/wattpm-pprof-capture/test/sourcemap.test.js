@@ -61,10 +61,7 @@ function decodeAndValidateProfile (encodedProfile, checkLocations) {
   return profile
 }
 
-// Build TypeScript service once before all tests
-test.before(async () => {
-  const serviceDir = resolve(import.meta.dirname, 'fixtures/sourcemap-test/service')
-
+async function compile(serviceDir) {
   // Build the TypeScript (dependencies are in parent package devDependencies)
   try {
     await execAsync('npx tsc', { cwd: serviceDir, timeout: 30000 })
@@ -82,10 +79,22 @@ test.before(async () => {
   } catch (err) {
     throw new Error(`Build artifacts not found: ${err.message}. Plugin: ${pluginPath}, Map: ${mapPath}`)
   }
+}
+
+// Build TypeScript service once before all tests
+test.before(async () => {
+  const dirs = [
+    resolve(import.meta.dirname, 'fixtures/sourcemap-test/service'),
+    resolve(import.meta.dirname, 'fixtures/sourcemap-config-test/service')
+  ]
+
+  for (const dir of dirs) {
+    await compile(dir)
+  }
 })
 
-async function createApp (t) {
-  const configFile = resolve(import.meta.dirname, 'fixtures/sourcemap-test/platformatic.json')
+async function createApp (t, config = 'fixtures/sourcemap-test/platformatic.json') {
+  const configFile = resolve(import.meta.dirname, config)
 
   // Ensure tmp directory exists
   const { mkdir } = await import('node:fs/promises')
@@ -204,4 +213,69 @@ test('sourcemaps should work with heap profiling', async t => {
   verifyTypeScriptFilesInProfile(profile)
 
   await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
+})
+
+test('sourcemaps should be initialized and profiling should work with TypeScript if enabled via config file', async t => {
+  const { app, url } = await createApp(t, 'fixtures/sourcemap-config-test/platformatic.json')
+
+  // Verify service is running
+  const res = await request(`${url}/`)
+  const json = await res.body.json()
+  assert.strictEqual(res.statusCode, 200)
+  assert.strictEqual(json.message, 'Hello from TypeScript')
+
+  // Verify sourcemap files exist in service directory
+  const diagRes = await request(`${url}/diagnostic`, { headersTimeout: 10000, bodyTimeout: 10000 })
+  const diag = await diagRes.body.json()
+  assert.strictEqual(diag.pluginMapExists, true, `Sourcemap file should exist at ${diag.serviceDir}/plugin.js.map`)
+
+  // Start profiling with sufficient duration to ensure we capture samples
+  // Enable source maps to resolve TypeScript locations
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 5000 })
+
+  // Wait for profiler to actually start
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isProfilerRunning
+  }, 2000)
+
+  // Make requests spread over time to ensure continuous CPU activity during profiling
+  // Use shorter interval and add timeout to prevent hanging
+  let consecutiveFailures = 0
+  let intervalStopped = false
+  const requestInterval = setInterval(() => {
+    if (intervalStopped) return
+
+    request(`${url}/compute`, { headersTimeout: 30000, bodyTimeout: 30000 })
+      .then(() => {
+        consecutiveFailures = 0
+      })
+      .catch((err) => {
+        consecutiveFailures++
+
+        // If we get 3 consecutive connection failures, the service likely crashed
+        if (consecutiveFailures >= 3 && (err.message.includes('ECONNREFUSED') || err.message.includes('ECONNRESET'))) {
+          intervalStopped = true
+          clearInterval(requestInterval)
+          throw new Error(`Service crashed - ${consecutiveFailures} consecutive connection failures: ${err.message}`)
+        }
+      })
+  }, 300)
+
+  // Wait for profile to be captured
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 10000)
+
+  clearInterval(requestInterval)
+
+  // Get the profile - this should succeed with SourceMapper initialized
+  const encodedProfile = await app.sendCommandToApplication('service', 'getLastProfile')
+  const profile = decodeAndValidateProfile(encodedProfile, true)
+
+  // Verify sourcemaps are working by checking for .ts file extensions
+  verifyTypeScriptFilesInProfile(profile)
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
 })
