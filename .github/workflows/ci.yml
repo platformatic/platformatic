@@ -846,7 +846,7 @@ jobs:
     name: 'vite - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'vite' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -873,7 +873,7 @@ jobs:
     name: 'astro - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'astro' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -900,7 +900,7 @@ jobs:
     name: 'remix - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'remix' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -927,7 +927,7 @@ jobs:
     name: 'nest - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'nest' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -954,7 +954,7 @@ jobs:
     name: 'tanstack - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'tanstack' }}
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:

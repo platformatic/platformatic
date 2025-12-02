@@ -4,7 +4,6 @@ import { resolve } from 'node:path'
 import {
   createRuntime,
   getLogsFromFile,
-  isCIOnWindows,
   prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
@@ -269,7 +268,6 @@ const configurations = [
     language: 'js'
   },
   {
-    only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -318,7 +316,6 @@ const configurations = [
     language: 'js'
   },
   {
-    only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -367,7 +364,6 @@ const configurations = [
     language: 'js'
   },
   {
-    only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
@@ -416,7 +412,6 @@ const configurations = [
     language: 'js'
   },
   {
-    only: isCIOnWindows,
     id: 'koa-with-build-composer-with-prefix',
     name: 'Koa (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,

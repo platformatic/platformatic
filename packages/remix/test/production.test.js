@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   setAdditionalDependencies,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -32,7 +31,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],

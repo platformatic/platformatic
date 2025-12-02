@@ -2,11 +2,10 @@ import { strict as assert } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime, getLogsFromFile, isCIOnWindows } from '../../basic/test/helper.js'
+import { createRuntime, getLogsFromFile } from '../../basic/test/helper.js'
 import { copyServerEntrypoint } from './helper.js'
 
-// TODO: fix this test on windows
-test('logger options', { skip: isCIOnWindows }, async t => {
+test('logger options', async t => {
   const { runtime, root, url } = await createRuntime({
     t,
     root: resolve(import.meta.dirname, './fixtures/logger'),

@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   setAdditionalDependencies,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -48,7 +47,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Tanstack (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
@@ -89,7 +87,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Tanstack SSR (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],

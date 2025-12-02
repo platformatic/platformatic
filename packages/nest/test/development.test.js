@@ -4,7 +4,6 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createRuntime,
-  isCIOnWindows,
   prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
@@ -177,7 +176,6 @@ const configurations = [
     language: 'js'
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'NestJS application (in composer with prefix)',
     check: verifyComposerWithPrefix,

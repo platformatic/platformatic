@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
-  isCIOnWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnPrefix,
@@ -29,7 +28,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
     files: [...files, ...internalApplicationsFiles],
@@ -72,7 +70,6 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Astro SSR (in composer with prefix)',
     files: filesSSR,
