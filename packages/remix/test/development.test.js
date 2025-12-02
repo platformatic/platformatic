@@ -22,6 +22,11 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
     case 'connected':
       resolveConnection()
       break
+    case 'custom':
+      if (message.event === 'remix:hmr') {
+        resolveReload()
+      }
+      break
     case 'full-reload':
       resolveReload()
   }

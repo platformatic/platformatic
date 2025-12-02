@@ -8,7 +8,7 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('Vite version is checked in development', async t => {
   const { runtime, root } = await prepareRuntime(t, 'standalone', false, null, async root => {
-    await swapVersion(t, root, 'vite')
+    await swapVersion(t, root, 'vite', '../..')
   })
 
   await rejects(runtime.start())
@@ -19,7 +19,7 @@ test('Vite version is checked in development', async t => {
 
 test('Vite version is not checked in production', async t => {
   const { runtime, root } = await prepareRuntime(t, 'standalone', true, null, async root => {
-    await swapVersion(t, root, 'vite')
+    await swapVersion(t, root, 'vite', '../..')
   })
 
   await rejects(runtime.start())
