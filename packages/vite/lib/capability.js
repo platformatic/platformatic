@@ -6,9 +6,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
@@ -38,7 +38,7 @@ export class ViteCapability extends BaseCapability {
       return
     }
 
-    this.#vite = dirname(await resolvePackage(this.root, 'vite'))
+    this.#vite = dirname(await resolvePackageViaCJS(this.root, 'vite'))
 
     // In Vite 6, module resolving changed, adjust it
     if (!existsSync(resolve(this.#vite, 'dist/node/index.js'))) {
@@ -369,7 +369,7 @@ export class ViteSSRCapability extends NodeCapability {
 
     await this.init()
 
-    let vite = dirname(await resolvePackage(this.root, 'vite'))
+    let vite = dirname(await resolvePackageViaCJS(this.root, 'vite'))
     // In Vite 6, module resolving changed, adjust it
     if (!existsSync(resolve(vite, 'dist/node/index.js'))) {
       vite = resolve(vite, '../..')

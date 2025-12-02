@@ -1,12 +1,5 @@
-import {
-  cleanBasePath,
-  createServerListener,
-  ensureTrailingSlash,
-  errors,
-  getServerUrl,
-  resolvePackage
-} from '@platformatic/basic'
-import { importFile } from '@platformatic/basic/lib/utils.js'
+import { cleanBasePath, createServerListener, ensureTrailingSlash, errors, getServerUrl } from '@platformatic/basic'
+import { importFile, resolvePackageViaESM } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation'
 import { ViteCapability } from '@platformatic/vite'
 import inject from 'light-my-request'
@@ -34,7 +27,7 @@ export class TanstackCapability extends ViteCapability {
     await super.init()
 
     if (!this.isProduction) {
-      this.#tanstack = resolve(dirname(await resolvePackage(this.root, '@tanstack/react-start')), '../..')
+      this.#tanstack = resolve(dirname(await resolvePackageViaESM(this.root, '@tanstack/react-start')), '../..')
       const tanstackPackage = JSON.parse(await readFile(resolve(this.#tanstack, 'package.json'), 'utf-8'))
 
       if (!satisfies(tanstackPackage.version, supportedVersions)) {

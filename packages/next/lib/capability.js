@@ -6,9 +6,9 @@ import {
   createServerListener,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -43,7 +43,7 @@ export class NextCapability extends BaseCapability {
     // PS by Paolo: Sob.
     process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
 
-    this.#next = resolvePath(dirname(await resolvePackage(this.root, 'next')), '../..')
+    this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
 

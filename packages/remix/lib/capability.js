@@ -4,9 +4,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
@@ -36,7 +36,7 @@ export class RemixCapability extends ViteCapability {
     await super.init()
 
     if (!this.isProduction) {
-      this.#remix = resolve(dirname(await resolvePackage(this.root, '@remix-run/dev')), '..')
+      this.#remix = resolve(dirname(await resolvePackageViaCJS(this.root, '@remix-run/dev')), '..')
       const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 
       if (!satisfies(remixPackage.version, supportedVersions)) {

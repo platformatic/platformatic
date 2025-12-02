@@ -59,19 +59,24 @@ export function importFile (path) {
   return import(ensureFileUrl(path))
 }
 
+/* c8 ignore next 6 */
+export function resolvePackageViaCJS (root, pkg) {
+  const require = createRequire(root)
+  // We need to add the main module paths to the require.resolve call
+  // Note that `require.main` is not defined in `next` if we set sthe instrumentation hook reequired for ESM applications.
+  // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
+  return require.resolve(pkg, { paths: [root, ...(require.main?.paths || [])] })
+}
+
 /* c8 ignore next 14 */
-export async function resolvePackage (root, pkg) {
+export async function resolvePackageViaESM (root, pkg) {
   // Use import.meta.resolve if available first, since it also understands ESM only packages
   try {
     const url = await import.meta.resolve(pkg)
     return fileURLToPath(new URL(url))
   } catch {
-    const require = createRequire(root)
-
-    // We need to add the main module paths to the require.resolve call
-    // Note that `require.main` is not defined in `next` if we set sthe instrumentation hook reequired for ESM applications.
-    // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-    return require.resolve(pkg, { paths: [root, ...(require.main?.paths || [])] })
+    // Fallback to CJS resolution
+    return resolvePackageViaCJS(root, pkg)
   }
 }
 
@@ -82,3 +87,6 @@ export function cleanBasePath (basePath) {
 export function ensureTrailingSlash (basePath) {
   return basePath ? `${basePath}${basePath.endsWith('/') ? '' : '/'}` : '/'
 }
+
+// TODO: This is for backwards compatibility, remove in future major release
+export const resolvePackage = resolvePackageViaCJS

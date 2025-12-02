@@ -5,9 +5,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile,
-  resolvePackage
+  importFile
 } from '@platformatic/basic'
+import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -37,7 +37,7 @@ export class NestCapability extends BaseCapability {
     const config = this.config
 
     this.#isFastify = config.nest.adapter === 'fastify'
-    this.#nestjsCore = resolve(await resolvePackage(this.root, '@nestjs/core'))
+    this.#nestjsCore = resolve(await resolvePackageViaCJS(this.root, '@nestjs/core'))
     // As @nest/cli is not exporting any file, we assume it's in the same folder of @nestjs/core.
     this.#nestjsCli = resolve(this.#nestjsCore, '../../cli/bin/nest.js')
 
@@ -244,7 +244,7 @@ export class NestCapability extends BaseCapability {
     this.logger.debug(`Using NestJS adapter ${toImport}.`)
 
     try {
-      adapter = await importFile(await resolvePackage(this.root, toImport))
+      adapter = await importFile(await resolvePackageViaCJS(this.root, toImport))
       return adapter[this.#isFastify ? 'FastifyAdapter' : 'ExpressAdapter']
     } catch (e) {
       throw new Error(`Cannot import the NestJS adapter. Please add ${toImport} to the dependencies and try again.`)
