@@ -2,6 +2,8 @@ import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } 
 import { ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
+import repl from 'node:repl'
+import { Duplex } from 'node:stream'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
   ApplicationExitedError,
@@ -261,6 +263,52 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
 
       saveMessagingChannel (channel) {
         messaging.addSource(channel)
+      },
+
+      startRepl (port) {
+        // Create a duplex stream that wraps the MessagePort
+        const replStream = new Duplex({
+          read () {},
+          write (chunk, encoding, callback) {
+            port.postMessage({ type: 'output', data: chunk.toString() })
+            callback()
+          }
+        })
+
+        port.on('message', (message) => {
+          if (message.type === 'input') {
+            replStream.push(message.data)
+          } else if (message.type === 'close') {
+            replStream.push(null)
+          }
+        })
+
+        port.on('close', () => {
+          replStream.push(null)
+        })
+
+        // Start the REPL with the stream
+        const replServer = repl.start({
+          prompt: `${controller.applicationConfig.id}> `,
+          input: replStream,
+          output: replStream,
+          terminal: false,
+          useColors: true,
+          ignoreUndefined: true,
+          preview: false
+        })
+
+        // Expose useful context
+        replServer.context.app = controller.capability?.app
+        replServer.context.platformatic = globalThis.platformatic
+        replServer.context.config = controller.applicationConfig
+
+        replServer.on('exit', () => {
+          port.postMessage({ type: 'exit' })
+          port.close()
+        })
+
+        return { started: true }
       }
     }
   })
