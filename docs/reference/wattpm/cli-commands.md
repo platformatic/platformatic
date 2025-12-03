@@ -410,6 +410,72 @@ wattpm inject --method POST --header "Content-Type: application/json" --data '{"
 wattpm inject my-app api-application --path /users --output response.json
 ```
 
+### `wattpm repl`
+
+Starts an interactive Node.js REPL (Read-Eval-Print Loop) session inside a running application's worker thread. This allows you to inspect and interact with your application at runtime for debugging and exploration.
+
+```bash
+wattpm repl [id] [application]
+```
+
+**Arguments:**
+
+- `id` - Process ID or application name (optional if only one app is running)
+- `application` - Application name (optional, uses entrypoint if omitted)
+
+**Available Context:**
+
+The REPL session provides access to:
+
+- `app` - The Fastify application instance
+- `platformatic` - The global platformatic object with messaging, events, and configuration
+- `config` - The application's configuration object
+
+**REPL Commands:**
+
+Standard Node.js REPL commands are available:
+
+- `.exit` - Exit the REPL session
+- `.help` - Show available REPL commands
+- `.break` - Clear the current multi-line expression
+- `.clear` - Reset the REPL context
+- `.save <file>` - Save REPL history to a file
+- `.load <file>` - Load a file into the REPL session
+
+**Examples:**
+
+```bash
+# Start REPL in the entrypoint application (auto-detect runtime)
+wattpm repl
+
+# Start REPL in a specific application
+wattpm repl api-service
+
+# Start REPL with explicit runtime name and application
+wattpm repl my-app api-service
+
+# Start REPL using runtime PID
+wattpm repl 12345 api-service
+```
+
+**Example REPL Session:**
+
+```javascript
+api-service> app.server.address()
+{ address: '::', family: 'IPv6', port: 3000 }
+
+api-service> Object.keys(platformatic)
+[ 'logger', 'events', 'messaging', 'config', ... ]
+
+api-service> config.id
+'api-service'
+
+api-service> await app.inject({ method: 'GET', url: '/health' })
+{ statusCode: 200, ... }
+
+api-service> .exit
+```
+
 ### `wattpm env`
 
 Displays environment variables for a running application or application.

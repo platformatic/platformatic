@@ -80,7 +80,8 @@ const sidebars = {
             'guides/metrics',
             'guides/distributed-tracing',
             'guides/logging-to-elasticsearch',
-            'guides/profiling-with-watt'
+            'guides/profiling-with-watt',
+            'guides/debugging-with-repl'
           ]
         }
       ]
