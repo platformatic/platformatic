@@ -427,9 +427,11 @@ wattpm repl [id] [application]
 
 The REPL session provides access to:
 
-- `app` - The Fastify application instance
+- `app` - The Fastify application instance (for service-based applications)
+- `capability` - The application capability object with configuration and methods
 - `platformatic` - The global platformatic object with messaging, events, and configuration
 - `config` - The application's configuration object
+- `logger` - The application logger
 
 **REPL Commands:**
 

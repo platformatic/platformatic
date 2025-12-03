@@ -8,9 +8,11 @@ This guide will walk you through using the REPL for debugging, from basic usage 
 
 The `wattpm repl` command starts an interactive Node.js REPL session inside a running application's worker thread. This gives you direct access to:
 
-- The Fastify application instance (`app`)
-- The global Platformatic object (`platformatic`)
+- The Fastify application instance (`app`) - for service-based applications
+- The application capability object (`capability`) - configuration and methods
+- The global Platformatic object (`platformatic`) - messaging, events, shared context
 - The application configuration (`config`)
+- The application logger (`logger`)
 - All modules and variables in the worker's scope
 
 ### Key Features
@@ -134,6 +136,51 @@ api-service> config.server
 // Check environment
 api-service> config.isProduction
 false
+```
+
+### The `capability` Object
+
+The `capability` variable provides access to the application's capability with its configuration and methods:
+
+```javascript
+// Check capability type
+api-service> capability.type
+'service'
+
+// Get application root directory
+api-service> capability.root
+'/path/to/my-app/services/api-service'
+
+// Check if this is the entrypoint
+api-service> capability.isEntrypoint
+true
+
+// Access runtime configuration
+api-service> capability.runtimeConfig
+{ ... }
+
+// Get application URL (if listening)
+api-service> capability.url
+'http://127.0.0.1:3000'
+
+// Access the capability's logger
+api-service> capability.logger.info('Debug message')
+```
+
+### The `logger` Object
+
+The `logger` variable provides access to the application's Pino logger:
+
+```javascript
+// Log at different levels
+api-service> logger.info('Information message')
+api-service> logger.debug({ data: 'object' }, 'Debug with data')
+api-service> logger.warn('Warning message')
+api-service> logger.error(new Error('test'), 'Error occurred')
+
+// Check current log level
+api-service> logger.level
+'info'
 ```
 
 ## Advanced Debugging Techniques

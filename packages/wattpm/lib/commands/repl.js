@@ -95,9 +95,11 @@ export const help = {
     footer: `
 The REPL session runs inside the worker thread of the specified application.
 You have access to:
-  - app: The Fastify application instance
+  - app: The Fastify application instance (for service-based apps)
+  - capability: The application capability object with configuration and methods
   - platformatic: The global platformatic object
   - config: The application configuration
+  - logger: The application logger
 
 Press Ctrl+C or type .exit to exit the REPL.
     `

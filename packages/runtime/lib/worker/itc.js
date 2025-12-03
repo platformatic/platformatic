@@ -299,9 +299,12 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         })
 
         // Expose useful context
-        replServer.context.app = controller.capability?.app
+        // For service-based capabilities, expose the Fastify app
+        replServer.context.app = controller.capability?.getApplication?.()
+        replServer.context.capability = controller.capability
         replServer.context.platformatic = globalThis.platformatic
         replServer.context.config = controller.applicationConfig
+        replServer.context.logger = globalThis.platformatic?.logger
 
         replServer.on('exit', () => {
           port.postMessage({ type: 'exit' })
