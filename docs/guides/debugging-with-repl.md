@@ -47,7 +47,7 @@ wattpm version
 To start a REPL session in your application:
 
 ```bash
-# Connect to the entrypoint application (auto-detect runtime)
+# Auto-connect if single application, or list available applications
 wattpm repl
 
 # Connect to a specific application
@@ -74,7 +74,7 @@ To exit the REPL session:
 api-service> .exit
 ```
 
-Or press `Ctrl+C` twice.
+Or press `Ctrl+D` (EOF) or `Ctrl+C` twice.
 
 ## Exploring the Application Context
 

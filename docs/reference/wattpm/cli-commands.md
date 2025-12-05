@@ -415,13 +415,13 @@ wattpm inject my-app api-application --path /users --output response.json
 Starts an interactive Node.js REPL (Read-Eval-Print Loop) session inside a running application's worker thread. This allows you to inspect and interact with your application at runtime for debugging and exploration.
 
 ```bash
-wattpm repl [id] [application]
+wattpm repl [id] <application>
 ```
 
 **Arguments:**
 
-- `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, uses entrypoint if omitted)
+- `id` - Process ID or runtime name (optional if only one runtime is running)
+- `application` - Application name (if omitted, auto-connects when single application or lists available applications)
 
 **Available Context:**
 
@@ -447,7 +447,7 @@ Standard Node.js REPL commands are available:
 **Examples:**
 
 ```bash
-# Start REPL in the entrypoint application (auto-detect runtime)
+# Auto-connect if single application, or list available applications
 wattpm repl
 
 # Start REPL in a specific application
