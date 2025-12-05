@@ -280,7 +280,12 @@ export async function startProfiling (options = {}) {
   }
 
   // Initialize source mapper if source maps are requested
-  state.sourceMapsEnabled = options.sourceMaps === true
+  if (options.sourceMaps === undefined) {
+    state.sourceMapsEnabled = process.sourceMapsEnabled
+  } else if (options.sourceMaps === true) {
+    state.sourceMapsEnabled = true
+  }
+
   if (state.sourceMapsEnabled) {
     await initializeSourceMapper()
   }
