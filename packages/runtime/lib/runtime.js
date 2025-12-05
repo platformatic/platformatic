@@ -885,6 +885,10 @@ export class Runtime extends EventEmitter {
     this.#concurrency = concurrency
   }
 
+  getRoot () {
+    return this.#root
+  }
+
   getUrl () {
     return this.#url
   }

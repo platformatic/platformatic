@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/react-router/3.0.0.json",
+  "application": {
+    "basePath": "/frontend",
+    "commands": {
+      "build": "npm run build",
+      "development": "npm run dev",
+      "production": "npm run start"
+    }
+  }
+}

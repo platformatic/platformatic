@@ -6,9 +6,9 @@ import {
   createServerListener,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  resolvePackageViaCJS
 } from '@platformatic/basic'
-import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -88,17 +88,7 @@ export class NextCapability extends BaseCapability {
     globalThis.platformatic.events.emit('plt:next:close')
 
     if (this.isProduction && this.#server) {
-      await new Promise((resolve, reject) => {
-        this.#server.close(error => {
-          /* c8 ignore next 3 */
-          if (error) {
-            return reject(error)
-          }
-
-          resolve()
-        })
-      })
-
+      await this._closeServer(this.#server)
       await this.childManager.close()
     } else if (this.#child) {
       const exitPromise = once(this.#child, 'exit')

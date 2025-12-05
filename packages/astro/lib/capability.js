@@ -7,9 +7,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  resolvePackageViaCJS
 } from '@platformatic/basic'
-import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
