@@ -720,7 +720,7 @@ importers:
         version: 11.3.0
       '@fastify/reply-from':
         specifier: ^12.0.0
-        version: 12.3.1
+        version: 12.5.0
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.2.0
@@ -1081,7 +1081,7 @@ importers:
     devDependencies:
       '@fastify/reply-from':
         specifier: ^12.0.0
-        version: 12.3.1
+        version: 12.5.0
       '@platformatic/gateway':
         specifier: workspace:*
         version: link:../gateway
@@ -3329,8 +3329,8 @@ packages:
   '@fastify/proxy-addr@5.1.0':
     resolution: {integrity: sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw==}
 
-  '@fastify/reply-from@12.3.1':
-    resolution: {integrity: sha512-uaeijLjIceeU+T+9P50rMSOkLeKfBpv9blvw3kbK9+8ZJxTjGAgDkveW20ZiWMerWKd7WVHx6NiMPvQJ55eBLQ==}
+  '@fastify/reply-from@12.5.0':
+    resolution: {integrity: sha512-m7mTGjgtnpnZBk4I8r6eFJY8WB4kyvXJo2nAf5PBm5f3mj3P7G6H2D7mhmF25os/n6EGMWVyw/bpTUehvy0i8g==}
 
   '@fastify/send@4.1.0':
     resolution: {integrity: sha512-TMYeQLCBSy2TOFmV95hQWkiTYgC/SEx7vMdV+wnZVX4tt8VBLKzmH8vV9OzJehV0+XBfg+WxPMt5wp+JBUKsVw==}
@@ -12381,7 +12381,7 @@ snapshots:
 
   '@fastify/http-proxy@11.3.0':
     dependencies:
-      '@fastify/reply-from': 12.3.1
+      '@fastify/reply-from': 12.5.0
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
       ws: 8.18.3
@@ -12430,7 +12430,7 @@ snapshots:
       '@fastify/forwarded': 3.0.1
       ipaddr.js: 2.2.0
 
-  '@fastify/reply-from@12.3.1':
+  '@fastify/reply-from@12.5.0':
     dependencies:
       '@fastify/error': 4.2.0
       end-of-stream: 1.4.5
