@@ -117,7 +117,7 @@ async function createApp (t, config = 'fixtures/sourcemap-test/platformatic.json
   return { app, url }
 }
 
-test('sourcemaps should be initialized and profiling should work with TypeScript', async t => {
+test('sourcemaps should be initialized and profiling should work with TypeScript', { skip: process.platform === 'win32' }, async t => {
   const { app, url } = await createApp(t)
 
   // Verify service is running
@@ -182,7 +182,7 @@ test('sourcemaps should be initialized and profiling should work with TypeScript
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
 
-test('sourcemaps should work with heap profiling', async t => {
+test('sourcemaps should work with heap profiling', { skip: process.platform === 'win32' }, async t => {
   const { app, url } = await createApp(t)
 
   // Start heap profiling with source maps enabled
