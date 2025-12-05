@@ -6,23 +6,22 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  resolvePackageViaCJS
 } from '@platformatic/basic'
-import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { parse, satisfies } from 'semver'
+import { satisfies } from 'semver'
 import { version } from './schema.js'
 
 const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0']
 
 export class ViteCapability extends BaseCapability {
   #vite
-  #viteVersion
   #app
   #server
   #basePath
@@ -46,7 +45,6 @@ export class ViteCapability extends BaseCapability {
     }
 
     const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
-    this.#viteVersion = parse(vitePackage.version)
 
     if (!supportedVersions.some(v => satisfies(vitePackage.version, v))) {
       throw new errors.UnsupportedVersion('vite', vitePackage.version, supportedVersions)
@@ -155,13 +153,13 @@ export class ViteCapability extends BaseCapability {
     return { statusCode, headers, body, payload, rawPayload }
   }
 
-  getMeta () {
+  getMeta (prefix) {
     const config = this.subprocessConfig ?? this.#app?.config
 
     const gateway = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
-      prefix: this.basePath ?? config?.base ?? this.#basePath,
+      prefix: this.basePath ?? config?.base ?? prefix ?? this.#basePath,
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
     }
@@ -169,8 +167,20 @@ export class ViteCapability extends BaseCapability {
     return { gateway }
   }
 
-  _getVite () {
+  _getApp () {
     return this.#app
+  }
+
+  _setApp (app) {
+    this.#app = app
+  }
+
+  _getViteModule () {
+    return this.#vite
+  }
+
+  _setViteModule (vitePath) {
+    this.#vite = vitePath
   }
 
   async #startDevelopment () {
@@ -258,18 +268,10 @@ export class ViteCapability extends BaseCapability {
 
     this.#app = fastify({ loggerInstance: this.logger })
 
-    const outputDirectory = resolve(this.root, config.application.outputDirectory)
-    this.verifyOutputDirectory(outputDirectory)
-    const buildInfoPath = resolve(outputDirectory, '.platformatic-build.json')
+    const outputDirectory = this.outputDirectory ?? resolve(this.root, config.application.outputDirectory)
 
-    if (!this.#basePath && existsSync(buildInfoPath)) {
-      try {
-        const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
-        this.#basePath = buildInfo.basePath
-      } catch (e) {
-        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
-      }
-    }
+    this.verifyOutputDirectory(outputDirectory)
+    this.#basePath = await this._getBasePathFromBuildInfo()
 
     await this.#app.register(fastifyStatic, {
       root: outputDirectory,
@@ -287,6 +289,23 @@ export class ViteCapability extends BaseCapability {
     }
 
     await this.#app.ready()
+  }
+
+  async _getBasePathFromBuildInfo () {
+    const config = this.config
+    const outputDirectory = this.outputDirectory ?? resolve(this.root, config.application.outputDirectory)
+    const buildInfoPath = this.buildInfoPath ?? resolve(outputDirectory, '.platformatic-build.json')
+
+    if (!this.#basePath && existsSync(buildInfoPath)) {
+      try {
+        const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
+        this.#basePath = buildInfo.basePath
+      } catch (e) {
+        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
+      }
+    }
+
+    return this.#basePath
   }
 }
 

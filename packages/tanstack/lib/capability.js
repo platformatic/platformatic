@@ -1,9 +1,14 @@
-import { cleanBasePath, createServerListener, ensureTrailingSlash, errors, getServerUrl } from '@platformatic/basic'
-import { importFile, resolvePackageViaESM } from '@platformatic/basic/lib/utils.js'
-import { ensureLoggableError } from '@platformatic/foundation'
+import {
+  cleanBasePath,
+  createServerListener,
+  ensureTrailingSlash,
+  errors,
+  getServerUrl,
+  importFile,
+  resolvePackageViaESM
+} from '@platformatic/basic'
 import { ViteCapability } from '@platformatic/vite'
 import inject from 'light-my-request'
-import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
@@ -70,17 +75,7 @@ export class TanstackCapability extends ViteCapability {
     const config = this.config
     const outputDirectory = resolve(this.root, config.application.outputDirectory)
     this.verifyOutputDirectory(outputDirectory)
-
-    const buildInfoPath = resolve(outputDirectory, '.platformatic-build.json')
-
-    if (!this.#basePath && existsSync(buildInfoPath)) {
-      try {
-        const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
-        this.#basePath = buildInfo.basePath
-      } catch (e) {
-        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
-      }
-    }
+    this.#basePath = await this._getBasePathFromBuildInfo()
 
     const serverOptions = this.serverConfig
     const serverPromise = createServerListener(
@@ -113,32 +108,7 @@ export class TanstackCapability extends ViteCapability {
       return
     }
 
-    return new Promise((resolve, reject) => {
-      this.#server.close(error => {
-        /* c8 ignore next 3 */
-        if (error) {
-          return reject(error)
-        }
-
-        resolve()
-      })
-    })
-  }
-
-  getMeta () {
-    if (!this.isProduction) {
-      return super.getMeta()
-    }
-
-    return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: true,
-        needsRootTrailingSlash: true
-      }
-    }
+    return this._closeServer(this.#server)
   }
 
   async inject (injectParams, onInject) {
@@ -151,8 +121,9 @@ export class TanstackCapability extends ViteCapability {
     /* c8 ignore next 3 */
     if (onInject) {
       return
-    } // Since inject might be called from the main thread directly via ITC, let's clean it up
+    }
 
+    // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
     return { statusCode, headers, body, payload, rawPayload }
   }

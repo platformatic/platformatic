@@ -265,16 +265,7 @@ export class NodeCapability extends BaseCapability {
       return
     }
 
-    return new Promise((resolve, reject) => {
-      this.#server.close(error => {
-        /* c8 ignore next 3 */
-        if (error) {
-          return reject(error)
-        }
-
-        resolve()
-      })
-    })
+    return this._closeServer(this.#server)
   }
 
   async build () {

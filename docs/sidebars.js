@@ -184,9 +184,9 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'Next.js',
+              label: 'Astro',
               collapsed: true,
-              items: ['reference/next/overview', 'reference/next/configuration']
+              items: ['reference/astro/overview', 'reference/astro/configuration', 'reference/astro/caching']
             },
             {
               type: 'category',
@@ -196,21 +196,27 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'Tanstack',
+              label: 'Next.js',
               collapsed: true,
-              items: ['reference/tanstack/overview', 'reference/tanstack/configuration']
+              items: ['reference/next/overview', 'reference/next/configuration']
             },
             {
               type: 'category',
-              label: 'Astro',
+              label: 'React Router',
               collapsed: true,
-              items: ['reference/astro/overview', 'reference/astro/configuration', 'reference/astro/caching']
+              items: ['reference/react-router/overview', 'reference/react-router/configuration']
             },
             {
               type: 'category',
               label: 'Remix',
               collapsed: true,
               items: ['reference/remix/overview', 'reference/remix/configuration', 'reference/remix/caching']
+            },
+            {
+              type: 'category',
+              label: 'Tanstack',
+              collapsed: true,
+              items: ['reference/tanstack/overview', 'reference/tanstack/configuration']
             },
             {
               type: 'category',

@@ -159,21 +159,9 @@ export class BaseCapability extends EventEmitter {
     throw new Error('BaseCapability.start must be overriden by the subclasses')
   }
 
+  // This is to allow grand-children to access the method without calling super.stop()
   async stop () {
-    if (this.#pendingDependenciesWaits.size > 0) {
-      await Promise.allSettled(this.#pendingDependenciesWaits)
-    }
-
-    if (this.#reuseTcpPortsSubscribers) {
-      tracingChannel('net.server.listen').unsubscribe(this.#reuseTcpPortsSubscribers)
-      this.#reuseTcpPortsSubscribers = null
-    }
-
-    // Stop OTLP bridge if running
-    if (this.otlpBridge) {
-      this.otlpBridge.stop()
-      this.otlpBridge = null
-    }
+    return this._stop()
   }
 
   build () {
@@ -653,6 +641,23 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
+  async _stop () {
+    if (this.#pendingDependenciesWaits.size > 0) {
+      await Promise.allSettled(this.#pendingDependenciesWaits)
+    }
+
+    if (this.#reuseTcpPortsSubscribers) {
+      tracingChannel('net.server.listen').unsubscribe(this.#reuseTcpPortsSubscribers)
+      this.#reuseTcpPortsSubscribers = null
+    }
+
+    // Stop OTLP bridge if running
+    if (this.otlpBridge) {
+      this.otlpBridge.stop()
+      this.otlpBridge = null
+    }
+  }
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
@@ -667,6 +672,20 @@ export class BaseCapability extends EventEmitter {
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
     await this.#setupOtlpExporter()
+  }
+
+  _closeServer (server) {
+    const { promise, resolve, reject } = Promise.withResolvers()
+
+    server.close(error => {
+      if (error) {
+        return reject(error)
+      }
+
+      resolve()
+    })
+
+    return promise
   }
 
   async #collectMetrics () {
