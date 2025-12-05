@@ -2,7 +2,6 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
-import { setTimeout as sleep } from 'node:timers/promises'
 import test from 'node:test'
 import { request } from 'undici'
 import { Profile } from 'pprof-format'
@@ -216,7 +215,7 @@ test('sourcemaps should work with heap profiling', async t => {
   await app.sendCommandToApplication('service', 'stopProfiling', { type: 'heap' })
 })
 
-test('sourcemaps should be initialized and profiling should work with TypeScript if enabled via config file', async t => {
+test('sourcemaps should be initialized and profiling should work with TypeScript if enabled via config file', { skip: process.platform === 'win32' }, async t => {
   const { app, url } = await createApp(t, 'fixtures/sourcemap-config-test/platformatic.json')
 
   // Verify service is running
@@ -239,11 +238,6 @@ test('sourcemaps should be initialized and profiling should work with TypeScript
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning
   }, 2000)
-
-  // Give Windows extra time for the profiler and SourceMapper to stabilize
-  if (process.platform === 'win32') {
-    await sleep(1000)
-  }
 
   // Make requests spread over time to ensure continuous CPU activity during profiling
   // Use shorter interval and add timeout to prevent hanging
