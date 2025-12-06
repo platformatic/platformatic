@@ -288,6 +288,44 @@ export async function managementApiPlugin (app, opts) {
   app.get('/logs/live', { websocket: true }, async socket => {
     runtime.addLoggerDestination(createWebSocketStream(socket))
   })
+
+  app.get('/applications/:id/repl', { websocket: true }, async (socket, request) => {
+    const { id } = request.params
+
+    try {
+      // Start REPL and get the communication port
+      const port = await runtime.startApplicationRepl(id)
+
+      // Forward messages between WebSocket and MessagePort
+      port.on('message', (message) => {
+        if (message.type === 'output') {
+          socket.send(message.data)
+        } else if (message.type === 'exit') {
+          socket.close()
+        }
+      })
+
+      socket.on('message', (data) => {
+        port.postMessage({ type: 'input', data: data.toString() })
+      })
+
+      socket.on('close', () => {
+        port.postMessage({ type: 'close' })
+        port.close()
+      })
+
+      socket.on('error', () => {
+        port.postMessage({ type: 'close' })
+        port.close()
+      })
+    } catch (error) {
+      socket.send(JSON.stringify({
+        error: error.message,
+        code: error.code
+      }))
+      socket.close()
+    }
+  })
 }
 
 export async function startManagementApi (runtime) {

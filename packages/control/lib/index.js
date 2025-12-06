@@ -495,6 +495,18 @@ export class RuntimeApiClient {
     return webSocketStream
   }
 
+  getRuntimeApplicationRepl (pid, applicationId) {
+    const socketPath = this.#getSocketPathFromPid(pid)
+
+    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+
+    const webSocketUrl = protocol + socketPath + `:/api/v1/applications/${applicationId}/repl`
+    const ws = new WebSocket(webSocketUrl)
+    this.#webSockets.add(ws)
+
+    return ws
+  }
+
   async getRuntimeLogsStream (pid, logsId, options = {}) {
     const runtimePID = options.runtimePID ?? pid
     const client = this.#getUndiciClient(pid)

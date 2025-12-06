@@ -13,6 +13,7 @@ import { logsCommand } from './lib/commands/logs.js'
 import { applicationsCommand, configCommand, envCommand, psCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
+import { replCommand } from './lib/commands/repl.js'
 import { version } from './lib/schema.js'
 
 export * from './lib/schema.js'
@@ -105,6 +106,9 @@ export async function main () {
       break
     case 'pprof':
       command = pprofCommand
+      break
+    case 'repl':
+      command = replCommand
       break
     case 'applications:add':
       command = applicationsAddCommand
