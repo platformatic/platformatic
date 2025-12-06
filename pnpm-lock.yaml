@@ -365,7 +365,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/basic-auth':
         specifier: ^6.0.0
         version: 6.2.0
@@ -1351,7 +1351,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/basic-auth':
         specifier: ^6.0.0
         version: 6.2.0
@@ -1541,7 +1541,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/autoload':
         specifier: ^6.0.0
         version: 6.3.1
@@ -3251,8 +3251,8 @@ packages:
   '@fastify/accept-negotiator@2.0.1':
     resolution: {integrity: sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ==}
 
-  '@fastify/accepts@5.0.3':
-    resolution: {integrity: sha512-JQE0PVW7V5aIvWNQvBvlz3K92Q4OnDcC8ERcJnFd9a11/IVi/eV6SCutOUh9K2CAeQUMkJJyRog3Gltn7uAF6g==}
+  '@fastify/accepts@5.0.4':
+    resolution: {integrity: sha512-XKtvD77ZLQ/4G5r1WhPua5+rTctt16DF4XUMBQuP8KM/Ic431GhfqjJoYvwS4aDaUhoRTiU9DGFaMZ3TRM6ctg==}
 
   '@fastify/ajv-compiler@4.0.5':
     resolution: {integrity: sha512-KoWKW+MhvfTRWL4qrhUwAAZoaChluo0m0vbiJlGMt2GXvL4LVPQEjt8kSpHI3IBq5Rez8fg+XeH3cneztq+C7A==}
@@ -6287,6 +6287,9 @@ packages:
 
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
+
+  csstype@3.2.3:
+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
   data-uri-to-buffer@3.0.1:
     resolution: {integrity: sha512-WboRycPNsVw3B3TL559F7kuBUM4d8CgMEvk6xEJlOp7OBPjt6G7z8WMWlD2rOFZLk6OYfFIUGsCOWzcQH9K2og==}
@@ -12305,7 +12308,7 @@ snapshots:
 
   '@fastify/accept-negotiator@2.0.1': {}
 
-  '@fastify/accepts@5.0.3':
+  '@fastify/accepts@5.0.4':
     dependencies:
       accepts: 1.3.8
       fastify-plugin: 5.0.1
@@ -15894,6 +15897,8 @@ snapshots:
   cssesc@3.0.0: {}
 
   csstype@3.1.3: {}
+
+  csstype@3.2.3: {}
 
   data-uri-to-buffer@3.0.1: {}
 
@@ -21020,7 +21025,7 @@ snapshots:
 
   solid-js@1.9.10:
     dependencies:
-      csstype: 3.1.3
+      csstype: 3.2.3
       seroval: 1.3.2
       seroval-plugins: 1.3.3(seroval@1.3.2)
 
