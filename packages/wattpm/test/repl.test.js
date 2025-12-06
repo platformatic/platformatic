@@ -26,7 +26,8 @@ test('repl - should start a REPL session in the application', async t => {
     }
   }
 
-  const replProcess = wattpm('repl', 'main')
+  // Pass both runtime name and application name since fixture has multiple apps
+  const replProcess = wattpm('repl', 'main', 'main')
 
   // Collect output
   let output = ''
@@ -88,7 +89,8 @@ test('repl - should have access to platformatic context', async t => {
     }
   }
 
-  const replProcess = wattpm('repl', 'main')
+  // Pass both runtime name and application name since fixture has multiple apps
+  const replProcess = wattpm('repl', 'main', 'main')
 
   // Collect output
   let output = ''
