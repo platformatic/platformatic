@@ -1491,6 +1491,12 @@
               "sourceMaps": {
                 "type": "boolean"
               },
+              "nodeModulesSourceMaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "packageManager": {
                 "type": "string",
                 "enum": [
@@ -2737,6 +2743,13 @@
           "type": "boolean",
           "default": false
         },
+        "nodeModulesSourceMaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "scheduler": {
           "type": "array",
           "items": {
@@ -2989,6 +3002,12 @@
             },
             "sourceMaps": {
               "type": "boolean"
+            },
+            "nodeModulesSourceMaps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "packageManager": {
               "type": "string",

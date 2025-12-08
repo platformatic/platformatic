@@ -556,6 +556,7 @@ export interface PlatformaticComposerConfig {
       [k: string]: string;
     };
     sourceMaps?: boolean;
+    nodeModulesSourceMaps?: string[];
     scheduler?: {
       enabled?: boolean | string;
       name: string;
@@ -580,6 +581,63 @@ export interface PlatformaticComposerConfig {
          * via the `patternProperty` "^.*$".
          */
         [k: string]: string | [string, ...string[]];
+      };
+    };
+    application?: {
+      reuseTcpPorts?: boolean;
+      workers?:
+        | number
+        | string
+        | {
+            static?: number;
+            minimum?: number;
+            maximum?: number;
+            [k: string]: unknown;
+          };
+      health?: {
+        enabled?: boolean | string;
+        interval?: number | string;
+        gracePeriod?: number | string;
+        maxUnhealthyChecks?: number | string;
+        maxELU?: number | string;
+        maxHeapUsed?: number | string;
+        maxHeapTotal?: number | string;
+        maxYoungGeneration?: number | string;
+        codeRangeSize?: number | string;
+      };
+      arguments?: string[];
+      env?: {
+        [k: string]: string;
+      };
+      envfile?: string;
+      sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
+      packageManager?: "npm" | "pnpm" | "yarn";
+      preload?: string | string[];
+      nodeOptions?: string;
+      execArgv?: string[];
+      permissions?: {
+        fs?: {
+          read?: string[];
+          write?: string[];
+        };
+      };
+      telemetry?: {
+        /**
+         * An array of instrumentations loaded if telemetry is enabled
+         */
+        instrumentations?: (
+          | string
+          | {
+              package: string;
+              exportName?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }
+        )[];
+        [k: string]: unknown;
       };
     };
   };

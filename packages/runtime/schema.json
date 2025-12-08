@@ -227,6 +227,12 @@
               "sourceMaps": {
                 "type": "boolean"
               },
+              "nodeModulesSourceMaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "packageManager": {
                 "type": "string",
                 "enum": [
@@ -525,6 +531,12 @@
           "sourceMaps": {
             "type": "boolean"
           },
+          "nodeModulesSourceMaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "packageManager": {
             "type": "string",
             "enum": [
@@ -821,6 +833,12 @@
           "sourceMaps": {
             "type": "boolean"
           },
+          "nodeModulesSourceMaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "packageManager": {
             "type": "string",
             "enum": [
@@ -1116,6 +1134,12 @@
           },
           "sourceMaps": {
             "type": "boolean"
+          },
+          "nodeModulesSourceMaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "packageManager": {
             "type": "string",
@@ -2387,6 +2411,13 @@
     "sourceMaps": {
       "type": "boolean",
       "default": false
+    },
+    "nodeModulesSourceMaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     },
     "scheduler": {
       "type": "array",

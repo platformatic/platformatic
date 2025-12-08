@@ -190,6 +190,7 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     sourceMaps: false,
+    nodeModulesSourceMaps: [],
     reuseTcpPorts: true,
     restartOnError: 2,
     exitOnUnhandledErrors: true,
