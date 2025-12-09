@@ -3,8 +3,10 @@ import { Worker } from 'node:worker_threads'
 import { resolve } from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
+import { platform } from 'node:os'
 
 const execAsync = promisify(exec)
+const isWindows = platform() === 'win32'
 
 test.before(async () => {
   const serviceDir = resolve(import.meta.dirname, 'fixtures/sourcemap-test/service')
@@ -16,7 +18,7 @@ test.before(async () => {
 })
 
 // Test if SourceMapper works in a plain worker thread on Windows
-test('minimal SourceMapper test in worker thread', async (t) => {
+test('minimal SourceMapper test in worker thread', { skip: isWindows }, async (t) => {
   await new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./fixtures/minimal-sourcemap-worker.js', import.meta.url))
 
