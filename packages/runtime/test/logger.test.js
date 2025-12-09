@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { startPath } from './cli/helper.js'
-import { updateFile } from './helpers.js'
+import { isWindows, updateFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 function stdioOutputToLogs (data) {
@@ -312,7 +312,7 @@ test('should get json logs from thread applications when they are not pino defau
   )
 })
 
-test('should handle logs from thread applications as they are with captureStdio: false', async t => {
+test('should handle logs from thread applications as they are with captureStdio: false', { skip: isWindows }, async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
   let responses = 0
