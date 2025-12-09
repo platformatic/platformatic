@@ -6,10 +6,10 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { ensureDependencies, prepareRuntime } from '../../basic/test/helper.js'
+import { ensureDependencies, isWindows, prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, waitForStart, wattpm } from './helper.js'
 
-test('applications:add - should add application to an existing app', async t => {
+test('applications:add - should add application to an existing app', { skip: isWindows }, async t => {
   const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, 'watt-1-only.json')
 
   t.after(() => {
@@ -210,7 +210,7 @@ test('applications:add - should complain when a runtime is not found', async t =
   ok(addProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
-test('applications:remove - should remove applications from an existing app', async t => {
+test('applications:remove - should remove applications from an existing app', { skip: isWindows }, async t => {
   const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, 'watt-all.json')
 
   t.after(() => {
