@@ -1,5 +1,6 @@
 import { safeRemove } from '@platformatic/foundation'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
+import getPort from 'get-port'
 import { connect } from 'inspector-client'
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
@@ -458,6 +459,29 @@ test('stop - should complain when a runtime is not found', async t => {
 
 test('restart - should restart an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('start', rootDir)
+  await waitForStart(startProcess)
+
+  const restart = await wattpm('restart', 'main')
+
+  ok(restart.stdout.includes('Runtime main has been restarted.'))
+})
+
+test('restart - can restart the entrypoint when port is fixed and reusePort is disabled', async t => {
+  const port = await getPort()
+
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', (root, config) => {
+    return updateConfigFile(resolve(root, 'watt.json'), config => {
+      config.server = { port }
+      config.reuseTcpPorts = false
+    })
+  })
 
   t.after(() => {
     startProcess.kill('SIGINT')
