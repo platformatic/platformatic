@@ -790,6 +790,10 @@ export const application = {
     sourceMaps: {
       type: 'boolean'
     },
+    nodeModulesSourceMaps: {
+      type: 'array',
+      items: { type: 'string' }
+    },
     packageManager: {
       type: 'string',
       enum: ['npm', 'pnpm', 'yarn']
@@ -1278,6 +1282,11 @@ export const runtimeProperties = {
   sourceMaps: {
     type: 'boolean',
     default: false
+  },
+  nodeModulesSourceMaps: {
+    type: 'array',
+    items: { type: 'string' },
+    default: []
   },
   scheduler: {
     type: 'array',
