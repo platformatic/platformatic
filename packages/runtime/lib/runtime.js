@@ -2085,6 +2085,14 @@ export class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(applicationId, index, workersCount)
     let newWorker
 
+    const stopBeforeStart =
+      applicationConfig.entrypoint &&
+      (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
+
+    if (stopBeforeStart) {
+      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+    }
+
     try {
       if (!silent) {
         this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
@@ -2108,17 +2116,25 @@ export class Runtime extends EventEmitter {
 
       this.#workers.set(workerId, newWorker)
       this.#meshInterceptor.route(applicationId, newWorker)
-
-      // Remove the old worker and then kill it
-      await sendViaITC(worker, 'removeFromMesh')
     } catch (e) {
       newWorker?.terminate?.()
       throw e
     }
 
+    if (!stopBeforeStart) {
+      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+    }
+  }
+
+  async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
     if (!silent) {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
+
+    // Remove the old worker and then kill it
+    await sendViaITC(worker, 'removeFromMesh')
+
+    // Stop the old worker to free the port
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
   }
 
