@@ -95,7 +95,7 @@ importers:
         version: link:../telemetry
       execa:
         specifier: ^9.3.1
-        version: 9.6.0
+        version: 9.6.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -240,7 +240,7 @@ importers:
         version: 9.36.0(jiti@2.6.1)
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.44.1(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
@@ -289,7 +289,7 @@ importers:
         version: 1.6.0
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       inquirer:
         specifier: ^9.2.16
         version: 9.3.8(@types/node@22.18.13)
@@ -434,7 +434,7 @@ importers:
         version: 6.0.1
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       fastify:
         specifier: ^5.0.0
         version: 5.6.2
@@ -762,7 +762,7 @@ importers:
         version: 2.14.6
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -880,7 +880,7 @@ importers:
         version: 2.1.0
       execa:
         specifier: ^9.6.0
-        version: 9.6.0
+        version: 9.6.1
       fastify:
         specifier: ^5.0.0
         version: 5.6.2
@@ -1105,7 +1105,7 @@ importers:
         version: 9.36.0(jiti@2.6.1)
       execa:
         specifier: ^9.5.1
-        version: 9.6.0
+        version: 9.6.1
       fastify:
         specifier: ^5.0.0
         version: 5.6.2
@@ -1496,7 +1496,7 @@ importers:
         version: 9.36.0(jiti@2.6.1)
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       express:
         specifier: ^4.18.3
         version: 4.22.1
@@ -1613,7 +1613,7 @@ importers:
         version: 6.0.1
       execa:
         specifier: ^9.0.0
-        version: 9.6.0
+        version: 9.6.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -2220,7 +2220,7 @@ importers:
         version: 9.36.0(jiti@2.6.1)
       execa:
         specifier: ^9.4.0
-        version: 9.6.0
+        version: 9.6.1
       inspector-client:
         specifier: ^0.2.0
         version: 0.2.0
@@ -2293,7 +2293,7 @@ importers:
         version: 16.6.1
       execa:
         specifier: ^9.4.0
-        version: 9.6.0
+        version: 9.6.1
       semver:
         specifier: ^7.7.0
         version: 7.7.3
@@ -6875,8 +6875,8 @@ packages:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
 
-  execa@9.6.0:
-    resolution: {integrity: sha512-jpWzZ1ZhwUmeWRhS7Qv3mhpOhLfwI+uAX4e5fOcXqwMR7EcJ0pj2kV1CVzHVMX/LphnKWD3LObjZCoJ71lKpHw==}
+  execa@9.6.1:
+    resolution: {integrity: sha512-9Be3ZoN4LmYR90tUoVu2te2BsbzHfhJyfEiAVfz7N5/zv+jduIfLrV2xdQXOHbaD6KgpGdO9PRPM1Y4Q9QkPkA==}
     engines: {node: ^18.19.0 || >=20.5.0}
 
   exit-hook@2.2.1:
@@ -16690,7 +16690,7 @@ snapshots:
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
 
-  execa@9.6.0:
+  execa@9.6.1:
     dependencies:
       '@sindresorhus/merge-streams': 4.0.0
       cross-spawn: 7.0.6
