@@ -48,5 +48,16 @@ Supported object properties:
 Configures Next.js. Supported object properties:
 
 - **`trailingSlash`**: Enables [trailingSlash](https://nextjs.org/docs/pages/api-reference/config/next-config-js/trailingSlash) in the `next.config.js`.
+- **`useExperimentalAdapter`**: Enables the [`experimental adapterPath`](https://nextjs.org/docs/app/api-reference/config/next-config-js/adapterPath) integration to modify the `next.config.js`. It requires you to add the following to your `next.config.js` file:
+
+  ```
+  import { getAdapterPath } from '@platformatic/next'
+
+  module.exports = {
+    experimental: {
+      adapterPath: getAdapterPath()
+    },
+  }
+  ```
 
 <Issues />

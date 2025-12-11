@@ -45,6 +45,10 @@ const next = {
     trailingSlash: {
       type: 'boolean',
       default: false
+    },
+    useExperimentalAdapter: {
+      type: 'boolean',
+      default: false
     }
   },
   default: {},

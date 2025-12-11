@@ -1,5 +1,6 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
 
@@ -13,6 +14,10 @@ export async function transform (config, schema, options) {
   }
 
   return config
+}
+
+export function getAdapterPath () {
+  return resolvePath(import.meta.dirname, 'lib', 'adapter.js')
 }
 
 export async function enhanceNextConfig (nextConfig, ...args) {
