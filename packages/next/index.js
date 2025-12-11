@@ -78,4 +78,5 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 
 export * as cachingValkey from './lib/caching/valkey-isr.js'
 export * from './lib/capability.js'
+export * as errors from './lib/errors.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

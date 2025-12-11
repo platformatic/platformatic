@@ -1,10 +1,10 @@
 import {
   BaseCapability,
+  errors as basicErrors,
   ChildManager,
   cleanBasePath,
   createChildProcessListener,
   createServerListener,
-  errors,
   getServerUrl,
   importFile,
   resolvePackageViaCJS
@@ -16,6 +16,7 @@ import { glob, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
+import * as errors from './errors.js'
 import { version } from './schema.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
@@ -59,7 +60,7 @@ export class NextCapability extends BaseCapability {
 
     /* c8 ignore next 3 */
     if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
-      throw new errors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
+      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
 
@@ -300,10 +301,13 @@ export class NextCapability extends BaseCapability {
     }
 
     if (!serverEntrypoint) {
-      throw new Error('Cannot find server.js entrypoint in .next/standalone.')
+      throw new errors.StandaloneServerNotFound()
     }
 
-    // Now parse the server.js to extract the nextConfig.
+    // The default Next.js standalone server uses chdir, which is not supported in worker threads.
+    // Therefore we need to reproduce the server.js logic here, which what we do in the rest of this method.
+
+    // Parse the server.js to extract the nextConfig.
     // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
     let nextConfig
     try {
@@ -311,7 +315,7 @@ export class NextCapability extends BaseCapability {
       const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
       nextConfig = JSON.parse(nextConfigMatch[1])
     } catch (e) {
-      throw new Error('Cannot parse nextConfig from standalone server.js.', { cause: e })
+      throw new errors.CannotParseStandaloneServer({ cause: e })
     }
 
     // Fix cache handlers path
