@@ -1,13 +1,7 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
-import { sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { NextCapability } from './lib/capability.js'
+import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
-
-function getCacheHandlerPath (name) {
-  return fileURLToPath(new URL(`./lib/caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
-}
 
 /* c8 ignore next 9 */
 export async function transform (config, schema, options) {
@@ -35,20 +29,30 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig.basePath = basePath
   }
 
+  const modifications = []
+
   if (config.cache?.adapter) {
     if (nextVersion.major > 15 && config.cache?.cacheComponents && typeof nextConfig.cacheComponents === 'undefined') {
       nextConfig.cacheComponents = true
       nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
       nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
       nextConfig.cacheMaxMemorySize = 0
+      modifications.push(['componentsCache', config.cache.adapter])
     } else if (typeof nextConfig.cacheHandler === 'undefined') {
       nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
       nextConfig.cacheMaxMemorySize = 0
+      modifications.push(['isrCache', config.cache.adapter])
     }
   }
 
   if (config.next?.trailingSlash && typeof nextConfig.trailingSlash === 'undefined') {
     nextConfig.trailingSlash = true
+    modifications.push(['trailingSlash', 'enabled'])
+  }
+
+  if (modifications.length > 0) {
+    nextConfig.env ??= {}
+    nextConfig.env.PLT_NEXT_MODIFICATIONS = JSON.stringify(Object.fromEntries(modifications))
   }
 
   globalThis.platformatic.notifyConfig(nextConfig)
