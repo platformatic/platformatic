@@ -1,23 +1,30 @@
 import {
   BaseCapability,
+  errors as basicErrors,
   ChildManager,
   cleanBasePath,
   createChildProcessListener,
   createServerListener,
-  errors,
   getServerUrl,
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
-import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve as resolvePath } from 'node:path'
+import { existsSync } from 'node:fs'
+import { glob, readFile, writeFile } from 'node:fs/promises'
+import { dirname, resolve as resolvePath, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
+import * as errors from './errors.js'
 import { version } from './schema.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
+
+export function getCacheHandlerPath (name) {
+  return fileURLToPath(new URL(`./caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
+}
 
 export class NextCapability extends BaseCapability {
   #basePath
@@ -53,7 +60,7 @@ export class NextCapability extends BaseCapability {
 
     /* c8 ignore next 3 */
     if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
-      throw new errors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
+      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
 
@@ -115,21 +122,7 @@ export class NextCapability extends BaseCapability {
     }
 
     await this.buildWithCommand(command, this.#basePath, { loader, scripts: this.#getChildManagerScripts() })
-
-    // This is need to avoid Next.js 15.4+ to throw an error as process.cwd() is not the root of the Next.js application
-    if (
-      config.cache?.adapter &&
-      (this.#nextVersion.major > 15 || (this.#nextVersion.major === 15 && this.#nextVersion.minor >= 4))
-    ) {
-      const distDir = resolvePath(this.root, '.next')
-      const requiredServerFilesPath = resolvePath(distDir, 'required-server-files.json')
-      const requiredServerFiles = JSON.parse(await readFile(requiredServerFilesPath, 'utf-8'))
-
-      if (requiredServerFiles.config.cacheHandler) {
-        requiredServerFiles.config.cacheHandler = resolvePath(distDir, requiredServerFiles.config.cacheHandler)
-        await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
-      }
-    }
+    await this.#fixRequiredServerFiles()
   }
 
   /* c8 ignore next 5 */
@@ -244,7 +237,12 @@ export class NextCapability extends BaseCapability {
     )
 
     this.verifyOutputDirectory(resolvePath(this.root, '.next'))
-    await this.#startProductionNext()
+
+    if (existsSync(resolvePath(this.root, '.next/standalone'))) {
+      return this.#startProductionStandaloneNext()
+    } else {
+      return this.#startProductionNext()
+    }
   }
 
   async #startProductionNext () {
@@ -276,6 +274,96 @@ export class NextCapability extends BaseCapability {
       } else {
         await nextStart(serverOptions, this.root)
       }
+
+      this.#server = await serverPromise
+      this.url = getServerUrl(this.#server)
+    } finally {
+      await this.childManager.eject()
+    }
+  }
+
+  async #startProductionStandaloneNext () {
+    const rootDir = resolvePath(this.root, '.next', 'standalone')
+
+    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
+    // inside .next/standalone due to turbopack limitations in determining the root of the project.
+    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
+    const serverEntrypoints = await Array.fromAsync(
+      glob(['**/server.js'], { cwd: rootDir, ignore: ['node_modules', '**/node_modules/**'] })
+    )
+
+    let serverEntrypoint
+    for (const entrypoint of serverEntrypoints) {
+      if (existsSync(resolvePath(rootDir, dirname(entrypoint), '.next'))) {
+        serverEntrypoint = resolvePath(rootDir, entrypoint)
+        break
+      }
+    }
+
+    if (!serverEntrypoint) {
+      throw new errors.StandaloneServerNotFound()
+    }
+
+    // The default Next.js standalone server uses chdir, which is not supported in worker threads.
+    // Therefore we need to reproduce the server.js logic here, which what we do in the rest of this method.
+
+    // Parse the server.js to extract the nextConfig.
+    // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
+    let nextConfig
+    try {
+      const serverJsContent = await readFile(serverEntrypoint, 'utf-8')
+      const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
+      nextConfig = JSON.parse(nextConfigMatch[1])
+    } catch (e) {
+      throw new errors.CannotParseStandaloneServer({ cause: e })
+    }
+
+    // Fix cache handlers path
+    if (nextConfig.env?.PLT_NEXT_MODIFICATIONS) {
+      const pltNextModifications = JSON.parse(nextConfig.env.PLT_NEXT_MODIFICATIONS)
+
+      if (pltNextModifications.isrCache) {
+        nextConfig.cacheHandler = getCacheHandlerPath(`${pltNextModifications.isrCache}-isr`)
+      } else if (pltNextModifications.componentsCache) {
+        nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
+        nextConfig.cacheHandlers.default = getCacheHandlerPath(`${pltNextModifications.componentsCache}-components`)
+      }
+    }
+
+    try {
+      await this.childManager.inject()
+      await this.childManager.register()
+
+      const { hostname, port, backlog } = this.serverConfig ?? {}
+      const serverOptions = {
+        hostname: hostname || '127.0.0.1',
+        port: port || 0
+      }
+
+      const serverPromise = createServerListener(
+        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
+        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+        typeof backlog === 'number' ? { backlog } : {}
+      )
+
+      let keepAliveTimeout = parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
+      if (Number.isNaN(keepAliveTimeout) || !Number.isFinite(keepAliveTimeout) || keepAliveTimeout < 0) {
+        keepAliveTimeout = undefined
+      }
+
+      // This is needed by Next.js standalone server to pick up the correct configuration
+      process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
+      const { startServer } = await importFile(resolvePath(this.#next, './dist/server/lib/start-server.js'))
+
+      await startServer({
+        dir: dirname(serverEntrypoint),
+        isDev: false,
+        config: nextConfig,
+        hostname: serverOptions.hostname,
+        port: serverOptions.port,
+        allowRetry: false,
+        keepAliveTimeout
+      })
 
       this.#server = await serverPromise
       this.url = getServerUrl(this.#server)
@@ -330,5 +418,25 @@ export class NextCapability extends BaseCapability {
     })
 
     return childManager
+  }
+
+  async #fixRequiredServerFiles () {
+    const config = this.config
+    const distDir = resolvePath(this.root, '.next')
+
+    // This is need to avoid Next.js 15.4+ to throw an error as process.cwd() is not the root of the Next.js application
+    if (
+      config.cache?.adapter &&
+      (this.#nextVersion.major > 15 || (this.#nextVersion.major === 15 && this.#nextVersion.minor >= 4))
+    ) {
+      const requiredServerFilesPath = resolvePath(distDir, 'required-server-files.json')
+      const requiredServerFiles = JSON.parse(await readFile(requiredServerFilesPath, 'utf-8'))
+
+      if (requiredServerFiles.config.cacheHandler) {
+        requiredServerFiles.config.cacheHandler = resolvePath(distDir, requiredServerFiles.config.cacheHandler)
+        await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
+      }
+    }
+    return distDir
   }
 }

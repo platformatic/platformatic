@@ -4,7 +4,7 @@ import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { fixturesDir, getLogsFromFile, setFixturesDir } from '../../../basic/test/helper.js'
+import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 import {
   base64ValueMatcher,
@@ -522,6 +522,88 @@ test('should track Next.js cache hit and miss ratio in Prometheus', async t => {
 test('should properly use the Valkey cache handler in production when using next.config.ts', async t => {
   const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
     await rename(resolve(root, 'services/frontend/next.config.mjs'), resolve(root, 'services/frontend/next.config.ts'))
+  })
+
+  const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  let version
+  let time
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+    time = mo[2]
+  }
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+
+    deepStrictEqual(mo[1], version)
+    deepStrictEqual(mo[2], time)
+  }
+
+  const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
+
+  const storedValues = verifyValkeySequence(valkeyCalls, [
+    ['get', key],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['get', key]
+  ])
+
+  const {
+    maxTTL,
+    meta: { applicationId, workerId },
+    value,
+    revalidate,
+    expire,
+    stale,
+    tags
+  } = unpack(Buffer.from(storedValues[0], 'base64url'))
+
+  deepStrictEqual(
+    value.toString(),
+    `0:"$@1"\n1:["$","div",null,{"children":["Hello from v",${version}," t",${time}]}]\n`
+  )
+  deepStrictEqual(tags, ['first', 'second', 'third'])
+  deepStrictEqual(expire, 4294967294)
+  deepStrictEqual(stale, 300)
+  deepStrictEqual(revalidate, 120)
+  deepStrictEqual(maxTTL, 86400 * 7)
+  deepStrictEqual(applicationId, 'frontend')
+  deepStrictEqual(workerId, 0)
+})
+
+test('should properly use the Valkey cache handler in standalone mode', async t => {
+  const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
+    await updateFile(resolve(root, 'services/frontend/next.config.mjs'), contents => {
+      return contents.replace('{}', '{ output: "standalone"}')
+    })
   })
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
