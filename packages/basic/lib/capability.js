@@ -451,38 +451,7 @@ export class BaseCapability extends EventEmitter {
       scripts
     })
 
-    this.childManager.on('config', config => {
-      this.subprocessConfig = config
-      this.notifyConfig(config)
-    })
-
-    this.childManager.on('connectionString', connectionString => {
-      this.connectionString = connectionString
-    })
-
-    this.childManager.on('openapiSchema', schema => {
-      this.openapiSchema = schema
-    })
-
-    this.childManager.on('graphqlSchema', schema => {
-      this.graphqlSchema = schema
-    })
-
-    this.childManager.on('basePath', path => {
-      this.basePath = path
-    })
-
-    this.childManager.on('event', event => {
-      globalThis[kITC]?.notify('event', event)
-      this.emit('application:worker:event:' + event.event, event.payload)
-    })
-
-    // This is not really important for the URL but sometimes it also a sign
-    // that the process has been replaced and thus we need to update the client WebSocket
-    this.childManager.on('url', (url, clientWs) => {
-      this.url = url
-      this.clientWs = clientWs
-    })
+    this.setupChildManagerEventsForwarding(this.childManager)
 
     try {
       await this.childManager.inject()
@@ -580,6 +549,41 @@ export class BaseCapability extends EventEmitter {
           : {},
       telemetryConfig: this.telemetryConfig
     }
+  }
+
+  setupChildManagerEventsForwarding (childManager) {
+    childManager.on('config', config => {
+      this.subprocessConfig = config
+      this.notifyConfig(config)
+    })
+
+    childManager.on('connectionString', connectionString => {
+      this.connectionString = connectionString
+    })
+
+    childManager.on('openapiSchema', schema => {
+      this.openapiSchema = schema
+    })
+
+    childManager.on('graphqlSchema', schema => {
+      this.graphqlSchema = schema
+    })
+
+    childManager.on('basePath', path => {
+      this.basePath = path
+    })
+
+    childManager.on('event', event => {
+      globalThis[kITC]?.notify('event', event)
+      this.emit('application:worker:event:' + event.event, event.payload)
+    })
+
+    // This is not really important for the URL but sometimes it also a sign
+    // that the process has been replaced and thus we need to update the client WebSocket
+    childManager.on('url', (url, clientWs) => {
+      this.url = url
+      this.clientWs = clientWs
+    })
   }
 
   async spawn (command) {

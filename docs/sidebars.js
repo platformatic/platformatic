@@ -198,7 +198,11 @@ const sidebars = {
               type: 'category',
               label: 'Next.js',
               collapsed: true,
-              items: ['reference/next/overview', 'reference/next/configuration']
+              items: [
+                'reference/next/overview',
+                'reference/next/configuration',
+                'reference/next/experimental-adapter-path'
+              ]
             },
             {
               type: 'category',

@@ -586,6 +586,7 @@ export interface PlatformaticNextJsConfig {
   };
   next?: {
     trailingSlash?: boolean;
+    useExperimentalAdapter?: boolean;
   };
   cache?: {
     adapter: "redis" | "valkey";

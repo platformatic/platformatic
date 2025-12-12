@@ -5,7 +5,7 @@ import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { parse } from 'semver'
-import { fixturesDir, getLogsFromFile, setFixturesDir } from '../../../basic/test/helper.js'
+import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 import { CacheHandler } from '../../lib/caching/valkey-isr.js'
 import {
@@ -1194,6 +1194,148 @@ test('should properly use the Valkey cache handler in production when using next
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['set', pageKey, base64ValueMatcher, 'EX', '120'],
         ['get', pageKey]
+      ])
+      break
+  }
+
+  {
+    const {
+      value: {
+        kind,
+        data: { body, status, url: cachedUrl },
+        revalidate: revalidateNext
+      },
+      tags,
+      revalidate: revalidatePlt,
+      maxTTL,
+      applicationId
+    } = unpack(Buffer.from(storedValues[0], 'base64url'))
+
+    deepStrictEqual(kind, 'FETCH')
+    deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
+    deepStrictEqual(status, 200)
+    deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
+    deepStrictEqual(tags, ['first', 'second', 'third'])
+    deepStrictEqual(revalidateNext, 120)
+    deepStrictEqual(revalidatePlt, 120)
+    deepStrictEqual(maxTTL, 86400 * 7)
+    deepStrictEqual(applicationId, 'frontend')
+  }
+
+  {
+    const {
+      value: { kind, html, headers },
+      revalidate,
+      maxTTL,
+      applicationId
+    } = unpack(Buffer.from(storedValues[1], 'base64url'))
+
+    switch (nextMajor) {
+      case 14:
+        deepStrictEqual(kind, 'PAGE')
+        deepStrictEqual(headers['x-next-cache-tags'], 'first,second,third,_N_T_/layout,_N_T_/page,_N_T_/')
+        break
+      case 15:
+        deepStrictEqual(kind, 'APP_PAGE')
+        deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,first,second,third')
+        break
+      default:
+        deepStrictEqual(kind, 'APP_PAGE')
+        deepStrictEqual(headers['x-next-cache-tags'], '_N_T_/layout,_N_T_/page,_N_T_/,_N_T_/index,first,second,third')
+        break
+    }
+
+    ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
+
+    deepStrictEqual(revalidate, 120)
+    deepStrictEqual(maxTTL, 86400 * 7)
+    deepStrictEqual(applicationId, 'frontend')
+  }
+})
+
+test('should properly use the Valkey cache handler in standalone mode', async t => {
+  const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
+    await updateFile(resolve(root, 'services/frontend/next.config.mjs'), contents => {
+      return contents.replace('{}', '{ output: "standalone"}')
+    })
+  })
+
+  const nextPackageJson = JSON.parse(
+    await readFile(resolve(root, 'services/frontend/node_modules/next/package.json'), 'utf-8')
+  )
+  const nextMajor = parse(nextPackageJson.version).major
+
+  const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  let version
+  let time
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+    time = mo[2]
+  }
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    deepStrictEqual(mo[1], version)
+    deepStrictEqual(mo[2], time)
+  }
+
+  const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
+
+  let storedValues
+
+  switch (nextMajor) {
+    case 14:
+      storedValues = verifyValkeySequence(valkeyCalls, [
+        ['get', key],
+        ['get', key],
+        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+        ['get', key],
+        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['get', key]
+      ])
+      break
+    default:
+      storedValues = verifyValkeySequence(valkeyCalls, [
+        ['get', key],
+        ['get', key],
+        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['get', key]
       ])
       break
   }

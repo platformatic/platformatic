@@ -1,8 +1,17 @@
 import { deepStrictEqual, ok } from 'node:assert'
+import { cp } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
+import {
+  commonFixturesRoot,
+  getLogsFromFile,
+  prepareRuntime,
+  setFixturesDir,
+  startRuntime,
+  updateFile
+} from '../../basic/test/helper.js'
+import { prepareRuntimeWithBackend } from './caching/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -71,4 +80,27 @@ test('should not show start in handle mode in production', async t => {
         )
     )
   )
+})
+
+test('should support Next.js in standalone mode', async t => {
+  const { url } = await prepareRuntimeWithBackend(t, 'composer-with-prefix', true, false, ['frontend'], async root => {
+    for (const type of ['backend', 'composer']) {
+      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
+        recursive: true
+      })
+    }
+
+    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+      return contents.replace('$PREFIX', '')
+    })
+
+    await updateFile(resolve(root, 'services/frontend/next.config.js'), contents => {
+      return contents.replace('{}', '{ output: "standalone"}')
+    })
+  })
+
+  const response = await fetch(url + '/frontend')
+  const data = await response.text()
+  const mo = data.match(/<div>Hello from v<!-- -->(.+)<\/div>/)
+  ok(mo)
 })
