@@ -39,17 +39,6 @@ export async function prepareRuntime (t, name, dependencies) {
   return root
 }
 
-export async function verifyResponse (baseUrl, application, expectedWorker, socket, additionalChecks) {
-  const res = await request(baseUrl + `/${application}/hello`)
-  const json = await res.body.json()
-
-  deepStrictEqual(res.statusCode, 200)
-  deepStrictEqual(res.headers['x-plt-socket'], socket)
-  deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
-  deepStrictEqual(json, { from: application })
-  additionalChecks?.(res, json)
-}
-
 export async function verifyInject (client, application, expectedWorker, additionalChecks) {
   const res = await client.request({ method: 'GET', path: `/api/v1/applications/${application}/proxy/hello` })
   const json = await res.body.json()
@@ -58,6 +47,57 @@ export async function verifyInject (client, application, expectedWorker, additio
   deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
   deepStrictEqual(json, { from: application })
   additionalChecks?.(res, json)
+}
+
+export async function testRoundRobin (baseUrl, services) {
+  // Calculate iterations needed to check all sequences at least twice
+  // For a service with N workers, we need at least 2*N requests to verify 2 complete cycles
+  const maxWorkerCount = Math.max(...services.map(s => s.workerCount))
+  const iterations = maxWorkerCount * 2
+
+  for (const service of services) {
+    service.workers = []
+    service.additionalData = []
+  }
+
+  // Collect worker IDs and additional data from multiple requests
+  for (let i = 0; i < iterations; i++) {
+    for (const service of services) {
+      const res = await request(baseUrl + `/${service.name}/hello`)
+      const json = await res.body.json()
+
+      deepStrictEqual(res.statusCode, 200)
+      deepStrictEqual(res.headers['x-plt-socket'], service.expectedSocket)
+      deepStrictEqual(json, { from: service.name })
+
+      const workerId = parseInt(res.headers['x-plt-worker-id'])
+      service.workers.push(workerId)
+
+      if (service.verifyAdditional) {
+        service.verifyAdditional(res, workerId, service.additionalData)
+      }
+    }
+  }
+
+  // Verify round-robin pattern for each service
+  for (const service of services) {
+    const { workers, workerCount, name } = service
+
+    // Verify pattern repeats every workerCount requests
+    for (let i = workerCount; i < workers.length; i++) {
+      deepStrictEqual(workers[i], workers[i - workerCount],
+        `${name}: worker at position ${i} should match position ${i - workerCount}`)
+    }
+
+    // Verify all workers are used (complete coverage)
+    const uniqueWorkers = new Set(workers.slice(0, workerCount))
+    deepStrictEqual(uniqueWorkers.size, workerCount,
+      `${name}: all ${workerCount} workers should be used`)
+
+    // Verify we tested at least 2 complete cycles
+    deepStrictEqual(workers.length >= workerCount * 2, true,
+      `${name}: should have at least ${workerCount * 2} requests to verify 2 complete cycles`)
+  }
 }
 
 export function formatEvent (event) {

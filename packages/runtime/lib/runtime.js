@@ -61,7 +61,8 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kInterceptorReadyPromise
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -1627,10 +1628,12 @@ export class Runtime extends EventEmitter {
     if (enabled) {
       // Store locally
       this.#workers.set(workerId, worker)
-
-      // Setup the interceptor
-      this.#meshInterceptor.route(applicationId, worker)
     }
+
+    // Setup the interceptor
+    // kInterceptorReadyPromise resolves when the worker
+    // is ready to receive requests: after calling the replaceServer method
+    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
 
     // Wait for initialization
     await waitEventFromITC(worker, 'init')
@@ -1871,6 +1874,9 @@ export class Runtime extends EventEmitter {
         this.#url = workerUrl
       }
 
+      await worker[kInterceptorReadyPromise]
+      worker[kInterceptorReadyPromise] = null
+
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
 
@@ -2021,7 +2027,7 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
+    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
@@ -2115,7 +2121,6 @@ export class Runtime extends EventEmitter {
       }
 
       this.#workers.set(workerId, newWorker)
-      this.#meshInterceptor.route(applicationId, newWorker)
     } catch (e) {
       newWorker?.terminate?.()
       throw e
