@@ -19,7 +19,6 @@ import { parse, satisfies } from 'semver'
 import * as errors from './errors.js'
 import { version } from './schema.js'
 
-const kITC = Symbol.for('plt.runtime.itc')
 const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
 export function getCacheHandlerPath (name) {
@@ -32,6 +31,7 @@ export class NextCapability extends BaseCapability {
   #nextVersion
   #child
   #server
+  #configModified
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
@@ -58,6 +58,10 @@ export class NextCapability extends BaseCapability {
       await import('./create-context-patch.js')
     }
 
+    if (this.#nextVersion.major < 16 && this.config.next?.useExperimentalAdapter === true) {
+      this.config.next.useExperimentalAdapter = false
+    }
+
     /* c8 ignore next 3 */
     if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
@@ -73,6 +77,7 @@ export class NextCapability extends BaseCapability {
     await super._start({ listen })
 
     this.on('config', config => {
+      this.#configModified = true
       this.#basePath = config.basePath
     })
 
@@ -83,6 +88,18 @@ export class NextCapability extends BaseCapability {
     }
 
     await this._collectMetrics()
+
+    if (!this.#configModified && this.config.next?.useExperimentalAdapter) {
+      this.logger.warn(
+        'The experimental Next.js adapterPath is enabled but the @platformatic/next adapter was not included.'
+      )
+      this.logger.warn(
+        'Please ensure that your next.config.js is correctly set up to use the Platformatic Next.js adapter.'
+      )
+      this.logger.warn(
+        'Refer to the documentation for more details: https://platformatic.dev/docs/reference/next/configuration#next.'
+      )
+    }
   }
 
   async stop () {
@@ -412,11 +429,7 @@ export class NextCapability extends BaseCapability {
       scripts
     })
 
-    childManager.on('event', event => {
-      globalThis[kITC].notify('event', event)
-      this.emit('application:worker:event:' + event.event, event.payload)
-    })
-
+    this.setupChildManagerEventsForwarding(childManager)
     return childManager
   }
 

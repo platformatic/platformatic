@@ -93,6 +93,10 @@ export async function initialize (data) {
     realRoot.pathname += '/'
   }
 
+  if (data.config.next?.useExperimentalAdapter === true) {
+    return
+  }
+
   candidates = candidates.map(c => new URL(c, realRoot).toString())
 }
 
