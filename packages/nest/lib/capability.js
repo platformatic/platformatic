@@ -5,9 +5,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  resolvePackageViaCJS
 } from '@platformatic/basic'
-import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -100,16 +100,7 @@ export class NestCapability extends BaseCapability {
       return
     }
 
-    return new Promise((resolve, reject) => {
-      this.#server.close(error => {
-        /* c8 ignore next 3 */
-        if (error) {
-          return reject(error)
-        }
-
-        resolve()
-      })
-    })
+    return this._closeServer(this.#server)
   }
 
   async build () {

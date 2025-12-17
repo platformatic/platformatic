@@ -57,6 +57,28 @@ Due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHS
 
 This will allow other applications inside the platformatic mesh network to contact your Vite server.
 
+## Using when the entrypoint is a Platformatic Gateway
+
+To properly work when using with in application where the entrypoint is a Platformatic Gateway, you need to adjust your `vite.config.ts` file to
+properly set the Vite's `base` property and the `remix.basename` property as follows:
+
+```js
+import { vitePlugin as remix } from '@remix-run/dev'
+import { defineConfig } from 'vite'
+import { getGlobal } from '@platformatic/globals'
+
+export default defineConfig({
+  base: getGlobal().basePath ?? '/',
+  /* ... */
+  plugins: [
+    remix({
+      basename: getGlobal().basePath ?? '/'
+      /* ... */
+    })
+  ]
+})
+```
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.

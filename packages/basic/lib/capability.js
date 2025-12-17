@@ -159,21 +159,9 @@ export class BaseCapability extends EventEmitter {
     throw new Error('BaseCapability.start must be overriden by the subclasses')
   }
 
+  // This is to allow grand-children to access the method without calling super.stop()
   async stop () {
-    if (this.#pendingDependenciesWaits.size > 0) {
-      await Promise.allSettled(this.#pendingDependenciesWaits)
-    }
-
-    if (this.#reuseTcpPortsSubscribers) {
-      tracingChannel('net.server.listen').unsubscribe(this.#reuseTcpPortsSubscribers)
-      this.#reuseTcpPortsSubscribers = null
-    }
-
-    // Stop OTLP bridge if running
-    if (this.otlpBridge) {
-      this.otlpBridge.stop()
-      this.otlpBridge = null
-    }
+    return this._stop()
   }
 
   build () {
@@ -463,38 +451,7 @@ export class BaseCapability extends EventEmitter {
       scripts
     })
 
-    this.childManager.on('config', config => {
-      this.subprocessConfig = config
-      this.notifyConfig(config)
-    })
-
-    this.childManager.on('connectionString', connectionString => {
-      this.connectionString = connectionString
-    })
-
-    this.childManager.on('openapiSchema', schema => {
-      this.openapiSchema = schema
-    })
-
-    this.childManager.on('graphqlSchema', schema => {
-      this.graphqlSchema = schema
-    })
-
-    this.childManager.on('basePath', path => {
-      this.basePath = path
-    })
-
-    this.childManager.on('event', event => {
-      globalThis[kITC]?.notify('event', event)
-      this.emit('application:worker:event:' + event.event, event.payload)
-    })
-
-    // This is not really important for the URL but sometimes it also a sign
-    // that the process has been replaced and thus we need to update the client WebSocket
-    this.childManager.on('url', (url, clientWs) => {
-      this.url = url
-      this.clientWs = clientWs
-    })
+    this.setupChildManagerEventsForwarding(this.childManager)
 
     try {
       await this.childManager.inject()
@@ -594,6 +551,41 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
+  setupChildManagerEventsForwarding (childManager) {
+    childManager.on('config', config => {
+      this.subprocessConfig = config
+      this.notifyConfig(config)
+    })
+
+    childManager.on('connectionString', connectionString => {
+      this.connectionString = connectionString
+    })
+
+    childManager.on('openapiSchema', schema => {
+      this.openapiSchema = schema
+    })
+
+    childManager.on('graphqlSchema', schema => {
+      this.graphqlSchema = schema
+    })
+
+    childManager.on('basePath', path => {
+      this.basePath = path
+    })
+
+    childManager.on('event', event => {
+      globalThis[kITC]?.notify('event', event)
+      this.emit('application:worker:event:' + event.event, event.payload)
+    })
+
+    // This is not really important for the URL but sometimes it also a sign
+    // that the process has been replaced and thus we need to update the client WebSocket
+    childManager.on('url', (url, clientWs) => {
+      this.url = url
+      this.clientWs = clientWs
+    })
+  }
+
   async spawn (command) {
     const [executable, ...args] = parseCommandString(command)
     const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
@@ -653,6 +645,23 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
+  async _stop () {
+    if (this.#pendingDependenciesWaits.size > 0) {
+      await Promise.allSettled(this.#pendingDependenciesWaits)
+    }
+
+    if (this.#reuseTcpPortsSubscribers) {
+      tracingChannel('net.server.listen').unsubscribe(this.#reuseTcpPortsSubscribers)
+      this.#reuseTcpPortsSubscribers = null
+    }
+
+    // Stop OTLP bridge if running
+    if (this.otlpBridge) {
+      this.otlpBridge.stop()
+      this.otlpBridge = null
+    }
+  }
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
@@ -667,6 +676,20 @@ export class BaseCapability extends EventEmitter {
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
     await this.#setupOtlpExporter()
+  }
+
+  _closeServer (server) {
+    const { promise, resolve, reject } = Promise.withResolvers()
+
+    server.close(error => {
+      if (error) {
+        return reject(error)
+      }
+
+      resolve()
+    })
+
+    return promise
   }
 
   async #collectMetrics () {

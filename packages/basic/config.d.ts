@@ -391,6 +391,7 @@ export interface PlatformaticBasicConfig {
       [k: string]: string;
     };
     sourceMaps?: boolean;
+    nodeModulesSourceMaps?: string[];
     scheduler?: {
       enabled?: boolean | string;
       name: string;
@@ -445,6 +446,7 @@ export interface PlatformaticBasicConfig {
       };
       envfile?: string;
       sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
       packageManager?: "npm" | "pnpm" | "yarn";
       preload?: string | string[];
       nodeOptions?: string;

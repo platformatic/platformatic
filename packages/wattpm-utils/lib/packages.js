@@ -16,6 +16,7 @@ export const packages = [
   '@platformatic/nest',
   '@platformatic/next',
   '@platformatic/node',
+  '@platformatic/react-router',
   '@platformatic/remix',
   '@platformatic/runtime',
   '@platformatic/scalar-theme',

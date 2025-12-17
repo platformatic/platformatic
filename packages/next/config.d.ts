@@ -499,6 +499,7 @@ export interface PlatformaticNextJsConfig {
       [k: string]: string;
     };
     sourceMaps?: boolean;
+    nodeModulesSourceMaps?: string[];
     scheduler?: {
       enabled?: boolean | string;
       name: string;
@@ -553,6 +554,7 @@ export interface PlatformaticNextJsConfig {
       };
       envfile?: string;
       sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
       packageManager?: "npm" | "pnpm" | "yarn";
       preload?: string | string[];
       nodeOptions?: string;
@@ -584,6 +586,7 @@ export interface PlatformaticNextJsConfig {
   };
   next?: {
     trailingSlash?: boolean;
+    useExperimentalAdapter?: boolean;
   };
   cache?: {
     adapter: "redis" | "valkey";

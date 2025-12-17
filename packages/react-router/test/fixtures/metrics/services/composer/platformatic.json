@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.56.0.json",
+  "gateway": {
+    "services": [
+      {
+        "id": "backend"
+      },
+      {
+        "id": "frontend"
+      }
+    ]
+  },
+  "watch": false
+}

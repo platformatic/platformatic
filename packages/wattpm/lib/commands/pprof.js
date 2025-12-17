@@ -11,7 +11,8 @@ export async function pprofStartCommand (logger, args) {
       args,
       {
         type: { type: 'string', short: 't', default: 'cpu' },
-        'source-maps': { type: 'boolean', short: 's', default: false }
+        'source-maps': { type: 'boolean', short: 's', default: false },
+        'node-modules-source-maps': { type: 'string', short: 'n' }
       },
       false
     )
@@ -33,6 +34,11 @@ export async function pprofStartCommand (logger, args) {
     // Add sourceMaps option if enabled
     if (values['source-maps']) {
       options.sourceMaps = true
+    }
+
+    // Add nodeModulesSourceMaps option if provided (comma-separated list of module names)
+    if (values['node-modules-source-maps']) {
+      options.nodeModulesSourceMaps = values['node-modules-source-maps'].split(',').map(s => s.trim())
     }
 
     if (applicationId) {
@@ -163,6 +169,10 @@ export const help = {
       {
         name: '--source-maps, -s',
         description: 'Enable source map support to resolve TypeScript and other transpiled code locations in profiles'
+      },
+      {
+        name: '--node-modules-source-maps, -n',
+        description: 'Comma-separated list of node_modules packages to load source maps from (e.g., "next,@next/next-server")'
       }
     ],
     args: [
@@ -183,11 +193,12 @@ export const help = {
     footer:
       'Use "pprof start [application]" to start profiling and "pprof stop [application]" to stop and save profile data.\n' +
       'Examples:\n' +
-      '  wattpm pprof start --type=cpu my-app                # Start CPU profiling\n' +
-      '  wattpm pprof start --type=heap my-app               # Start heap profiling\n' +
-      '  wattpm pprof start --source-maps my-app             # Start CPU profiling with source maps\n' +
-      '  wattpm pprof start --type=cpu --source-maps my-app  # Start CPU profiling with source maps\n' +
-      '  wattpm pprof stop --type=cpu my-app                 # Stop CPU profiling\n' +
-      '  wattpm pprof stop --type=heap my-app                # Stop heap profiling'
+      '  wattpm pprof start --type=cpu my-app                              # Start CPU profiling\n' +
+      '  wattpm pprof start --type=heap my-app                             # Start heap profiling\n' +
+      '  wattpm pprof start --source-maps my-app                           # Start CPU profiling with source maps\n' +
+      '  wattpm pprof start --type=cpu --source-maps my-app                # Start CPU profiling with source maps\n' +
+      '  wattpm pprof start -s -n next,@next/next-server my-app            # Profile with Next.js source maps\n' +
+      '  wattpm pprof stop --type=cpu my-app                               # Stop CPU profiling\n' +
+      '  wattpm pprof stop --type=heap my-app                              # Stop heap profiling'
   }
 }

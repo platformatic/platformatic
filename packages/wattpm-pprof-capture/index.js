@@ -229,7 +229,7 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
   }
 }
 
-async function initializeSourceMapper () {
+async function initializeSourceMapper (options = {}) {
   if (sourceMapperInitialized) {
     return
   }
@@ -250,6 +250,19 @@ async function initializeSourceMapper () {
     // Note: SourceMapper searches recursively for files matching /\.[cm]?js\.map$/
     const debug = process.env.PLT_PPROF_SOURCEMAP_DEBUG === 'true'
     const innerMapper = await SourceMapper.create([appPath], debug)
+
+    // Load additional node_modules sourcemaps if specified
+    if (options.nodeModulesSourceMaps?.length > 0) {
+      const { loadNodeModulesSourceMaps } = await import('./lib/node-modules-sourcemaps.js')
+      const moduleEntries = await loadNodeModulesSourceMaps(
+        appPath,
+        options.nodeModulesSourceMaps,
+        debug
+      )
+      for (const [generatedPath, info] of moduleEntries) {
+        innerMapper.infoMap.set(generatedPath, info)
+      }
+    }
 
     // Wrap the SourceMapper to fix Windows path normalization
     sourceMapper = new SourceMapperWrapper(innerMapper)
@@ -280,9 +293,16 @@ export async function startProfiling (options = {}) {
   }
 
   // Initialize source mapper if source maps are requested
-  state.sourceMapsEnabled = options.sourceMaps === true
+  if (options.sourceMaps === undefined) {
+    state.sourceMapsEnabled = process.sourceMapsEnabled
+  } else if (options.sourceMaps === true) {
+    state.sourceMapsEnabled = true
+  }
+
   if (state.sourceMapsEnabled) {
-    await initializeSourceMapper()
+    await initializeSourceMapper({
+      nodeModulesSourceMaps: options.nodeModulesSourceMaps
+    })
   }
 
   state.isCapturing = true

@@ -1,8 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.16.0.json",
-  "server": {
-    "port": 3000
-  },
   "logger": {
     "level": "error"
   },

@@ -4,9 +4,9 @@ import {
   ensureTrailingSlash,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  resolvePackageViaCJS
 } from '@platformatic/basic'
-import { resolvePackageViaCJS } from '@platformatic/basic/lib/utils.js'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
@@ -124,8 +124,9 @@ export class RemixCapability extends ViteCapability {
     /* c8 ignore next 3 */
     if (onInject) {
       return
-    } // Since inject might be called from the main thread directly via ITC, let's clean it up
+    }
 
+    // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
     return { statusCode, headers, body, payload, rawPayload }
   }
@@ -161,7 +162,7 @@ export class RemixCapability extends ViteCapability {
     await super.start({ listen })
 
     /* c8 ignore next 3 */
-    if (!this._getVite().config.plugins.some(p => p.name === 'remix')) {
+    if (!this._getApp().config.plugins.some(p => p.name === 'remix')) {
       this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
     }
   }
@@ -212,15 +213,6 @@ export class RemixCapability extends ViteCapability {
       return
     }
 
-    return new Promise((resolve, reject) => {
-      this.#server.close(error => {
-        /* c8 ignore next 3 */
-        if (error) {
-          return reject(error)
-        }
-
-        resolve()
-      })
-    })
+    return this._closeServer(this.#server)
   }
 }

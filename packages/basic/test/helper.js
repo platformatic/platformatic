@@ -4,6 +4,7 @@ import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
 import { basename, dirname, join, matchesGlob, resolve } from 'node:path'
@@ -101,27 +102,45 @@ export function setAdditionalDependencies (dependencies) {
 }
 
 // This is used to debug tests
-export function pause (t, url, timeout) {
+export function pause (_, runtime, url, timeout) {
   if (timeout && typeof timeout !== 'number') {
     timeout = DEFAULT_PAUSE_TIMEOUT
   }
 
-  console.log(
-    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')}/. Press any key to resume ...`
-  )
-
   return new Promise(resolve => {
-    let handler = null
+    // We can't use stdin since `node --test` will disable processing of stdin. Let's use a dummy HTTP server instead.
+    const server = createServer((_, res) => {
+      listener()
+      res.writeHead(204)
+      res.end()
+    })
+
+    server.listen(0)
+
+    const separator = '-'.repeat(60)
+    const message = [
+      '',
+      separator,
+      '',
+      `Runtime root: ${runtime.getRoot()}`,
+      `Runtime URL : ${url.replace('[::]', '127.0.0.1')}`,
+      '',
+      `Make a HTTP request to http://127.0.0.1:${server.address().port} to resume.`,
+      timeout < 0 ? 'The test will not resume automatically.' : `The test will resume automatically in ${timeout} ms.`,
+      '',
+      separator,
+      ''
+    ]
+    process._rawDebug(message.join('\n'))
+
+    const handler = timeout > 0 ? setTimeout(listener, timeout) : null
 
     function listener () {
-      console.log('--- Resuming execution ...')
       clearTimeout(handler)
-      process.stdin.removeListener('data', listener)
+      server.close()
+      process._rawDebug('\n' + separator + '\nTest resumed.\n' + separator + '\n')
       resolve()
     }
-
-    handler = setTimeout(listener, timeout)
-    process.stdin.on('data', listener)
   })
 }
 
@@ -369,7 +388,7 @@ export async function startRuntime (t, runtime, pauseAfterCreation = false, appl
   const url = await runtime.start()
 
   if (pauseAfterCreation) {
-    await pause(t, url, pauseAfterCreation)
+    await pause(t, runtime, url, pauseAfterCreation)
   }
 
   return url?.replace('[::]', '127.0.0.1')
@@ -474,9 +493,13 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const ac = new AbortController()
   const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
 
+  // Some delay to ensure the server is ready to accept WebSocket connections
+  await sleep(1000)
+
   const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
+    process._rawDebug('WebSocket error:', err)
     clearTimeout(timeout)
     connection.reject(err)
     reload.reject(err)
@@ -493,7 +516,6 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
-    await sleep(1000)
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
     if ((await Promise.race([reload.promise, timeout])) === kTimeout) {
@@ -588,7 +610,8 @@ export function verifyFrontendAPIOnAutodetectedPrefix (_, url) {
 
 export function filterConfigurations (configurations) {
   const skipped = configurations.filter(c => c.skip !== true)
-  return skipped.find(c => c.only) ? skipped.filter(c => c.only) : skipped
+  const onlyFinder = c => typeof c.only !== 'undefined' && c.only !== false
+  return skipped.find(onlyFinder) ? skipped.filter(onlyFinder) : skipped
 }
 
 export async function prepareRuntimeWithApplications (
@@ -754,20 +777,12 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
   configurations = filterConfigurations(configurations)
 
   for (const configuration of configurations) {
-    const { id, todo, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
+    const { id, only, todo, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
+    const timeout = typeof only === 'number' ? only : pauseTimeout
+
     test(`should start in development mode - configuration "${id}"${tag ? ` (${tag})` : ''}`, { todo }, async t => {
       setHMRTriggerFile(hmrTriggerFile)
-      await check(
-        t,
-        id,
-        language,
-        htmlContents,
-        hmrUrl,
-        hmrProtocol,
-        websocketHMRHandler,
-        pauseTimeout,
-        additionalSetup
-      )
+      await check(t, id, language, htmlContents, hmrUrl, hmrProtocol, websocketHMRHandler, timeout, additionalSetup)
     })
   }
 }
@@ -775,12 +790,14 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
 export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
-  for (const { id, todo, tag, language, prefix, files, checks, additionalSetup } of configurations) {
+  for (const { id, only, todo, tag, language, prefix, files, checks, additionalSetup } of configurations) {
     test(
       `should build and start in production mode - configuration "${id}${tag ? ` (${tag})` : ''}"`,
       { todo },
       async t => {
         let args
+        const timeout = typeof only === 'number' ? only : pauseTimeout
+
         const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
           for (const type of ['backend', 'composer']) {
             await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
@@ -822,7 +839,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         }
 
         // Start the runtime
-        const url = await startRuntime(t, runtime, pauseTimeout)
+        const url = await startRuntime(t, runtime, timeout)
 
         if (runtimeHost) {
           const actualHost = new URL(url).hostname
