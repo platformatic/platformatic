@@ -144,3 +144,7 @@ export const CannotRemoveEntrypointError = createError(
   `${ERROR_PREFIX}_CANNOT_REMOVE_ENTRYPOINT`,
   'Cannot remove the entrypoint application.'
 )
+export const WorkerInterceptorNotReadyError = createError(
+  `${ERROR_PREFIX}_WORKER_INTERCEPTOR_NOT_READY`,
+  'The "%s" application worker interceptor is not ready'
+)

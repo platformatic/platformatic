@@ -35,7 +35,8 @@ import {
   MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
-  WorkerNotFoundError
+  WorkerNotFoundError,
+  WorkerInterceptorNotReadyError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
@@ -1874,8 +1875,7 @@ export class Runtime extends EventEmitter {
         this.#url = workerUrl
       }
 
-      await worker[kInterceptorReadyPromise]
-      worker[kInterceptorReadyPromise] = null
+      await this.#waitForWorkerInterceptor(worker)
 
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
@@ -2785,5 +2785,25 @@ export class Runtime extends EventEmitter {
     }
 
     this.#loggerContext.updatePrefixes(ids)
+  }
+
+  async #waitForWorkerInterceptor (worker, timeout = 10000) {
+    const workerId = worker[kId]
+    const applicationId = worker[kApplicationId]
+
+    const interceptorReadyTimeout = setTimeout(() => {
+      this.logger.error(
+        { applicationId, workerId },
+        'The worker interceptor is not ready after 10s'
+      )
+      throw new WorkerInterceptorNotReadyError(applicationId)
+    }, timeout)
+
+    try {
+      await worker[kInterceptorReadyPromise]
+      worker[kInterceptorReadyPromise] = null
+    } finally {
+      clearTimeout(interceptorReadyTimeout)
+    }
   }
 }

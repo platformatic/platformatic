@@ -1440,8 +1440,8 @@ importers:
         specifier: ^7.0.0
         version: 7.11.0
       undici-thread-interceptor:
-        specifier: 0.16.0-alpha.1
-        version: 0.16.0-alpha.1
+        specifier: 0.16.0-alpha.2
+        version: 0.16.0-alpha.2
       ws:
         specifier: ^8.16.0
         version: 8.18.3
@@ -10644,8 +10644,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.16.0-alpha.1:
-    resolution: {integrity: sha512-6wXwvkADB6kof0LrLed2N2whCqxs68ek2iMIj27xm2XMBo/qJrAXx6ZFheX9rrfUWSSYfU6ljB4UMF6QLdxOtA==}
+  undici-thread-interceptor@0.16.0-alpha.2:
+    resolution: {integrity: sha512-tX4r+g4+QKovqG++tcXrEZ98+lgD3jvw4zkGC0Ib+NvHkmsyAYzev8eEwGjeP1DjG0HXOf1Y3UAe0reisRKhrQ==}
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
@@ -21554,7 +21554,7 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.21.3
 
-  undici-thread-interceptor@0.16.0-alpha.1:
+  undici-thread-interceptor@0.16.0-alpha.2:
     dependencies:
       fastq: 1.19.1
       hyperid: 3.3.0
