@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/react-router/3.27.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/react-router/3.28.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic React Router Config",
   "type": "object",
