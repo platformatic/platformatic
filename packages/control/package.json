@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/control",
-  "version": "3.28.0",
+  "version": "3.28.1",
   "description": "Platformatic Control",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
