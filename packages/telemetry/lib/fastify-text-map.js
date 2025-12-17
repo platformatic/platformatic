@@ -10,6 +10,6 @@ export const fastifyTextMapGetter = {
 
 export const fastifyTextMapSetter = {
   set (reply, key, value) {
-    reply.headers({ [key]: value })
+    reply.header(key, value)
   }
 }

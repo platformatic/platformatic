@@ -135,17 +135,21 @@ test('should trace a client request', async () => {
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
-  equal(finishedSpans.length, 2)
-  // We have two one for the client and one for the server
-  const spanServer = finishedSpans[0]
+  // We now have: 1 CLIENT (manual) + 1 SERVER (LightMyRequest) + 2 INTERNAL (@fastify/otel)
+  ok(finishedSpans.length >= 2, `Expected at least 2 spans, got ${finishedSpans.length}`)
+
+  // Find the SERVER span
+  const spanServer = finishedSpans.find(span => span.kind === SpanKind.SERVER)
+  ok(spanServer, 'Should have SERVER span')
   equal(spanServer.name, 'GET /test')
-  equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.OK)
   equal(spanServer.attributes['http.request.method'], 'GET')
   equal(spanServer.attributes['url.path'], '/test')
   equal(spanServer.attributes['http.response.status_code'], 200)
 
-  const spanClient = finishedSpans[1]
+  // Find the CLIENT span
+  const spanClient = finishedSpans.find(span => span.kind === SpanKind.CLIENT)
+  ok(spanClient, 'Should have CLIENT span')
   equal(spanClient.name, 'GET http://localhost:3000/test')
   equal(spanClient.kind, SpanKind.CLIENT)
   equal(spanClient.status.code, SpanStatusCode.OK)
@@ -196,17 +200,20 @@ test('should trace a client request failing', async () => {
   const exporter = exporters[0]
 
   const finishedSpans = exporter.getFinishedSpans()
-  equal(finishedSpans.length, 2)
-  // We have two one for the client and one for the server
-  const spanServer = finishedSpans[0]
+  ok(finishedSpans.length >= 2, `Expected at least 2 spans, got ${finishedSpans.length}`)
+
+  // Find the SERVER span
+  const spanServer = finishedSpans.find(span => span.kind === SpanKind.SERVER)
+  ok(spanServer, 'Should have SERVER span')
   equal(spanServer.name, 'GET /wrong')
-  equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.ERROR)
   equal(spanServer.attributes['http.request.method'], 'GET')
   equal(spanServer.attributes['url.path'], '/wrong')
   equal(spanServer.attributes['http.response.status_code'], 404)
 
-  const spanClient = finishedSpans[1]
+  // Find the CLIENT span
+  const spanClient = finishedSpans.find(span => span.kind === SpanKind.CLIENT)
+  ok(spanClient, 'Should have CLIENT span')
   equal(spanClient.name, 'GET http://localhost/test')
   equal(spanClient.kind, SpanKind.CLIENT)
   equal(spanClient.status.code, SpanStatusCode.ERROR)

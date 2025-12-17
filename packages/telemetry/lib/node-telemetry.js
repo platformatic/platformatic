@@ -1,7 +1,14 @@
+console.error('[node-telemetry] TOP OF FILE')
+
+import { context } from '@opentelemetry/api'
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks'
+import { FastifyOtelInstrumentation } from '@fastify/otel'
+import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
+import { LightMyRequestInstrumentation } from '@platformatic/instrumentation-light-my-request'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import * as opentelemetry from '@opentelemetry/sdk-node'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
@@ -29,9 +36,35 @@ const require = createRequire(import.meta.url)
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+// Write marker file to verify module loads
+try {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const os = require('node:os')
+  const worker_threads = require('node:worker_threads')
+  const marker = path.join(os.tmpdir(), `node-telemetry-${process.pid}.txt`)
+  fs.writeFileSync(marker, `Loaded ${new Date().toISOString()} thread=${worker_threads.threadId}\n`)
+  console.error('[node-telemetry] Wrote marker to:', marker)
+} catch (e) {
+  console.error('[node-telemetry] Failed to write marker:', e.message)
+}
+
+const setupNodeHTTPTelemetry = async (opts, applicationDir, applicationId) => {
+  const worker_threads = require('node:worker_threads')
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const os = require('node:os')
+  const logFile = path.join(os.tmpdir(), `telemetry-setup-${process.pid}-${worker_threads.threadId}.log`)
+  fs.appendFileSync(logFile, `[${new Date().toISOString()}] setupNodeHTTPTelemetry called for ${opts.applicationName}\n`)
+
   const { applicationName, instrumentations = [] } = opts
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
+
+  // Construct service name from runtime applicationName and service applicationId
+  let serviceName = applicationName
+  if (applicationId && !applicationName.endsWith(`-${applicationId}`)) {
+    serviceName = `${applicationName}-${applicationId}`
+  }
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -43,7 +76,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   for (const exporter of exporters) {
     // Exporter config:
     // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, applicationName }
+    const exporterOptions = { ...exporter.options, applicationName: serviceName }
 
     let exporterObj
     if (exporter.type === 'console') {
@@ -78,31 +111,82 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   globalThis.platformatic = globalThis.platformatic || {}
   globalThis.platformatic.clientSpansAls = clientSpansAls
 
-  const sdk = new opentelemetry.NodeSDK({
-    spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
-    instrumentations: [
-      new UndiciInstrumentation({
-        responseHook: span => {
-          const store = clientSpansAls.getStore()
-          if (store) {
-            store.span = span
-          }
-        }
-      }),
-      new HttpInstrumentation(),
-      ...additionalInstrumentations
-    ],
-    resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: applicationName
-    })
+  // Create TracerProvider with resource and span processors
+  const resource = resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: serviceName
   })
-  sdk.start()
 
-  process.on('SIGTERM', () => {
-    sdk
-      .shutdown()
-      .then(() => debuglog('Tracing terminated'))
-      .catch(error => debuglog('Error terminating tracing', error))
+  const tracerProvider = new NodeTracerProvider({
+    resource,
+    spanProcessors  // Pass span processors to constructor
+  })
+
+  // Set up global context manager for async context propagation
+  // Context manager MUST be global for instrumentations to work
+  const contextManager = new AsyncLocalStorageContextManager()
+  contextManager.enable()
+  context.setGlobalContextManager(contextManager)
+
+  // Check if http module is already loaded
+  fs.appendFileSync(logFile, `[${new Date().toISOString()}] http module loaded: ${!!require.cache[require.resolve('node:http')]}\n`)
+  fs.appendFileSync(logFile, `[${new Date().toISOString()}] https module loaded: ${!!require.cache[require.resolve('node:https')]}\n`)
+
+  // Create instrumentations and manually set tracer provider
+  // This avoids using NodeSDK or registerInstrumentations which set globals
+  const undiciInstrumentation = new UndiciInstrumentation({
+    responseHook: (span, { response }) => {
+      // Store span for clientSpansAls
+      const store = clientSpansAls.getStore()
+      if (store) {
+        store.span = span
+      }
+
+      // Add HTTP cache attributes
+      if (response?.headers) {
+        const httpCacheId = response.headers['x-plt-http-cache-id']
+        const isCacheHit = response.headers.age !== undefined
+        if (httpCacheId) {
+          span.setAttributes({
+            'http.cache.id': httpCacheId,
+            'http.cache.hit': isCacheHit.toString()
+          })
+        }
+      }
+    }
+  })
+
+  const httpInstrumentation = new HttpInstrumentation()
+  const fastifyInstrumentation = new FastifyOtelInstrumentation({ registerOnInitialization: true })
+  const lmrInstrumentation = new LightMyRequestInstrumentation()
+
+  const allInstrumentations = [
+    undiciInstrumentation,
+    httpInstrumentation,
+    fastifyInstrumentation,
+    lmrInstrumentation,
+    ...additionalInstrumentations
+  ]
+
+  // Set our TracerProvider on each instrumentation and enable it
+  fs.appendFileSync(logFile, `[${new Date().toISOString()}] Setting TracerProvider and enabling ${allInstrumentations.length} instrumentations\n`)
+  for (const instrumentation of allInstrumentations) {
+    instrumentation.setTracerProvider(tracerProvider)
+    instrumentation.enable()
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}]   - ${instrumentation.instrumentationName || instrumentation.constructor.name}\n`)
+  }
+
+  // Store our isolated provider for access by other parts of the system
+  globalThis.platformatic.tracerProvider = tracerProvider
+  globalThis.platformatic.contextManager = contextManager
+
+  process.on('SIGTERM', async () => {
+    try {
+      await tracerProvider.shutdown()
+      contextManager.disable()
+      debuglog('Tracing terminated')
+    } catch (error) {
+      debuglog('Error terminating tracing', error)
+    }
   })
 }
 
@@ -113,6 +197,8 @@ const { promise: telemetryReadyPromise, resolve: resolveTelemetryReady } = Promi
 globalThis.platformatic.telemetryReady = telemetryReadyPromise
 
 async function main () {
+  console.error('[node-telemetry] Loading in process:', process.pid, 'isWorker:', !!workerData, 'threadId:', require('node:worker_threads').threadId)
+
   let data = null
   const useWorkerData = !!workerData
 
@@ -133,10 +219,11 @@ async function main () {
   if (data) {
     debuglog('Setting up telemetry %o', data)
     const applicationDir = data.applicationConfig?.path
+    const applicationId = data.applicationConfig?.id
     const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
+      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir, applicationId)
       resolveTelemetryReady()
     } else {
       resolveTelemetryReady()

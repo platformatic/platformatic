@@ -1438,12 +1438,17 @@ export class Runtime extends EventEmitter {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
-      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
+      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs')).href
 
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-      execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
-      execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
+      const dataUrl = `data:text/javascript,import { register } from 'node:module'; register('${hookUrl}')`
+      const telemetryUrl = pathToFileURL(openTelemetrySetupPath).href
+      execArgv.push('--import', dataUrl)
+      execArgv.push('--import', telemetryUrl)
+      console.error('[runtime] Added telemetry --import flags for', applicationId)
+      console.error('  dataUrl:', dataUrl)
+      console.error('  telemetryUrl:', telemetryUrl)
     }
 
     if ((applicationConfig.sourceMaps ?? config.sourceMaps) === true) {

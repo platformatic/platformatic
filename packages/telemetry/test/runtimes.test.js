@@ -99,6 +99,23 @@ test('configure telemetry correctly with a gateway + node app', async t => {
   await sleep(500)
   const spans = await getSpans(spansPath)
 
+  // Debug: log all spans
+  console.log(`\nTotal spans: ${spans.length}`)
+  spans.forEach((span, i) => {
+    const attrs = getAttributesForResource(span.resource)
+    const kindName = span.kind === 0 ? 'INTERNAL' : span.kind === 1 ? 'SERVER' : span.kind === 2 ? 'CLIENT' : 'UNKNOWN'
+    console.log(`Span ${i}: kind=${span.kind} (${kindName}), service=${attrs?.['service.name']}, name=${span.name}`)
+    if (span.attributes) {
+      console.log('  Attributes:', Object.keys(span.attributes).map(k => `${k}=${span.attributes[k]}`).join(', '))
+    }
+  })
+
+  // Count span types
+  const serverSpans = spans.filter(s => s.kind === 1)
+  const clientSpans = spans.filter(s => s.kind === 2)
+  const internalSpans = spans.filter(s => s.kind === 0)
+  console.log(`SERVER spans: ${serverSpans.length}, CLIENT spans: ${clientSpans.length}, INTERNAL spans: ${internalSpans.length}`)
+
   // We can have spurious span (like the one from the composr to applications) so we need to filter
   // the one for the actual call
   const spanGatewayServer = spans.find(span => {
@@ -107,6 +124,8 @@ test('configure telemetry correctly with a gateway + node app', async t => {
     }
     return false
   })
+
+  console.log('spanGatewayServer:', spanGatewayServer ? 'found' : 'NOT FOUND')
 
   const spanGatewayClient = spans.find(span => {
     if (span.kind === SpanKind.CLIENT) {
