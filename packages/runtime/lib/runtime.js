@@ -679,6 +679,19 @@ export class Runtime extends EventEmitter {
     return sendViaITC(service, 'stopProfiling', options)
   }
 
+  async startApplicationRepl (id, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    // Create a MessageChannel for REPL communication
+    const { port1, port2 } = new MessageChannel()
+
+    // Send port1 to the worker to start the REPL
+    await sendViaITC(service, 'startRepl', port1, [port1])
+
+    // Return port2 for the caller to use
+    return port2
+  }
+
   async updateUndiciInterceptors (undiciConfig) {
     this.#config.undici = undiciConfig
 

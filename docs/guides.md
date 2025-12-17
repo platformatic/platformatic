@@ -12,6 +12,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 ### Caching & Performance
 - **[Cache with Platformatic Watt](./guides/cache-with-platformatic-watt.md)** - Implement caching strategies to improve application performance
 - **[Profiling with Watt](./guides/profiling-with-watt.md)** - Profile and optimize your Watt applications for better performance
+- **[Debugging with REPL](./guides/debugging-with-repl.md)** - Debug applications interactively using the built-in REPL
 
 ### Multi-Repository & Scaling
 - **[Use Watt with Multiple Repositories](./guides/use-watt-multiple-repository.md)** - Manage Watt applications across multiple repositories

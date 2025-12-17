@@ -19,7 +19,8 @@ async function loadCommands () {
     'logs',
     'inject',
     'metrics',
-    'pprof'
+    'pprof',
+    'repl'
   ]) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
