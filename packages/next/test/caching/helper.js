@@ -76,6 +76,9 @@ export function verifyValkeySequence (actual, expected) {
     for (let j = 0; j < expected[i].length; j++) {
       if (expected[i][j] instanceof RegExp) {
         const actualCommand = actual?.[i]?.[j]
+        if (!actualCommand) {
+          process._rawDebug('--------DEBUG---------', actual, i, j)
+        }
         ok(expected[i][j].test(actualCommand), `Expected command ${i} to match ${expected[i][j]}, got ${actualCommand}`)
       }
     }
