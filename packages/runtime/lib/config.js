@@ -306,6 +306,14 @@ export async function transform (config, _, context) {
       config.workers.gracePeriod = config.verticalScaler.gracePeriod
     }
 
+    if (typeof config.workers.scaleUpELU === 'undefined' && typeof config.verticalScaler.scaleUpELU === 'number') {
+      config.workers.scaleUpELU = config.verticalScaler.scaleUpELU
+    }
+
+    if (typeof config.workers.scaleDownELU === 'undefined' && typeof config.verticalScaler.scaleDownELU === 'number') {
+      config.workers.scaleDownELU = config.verticalScaler.scaleDownELU
+    }
+
     config.verticalScaler = undefined
   }
 

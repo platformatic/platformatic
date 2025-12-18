@@ -1,5 +1,3 @@
-export const scaleUpELUThreshold = 0.8
-export const scaleDownELUThreshold = 0.2
 export const scaleUpTimeWindow = 10_000
 export const scaleDownTimeWindow = 60_000
 
@@ -7,11 +5,20 @@ export class ScalingAlgorithm {
   #maxTotalWorkers
   #appsMetrics
   #appsConfigs
+  #scaleUpELU
+  #scaleDownELU
 
   constructor (options = {}) {
     this.#maxTotalWorkers = options.maxTotalWorkers ?? Infinity
     this.#appsConfigs = options.applications ?? {}
     this.#appsMetrics = {}
+
+    this.#scaleUpELU = options.scaleUpELU ?? 0.8
+    this.#scaleDownELU = options.scaleDownELU ?? 0.2
+  }
+
+  get scaleUpELU () {
+    return this.#scaleUpELU
   }
 
   addApplication (id, config) {
@@ -236,10 +243,10 @@ export class ScalingAlgorithm {
     const { heapUsed: avgHeapUsage } = this.#calculateAppAvgMetrics(applicationId)
 
     let recommendation = null
-    if (scaleUpELU > scaleUpELUThreshold) {
+    if (scaleUpELU > this.#scaleUpELU) {
       recommendation = 'scaleUp'
     }
-    if (scaleDownELU < scaleDownELUThreshold) {
+    if (scaleDownELU < this.#scaleDownELU) {
       recommendation = 'scaleDown'
     }
 

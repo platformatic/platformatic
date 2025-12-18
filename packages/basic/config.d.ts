@@ -357,13 +357,7 @@ export interface PlatformaticBasicConfig {
       maxWorkers?: number;
       cooldownSec?: number;
       gracePeriod?: number;
-      /**
-       * @deprecated
-       */
       scaleUpELU?: number;
-      /**
-       * @deprecated
-       */
       scaleDownELU?: number;
       /**
        * @deprecated

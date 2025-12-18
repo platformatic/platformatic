@@ -100,6 +100,54 @@ for (const [name, file] of Object.entries(configurations)) {
     assert.strictEqual(service2Workers.length, 2)
   })
 
+  test(`should not scale applications when the elu is lower than treshold (configuration ${name})`, async t => {
+    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const app = await createRuntime(configFile, null, {
+      async transform (config, ...args) {
+        config.verticalScaler = {
+          enabled: true,
+          maxTotalWorkers: 5,
+          gracePeriod: 1,
+          scaleUpELU: 1
+        }
+        config = await transform(config, ...args)
+        return config
+      }
+    })
+
+    const entryUrl = await app.start()
+
+    t.after(() => app.close())
+
+    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timeout: 1000 })
+    })
+    assert.strictEqual(statusCode, 200)
+
+    await sleep(10000)
+
+    const workers = await app.getWorkers()
+
+    const service1Workers = []
+    const service2Workers = []
+
+    for (const worker of Object.values(workers)) {
+      if (worker.application === 'service-1') {
+        service1Workers.push(worker)
+      }
+      if (worker.application === 'service-2') {
+        service2Workers.push(worker)
+      }
+    }
+
+    assert.strictEqual(service1Workers.length, 1)
+    assert.strictEqual(service2Workers.length, 1)
+  })
+
   test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
     const configFile = join(fixturesDir, 'worker-scaler', file)
     const app = await createRuntime(configFile, null, {

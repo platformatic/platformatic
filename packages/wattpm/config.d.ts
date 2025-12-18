@@ -433,13 +433,7 @@ export type PlatformaticRuntimeConfig = {
     maxWorkers?: number;
     cooldownSec?: number;
     gracePeriod?: number;
-    /**
-     * @deprecated
-     */
     scaleUpELU?: number;
-    /**
-     * @deprecated
-     */
     scaleDownELU?: number;
     /**
      * @deprecated
@@ -457,6 +451,8 @@ export type PlatformaticRuntimeConfig = {
       [k: string]: {
         minWorkers?: number;
         maxWorkers?: number;
+        scaleUpELU?: number;
+        scaleDownELU?: number;
       };
     };
   };

@@ -72,8 +72,8 @@ const verticalScaler = {
     maxWorkers: { type: 'number', minimum: 1 },
     cooldownSec: { type: 'number', minimum: 0 },
     gracePeriod: { type: 'number', minimum: 0 },
-    scaleUpELU: { type: 'number', minimum: 0, maximum: 1, deprecated: true },
-    scaleDownELU: { type: 'number', minimum: 0, maximum: 1, deprecated: true },
+    scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+    scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
     timeWindowSec: { type: 'number', minimum: 0, deprecated: true },
     scaleDownTimeWindowSec: { type: 'number', minimum: 0, deprecated: true },
     scaleIntervalSec: { type: 'number', minimum: 0, deprecated: true }

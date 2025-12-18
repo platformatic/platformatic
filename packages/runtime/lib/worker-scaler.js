@@ -1,7 +1,7 @@
 import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
-import { ScalingAlgorithm, scaleUpELUThreshold } from './scaling-algorithm.js'
+import { ScalingAlgorithm } from './scaling-algorithm.js'
 import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
 const healthCheckInterval = 1000
@@ -40,7 +40,11 @@ export class DynamicWorkersScaler {
     this.#cooldown = config.cooldown ?? defaultCooldown
     this.#gracePeriod = config.gracePeriod ?? defaultGracePeriod
 
-    this.#algorithm = new ScalingAlgorithm({ maxTotalWorkers: this.#maxTotalWorkers })
+    this.#algorithm = new ScalingAlgorithm({
+      maxTotalWorkers: this.#maxTotalWorkers,
+      scaleUpELU: config.scaleUpELU,
+      scaleDownELU: config.scaleDownELU
+    })
 
     this.#isScaling = false
     this.#lastScaling = 0
@@ -151,7 +155,7 @@ export class DynamicWorkersScaler {
           heapTotal: health.heapTotal
         })
 
-        if (health.elu > scaleUpELUThreshold) {
+        if (health.elu > this.#algorithm.scaleUpELU) {
           shouldCheckForScaling = true
         }
       } catch (err) {

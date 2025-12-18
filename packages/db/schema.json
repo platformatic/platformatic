@@ -2702,14 +2702,12 @@
             "scaleUpELU": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "deprecated": true
+              "maximum": 1
             },
             "scaleDownELU": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "deprecated": true
+              "maximum": 1
             },
             "timeWindowSec": {
               "type": "number",

@@ -465,13 +465,7 @@ export interface PlatformaticViteConfig {
       maxWorkers?: number;
       cooldownSec?: number;
       gracePeriod?: number;
-      /**
-       * @deprecated
-       */
       scaleUpELU?: number;
-      /**
-       * @deprecated
-       */
       scaleDownELU?: number;
       /**
        * @deprecated
