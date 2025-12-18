@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { createRuntime, updateConfigFile } from '../helpers.js'
-import { prepareRuntime, verifyInject, verifyResponse } from './helper.js'
+import { prepareRuntime, testRoundRobin, verifyInject } from './helper.js'
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
@@ -15,23 +15,10 @@ test('the mesh network works with the internal dispatcher', async t => {
     await app.close()
   })
 
-  await verifyResponse(entryUrl, 'service', 0, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 1, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 2, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 0, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 3, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 4, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'MockSocket')
-  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
+  await testRoundRobin(entryUrl, [
+    { name: 'service', workerCount: 3, expectedSocket: 'MockSocket' },
+    { name: 'node', workerCount: 5, expectedSocket: 'MockSocket' }
+  ])
 })
 
 test('the mesh network works with the HTTP applications when using ITC', async t => {
@@ -62,27 +49,17 @@ test('the mesh network works with the HTTP applications when using ITC', async t
     await app.close()
   })
 
-  function verifySource (port, res) {
-    deepStrictEqual(res.headers['x-plt-port'], port)
-  }
-
-  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
-  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
-  await verifyResponse(entryUrl, 'node', 1, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
-  await verifyResponse(entryUrl, 'node', 2, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
-  await verifyResponse(entryUrl, 'node', 3, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
-  await verifyResponse(entryUrl, 'node', 4, 'MockSocket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
-  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
+  await testRoundRobin(entryUrl, [
+    {
+      name: 'service',
+      workerCount: 3,
+      expectedSocket: 'Socket',
+      verifyAdditional: (res, workerId) => {
+        deepStrictEqual(res.headers['x-plt-port'], ports[workerId])
+      }
+    },
+    { name: 'node', workerCount: 5, expectedSocket: 'MockSocket' }
+  ])
 })
 
 test('the mesh network works with the HTTP applications when using HTTP', async t => {
@@ -117,27 +94,17 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
     await app.close()
   })
 
-  function verifySource (port, res) {
-    deepStrictEqual(res.headers['x-plt-port'], port)
-  }
-
-  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
-  await verifyResponse(entryUrl, 'node', 0, 'Socket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
-  await verifyResponse(entryUrl, 'node', 1, 'Socket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
-  await verifyResponse(entryUrl, 'node', 2, 'Socket')
-
-  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
-  await verifyResponse(entryUrl, 'node', 3, 'Socket')
-
-  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
-  await verifyResponse(entryUrl, 'node', 4, 'Socket')
-
-  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
-  await verifyResponse(entryUrl, 'node', 0, 'Socket')
+  await testRoundRobin(entryUrl, [
+    {
+      name: 'service',
+      workerCount: 3,
+      expectedSocket: 'Socket',
+      verifyAdditional: (res, workerId) => {
+        deepStrictEqual(res.headers['x-plt-port'], ports[workerId])
+      }
+    },
+    { name: 'node', workerCount: 5, expectedSocket: 'Socket' }
+  ])
 })
 
 test('can inject on a worker', async t => {
