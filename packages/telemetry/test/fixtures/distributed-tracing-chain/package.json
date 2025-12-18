@@ -1,0 +1,9 @@
+{
+  "name": "distributed-tracing-chain",
+  "private": true,
+  "dependencies": {
+    "@platformatic/node": "workspace:*",
+    "@platformatic/composer": "workspace:*",
+    "fastify": "^5.0.0"
+  }
+}

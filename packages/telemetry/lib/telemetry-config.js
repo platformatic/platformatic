@@ -1,5 +1,5 @@
 import { formatParamUrl } from '@fastify/swagger'
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { context, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
   BatchSpanProcessor,
@@ -159,18 +159,26 @@ export function setupTelemetry (opts, logger) {
       return
     }
 
+    // Check if there's already a span in the active context (e.g., from thread-interceptor's onServerRequest)
+    const activeContext = context.active()
+    const existingSpan = trace.getSpan(activeContext)
+    if (existingSpan) {
+      request.span = existingSpan
+      return
+    }
+
     // We populate the context with the incoming request headers
-    let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
+    let spanContext = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
 
     const route = request.routeOptions?.url ?? null
-    const span = tracer.startSpan(formatSpanName(request, route), {}, context)
+    const span = tracer.startSpan(formatSpanName(request, route), {}, spanContext)
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
-    context = context.setSpan(span)
+    spanContext = spanContext.setSpan(span)
     span.setAttributes(formatSpanAttributes.request(request, route))
-    span.context = context
+    span.context = spanContext
     // Inject the propagation headers
-    propagator.inject(context, reply, fastifyTextMapSetter)
+    propagator.inject(spanContext, reply, fastifyTextMapSetter)
     request.span = span
   }
 

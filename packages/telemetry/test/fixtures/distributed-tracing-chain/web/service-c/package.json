@@ -1,0 +1,7 @@
+{
+  "name": "service-c",
+  "private": true,
+  "dependencies": {
+    "@platformatic/node": "workspace:*"
+  }
+}

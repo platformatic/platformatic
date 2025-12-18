@@ -3,9 +3,9 @@ import fastUri from 'fast-uri'
 import { formatSpanAttributes, formatSpanName } from './telemetry-config.js'
 import { name as moduleName, version as moduleVersion } from './version.js'
 
-const tracer = trace.getTracer(moduleName, moduleVersion)
-
 export function createTelemetryThreadInterceptorHooks () {
+  const tracer = trace.getTracer(moduleName, moduleVersion)
+
   const onServerRequest = (req, cb) => {
     const activeContext = propagation.extract(context.active(), req.headers)
 
@@ -40,6 +40,14 @@ export function createTelemetryThreadInterceptorHooks () {
   }
 
   const onClientRequest = (req, ctx) => {
+    // Check if traceparent header already exists - if so, someone else (e.g., gateway proxy,
+    // undici instrumentation) already created a CLIENT span and injected headers.
+    // We don't need to create another span, just ensure headers are propagated.
+    if (req.headers?.traceparent) {
+      // Headers already have trace context, don't create duplicate span
+      return
+    }
+
     const activeContext = context.active()
 
     const { origin, method = '', path } = req

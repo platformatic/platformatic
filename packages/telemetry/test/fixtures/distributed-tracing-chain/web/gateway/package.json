@@ -1,0 +1,7 @@
+{
+  "name": "gateway",
+  "private": true,
+  "dependencies": {
+    "@platformatic/composer": "workspace:*"
+  }
+}

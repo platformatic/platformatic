@@ -1,0 +1,8 @@
+{
+  "name": "service-b",
+  "private": true,
+  "dependencies": {
+    "@platformatic/node": "workspace:*",
+    "fastify": "^5.0.0"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "logger": {
+    "level": "info"
+  },
+  "entrypoint": "gateway",
+  "autoload": {
+    "path": "web"
+  },
+  "telemetry": {
+    "applicationName": "distributed-tracing-chain",
+    "exporter": {
+      "type": "file",
+      "options": {
+        "path": "spans.log"
+      }
+    }
+  },
+  "watch": false
+}

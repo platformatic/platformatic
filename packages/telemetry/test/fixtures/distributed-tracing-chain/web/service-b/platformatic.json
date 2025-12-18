@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "node": {
+    "main": "server.mjs",
+    "dispatchViaHttp": true
+  }
+}
