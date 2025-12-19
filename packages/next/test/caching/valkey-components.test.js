@@ -1,6 +1,7 @@
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
+import { once } from 'node:events'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -236,18 +237,25 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
 })
 
 test('should not extend the TTL over the original intended one', async t => {
-  const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
-    await setCacheSettings(root, cache => {
-      cache.maxTTL = 10
-    })
+  const { runtime, root, url } = await prepareRuntimeWithBackend(
+    t,
+    configuration,
+    true,
+    false,
+    ['frontend'],
+    async root => {
+      await setCacheSettings(root, cache => {
+        cache.maxTTL = 10
+      })
 
-    const pageFile = await readFile(resolve(root, 'services/frontend/src/app/route/route.js'), 'utf-8')
-    await writeFile(
-      resolve(root, 'services/frontend/src/app/route/route.js'),
-      pageFile.replace('revalidate: 120', 'revalidate: 11'),
-      'utf-8'
-    )
-  })
+      const pageFile = await readFile(resolve(root, 'services/frontend/src/app/route/route.js'), 'utf-8')
+      await writeFile(
+        resolve(root, 'services/frontend/src/app/route/route.js'),
+        pageFile.replace('revalidate: 120', 'revalidate: 11'),
+        'utf-8'
+      )
+    }
+  )
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -269,6 +277,7 @@ test('should not extend the TTL over the original intended one', async t => {
   {
     const response = await fetch(url + '/route')
     const data = await response.json()
+    await once(runtime, 'application:worker:event:completed')
 
     version = data.version
     time = data.time
@@ -279,6 +288,7 @@ test('should not extend the TTL over the original intended one', async t => {
   {
     const response = await fetch(url + '/route?delay=3000')
     const data = await response.json()
+    await once(runtime, 'application:worker:event:completed')
 
     notDeepStrictEqual(data.version, version)
     notDeepStrictEqual(data.time, time)
