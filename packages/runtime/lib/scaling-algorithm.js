@@ -5,15 +5,23 @@ export class ScalingAlgorithm {
   #maxTotalWorkers
   #appsMetrics
   #appsConfigs
+  #scaleUpELU
+  #scaleDownELU
 
   constructor (options = {}) {
     this.#maxTotalWorkers = options.maxTotalWorkers ?? Infinity
     this.#appsConfigs = options.applications ?? {}
     this.#appsMetrics = {}
+    this.#scaleUpELU = options.scaleUpELU ?? 0.8
+    this.#scaleDownELU = options.scaleDownELU ?? 0.2
   }
 
-  addApplication (id, config) {
+  addApplication (id, config = {}) {
+    config.scaleUpELU ??= this.#scaleUpELU
+    config.scaleDownELU ??= this.#scaleDownELU
+
     this.#appsConfigs[id] = config
+    this.#appsMetrics[id] ??= {}
   }
 
   removeApplication (id) {
@@ -26,8 +34,9 @@ export class ScalingAlgorithm {
     const timestamp = Date.now()
 
     if (!this.#appsMetrics[applicationId]) {
-      this.#appsMetrics[applicationId] = {}
+      throw new Error(`Missing application "${applicationId}" in the scaling algorithm.`)
     }
+
     if (!this.#appsMetrics[applicationId][workerId]) {
       this.#appsMetrics[applicationId][workerId] = []
     }

@@ -46,7 +46,9 @@ export class DynamicWorkersScaler {
     this.#gracePeriod = config.gracePeriod ?? defaultGracePeriod
 
     this.#algorithm = new ScalingAlgorithm({
-      maxTotalWorkers: this.#maxTotalWorkers
+      maxTotalWorkers: this.#maxTotalWorkers,
+      scaleUpELU: this.#scaleUpELU,
+      scaleDownELU: this.#scaleDownELU
     })
 
     this.#isScaling = false
@@ -158,6 +160,8 @@ export class DynamicWorkersScaler {
 
         const workerId = worker[kId]
         const applicationId = worker[kApplicationId]
+        const scaleConfig = this.#appsConfigs[applicationId]
+        if (!scaleConfig) continue
 
         this.#algorithm.addWorkerHealthInfo({
           workerId,
@@ -167,7 +171,6 @@ export class DynamicWorkersScaler {
           heapTotal: health.heapTotal
         })
 
-        const scaleConfig = this.#appsConfigs[applicationId]
         if (health.elu > scaleConfig.scaleUpELU) {
           shouldCheckForScaling = true
         }
