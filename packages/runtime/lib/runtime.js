@@ -35,7 +35,8 @@ import {
   MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
-  WorkerNotFoundError
+  WorkerNotFoundError,
+  WorkerInterceptorNotReadyError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
@@ -61,7 +62,8 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kInterceptorReadyPromise
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -677,6 +679,19 @@ export class Runtime extends EventEmitter {
     this.#validatePprofCapturePreload()
 
     return sendViaITC(service, 'stopProfiling', options)
+  }
+
+  async startApplicationRepl (id, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    // Create a MessageChannel for REPL communication
+    const { port1, port2 } = new MessageChannel()
+
+    // Send port1 to the worker to start the REPL
+    await sendViaITC(service, 'startRepl', port1, [port1])
+
+    // Return port2 for the caller to use
+    return port2
   }
 
   async updateUndiciInterceptors (undiciConfig) {
@@ -1627,10 +1642,12 @@ export class Runtime extends EventEmitter {
     if (enabled) {
       // Store locally
       this.#workers.set(workerId, worker)
-
-      // Setup the interceptor
-      this.#meshInterceptor.route(applicationId, worker)
     }
+
+    // Setup the interceptor
+    // kInterceptorReadyPromise resolves when the worker
+    // is ready to receive requests: after calling the replaceServer method
+    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
 
     // Wait for initialization
     await waitEventFromITC(worker, 'init')
@@ -1871,6 +1888,8 @@ export class Runtime extends EventEmitter {
         this.#url = workerUrl
       }
 
+      await this.#waitForWorkerInterceptor(worker)
+
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
 
@@ -2021,7 +2040,7 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
+    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
@@ -2115,7 +2134,6 @@ export class Runtime extends EventEmitter {
       }
 
       this.#workers.set(workerId, newWorker)
-      this.#meshInterceptor.route(applicationId, newWorker)
     } catch (e) {
       newWorker?.terminate?.()
       throw e
@@ -2780,5 +2798,25 @@ export class Runtime extends EventEmitter {
     }
 
     this.#loggerContext.updatePrefixes(ids)
+  }
+
+  async #waitForWorkerInterceptor (worker, timeout = 10000) {
+    const workerId = worker[kId]
+    const applicationId = worker[kApplicationId]
+
+    const interceptorReadyTimeout = setTimeout(() => {
+      this.logger.error(
+        { applicationId, workerId },
+        'The worker interceptor is not ready after 10s'
+      )
+      throw new WorkerInterceptorNotReadyError(applicationId)
+    }, timeout)
+
+    try {
+      await worker[kInterceptorReadyPromise]
+      worker[kInterceptorReadyPromise] = null
+    } finally {
+      clearTimeout(interceptorReadyTimeout)
+    }
   }
 }

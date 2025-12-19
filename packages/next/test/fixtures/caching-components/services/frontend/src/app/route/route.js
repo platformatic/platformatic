@@ -37,5 +37,10 @@ async function getCachedResponse (url) {
 export async function GET (request) {
   const url = new URL(request.url)
   const response = await getCachedResponse(url)
+
+  setTimeout(() => {
+    globalThis.platformatic.events.emitAndNotify('completed')
+  }, 100)
+
   return Response.json(response, { status: response.ok === false ? 404 : 200 })
 }

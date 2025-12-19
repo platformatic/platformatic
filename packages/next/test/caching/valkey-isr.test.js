@@ -2,6 +2,7 @@ import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { readFile, rename, writeFile } from 'node:fs/promises'
+import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { parse } from 'semver'
@@ -428,7 +429,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
 })
 
 test('should properly revalidate tags in Valkey', async t => {
-  const { url } = await prepareRuntimeWithBackend(t, configuration)
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration)
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   await cleanupCache(valkey)
@@ -461,6 +462,8 @@ test('should properly revalidate tags in Valkey', async t => {
     const res = await fetch(url + '/revalidate')
     ok(res.status, 200)
   }
+
+  await once(runtime, 'application:worker:event:revalidated')
 
   {
     const response = await fetch(url)
@@ -830,6 +833,7 @@ test('should handle refresh error', async t => {
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
 
   await fetch(url + '/revalidate')
+  await once(runtime, 'application:worker:event:revalidated')
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
