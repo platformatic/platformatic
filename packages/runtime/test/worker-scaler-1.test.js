@@ -385,3 +385,55 @@ test('should apply application scaleUpELU and scaleDownELU', async t => {
   assert.strictEqual(service1Workers.length, 1)
   assert.strictEqual(service2Workers.length, 2)
 })
+
+test('should apply application scaleUpELU and scaleDownELU (vertical scaler))', async t => {
+  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.worker-scaler.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config.verticalScaler = {
+        enabled: true,
+        maxTotalWorkers: 5,
+        gracePeriod: 1,
+        scaleUpELU: 1,
+        applications: {
+          'service-1': { scaleUpELU: 1 },
+          'service-2': { scaleUpELU: 0.5 }
+        }
+      }
+      config = await transform(config, ...args)
+      return config
+    }
+  })
+
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ timeout: 1000 })
+  })
+  assert.strictEqual(statusCode, 200)
+
+  await sleep(10000)
+
+  const workers = await app.getWorkers()
+
+  const service1Workers = []
+  const service2Workers = []
+
+  for (const worker of Object.values(workers)) {
+    if (worker.application === 'service-1') {
+      service1Workers.push(worker)
+    }
+    if (worker.application === 'service-2') {
+      service2Workers.push(worker)
+    }
+  }
+
+  assert.strictEqual(service1Workers.length, 1)
+  assert.strictEqual(service2Workers.length, 2)
+})
