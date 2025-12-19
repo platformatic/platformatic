@@ -5,20 +5,11 @@ export class ScalingAlgorithm {
   #maxTotalWorkers
   #appsMetrics
   #appsConfigs
-  #scaleUpELU
-  #scaleDownELU
 
   constructor (options = {}) {
     this.#maxTotalWorkers = options.maxTotalWorkers ?? Infinity
     this.#appsConfigs = options.applications ?? {}
     this.#appsMetrics = {}
-
-    this.#scaleUpELU = options.scaleUpELU ?? 0.8
-    this.#scaleDownELU = options.scaleDownELU ?? 0.2
-  }
-
-  get scaleUpELU () {
-    return this.#scaleUpELU
   }
 
   addApplication (id, config) {
@@ -241,12 +232,13 @@ export class ScalingAlgorithm {
     const { elu: scaleUpELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleUpTimeWindow })
     const { elu: scaleDownELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleDownTimeWindow })
     const { heapUsed: avgHeapUsage } = this.#calculateAppAvgMetrics(applicationId)
+    const config = this.#appsConfigs[applicationId]
 
     let recommendation = null
-    if (scaleUpELU > this.#scaleUpELU) {
+    if (scaleUpELU > config.scaleUpELU) {
       recommendation = 'scaleUp'
     }
-    if (scaleDownELU < this.#scaleDownELU) {
+    if (scaleDownELU < config.scaleDownELU) {
       recommendation = 'scaleDown'
     }
 

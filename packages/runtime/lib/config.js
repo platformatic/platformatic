@@ -298,19 +298,31 @@ export async function transform (config, _, context) {
     config.workers.maximum ??= config.verticalScaler.maxWorkers ?? config.verticalScaler.maxTotalWorkers ?? 1
     config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
 
-    if (typeof config.workers.cooldown === 'undefined' && typeof config.verticalScaler.cooldownSec === 'number') {
+    if (
+      typeof config.workers.cooldown === 'undefined' &&
+      typeof config.verticalScaler.cooldownSec === 'number'
+    ) {
       config.workers.cooldown = config.verticalScaler.cooldownSec * 1000
     }
 
-    if (typeof config.workers.gracePeriod === 'undefined' && typeof config.verticalScaler.gracePeriod === 'number') {
+    if (
+      typeof config.workers.gracePeriod === 'undefined' &&
+      typeof config.verticalScaler.gracePeriod === 'number'
+    ) {
       config.workers.gracePeriod = config.verticalScaler.gracePeriod
     }
 
-    if (typeof config.workers.scaleUpELU === 'undefined' && typeof config.verticalScaler.scaleUpELU === 'number') {
+    if (
+      typeof config.workers.scaleUpELU === 'undefined' &&
+      typeof config.verticalScaler.scaleUpELU === 'number'
+    ) {
       config.workers.scaleUpELU = config.verticalScaler.scaleUpELU
     }
 
-    if (typeof config.workers.scaleDownELU === 'undefined' && typeof config.verticalScaler.scaleDownELU === 'number') {
+    if (
+      typeof config.workers.scaleDownELU === 'undefined' &&
+      typeof config.verticalScaler.scaleDownELU === 'number'
+    ) {
       config.workers.scaleDownELU = config.verticalScaler.scaleDownELU
     }
 

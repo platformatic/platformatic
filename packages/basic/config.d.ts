@@ -25,6 +25,8 @@ export interface PlatformaticBasicConfig {
           maxMemory?: number;
           cooldown?: number;
           gracePeriod?: number;
+          scaleUpELU?: number;
+          scaleDownELU?: number;
           [k: string]: unknown;
         };
     workersRestartDelay?: number | string;
@@ -421,6 +423,8 @@ export interface PlatformaticBasicConfig {
             static?: number;
             minimum?: number;
             maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
             [k: string]: unknown;
           };
       health?: {

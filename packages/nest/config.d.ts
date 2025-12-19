@@ -133,6 +133,8 @@ export interface PlatformaticNestJSConfig {
           maxMemory?: number;
           cooldown?: number;
           gracePeriod?: number;
+          scaleUpELU?: number;
+          scaleDownELU?: number;
           [k: string]: unknown;
         };
     workersRestartDelay?: number | string;
@@ -529,6 +531,8 @@ export interface PlatformaticNestJSConfig {
             static?: number;
             minimum?: number;
             maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
             [k: string]: unknown;
           };
       health?: {
