@@ -56,7 +56,9 @@ export const workers = {
         total: { type: 'number', minimum: 1 },
         maxMemory: { type: 'number', minimum: 0 },
         cooldown: { type: 'number', minimum: 0 },
-        gracePeriod: { type: 'number', minimum: 0 }
+        gracePeriod: { type: 'number', minimum: 0 },
+        scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+        scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
       }
     }
   ]
@@ -764,7 +766,9 @@ export const application = {
           properties: {
             static: { type: 'number', minimum: 1 },
             minimum: { type: 'number', minimum: 1 },
-            maximum: { type: 'number', minimum: 0 }
+            maximum: { type: 'number', minimum: 0 },
+            scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+            scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
           }
         }
       ]

@@ -1391,6 +1391,16 @@
                       "maximum": {
                         "type": "number",
                         "minimum": 0
+                      },
+                      "scaleUpELU": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "scaleDownELU": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
                       }
                     }
                   }
@@ -1670,6 +1680,16 @@
                 "gracePeriod": {
                   "type": "number",
                   "minimum": 0
+                },
+                "scaleUpELU": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "scaleDownELU": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
                 }
               }
             }
@@ -2908,6 +2928,16 @@
                     "maximum": {
                       "type": "number",
                       "minimum": 0
+                    },
+                    "scaleUpELU": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "scaleDownELU": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
                     }
                   }
                 }
