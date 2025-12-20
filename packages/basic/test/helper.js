@@ -319,6 +319,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   process.chdir(root)
   const runtime = await createPlaformaticRuntime(root, configFile, {
     production,
+    setupSignals: false,
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.logger ??= {}
