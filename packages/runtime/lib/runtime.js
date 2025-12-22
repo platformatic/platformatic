@@ -2341,7 +2341,7 @@ export class Runtime extends EventEmitter {
 
       let pinoLog
 
-      if (typeof message === 'object') {
+      if (message !== null && typeof message === 'object') {
         pinoLog =
           typeof message.level === 'number' &&
           // We want to accept both pino raw time (number) and time as formatted string
