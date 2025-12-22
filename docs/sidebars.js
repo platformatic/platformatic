@@ -58,7 +58,7 @@ const sidebars = {
             'guides/use-watt-multiple-repository',
             'guides/use-watt-with-ts-node',
             'guides/scheduler',
-            'guides/vertical-scaler'
+            'guides/dynamic-workers'
           ]
         },
         {

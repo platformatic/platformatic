@@ -1,4 +1,4 @@
-# Vertical Scaler
+# Dynamic Workers
 
 ## Overview
 
