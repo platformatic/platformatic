@@ -548,3 +548,30 @@ test('should use colors when printing applications logs', async t => {
     )
   )
 })
+
+// Regression test for: TypeError: Cannot read properties of null (reading 'level')
+// This happens when a worker outputs the literal string "null" to stdout.
+// JSON.parse("null") returns null, and typeof null === 'object' (JS quirk),
+// so the code enters the object branch and tries to access null.level
+test('should handle literal null output from workers without crashing', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-null-output', 'platformatic.json')
+
+  let requested = false
+  const { stderr } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/null-output' })
+      requested = true
+    },
+    done: message => {
+      return requested && message.includes('null')
+    }
+  })
+
+  // The runtime should not crash - if we got here, the test passed
+  ok(requested, 'Request was made successfully')
+
+  // Verify no crash error in stderr
+  const stderrText = stderr.join('')
+  ok(!stderrText.includes('Cannot read properties of null'), 'No null property access error')
+})
