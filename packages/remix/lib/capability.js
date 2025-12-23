@@ -60,7 +60,7 @@ export class RemixCapability extends ViteCapability {
       return this.url
     }
 
-    await this._start()
+    await this._start({ listen })
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']

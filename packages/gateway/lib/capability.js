@@ -41,7 +41,6 @@ export class GatewayCapability extends ServiceCapability {
       return this.url
     }
 
-    await super._start()
     const url = await super.start()
 
     this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)

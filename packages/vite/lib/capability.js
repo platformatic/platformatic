@@ -52,12 +52,12 @@ export class ViteCapability extends BaseCapability {
   }
 
   async start ({ listen }) {
-    await super._start({ listen })
-
     // Make this idempotent
     if (this.url) {
       return this.url
     }
+
+    await super._start({ listen })
 
     if (this.isProduction) {
       await this.#startProduction(listen)

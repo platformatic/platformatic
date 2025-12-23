@@ -55,6 +55,11 @@ export class ReactRouterCapability extends ViteCapability {
   }
 
   async start ({ listen }) {
+    // Make this idempotent
+    if (this.url) {
+      return this.url
+    }
+
     const config = this.config
     const reactRouterConfig = await this.#getReactRouterConfig()
 
@@ -69,6 +74,8 @@ export class ReactRouterCapability extends ViteCapability {
       }
 
       if (reactRouterConfig.ssr) {
+        await super._start({ listen })
+
         return this.#startSSRProduction(listen)
       }
     }
