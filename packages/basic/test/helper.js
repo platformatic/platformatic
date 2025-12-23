@@ -884,21 +884,17 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Check that we get the response from different workers
   const workers = features.node.reusePort ? 5 : 1
 
-  const usedWorkers = new Set()
+  let attempts = 0
+  const usedWorkers = new Set(Array.from(Array(workers)).map((_, i) => i.toString()))
 
-  const promises = Array.from(Array(workers)).map(async () => {
+  // The round robin may take a few attempts to use all workers
+  while (usedWorkers.size > 0 && attempts++ < workers * 5) {
     const res = await request(url + '/')
     await integrityCheck?.(res)
 
     const worker = res.headers['x-plt-worker-id']
     ok(worker.match(/^[01234]$/))
 
-    usedWorkers.add(worker)
-  })
-
-  await Promise.all(promises)
-
-  if (workers > 1) {
-    ok(usedWorkers.size > 1)
+    usedWorkers.delete(worker)
   }
 }

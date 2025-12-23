@@ -69,7 +69,7 @@ export class ServiceCapability extends BaseCapability {
       return this.url
     }
 
-    await super._start()
+    await super._start({ listen })
 
     // Create the application if needed
     if (!this.#app) {
