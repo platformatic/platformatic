@@ -90,6 +90,16 @@
                       "maximum": {
                         "type": "number",
                         "minimum": 0
+                      },
+                      "scaleUpELU": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "scaleDownELU": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
                       }
                     }
                   }
@@ -394,6 +404,16 @@
                   "maximum": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "scaleUpELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "scaleDownELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
                   }
                 }
               }
@@ -696,6 +716,16 @@
                   "maximum": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "scaleUpELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "scaleDownELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
                   }
                 }
               }
@@ -998,6 +1028,16 @@
                   "maximum": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "scaleUpELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "scaleDownELU": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
                   }
                 }
               }
@@ -1277,6 +1317,16 @@
             "gracePeriod": {
               "type": "number",
               "minimum": 0
+            },
+            "scaleUpELU": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "scaleDownELU": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
             }
           }
         }
@@ -2313,14 +2363,12 @@
         "scaleUpELU": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "deprecated": true
+          "maximum": 1
         },
         "scaleDownELU": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "deprecated": true
+          "maximum": 1
         },
         "timeWindowSec": {
           "type": "number",
@@ -2349,6 +2397,16 @@
               "maxWorkers": {
                 "type": "number",
                 "minimum": 1
+              },
+              "scaleUpELU": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "scaleDownELU": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
               }
             },
             "additionalProperties": false

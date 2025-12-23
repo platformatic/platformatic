@@ -1,5 +1,3 @@
-export const scaleUpELUThreshold = 0.8
-export const scaleDownELUThreshold = 0.2
 export const scaleUpTimeWindow = 10_000
 export const scaleDownTimeWindow = 60_000
 
@@ -7,15 +5,23 @@ export class ScalingAlgorithm {
   #maxTotalWorkers
   #appsMetrics
   #appsConfigs
+  #scaleUpELU
+  #scaleDownELU
 
   constructor (options = {}) {
     this.#maxTotalWorkers = options.maxTotalWorkers ?? Infinity
     this.#appsConfigs = options.applications ?? {}
     this.#appsMetrics = {}
+    this.#scaleUpELU = options.scaleUpELU ?? 0.8
+    this.#scaleDownELU = options.scaleDownELU ?? 0.2
   }
 
-  addApplication (id, config) {
+  addApplication (id, config = {}) {
+    config.scaleUpELU ??= this.#scaleUpELU
+    config.scaleDownELU ??= this.#scaleDownELU
+
     this.#appsConfigs[id] = config
+    this.#appsMetrics[id] ??= {}
   }
 
   removeApplication (id) {
@@ -28,8 +34,9 @@ export class ScalingAlgorithm {
     const timestamp = Date.now()
 
     if (!this.#appsMetrics[applicationId]) {
-      this.#appsMetrics[applicationId] = {}
+      throw new Error(`Missing application "${applicationId}" in the scaling algorithm.`)
     }
+
     if (!this.#appsMetrics[applicationId][workerId]) {
       this.#appsMetrics[applicationId][workerId] = []
     }
@@ -234,12 +241,13 @@ export class ScalingAlgorithm {
     const { elu: scaleUpELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleUpTimeWindow })
     const { elu: scaleDownELU } = this.#calculateAppAvgMetrics(applicationId, { timeWindow: scaleDownTimeWindow })
     const { heapUsed: avgHeapUsage } = this.#calculateAppAvgMetrics(applicationId)
+    const config = this.#appsConfigs[applicationId]
 
     let recommendation = null
-    if (scaleUpELU > scaleUpELUThreshold) {
+    if (scaleUpELU > config.scaleUpELU) {
       recommendation = 'scaleUp'
     }
-    if (scaleDownELU < scaleDownELUThreshold) {
+    if (scaleDownELU < config.scaleDownELU) {
       recommendation = 'scaleDown'
     }
 

@@ -133,6 +133,8 @@ export interface PlatformaticRemixConfig {
           maxMemory?: number;
           cooldown?: number;
           gracePeriod?: number;
+          scaleUpELU?: number;
+          scaleDownELU?: number;
           [k: string]: unknown;
         };
     workersRestartDelay?: number | string;
@@ -465,13 +467,7 @@ export interface PlatformaticRemixConfig {
       maxWorkers?: number;
       cooldownSec?: number;
       gracePeriod?: number;
-      /**
-       * @deprecated
-       */
       scaleUpELU?: number;
-      /**
-       * @deprecated
-       */
       scaleDownELU?: number;
       /**
        * @deprecated
@@ -535,6 +531,8 @@ export interface PlatformaticRemixConfig {
             static?: number;
             minimum?: number;
             maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
             [k: string]: unknown;
           };
       health?: {

@@ -298,12 +298,40 @@ export async function transform (config, _, context) {
     config.workers.maximum ??= config.verticalScaler.maxWorkers ?? config.verticalScaler.maxTotalWorkers ?? 1
     config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
 
-    if (typeof config.workers.cooldown === 'undefined' && typeof config.verticalScaler.cooldownSec === 'number') {
-      config.workers.cooldown = config.verticalScaler.cooldownSec * 1000
+    if (config.verticalScaler.cooldownSec) {
+      config.workers.cooldown ??= config.verticalScaler.cooldownSec * 1000
+    }
+    if (config.verticalScaler.gracePeriod) {
+      config.workers.gracePeriod ??= config.verticalScaler.gracePeriod
+    }
+    if (config.verticalScaler.scaleUpELU) {
+      config.workers.scaleUpELU ??= config.verticalScaler.scaleUpELU
+    }
+    if (config.verticalScaler.scaleDownELU) {
+      config.workers.scaleDownELU ??= config.verticalScaler.scaleDownELU
     }
 
-    if (typeof config.workers.gracePeriod === 'undefined' && typeof config.verticalScaler.gracePeriod === 'number') {
-      config.workers.gracePeriod = config.verticalScaler.gracePeriod
+    if (config.verticalScaler.applications) {
+      for (const appId in config.verticalScaler.applications) {
+        let appConfig = applications.find((app) => app.id === appId)
+        if (!appConfig) {
+          appConfig = { id: appId, workers: {} }
+          applications.push(appConfig)
+        }
+
+        const scaleConfig = config.verticalScaler.applications[appId]
+        const workersConfig = appConfig.workers
+
+        workersConfig.minimum ??= scaleConfig.minWorkers ?? config.workers.minimum
+        workersConfig.maximum ??= scaleConfig.maxWorkers ?? config.workers.maximum
+
+        if (scaleConfig.scaleUpELU) {
+          workersConfig.scaleUpELU ??= scaleConfig.scaleUpELU
+        }
+        if (scaleConfig.scaleDownELU) {
+          workersConfig.scaleDownELU ??= scaleConfig.scaleDownELU
+        }
+      }
     }
 
     config.verticalScaler = undefined

@@ -495,6 +495,8 @@ export interface PlatformaticDatabaseConfig {
           maxMemory?: number;
           cooldown?: number;
           gracePeriod?: number;
+          scaleUpELU?: number;
+          scaleDownELU?: number;
           [k: string]: unknown;
         };
     workersRestartDelay?: number | string;
@@ -827,13 +829,7 @@ export interface PlatformaticDatabaseConfig {
       maxWorkers?: number;
       cooldownSec?: number;
       gracePeriod?: number;
-      /**
-       * @deprecated
-       */
       scaleUpELU?: number;
-      /**
-       * @deprecated
-       */
       scaleDownELU?: number;
       /**
        * @deprecated
@@ -897,6 +893,8 @@ export interface PlatformaticDatabaseConfig {
             static?: number;
             minimum?: number;
             maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
             [k: string]: unknown;
           };
       health?: {

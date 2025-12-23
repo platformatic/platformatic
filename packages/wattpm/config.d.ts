@@ -28,6 +28,8 @@ export type PlatformaticRuntimeConfig = {
               static?: number;
               minimum?: number;
               maximum?: number;
+              scaleUpELU?: number;
+              scaleDownELU?: number;
               [k: string]: unknown;
             };
         health?: {
@@ -100,6 +102,8 @@ export type PlatformaticRuntimeConfig = {
         maxMemory?: number;
         cooldown?: number;
         gracePeriod?: number;
+        scaleUpELU?: number;
+        scaleDownELU?: number;
         [k: string]: unknown;
       };
   workersRestartDelay?: number | string;
@@ -433,13 +437,7 @@ export type PlatformaticRuntimeConfig = {
     maxWorkers?: number;
     cooldownSec?: number;
     gracePeriod?: number;
-    /**
-     * @deprecated
-     */
     scaleUpELU?: number;
-    /**
-     * @deprecated
-     */
     scaleDownELU?: number;
     /**
      * @deprecated
@@ -457,6 +455,8 @@ export type PlatformaticRuntimeConfig = {
       [k: string]: {
         minWorkers?: number;
         maxWorkers?: number;
+        scaleUpELU?: number;
+        scaleDownELU?: number;
       };
     };
   };

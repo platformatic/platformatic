@@ -5,6 +5,7 @@ import { ScalingAlgorithm } from '../lib/scaling-algorithm.js'
 test('ScalingAlgorithm - should scale down if app ELUs are lower the treshold', async () => {
   const scaleDownELU = 0.2
   const scalingAlgorithm = new ScalingAlgorithm()
+  scalingAlgorithm.addApplication('app-1', { scaleDownELU })
 
   const applicationId = 'app-1'
   const workersCount = 2
@@ -27,6 +28,7 @@ test('ScalingAlgorithm - should scale down if app ELUs are lower the treshold', 
 test('ScalingAlgorithm - should not scale down if there is 1 worker', async () => {
   const scaleDownELU = 0.2
   const scalingAlgorithm = new ScalingAlgorithm({ scaleDownELU })
+  scalingAlgorithm.addApplication('app-1', { scaleDownELU })
 
   const applicationId = 'app-1'
 
@@ -43,6 +45,7 @@ test('ScalingAlgorithm - should not scale down if there is 1 worker', async () =
 test('ScalingAlgorithm - should scale up if the max workers is reached', async () => {
   const maxTotalWorkers = 2
   const scalingAlgorithm = new ScalingAlgorithm({ maxTotalWorkers })
+  scalingAlgorithm.addApplication('app-1')
 
   const applicationId = 'app-1'
   const workersCount = maxTotalWorkers
@@ -59,7 +62,8 @@ test('ScalingAlgorithm - should scale up if the max workers is reached', async (
 
 test('ScalingAlgorithm - should scale up if elu is higher than treshold', async () => {
   const scaleUpELU = 0.8
-  const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU })
+  const scalingAlgorithm = new ScalingAlgorithm()
+  scalingAlgorithm.addApplication('app-1', { scaleUpELU })
 
   const applicationId = 'app-1'
 
@@ -81,7 +85,8 @@ test('ScalingAlgorithm - should scale up if elu is higher than treshold', async 
 test('ScalingAlgorithm - should not scale if elu is between tresholds', async () => {
   const scaleDownELU = 0.2
   const scaleUpELU = 0.8
-  const scalingAlgorithm = new ScalingAlgorithm({ scaleDownELU, scaleUpELU })
+  const scalingAlgorithm = new ScalingAlgorithm()
+  scalingAlgorithm.addApplication('app-1', { scaleDownELU, scaleUpELU })
 
   const applicationId = 'app-1'
 
@@ -105,6 +110,9 @@ test('ScalingAlgorithm - should not scale if elu is between tresholds', async ()
 test('ScalingAlgorithm - should scale up only one app per recommendation', async () => {
   const scaleUpELU = 0.8
   const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU })
+  scalingAlgorithm.addApplication('app-1')
+  scalingAlgorithm.addApplication('app-2')
+  scalingAlgorithm.addApplication('app-3')
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', minELU: scaleUpELU, workersCount: 1 },
@@ -130,10 +138,14 @@ test('ScalingAlgorithm - should not scale up there is not enough workers', async
   const maxTotalWorkers = 8
 
   const scalingAlgorithm = new ScalingAlgorithm({
+    maxTotalWorkers,
     scaleUpELU,
-    scaleDownELU,
-    maxTotalWorkers
+    scaleDownELU
   })
+  scalingAlgorithm.addApplication('app-1')
+  scalingAlgorithm.addApplication('app-2')
+  scalingAlgorithm.addApplication('app-3')
+  scalingAlgorithm.addApplication('app-4')
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', elu: 0.99, workersCount: 2 },
@@ -152,7 +164,10 @@ test('ScalingAlgorithm - should not scale up there is not enough workers', async
 
 test('ScalingAlgorithm - should scale down many apps per recommendation', async () => {
   const scaleDownELU = 0.2
-  const scalingAlgorithm = new ScalingAlgorithm({ scaleDownELU })
+  const scalingAlgorithm = new ScalingAlgorithm()
+  scalingAlgorithm.addApplication('app-1', { scaleDownELU })
+  scalingAlgorithm.addApplication('app-2', { scaleDownELU })
+  scalingAlgorithm.addApplication('app-3', { scaleDownELU })
 
   const appsCount = 3
   const workersCount = 4
@@ -178,14 +193,9 @@ test('ScalingAlgorithm - should scale down many apps per recommendation', async 
 })
 
 test('ScalingAlgorithm - should not scale if the application max workers is reached', async () => {
-  const scalingAlgorithm = new ScalingAlgorithm({
-    maxTotalWorkers: 10,
-    applications: {
-      'app-1': {
-        maxWorkers: 5
-      }
-    }
-  })
+  const scalingAlgorithm = new ScalingAlgorithm({ maxTotalWorkers: 10 })
+  scalingAlgorithm.addApplication('app-1', { maxWorkers: 5 })
+  scalingAlgorithm.addApplication('app-2')
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', elu: 1, workersCount: 5 },
@@ -210,15 +220,10 @@ test('ScalingAlgorithm - should not scale if the application max workers is reac
 })
 
 test('ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower', async () => {
-  const scalingAlgorithm = new ScalingAlgorithm({
-    scaleUpELU: 0.8,
-    minWorkers: 2,
-    applications: {
-      'app-1': { minWorkers: 2 },
-      'app-2': { minWorkers: 3 },
-      'app-3': { minWorkers: 4 }
-    }
-  })
+  const scalingAlgorithm = new ScalingAlgorithm({ minWorkers: 2, scaleUpELU: 0.8 })
+  scalingAlgorithm.addApplication('app-1', { minWorkers: 2 })
+  scalingAlgorithm.addApplication('app-2', { minWorkers: 3 })
+  scalingAlgorithm.addApplication('app-3', { minWorkers: 4 })
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', elu: 1, workersCount: 1 },
@@ -251,6 +256,9 @@ test('ScalingAlgorithm - should scale up apps to their min workers if the actual
 
 test('ScalingAlgorithm - should not scale if there is not enough memory', async () => {
   const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU: 0.8 })
+  scalingAlgorithm.addApplication('app-1')
+  scalingAlgorithm.addApplication('app-2')
+  scalingAlgorithm.addApplication('app-3')
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', elu: 1, heapUsed: 1000, workersCount: 1 },
@@ -269,7 +277,10 @@ test('ScalingAlgorithm - should not scale if there is not enough memory', async 
 })
 
 test('ScalingAlgorithm - should scale an application that has enough memory', async () => {
-  const scalingAlgorithm = new ScalingAlgorithm({ scaleUpELU: 0.8 })
+  const scalingAlgorithm = new ScalingAlgorithm()
+  scalingAlgorithm.addApplication('app-1')
+  scalingAlgorithm.addApplication('app-2')
+  scalingAlgorithm.addApplication('app-3')
 
   const { appsWorkersInfo, healthInfo } = generateMetadata([
     { applicationId: 'app-1', elu: 1, heapUsed: 2000, workersCount: 1 },

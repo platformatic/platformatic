@@ -22,7 +22,9 @@ schemaComponents.runtimeProperties.verticalScaler.properties.applications = {
     type: 'object',
     properties: {
       minWorkers: { type: 'number', minimum: 1 },
-      maxWorkers: { type: 'number', minimum: 1 }
+      maxWorkers: { type: 'number', minimum: 1 },
+      scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+      scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
     },
     additionalProperties: false
   }

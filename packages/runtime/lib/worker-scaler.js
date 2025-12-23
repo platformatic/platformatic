@@ -1,7 +1,7 @@
 import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
-import { ScalingAlgorithm, scaleUpELUThreshold } from './scaling-algorithm.js'
+import { ScalingAlgorithm } from './scaling-algorithm.js'
 import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
 const healthCheckInterval = 1000
@@ -20,6 +20,8 @@ export class DynamicWorkersScaler {
   #maxTotalWorkers
   #maxWorkers
   #minWorkers
+  #scaleUpELU
+  #scaleDownELU
   #cooldown
   #gracePeriod
 
@@ -29,6 +31,7 @@ export class DynamicWorkersScaler {
   #checkScalingInterval
   #isScaling
   #lastScaling
+  #appsConfigs
 
   constructor (runtime, config) {
     this.#runtime = runtime
@@ -37,15 +40,22 @@ export class DynamicWorkersScaler {
     this.#maxTotalWorkers = config.total ?? availableParallelism()
     this.#maxWorkers = config.maximum ?? this.#maxTotalWorkers
     this.#minWorkers = config.minimum ?? 1
+    this.#scaleUpELU = config.scaleUpELU ?? 0.8
+    this.#scaleDownELU = config.scaleDownELU ?? 0.2
     this.#cooldown = config.cooldown ?? defaultCooldown
     this.#gracePeriod = config.gracePeriod ?? defaultGracePeriod
 
-    this.#algorithm = new ScalingAlgorithm({ maxTotalWorkers: this.#maxTotalWorkers })
+    this.#algorithm = new ScalingAlgorithm({
+      maxTotalWorkers: this.#maxTotalWorkers,
+      scaleUpELU: this.#scaleUpELU,
+      scaleDownELU: this.#scaleDownELU
+    })
 
     this.#isScaling = false
     this.#lastScaling = 0
     this.#initialUpdates = []
     this.#status = 'init'
+    this.#appsConfigs = {}
   }
 
   getConfig () {
@@ -100,10 +110,14 @@ export class DynamicWorkersScaler {
     } else {
       config.minWorkers = application.workers.minimum
       config.maxWorkers = application.workers.maximum
+      config.scaleUpELU = application.workers.scaleUpELU
+      config.scaleDownELU = application.workers.scaleDownELU
     }
 
     config.minWorkers ??= this.#minWorkers
     config.maxWorkers ??= this.#maxWorkers
+    config.scaleUpELU ??= this.#scaleUpELU
+    config.scaleDownELU ??= this.#scaleDownELU
 
     if (config.minWorkers > 1) {
       const update = { application: application.id, workers: config.minWorkers }
@@ -115,6 +129,7 @@ export class DynamicWorkersScaler {
       }
     }
 
+    this.#appsConfigs[application.id] = config
     this.#algorithm.addApplication(application.id, config)
   }
 
@@ -143,15 +158,20 @@ export class DynamicWorkersScaler {
 
         worker[kLastWorkerScalerELU] = health.currentELU
 
+        const workerId = worker[kId]
+        const applicationId = worker[kApplicationId]
+        const scaleConfig = this.#appsConfigs[applicationId]
+        if (!scaleConfig) continue
+
         this.#algorithm.addWorkerHealthInfo({
-          workerId: worker[kId],
-          applicationId: worker[kApplicationId],
+          workerId,
+          applicationId,
           elu: health.elu,
           heapUsed: health.heapUsed,
           heapTotal: health.heapTotal
         })
 
-        if (health.elu > scaleUpELUThreshold) {
+        if (health.elu > scaleConfig.scaleUpELU) {
           shouldCheckForScaling = true
         }
       } catch (err) {
