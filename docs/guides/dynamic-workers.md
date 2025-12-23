@@ -92,6 +92,8 @@ Add a `workers` property to your runtime configuration (`platformatic.json` or `
 | **maxMemory** | Maximum total memory that can be used by all workers (bytes) | 90% of system total memory |
 | **cooldown** | Cooldown period between scaling operations (milliseconds) | 20000 |
 | **gracePeriod** | Delay after worker startup before collecting metrics (milliseconds) | 30000 |
+| **scaleUpELU** | ELU threshold to trigger scaling up (0-1) | 0.8 |
+| **scaleDownELU** | ELU threshold to trigger scaling down (0-1) | 0.2 |
 
 Example:
 ```json
