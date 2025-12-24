@@ -1,8 +1,8 @@
-# Vertical Scaler
+# Dynamic Workers
 
 ## Overview
 
-The Vertical Scaler is an automatic resource allocation algorithm that dynamically adjusts the number of workers for applications based on their Event Loop Utilization (ELU) metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
+Dynamic Workers is an automatic resource allocation algorithm that dynamically adjusts the number of workers for applications based on their Event Loop Utilization (ELU) metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
 
 ## How It Works
 
@@ -81,43 +81,49 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 
 ## Configuration
 
-### Vertical scaler parameters
+### Global Workers Configuration
+
+Add a `workers` property to your runtime configuration (`platformatic.json` or `watt.json`):
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| **maxTotalWorkers** | Maximum total workers across all applications | `os.availableParallelism()` |
-| **maxTotalMemory** | Maximum total memory that can be used by all workers (bytes) | 90% of system total memory |
-| **minWorkers** | Minimum workers for each application | 1 |
-| **maxWorkers** | Maximum workers for each application | `maxTotalWorkers` |
+| **dynamic** | Enable dynamic worker scaling | `false` |
+| **total** | Maximum total workers across all applications | `os.availableParallelism()` |
+| **maxMemory** | Maximum total memory that can be used by all workers (bytes) | 90% of system total memory |
+| **cooldown** | Cooldown period between scaling operations (milliseconds) | 20000 |
+| **gracePeriod** | Delay after worker startup before collecting metrics (milliseconds) | 30000 |
 | **scaleUpELU** | ELU threshold to trigger scaling up (0-1) | 0.8 |
 | **scaleDownELU** | ELU threshold to trigger scaling down (0-1) | 0.2 |
-| **timeWindowSec** | Time window for averaging ELU metrics for scale-up decisions (seconds) | 10 |
-| **scaleDownTimeWindowSec** | Time window for averaging ELU metrics for scale-down decisions (seconds) | 60 |
-| **cooldownSec** | Cooldown period between scaling operations (seconds) | 20 |
-| **gracePeriod** | Delay after worker startup before collecting metrics (milliseconds) | 30000 |
-| **scaleIntervalSec** | Interval for periodic scaling checks (seconds) | 60 |
-
-### Per-Application Configuration
-
-Individual applications can override global limits using the `applications` parameter:
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| **minWorkers** | Minimum workers for this application | 1 |
-| **maxWorkers** | Maximum workers for this application | Global maxWorkers |
 
 Example:
 ```json
 {
-  "maxTotalWorkers": 10,
-  "applications": {
-    "api-service": {
-      "minWorkers": 2,
-      "maxWorkers": 6
-    },
-    "background-worker": {
-      "minWorkers": 1,
-      "maxWorkers": 4
+  "workers": {
+    "dynamic": true,
+    "total": 10,
+    "gracePeriod": 30000
+  }
+}
+```
+
+### Per-Application Configuration
+
+Individual applications can configure their worker limits using the `workers` property in the application config or the `runtime` section:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| **dynamic** | Enable dynamic worker scaling for this application | Global setting |
+| **minimum** | Minimum workers for this application | 1 |
+| **maximum** | Maximum workers for this application | Global total |
+
+Example (in application's `platformatic.json`):
+```json
+{
+  "runtime": {
+    "workers": {
+      "dynamic": true,
+      "minimum": 2,
+      "maximum": 6
     }
   }
 }
