@@ -145,7 +145,7 @@ curl http://localhost:3042/node
 
 :::note
 
-You can customize how the various applications are exposed by changing `web/gateway/platformatic.json`.
+You can customize how the various applications are exposed by changing `web/gateway/watt.json`.
 Here is the equivalent of the default configuration when exposing a Node.js application:
 
 ```json
