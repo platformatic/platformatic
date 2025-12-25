@@ -2,8 +2,8 @@ import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } 
 import { ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
-import repl from 'node:repl'
 import { Duplex } from 'node:stream'
+import { createRequire } from 'node:module'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
   ApplicationExitedError,
@@ -266,6 +266,14 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
       },
 
       startRepl (port) {
+        // We are loading the repl module dynamically here to avoid loading it
+        // when not needed (since it pulls in domain, which is quite expensive
+        // as it monkey patches EventEmitter).
+        // We must use local require() instead of import
+        // because dynamic import() is async and the
+        // startRepl handler is sync.
+        const repl = createRequire(import.meta.url)('node:repl')
+
         // Create a duplex stream that wraps the MessagePort
         const replStream = new Duplex({
           read () {},
