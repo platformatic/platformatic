@@ -52,7 +52,8 @@ This file is created as your nodejs app:
 import { createServer } from 'node:http'
 
 export function create () {
-  return createServer((req, res) => {
+  return createServer((_, res) => {
+    globalThis.platformatic.logger.debug('Serving request.')
     res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
     res.end(JSON.stringify({ hello: 'world' }))
   })
