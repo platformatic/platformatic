@@ -41,7 +41,7 @@ Hello YOURNAME, welcome to Watt 3.0.0!
 ```
 
 Dependencies are going to be installed. Your application is located in `web/node`.
-The `watt.json` file is automatically created in the `node` folder, and the `package.json` file includes a `start` script and `@platformatic/node` as a dependency.
+The `watt.json` file is automatically created in the `node` folder, and the `package.json` file includes `@platformatic/node` as a dependency.
 
 ## Add your first Node.js application to Watt
 
