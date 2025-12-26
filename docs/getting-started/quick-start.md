@@ -35,6 +35,7 @@ Hello YOURNAME, welcome to Watt 3.0.0!
 ? Which kind of application do you want to create? @platformatic/node
 ✔ Installing @platformatic/node@^3.0.0 using npm ...
 ? What is the name of the application? node
+? Do you want to use TypeScript? no
 ? Do you want to create another application? no
 ? What port do you want to use? 3042
 ```
