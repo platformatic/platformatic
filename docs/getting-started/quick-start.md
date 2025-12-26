@@ -226,7 +226,7 @@ Then, you can test it by opening your browser at [`http://localhost:3042/next`](
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
 You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/gateway/platformatic.json` accordingly if you customize it.
+and the `prefix` in `web/gateway/watt.json` accordingly if you customize it.
 
 :::
 
