@@ -41,7 +41,7 @@ Hello YOURNAME, welcome to Watt 3.0.0!
 ```
 
 Dependencies are going to be installed. Your application is located in `web/node`.
-The `watt.json` file is automatically created in the `node` folder, and the `package.json` file includes a `start` script and `@platformatic/node` as a dependency.
+The `watt.json` file is automatically created in the `node` folder, and the `package.json` file includes `@platformatic/node` as a dependency.
 
 ## Add your first Node.js application to Watt
 
@@ -226,7 +226,7 @@ Then, you can test it by opening your browser at [`http://localhost:3042/next`](
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
 You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/gateway/platformatic.json` accordingly if you customize it.
+and the `prefix` in `web/gateway/watt.json` accordingly if you customize it.
 
 :::
 
