@@ -254,7 +254,7 @@ This domain name would not work outside of a Watt or Platformatic environment.
 :::note
 
 By default Next.js caches all `fetch()` requests.
-The `{ cache: 'no-store' }` option is used to disable caching, so that you can see the counter incrementing.
+The `{ cache: 'no-store' }` option is used to disable caching.
 
 :::
 
