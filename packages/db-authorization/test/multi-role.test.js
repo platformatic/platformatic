@@ -312,6 +312,7 @@ test('multi-role: most permissive wins - user with blocked role can still save',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
+    roleMergeStrategy: 'most-permissive',
     rules: [
       {
         role: 'blocked',

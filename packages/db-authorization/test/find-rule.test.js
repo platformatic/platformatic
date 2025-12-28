@@ -91,7 +91,8 @@ test('should search all roles until match', t => {
   deepEqual(found._id, 'RULE2')
 })
 
-test('multi-role: most permissive wins - true wins over false', t => {
+// Tests for 'most-permissive' strategy
+test('most-permissive: true wins over false', t => {
   const roles = ['member', 'super-admin']
   const rules = [
     {
@@ -111,13 +112,13 @@ test('multi-role: most permissive wins - true wins over false', t => {
       delete: true
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found.save, true)
   deepEqual(found.delete, true)
   deepEqual(found.find, true)
 })
 
-test('multi-role: order of rules should not matter', t => {
+test('most-permissive: order of rules should not matter', t => {
   const roles = ['member', 'super-admin']
 
   const rulesOrder1 = [
@@ -130,14 +131,14 @@ test('multi-role: order of rules should not matter', t => {
     { _id: 'MEMBER', role: 'member', entity: 'movie', save: false }
   ]
 
-  const found1 = findRule(rulesOrder1, roles)
-  const found2 = findRule(rulesOrder2, roles)
+  const found1 = findRule(rulesOrder1, roles, 'most-permissive')
+  const found2 = findRule(rulesOrder2, roles, 'most-permissive')
 
   deepEqual(found1.save, true)
   deepEqual(found2.save, true)
 })
 
-test('multi-role: order of roles should not matter', t => {
+test('most-permissive: order of roles should not matter', t => {
   const roles1 = ['member', 'super-admin']
   const roles2 = ['super-admin', 'member']
 
@@ -146,14 +147,14 @@ test('multi-role: order of roles should not matter', t => {
     { _id: 'SUPER_ADMIN', role: 'super-admin', entity: 'movie', save: true }
   ]
 
-  const found1 = findRule(rules, roles1)
-  const found2 = findRule(rules, roles2)
+  const found1 = findRule(rules, roles1, 'most-permissive')
+  const found2 = findRule(rules, roles2, 'most-permissive')
 
   deepEqual(found1.save, true)
   deepEqual(found2.save, true)
 })
 
-test('multi-role: object permission wins over false', t => {
+test('most-permissive: object permission wins over false', t => {
   const roles = ['blocked', 'user']
   const rules = [
     {
@@ -177,11 +178,11 @@ test('multi-role: object permission wins over false', t => {
       }
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found.save, { checks: { userId: 'X-PLATFORMATIC-USER-ID' } })
 })
 
-test('multi-role: defaults are merged', t => {
+test('most-permissive: first truthy defaults wins', t => {
   const roles = ['role1', 'role2']
   const rules = [
     {
@@ -203,11 +204,11 @@ test('multi-role: defaults are merged', t => {
       }
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found.defaults, { field1: 'value1' })
 })
 
-test('single role: returns exact rule', t => {
+test('most-permissive: single role returns exact rule', t => {
   const roles = ['admin']
   const rules = [
     {
@@ -218,13 +219,13 @@ test('single role: returns exact rule', t => {
       delete: true
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found._id, 'ADMIN')
   deepEqual(found.save, true)
   deepEqual(found.delete, true)
 })
 
-test('platformatic-admin is excluded when other roles present (user impersonation)', t => {
+test('most-permissive: platformatic-admin is excluded when other roles present (user impersonation)', t => {
   const roles = ['user', 'platformatic-admin']
   const rules = [
     {
@@ -244,12 +245,12 @@ test('platformatic-admin is excluded when other roles present (user impersonatio
       delete: true
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found._id, 'USER')
   deepEqual(found.delete, false)
 })
 
-test('platformatic-admin is used when it is the only role', t => {
+test('most-permissive: platformatic-admin is used when it is the only role', t => {
   const roles = ['platformatic-admin']
   const rules = [
     {
@@ -269,7 +270,29 @@ test('platformatic-admin is used when it is the only role', t => {
       delete: true
     }
   ]
-  const found = findRule(rules, roles)
+  const found = findRule(rules, roles, 'most-permissive')
   deepEqual(found._id, 'PLT_ADMIN')
   deepEqual(found.delete, true)
+})
+
+test('first-match: returns first matching rule based on rule order', t => {
+  const roles = ['member', 'super-admin']
+  const rules = [
+    { _id: 'MEMBER', role: 'member', entity: 'movie', save: false },
+    { _id: 'SUPER_ADMIN', role: 'super-admin', entity: 'movie', save: true }
+  ]
+  const found = findRule(rules, roles, 'first-match')
+  deepEqual(found._id, 'MEMBER')
+  deepEqual(found.save, false)
+})
+
+test('first-match: is the default strategy', t => {
+  const roles = ['member', 'super-admin']
+  const rules = [
+    { _id: 'MEMBER', role: 'member', entity: 'movie', save: false },
+    { _id: 'SUPER_ADMIN', role: 'super-admin', entity: 'movie', save: true }
+  ]
+  const found = findRule(rules, roles) // no strategy = default
+  deepEqual(found._id, 'MEMBER')
+  deepEqual(found.save, false)
 })

@@ -1,6 +1,29 @@
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 
-export function findRule (rules, roles) {
+export function findRule (rules, roles, strategy = 'first-match') {
+  if (strategy === 'first-match') {
+    return findRuleFirstMatch(rules, roles)
+  }
+  return findRuleMostPermissive(rules, roles)
+}
+
+function findRuleFirstMatch (rules, roles) {
+  let found = null
+  for (const rule of rules) {
+    for (const role of roles) {
+      if (rule.role === role) {
+        found = rule
+        break
+      }
+    }
+    if (found) {
+      break
+    }
+  }
+  return found
+}
+
+function findRuleMostPermissive (rules, roles) {
   const matchingRules = []
 
   for (const rule of rules) {
