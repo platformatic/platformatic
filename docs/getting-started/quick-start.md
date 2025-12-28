@@ -181,13 +181,13 @@ npx create-next-app web/next
 Which will output:
 
 ```
-✔ Would you like to use TypeScript? … No / Yes
+✔ Would you like to use TypeScript? … No
 ✔ Which linter would you like to use? › ESLint
-✔ Would you like to use Tailwind CSS? … No / Yes
-✔ Would you like your code inside a `src/` directory? … No / Yes
-✔ Would you like to use App Router? (recommended) … No / Yes
-✔ Would you like to use Turbopack? (recommended) … No / Yes
-✔ Would you like to customize the import alias (`@/*` by default)? … No / Yes
+✔ Would you like to use React Compiler? No
+✔ Would you like to use Tailwind CSS? … No
+✔ Would you like your code inside a `src/` directory? … Yes
+✔ Would you like to use App Router? (recommended) … Yes
+✔ Would you like to customize the import alias (`@/*` by default)? … No
 ```
 
 Then, let's import it to our Watt server:
