@@ -63,7 +63,7 @@ export function create () {
 
 :::note
 In this example, we are using the built-in `node:http` module to
-create a simple HTTP server that responds with a JSON object containing a counter.
+create a simple HTTP server that responds with a JSON object containing a string.
 You can see that we are returning a `create` function that creates the server.
 This server will be run by Watt when the application starts in its
 own worker thread.
