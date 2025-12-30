@@ -238,7 +238,7 @@ Replace `web/next/src/app/page.js` with the following code:
 import styles from './page.module.css'
 
 export default async function Home () {
-  const { hello } = await (await fetch('http://node.plt.local', { cache: 'no-store' })).json()
+  const { hello } = await (await fetch('http://node.plt.local')).json()
   return (
     <div className={styles.page}>
       <main className={styles.main}>Hello {hello}</main>
@@ -250,13 +250,6 @@ export default async function Home () {
 This will fetch the data from the Node.js app and display it in the Next.js app.
 Note that it uses the `node.plt.local` hostname, which is the _internal_ hostname for the `node` application.
 This domain name would not work outside of a Watt or Platformatic environment.
-
-:::note
-
-By default Next.js caches all `fetch()` requests.
-The `{ cache: 'no-store' }` option is used to disable caching.
-
-:::
 
 Launch it with: `npm run dev`.
 
