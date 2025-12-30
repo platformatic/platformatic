@@ -13,6 +13,7 @@ async function auth (app, opts) {
   const roleKey = opts.rolePath || opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const isRolePath = !!opts.rolePath // if `true` the role is intepreted as path like `user.role`
   const anonymousRole = opts.anonymousRole || 'anonymous'
+  const roleMergeStrategy = opts.roleMergeStrategy || 'first-match'
 
   app.decorateRequest('setupDBAuthorizationUser', setupUser)
 
@@ -174,7 +175,7 @@ async function auth (app, opts) {
             return originalFind({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
           checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
@@ -186,7 +187,7 @@ async function auth (app, opts) {
             return originalSave({ ctx, input, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -237,7 +238,7 @@ async function auth (app, opts) {
             return originalInsert({ inputs, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -268,7 +269,7 @@ async function auth (app, opts) {
             return originalDelete({ where, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
@@ -280,7 +281,7 @@ async function auth (app, opts) {
             return originalUpdateMany({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
 
@@ -357,11 +358,11 @@ async function fromRuleToWhere (ctx, rule, where, user) {
   return where
 }
 
-async function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole, isRolePath = false) {
+async function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole, isRolePath = false, roleMergeStrategy = 'first-match') {
   const request = getRequestFromContext(ctx)
   await request.setupDBAuthorizationUser()
   const roles = getRoles(request, roleKey, anonymousRole, isRolePath)
-  const rule = findRule(rules, roles)
+  const rule = findRule(rules, roles, roleMergeStrategy)
   if (!rule) {
     ctx.reply.request.log.warn({ roles, rules }, 'no rule for roles')
     throw new Unauthorized()
