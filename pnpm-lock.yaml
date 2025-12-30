@@ -365,7 +365,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/basic-auth':
         specifier: ^6.0.0
         version: 6.2.0
@@ -1351,7 +1351,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/basic-auth':
         specifier: ^6.0.0
         version: 6.2.0
@@ -1541,7 +1541,7 @@ importers:
     dependencies:
       '@fastify/accepts':
         specifier: ^5.0.0
-        version: 5.0.3
+        version: 5.0.4
       '@fastify/autoload':
         specifier: ^6.0.0
         version: 6.3.1
@@ -3251,8 +3251,8 @@ packages:
   '@fastify/accept-negotiator@2.0.1':
     resolution: {integrity: sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ==}
 
-  '@fastify/accepts@5.0.3':
-    resolution: {integrity: sha512-JQE0PVW7V5aIvWNQvBvlz3K92Q4OnDcC8ERcJnFd9a11/IVi/eV6SCutOUh9K2CAeQUMkJJyRog3Gltn7uAF6g==}
+  '@fastify/accepts@5.0.4':
+    resolution: {integrity: sha512-XKtvD77ZLQ/4G5r1WhPua5+rTctt16DF4XUMBQuP8KM/Ic431GhfqjJoYvwS4aDaUhoRTiU9DGFaMZ3TRM6ctg==}
 
   '@fastify/ajv-compiler@4.0.5':
     resolution: {integrity: sha512-KoWKW+MhvfTRWL4qrhUwAAZoaChluo0m0vbiJlGMt2GXvL4LVPQEjt8kSpHI3IBq5Rez8fg+XeH3cneztq+C7A==}
@@ -12306,7 +12306,7 @@ snapshots:
 
   '@fastify/accept-negotiator@2.0.1': {}
 
-  '@fastify/accepts@5.0.3':
+  '@fastify/accepts@5.0.4':
     dependencies:
       accepts: 1.3.8
       fastify-plugin: 5.0.1
