@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
-import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm, wattpmUtils } from './helper.js'
+import { changeWorkingDirectory, prepareGitRepository, wattpm, wattpmUtils } from './helper.js'
 
 test('start - should use default folders for resolved applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -28,18 +28,37 @@ test('start - should use default folders for resolved applications', async t => 
 
   const startProcess = wattpm('start', rootDir)
 
+  // Use a single stream consumer to avoid race conditions between
+  // multiple pipe(split2()) calls losing messages
   let started = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+  let url
+  startProcess.stderr?.pipe(startProcess.stdout)
 
-    if (parsed.msg.startsWith('Started the worker 0 of the application "resolved"')) {
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    if (process.env.PLT_TESTS_DEBUG === 'true') {
+      process._rawDebug(log.toString())
+    }
+
+    let parsed
+    try {
+      parsed = JSON.parse(log.toString())
+    } catch {
+      continue
+    }
+
+    if (parsed.msg?.startsWith('Started the worker 0 of the application "resolved"')) {
       started = true
+    }
+
+    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    if (mo) {
+      url = mo[1]
       break
     }
   }
 
-  await waitForStart(startProcess)
-  ok(started)
+  ok(started, 'Expected worker 0 of "resolved" application to start')
+  ok(url, 'Expected Platformatic to be listening')
 })
 
 test('start - should throw an error when an application has not been resolved', async t => {
