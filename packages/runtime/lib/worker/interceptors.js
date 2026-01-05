@@ -1,4 +1,3 @@
-import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -162,9 +161,9 @@ async function getDispatcherOpts (undiciConfig) {
 }
 
 function createThreadInterceptor (runtimeConfig) {
-  const telemetry = runtimeConfig.telemetry
-
-  const telemetryHooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
+  // Telemetry is now handled by automatic OpenTelemetry instrumentations
+  // via UndiciInstrumentation in node-telemetry.js
+  // No need for manual thread interceptor hooks
 
   const threadDispatcher = wire({
     // Specifying the domain is critical to avoid flooding the DNS
@@ -172,8 +171,7 @@ function createThreadInterceptor (runtimeConfig) {
     domain: '.plt.local',
     port: parentPort,
     timeout: runtimeConfig.applicationTimeout,
-    onChannelCreation: createChannelCreationHook(runtimeConfig),
-    ...telemetryHooks
+    onChannelCreation: createChannelCreationHook(runtimeConfig)
   })
   return threadDispatcher
 }

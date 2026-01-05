@@ -1,3 +1,4 @@
+import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api'
 import { randomUUID } from 'node:crypto'
 import { Readable, Writable } from 'node:stream'
 import { interceptors } from 'undici'
@@ -149,13 +150,44 @@ export function httpCacheInterceptor (interceptorOpts) {
 
           if (clientSpansAls) {
             try {
-              const { span } = clientSpansAls.getStore()
-              if (span) {
+              const store = clientSpansAls.getStore()
+              let span = store?.span
+
+              // For cache hits, UndiciInstrumentation doesn't create a span because
+              // the cached response is returned without making an actual network request.
+              // We need to create a CLIENT span manually for cache hits.
+              if (!span && isCacheHit) {
+                const tracerProvider = globalThis.platformatic?.tracerProvider
+                if (tracerProvider) {
+                  const tracer = tracerProvider.getTracer('@platformatic/http-cache')
+                  span = tracer.startSpan(`${opts.method} ${opts.path}`, {
+                    kind: SpanKind.CLIENT,
+                    attributes: {
+                      'http.request.method': opts.method,
+                      'url.full': `${opts.origin}${opts.path}`,
+                      'url.path': opts.path,
+                      'server.address': new URL(opts.origin).hostname,
+                      'http.cache.id': cacheEntryId,
+                      'http.cache.hit': 'true',
+                      'http.response.status_code': statusCode
+                    }
+                  }, context.active())
+
+                  span.setStatus({ code: statusCode < 400 ? SpanStatusCode.OK : SpanStatusCode.ERROR })
+                  span.end()
+
+                  // Store for potential downstream use
+                  if (store) {
+                    store.span = span
+                  }
+                }
+              } else if (span) {
+                // Span was created by UndiciInstrumentation, just add cache attributes
                 span.setAttribute('http.cache.id', cacheEntryId)
                 span.setAttribute('http.cache.hit', isCacheHit.toString())
               }
             } catch (err) {
-              interceptorOpts.logger.error(err, 'Error setting cache id on span')
+              interceptorOpts.logger?.error?.(err, 'Error setting cache id on span')
             }
           }
         }

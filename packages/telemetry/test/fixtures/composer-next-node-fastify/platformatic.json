@@ -9,7 +9,12 @@
   },
   "entrypoint": "composer",
   "autoload": {
-    "path": "web"
+    "path": "web",
+    "mappings": {
+      "node": {
+        "id": "node"
+      }
+    }
   },
   "telemetry": {
     "applicationName": "test-runtime",

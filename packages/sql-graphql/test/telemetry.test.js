@@ -1,6 +1,7 @@
 import sqlMapper from '@platformatic/sql-mapper'
 import { telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
+import { SpanKind } from '@opentelemetry/api'
 import { equal, fail, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import sqlGraphQL from '../index.js'
@@ -18,20 +19,6 @@ async function createBasicPages (db, sql) {
       title VARCHAR(10)
     );`)
   }
-}
-
-const getSpanPerType = (spans, type = 'http') => {
-  let attibuteToLookFor
-  if (type === 'graphql') {
-    attibuteToLookFor = 'graphql.document'
-  } else if (type === 'db') {
-    attibuteToLookFor = 'db.system'
-  } else if (type === 'http') {
-    attibuteToLookFor = 'url.path'
-  } else {
-    throw new Error(`Type ${type} not supported`)
-  }
-  return spans.find(span => span.attributes[attibuteToLookFor])
 }
 
 test('creates the spans for the graphql mutation', async t => {
@@ -92,12 +79,18 @@ test('creates the spans for the graphql mutation', async t => {
 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
-  const httpSpan = getSpanPerType(finishedSpans, 'http')
+
+  // Find the GraphQL span by looking for graphql.document attribute
+  const graphqlSpan = finishedSpans.find(span => span.attributes['graphql.document'])
+  pass(graphqlSpan, 'Should have a GraphQL span')
+
+  // Find the HTTP SERVER span from LightMyRequestInstrumentation
+  const httpSpan = finishedSpans.find(s => s.kind === SpanKind.SERVER && s.attributes['url.path'])
+  pass(httpSpan, 'Should have a SERVER span for HTTP request')
 
   equal(httpSpan.name, 'POST /graphql')
   equal(httpSpan.attributes['http.request.method'], 'POST')
-  equal(httpSpan.attributes['http.route'], '/graphql')
+  // Note: LightMyRequestInstrumentation doesn't set http.route
   equal(httpSpan.attributes['url.path'], '/graphql')
   equal(httpSpan.attributes['http.response.status_code'], 200)
 
@@ -167,9 +160,17 @@ test('creates the spans for errors', { skip: isSQLite }, async t => {
 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  equal(finishedSpans.length, 3)
-  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
-  const httpSpan = getSpanPerType(finishedSpans, 'http')
+
+  // With @fastify/otel and LightMyRequestInstrumentation, we get multiple spans
+  pass(finishedSpans.length >= 3, `Expected at least 3 spans, got ${finishedSpans.length}`)
+
+  // Find the GraphQL span by looking for graphql.document attribute
+  const graphqlSpan = finishedSpans.find(span => span.attributes['graphql.document'])
+  pass(graphqlSpan, 'Should have a GraphQL span')
+
+  // Find the HTTP SERVER span from LightMyRequestInstrumentation
+  const httpSpan = finishedSpans.find(s => s.kind === SpanKind.SERVER && s.attributes['url.path'])
+  pass(httpSpan, 'Should have a SERVER span for HTTP request')
 
   equal(httpSpan.name, 'POST /graphql')
   equal(httpSpan.attributes['http.request.method'], 'POST')

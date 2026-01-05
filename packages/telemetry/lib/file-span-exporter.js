@@ -7,12 +7,15 @@ import { workerData } from 'node:worker_threads'
 export class FileSpanExporter {
   #path
   constructor (opts) {
-    this.#path = resolvePath(workerData?.dirname ?? process.cwd(), opts.path ?? 'spans.log')
+    // Try to get dirname from workerData first, then globalThis.platformatic, then fall back to process.cwd()
+    const dirname = workerData?.dirname ?? globalThis.platformatic?.dirname ?? process.cwd()
+    this.#path = resolvePath(dirname, opts.path ?? 'spans.log')
   }
 
   export (spans, resultCallback) {
     for (const span of spans) {
-      appendFileSync(this.#path, JSON.stringify(this.#exportInfo(span)) + '\n')
+      const spanInfo = this.#exportInfo(span)
+      appendFileSync(this.#path, JSON.stringify(spanInfo) + '\n')
     }
     resultCallback(ExportResultCode.SUCCESS)
   }
@@ -26,13 +29,26 @@ export class FileSpanExporter {
   }
 
   #exportInfo (span) {
+    // OpenTelemetry 2.0+ resources need to be serialized with their attributes
+    const resource = {
+      attributes: span.resource?.attributes || {}
+    }
+
+    // In OTel 2.0, spans have parentSpanContext property directly
+    // Map it to the format expected by tests (with just traceId and spanId)
+    const parentSpanContext = span.parentSpanContext
+      ? {
+          traceId: span.parentSpanContext.traceId,
+          spanId: span.parentSpanContext.spanId
+        }
+      : {
+          traceId: undefined,
+          spanId: undefined
+        }
+
     return {
       traceId: span.spanContext().traceId,
-      // parentId has been removed from otel 2.0, we need to get it from parentSpanContext
-      parentSpanContext: {
-        traceId: span.parentSpanContext?.traceId,
-        spanId: span.parentSpanContext?.spanId
-      },
+      parentSpanContext,
       traceState: span.spanContext().traceState?.serialize(),
       name: span.name,
       id: span.spanContext().spanId,
@@ -43,7 +59,7 @@ export class FileSpanExporter {
       status: span.status,
       events: span.events,
       links: span.links,
-      resource: span.resource,
+      resource,
       // instrumentationLibrary is deprecated in otel 2.0, we need to use instrumentationScope
       instrumentationScope: span.instrumentationLibrary || span.instrumentationScope
     }

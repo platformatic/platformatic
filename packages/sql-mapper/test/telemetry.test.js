@@ -95,12 +95,15 @@ test('should trace a request getting DB from the request and running the query m
   equal(res.statusCode, 200, '/custom-pages status code')
 
   const finishedSpans = exporter.getFinishedSpans()
-  equal(finishedSpans.length, 2)
+  // FastifyOtelInstrumentation creates additional spans (onRequest, handler, request)
+  // so we expect at least 2 spans (1 CLIENT for DB, 1 SERVER for HTTP)
+  ok(finishedSpans.length >= 2, `Expected at least 2 spans, got ${finishedSpans.length}`)
 
   let dbTraceId, dbParentSpanId
   {
-    // DB query span
-    const span = finishedSpans[0]
+    // DB query span - find the CLIENT span
+    const span = finishedSpans.find(s => s.kind === SpanKind.CLIENT)
+    ok(span, 'Should have a CLIENT span for DB query')
     equal(span.kind, SpanKind.CLIENT) // this is the db client span
     const expectedName = `${expectedTelemetryPrefix}.query:`
     const expectedNameRE = new RegExp(`^${expectedName}`)
@@ -131,28 +134,59 @@ test('should trace a request getting DB from the request and running the query m
     dbParentSpanId = span.parentSpanContext?.spanId
   }
   {
-    // HTTP request span
-    const span = finishedSpans[1]
-    equal(span.kind, SpanKind.SERVER)
-    equal(span.name, 'GET /custom-pages')
-    equal(span.status.code, SpanStatusCode.OK)
-    equal(span.attributes['http.request.method'], 'GET')
-    equal(span.attributes['http.route'], '/custom-pages')
-    equal(span.attributes['url.path'], '/custom-pages')
-    equal(span.attributes['http.response.status_code'], 200)
-    equal(span.attributes['url.scheme'], 'http')
-    const resource = span.resource
+    // HTTP request span - find the SERVER span
+    const httpServerSpan = finishedSpans.find(s => s.kind === SpanKind.SERVER)
+    ok(httpServerSpan, 'Should have a SERVER span for HTTP request')
+    equal(httpServerSpan.kind, SpanKind.SERVER)
+    equal(httpServerSpan.name, 'GET /custom-pages')
+    equal(httpServerSpan.status.code, SpanStatusCode.OK)
+    equal(httpServerSpan.attributes['http.request.method'], 'GET')
+    // Note: LightMyRequestInstrumentation doesn't set http.route
+    equal(httpServerSpan.attributes['url.path'], '/custom-pages')
+    equal(httpServerSpan.attributes['http.response.status_code'], 200)
+    equal(httpServerSpan.attributes['url.scheme'], 'http')
+    const resource = httpServerSpan.resource
     deepEqual(resource.attributes['service.name'], 'test-service')
     deepEqual(resource.attributes['service.version'], '1.0.0')
 
-    const spanId = span._spanContext.spanId
-    const traceId = span._spanContext.traceId
-    const parentSpanId = span.parentSpanContext?.spanId
+    const httpServerSpanId = httpServerSpan._spanContext.spanId
+    const traceId = httpServerSpan._spanContext.traceId
+    const parentSpanId = httpServerSpan.parentSpanContext?.spanId
 
-    // Check that the traceId is the same and the http span is the parent of the db span
+    // Check that the traceId is the same
     equal(traceId, dbTraceId)
-    equal(dbParentSpanId, spanId) // the db span is the child of the http span
-    ok(!parentSpanId) // the http span has no parent
+    ok(!parentSpanId) // the http server span has no parent
+
+    // The DB span should be a child of either:
+    // 1. The SERVER span directly, OR
+    // 2. An INTERNAL span that is part of the HTTP request processing
+    // FastifyOtelInstrumentation creates INTERNAL spans for route handlers,
+    // so the DB span will be a child of the handler INTERNAL span
+    const httpRelatedSpanIds = new Set()
+    httpRelatedSpanIds.add(httpServerSpanId) // The SERVER span
+
+    // Find all INTERNAL spans that are descendants of the SERVER span
+    // We need to iterate until no new spans are added, to build the full tree
+    const internalSpans = finishedSpans.filter(s => s.kind === SpanKind.INTERNAL)
+    let added = true
+    while (added) {
+      added = false
+      for (const internalSpan of internalSpans) {
+        const internalSpanId = internalSpan._spanContext.spanId
+        const internalParentSpanId = internalSpan.parentSpanContext?.spanId
+        // If this INTERNAL span is a child of a valid span and not already in the set
+        if (internalParentSpanId && httpRelatedSpanIds.has(internalParentSpanId) && !httpRelatedSpanIds.has(internalSpanId)) {
+          httpRelatedSpanIds.add(internalSpanId)
+          added = true
+        }
+      }
+    }
+
+    // Verify the DB span's parent is one of the HTTP-related spans
+    ok(
+      httpRelatedSpanIds.has(dbParentSpanId),
+      `DB span parent ${dbParentSpanId} should be one of the HTTP-related spans`
+    )
   }
 })
 
@@ -266,26 +300,47 @@ test('should trace entity operations within a transaction with connectionInfo', 
   }
 
   // Find HTTP request span
-  const httpSpan = finishedSpans.find(span => span.kind === SpanKind.SERVER)
-  ok(httpSpan, 'Should have HTTP request span')
-  equal(httpSpan.name, 'POST /pages-in-transaction')
-  equal(httpSpan.status.code, SpanStatusCode.OK)
-  equal(httpSpan.attributes['http.request.method'], 'POST')
-  equal(httpSpan.attributes['http.route'], '/pages-in-transaction')
-  equal(httpSpan.attributes['url.path'], '/pages-in-transaction')
-  equal(httpSpan.attributes['http.response.status_code'], 200)
+  const httpServerSpan = finishedSpans.find(span => span.kind === SpanKind.SERVER)
+  ok(httpServerSpan, 'Should have HTTP request span')
+  equal(httpServerSpan.name, 'POST /pages-in-transaction')
+  equal(httpServerSpan.status.code, SpanStatusCode.OK)
+  equal(httpServerSpan.attributes['http.request.method'], 'POST')
+  // Note: LightMyRequestInstrumentation doesn't set http.route
+  equal(httpServerSpan.attributes['url.path'], '/pages-in-transaction')
+  equal(httpServerSpan.attributes['http.response.status_code'], 200)
 
-  const httpSpanId = httpSpan._spanContext.spanId
-  const httpTraceId = httpSpan._spanContext.traceId
+  const httpServerSpanId = httpServerSpan._spanContext.spanId
+  const httpTraceId = httpServerSpan._spanContext.traceId
 
   // Verify all DB spans are part of the same trace as the HTTP request
   for (const dbTraceId of dbTraceIds) {
     equal(dbTraceId, httpTraceId, 'DB spans should have same traceId as HTTP span')
   }
 
-  // Verify all DB spans are children of the HTTP span
+  // Build set of all HTTP-related span IDs (SERVER + INTERNAL descendants)
+  const httpRelatedSpanIds = new Set()
+  httpRelatedSpanIds.add(httpServerSpanId)
+
+  const internalSpans = finishedSpans.filter(span => span.kind === SpanKind.INTERNAL)
+  let added = true
+  while (added) {
+    added = false
+    for (const internalSpan of internalSpans) {
+      const internalSpanId = internalSpan._spanContext.spanId
+      const internalParentSpanId = internalSpan.parentSpanContext?.spanId
+      if (internalParentSpanId && httpRelatedSpanIds.has(internalParentSpanId) && !httpRelatedSpanIds.has(internalSpanId)) {
+        httpRelatedSpanIds.add(internalSpanId)
+        added = true
+      }
+    }
+  }
+
+  // Verify all DB spans are children of HTTP-related spans
   for (const dbParentSpanId of dbParentSpanIds) {
-    equal(dbParentSpanId, httpSpanId, 'DB spans should be children of HTTP span')
+    ok(
+      httpRelatedSpanIds.has(dbParentSpanId),
+      `DB span parent ${dbParentSpanId} should be one of the HTTP-related spans`
+    )
   }
 })
 

@@ -132,6 +132,7 @@ export class ChildManager extends ITC {
 
     await this.#closeServer(this.#websocketServer)
     await this.#closeServer(this.#server)
+
     await super.close()
   }
 
@@ -148,6 +149,7 @@ export class ChildManager extends ITC {
       JSON.stringify(
         {
           data: this.#context,
+          dirname: process.cwd(),  // Include dirname for FileSpanExporter
           loader: ensureFileUrl(this.#loader),
           scripts: this.#scripts.map(s => ensureFileUrl(s))
         },

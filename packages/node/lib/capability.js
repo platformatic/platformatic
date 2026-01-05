@@ -8,7 +8,8 @@ import {
   injectViaRequest
 } from '@platformatic/basic'
 import { Unpromise } from '@watchable/unpromise'
-import inject from 'light-my-request'
+// Lazy-load light-my-request to allow instrumentation to patch it first
+// import inject from 'light-my-request'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -302,6 +303,10 @@ export class NodeCapability extends BaseCapability {
         res = await this.#app.inject(injectParams, onInject)
       } else {
         this.logger.trace({ injectParams }, 'injecting via light-my-request')
+        // Lazy-load light-my-request so instrumentation can patch it first
+        // Use require() instead of import() so instrumentation hooks can intercept it
+        const require = createRequire(import.meta.url)
+        const inject = require('light-my-request')
         res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
       }
     }

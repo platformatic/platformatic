@@ -45,17 +45,6 @@ test.beforeEach(async () => {
   received = []
 })
 
-const findParentSpan = (spans, startSpan, type, name) => {
-  let currentSpan = startSpan
-  while (currentSpan) {
-    const parentSpan = spans.find(span => span.spanId === currentSpan.parentSpanId)
-    if (parentSpan && parentSpan.kind === type && parentSpan.name === name) {
-      return parentSpan
-    }
-    currentSpan = parentSpan
-  }
-}
-
 const findSpanWithParentWithId = (spans, startSpan, id) => {
   let currentSpan = startSpan
   while (currentSpan) {
@@ -184,33 +173,40 @@ test('configure telemetry correctly with a gateway + next - integration test', a
   const spanGatewayClient = allSpans.find(span => {
     if (span.kind === 3) {
       // Client
+      // In production mode, Next.js uses actual localhost IP instead of service mesh hostname
       return (
         span.applicationName === 'test-runtime-composer' &&
-        span.attributes['url.full'].stringValue === 'http://next.plt.local/next'
+        span.attributes['url.full']?.stringValue?.includes('/next') &&
+        span.attributes['url.full']?.stringValue?.startsWith('http://127.0.0.1:')
       )
     }
     return false
   })
 
   // Next also produces some "type 0" internal spans, that are not relevant for this test
-  // so we start from the last ones (node and fastify server span) and go backward
-  // to the gateway one
-  const spanNodeServer = allSpans.find(span => {
-    if (span.kind === 2) {
-      return span.applicationName === 'test-runtime-node'
+  // Find Next.js CLIENT span to node service by url.full attribute
+  const spanNextClientNode = allSpans.find(span => {
+    if (span.kind === 3) { // CLIENT
+      return (
+        span.applicationName === 'test-runtime-next' &&
+        span.attributes['url.full']?.stringValue === 'http://node.plt.local/'
+      )
     }
     return false
   })
 
-  const spanNextClientNode = findParentSpan(allSpans, spanNodeServer, 3, 'GET http://node.plt.local/')
   const spanNextServer = findSpanWithParentWithId(allSpans, spanNextClientNode, spanGatewayClient.spanId)
-  const spanFastifyServer = allSpans.find(span => {
-    if (span.kind === 2) {
-      return span.applicationName === 'test-runtime-fastify'
+
+  // Find Next.js CLIENT span to fastify service by url.full attribute
+  const spanNextClientFastify = allSpans.find(span => {
+    if (span.kind === 3) { // CLIENT
+      return (
+        span.applicationName === 'test-runtime-next' &&
+        span.attributes['url.full']?.stringValue === 'http://fastify.plt.local/'
+      )
     }
     return false
   })
-  const spanNextClientFastify = findParentSpan(allSpans, spanFastifyServer, 3, 'GET http://fastify.plt.local/')
   const spanNextServer2 = findSpanWithParentWithId(allSpans, spanNextClientFastify, spanGatewayClient.spanId)
 
   equal(spanNextServer.id, spanNextServer2.id) // Must be the same span

@@ -1,11 +1,14 @@
 'use strict'
 
+const { trace } = require('@opentelemetry/api')
 const { request } = require('undici')
 
 module.exports = async function (fastify, opts) {
   // This returns the traceId set on the span by the service
+  // Uses OpenTelemetry API to get active span (works with both manual and automatic instrumentation)
   fastify.get('/', async (req, reply) => {
-    const traceId = req.span?.spanContext()?.traceId
+    const activeSpan = trace.getActiveSpan()
+    const traceId = activeSpan?.spanContext()?.traceId
     return { traceId }
   })
 

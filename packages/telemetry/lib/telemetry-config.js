@@ -1,5 +1,11 @@
 import { formatParamUrl } from '@fastify/swagger'
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { SpanKind, SpanStatusCode, context } from '@opentelemetry/api'
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks'
+import { registerInstrumentations } from '@opentelemetry/instrumentation'
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
+import { FastifyOtelInstrumentation } from '@fastify/otel'
+import { LightMyRequestInstrumentation } from '@platformatic/instrumentation-light-my-request'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
   BatchSpanProcessor,
@@ -10,12 +16,46 @@ import {
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 import fastUri from 'fast-uri'
 import { createRequire } from 'node:module'
-import { fastifyTextMapGetter, fastifyTextMapSetter } from './fastify-text-map.js'
 import { FileSpanExporter } from './file-span-exporter.js'
 import { PlatformaticContext } from './platformatic-context.js'
 import { PlatformaticTracerProvider } from './platformatic-trace-provider.js'
 
 import { name as moduleName, version as moduleVersion } from './version.js'
+
+// Custom span processor that filters out spans based on skip configuration
+class SkipSpanProcessor {
+  constructor (skipOperations, logger) {
+    this.skipOperations = skipOperations
+    this.logger = logger
+  }
+
+  onStart (span, parentContext) {
+    // Check if this span should be skipped based on attributes
+    const method = span.attributes?.['http.request.method']
+    const path = span.attributes?.['url.path']
+
+    if (method && path) {
+      const operation = `${method}${path}`
+      if (this.skipOperations.includes(operation)) {
+        this.logger.debug({ operation }, 'Skipping telemetry for operation')
+        // Mark span as not recording to prevent it from being exported
+        span._ended = true
+      }
+    }
+  }
+
+  onEnd (span) {
+    // No-op
+  }
+
+  async shutdown () {
+    // No-op
+  }
+
+  async forceFlush () {
+    // No-op
+  }
+}
 
 // Platformatic telemetry plugin.
 // Supported Exporters:
@@ -31,6 +71,39 @@ export function formatSpanName (request, route) {
 
   const { method, url } = request
   return `${method} ${route ?? url}`
+}
+
+// Shared instrumentations - created once and reused
+let sharedInstrumentations = null
+let sharedFastifyInstrumentation = null
+
+function getOrCreateInstrumentations (isStandalone) {
+  if (!sharedInstrumentations) {
+    sharedInstrumentations = {
+      undici: new UndiciInstrumentation(),
+      http: new HttpInstrumentation(),
+      lightMyRequest: new LightMyRequestInstrumentation()
+    }
+  }
+
+  // Create or reuse Fastify instrumentation based on standalone flag
+  // For standalone mode, we create a new instance that won't auto-register
+  if (isStandalone) {
+    return {
+      ...sharedInstrumentations,
+      fastify: new FastifyOtelInstrumentation({ registerOnInitialization: false })
+    }
+  }
+
+  // For runtime mode, reuse the shared instance
+  if (!sharedFastifyInstrumentation) {
+    sharedFastifyInstrumentation = new FastifyOtelInstrumentation({ registerOnInitialization: true })
+  }
+
+  return {
+    ...sharedInstrumentations,
+    fastify: sharedFastifyInstrumentation
+  }
 }
 
 export const formatSpanAttributes = {
@@ -77,7 +150,7 @@ export const formatSpanAttributes = {
   }
 }
 
-const initTelemetry = (opts, logger) => {
+export const initTelemetry = (opts, logger, isStandalone = false) => {
   const { applicationName, version } = opts
   let exporter = opts.exporter
   if (!exporter) {
@@ -97,6 +170,18 @@ const initTelemetry = (opts, logger) => {
       [ATTR_SERVICE_VERSION]: version
     })
   })
+
+  // Add skip processor if skip operations are configured
+  const skipOperations =
+    opts?.skip?.map(skip => {
+      const { method, path } = skip
+      return `${method}${path}`
+    }) || []
+
+  if (skipOperations.length > 0) {
+    const skipProcessor = new SkipSpanProcessor(skipOperations, logger)
+    provider.addSpanProcessor(skipProcessor)
+  }
 
   const exporterObjs = []
   const spanProcessors = []
@@ -141,57 +226,47 @@ const initTelemetry = (opts, logger) => {
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
 
-  return { tracer, exporters: exporterObjs, propagator, provider, spanProcessors }
+  // Set up global context manager for async context propagation
+  const contextManager = new AsyncLocalStorageContextManager()
+  contextManager.enable()
+  context.setGlobalContextManager(contextManager)
+
+  // Get or create shared instrumentations
+  const instrumentations = getOrCreateInstrumentations(isStandalone)
+  const allInstrumentations = [
+    instrumentations.undici,
+    instrumentations.http,
+    instrumentations.fastify,
+    instrumentations.lightMyRequest
+  ]
+
+  // Register instrumentations with this tracer provider
+  registerInstrumentations({
+    tracerProvider: provider,
+    instrumentations: allInstrumentations
+  })
+
+  return {
+    tracer,
+    exporters: exporterObjs,
+    propagator,
+    provider,
+    spanProcessors,
+    fastifyOtelInstrumentation: instrumentations.fastify,
+    instrumentations: allInstrumentations
+  }
 }
 
-export function setupTelemetry (opts, logger) {
-  const openTelemetryAPIs = initTelemetry(opts, logger)
-  const { tracer, propagator, provider } = openTelemetryAPIs
+export function setupTelemetry (opts, logger, isStandalone = false) {
+  const openTelemetryAPIs = initTelemetry(opts, logger, isStandalone)
+  const { tracer, propagator, provider, fastifyOtelInstrumentation } = openTelemetryAPIs
   const skipOperations =
     opts?.skip?.map(skip => {
       const { method, path } = skip
       return `${method}${path}`
     }) || []
 
-  const startHTTPSpan = async (request, reply) => {
-    if (skipOperations.includes(`${request.method}${request.url}`)) {
-      request.log.debug({ operation: `${request.method}${request.url}` }, 'Skipping telemetry')
-      return
-    }
-
-    // We populate the context with the incoming request headers
-    let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
-
-    const route = request.routeOptions?.url ?? null
-    const span = tracer.startSpan(formatSpanName(request, route), {}, context)
-    span.kind = SpanKind.SERVER
-    // Next 2 lines are needed by W3CTraceContextPropagator
-    context = context.setSpan(span)
-    span.setAttributes(formatSpanAttributes.request(request, route))
-    span.context = context
-    // Inject the propagation headers
-    propagator.inject(context, reply, fastifyTextMapSetter)
-    request.span = span
-  }
-
-  const setErrorInSpan = async (request, _reply, error) => {
-    const span = request.span
-    span.setAttributes(formatSpanAttributes.error(error))
-  }
-
-  const endHTTPSpan = async (request, reply) => {
-    const span = request.span
-    if (span) {
-      propagator.inject(span.context, reply, fastifyTextMapSetter)
-      const spanStatus = { code: SpanStatusCode.OK }
-      if (reply.statusCode >= 400) {
-        spanStatus.code = SpanStatusCode.ERROR
-      }
-      span.setAttributes(formatSpanAttributes.reply(reply))
-      span.setStatus(spanStatus)
-      span.end()
-    }
-  }
+  // HTTP request/response span functions removed - now handled by automatic instrumentations
 
   //* Client APIs
   const getSpanPropagationHeaders = span => {
@@ -295,11 +370,9 @@ export function setupTelemetry (opts, logger) {
 
   // In the generic "startSpan" the attributes here are specified by the caller
   const startSpan = (name, ctx, attributes = {}, kind = SpanKind.INTERNAL) => {
-    const context = ctx || new PlatformaticContext()
-    const span = tracer.startSpan(name, {}, context)
-    span.kind = kind
-    span.setAttributes(attributes)
-    span.context = context
+    // If no context provided, use the active context from OpenTelemetry
+    const activeContext = ctx || context.active()
+    const span = tracer.startSpan(name, { kind, attributes }, activeContext)
     return span
   }
 
@@ -323,6 +396,9 @@ export function setupTelemetry (opts, logger) {
   // Unfortunately, this must be async, because of: https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_sdk_trace_base.SpanProcessor.html#shutdown
   const shutdown = async () => {
     try {
+      // Only shutdown span processors
+      // Do NOT disable instrumentations - they are globally registered and disabling
+      // them would break subsequent uses (especially problematic in tests)
       await provider.shutdown()
     } catch (err) {
       logger.error({ err }, 'Error shutting down telemetry provider')
@@ -330,15 +406,13 @@ export function setupTelemetry (opts, logger) {
   }
 
   return {
-    startHTTPSpan,
-    endHTTPSpan,
-    setErrorInSpan,
     startHTTPSpanClient,
     endHTTPSpanClient,
     setErrorInSpanClient,
     startSpan,
     endSpan,
     shutdown,
-    openTelemetryAPIs
+    openTelemetryAPIs,
+    fastifyOtelInstrumentation
   }
 }

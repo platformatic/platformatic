@@ -1,7 +1,12 @@
+import { context, propagation } from '@opentelemetry/api'
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks'
+import { W3CTraceContextPropagator } from '@opentelemetry/core'
+import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
+import { LightMyRequestInstrumentation } from '@platformatic/instrumentation-light-my-request'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import * as opentelemetry from '@opentelemetry/sdk-node'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
@@ -29,9 +34,19 @@ const require = createRequire(import.meta.url)
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+// Set up global propagator EARLY for trace context propagation via HTTP headers
+// This must be set before any HTTP operations occur
+propagation.setGlobalPropagator(new W3CTraceContextPropagator())
+
+const setupNodeHTTPTelemetry = async (opts, applicationDir, applicationId) => {
   const { applicationName, instrumentations = [] } = opts
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
+
+  // Construct service name from runtime applicationName and service applicationId
+  let serviceName = applicationName
+  if (applicationId && !applicationName.endsWith(`-${applicationId}`)) {
+    serviceName = `${applicationName}-${applicationId}`
+  }
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -43,7 +58,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   for (const exporter of exporters) {
     // Exporter config:
     // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, applicationName }
+    const exporterOptions = { ...exporter.options, applicationName: serviceName }
 
     let exporterObj
     if (exporter.type === 'console') {
@@ -78,31 +93,80 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   globalThis.platformatic = globalThis.platformatic || {}
   globalThis.platformatic.clientSpansAls = clientSpansAls
 
-  const sdk = new opentelemetry.NodeSDK({
-    spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
+  // Create TracerProvider with resource and span processors
+  const resource = resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: serviceName
+  })
+
+  const tracerProvider = new NodeTracerProvider({
+    resource,
+    spanProcessors  // Pass span processors to constructor
+  })
+
+  // Set up global context manager for async context propagation
+  // Context manager MUST be global for instrumentations to work
+  const contextManager = new AsyncLocalStorageContextManager()
+  contextManager.enable()
+  context.setGlobalContextManager(contextManager)
+
+  // Register instrumentations with our isolated TracerProvider
+  // Pass tracerProvider parameter so they use our provider without global registration
+  registerInstrumentations({
+    tracerProvider,  // Use our isolated provider
     instrumentations: [
       new UndiciInstrumentation({
-        responseHook: span => {
+        responseHook: (span, response) => {
+          // Store span for clientSpansAls (used by httpCacheInterceptor)
           const store = clientSpansAls.getStore()
           if (store) {
             store.span = span
           }
+
+          // Add HTTP cache attributes from response headers
+          // response.headers is in array format [k1, v1, k2, v2, ...]
+          if (response?.headers && Array.isArray(response.headers)) {
+            let httpCacheId, age
+            for (let i = 0; i < response.headers.length; i += 2) {
+              const key = response.headers[i].toLowerCase()
+              if (key === 'x-plt-http-cache-id') {
+                httpCacheId = response.headers[i + 1]
+              } else if (key === 'age') {
+                age = response.headers[i + 1]
+              }
+            }
+            const isCacheHit = age !== undefined
+            if (httpCacheId) {
+              span.setAttributes({
+                'http.cache.id': httpCacheId,
+                'http.cache.hit': isCacheHit.toString()
+              })
+            }
+          }
         }
       }),
-      new HttpInstrumentation(),
+      new HttpInstrumentation({
+        enabled: true,
+        // Disable outgoing request instrumentation since UndiciInstrumentation handles those
+        // This prevents duplicate CLIENT spans for the same HTTP request
+        disableOutgoingRequestInstrumentation: true
+      }),
+      new LightMyRequestInstrumentation(),
       ...additionalInstrumentations
-    ],
-    resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: applicationName
-    })
+    ]
   })
-  sdk.start()
 
-  process.on('SIGTERM', () => {
-    sdk
-      .shutdown()
-      .then(() => debuglog('Tracing terminated'))
-      .catch(error => debuglog('Error terminating tracing', error))
+  // Store our isolated provider for access by other parts of the system
+  globalThis.platformatic.tracerProvider = tracerProvider
+  globalThis.platformatic.contextManager = contextManager
+
+  process.on('SIGTERM', async () => {
+    try {
+      await tracerProvider.shutdown()
+      contextManager.disable()
+      debuglog('Tracing terminated')
+    } catch (error) {
+      debuglog('Error terminating tracing', error)
+    }
   })
 }
 
@@ -133,15 +197,19 @@ async function main () {
   if (data) {
     debuglog('Setting up telemetry %o', data)
     const applicationDir = data.applicationConfig?.path
+    const applicationId = data.applicationConfig?.id
     const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
+      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir, applicationId)
+      debuglog('Telemetry initialized for %s', applicationId)
       resolveTelemetryReady()
     } else {
+      debuglog('No telemetry config for %s, skipping setup', applicationId)
       resolveTelemetryReady()
     }
   } else {
+    debuglog('No worker data or PLT_MANAGER_ID, skipping telemetry setup')
     resolveTelemetryReady()
   }
 }

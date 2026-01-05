@@ -27,7 +27,8 @@ export function wrapQuery (app, db, request) {
     const name = queryText.substring(0, 20)
     const spanName = `${namePrefix}${name.replace(/\n|\r/g, ' ')}`
 
-    const ctx = request.span?.context
+    // Pass undefined to let startSpan use the active context from OpenTelemetry
+    const ctx = undefined
 
     const { database, host, port, user, dbSystem } = connectionInfo
     const telemetryAttributes = {

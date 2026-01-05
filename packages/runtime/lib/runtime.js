@@ -83,6 +83,7 @@ export class Runtime extends EventEmitter {
   #loggerDestination
   #loggerContext
   #stdio
+  #debugMainStdio
 
   #status // starting, started, stopping, stopped, closed
   #root
@@ -145,7 +146,13 @@ export class Runtime extends EventEmitter {
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
-    if (!this.#config.logger.captureStdio) {
+    // Debug helper: duplicate worker stdout/stderr to the main process stdio.
+    // This is helpful when tests/config set the logger to silent and you still want to see build output.
+    // Enable with: PLT_DEBUG_MAIN_STDIO=1 (or "true")
+    // Note: This duplicates output - logs are still captured and processed normally.
+    this.#debugMainStdio = process.env.PLT_DEBUG_MAIN_STDIO === '1' || process.env.PLT_DEBUG_MAIN_STDIO === 'true'
+
+    if (!this.#config.logger.captureStdio || this.#debugMainStdio) {
       this.#stdio = {
         stdout: new SonicBoom({ fd: process.stdout.fd }),
         stderr: new SonicBoom({ fd: process.stderr.fd })
@@ -654,15 +661,34 @@ export class Runtime extends EventEmitter {
     const application = await this.#getApplicationById(id)
 
     this.emitAndNotify('application:building', id)
+
+    // Avoid indefinite hangs during build (e.g., stalled child process).
+    // Default: 10 minutes. Override with PLT_APPLICATION_BUILD_TIMEOUT (ms).
+    const defaultBuildTimeout = 10 * 60 * 1000
+    const buildTimeout =
+      Number.parseInt(process.env.PLT_APPLICATION_BUILD_TIMEOUT, 10) > 0
+        ? Number.parseInt(process.env.PLT_APPLICATION_BUILD_TIMEOUT, 10)
+        : defaultBuildTimeout
+
     try {
-      await sendViaITC(application, 'build')
+      const result = await executeWithTimeout(sendViaITC(application, 'build'), buildTimeout, kTimeout)
+
+      if (result === kTimeout) {
+        this.emitAndNotify('application:buildTimeout', id, buildTimeout)
+        throw new Error(`Building application "${id}" timed out after ${buildTimeout}ms.`)
+      }
+
       this.emitAndNotify('application:built', id)
+      return result
     } catch (e) {
       // The application exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
         return {}
       }
 
+      // Improve error reporting by including application id in the log/event stream.
+      this.emitAndNotify('application:buildFailed', id, { message: e?.message, code: e?.code })
+      this.logger.error({ err: ensureLoggableError(e), applicationId: id }, `Failed to build application "${id}".`)
       throw e
     }
   }
@@ -1440,12 +1466,14 @@ export class Runtime extends EventEmitter {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
-      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
+      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs')).href
 
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-      execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
-      execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
+      const dataUrl = `data:text/javascript,import { register } from 'node:module'; register('${hookUrl}')`
+      const telemetryUrl = pathToFileURL(openTelemetrySetupPath).href
+      execArgv.push('--import', dataUrl)
+      execArgv.push('--import', telemetryUrl)
     }
 
     if ((applicationConfig.sourceMaps ?? config.sourceMaps) === true) {
@@ -2322,6 +2350,11 @@ export class Runtime extends EventEmitter {
     if (!this.#config.logger.captureStdio) {
       this.#stdio[label].write(data)
       return
+    }
+
+    // When debugMainStdio is enabled, duplicate output to main stdio while still capturing
+    if (this.#debugMainStdio) {
+      this.#stdio[label].write(data)
     }
 
     let plainMessages = ''

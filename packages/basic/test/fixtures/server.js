@@ -6,7 +6,7 @@ function handler (_, res) {
     connection: 'close'
   })
 
-  const { events, prometheus, itc, clientSpansAls, telemetryReady, ...platformatic } = globalThis.platformatic
+  const { events, prometheus, itc, clientSpansAls, telemetryReady, tracerProvider, contextManager, ...platformatic } = globalThis.platformatic
 
   res.end(JSON.stringify(platformatic))
 }

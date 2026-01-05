@@ -9,21 +9,20 @@ async function telemetry (app, opts) {
   }
 
   const {
-    startHTTPSpan,
-    endHTTPSpan,
-    setErrorInSpan,
     startSpan,
     endSpan,
     startHTTPSpanClient,
     endHTTPSpanClient,
     setErrorInSpanClient,
     shutdown,
-    openTelemetryAPIs
-  } = setupTelemetry(opts, app.log)
+    openTelemetryAPIs,
+    fastifyOtelInstrumentation
+  } = setupTelemetry(opts, app.log, true) // Pass true for isStandalone
 
-  app.addHook('onRequest', startHTTPSpan)
-  app.addHook('onResponse', endHTTPSpan)
-  app.addHook('onError', setErrorInSpan)
+  // Register @fastify/otel as a nested plugin to capture Fastify-specific telemetry
+  // This must be registered early to instrument all routes and hooks
+  await app.register(fastifyOtelInstrumentation.plugin())
+
   app.addHook('onClose', shutdown)
 
   app.decorate('openTelemetry', {

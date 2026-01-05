@@ -100,6 +100,7 @@ export class BaseCapability extends EventEmitter {
     // Setup globals
     this.registerGlobals({
       capability: this,
+      production: this.isProduction,
       applicationId: this.applicationId,
       workerId: this.workerId,
       logLevel: this.logger.level,

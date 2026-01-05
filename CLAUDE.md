@@ -54,6 +54,11 @@ npm test               # Run tests for specific package
 
 ## Development Guidelines
 
+### Debugging
+
+- `PLT_DEBUG_MAIN_STDIO=1`
+  Duplicates worker thread `stdout`/`stderr` to the main process standard output/error while still capturing logs normally. This is useful when debugging tests that spawn subprocesses (e.g. framework builds) inside runtime workers and you need to see their output in the test runner.
+
 ### Workspace Dependencies
 Use `workspace:*` for internal package dependencies. All packages share the same version (currently 2.65.1).
 
