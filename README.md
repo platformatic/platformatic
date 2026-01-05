@@ -24,12 +24,42 @@
 
 <div align="center">
 
-**Build and run multiple Node.js applications with unified logging, monitoring, and deployment.**
-
-Transform Node.js development with a single server that handles databases, APIs, frontend frameworks, and microservices - all with built-in observability and zero-config deployment.
+Watt takes any Node.js application, written in any framework, and runs it as a worker thread so you can ship faster and scale smarter in any containerized environment.
 
 </div>
 <br/>
+
+## What problems was Watt built to solve?
+
+#### Speed and Stability at Scale
+
+When run as a single-thread, Node.js fails to efficiently consume the CPU allocated to it, causing the event-loop to become blocked during periods of heavy traffic, which leads to spikes in latency and crashes.
+
+Even worse, because that single thread is also responsible for all your key telemetry data, you lose critical observability when your application crashes, leaving teams in the dark when troubleshooting performance issues. 
+
+Finally, container orchestrators don’t measure the metrics that actually matter for scaling Node.js, which means new pods aren’t scaled up until it’s already too late, forcing teams to drastically over-provision critical services or risk downtime.
+
+## Why Watt?
+
+#### Faster, better, stronger
+
+Using Watt to run your app(s) brings the following advantages: 
+
+**⚡ Radically More Performant:** take advantage of multiple CPU cores with Watt’s multi-threaded architectures to run your apps [up to 93% faster](https://blog.platformatic.dev/93-faster-nextjs-in-your-kubernetes)
+
+**⚖️ Stability at Scale** Watt auto-heals and scales worker threads in seconds, keeping latency low and users happy, even at p95 and above 
+
+👁️ **Built-in Observability**: out-of-the-box logging, metrics, tracing, performance profiling (for [memory](https://blog.platformatic.dev/announcing-heap-profiling-support-in-platformaticflame-and-watt-runtime) and [CPU](https://blog.platformatic.dev/introducing-next-gen-flamegraphs-for-nodejs)), and health checks, all managed outside of your worker threads so you don’t lose valuable data if your app crashes
+
+**🫂 Microservice Consolidation:** run services that are frequently orchestrated together (think BFFs, microfrontends) all in the same process, eliminating costly network calls that add complexity and degrade performance. 
+
+🧱 Composable Architecture \- HTTP services, API composers, frontend frameworks, and data services
+
+🧩 Framework Integration \- Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js.
+
+📦 Production Ready \- Docker deployment, environment configuration, and scaling built-in.
+
+🧷 TypeScript First \- Full type safety with auto-generated types and SDK.
 
 ## Quick Start (2 minutes)
 
@@ -42,16 +72,6 @@ cd my-first-app && npm start
 ```
 
 Your application will be running at `http://localhost:3042` with auto-generated REST and GraphQL APIs.
-
-## What Makes Watt Different?
-
-**One Server, Multiple Services** - Watt runs your database APIs, custom services, frontend frameworks, and API gateways all within a single, unified application server.
-
-- **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box
-- **🧱 Composable Architecture** - HTTP services, API composers, frontend frameworks, and data services
-- **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js
-- **📦 Production Ready** - Docker deployment, environment configuration, and scaling built-in
-- **🚀 TypeScript First** - Full type safety with auto-generated types and SDK
 
 ## Choose Your Learning Path
 
@@ -71,28 +91,6 @@ Get running in 5 minutes, then dive into advanced patterns and integrations.
 Add Watt to your existing Express, Fastify, or Next.js applications.
 
 ---
-
-## Core Capabilities
-
-### HTTP Services
-
-Custom application logic built on Fastify with automatic API documentation, validation, and plugin integration.
-
-### API Composition
-
-Combine multiple services into unified APIs with request/response transformation and intelligent caching.
-
-### Frontend Integration
-
-Deploy Next.js, Astro, Remix, Vite, or NestJS applications alongside your APIs with optimized builds and routing.
-
-### Client SDK
-
-Auto-generated TypeScript/JavaScript clients for your APIs with full type safety and IDE integration.
-
-### Data Services
-
-Auto-generated REST and GraphQL APIs from your database schema with built-in authorization, migrations, and relationships.
 
 ## Documentation Structure
 
@@ -119,8 +117,4 @@ Complete technical specifications for CLI, configuration, and APIs
 
 ## Enterprise Solutions
 
-**Platformatic for Teams** provides enterprise-grade management, monitoring, and deployment tools for production Watt applications.
-
-[Learn more about Enterprise Plans →](https://www.platformatichq.com)
-
-![Command Center](./assets/Hompage_Solution_White.png)
+Platformatic provides enterprise support and architectural guidance for teams looking to use Watt for mission critical applications. Get in touch at sales@platformatic.dev.
