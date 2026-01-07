@@ -23,9 +23,11 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@mjackson/node-fetch-server": "^0.7.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
+    "compression": "^1.8.1",
     "express": "^4.19.2",
     "light-my-request": "^6.0.0",
     "pino-http": "^10.2.0",

@@ -19,12 +19,24 @@ Full-stack React framework with server-side rendering and app router support.
 - **[Overview](../reference/next/overview.md)** - Getting started with Next.js integration
 - **[Configuration](../reference/next/configuration.md)** - Complete configuration reference
 
+### [React Router](../reference/react-router/overview.md)
+A user‑obsessed, standards‑focused, multi‑strategy router you can deploy anywhere.
+
+- **[Overview](../reference/react-router/overview.md)** - Getting started with React Router integration
+- **[Configuration](../reference/react-router/configuration.md)** - Complete configuration reference
+
 ### [Remix](../reference/remix/overview.md)
 Full-stack web framework focused on web fundamentals and modern user experience.
 
 - **[Overview](../reference/remix/overview.md)** - Getting started with Remix integration
 - **[Configuration](../reference/remix/configuration.md)** - Complete configuration reference
 - **[Caching](../reference/remix/caching.md)** - Caching strategies and configuration
+
+### [Tanstack Start](../reference/tanstack/overview.md)
+Full-stack Framework powered by TanStack Router for React and Solid.
+
+- **[Overview](../reference/tanstack/overview.md)** - Getting started with Tanstack Start integration
+- **[Configuration](../reference/tanstack/configuration.md)** - Complete configuration reference
 
 ### [Vite](../reference/vite/overview.md)
 Fast build tool with hot module replacement for modern web projects.

@@ -1,3 +1,4 @@
+import { createRequestListener } from '@mjackson/node-fetch-server'
 import {
   cleanBasePath,
   createServerListener,
@@ -9,11 +10,12 @@ import {
 } from '@platformatic/basic'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@react-router/express'
+import compression from 'compression'
 import express from 'express'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { pinoHttp } from 'pino-http'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
@@ -178,18 +180,55 @@ export class ReactRouterCapability extends ViteCapability {
     this.verifyOutputDirectory(serverRoot)
     this.#basePath = await this._getBasePathFromBuildInfo()
 
-    const { entrypoint } = await importFile(resolve(serverRoot, 'index.js'))
+    const serverModule = await importFile(resolve(serverRoot, 'index.js'))
 
     // Setup express app
     this.#app = express()
     this._setApp(this.#app)
     this.#app.disable('x-powered-by')
     this.#app.use(pinoHttp({ logger: this.logger }))
-    this.#app.use(this.#basePath, express.static(clientRoot))
-    this.#app.all(
-      `${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`,
-      createRequestHandler({ build: () => entrypoint })
-    )
+
+    // Custom entrypoint
+    if (serverModule.entrypoint) {
+      this.#app.use(this.#basePath, express.static(clientRoot))
+      this.#app.all(
+        `${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`,
+        createRequestHandler({ build: () => serverModule.entrypoint })
+      )
+      // Reproduces and simplifies @react-router/serve
+    } else {
+      let assetsRoot = serverModule.assetsBuildDirectory
+        ? resolve(this.root, serverModule.assetsBuildDirectory)
+        : clientRoot
+      let publicPath = serverModule.publicPath ?? '/'
+      let mainHandler
+
+      // isRSCServerBuild
+      if (typeof serverModule.default === 'function') {
+        if (serverModule.unstable_reactRouterServeConfig) {
+          if (serverModule.unstable_reactRouterServeConfig.assetsBuildDirectory) {
+            assetsRoot = resolve(this.root, serverModule.unstable_reactRouterServeConfig.assetsBuildDirectory)
+          }
+          if (serverModule.unstable_reactRouterServeConfig.publicPath) {
+            publicPath = serverModule.unstable_reactRouterServeConfig.publicPath
+          }
+        }
+
+        mainHandler = createRequestListener(serverModule.default)
+
+        this.#app.use(compression())
+      } else {
+        mainHandler = createRequestHandler({ build: serverModule, mode: process.env.NODE_ENV })
+      }
+
+      this.#app.use(
+        join(this.#basePath, 'assets'),
+        express.static(resolve(assetsRoot, 'assets'), { immutable: true, maxAge: '1y' })
+      )
+      this.#app.use(join(this.#basePath, publicPath), express.static(resolve(assetsRoot, 'assets')))
+      this.#app.use(express.static('public', { maxAge: '1h' }))
+      this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, mainHandler)
+    }
 
     await this._collectMetrics()
     return this.url

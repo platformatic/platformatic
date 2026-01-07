@@ -62,9 +62,9 @@ export default defineConfig({
 })
 ```
 
-## Preparing for production mode when using SSR
+## Providing a custom entrypoint
 
-When using Server-Side Rendering (SSR) in production mode, you need to make three configuration changes:
+If you want provide a custom entrypoint which will be used in `@react-router/express`, you need to make three configuration changes:
 
 1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
 
