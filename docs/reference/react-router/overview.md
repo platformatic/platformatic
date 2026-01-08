@@ -64,7 +64,7 @@ export default defineConfig({
 
 ## Providing a custom entrypoint
 
-If you want provide a custom entrypoint which will be used in `@react-router/express`, you need to make three configuration changes:
+If you want provide a custom entrypoint which will be used in `@react-router/node`, you need to make three configuration changes:
 
 1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
 

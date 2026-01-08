@@ -9,11 +9,13 @@ export const cliPath = path.join(import.meta.dirname, '../../cli', 'cli.js')
 const envs = {
   production: {
     build: true,
-    production: true
+    production: true,
+    timeout: 72
   },
   dev: {
     build: false,
-    production: false
+    production: false,
+    timeout: 5
   }
 }
 
@@ -33,7 +35,7 @@ for (const [env, options] of Object.entries(envs)) {
       assert.ok(res.headers['content-type'].startsWith('text/html'))
       assert.ok(res.headers['date'].length > 0)
       assert.strictEqual(res.headers['connection'], 'keep-alive')
-      assert.strictEqual(res.headers['keep-alive'], 'timeout=5')
+      assert.strictEqual(res.headers['keep-alive'], `timeout=${options.timeout}`)
       assert.strictEqual(res.headers['transfer-encoding'], 'chunked')
       assert.strictEqual(res.headers['x-powered-by'], undefined)
 

@@ -1,3 +1,4 @@
+import fastifyStatic from '@fastify/static'
 import {
   cleanBasePath,
   createServerListener,
@@ -8,13 +9,11 @@ import {
   resolvePackageViaCJS
 } from '@platformatic/basic'
 import { ViteCapability } from '@platformatic/vite'
-import { createRequestHandler } from '@remix-run/express'
-import express from 'express'
-import inject from 'light-my-request'
+import { createRequestHandler } from '@remix-run/node'
+import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
-import { pinoHttp } from 'pino-http'
+import { dirname, join, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
@@ -22,7 +21,6 @@ const supportedVersions = '^2.0.0'
 
 export class RemixCapability extends ViteCapability {
   #app
-  #server
   #remix
   #basePath
 
@@ -72,20 +70,6 @@ export class RemixCapability extends ViteCapability {
     return this.isProduction ? this.#startProduction(listen) : this.#startDevelopment(listen)
   }
 
-  async stop () {
-    await super.stop()
-
-    if (this.childManager) {
-      return this.stopCommand()
-    }
-
-    if (this.isProduction) {
-      return this.#stopProduction()
-    } else if (this.#app) {
-      return this.#app.close()
-    }
-  }
-
   async build () {
     const config = this.config
     const command = config.application.commands.build
@@ -112,23 +96,6 @@ export class RemixCapability extends ViteCapability {
     } finally {
       globalThis.platformatic.isBuilding = false
     }
-  }
-
-  async inject (injectParams, onInject) {
-    if (!this.isProduction) {
-      return super.inject(injectParams, onInject)
-    }
-
-    const res = await inject(this.#app, injectParams, onInject)
-
-    /* c8 ignore next 3 */
-    if (onInject) {
-      return
-    }
-
-    // Since inject might be called from the main thread directly via ITC, let's clean it up
-    const { statusCode, headers, body, payload, rawPayload } = res
-    return { statusCode, headers, body, payload, rawPayload }
   }
 
   getMeta () {
@@ -177,16 +144,8 @@ export class RemixCapability extends ViteCapability {
         createServerListener(false, false, { backlog: serverOptions.backlog })
       }
 
-      this.#server = await new Promise((resolve, reject) => {
-        return this.#app
-          .listen(listenOptions, function () {
-            resolve(this)
-          })
-          .on('error', reject)
-      })
-
-      this.url = getServerUrl(this.#server)
-
+      await this.#app.listen(listenOptions)
+      this.url = getServerUrl(this.#app.server)
       return this.url
     }
 
@@ -196,23 +155,48 @@ export class RemixCapability extends ViteCapability {
     const build = await importFile(resolve(this.root, `${outputDirectory}/server/index.js`))
     this.#basePath = ensureTrailingSlash(cleanBasePath(build.basename))
 
-    // Setup express app
-    this.#app = express()
-    this.#app.disable('x-powered-by')
-    this.#app.use(pinoHttp({ logger: this.logger }))
-    this.#app.use(this.#basePath, express.static(resolve(this.root, `${outputDirectory}/client`)))
-    this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, createRequestHandler({ build }))
+    // Setup fastify
+    this.#app = fastify({ loggerInstance: this.logger })
+    this._setApp(this.#app)
 
+    await this.#app.register(fastifyStatic, {
+      root: resolve(this.root, `${outputDirectory}/client`),
+      prefix: join(this.#basePath, 'assets'),
+      prefixAvoidTrailingSlash: true,
+      schemaHide: true
+    })
+
+    this.#app.all(
+      `${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`,
+      this.#handleRequest.bind(this, createRequestHandler(build, process.env.NODE_ENV))
+    )
+
+    await this.#app.ready()
     await this._collectMetrics()
-    return this.url
   }
 
-  async #stopProduction () {
-    /* c8 ignore next 3 */
-    if (!this.#server?.listening) {
-      return
+  #handleRequest (handle, req) {
+    // Support aborting
+    const ac = new AbortController()
+
+    req.raw.on('aborted', () => ac.abort())
+    req.raw.on('close', () => ac.abort())
+
+    const headers = new Headers()
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value) {
+        headers.set(key, Array.isArray(value) ? value.join(',') : value)
+      }
     }
 
-    return this._closeServer(this.#server)
+    return handle(
+      new Request(`${req.protocol}://${req.hostname}${req.raw.url}`, {
+        method: req.method,
+        headers,
+        body: ['GET', 'HEAD'].includes(req.method) ? undefined : ReadableStream.from(req.raw),
+        duplex: 'half',
+        signal: ac.signal
+      })
+    )
   }
 }
