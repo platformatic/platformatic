@@ -3,14 +3,22 @@ import fastUri from 'fast-uri'
 import { formatSpanAttributes, formatSpanName } from './telemetry-config.js'
 import { name as moduleName, version as moduleVersion } from './version.js'
 
-const tracer = trace.getTracer(moduleName, moduleVersion)
+// Get tracer from our isolated TracerProvider stored in globalThis.platformatic
+function getTracer () {
+  const tracerProvider = globalThis.platformatic?.tracerProvider
+  if (tracerProvider) {
+    return tracerProvider.getTracer(moduleName, moduleVersion)
+  }
+  // Fallback to global tracer if our provider isn't set up yet
+  return trace.getTracer(moduleName, moduleVersion)
+}
 
 export function createTelemetryThreadInterceptorHooks () {
   const onServerRequest = (req, cb) => {
     const activeContext = propagation.extract(context.active(), req.headers)
 
     const route = req.routeOptions?.url ?? null
-    const span = tracer.startSpan(
+    const span = getTracer().startSpan(
       formatSpanName(req, route),
       {
         attributes: formatSpanAttributes.request(req, route),
@@ -52,7 +60,7 @@ export function createTelemetryThreadInterceptorHooks () {
     } else {
       name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
     }
-    const span = tracer.startSpan(
+    const span = getTracer().startSpan(
       name,
       {
         attributes: {

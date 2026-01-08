@@ -1,19 +1,12 @@
 import { formatParamUrl } from '@fastify/swagger'
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import {
-  BatchSpanProcessor,
-  ConsoleSpanExporter,
-  InMemorySpanExporter,
-  SimpleSpanProcessor
-} from '@opentelemetry/sdk-trace-base'
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 import fastUri from 'fast-uri'
-import { createRequire } from 'node:module'
 import { fastifyTextMapGetter, fastifyTextMapSetter } from './fastify-text-map.js'
-import { FileSpanExporter } from './file-span-exporter.js'
 import { PlatformaticContext } from './platformatic-context.js'
 import { PlatformaticTracerProvider } from './platformatic-trace-provider.js'
+import { getSpanProcessors } from './span-processors.js'
 
 import { name as moduleName, version as moduleVersion } from './version.js'
 
@@ -78,18 +71,8 @@ export const formatSpanAttributes = {
 }
 
 const initTelemetry = (opts, logger) => {
+  const { exporters, spanProcessors } = getSpanProcessors(opts, logger)
   const { applicationName, version } = opts
-  let exporter = opts.exporter
-  if (!exporter) {
-    logger.warn('No exporter configured, defaulting to console.')
-    exporter = { type: 'console' }
-  }
-
-  const exporters = Array.isArray(exporter) ? exporter : [exporter]
-
-  logger.debug(
-    `Setting up platformatic telemetry for application: ${applicationName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
-  )
 
   const provider = new PlatformaticTracerProvider({
     resource: resourceFromAttributes({
@@ -98,50 +81,11 @@ const initTelemetry = (opts, logger) => {
     })
   })
 
-  const exporterObjs = []
-  const spanProcessors = []
-  const require = createRequire(import.meta.url)
-  for (const exporter of exporters) {
-    // Exporter config:
-    // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, applicationName }
-
-    let exporterObj
-    if (exporter.type === 'console') {
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    } else if (exporter.type === 'otlp') {
-      // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
-      exporterObj = new OTLPTraceExporter(exporterOptions)
-    } else if (exporter.type === 'zipkin') {
-      const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
-      exporterObj = new ZipkinExporter(exporterOptions)
-    } else if (exporter.type === 'memory') {
-      exporterObj = new InMemorySpanExporter()
-    } else if (exporter.type === 'file') {
-      exporterObj = new FileSpanExporter(exporterOptions)
-    } else {
-      logger.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    }
-
-    let spanProcessor
-    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    // , unless "processor" is set to "simple" (used only in tests)
-    if (exporter.processor === 'simple' || ['memory', 'console', 'file'].includes(exporter.type)) {
-      spanProcessor = new SimpleSpanProcessor(exporterObj)
-    } else {
-      spanProcessor = new BatchSpanProcessor(exporterObj)
-    }
-    spanProcessors.push(spanProcessor)
-    exporterObjs.push(exporterObj)
-  }
-
   provider.addSpanProcessor(spanProcessors)
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
 
-  return { tracer, exporters: exporterObjs, propagator, provider, spanProcessors }
+  return { tracer, exporters, propagator, provider, spanProcessors }
 }
 
 export function setupTelemetry (opts, logger) {
