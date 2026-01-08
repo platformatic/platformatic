@@ -63,7 +63,7 @@ export interface MetricValue {
     quantile?: number
     method?: string
     status_code?: number
-    telemetry_id?: string
+    callerTelemetryId?: string
     type?: string
     space?: string
     version?: string
