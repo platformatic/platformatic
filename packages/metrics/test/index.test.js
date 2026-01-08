@@ -78,9 +78,9 @@ test('httpMetrics histogram resets after metric collection', async () => {
   const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
   assert.ok(histogramMetric, 'histogram metric should exist')
 
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.1)
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.2)
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.3)
+  histogramMetric.observe({ method: 'GET', callerTelemetryId: 'test' }, 0.1)
+  histogramMetric.observe({ method: 'GET', callerTelemetryId: 'test' }, 0.2)
+  histogramMetric.observe({ method: 'GET', callerTelemetryId: 'test' }, 0.3)
 
   const metricsBefore = await result.registry.getMetricsAsJSON()
   const histogramBefore = metricsBefore.find(m => m.name === 'http_request_all_duration_seconds')
@@ -106,9 +106,9 @@ test('httpMetrics summary resets after metric collection', async () => {
   const summaryMetric = result.registry.getSingleMetric('http_request_all_summary_seconds')
   assert.ok(summaryMetric, 'summary metric should exist')
 
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.15)
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.25)
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.35)
+  summaryMetric.observe({ method: 'POST', callerTelemetryId: 'test' }, 0.15)
+  summaryMetric.observe({ method: 'POST', callerTelemetryId: 'test' }, 0.25)
+  summaryMetric.observe({ method: 'POST', callerTelemetryId: 'test' }, 0.35)
 
   const metricsBefore = await result.registry.getMetricsAsJSON()
   const summaryBefore = metricsBefore.find(m => m.name === 'http_request_all_summary_seconds')

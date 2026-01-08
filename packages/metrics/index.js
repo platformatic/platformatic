@@ -166,10 +166,10 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
 
   if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
     collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
+      customLabels: ['callerTelemetryId'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
+        const callerTelemetryId = req.headers?.['x-plt-telemetry-id']
+        return callerTelemetryId ? { callerTelemetryId } : {}
       },
       histogram: {
         name: 'http_request_all_duration_seconds',
