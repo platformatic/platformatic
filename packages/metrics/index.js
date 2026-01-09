@@ -32,6 +32,13 @@ export function ensureMetricsGroup (registry, group) {
   return false
 }
 
+export function clearRegistry (registry) {
+  registry.clear()
+  if (registry[kMetricsGroups]) {
+    registry[kMetricsGroups].clear()
+  }
+}
+
 export async function collectThreadCpuMetrics (registry) {
   if (ensureMetricsGroup(registry, 'threadCpuUsage')) {
     return

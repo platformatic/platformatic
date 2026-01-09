@@ -523,3 +523,61 @@ test('BaseCapability - spawn - should handle chained commands', { skip: isWindow
     await fs.unlink(testFile2).catch(() => {})
   }
 })
+
+test('BaseCapability - updateMetricsConfig - should disable metrics', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: true } })
+
+  await capability._collectMetrics()
+  ok(capability.metricsRegistry)
+
+  const metricsBefore = await capability.metricsRegistry.getMetricsAsJSON()
+  ok(metricsBefore.length > 0)
+
+  await capability.updateMetricsConfig({ enabled: false })
+
+  const metricsAfter = await capability.metricsRegistry.getMetricsAsJSON()
+  deepStrictEqual(metricsAfter, [])
+})
+
+test('BaseCapability - updateMetricsConfig - should re-enable metrics', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: true } })
+
+  await capability._collectMetrics()
+
+  await capability.updateMetricsConfig({ enabled: false })
+  const metricsAfterDisable = await capability.metricsRegistry.getMetricsAsJSON()
+  deepStrictEqual(metricsAfterDisable, [])
+
+  await capability.updateMetricsConfig({ enabled: true })
+  const metricsAfterEnable = await capability.metricsRegistry.getMetricsAsJSON()
+  ok(metricsAfterEnable.length > 0)
+})
+
+test('BaseCapability - updateMetricsConfig - should update with new labels', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: true } })
+
+  await capability._collectMetrics()
+
+  await capability.updateMetricsConfig({ enabled: true, labels: { environment: 'test' } })
+  const metrics = await capability.metricsRegistry.getMetricsAsJSON()
+  ok(metrics.length > 0)
+})
+
+test('BaseCapability - updateMetricsConfig - should handle enabled false config', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: true } })
+
+  await capability._collectMetrics()
+  ok(capability.metricsRegistry)
+
+  await capability.updateMetricsConfig({ enabled: false })
+
+  const metricsAfter = await capability.metricsRegistry.getMetricsAsJSON()
+  deepStrictEqual(metricsAfter, [])
+})
+
+test('BaseCapability - updateMetricsConfig - should handle no registry', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: false } })
+
+  await capability.updateMetricsConfig({ enabled: true })
+  deepStrictEqual(capability.context.metricsConfig, { enabled: true, idLabel: 'applicationId' })
+})

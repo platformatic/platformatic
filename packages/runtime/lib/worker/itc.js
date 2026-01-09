@@ -176,6 +176,13 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         await updateUndiciInterceptors(undiciConfig)
       },
 
+      async updateMetricsConfig (metricsConfig) {
+        if (controller && typeof controller.updateMetricsConfig === 'function') {
+          await controller.updateMetricsConfig(metricsConfig)
+        }
+        return { success: true }
+      },
+
       async updateWorkersCount (data) {
         const { workers } = data
         workerData.applicationConfig.workers = workers
