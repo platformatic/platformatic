@@ -26,6 +26,14 @@ export class FileSpanExporter {
   }
 
   #exportInfo (span) {
+    // OpenTelemetry 2.0+ resources need to be serialized with their attributes
+    // The resource.attributes property contains a map of attribute values
+    // We need to convert it to the format expected by tests (_rawAttributes array)
+    const resource = {
+      attributes: span.resource?.attributes || {},
+      _rawAttributes: Object.entries(span.resource?.attributes || {})
+    }
+
     return {
       traceId: span.spanContext().traceId,
       // parentId has been removed from otel 2.0, we need to get it from parentSpanContext
@@ -43,7 +51,7 @@ export class FileSpanExporter {
       status: span.status,
       events: span.events,
       links: span.links,
-      resource: span.resource,
+      resource,
       // instrumentationLibrary is deprecated in otel 2.0, we need to use instrumentationScope
       instrumentationScope: span.instrumentationLibrary || span.instrumentationScope
     }

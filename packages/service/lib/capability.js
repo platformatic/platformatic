@@ -41,7 +41,10 @@ export class ServiceCapability extends BaseCapability {
 
     // This must be done before loading the plugins, so they can inspect if the
     // openTelemetry decorator exists and then configure accordingly.
-    if (isKeyEnabled('telemetry', config)) {
+    // Skip manual telemetry plugin if automatic instrumentation is already active
+    // (loaded via --import from node-telemetry.js)
+    const hasAutomaticInstrumentation = !!globalThis.platformatic?.tracerProvider
+    if (isKeyEnabled('telemetry', config) && !hasAutomaticInstrumentation) {
       await this.#app.register(telemetry, config.telemetry)
     }
 
