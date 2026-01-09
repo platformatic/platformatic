@@ -38,7 +38,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 When running in development mode, the Vite development server instrumented with [@remix-run/dev](https://www.npmjs.com/package/@remix-run/dev) is run a in worker thread in the same process of the Platformatic runtime. The server port is chosen randomly and it will override any user setting.
 
-When running in production mode, a custom Express server instrumented with [@remix-run/express](https://www.npmjs.com/package/@remix-run/express) will serve the built application. The application is run a in worker thread in the same process of the Platformatic runtime and it will not start a TCP server unless it's the runtime entrypoint.
+When running in production mode, a custom Fastify server will serve the built application. The application is run a in worker thread in the same process of the Platformatic runtime and it will not start a TCP server unless it's the runtime entrypoint.
 
 In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 

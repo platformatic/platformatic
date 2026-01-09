@@ -7,10 +7,8 @@
     },
     "timestamp": "isoTime",
     "redact": {
-      "paths": [
-        "req.headers.authorization"
-      ],
+      "paths": ["req.host"],
       "censor": "***HIDDEN***"
-    }    
+    }
   }
 }

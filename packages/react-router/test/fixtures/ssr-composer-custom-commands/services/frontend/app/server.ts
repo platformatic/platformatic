@@ -1,17 +1,50 @@
+import fastifyStatic from '@fastify/static'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
-import { createRequestHandler } from '@react-router/express'
-import express from 'express'
-import { resolve } from 'node:path'
-import { pinoHttp } from 'pino-http'
-import 'react-router'
+import fastify from 'fastify'
+import { join, resolve } from 'node:path'
+import { createRequestHandler } from 'react-router'
 
-const app = express()
+function handleRequest (handle, req) {
+  // Support aborting
+  const ac = new AbortController()
+
+  req.raw.on('aborted', () => ac.abort())
+  req.raw.on('close', () => ac.abort())
+
+  const headers = new Headers()
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      headers.set(key, Array.isArray(value) ? value.join(',') : value)
+    }
+  }
+
+  return handle(
+    new Request(`${req.protocol}://${req.hostname}${req.raw.url}`, {
+      method: req.method,
+      headers,
+      body: ['GET', 'HEAD'].includes(req.method) ? undefined : ReadableStream.from(req.raw),
+      duplex: 'half',
+      signal: ac.signal
+    })
+  )
+}
+
+const app = fastify({ loggerInstance: globalThis.platformatic?.logger })
 const basePath = globalThis.platformatic?.basePath ?? '/'
 
-app.use(pinoHttp({ level: globalThis.platformatic?.logLevel ?? 'info' }))
-app.use(ensureTrailingSlash(cleanBasePath(basePath)), express.static(resolve(process.cwd(), 'build/client')))
-app.use(
+await app.register(fastifyStatic, {
+  root: resolve(process.cwd(), resolve(process.cwd(), 'build/client')),
+  prefix: join(basePath, 'assets'),
+  prefixAvoidTrailingSlash: true,
+  schemaHide: true
+})
+
+await app.all(
   `${ensureTrailingSlash(cleanBasePath(basePath))}*`,
-  createRequestHandler({ build: () => import('virtual:react-router/server-build') })
+  handleRequest.bind(
+    null,
+    createRequestHandler(await import('virtual:react-router/server-build'), process.env.NODE_ENV)
+  )
 )
-app.listen(3000)
+
+await app.listen({ port: 3000 })
