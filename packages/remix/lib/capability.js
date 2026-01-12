@@ -160,7 +160,7 @@ export class RemixCapability extends ViteCapability {
     this._setApp(this.#app)
 
     await this.#app.register(fastifyStatic, {
-      root: resolve(this.root, `${outputDirectory}/client`),
+      root: resolve(this.root, `${outputDirectory}/client/assets`),
       prefix: join(this.#basePath, 'assets'),
       prefixAvoidTrailingSlash: true,
       schemaHide: true
