@@ -157,9 +157,20 @@ export class BaseCapability extends EventEmitter {
 
   async updateMetricsConfig (metricsConfig) {
     // Transform applicationLabel to idLabel (same transformation as in worker/main.js)
-    this.context.metricsConfig = {
+    const normalizedConfig = {
       ...metricsConfig,
       idLabel: metricsConfig.applicationLabel || 'applicationId'
+    }
+    this.context.metricsConfig = normalizedConfig
+
+    // If running in subprocess mode, send the update to the child process
+    if (this.childManager && this.clientWs) {
+      await this.childManager.send(this.clientWs, 'updateMetricsConfig', {
+        applicationId: this.applicationId,
+        workerId: this.workerId,
+        metricsConfig: normalizedConfig
+      })
+      return
     }
 
     if (this.metricsRegistry) {

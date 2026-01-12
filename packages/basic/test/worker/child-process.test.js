@@ -189,3 +189,50 @@ test('ChildProcess - should properly setup globals', async t => {
   equal(capability.graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
   equal(capability.connectionString, 'TEST_CONNECTION_STRING')
 })
+
+test('ChildProcess - updateMetricsConfig should update metrics in subprocess', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  const [, socket] = await once(childManager, 'ready')
+
+  // Initialize metrics collection in the subprocess
+  await childManager.send(socket, 'collectMetrics', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: true, defaultMetrics: true, httpMetrics: false }
+  })
+
+  // Verify metrics were collected using the built-in getMetrics handler
+  const beforeDisable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  ok(beforeDisable.length > 0, 'Expected metrics to be collected initially')
+
+  // Update metrics config to disable metrics
+  await childManager.send(socket, 'updateMetricsConfig', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: false }
+  })
+
+  // Verify metrics were cleared
+  const afterDisable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  equal(afterDisable.length, 0, 'Expected metrics to be cleared after disabling')
+
+  // Re-enable metrics
+  await childManager.send(socket, 'updateMetricsConfig', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: true, defaultMetrics: true, httpMetrics: false }
+  })
+
+  // Verify metrics were re-collected
+  const afterEnable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  ok(afterEnable.length > 0, 'Expected metrics to be re-collected after enabling')
+
+  // Signal done and wait for subprocess to exit
+  await childManager.send(socket, 'done')
+  await promise
+})
