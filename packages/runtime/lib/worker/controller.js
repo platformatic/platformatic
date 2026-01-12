@@ -92,6 +92,13 @@ export class Controller extends EventEmitter {
     }
   }
 
+  async updateMetricsConfig (metricsConfig) {
+    this.#context.metricsConfig = metricsConfig
+    if (this.capability && typeof this.capability.updateMetricsConfig === 'function') {
+      await this.capability.updateMetricsConfig(metricsConfig)
+    }
+  }
+
   // Note: capability's init() is executed within start
   async init () {
     try {

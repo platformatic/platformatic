@@ -7,7 +7,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { client, collectMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
+import { clearRegistry, client, collectMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -153,6 +153,37 @@ export class BaseCapability extends EventEmitter {
 
   updateContext (_context) {
     // No-op by default
+  }
+
+  async updateMetricsConfig (metricsConfig) {
+    // Transform applicationLabel to idLabel (same transformation as in worker/main.js)
+    const normalizedConfig = {
+      ...metricsConfig,
+      idLabel: metricsConfig.applicationLabel || 'applicationId'
+    }
+    this.context.metricsConfig = normalizedConfig
+
+    // If running in subprocess mode, send the update to the child process
+    if (this.childManager && this.clientWs) {
+      await this.childManager.send(this.clientWs, 'updateMetricsConfig', {
+        applicationId: this.applicationId,
+        workerId: this.workerId,
+        metricsConfig: normalizedConfig
+      })
+      return
+    }
+
+    if (this.metricsRegistry) {
+      // We must clear the registry to stop prom-client from collecting metrics in the background,
+      // and because prom-client doesn't support changing labels on existing metrics.
+      // This will lose all previously collected metrics.
+      clearRegistry(this.metricsRegistry)
+
+      if (metricsConfig.enabled !== false) {
+        this.#metricsCollected = false
+        await this._collectMetrics()
+      }
+    }
   }
 
   start () {

@@ -710,6 +710,56 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  /**
+   * Updates the metrics configuration at runtime without restarting the runtime or workers.
+   *
+   * This method allows you to:
+   * - Enable or disable metrics collection
+   * - Change Prometheus server settings (port, endpoint, authentication)
+   * - Update custom labels for metrics
+   *
+   * @example
+   * // Enable metrics with custom port
+   * await runtime.updateMetricsConfig({
+   *   enabled: true,
+   *   port: 9091,
+   *   labels: { environment: 'production' }
+   * })
+   *
+   * // Disable metrics
+   * await runtime.updateMetricsConfig({ enabled: false })
+   */
+  async updateMetricsConfig (metricsConfig) {
+    if (this.#prometheusServer) {
+      await this.#prometheusServer.close()
+      this.#prometheusServer = null
+    }
+
+    this.#config.metrics = metricsConfig
+    this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
+
+    if (metricsConfig.enabled !== false) {
+      this.#prometheusServer = await startPrometheusServer(this, metricsConfig)
+    }
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      if (worker[kWorkerStatus] === 'started') {
+        promises.push(sendViaITC(worker, 'updateMetricsConfig', metricsConfig))
+      }
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
+      }
+    }
+
+    this.logger.info({ metricsConfig }, 'Metrics configuration updated')
+    return { success: true, config: metricsConfig }
+  }
+
   // TODO: Remove in next major version
   startCollectingMetrics () {
     this.logger.warn(
