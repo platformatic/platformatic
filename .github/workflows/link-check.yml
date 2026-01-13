@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-      - v1.x
-      - v2.x
-  pull_request:
   schedule:
     - cron: '0 0 * * *'  # Daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
