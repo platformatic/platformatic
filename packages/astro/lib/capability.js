@@ -37,8 +37,9 @@ export class AstroCapability extends BaseCapability {
       return
     }
 
-    this.#astro = resolve(dirname(await resolvePackageViaCJS(this.root, 'astro')), '../..')
-    const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
+    const astroPackageJsonPath = await resolvePackageViaCJS(this.root, 'astro/package.json')
+    this.#astro = dirname(astroPackageJsonPath)
+    const astroPackage = JSON.parse(await readFile(astroPackageJsonPath, 'utf-8'))
 
     if (!satisfies(astroPackage.version, supportedVersions)) {
       throw new errors.UnsupportedVersion('astro', astroPackage.version, supportedVersions)
