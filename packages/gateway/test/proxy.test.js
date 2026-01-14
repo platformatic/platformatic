@@ -1291,7 +1291,7 @@ test('should rewrite Location headers for proxied applications https', async t =
   }
 })
 
-test.only('should properly strip runtime basePath from proxied applications', async t => {
+test('should properly strip runtime basePath from proxied applications', async t => {
   const remixModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [remixModulesRoot, resolve(import.meta.dirname, './proxy/fixtures/remix/build')])
