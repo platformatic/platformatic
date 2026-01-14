@@ -4,6 +4,10 @@
 
 Platformatic supports Open Telemetry integration. This allows you to send telemetry data to one of the OTLP compatible servers ([see here](https://opentelemetry.io/ecosystem/vendors/)) or to a Zipkin server. Let's show this with [Jaeger](https://www.jaegertracing.io/).
 
+:::tip Advanced Setup
+For manual OpenTelemetry SDK setup with custom instrumentations or exporters, see the [Advanced OpenTelemetry Setup](./opentelemetry-sdk-setup.md) guide.
+:::
+
 ## Jaeger setup
 
 The quickest way is to use docker:
