@@ -108,7 +108,7 @@ test('should get runtime metrics in a json format', async t => {
         strictEqual(labels.custom_label, 'custom-value')
 
         if (metricName.startsWith('http_request')) {
-          strictEqual(labels.telemetry_id, `${applicationId}-client`)
+          strictEqual(labels.callerTelemetryId, `${applicationId}-client`)
         }
       }
     }
