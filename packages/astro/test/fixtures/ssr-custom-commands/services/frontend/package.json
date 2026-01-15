@@ -17,7 +17,7 @@
     "@fastify/middie": "^8.3.2",
     "@fastify/static": "^7.0.4",
     "astro": "^4.1.4",
-    "fastify": "^4.28.1",
+    "fastify": "^5.7.0",
     "vite": "^5.4.4"
   },
   "devDependencies": {
