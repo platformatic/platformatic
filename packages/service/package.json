@@ -36,7 +36,7 @@
     "self-cert": "^2.0.0",
     "split2": "^4.2.0",
     "typescript": "^5.5.4",
-    "undici": "7.11.0",
+    "undici": "7.18.2",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.4.1"
