@@ -23,21 +23,17 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@mjackson/node-fetch-server": "^0.7.0",
+    "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
-    "compression": "^1.8.1",
-    "express": "^4.19.2",
-    "light-my-request": "^6.0.0",
-    "pino-http": "^10.2.0",
+    "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@react-router/dev": "^7.10.0",
-    "@react-router/express": "^7.10.1",
     "@react-router/node": "^7.10.0",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",

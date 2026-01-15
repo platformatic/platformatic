@@ -1182,9 +1182,9 @@ importers:
 
   packages/react-router:
     dependencies:
-      '@mjackson/node-fetch-server':
-        specifier: ^0.7.0
-        version: 0.7.0
+      '@fastify/static':
+        specifier: ^8.0.0
+        version: 8.2.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1194,18 +1194,9 @@ importers:
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
-      compression:
-        specifier: ^1.8.1
-        version: 1.8.1
-      express:
-        specifier: ^4.19.2
-        version: 4.22.1
-      light-my-request:
-        specifier: ^6.0.0
-        version: 6.6.0
-      pino-http:
-        specifier: ^10.2.0
-        version: 10.5.0
+      fastify:
+        specifier: ^5.0.0
+        version: 5.6.2
       semver:
         specifier: ^7.6.3
         version: 7.7.3
@@ -1219,9 +1210,6 @@ importers:
       '@react-router/dev':
         specifier: ^7.10.0
         version: 7.10.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(terser@5.44.1)(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2))(yaml@2.8.2)
-      '@react-router/express':
-        specifier: ^7.10.1
-        version: 7.10.1(express@4.22.1)(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@react-router/node':
         specifier: ^7.10.0
         version: 7.10.0(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
@@ -1237,9 +1225,6 @@ importers:
       eslint:
         specifier: '9'
         version: 9.36.0(jiti@2.6.1)
-      fastify:
-        specifier: ^5.0.0
-        version: 5.6.2
       isbot:
         specifier: ^5.1.17
         version: 5.1.32
@@ -1273,6 +1258,9 @@ importers:
 
   packages/remix:
     dependencies:
+      '@fastify/static':
+        specifier: ^8.0.0
+        version: 8.2.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1282,18 +1270,9 @@ importers:
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
-      '@remix-run/express':
-        specifier: ^2.16.8
-        version: 2.17.2(express@4.22.1)(typescript@5.9.3)
-      express:
-        specifier: ^4.19.2
-        version: 4.22.1
-      light-my-request:
-        specifier: ^6.0.0
-        version: 6.6.0
-      pino-http:
-        specifier: ^10.2.0
-        version: 10.5.0
+      fastify:
+        specifier: ^5.0.0
+        version: 5.6.2
       semver:
         specifier: ^7.6.3
         version: 7.7.3
@@ -1325,9 +1304,6 @@ importers:
       eslint:
         specifier: '9'
         version: 9.36.0(jiti@2.6.1)
-      fastify:
-        specifier: ^5.0.0
-        version: 5.6.2
       isbot:
         specifier: ^5.1.17
         version: 5.1.32
@@ -3660,9 +3636,6 @@ packages:
   '@mjackson/node-fetch-server@0.2.0':
     resolution: {integrity: sha512-EMlH1e30yzmTpGLQjlFmaDAjyOeZhng1/XCd7DExR8PNAnG/G1tyruZxEoUe11ClnwGhGrtsdnyyUx1frSzjng==}
 
-  '@mjackson/node-fetch-server@0.7.0':
-    resolution: {integrity: sha512-un8diyEBKU3BTVj3GzlTPA1kIjCkGdD+AMYQy31Gf9JCkfoZzwgJ79GUtHrF2BN3XPNMLpubbzPcxys+a3uZEw==}
-
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     resolution: {integrity: sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw==}
     cpu: [arm64]
@@ -4354,32 +4327,11 @@ packages:
       wrangler:
         optional: true
 
-  '@react-router/express@7.10.1':
-    resolution: {integrity: sha512-O7xjg6wWHfrsnPyVWgQG+tCamIE09SqLqtHwa1tAFzKPjcDpCw4S4+/OkJvNXLtBL60H3VhZ1r2OQgXBgGOMpw==}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      express: ^4.17.1 || ^5
-      react-router: 7.10.1
-      typescript: ^5.1.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   '@react-router/node@7.10.0':
     resolution: {integrity: sha512-pff3Xz3gASrIUUX54QdlPzasdN9XRLnzoFEwUVsH5y2sZ6vijQdjZExLS6aQhPiuUr/uVPwN2WngO0Ryfrxulg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react-router: 7.10.0
-      typescript: ^5.1.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@react-router/node@7.10.1':
-    resolution: {integrity: sha512-RLmjlR1zQu+ve8ibI0lu91pJrXGcmfkvsrQl7z/eTc5V5FZgl0OvQVWL5JDWBlBZyzdLMQQekUOX5WcPhCP1FQ==}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      react-router: 7.10.1
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
@@ -4403,16 +4355,6 @@ packages:
       vite:
         optional: true
       wrangler:
-        optional: true
-
-  '@remix-run/express@2.17.2':
-    resolution: {integrity: sha512-N3Rp4xuXWlUUboQxc8ATqvYiFX2DoX0cavWIsQ0pMKPyG1WOSO+MfuOFgHa7kf/ksRteSfDtzgJSgTH6Fv96AA==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      express: ^4.20.0
-      typescript: ^5.1.0
-    peerDependenciesMeta:
-      typescript:
         optional: true
 
   '@remix-run/node-fetch-server@0.9.0':
@@ -6073,14 +6015,6 @@ packages:
 
   common-ancestor-path@1.0.1:
     resolution: {integrity: sha512-L3sHRo1pXXEqX8VU28kfgUY+YGsk09hPqZiZmLacNib6XNTCM8ubYeT7ryXQw8asB1sKgcU5lkB7ONug08aB8w==}
-
-  compressible@2.0.18:
-    resolution: {integrity: sha512-AF3r7P5dWxL8MxyITRMlORQNaOA2IkAFaTr4k7BUumjPtRpGDTZpl0Pb1XCO6JeDCBdp126Cgs9sMxqSjgYyRg==}
-    engines: {node: '>= 0.6'}
-
-  compression@1.8.1:
-    resolution: {integrity: sha512-9mAqGPHLakhCLeNyxPkK4xVo746zQ/czLH1Ky+vkitMnWfWZps8r0qXuwhwizagCRttsL4lfG4pIOvaWLpAP0w==}
-    engines: {node: '>= 0.8.0'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -8723,10 +8657,6 @@ packages:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
 
-  negotiator@0.6.4:
-    resolution: {integrity: sha512-myRT3DiWPHqho5PrJaIRyaMv2kgYf0mUVgBNOYMuCH5Ki1yEiQaf/ZJuQ62nvpc44wL5WDbTX7yGJi1Neevw8w==}
-    engines: {node: '>= 0.6'}
-
   negotiator@1.0.0:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
@@ -8936,10 +8866,6 @@ packages:
 
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
-    engines: {node: '>= 0.8'}
-
-  on-headers@1.1.0:
-    resolution: {integrity: sha512-737ZY3yNnXy37FHkQxPzt4UZ2UWPWiCZWLvFZ4fu5cueciegX0zGPnrlY6bwRg4FdQOe9YU8MkmJwGhoMybl8A==}
     engines: {node: '>= 0.8'}
 
   on-net-listen@1.1.2:
@@ -11615,19 +11541,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/helper-create-class-features-plugin@7.28.3(@babel/core@7.28.5)':
-    dependencies:
-      '@babel/core': 7.28.5
-      '@babel/helper-annotate-as-pure': 7.27.3
-      '@babel/helper-member-expression-to-functions': 7.27.1
-      '@babel/helper-optimise-call-expression': 7.27.1
-      '@babel/helper-replace-supers': 7.27.1(@babel/core@7.28.5)
-      '@babel/helper-skip-transparent-expression-wrappers': 7.27.1
-      '@babel/traverse': 7.28.5
-      semver: 6.3.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/helper-create-class-features-plugin@7.28.5(@babel/core@7.28.5)':
     dependencies:
       '@babel/core': 7.28.5
@@ -11796,17 +11709,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-typescript@7.28.0(@babel/core@7.28.5)':
-    dependencies:
-      '@babel/core': 7.28.5
-      '@babel/helper-annotate-as-pure': 7.27.3
-      '@babel/helper-create-class-features-plugin': 7.28.3(@babel/core@7.28.5)
-      '@babel/helper-plugin-utils': 7.27.1
-      '@babel/helper-skip-transparent-expression-wrappers': 7.27.1
-      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/plugin-transform-typescript@7.28.5(@babel/core@7.28.5)':
     dependencies:
       '@babel/core': 7.28.5
@@ -11826,17 +11728,6 @@ snapshots:
       '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.4)
       '@babel/plugin-transform-modules-commonjs': 7.27.1(@babel/core@7.28.4)
       '@babel/plugin-transform-typescript': 7.28.0(@babel/core@7.28.4)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/preset-typescript@7.27.1(@babel/core@7.28.5)':
-    dependencies:
-      '@babel/core': 7.28.5
-      '@babel/helper-plugin-utils': 7.27.1
-      '@babel/helper-validator-option': 7.27.1
-      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
-      '@babel/plugin-transform-modules-commonjs': 7.27.1(@babel/core@7.28.5)
-      '@babel/plugin-transform-typescript': 7.28.0(@babel/core@7.28.5)
     transitivePeerDependencies:
       - supports-color
 
@@ -12872,8 +12763,6 @@ snapshots:
 
   '@mjackson/node-fetch-server@0.2.0': {}
 
-  '@mjackson/node-fetch-server@0.7.0': {}
-
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     optional: true
 
@@ -13565,7 +13454,7 @@ snapshots:
       '@babel/generator': 7.28.5
       '@babel/parser': 7.28.5
       '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
-      '@babel/preset-typescript': 7.27.1(@babel/core@7.28.5)
+      '@babel/preset-typescript': 7.28.5(@babel/core@7.28.5)
       '@babel/traverse': 7.28.5
       '@babel/types': 7.28.5
       '@react-router/node': 7.10.0(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
@@ -13583,7 +13472,7 @@ snapshots:
       pathe: 1.1.2
       picocolors: 1.1.1
       pkg-types: 2.3.0
-      prettier: 3.6.2
+      prettier: 3.7.4
       react-refresh: 0.14.2
       react-router: 7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       semver: 7.7.3
@@ -13608,22 +13497,7 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/express@7.10.1(express@4.22.1)(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
-    dependencies:
-      '@react-router/node': 7.10.1(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
-      express: 4.22.1
-      react-router: 7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-    optionalDependencies:
-      typescript: 5.9.3
-
   '@react-router/node@7.10.0(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
-    dependencies:
-      '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-    optionalDependencies:
-      typescript: 5.9.3
-
-  '@react-router/node@7.10.1(react-router@7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
       react-router: 7.12.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -13710,13 +13584,6 @@ snapshots:
       - tsx
       - utf-8-validate
       - yaml
-
-  '@remix-run/express@2.17.2(express@4.22.1)(typescript@5.9.3)':
-    dependencies:
-      '@remix-run/node': 2.17.2(typescript@5.9.3)
-      express: 4.22.1
-    optionalDependencies:
-      typescript: 5.9.3
 
   '@remix-run/node-fetch-server@0.9.0': {}
 
@@ -14140,7 +14007,7 @@ snapshots:
   '@tanstack/directive-functions-plugin@1.139.0(vite@7.2.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2))':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/core': 7.28.4
+      '@babel/core': 7.28.5
       '@babel/traverse': 7.28.5
       '@babel/types': 7.28.5
       '@tanstack/router-utils': 1.139.0
@@ -14238,9 +14105,9 @@ snapshots:
 
   '@tanstack/router-plugin@1.139.7(@tanstack/react-router@1.139.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(vite-plugin-solid@2.11.10(solid-js@1.9.10)(vite@7.2.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2)))(vite@7.2.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2))(webpack@5.103.0)':
     dependencies:
-      '@babel/core': 7.28.4
-      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.4)
-      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.4)
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
       '@babel/template': 7.27.2
       '@babel/traverse': 7.28.5
       '@babel/types': 7.28.5
@@ -14276,9 +14143,9 @@ snapshots:
   '@tanstack/server-functions-plugin@1.139.0(vite@7.2.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2))':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/core': 7.28.4
-      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.4)
-      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.4)
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
       '@babel/template': 7.27.2
       '@babel/traverse': 7.28.5
       '@babel/types': 7.28.5
@@ -15736,22 +15603,6 @@ snapshots:
   comment-parser@1.4.1: {}
 
   common-ancestor-path@1.0.1: {}
-
-  compressible@2.0.18:
-    dependencies:
-      mime-db: 1.54.0
-
-  compression@1.8.1:
-    dependencies:
-      bytes: 3.1.2
-      compressible: 2.0.18
-      debug: 2.6.9
-      negotiator: 0.6.4
-      on-headers: 1.1.0
-      safe-buffer: 5.2.1
-      vary: 1.1.2
-    transitivePeerDependencies:
-      - supports-color
 
   concat-map@0.0.1: {}
 
@@ -19251,8 +19102,6 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  negotiator@0.6.4: {}
-
   negotiator@1.0.0: {}
 
   neo-async@2.6.2: {}
@@ -19532,8 +19381,6 @@ snapshots:
   on-finished@2.4.1:
     dependencies:
       ee-first: 1.1.1
-
-  on-headers@1.1.0: {}
 
   on-net-listen@1.1.2: {}
 

@@ -1,4 +1,4 @@
-import { createRequestListener } from '@mjackson/node-fetch-server'
+import fastifyStatic from '@fastify/static'
 import {
   cleanBasePath,
   createServerListener,
@@ -9,14 +9,11 @@ import {
   resolvePackageViaCJS
 } from '@platformatic/basic'
 import { ViteCapability } from '@platformatic/vite'
-import { createRequestHandler } from '@react-router/express'
-import compression from 'compression'
-import express from 'express'
-import inject from 'light-my-request'
+import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { pinoHttp } from 'pino-http'
+import { createRequestHandler } from 'react-router'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
@@ -24,7 +21,6 @@ const supportedVersions = '^7.0.0'
 
 export class ReactRouterCapability extends ViteCapability {
   #app
-  #server
   #reactRouter
   #basePath
 
@@ -85,22 +81,6 @@ export class ReactRouterCapability extends ViteCapability {
     return super.start({ listen })
   }
 
-  async stop () {
-    const reactRouterConfig = await this.#getReactRouterConfig()
-
-    if (reactRouterConfig.ssr) {
-      await this._stop()
-
-      if (this.#server?.listening) {
-        await this._closeServer(this.#server)
-      }
-
-      return
-    }
-
-    return super.stop()
-  }
-
   async build () {
     const config = this.config
     const command = config.application.commands.build
@@ -118,7 +98,7 @@ export class ReactRouterCapability extends ViteCapability {
 
     await writeFile(
       resolve(this.root, config.reactRouter.outputDirectory, '.platformatic-build.json'),
-      JSON.stringify({ basePath: reactRouterConfig.basename ?? '/' }),
+      JSON.stringify({ basePath: basePath ?? reactRouterConfig.basename ?? '/' }),
       'utf-8'
     )
   }
@@ -126,16 +106,6 @@ export class ReactRouterCapability extends ViteCapability {
   async getMeta () {
     const reactRouterConfig = await this.#getReactRouterConfig()
     return super.getMeta(reactRouterConfig.basename)
-  }
-
-  async inject (injectParams, onInject) {
-    const reactRouterConfig = await this.#getReactRouterConfig()
-
-    if (this.isProduction && reactRouterConfig.ssr) {
-      return this.#inject(injectParams, onInject)
-    }
-
-    return super.inject(injectParams, onInject)
   }
 
   async #getReactRouterConfig () {
@@ -159,16 +129,8 @@ export class ReactRouterCapability extends ViteCapability {
         createServerListener(false, false, { backlog: serverOptions.backlog })
       }
 
-      this.#server = await new Promise((resolve, reject) => {
-        return this.#app
-          .listen(listenOptions, function () {
-            resolve(this)
-          })
-          .on('error', reject)
-      })
-
-      this.url = getServerUrl(this.#server)
-
+      await this.#app.listen(listenOptions)
+      this.url = getServerUrl(this.#app.server)
       return this.url
     }
 
@@ -182,28 +144,28 @@ export class ReactRouterCapability extends ViteCapability {
 
     const serverModule = await importFile(resolve(serverRoot, 'index.js'))
 
-    // Setup express app
-    this.#app = express()
+    // Setup fastify
+    this.#app = fastify({ loggerInstance: this.logger })
     this._setApp(this.#app)
-    this.#app.disable('x-powered-by')
-    this.#app.use(pinoHttp({ logger: this.logger }))
+
+    let assetsRoot = clientRoot
+    let publicPath = '/'
+    let mainHandler
 
     // Custom entrypoint
     if (serverModule.entrypoint) {
-      this.#app.use(this.#basePath, express.static(clientRoot))
-      this.#app.all(
-        `${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`,
-        createRequestHandler({ build: () => serverModule.entrypoint })
-      )
-      // Reproduces and simplifies @react-router/serve
+      mainHandler = createRequestHandler(() => serverModule.entrypoint, process.env.NODE_ENV)
+      // Adapts @react-router/serve to fastify
     } else {
-      let assetsRoot = serverModule.assetsBuildDirectory
-        ? resolve(this.root, serverModule.assetsBuildDirectory)
-        : clientRoot
-      let publicPath = serverModule.publicPath ?? '/'
-      let mainHandler
+      if (serverModule.assetsBuildDirectory) {
+        assetsRoot = resolve(this.root, serverModule.assetsBuildDirectory)
+      }
 
-      // isRSCServerBuild
+      if (serverModule.publicPath) {
+        publicPath = serverModule.publicPath ?? '/'
+      }
+
+      // RSC build
       if (typeof serverModule.default === 'function') {
         if (serverModule.unstable_reactRouterServeConfig) {
           if (serverModule.unstable_reactRouterServeConfig.assetsBuildDirectory) {
@@ -214,36 +176,58 @@ export class ReactRouterCapability extends ViteCapability {
           }
         }
 
-        mainHandler = createRequestListener(serverModule.default)
-
-        this.#app.use(compression())
+        mainHandler = serverModule.default
       } else {
-        mainHandler = createRequestHandler({ build: serverModule, mode: process.env.NODE_ENV })
+        mainHandler = createRequestHandler(serverModule, process.env.NODE_ENV)
       }
-
-      this.#app.use(
-        join(this.#basePath, 'assets'),
-        express.static(resolve(assetsRoot, 'assets'), { immutable: true, maxAge: '1y' })
-      )
-      this.#app.use(join(this.#basePath, publicPath), express.static(resolve(assetsRoot, 'assets')))
-      this.#app.use(express.static('public', { maxAge: '1h' }))
-      this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, mainHandler)
     }
 
+    await this.#app.register(fastifyStatic, {
+      root: resolve(assetsRoot, 'assets'),
+      prefix: join(this.#basePath, 'assets'),
+      prefixAvoidTrailingSlash: true,
+      schemaHide: true,
+      decorateReply: false
+    })
+
+    if (publicPath !== '/') {
+      await this.#app.register(fastifyStatic, {
+        root: resolve(assetsRoot, 'assets'),
+        prefix: join(this.#basePath, publicPath),
+        prefixAvoidTrailingSlash: true,
+        schemaHide: true,
+        decorateReply: false
+      })
+    }
+
+    this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, this.#handleRequest.bind(this, mainHandler))
+
+    await this.#app.ready()
     await this._collectMetrics()
-    return this.url
   }
 
-  async #inject (injectParams, onInject) {
-    const res = await inject(this.#app, injectParams, onInject)
+  #handleRequest (handle, req) {
+    // Support aborting
+    const ac = new AbortController()
 
-    /* c8 ignore next 3 */
-    if (onInject) {
-      return
+    req.raw.on('aborted', () => ac.abort())
+    req.raw.on('close', () => ac.abort())
+
+    const headers = new Headers()
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value) {
+        headers.set(key, Array.isArray(value) ? value.join(',') : value)
+      }
     }
 
-    // Since inject might be called from the main thread directly via ITC, let's clean it up
-    const { statusCode, headers, body, payload, rawPayload } = res
-    return { statusCode, headers, body, payload, rawPayload }
+    return handle(
+      new Request(`${req.protocol}://${req.hostname}${req.raw.url}`, {
+        method: req.method,
+        headers,
+        body: ['GET', 'HEAD'].includes(req.method) ? undefined : ReadableStream.from(req.raw),
+        duplex: 'half',
+        signal: ac.signal
+      })
+    )
   }
 }

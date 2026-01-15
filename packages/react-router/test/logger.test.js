@@ -36,8 +36,8 @@ test('logger options', async t => {
         log.stdout.name === 'react-router' &&
         log.stdout.level === 'INFO' &&
         log.stdout.time.length === 24 && // isotime
-        log.stdout.req?.headers?.authorization === '***HIDDEN***' &&
-        log.stdout.msg === 'request completed'
+        log?.stdout?.req?.host === '***HIDDEN***' &&
+        log?.stdout?.msg === 'incoming request'
       )
     })
   )
