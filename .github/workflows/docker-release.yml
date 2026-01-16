@@ -9,7 +9,6 @@ on:
 jobs:
   buildx:
     runs-on: ubuntu-latest
-    environment: main
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
