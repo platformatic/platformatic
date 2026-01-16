@@ -3,7 +3,7 @@
     "test": "node --test test/*/*.test.js"
   },
   "devDependencies": {
-    "fastify": "^5.0.0"
+    "fastify": "^5.7.0"
   },
   "dependencies": {
     "platformatic": "^2.0.0",

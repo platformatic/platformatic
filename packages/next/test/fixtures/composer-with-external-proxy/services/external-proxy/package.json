@@ -1,7 +1,7 @@
 {
   "name": "external-proxy",
   "devDependencies": {
-    "fastify": "^5.0.0-alpha.4"
+    "fastify": "^5.7.0"
   },
   "dependencies": {
     "@platformatic/service": "^2.3.1",

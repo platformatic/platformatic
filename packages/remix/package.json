@@ -23,13 +23,11 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
-    "@remix-run/express": "^2.16.8",
-    "express": "^4.19.2",
-    "light-my-request": "^6.0.0",
-    "pino-http": "^10.2.0",
+    "fastify": "^5.7.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
@@ -42,7 +40,7 @@
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "isbot": "^5.1.17",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
