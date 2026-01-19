@@ -13,6 +13,7 @@ import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
+import { Readable } from 'node:stream'
 import { createRequestHandler } from 'react-router'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
@@ -152,6 +153,12 @@ export class ReactRouterCapability extends ViteCapability {
     let publicPath = '/'
     let mainHandler
 
+    // Since it uses the Fetch API, we don't need to parse the request body.
+    this.#app.removeAllContentTypeParsers()
+    this.#app.addContentTypeParser('*', function (_, payload, done) {
+      done(null, payload)
+    })
+
     // Custom entrypoint
     if (serverModule.entrypoint) {
       mainHandler = createRequestHandler(() => serverModule.entrypoint, process.env.NODE_ENV)
@@ -209,9 +216,15 @@ export class ReactRouterCapability extends ViteCapability {
   #handleRequest (handle, req) {
     // Support aborting
     const ac = new AbortController()
+    let ended = false
 
     req.raw.on('aborted', () => ac.abort())
-    req.raw.on('close', () => ac.abort())
+    req.raw.on('end', () => { ended = true })
+    req.raw.on('close', () => {
+      if (!ended) {
+        ac.abort()
+      }
+    })
 
     const headers = new Headers()
     for (const [key, value] of Object.entries(req.headers)) {
@@ -220,12 +233,18 @@ export class ReactRouterCapability extends ViteCapability {
       }
     }
 
+    let body
+
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      body = Readable.toWeb(req.raw)
+    }
+
     return handle(
       new Request(`${req.protocol}://${req.hostname}${req.raw.url}`, {
         method: req.method,
         headers,
-        body: ['GET', 'HEAD'].includes(req.method) ? undefined : ReadableStream.from(req.raw),
-        duplex: 'half',
+        body,
+        duplex: body ? 'half' : undefined,
         signal: ac.signal
       })
     )
