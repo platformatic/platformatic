@@ -1649,3 +1649,87 @@ test('should dynamically proxy a using custom logic', async t => {
     client.close()
   }
 })
+
+test('should proxy to a remote service with external origin', async t => {
+  // Create an external service (simulating a remote API)
+  const remoteService = await createOpenApiApplication(t, ['users'])
+  const remoteOrigin = await remoteService.listen({ port: 0 })
+
+  // Configure gateway with a remote application using origin (not part of runtime)
+  // This tests that remote services work without being part of the runtime
+  const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'remote-users',
+          origin: remoteOrigin,
+          openapi: {
+            url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/api/users'
+          }
+        }
+      ]
+    }
+  }
+
+  const gateway = await createFromConfig(t, config)
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  // Test that requests are proxied to the remote service
+  await testEntityRoutes(gatewayOrigin, ['/api/users/users'])
+
+  // Test that openapi spec is available and contains the users entity
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/documentation/json'
+  })
+  assert.equal(statusCode, 200)
+  const openApiSchema = await body.json()
+  // OpenAPI composition uses the application's paths prefixed appropriately
+  const paths = Object.keys(openApiSchema.paths)
+  assert.ok(paths.some(p => p.includes('users')), `Expected a users path, got: ${paths.join(', ')}`)
+})
+
+test('should proxy to a remote service from gateway in runtime', async t => {
+  // Create an external service (simulating a remote API not part of the runtime)
+  const remoteService = await createOpenApiApplication(t, ['products'])
+  const remoteOrigin = await remoteService.listen({ port: 0 })
+
+  // Create a gateway in a runtime that proxies to the external remote service
+  // This is the scenario from issue #4531 - remote services should work
+  // without throwing "Application not found"
+  const runtime = await createGatewayInRuntime(
+    t,
+    'gateway-remote-proxy',
+    {
+      gateway: {
+        applications: [
+          {
+            id: 'remote-products',
+            origin: remoteOrigin,
+            openapi: {
+              url: '/documentation/json'
+            },
+            proxy: {
+              prefix: '/api/products'
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [] // No local services - only remote external service
+  )
+
+  const address = await runtime.start()
+
+  // Test that requests are proxied to the remote external service
+  await testEntityRoutes(address, ['/api/products/products'])
+})

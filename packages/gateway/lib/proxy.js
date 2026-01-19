@@ -11,9 +11,21 @@ const kProxyRoute = Symbol('plt.gateway.proxy.route')
 
 const urlPattern = /^https?:\/\//
 
+function isLocalApplication (application) {
+  if (!application.origin) {
+    return true
+  }
+
+  return application.origin.endsWith('.plt.local')
+}
+
 async function resolveApplicationProxyParameters (application) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
-  const allMeta = (await globalThis[kITC]?.send('getApplicationMeta', application.id)) ?? {}
+  // Only fetch meta for local applications - remote applications won't be in the runtime
+  let allMeta = {}
+  if (isLocalApplication(application)) {
+    allMeta = (await globalThis[kITC]?.send('getApplicationMeta', application.id)) ?? {}
+  }
   const meta = allMeta.gateway ?? allMeta.composer ?? { prefix: application.id }
 
   // If no prefix could be found, assume the application id
