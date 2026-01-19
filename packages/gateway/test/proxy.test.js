@@ -1733,3 +1733,64 @@ test('should proxy to a remote service from gateway in runtime', async t => {
   // Test that requests are proxied to the remote external service
   await testEntityRoutes(address, ['/api/products/products'])
 })
+
+test('should proxy both local and remote services in same runtime', async t => {
+  // Create an external service (simulating a remote API not part of the runtime)
+  const remoteService = await createOpenApiApplication(t, ['products'])
+  const remoteOrigin = await remoteService.listen({ port: 0 })
+
+  // Create a gateway in runtime with BOTH local and remote services
+  // This tests that local services still get ITC metadata while remote services work without it
+  const runtime = await createGatewayInRuntime(
+    t,
+    'gateway-mixed-local-remote',
+    {
+      gateway: {
+        applications: [
+          {
+            // Local service - part of the runtime, should use ITC for metadata
+            id: 'main',
+            proxy: {
+              prefix: '/local'
+            }
+          },
+          {
+            // Remote service - NOT part of runtime, should skip ITC
+            id: 'remote-products',
+            origin: remoteOrigin,
+            openapi: {
+              url: '/documentation/json'
+            },
+            proxy: {
+              prefix: '/remote'
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        // The actual local service definition
+        id: 'main',
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
+      }
+    ]
+  )
+
+  const address = await runtime.start()
+
+  // Test local service works (uses ITC for metadata)
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/local/hello'
+    })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: true })
+  }
+
+  // Test remote service works (skips ITC)
+  await testEntityRoutes(address, ['/remote/products'])
+})
