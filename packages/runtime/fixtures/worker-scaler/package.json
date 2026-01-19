@@ -7,7 +7,7 @@
     "start": "platformatic start"
   },
   "devDependencies": {
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "borp": "^0.19.0"
   },
   "dependencies": {

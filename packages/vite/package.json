@@ -27,7 +27,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/node": "workspace:*",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {

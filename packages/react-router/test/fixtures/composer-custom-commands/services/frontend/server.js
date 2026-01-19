@@ -1,11 +1,16 @@
-import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
-import express from 'express'
+import fastifyStatic from '@fastify/static'
+import { cleanBasePath } from '@platformatic/basic'
+import fastify from 'fastify'
 import { resolve } from 'node:path'
-import { pinoHttp } from 'pino-http'
 
-const app = express()
+const app = fastify({ loggerInstance: globalThis.platformatic?.logger })
 const basePath = globalThis.platformatic?.basePath ?? '/'
 
-app.use(pinoHttp({ level: globalThis.platformatic?.logLevel ?? 'info' }))
-app.use(ensureTrailingSlash(cleanBasePath(basePath)), express.static(resolve(process.cwd(), 'build/client')))
-app.listen(3000)
+await app.register(fastifyStatic, {
+  root: resolve(process.cwd(), resolve(process.cwd(), 'build/client')),
+  prefix: cleanBasePath(basePath),
+  prefixAvoidTrailingSlash: true,
+  schemaHide: true
+})
+
+await app.listen({ port: 3000 })

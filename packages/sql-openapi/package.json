@@ -30,7 +30,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.4.0",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "neostandard": "^0.12.0",
     "openapi-types": "^12.1.3",
     "tsd": "^0.33.0",

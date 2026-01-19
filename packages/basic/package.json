@@ -43,7 +43,7 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "express": "^4.19.2",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "get-port": "^7.1.0",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",

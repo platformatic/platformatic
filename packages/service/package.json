@@ -68,7 +68,7 @@
     "env-schema": "^6.0.0",
     "execa": "^9.0.0",
     "fast-json-patch": "^3.1.1",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "fastify-plugin": "^5.0.0",
     "graphql": "^16.9.0",
     "help-me": "^5.0.0",
