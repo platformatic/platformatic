@@ -725,10 +725,6 @@ export interface PlatformaticServiceConfig {
            * Directory to store compile cache. Defaults to .plt/compile-cache in app root
            */
           directory?: string;
-          /**
-           * Enable portable mode for cache reuse when project location changes
-           */
-          portable?: boolean;
         };
     application?: {
       reuseTcpPorts?: boolean;
@@ -799,10 +795,6 @@ export interface PlatformaticServiceConfig {
              * Directory to store compile cache. Defaults to .plt/compile-cache in app root
              */
             directory?: string;
-            /**
-             * Enable portable mode for cache reuse when project location changes
-             */
-            portable?: boolean;
           };
     };
   };

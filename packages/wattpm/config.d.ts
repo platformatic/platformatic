@@ -89,10 +89,6 @@ export type PlatformaticRuntimeConfig = {
                * Directory to store compile cache. Defaults to .plt/compile-cache in app root
                */
               directory?: string;
-              /**
-               * Enable portable mode for cache reuse when project location changes
-               */
-              portable?: boolean;
             };
       };
     };
@@ -528,9 +524,5 @@ export type PlatformaticRuntimeConfig = {
          * Directory to store compile cache. Defaults to .plt/compile-cache in app root
          */
         directory?: string;
-        /**
-         * Enable portable mode for cache reuse when project location changes
-         */
-        portable?: boolean;
       };
 };
