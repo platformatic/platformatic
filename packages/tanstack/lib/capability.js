@@ -26,6 +26,7 @@ export class TanstackCapability extends ViteCapability {
     super(root, config, context)
     this.type = 'tanstack'
     this.version = packageJson.version
+    this.exitOnUnhandledErrors = false
   }
 
   async init () {
