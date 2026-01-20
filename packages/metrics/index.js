@@ -1,14 +1,75 @@
 import collectHttpMetrics from '@platformatic/http-metrics'
 import os from 'node:os'
+import { createRequire } from 'node:module'
 import { performance } from 'node:perf_hooks'
 import client from '@platformatic/prom-client'
 
 export * as client from '@platformatic/prom-client'
 
+const require = createRequire(import.meta.url)
+
+// Import individual metric collectors from prom-client
+const processCpuTotal = require('@platformatic/prom-client/lib/metrics/processCpuTotal')
+const processStartTime = require('@platformatic/prom-client/lib/metrics/processStartTime')
+const osMemoryHeap = require('@platformatic/prom-client/lib/metrics/osMemoryHeap')
+const processOpenFileDescriptors = require('@platformatic/prom-client/lib/metrics/processOpenFileDescriptors')
+const processMaxFileDescriptors = require('@platformatic/prom-client/lib/metrics/processMaxFileDescriptors')
+const eventLoopLag = require('@platformatic/prom-client/lib/metrics/eventLoopLag')
+const processHandles = require('@platformatic/prom-client/lib/metrics/processHandles')
+const processRequests = require('@platformatic/prom-client/lib/metrics/processRequests')
+const processResources = require('@platformatic/prom-client/lib/metrics/processResources')
+const heapSizeAndUsed = require('@platformatic/prom-client/lib/metrics/heapSizeAndUsed')
+const heapSpacesSizeAndUsed = require('@platformatic/prom-client/lib/metrics/heapSpacesSizeAndUsed')
+const version = require('@platformatic/prom-client/lib/metrics/version')
+const gc = require('@platformatic/prom-client/lib/metrics/gc')
+
 const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
+
+// Process-level metrics (same across all workers, collect once in main thread)
+export const PROCESS_LEVEL_METRICS = [
+  'process_cpu_user_seconds_total',
+  'process_cpu_system_seconds_total',
+  'process_cpu_seconds_total',
+  'process_start_time_seconds',
+  'process_resident_memory_bytes',
+  'process_open_fds',
+  'process_max_fds',
+  'nodejs_version_info',
+  'process_cpu_percent_usage'
+]
+
+// Thread/isolate-specific metrics (different per worker)
+export const THREAD_LEVEL_METRICS = [
+  'nodejs_heap_size_total_bytes',
+  'nodejs_heap_size_used_bytes',
+  'nodejs_external_memory_bytes',
+  'nodejs_heap_space_size_total_bytes',
+  'nodejs_heap_space_size_used_bytes',
+  'nodejs_heap_space_size_available_bytes',
+  'nodejs_eventloop_lag_seconds',
+  'nodejs_eventloop_lag_min_seconds',
+  'nodejs_eventloop_lag_max_seconds',
+  'nodejs_eventloop_lag_mean_seconds',
+  'nodejs_eventloop_lag_stddev_seconds',
+  'nodejs_eventloop_lag_p50_seconds',
+  'nodejs_eventloop_lag_p90_seconds',
+  'nodejs_eventloop_lag_p99_seconds',
+  'nodejs_eventloop_utilization',
+  'nodejs_gc_duration_seconds',
+  'nodejs_active_handles',
+  'nodejs_active_handles_total',
+  'nodejs_active_requests',
+  'nodejs_active_requests_total',
+  'nodejs_active_resources',
+  'nodejs_active_resources_total',
+  'thread_cpu_user_system_seconds_total',
+  'thread_cpu_system_seconds_total',
+  'thread_cpu_seconds_total',
+  'thread_cpu_percent_usage'
+]
 
 export function registerMetricsGroup (registry, group) {
   registry[kMetricsGroups] ??= new Set()
@@ -93,6 +154,49 @@ export async function collectThreadCpuMetrics (registry) {
   registry.registerMetric(threadCpuPercentUsageGaugeMetric)
 }
 
+// Collect system CPU usage metric (based on os.cpus(), process-level)
+export function collectSystemCpuMetric (registry) {
+  if (ensureMetricsGroup(registry, 'systemCpu')) {
+    return
+  }
+
+  let previousIdleTime = 0
+  let previousTotalTime = 0
+  const cpuMetric = new Gauge({
+    name: 'process_cpu_percent_usage',
+    help: 'The process CPU percent usage.',
+    collect: () => {
+      const cpus = os.cpus()
+      let idleTime = 0
+      let totalTime = 0
+
+      for (let i = 0; i < cpus.length; i++) {
+        const cpu = cpus[i]
+        const times = cpu.times
+        for (const type in times) {
+          totalTime += times[type]
+          if (type === 'idle') {
+            idleTime += times[type]
+          }
+        }
+      }
+
+      const idleDiff = idleTime - previousIdleTime
+      const totalDiff = totalTime - previousTotalTime
+
+      const usagePercent = 100 - (100 * idleDiff) / totalDiff
+      const roundedUsage = Math.round(usagePercent * 100) / 100
+      cpuMetric.set(roundedUsage)
+
+      previousIdleTime = idleTime
+      previousTotalTime = totalTime
+    },
+    registers: [registry]
+  })
+  registry.registerMetric(cpuMetric)
+}
+
+// Collect only the ELU metric (thread-specific)
 export function collectEluMetric (registry) {
   if (ensureMetricsGroup(registry, 'elu')) {
     return
@@ -111,41 +215,108 @@ export function collectEluMetric (registry) {
     registers: [registry]
   })
   registry.registerMetric(eluMetric)
-
-  let previousIdleTime = 0
-  let previousTotalTime = 0
-  const cpuMetric = new Gauge({
-    name: 'process_cpu_percent_usage',
-    help: 'The process CPU percent usage.',
-    collect: () => {
-      const cpus = os.cpus()
-      let idleTime = 0
-      let totalTime = 0
-
-      cpus.forEach(cpu => {
-        for (const type in cpu.times) {
-          totalTime += cpu.times[type]
-          if (type === 'idle') {
-            idleTime += cpu.times[type]
-          }
-        }
-      })
-
-      const idleDiff = idleTime - previousIdleTime
-      const totalDiff = totalTime - previousTotalTime
-
-      const usagePercent = 100 - (100 * idleDiff) / totalDiff
-      const roundedUsage = Math.round(usagePercent * 100) / 100
-      cpuMetric.set(roundedUsage)
-
-      previousIdleTime = idleTime
-      previousTotalTime = totalTime
-    },
-    registers: [registry]
-  })
-  registry.registerMetric(cpuMetric)
 }
 
+// Legacy function that collects both ELU and system CPU (for backward compatibility)
+export function collectEluAndSystemCpuMetrics (registry) {
+  collectEluMetric(registry)
+  collectSystemCpuMetric(registry)
+}
+
+// Collect process-level metrics (same across all workers, should run in main thread only)
+export function collectProcessMetrics (registry) {
+  if (ensureMetricsGroup(registry, 'process-level')) {
+    return
+  }
+
+  const config = {}
+
+  // Process CPU metrics
+  processCpuTotal(registry, config)
+  // Process start time
+  processStartTime(registry, config)
+  // Resident memory (RSS)
+  osMemoryHeap(registry, config)
+  // Open file descriptors (Linux)
+  processOpenFileDescriptors(registry, config)
+  // Max file descriptors (Linux)
+  processMaxFileDescriptors(registry, config)
+  // Node.js version info
+  version(registry, config)
+  // System CPU percent usage (os.cpus() based)
+  collectSystemCpuMetric(registry)
+}
+
+// Collect thread-specific metrics (different per worker)
+export async function collectThreadMetrics (applicationId, workerId, metricsConfig = {}, registry = undefined) {
+  if (!registry) {
+    registry = new Registry()
+  }
+
+  const labels = { ...metricsConfig.labels }
+
+  // Use the configured label name
+  const labelName = metricsConfig.idLabel || 'applicationId'
+  labels[labelName] = applicationId
+
+  if (workerId >= 0) {
+    labels.workerId = workerId
+  }
+  registry.setDefaultLabels(labels)
+
+  if (metricsConfig.defaultMetrics) {
+    if (!ensureMetricsGroup(registry, 'thread-level')) {
+      const config = { eventLoopMonitoringPrecision: 10 }
+
+      // Thread-specific metrics only
+      heapSizeAndUsed(registry, config)
+      heapSpacesSizeAndUsed(registry, config)
+      eventLoopLag(registry, config)
+      gc(registry, config)
+      processHandles(registry, config)
+      processRequests(registry, config)
+      if (typeof process.getActiveResourcesInfo === 'function') {
+        processResources(registry, config)
+      }
+    }
+
+    // Event loop utilization (thread-specific)
+    collectEluMetric(registry)
+    // Thread CPU metrics
+    await collectThreadCpuMetrics(registry)
+  }
+
+  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
+    collectHttpMetrics(registry, {
+      customLabels: ['telemetry_id'],
+      getCustomLabels: req => {
+        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      },
+      histogram: {
+        name: 'http_request_all_duration_seconds',
+        help: 'request duration in seconds summary for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        }
+      },
+      summary: {
+        name: 'http_request_all_summary_seconds',
+        help: 'request duration in seconds histogram for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        }
+      }
+    })
+  }
+
+  return {
+    registry,
+    otlpBridge: null
+  }
+}
+
+// Original function for backward compatibility (collects all metrics)
 export async function collectMetrics (applicationId, workerId, metricsConfig = {}, registry = undefined) {
   if (!registry) {
     registry = new Registry()
@@ -168,6 +339,7 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
     }
 
     collectEluMetric(registry)
+    collectSystemCpuMetric(registry)
     await collectThreadCpuMetrics(registry)
   }
 

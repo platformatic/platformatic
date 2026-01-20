@@ -10,6 +10,7 @@ import {
   parseMemorySize
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc'
+import { client as metricsClient, collectProcessMetrics } from '@platformatic/metrics'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -119,6 +120,8 @@ export class Runtime extends EventEmitter {
 
   #channelCreationHook
 
+  #processMetricsRegistry
+
   constructor (config, context) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
@@ -192,6 +195,11 @@ export class Runtime extends EventEmitter {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
       this.#prometheusServer = await startPrometheusServer(this, config.metrics)
+
+      // Initialize process-level metrics registry in the main thread
+      // These metrics are the same across all workers and only need to be collected once
+      this.#processMetricsRegistry = new metricsClient.Registry()
+      collectProcessMetrics(this.#processMetricsRegistry)
     } else {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
@@ -344,6 +352,12 @@ export class Runtime extends EventEmitter {
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
+    }
+
+    // Clean up process metrics registry
+    if (this.#processMetricsRegistry) {
+      this.#processMetricsRegistry.clear()
+      this.#processMetricsRegistry = null
     }
 
     if (this.#sharedHttpCache?.close) {
@@ -1059,6 +1073,12 @@ export class Runtime extends EventEmitter {
   async getMetrics (format = 'json') {
     let metrics = null
 
+    // Get process-level metrics once from main thread registry (if available)
+    let processMetricsJson = null
+    if (this.#processMetricsRegistry) {
+      processMetricsJson = await this.#processMetricsRegistry.getMetricsAsJSON()
+    }
+
     for (const worker of this.#workers.values()) {
       try {
         // The application might be temporarily unavailable
@@ -1066,6 +1086,7 @@ export class Runtime extends EventEmitter {
           continue
         }
 
+        // Get thread-specific metrics from worker
         const applicationMetrics = await executeWithTimeout(
           sendViaITC(worker, 'getMetrics', format),
           this.#config.metrics?.timeout ?? 10000
@@ -1076,9 +1097,30 @@ export class Runtime extends EventEmitter {
             metrics = format === 'json' ? [] : ''
           }
 
+          // Build worker labels including custom labels from metrics config
+          const workerLabels = {
+            ...this.#config.metrics?.labels,
+            [this.#metricsLabelName]: worker[kApplicationId]
+          }
+          const workerId = worker[kWorkerId]
+          if (workerId >= 0) {
+            workerLabels.workerId = workerId
+          }
+
           if (format === 'json') {
-            metrics.push(...applicationMetrics)
+            // Duplicate process metrics with worker labels and add to output
+            if (processMetricsJson) {
+              this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
+            }
+            // Add worker's thread-specific metrics
+            for (let i = 0; i < applicationMetrics.length; i++) {
+              metrics.push(applicationMetrics[i])
+            }
           } else {
+            // Text format: format process metrics with worker labels
+            if (processMetricsJson) {
+              metrics += this.#formatProcessMetricsText(processMetricsJson, workerLabels)
+            }
             metrics += applicationMetrics
           }
         }
@@ -1097,6 +1139,65 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  // Apply labels to process metrics and push to output array (for JSON format)
+  #applyLabelsToMetrics (processMetrics, labels, outputArray) {
+    for (let i = 0; i < processMetrics.length; i++) {
+      const metric = processMetrics[i]
+      const newValues = []
+      const values = metric.values
+      for (let j = 0; j < values.length; j++) {
+        const v = values[j]
+        newValues.push({
+          value: v.value,
+          labels: { ...labels, ...v.labels },
+          metricName: v.metricName
+        })
+      }
+      outputArray.push({
+        name: metric.name,
+        help: metric.help,
+        type: metric.type,
+        aggregator: metric.aggregator,
+        values: newValues
+      })
+    }
+  }
+
+  // Format process metrics as Prometheus text format with labels
+  #formatProcessMetricsText (processMetricsJson, labels) {
+    let output = ''
+
+    for (let i = 0; i < processMetricsJson.length; i++) {
+      const metric = processMetricsJson[i]
+      const name = metric.name
+      const help = metric.help
+      const type = metric.type
+
+      // Add HELP and TYPE lines
+      output += `# HELP ${name} ${help}\n`
+      output += `# TYPE ${name} ${type}\n`
+
+      const values = metric.values
+      for (let j = 0; j < values.length; j++) {
+        const v = values[j]
+        const combinedLabels = { ...labels, ...v.labels }
+        const labelParts = []
+
+        for (const [key, val] of Object.entries(combinedLabels)) {
+          // Escape label values for Prometheus format
+          const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+          labelParts.push(`${key}="${escapedVal}"`)
+        }
+
+        const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
+        const metricName = v.metricName || name
+        output += `${metricName}${labelStr} ${v.value}\n`
+      }
+    }
+
+    return output
   }
 
   async getFormattedMetrics () {

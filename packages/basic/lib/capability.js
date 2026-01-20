@@ -7,7 +7,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { clearRegistry, client, collectMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
+import { clearRegistry, client, collectThreadMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -739,7 +739,9 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    await collectMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
+    // Use thread-specific metrics collection - process-level metrics are collected
+    // by the main runtime thread and duplicated with worker labels
+    await collectThreadMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {

@@ -5,7 +5,7 @@ import {
   ensureLoggableError
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc/lib/index.js'
-import { clearRegistry, client, collectMetrics } from '@platformatic/metrics'
+import { clearRegistry, client, collectThreadMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -220,7 +220,9 @@ export class ChildProcess extends ITC {
   }
 
   async #collectMetrics ({ applicationId, workerId, metricsConfig }) {
-    await collectMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
+    // Use thread-specific metrics collection - process-level metrics are collected
+    // by the main runtime thread and duplicated with worker labels
+    await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
     this.#setHttpCacheMetrics()
   }
 
@@ -228,7 +230,9 @@ export class ChildProcess extends ITC {
     clearRegistry(this.#metricsRegistry)
 
     if (metricsConfig.enabled !== false) {
-      await collectMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
+      // Use thread-specific metrics collection - process-level metrics are collected
+      // by the main runtime thread and duplicated with worker labels
+      await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
       this.#setHttpCacheMetrics()
     }
   }
