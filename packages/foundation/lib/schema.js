@@ -723,6 +723,32 @@ export const policies = {
   additionalProperties: false
 }
 
+export const compileCache = {
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        enabled: {
+          type: 'boolean',
+          default: true,
+          description: 'Enable Node.js module compile cache for faster startup'
+        },
+        directory: {
+          type: 'string',
+          description: 'Directory to store compile cache. Defaults to .plt/compile-cache in app root'
+        },
+        portable: {
+          type: 'boolean',
+          default: true,
+          description: 'Enable portable mode for cache reuse when project location changes'
+        }
+      },
+      additionalProperties: false
+    }
+  ]
+}
+
 export const application = {
   type: 'object',
   anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
@@ -867,7 +893,8 @@ export const application = {
           }
         }
       }
-    }
+    },
+    compileCache
   }
 }
 
@@ -1340,7 +1367,8 @@ export const runtimeProperties = {
       required: ['name', 'cron', 'callbackUrl']
     }
   },
-  policies
+  policies,
+  compileCache
 }
 
 export const runtimeUnwrappablePropertiesList = [
@@ -1397,6 +1425,7 @@ export const schemaComponents = {
   telemetryExporter,
   telemetry,
   policies,
+  compileCache,
   applications,
   runtimeProperties,
   wrappedRuntimeProperties,

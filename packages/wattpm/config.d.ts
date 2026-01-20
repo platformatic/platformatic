@@ -78,6 +78,22 @@ export type PlatformaticRuntimeConfig = {
           )[];
           [k: string]: unknown;
         };
+        compileCache?:
+          | boolean
+          | {
+              /**
+               * Enable Node.js module compile cache for faster startup
+               */
+              enabled?: boolean;
+              /**
+               * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+               */
+              directory?: string;
+              /**
+               * Enable portable mode for cache reuse when project location changes
+               */
+              portable?: boolean;
+            };
       };
     };
   };
@@ -501,4 +517,20 @@ export type PlatformaticRuntimeConfig = {
       [k: string]: string | [string, ...string[]];
     };
   };
+  compileCache?:
+    | boolean
+    | {
+        /**
+         * Enable Node.js module compile cache for faster startup
+         */
+        enabled?: boolean;
+        /**
+         * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+         */
+        directory?: string;
+        /**
+         * Enable portable mode for cache reuse when project location changes
+         */
+        portable?: boolean;
+      };
 };

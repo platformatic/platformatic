@@ -578,7 +578,8 @@ export class BaseCapability extends EventEmitter {
               backlog: this.serverConfig.backlog
             }
           : {},
-      telemetryConfig: this.telemetryConfig
+      telemetryConfig: this.telemetryConfig,
+      compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache
     }
   }
 
