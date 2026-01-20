@@ -141,3 +141,4 @@ packages/runtime/test/tmp
 # Claude Code
 .claude
 packages/*/CLAUDE.md
+.githuman
