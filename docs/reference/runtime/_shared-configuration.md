@@ -542,8 +542,7 @@ The configuration can be a boolean or an object:
 {
   "compileCache": {
     "enabled": true,
-    "directory": ".plt/compile-cache",
-    "portable": true
+    "directory": ".plt/compile-cache"
   }
 }
 ```
@@ -552,7 +551,6 @@ Configuration options:
 
 - **`enabled`** (`boolean`). Enable or disable the compile cache. Default: `true` when the object form is used.
 - **`directory`** (`string`). The directory to store the compile cache. Default: `.plt/compile-cache` relative to the application root.
-- **`portable`** (`boolean`). Enable portable mode, which allows the cache to be reused when the project is moved to a different location. Default: `true`.
 
 **Performance considerations:**
 

@@ -118,10 +118,7 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   const cacheDir = config.directory ?? join(applicationConfig.path, '.plt', 'compile-cache')
 
   try {
-    const result = moduleApi.enableCompileCache({
-      directory: cacheDir,
-      portable: config.portable !== false
-    })
+    const result = moduleApi.enableCompileCache(cacheDir)
 
     const { compileCacheStatus } = moduleApi.constants ?? {}
 

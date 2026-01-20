@@ -2,8 +2,7 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "a",
   "compileCache": {
-    "enabled": true,
-    "portable": true
+    "enabled": true
   },
   "autoload": {
     "path": "./services"

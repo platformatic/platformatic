@@ -542,13 +542,8 @@ async function setupCompileCache (contextData) {
       ? normalizedConfig.directory
       : join(root, '.plt', 'compile-cache')
 
-  const portable = typeof normalizedConfig === 'object' ? normalizedConfig.portable !== false : true
-
   try {
-    moduleApi.enableCompileCache({
-      directory: cacheDir,
-      portable
-    })
+    moduleApi.enableCompileCache(cacheDir)
   } catch {
     // Silently ignore - cache is optional optimization
   }

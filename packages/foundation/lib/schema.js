@@ -737,11 +737,6 @@ export const compileCache = {
         directory: {
           type: 'string',
           description: 'Directory to store compile cache. Defaults to .plt/compile-cache in app root'
-        },
-        portable: {
-          type: 'boolean',
-          default: true,
-          description: 'Enable portable mode for cache reuse when project location changes'
         }
       },
       additionalProperties: false
