@@ -108,7 +108,7 @@ export type PlatformaticRuntimeConfig = {
       };
   workersRestartDelay?: number | string;
   logger?: {
-    level: (
+    level?: (
       | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
       | {
           [k: string]: unknown;

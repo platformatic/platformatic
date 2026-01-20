@@ -32,7 +32,7 @@ export interface PlatformaticComposerConfig {
     logger?:
       | boolean
       | {
-          level: (
+          level?: (
             | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
             | {
                 [k: string]: unknown;
@@ -196,7 +196,7 @@ export interface PlatformaticComposerConfig {
         };
     workersRestartDelay?: number | string;
     logger?: {
-      level: (
+      level?: (
         | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
         | {
             [k: string]: unknown;
