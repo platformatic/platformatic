@@ -323,6 +323,9 @@ RUN npm install && npm run build
 # Stage 2: Production
 FROM node:24-slim
 
+# Specify the Platformatic version 
+ARG PLT_VERSION=3.30.0
+
 WORKDIR /app
 
 # Copy standalone build and static files
@@ -333,7 +336,7 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/watt.json ./
 
 # Install wattpm and @platformatic/next (with all transitive deps)
-RUN npm install wattpm @platformatic/next
+RUN npm install wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 ENV PORT=3042
