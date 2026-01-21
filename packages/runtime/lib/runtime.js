@@ -195,14 +195,17 @@ export class Runtime extends EventEmitter {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
       this.#prometheusServer = await startPrometheusServer(this, config.metrics)
-
-      // Initialize process-level metrics registry in the main thread
-      // These metrics are the same across all workers and only need to be collected once
-      this.#processMetricsRegistry = new metricsClient.Registry()
-      collectProcessMetrics(this.#processMetricsRegistry)
     } else {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
+    }
+
+    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // These metrics are the same across all workers and only need to be collected once
+    // We need this for management API as it can request metrics even without explicit metrics config
+    if (config.metrics || config.managementApi) {
+      this.#processMetricsRegistry = new metricsClient.Registry()
+      collectProcessMetrics(this.#processMetricsRegistry)
     }
 
     // Create the logger

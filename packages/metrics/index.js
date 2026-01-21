@@ -1,27 +1,24 @@
 import collectHttpMetrics from '@platformatic/http-metrics'
 import os from 'node:os'
-import { createRequire } from 'node:module'
 import { performance } from 'node:perf_hooks'
 import client from '@platformatic/prom-client'
 
-export * as client from '@platformatic/prom-client'
-
-const require = createRequire(import.meta.url)
-
 // Import individual metric collectors from prom-client
-const processCpuTotal = require('@platformatic/prom-client/lib/metrics/processCpuTotal')
-const processStartTime = require('@platformatic/prom-client/lib/metrics/processStartTime')
-const osMemoryHeap = require('@platformatic/prom-client/lib/metrics/osMemoryHeap')
-const processOpenFileDescriptors = require('@platformatic/prom-client/lib/metrics/processOpenFileDescriptors')
-const processMaxFileDescriptors = require('@platformatic/prom-client/lib/metrics/processMaxFileDescriptors')
-const eventLoopLag = require('@platformatic/prom-client/lib/metrics/eventLoopLag')
-const processHandles = require('@platformatic/prom-client/lib/metrics/processHandles')
-const processRequests = require('@platformatic/prom-client/lib/metrics/processRequests')
-const processResources = require('@platformatic/prom-client/lib/metrics/processResources')
-const heapSizeAndUsed = require('@platformatic/prom-client/lib/metrics/heapSizeAndUsed')
-const heapSpacesSizeAndUsed = require('@platformatic/prom-client/lib/metrics/heapSpacesSizeAndUsed')
-const version = require('@platformatic/prom-client/lib/metrics/version')
-const gc = require('@platformatic/prom-client/lib/metrics/gc')
+import processCpuTotal from '@platformatic/prom-client/lib/metrics/processCpuTotal.js'
+import processStartTime from '@platformatic/prom-client/lib/metrics/processStartTime.js'
+import osMemoryHeap from '@platformatic/prom-client/lib/metrics/osMemoryHeap.js'
+import processOpenFileDescriptors from '@platformatic/prom-client/lib/metrics/processOpenFileDescriptors.js'
+import processMaxFileDescriptors from '@platformatic/prom-client/lib/metrics/processMaxFileDescriptors.js'
+import eventLoopLag from '@platformatic/prom-client/lib/metrics/eventLoopLag.js'
+import processHandles from '@platformatic/prom-client/lib/metrics/processHandles.js'
+import processRequests from '@platformatic/prom-client/lib/metrics/processRequests.js'
+import processResources from '@platformatic/prom-client/lib/metrics/processResources.js'
+import heapSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSizeAndUsed.js'
+import heapSpacesSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSpacesSizeAndUsed.js'
+import version from '@platformatic/prom-client/lib/metrics/version.js'
+import gc from '@platformatic/prom-client/lib/metrics/gc.js'
+
+export * as client from '@platformatic/prom-client'
 
 const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
