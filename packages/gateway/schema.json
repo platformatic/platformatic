@@ -1472,6 +1472,16 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "noHeapCheck": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -2116,6 +2126,17 @@
                 }
               ],
               "default": 268435456
+            },
+            "noHeapCheck": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": false
             }
           },
           "additionalProperties": false
@@ -3004,6 +3025,16 @@
                     {
                       "type": "number",
                       "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "noHeapCheck": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
                     },
                     {
                       "type": "string"

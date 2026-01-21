@@ -434,6 +434,7 @@ export interface PlatformaticServiceConfig {
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
+      noHeapCheck?: boolean | string;
     };
     undici?: {
       agentOptions?: {
@@ -737,6 +738,7 @@ export interface PlatformaticServiceConfig {
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
+        noHeapCheck?: boolean | string;
       };
       arguments?: string[];
       env?: {

@@ -208,6 +208,16 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "noHeapCheck": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -517,6 +527,16 @@
                   {
                     "type": "number",
                     "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "noHeapCheck": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
                   },
                   {
                     "type": "string"
@@ -834,6 +854,16 @@
                     "type": "string"
                   }
                 ]
+              },
+              "noHeapCheck": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -1141,6 +1171,16 @@
                   {
                     "type": "number",
                     "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "noHeapCheck": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
                   },
                   {
                     "type": "string"
@@ -1794,6 +1834,17 @@
             }
           ],
           "default": 268435456
+        },
+        "noHeapCheck": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": false
         }
       },
       "additionalProperties": false
