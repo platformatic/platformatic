@@ -49,7 +49,7 @@ export interface PlatformaticDatabaseConfig {
     logger?:
       | boolean
       | {
-          level: (
+          level?: (
             | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
             | {
                 [k: string]: unknown;
@@ -501,7 +501,7 @@ export interface PlatformaticDatabaseConfig {
         };
     workersRestartDelay?: number | string;
     logger?: {
-      level: (
+      level?: (
         | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
         | {
             [k: string]: unknown;

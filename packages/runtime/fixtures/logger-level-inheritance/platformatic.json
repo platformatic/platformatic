@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.1.json",
+  "entrypoint": "app",
+  "autoload": {
+    "path": "services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0"
+  },
+  "watch": false,
+  "managementApi": false,
+  "logger": {
+    "level": "debug"
+  }
+}

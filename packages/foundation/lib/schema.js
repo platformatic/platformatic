@@ -228,7 +228,6 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      default: 'info',
       oneOf: [
         {
           enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
@@ -337,7 +336,6 @@ export const logger = {
     }
   },
 
-  required: ['level'],
   default: {},
   additionalProperties: true
 }

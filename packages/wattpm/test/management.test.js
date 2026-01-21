@@ -273,9 +273,7 @@ test('config - should list configuration for an application', async t => {
 
   deepStrictEqual(JSON.parse(configProcess.stdout), {
     $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
-    logger: {
-      level: 'info'
-    },
+    logger: {},
     application: {
       outputDirectory: 'dist',
       include: ['dist'],

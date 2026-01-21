@@ -98,7 +98,6 @@
               "properties": {
                 "level": {
                   "type": "string",
-                  "default": "info",
                   "oneOf": [
                     {
                       "enum": [
@@ -241,9 +240,6 @@
                   "additionalProperties": true
                 }
               },
-              "required": [
-                "level"
-              ],
               "default": {},
               "additionalProperties": true
             }
@@ -1734,7 +1730,6 @@
           "properties": {
             "level": {
               "type": "string",
-              "default": "info",
               "oneOf": [
                 {
                   "enum": [
@@ -1877,9 +1872,6 @@
               "additionalProperties": true
             }
           },
-          "required": [
-            "level"
-          ],
           "default": {},
           "additionalProperties": true
         },

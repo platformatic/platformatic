@@ -8,7 +8,7 @@
 export interface PlatformaticNestJSConfig {
   $schema?: string;
   logger?: {
-    level: (
+    level?: (
       | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
       | {
           [k: string]: unknown;
@@ -139,7 +139,7 @@ export interface PlatformaticNestJSConfig {
         };
     workersRestartDelay?: number | string;
     logger?: {
-      level: (
+      level?: (
         | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
         | {
             [k: string]: unknown;

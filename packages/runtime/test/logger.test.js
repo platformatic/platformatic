@@ -575,3 +575,57 @@ test('should handle literal null output from workers without crashing', async t 
   const stderrText = stderr.join('')
   ok(!stderrText.includes('Cannot read properties of null'), 'No null property access error')
 })
+
+// Regression test for logger level inheritance from runtime to applications.
+// Previously, the logger schema had `default: 'info'` which would override
+// the runtime-level logger setting when merging configs.
+test('should inherit logger level from runtime when service does not specify logger level', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance', 'platformatic.json')
+
+  let requested = false
+  let levelResponse = null
+
+  await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      // Check what level the application's logger is using
+      const levelRes = await request(url, { path: '/get-level' })
+      levelResponse = await levelRes.body.json()
+      requested = true
+    },
+    done: message => {
+      return requested
+    }
+  })
+
+  // The service should have inherited 'debug' level from runtime,
+  // not the old default 'info' from schema
+  ok(levelResponse, 'Level response received')
+  ok(levelResponse.level === 'debug', `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`)
+})
+
+// Same test but for @platformatic/node applications
+test('should inherit logger level from runtime when node app does not specify logger level', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance-node', 'platformatic.json')
+
+  let requested = false
+  let levelResponse = null
+
+  await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      // Check what level the node application's logger is using
+      const levelRes = await request(url, { path: '/get-level' })
+      levelResponse = await levelRes.body.json()
+      requested = true
+    },
+    done: message => {
+      return requested
+    }
+  })
+
+  // The node app should have inherited 'debug' level from runtime,
+  // not the old default 'info' from schema
+  ok(levelResponse, 'Level response received')
+  ok(levelResponse.level === 'debug', `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`)
+})
