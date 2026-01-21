@@ -266,21 +266,18 @@ Here's an example of a minimal `package.json` for a Next.js standalone app with 
   "name": "my-next-app",
   "private": true,
   "scripts": {
-    "dev": "wattpm dev",
-    "build": "wattpm build",
-    "start": "wattpm start"
+    "dev": "next dev",
+    "build": "next build"
   },
   "dependencies": {
-    "@platformatic/next": "^3.30.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "wattpm": "^3.30.0"
+    "react-dom": "^19.0.0"
   }
 }
 ```
 
-Note that the scripts use `wattpm` instead of `next` directly - this ensures Watt manages the build and runtime.
+This is a standard Next.js package.json - no Watt dependencies needed. The `wattpm` and `@platformatic/next` packages are installed only in the Docker production image.
 
 And a minimal `watt.json`:
 
@@ -327,7 +324,7 @@ FROM node:24-slim AS builder
 
 WORKDIR /app
 COPY ./ ./
-RUN npm install && npm run build
+RUN npm install && npx wattpm build
 
 # Stage 2: Production
 FROM node:24-slim
@@ -346,7 +343,7 @@ RUN npm install wattpm @platformatic/next
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 EXPOSE 3042
-CMD ["npm", "run", "start"]
+CMD ["npx", "wattpm", "start"]
 ```
 
 #### Verifying Standalone Mode
