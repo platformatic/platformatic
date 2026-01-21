@@ -229,25 +229,139 @@ In order to run our application inside Kubernetes, we need to build our Docker i
 The most basic Dockerfile needed is:
 
 ```Dockerfile
-FROM node:22-alpine
+FROM node:24-slim
 
-ENV APP_HOME=/home/app
-ENV PORT=3042
-ENV PLT_SERVER_LOGGER_LEVEL="info"
-ENV PLT_NEXT_WORKERS="1"
-ENV PLT_VALKEY_HOST="valkey"
-
-RUN npm install -g pnpm
-WORKDIR $APP_HOME
+WORKDIR /app
 COPY ./ ./
+RUN npm install && npm run build
 
-RUN pnpm install && pnpm run build
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
 EXPOSE 3042
-
-CMD [ "pnpm", "run", "start" ]
+CMD ["npm", "run", "start"]
 ```
 
-Note that you might want to keep some of those environment variables loose and configure them via K8s.
+Configure environment variables like `PORT`, `PLT_NEXT_WORKERS`, and `PLT_VALKEY_HOST` via your K8s deployment yaml.
+
+### Using Next.js Standalone Mode 
+
+Next.js standalone mode creates a minimal, self-contained build that includes only the necessary files to run your application. This results in smaller Docker images and faster deployments.
+
+#### Enable Standalone Mode
+
+Add `output: "standalone"` to your `next.config.js` or `next.config.mjs`:
+
+```js
+// next.config.mjs
+const nextConfig = {
+  output: "standalone"
+}
+
+export default nextConfig
+```
+
+Here's an example of a minimal `package.json` for a Next.js standalone app:
+
+```json
+{
+  "name": "my-next-app",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+```
+
+This is a standard Next.js package.json - no Watt dependencies needed. The `wattpm` and `@platformatic/next` packages are installed only in the Docker production image.
+
+And a minimal `watt.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.30.0.json",
+  "runtime": {
+    "server": {
+      "hostname": "{PLT_SERVER_HOSTNAME}",
+      "port": "{PORT}"
+    }
+  }
+}
+```
+
+#### How Watt Handles Standalone Mode
+
+When you build your Next.js application with standalone mode enabled, Watt automatically detects the `.next/standalone` directory at runtime and handles it appropriately.
+
+**Why use Watt with standalone instead of raw Next.js standalone?**
+
+While Next.js standalone mode produces a minimal `server.js` that can run independently, using Watt provides additional enterprise features:
+- Prometheus metrics integration
+- Multi-threaded SSR with worker management
+- Distributed caching with Valkey/Redis
+- Health check endpoints
+- Unified logging and observability
+
+The trade-off is a slightly larger Docker image since Watt and its dependencies (`@platformatic/*` packages) must be included alongside the standalone build.
+
+#### Dockerfile for Standalone Mode
+
+Next.js standalone mode uses [@vercel/nft](https://github.com/vercel/nft) to trace dependencies and only includes packages that are actually imported by your application code. Since wattpm and @platformatic/next are used to orchestrate the app (not imported by it), they must be installed separately in the production image.
+
+```Dockerfile
+# Stage 1: Build
+FROM node:24-slim AS builder
+
+WORKDIR /app
+COPY ./ ./
+RUN npm install && npm run build
+
+# Stage 2: Production
+FROM node:24-slim
+
+# Specify the Platformatic version 
+ARG PLT_VERSION=3.30.0
+
+WORKDIR /app
+
+# Copy standalone build and static files
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# Copy watt.json configuration
+COPY --from=builder /app/watt.json ./
+
+# Install wattpm and @platformatic/next (with all transitive deps)
+RUN npm install wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}
+
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV PORT=3042
+EXPOSE 3042
+CMD ["npx", "wattpm", "start"]
+```
+
+**Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
+
+```bash
+docker build --build-arg PLT_VERSION=3.30.0 -t my-next-app .
+```
+
+#### Verifying Standalone Mode
+
+After building, verify that standalone mode is working:
+
+```bash
+# Check that .next/standalone exists
+ls -la .next/standalone/
+
+# The directory should contain server.js and minimal dependencies
+```
+
+When Watt starts with a standalone build, it automatically detects and uses the standalone server internally while providing all the Watt runtime features.
 
 ### Building the image
 
