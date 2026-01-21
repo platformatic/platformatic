@@ -1,4 +1,4 @@
-FROM node:22-alpine as base
+FROM node:22-slim as base
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -12,7 +12,7 @@ RUN mkdir $PNPM_HOME
 WORKDIR $PLT_HOME
 
 # Install required packages
-RUN apk update && apk add --no-cache python3 libc-dev make g++
+RUN apt-get update && apt-get install -y --no-install-recommends python3 libc-dev make g++ && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm i pnpm@9 --location=global
@@ -29,7 +29,7 @@ RUN pnpm fetch --prod --frozen-lockfile
 COPY . .
 
 # Install all the deps in the source code
-RUN pnpm install --prod --offline --node-linker=hoisted
+RUN pnpm install --prod --offline --node-linker=hoisted --shamefully-hoist --force
 
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global
@@ -38,22 +38,25 @@ RUN cd packages/cli && pnpm link --global
 RUN cd packages/wattpm && pnpm link --global
 
 # No pnpm/build tools install here, we just copy the files from the previous stage
-FROM node:22-alpine
+FROM node:22-slim
 
-# Make NPM available
-RUN npm install -g pnpm
+# Make pnpm available
+RUN npm install -g pnpm@9
 
 # We don't need the build tools anymore
-RUN apk update && apk add --no-cache dumb-init
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
 
 ENV HOME=/home
 ENV APP_HOME=$HOME/app
 ENV PLT_HOME=$HOME/platformatic/
+ENV PNPM_HOME=$HOME/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
 COPY --from=base $PLT_HOME $PLT_HOME
+COPY --from=base $PNPM_HOME $PNPM_HOME
 
 # Add platformatic to path
-RUN cd $PLT_HOME/packages/cli && npm link
+RUN cd $PLT_HOME/packages/cli && pnpm link --global
 
 # Move to the app directory
 WORKDIR $APP_HOME
