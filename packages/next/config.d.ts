@@ -522,6 +522,18 @@ export interface PlatformaticNextJsConfig {
         [k: string]: string | [string, ...string[]];
       };
     };
+    compileCache?:
+      | boolean
+      | {
+          /**
+           * Enable Node.js module compile cache for faster startup
+           */
+          enabled?: boolean;
+          /**
+           * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+           */
+          directory?: string;
+        };
     application?: {
       reuseTcpPorts?: boolean;
       workers?:
@@ -580,6 +592,18 @@ export interface PlatformaticNextJsConfig {
         )[];
         [k: string]: unknown;
       };
+      compileCache?:
+        | boolean
+        | {
+            /**
+             * Enable Node.js module compile cache for faster startup
+             */
+            enabled?: boolean;
+            /**
+             * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+             */
+            directory?: string;
+          };
     };
   };
   next?: {

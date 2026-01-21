@@ -142,3 +142,4 @@ packages/runtime/test/tmp
 .claude
 packages/*/CLAUDE.md
 .githuman
+.plt

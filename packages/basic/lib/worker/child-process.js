@@ -12,7 +12,8 @@ import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
-import { basename, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -507,11 +508,59 @@ function stripBasePath (basePath) {
   }
 }
 
+// Enable compile cache if configured (Node.js 22.1.0+)
+async function setupCompileCache (contextData) {
+  const config = contextData?.compileCache
+
+  // Normalize boolean shorthand
+  const normalizeConfig = cfg => {
+    if (cfg === true) return { enabled: true }
+    if (cfg === false) return { enabled: false }
+    return cfg
+  }
+
+  const normalizedConfig = normalizeConfig(config)
+  if (!normalizedConfig?.enabled) {
+    return
+  }
+
+  // Check if API is available (Node.js 22.1.0+)
+  let moduleApi
+  try {
+    moduleApi = await import('node:module')
+    if (typeof moduleApi.enableCompileCache !== 'function') {
+      return
+    }
+  } catch {
+    return
+  }
+
+  // Use root from context data (capability's this.root as URL)
+  const root = contextData?.root ? fileURLToPath(contextData.root) : null
+  if (!root) {
+    return
+  }
+
+  const cacheDir =
+    typeof normalizedConfig === 'object' && normalizedConfig.directory
+      ? normalizedConfig.directory
+      : join(root, '.plt', 'compile-cache')
+
+  try {
+    moduleApi.enableCompileCache(cacheDir)
+  } catch {
+    // Silently ignore - cache is optional optimization
+  }
+}
+
 async function main () {
   const executable = basename(process.argv[1] ?? '')
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
+
+  // Enable compile cache early before loading user modules
+  await setupCompileCache(data)
 
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, data)
   globalThis.platformatic.events = new ForwardingEventEmitter()

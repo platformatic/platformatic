@@ -9,7 +9,7 @@ import { EventEmitter } from 'node:events'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
 import { hostname } from 'node:os'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -85,6 +85,57 @@ async function performPreloading (...sources) {
   }
 }
 
+// Enable compile cache if configured (Node.js 22.1.0+)
+async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
+  // Normalize boolean shorthand: true -> { enabled: true }
+  const normalizeConfig = cfg => {
+    if (cfg === true) return { enabled: true }
+    if (cfg === false) return { enabled: false }
+    return cfg
+  }
+
+  // Merge runtime and app-level config (app overrides runtime)
+  const runtimeCache = normalizeConfig(runtimeConfig.compileCache)
+  const appCache = normalizeConfig(applicationConfig.compileCache)
+  const config = { ...runtimeCache, ...appCache }
+
+  if (!config.enabled) {
+    return
+  }
+
+  // Check if API is available (Node.js 22.1.0+)
+  let moduleApi
+  try {
+    moduleApi = await import('node:module')
+    if (typeof moduleApi.enableCompileCache !== 'function') {
+      return
+    }
+  } catch {
+    return
+  }
+
+  // Determine cache directory - use applicationConfig.path for the app root
+  const cacheDir = config.directory ?? join(applicationConfig.path, '.plt', 'compile-cache')
+
+  try {
+    const result = moduleApi.enableCompileCache(cacheDir)
+
+    const { compileCacheStatus } = moduleApi.constants ?? {}
+
+    if (result.status === compileCacheStatus?.ENABLED) {
+      logger.debug({ directory: result.directory }, 'Module compile cache enabled')
+    } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+      logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
+    } else if (result.status === compileCacheStatus?.FAILED) {
+      logger.warn({ message: result.message }, 'Failed to enable module compile cache')
+    } else if (result.status === compileCacheStatus?.DISABLED) {
+      logger.debug('Module compile cache disabled via NODE_DISABLE_COMPILE_CACHE')
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Error enabling module compile cache')
+  }
+}
+
 async function main () {
   globalThis.fetch = fetch
   globalThis[kId] = threadId
@@ -94,10 +145,12 @@ async function main () {
   })
 
   const runtimeConfig = workerData.config
-
-  await performPreloading(runtimeConfig, workerData.applicationConfig)
-
   const applicationConfig = workerData.applicationConfig
+
+  // Enable compile cache early before loading user modules
+  await setupCompileCache(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
+
+  await performPreloading(runtimeConfig, applicationConfig)
 
   // Load env file and mixin env vars from application config
   let envfile

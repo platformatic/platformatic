@@ -522,6 +522,63 @@ Configuration options:
 
 When policies are configured, `fetch` requests or messaging API calls between blocked application will throw an exception.
 
+### compileCache
+
+The `compileCache` configuration enables Node.js module compile cache to improve application startup performance. When enabled, V8 compiled code is stored on disk and reused on subsequent starts, significantly reducing startup time for applications with many dependencies.
+
+:::note
+This feature requires Node.js 22.1.0 or later. On older Node.js versions, this configuration is silently ignored.
+:::
+
+The configuration can be a boolean or an object:
+
+```json title="Simple boolean configuration"
+{
+  "compileCache": true
+}
+```
+
+```json title="Object configuration"
+{
+  "compileCache": {
+    "enabled": true,
+    "directory": ".plt/compile-cache"
+  }
+}
+```
+
+Configuration options:
+
+- **`enabled`** (`boolean`). Enable or disable the compile cache. Default: `true` when the object form is used.
+- **`directory`** (`string`). The directory to store the compile cache. Default: `.plt/compile-cache` relative to the application root.
+
+**Performance considerations:**
+
+- **First run**: The initial startup may be slightly slower as the cache is populated.
+- **Subsequent runs**: Startup time is significantly reduced as compiled code is loaded from the cache.
+- **Disk space**: The cache grows with the size of your codebase and dependencies.
+
+**Limitations:**
+
+- **Code coverage**: V8 coverage precision may be reduced for cached functions. Disable compile cache when running coverage tests.
+- **Node.js version changes**: The cache is automatically invalidated when the Node.js version changes.
+
+This configuration can also be set at the application level to override the runtime-level setting:
+
+```json title="Application-level override"
+{
+  "applications": [
+    {
+      "id": "my-app",
+      "path": "./services/my-app",
+      "compileCache": {
+        "enabled": false
+      }
+    }
+  ]
+}
+```
+
 ## Setting and Using ENV placeholders
 
 The value for any configuration setting can be replaced with an environment

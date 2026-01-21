@@ -332,6 +332,28 @@
                     }
                   }
                 }
+              },
+              "compileCache": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable Node.js module compile cache for faster startup"
+                      },
+                      "directory": {
+                        "type": "string",
+                        "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
               }
             }
           }
@@ -646,6 +668,28 @@
                 }
               }
             }
+          },
+          "compileCache": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable Node.js module compile cache for faster startup"
+                  },
+                  "directory": {
+                    "type": "string",
+                    "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
           }
         }
       }
@@ -958,6 +1002,28 @@
                 }
               }
             }
+          },
+          "compileCache": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable Node.js module compile cache for faster startup"
+                  },
+                  "directory": {
+                    "type": "string",
+                    "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
           }
         }
       }
@@ -1270,6 +1336,28 @@
                 }
               }
             }
+          },
+          "compileCache": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable Node.js module compile cache for faster startup"
+                  },
+                  "directory": {
+                    "type": "string",
+                    "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
           }
         }
       }
@@ -2570,6 +2658,28 @@
         "deny"
       ],
       "additionalProperties": false
+    },
+    "compileCache": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable Node.js module compile cache for faster startup"
+            },
+            "directory": {
+              "type": "string",
+              "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     }
   },
   "anyOf": [
