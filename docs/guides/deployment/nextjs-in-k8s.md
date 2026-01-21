@@ -344,6 +344,12 @@ EXPOSE 3042
 CMD ["npx", "wattpm", "start"]
 ```
 
+**Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
+
+```bash
+docker build --build-arg PLT_VERSION=3.30.0 -t my-next-app .
+```
+
 #### Verifying Standalone Mode
 
 After building, verify that standalone mode is working:
