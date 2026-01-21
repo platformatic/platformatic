@@ -259,7 +259,7 @@ const nextConfig = {
 export default nextConfig
 ```
 
-Here's an example of a minimal `package.json` for a Next.js standalone app with Watt:
+Here's an example of a minimal `package.json` for a Next.js standalone app:
 
 ```json
 {
@@ -295,13 +295,7 @@ And a minimal `watt.json`:
 
 #### How Watt Handles Standalone Mode
 
-When you build your Next.js application with standalone mode enabled, Watt automatically detects the `.next/standalone` directory at runtime and handles it appropriately:
-
-1. **Runtime Detection**: At startup, Watt checks for the presence of `.next/standalone` in your application directory. If found, it automatically switches to standalone mode without any configuration changes
-2. **Cache Handler Integration**: Cache handlers for Valkey/Redis are automatically configured and paths are rewritten at runtime to work correctly with standalone builds
-3. **Worker Thread Support**: Standalone mode works seamlessly with Watt's multithreading capabilities for server-side rendering
-
-No additional configuration is needed in your `watt.json` - Watt handles everything automatically.
+When you build your Next.js application with standalone mode enabled, Watt automatically detects the `.next/standalone` directory at runtime and handles it appropriately.
 
 **Why use Watt with standalone instead of raw Next.js standalone?**
 
