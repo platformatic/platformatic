@@ -1349,7 +1349,7 @@ export class Runtime extends EventEmitter {
       elu = worker.performance.eventLoopUtilization(elu, previousELU)
     }
 
-    if (!features.node.worker.getHeapStatistics) {
+    if (!features.node.worker.getHeapStatistics || options.noHeapCheck) {
       return { elu: elu.utilization, currentELU }
     }
 
@@ -1753,7 +1753,8 @@ export class Runtime extends EventEmitter {
         let health = null
         try {
           health = await this.getWorkerHealth(worker, {
-            previousELU: worker[kLastHealthCheckELU]
+            previousELU: worker[kLastHealthCheckELU],
+            noHeapCheck: worker[kConfig]?.health?.noHeapCheck
           })
         } catch (err) {
           this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
@@ -1797,7 +1798,7 @@ export class Runtime extends EventEmitter {
 
     const healthConfig = worker[kConfig].health
 
-    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
+    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, noHeapCheck } = worker[kConfig].health
 
     if (typeof maxHeapTotal === 'string') {
       maxHeapTotal = parseMemorySize(maxHeapTotal)
@@ -1828,8 +1829,8 @@ export class Runtime extends EventEmitter {
 
       if (lastHealthMetrics) {
         const health = lastHealthMetrics.currentHealth
-        const memoryUsage = health.heapUsed / maxHeapTotal
-        const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
+        const memoryUsage = noHeapCheck ? 0 : health.heapUsed / maxHeapTotal
+        const unhealthy = health.elu > maxELU || (!noHeapCheck && memoryUsage > maxHeapUsed)
 
         this.emit('application:worker:health', {
           id: worker[kId],
@@ -1847,7 +1848,7 @@ export class Runtime extends EventEmitter {
           )
         }
 
-        if (memoryUsage > maxHeapUsed) {
+        if (!noHeapCheck && memoryUsage > maxHeapUsed) {
           this.logger.error(
             `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
               `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`

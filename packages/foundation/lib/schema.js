@@ -607,7 +607,8 @@ export const health = {
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)), // 4GB
     maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }, 128 * Math.pow(1024, 2)), // 128MB,
-    codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456)
+    codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456),
+    noHeapCheck: overridableValue({ type: 'boolean' }, false)
   },
   additionalProperties: false
 }
