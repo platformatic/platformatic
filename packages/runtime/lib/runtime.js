@@ -1564,7 +1564,8 @@ export class Runtime extends EventEmitter {
         codeRangeSizeMb
       },
       stdout: true,
-      stderr: true
+      stderr: true,
+      name: workerId
     })
 
     this.#handleWorkerStandardStreams(worker, applicationId, index)

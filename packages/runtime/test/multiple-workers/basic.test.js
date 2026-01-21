@@ -1,5 +1,5 @@
 import { features } from '@platformatic/foundation'
-import { ok } from 'node:assert'
+import { ok, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime, updateConfigFile, updateFile } from '../helpers.js'
@@ -150,4 +150,24 @@ test('can collect metrics with worker label', async t => {
     'application:1',
     'application:2'
   ])
+})
+
+test('worker threads have correct threadName property set', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+  const app = await createRuntime(configFile, null, { isProduction: true })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const workers = await app.getWorkers(true)
+
+  for (const [workerId, workerInfo] of Object.entries(workers)) {
+    strictEqual(workerInfo.raw.threadName, workerId, `Worker ${workerId} should have threadName property set to its workerId`)
+  }
+
+  await app.stop()
 })
