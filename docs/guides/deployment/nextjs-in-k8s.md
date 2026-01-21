@@ -324,7 +324,7 @@ FROM node:24-slim AS builder
 
 WORKDIR /app
 COPY ./ ./
-RUN npm install && npx wattpm build
+RUN npm install && npm run build
 
 # Stage 2: Production
 FROM node:24-slim
@@ -342,6 +342,7 @@ COPY --from=builder /app/watt.json ./
 RUN npm install wattpm @platformatic/next
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV PORT=3042
 EXPOSE 3042
 CMD ["npx", "wattpm", "start"]
 ```
