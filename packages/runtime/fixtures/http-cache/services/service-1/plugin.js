@@ -5,6 +5,7 @@ const compress = require('@fastify/compress')
 
 module.exports = async function (fastify) {
   let counter = 0
+  let noCacheHeaderCounter = 0
 
   fastify.get('/cached-req-counter', async (req, reply) => {
     const { maxAge, cacheTags } = req.query
@@ -15,6 +16,19 @@ module.exports = async function (fastify) {
     }
 
     return { service: 'service-1', counter: ++counter }
+  })
+
+  // Endpoint without Cache-Control headers for testing cacheByDefault
+  fastify.get('/no-cache-header-counter', async (req, reply) => {
+    return { service: 'service-1', counter: ++noCacheHeaderCounter }
+  })
+
+  // Endpoint with max-age for testing private cache type
+  let privateCounter = 0
+  fastify.get('/private-cached-counter', async (req, reply) => {
+    const { maxAge } = req.query
+    reply.header('Cache-Control', `private, max-age=${maxAge}`)
+    return { service: 'service-1', counter: ++privateCounter }
   })
 
   fastify.get('/service-3/cached-req-counter', async (req, reply) => {
