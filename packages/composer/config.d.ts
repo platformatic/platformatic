@@ -350,6 +350,18 @@ export interface PlatformaticComposerConfig {
           maxSize?: number;
           maxEntrySize?: number;
           maxCount?: number;
+          /**
+           * Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\/\\/.*\\.example\\.com/").
+           */
+          origins?: string[];
+          /**
+           * Default cache duration in seconds for responses without explicit expiration headers.
+           */
+          cacheByDefault?: number;
+          /**
+           * Cache type. "shared" caches may be shared between users, "private" caches are user-specific.
+           */
+          type?: "shared" | "private";
           [k: string]: unknown;
         };
     watch?: boolean | string;

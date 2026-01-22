@@ -2009,6 +2009,26 @@
             },
             "maxCount": {
               "type": "integer"
+            },
+            "origins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., \"/https:\\\\/\\\\/.*\\\\.example\\\\.com/\")."
+            },
+            "cacheByDefault": {
+              "type": "integer",
+              "description": "Default cache duration in seconds for responses without explicit expiration headers."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "shared",
+                "private"
+              ],
+              "default": "shared",
+              "description": "Cache type. \"shared\" caches may be shared between users, \"private\" caches are user-specific."
             }
           }
         }
