@@ -248,14 +248,18 @@ Next.js standalone mode creates a minimal, self-contained build that includes on
 
 #### Enable Standalone Mode
 
-Add `output: "standalone"` to your `next.config.js` or `next.config.mjs`:
+Add `output: "standalone"` to your `next.config.js` or `next.config.mjs`.
+Note the `outputFileTracingIncludes`, which is necessary because `@platformatic/next` uses `next/dist/cli/next-start.js` which is stripped in standalone.
 
 ```js
-// next.config.mjs
-const nextConfig = {
-  output: "standalone"
-}
-
+  // next.config.mjs
+  const nextConfig = {
+    output: "standalone",
+    // Next.js 15+ (top level). With lower versions should be in `experimental`
+    outputFileTracingIncludes: {
+      '/*': ['./node_modules/next/dist/**/*']
+    }
+  }
 export default nextConfig
 ```
 
@@ -335,13 +339,27 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy watt.json configuration
 COPY --from=builder /app/watt.json ./
 
-# Install wattpm and @platformatic/next (with all transitive deps)
-RUN npm install wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}
+# Install wattpm and @platformatic/next globally with pnpm, then link to local.
+#
+# Why this works:
+# 1. `pnpm install -g` installs packages + all transitive deps to the global pnpm store
+# 2. `pnpm link --global` creates a symlink WITHOUT installing deps from package.json
+#    (unlike npm link which would install missing deps pruned by `standalone`)
+# 3. When Node.js resolves modules, it follows the symlink to the global store
+#    where all transitive dependencies are already available
+#
+# See: https://pnpm.io/cli/link
+ENV PNPM_HOME=/root/.local/share/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN npm install -g pnpm@9 && \
+    mkdir -p $PNPM_HOME && \
+    pnpm install -g wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION} && \
+    pnpm link --global @platformatic/next
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 ENV PORT=3042
 EXPOSE 3042
-CMD ["npx", "wattpm", "start"]
+CMD ["wattpm", "start"]
 ```
 
 **Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
