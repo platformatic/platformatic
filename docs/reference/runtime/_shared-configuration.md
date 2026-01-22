@@ -290,6 +290,9 @@ It can be a boolean or an object with the following settings:
 - **`maxCount`** (`integer`) - The maximum number of entries in the cache.
 - **`maxSize`** (`integer`) - The maximum size of the cache in bytes.
 - **`maxEntrySize`** (`integer`) - The maximum size of a single entry in the cache in bytes.
+- **`origins`** (`array`) - Whitelist of origins to cache. Only requests to these origins will be cached. Supports exact string matches and regex patterns. To use a regex, wrap the pattern in forward slashes (e.g., `"/https:\\/\\/.*\\.example\\.com/"`).
+- **`cacheByDefault`** (`integer`) - Default cache duration in milliseconds for responses that don't have explicit expiration headers (like `Cache-Control` or `Expires`). If not set, responses without explicit expiration will not be cached.
+- **`type`** (`string`) - The type of cache. Can be `"shared"` (default) or `"private"`. A shared cache may store responses that can be shared between users, while a private cache is dedicated to a single user. Note that `s-maxage` directive only applies to shared caches, while `max-age` applies to both.
 
 ### `server`
 
