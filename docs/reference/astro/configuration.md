@@ -1,4 +1,5 @@
 import Issues from '../../getting-started/issues.md';
+import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 # Configuration
 
@@ -29,5 +30,7 @@ Configures the HTTP server, see the [runtime](../runtime/configuration.md#server
 ## `watch`
 
 Manages watching of the application, see the [application](../service/configuration.md#watch) documentation.
+
+<RuntimeInCapabilities />
 
 <Issues />
