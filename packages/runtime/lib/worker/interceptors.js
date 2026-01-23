@@ -178,7 +178,23 @@ function createThreadInterceptor (runtimeConfig) {
   return threadDispatcher
 }
 
+function parseOrigins (origins) {
+  if (!origins) return undefined
+
+  return origins.map(origin => {
+    // Check if the origin is a regex pattern (starts and ends with /)
+    if (origin.startsWith('/') && origin.lastIndexOf('/') > 0) {
+      const lastSlash = origin.lastIndexOf('/')
+      const pattern = origin.slice(1, lastSlash)
+      const flags = origin.slice(lastSlash + 1)
+      return new RegExp(pattern, flags)
+    }
+    return origin
+  })
+}
+
 function createHttpCacheInterceptor (runtimeConfig) {
+  const httpCache = runtimeConfig.httpCache
   const cacheInterceptor = httpCacheInterceptor({
     store: new RemoteCacheStore({
       onRequest: opts => {
@@ -192,7 +208,10 @@ function createHttpCacheInterceptor (runtimeConfig) {
       },
       logger: globalThis.platformatic.logger
     }),
-    methods: runtimeConfig.httpCache.methods ?? ['GET', 'HEAD'],
+    methods: httpCache.methods ?? ['GET', 'HEAD'],
+    origins: parseOrigins(httpCache.origins),
+    cacheByDefault: httpCache.cacheByDefault,
+    type: httpCache.type,
     logger: globalThis.platformatic.logger
   })
   return cacheInterceptor

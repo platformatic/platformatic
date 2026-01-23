@@ -72,6 +72,21 @@ const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 
 const MAX_LISTENERS_COUNT = 100
 
+function parseOrigins (origins) {
+  if (!origins) return undefined
+
+  return origins.map(origin => {
+    // Check if the origin is a regex pattern (starts and ends with /)
+    if (origin.startsWith('/') && origin.lastIndexOf('/') > 0) {
+      const lastSlash = origin.lastIndexOf('/')
+      const pattern = origin.slice(1, lastSlash)
+      const flags = origin.slice(lastSlash + 1)
+      return new RegExp(pattern, flags)
+    }
+    return origin
+  })
+}
+
 const MAX_CONCURRENCY = 5
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
@@ -1500,7 +1515,10 @@ export class Runtime extends EventEmitter {
       interceptors.push(
         undiciInterceptors.cache({
           store: this.#sharedHttpCache,
-          methods: config.httpCache.methods ?? ['GET', 'HEAD']
+          methods: config.httpCache.methods ?? ['GET', 'HEAD'],
+          origins: parseOrigins(config.httpCache.origins),
+          cacheByDefault: config.httpCache.cacheByDefault,
+          type: config.httpCache.type
         })
       )
     }

@@ -572,3 +572,189 @@ test('should cache http requests gzipped', async t => {
   const { counter } = JSON.parse(gunzipSync(await res.body.arrayBuffer()))
   strictEqual(counter, 2)
 })
+
+test('should accept origins configuration with string values', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // String origins should be accepted
+        origins: ['http://service-1.plt.local', 'http://service-3.plt.local']
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // Verify that the runtime starts and caching works with origins configured
+  {
+    const res1 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should be cached
+    const res2 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Same counter means cached
+  }
+})
+
+test('should cache requests to origins matching regex pattern', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // Regex pattern to match all .plt.local origins
+        origins: ['/http:\\/\\/.*\\.plt\\.local/']
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // Both service-1 and service-3 should be cached due to regex match
+  {
+    const res1 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached
+  }
+
+  {
+    const res1 = await request(entryUrl + '/service-1/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached due to regex match
+  }
+})
+
+test('should use cacheByDefault for responses without explicit expiration', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        cacheByDefault: 10000 // 10 seconds default cache (in ms)
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  // The /no-cache-header-counter endpoint doesn't set Cache-Control
+  // With cacheByDefault, it should still be cached
+  {
+    const res1 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should be cached due to cacheByDefault
+    const res2 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Same counter means cached
+  }
+})
+
+test('should not cache responses without explicit expiration when cacheByDefault is not set', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // No cacheByDefault set
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  // The /no-cache-header-counter endpoint doesn't set Cache-Control
+  // Without cacheByDefault, it should NOT be cached
+  {
+    const res1 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should NOT be cached
+    const res2 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 2) // Different counter means not cached
+  }
+})
+
+test('should respect cache type configuration with private cache', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        type: 'private'
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // With type: 'private', caching should work for requests with max-age (not s-maxage)
+  {
+    const res1 = await request(entryUrl + '/service-1/private-cached-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/private-cached-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached
+  }
+})

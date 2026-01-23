@@ -288,6 +288,43 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 - Sets up cache tag header for intelligent invalidation
 - No external cache services needed (Redis, Memcached, etc.)
 
+### Advanced Cache Configuration
+
+You can fine-tune the cache behavior with additional options:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "httpCache": {
+    "cacheTagsHeader": "X-Cache-Tags",
+    "origins": [
+      "http://api.plt.local",
+      "/https:\\/\\/.*\\.trusted-api\\.com/"
+    ],
+    "cacheByDefault": 60000,
+    "type": "shared",
+    "maxSize": 104857600,
+    "maxEntrySize": 5242880,
+    "maxCount": 1024
+  },
+  "autoload": {
+    "path": "web"
+  },
+  "entrypoint": "api"
+}
+```
+
+**Additional configuration options:**
+
+- **`origins`**: Whitelist of origins to cache. Only requests to these origins will be cached. Supports:
+  - Exact strings: `"http://api.plt.local"`
+  - Regex patterns (wrapped in `/`): `"/https:\\/\\/.*\\.trusted-api\\.com/"` matches any subdomain of `trusted-api.com`
+- **`cacheByDefault`**: Default cache duration in milliseconds for responses without explicit `Cache-Control` headers. Useful for caching responses from APIs that don't set cache headers.
+- **`type`**: Cache type - `"shared"` (default) or `"private"`. Shared caches honor `s-maxage`, while private caches are user-specific and only use `max-age`.
+- **`maxSize`**: Maximum total cache size in bytes (default: 100MB)
+- **`maxEntrySize`**: Maximum size of a single cache entry in bytes (default: 5MB)
+- **`maxCount`**: Maximum number of cache entries (default: 1024)
+
 ## Step 5: Implement Cache Invalidation
 
 ### Method 1: Invalidate by Specific Route
