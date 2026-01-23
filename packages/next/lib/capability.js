@@ -51,11 +51,9 @@ export class NextCapability extends BaseCapability {
         if (buildInfo.standalone) {
           this.#isStandalone = true
           this.#nextVersion = parse(buildInfo.version)
-          console.log('BUILD INFO:', this.#isStandalone)
         }
         return
       } catch (error) {
-
         // No-op
       }
     }
