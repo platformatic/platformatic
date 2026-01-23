@@ -36,6 +36,30 @@ The `watt.json` or `platformatic.json` configuration file serves as the authorit
 
 This configuration-first approach ensures predictable behavior and allows developers to override automatic detection when needed.
 
+#### Embedding Runtime Configuration
+
+Each capability configuration file supports a `runtime` property that allows you to embed runtime-level settings directly in the application's configuration. This is useful for configuring workers, logging, health checks, and other runtime features specific to an application.
+
+For example:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.31.0.json",
+  "runtime": {
+    "logger": {
+      "level": "debug"
+    },
+    "workers": {
+      "dynamic": true,
+      "minimum": 1,
+      "maximum": 4
+    }
+  }
+}
+```
+
+See the capability configuration documentation (e.g., [Next.js](../reference/next/configuration.md#runtime), [Node](../reference/node/configuration.md#runtime)) for the full list of available runtime properties.
+
 ### Available Capabilities
 
 #### Generic Integrations

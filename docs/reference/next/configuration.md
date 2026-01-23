@@ -1,4 +1,5 @@
 import Issues from '../../getting-started/issues.md';
+import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 # Configuration
 
@@ -59,5 +60,7 @@ Configures Next.js. Supported object properties:
     },
   }
   ```
+
+<RuntimeInCapabilities />
 
 <Issues />

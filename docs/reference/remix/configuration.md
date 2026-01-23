@@ -1,4 +1,5 @@
 import Issues from '../../getting-started/issues.md';
+import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 # Configuration
 
@@ -12,5 +13,7 @@ It supports all the [settings supported by Platformatic Vite](../vite/configurat
 :::note
 Platformatic Remix uses this property instead of `application.outputDirectory` (which is ignored).
 :::
+
+<RuntimeInCapabilities />
 
 <Issues />
