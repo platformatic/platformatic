@@ -112,7 +112,6 @@ test.only('should support Next.js in standalone mode', async t => {
   await safeRemove(resolve(root, 'services/frontend'))
   await rename(resolve(root, 'services/frontend-temp'), resolve(root, 'services/frontend'))
 
-  console.log('STARTING')
   const url = await startRuntime(t, runtime)
   const response = await fetch(url + '/frontend')
   const data = await response.text()
