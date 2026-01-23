@@ -104,6 +104,7 @@ expectType<Promise<void>>(capability.setCustomReadinessCheck(() => Promise.resol
 
 // Test metrics methods
 expectType<Promise<any>>(capability.collectMetrics())
+expectType<Promise<string | Array<object>>>(capability.getMetrics())
 expectType<Promise<string | Array<object>>>(capability.getMetrics({ format: 'json' }))
 expectType<Promise<object>>(capability.getMeta())
 

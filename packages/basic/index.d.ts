@@ -62,7 +62,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
       | Promise<{ status: boolean; statusCode?: number; body?: string }>
   ): Promise<void>
   collectMetrics (): Promise<any>
-  getMetrics (options: { format: string }): Promise<string | Array<object>>
+  getMetrics (options?: { format?: string }): Promise<string | Array<object>>
   getMeta (): Promise<object>
   inject (injectParams: string | object): Promise<{
     statusCode: number
