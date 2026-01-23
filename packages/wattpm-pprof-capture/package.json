@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/wattpm-pprof-capture",
-  "version": "3.30.0",
+  "version": "3.32.0-alpha.0",
   "description": "pprof profiling capture for wattpm",
   "main": "index.js",
   "type": "module",
