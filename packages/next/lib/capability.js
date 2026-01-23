@@ -13,6 +13,7 @@ import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { glob, readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
@@ -32,6 +33,7 @@ export class NextCapability extends BaseCapability {
   #child
   #server
   #configModified
+  #isStandalone
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
@@ -41,6 +43,22 @@ export class NextCapability extends BaseCapability {
 
   async init () {
     await super.init()
+
+    if (this.isProduction) {
+      try {
+        const buildInfo = JSON.parse(await readFile(resolvePath(this.root, '.platformatic-build.json'), 'utf-8'))
+
+        if (buildInfo.standalone) {
+          this.#isStandalone = true
+          this.#nextVersion = parse(buildInfo.version)
+          console.log('BUILD INFO:', this.#isStandalone)
+        }
+        return
+      } catch (error) {
+
+        // No-op
+      }
+    }
 
     // This is needed to avoid Next.js to throw an error when the lockfile is not correct
     // and the user is using npm but has pnpm in its $PATH.
@@ -253,11 +271,10 @@ export class NextCapability extends BaseCapability {
       this.#getChildManagerScripts()
     )
 
-    this.verifyOutputDirectory(resolvePath(this.root, '.next'))
-
-    if (existsSync(resolvePath(this.root, '.next/standalone'))) {
+    if (this.#isStandalone) {
       return this.#startProductionStandaloneNext()
     } else {
+      this.verifyOutputDirectory(resolvePath(this.root, '.next'))
       return this.#startProductionNext()
     }
   }
@@ -300,19 +317,17 @@ export class NextCapability extends BaseCapability {
   }
 
   async #startProductionStandaloneNext () {
-    const rootDir = resolvePath(this.root, '.next', 'standalone')
-
     // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
     // inside .next/standalone due to turbopack limitations in determining the root of the project.
     // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
     const serverEntrypoints = await Array.fromAsync(
-      glob(['**/server.js'], { cwd: rootDir, ignore: ['node_modules', '**/node_modules/**'] })
+      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
     )
 
     let serverEntrypoint
     for (const entrypoint of serverEntrypoints) {
-      if (existsSync(resolvePath(rootDir, dirname(entrypoint), '.next'))) {
-        serverEntrypoint = resolvePath(rootDir, entrypoint)
+      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
+        serverEntrypoint = resolvePath(this.root, entrypoint)
         break
       }
     }
@@ -370,7 +385,9 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const { startServer } = await importFile(resolvePath(this.#next, './dist/server/lib/start-server.js'))
+      const require = createRequire(serverEntrypoint)
+      const serverModule = require('next/dist/server/lib/start-server.js')
+      const { startServer } = serverModule.default ?? serverModule
 
       await startServer({
         dir: dirname(serverEntrypoint),
@@ -450,6 +467,16 @@ export class NextCapability extends BaseCapability {
         await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
       }
     }
+
+    // This is needed to allow to have a standalone server working correctly
+    if (existsSync(resolvePath(distDir, 'standalone'))) {
+      await writeFile(
+        resolvePath(distDir, 'standalone/.platformatic-build.json'),
+        JSON.stringify({ standalone: true, version: this.#nextVersion.version }),
+        'utf-8'
+      )
+    }
+
     return distDir
   }
 }
