@@ -13,7 +13,7 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
-import { fetch } from 'undici'
+import { install as installUndiciGlobals } from 'undici'
 import { Controller } from './controller.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
@@ -137,7 +137,7 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
 }
 
 async function main () {
-  globalThis.fetch = fetch
+  installUndiciGlobals(globalThis)
   globalThis[kId] = threadId
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
     logger: createLogger(),
