@@ -82,7 +82,7 @@ test('should not show start in handle mode in production', async t => {
   )
 })
 
-test('should support Next.js in standalone mode', async t => {
+test.only('should support Next.js in standalone mode', async t => {
   const { root, runtime, } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true

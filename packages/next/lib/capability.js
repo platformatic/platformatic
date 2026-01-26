@@ -33,7 +33,7 @@ export class NextCapability extends BaseCapability {
   #child
   #server
   #configModified
-  #isStandalone
+  #standaloneEntrypoint
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
@@ -41,15 +41,43 @@ export class NextCapability extends BaseCapability {
     this.exitOnUnhandledErrors = false
   }
 
-  async init () {
+  async init (building = false) {
     await super.init()
 
-    if (this.isProduction && this.config.next?.standalone) {
-      this.#isStandalone = true
+    // This is needed to avoid Next.js to throw an error when the lockfile is not correct
+    // and the user is using npm but has pnpm in its $PATH.
+    //
+    // See: https://github.com/platformatic/composer-next-node-fastify/pull/3
+    //
+    // PS by Paolo: Sob.
+    process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
+
+    if (!building && this.isProduction && this.config.next?.standalone) {
+      this.#standaloneEntrypoint = await this.#resolveStandaloneEntrypoint()
+      this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.#standaloneEntrypoint, 'next')), '../..')
+    } else {
+      this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
+    }
+
+    const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
+    this.#nextVersion = parse(nextPackage.version)
+
+    if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
+      await import('./create-context-patch.js')
+    }
+
+    if (this.#nextVersion.major < 16 && this.config.next?.useExperimentalAdapter === true) {
+      this.config.next.useExperimentalAdapter = false
+    }
+
+    if (this.isProduction) {
       return
     }
 
-    return this.#init()
+    /* c8 ignore next 3 */
+    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
+      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
+    }
   }
 
   async start ({ listen }) {
@@ -107,10 +135,6 @@ export class NextCapability extends BaseCapability {
   }
 
   async build () {
-    if (!this.#nextVersion) {
-      await this.#init()
-    }
-
     const config = this.config
     const loader = new URL('./loader.js', import.meta.url)
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
@@ -118,7 +142,7 @@ export class NextCapability extends BaseCapability {
     let command = config.application.commands.build
 
     if (!command) {
-      await this.init()
+      await this.init(true)
       command = ['node', resolvePath(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
@@ -154,33 +178,6 @@ export class NextCapability extends BaseCapability {
     context.nextVersion = { major, minor }
 
     return context
-  }
-
-  async #init () {
-    // This is needed to avoid Next.js to throw an error when the lockfile is not correct
-    // and the user is using npm but has pnpm in its $PATH.
-    //
-    // See: https://github.com/platformatic/composer-next-node-fastify/pull/3
-    //
-    // PS by Paolo: Sob.
-    process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
-
-    this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
-    const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
-    this.#nextVersion = parse(nextPackage.version)
-
-    if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
-      await import('./create-context-patch.js')
-    }
-
-    if (this.#nextVersion.major < 16 && this.config.next?.useExperimentalAdapter === true) {
-      this.config.next.useExperimentalAdapter = false
-    }
-
-    /* c8 ignore next 3 */
-    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
-      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
-    }
   }
 
   async #startDevelopment () {
@@ -264,7 +261,7 @@ export class NextCapability extends BaseCapability {
       this.#getChildManagerScripts()
     )
 
-    if (this.#isStandalone) {
+    if (this.#standaloneEntrypoint) {
       return this.#startProductionStandaloneNext()
     } else {
       this.verifyOutputDirectory(resolvePath(this.root, '.next'))
@@ -310,25 +307,6 @@ export class NextCapability extends BaseCapability {
   }
 
   async #startProductionStandaloneNext () {
-    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
-    // inside .next/standalone due to turbopack limitations in determining the root of the project.
-    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
-    const serverEntrypoints = await Array.fromAsync(
-      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
-    )
-
-    let serverEntrypoint
-    for (const entrypoint of serverEntrypoints) {
-      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
-        serverEntrypoint = resolvePath(this.root, entrypoint)
-        break
-      }
-    }
-
-    if (!serverEntrypoint) {
-      throw new errors.StandaloneServerNotFound()
-    }
-
     // The default Next.js standalone server uses chdir, which is not supported in worker threads.
     // Therefore we need to reproduce the server.js logic here, which what we do in the rest of this method.
 
@@ -336,7 +314,7 @@ export class NextCapability extends BaseCapability {
     // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
     let nextConfig
     try {
-      const serverJsContent = await readFile(serverEntrypoint, 'utf-8')
+      const serverJsContent = await readFile(this.#standaloneEntrypoint, 'utf-8')
       const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
       nextConfig = JSON.parse(nextConfigMatch[1])
     } catch (e) {
@@ -378,10 +356,10 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const { startServer } = this.#requireStandaloneEntrypoint(serverEntrypoint)
+      const { startServer } = this.#requireStandaloneEntrypoint(this.#standaloneEntrypoint)
 
       await startServer({
-        dir: dirname(serverEntrypoint),
+        dir: dirname(this.#standaloneEntrypoint),
         isDev: false,
         config: nextConfig,
         hostname: serverOptions.hostname,
@@ -460,6 +438,34 @@ export class NextCapability extends BaseCapability {
     }
 
     return distDir
+  }
+
+  async #resolveStandaloneEntrypoint () {
+    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
+    // inside .next/standalone due to turbopack limitations in determining the root of the project.
+    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
+    const serverEntrypoints = await Array.fromAsync(
+      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
+    )
+
+    let serverEntrypoint
+    for (const entrypoint of serverEntrypoints) {
+      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
+        const candidate = resolvePath(this.root, entrypoint)
+        const contents = await readFile(candidate, 'utf-8')
+
+        if (contents.includes('process.env.__NEXT_PRIVATE_STANDALONE_CONFIG =')) {
+          serverEntrypoint = candidate
+          break
+        }
+      }
+    }
+
+    if (!serverEntrypoint) {
+      throw new errors.StandaloneServerNotFound()
+    }
+
+    return serverEntrypoint
   }
 
   #requireStandaloneEntrypoint (serverEntrypoint) {
