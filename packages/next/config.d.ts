@@ -619,6 +619,7 @@ export interface PlatformaticNextJsConfig {
     };
   };
   next?: {
+    standalone?: boolean;
     trailingSlash?: boolean;
     useExperimentalAdapter?: boolean;
   };
