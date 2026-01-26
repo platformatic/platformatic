@@ -1,7 +1,6 @@
 import { BaseCapability } from '@platformatic/basic'
-import { ConfigurationOptions } from '@platformatic/foundation'
+import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import {
-  Configuration,
   ServiceCapability,
   Generator as ServiceGenerator,
   PlatformaticServiceConfig,
