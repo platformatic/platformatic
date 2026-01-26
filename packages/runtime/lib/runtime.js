@@ -69,6 +69,8 @@ import {
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
+const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
+const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -1472,7 +1474,16 @@ export class Runtime extends EventEmitter {
       return { elu: elu.utilization, currentELU }
     }
 
-    const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+    // Only check heap statistics every 60 health checks (once per minute)
+    const counter = (worker[kHeapCheckCounter] ?? 0) + 1
+    worker[kHeapCheckCounter] = counter >= 60 ? 0 : counter
+
+    if (counter >= 60 || !worker[kLastHeapStats]) {
+      const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+      worker[kLastHeapStats] = { heapUsed, heapTotal }
+    }
+
+    const { heapUsed, heapTotal } = worker[kLastHeapStats]
     return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
   }
 
