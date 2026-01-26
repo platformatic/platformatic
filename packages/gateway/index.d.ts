@@ -4,13 +4,14 @@ import {
   Configuration,
   ServiceCapability,
   Generator as ServiceGenerator,
+  PlatformaticServiceConfig,
   ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
 import type { PlatformaticGatewayConfig } from './config.d.ts'
 
-export { PlatformaticService } from '@platformatic/service'
+export type { PlatformaticServiceConfig } from '@platformatic/service'
 export type { PlatformaticGatewayConfig } from './config.d.ts'
 
 export type GatewayCapability = ServiceCapability<PlatformaticGatewayConfig>
