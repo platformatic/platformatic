@@ -1697,8 +1697,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.1
       mqemitter:
-        specifier: ^6.0.0
-        version: 6.0.2
+        specifier: ^7.0.0
+        version: 7.1.0
       mqemitter-redis:
         specifier: ^6.0.0
         version: 6.1.0
