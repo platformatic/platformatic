@@ -44,44 +44,12 @@ export class NextCapability extends BaseCapability {
   async init () {
     await super.init()
 
-    if (this.isProduction) {
-      try {
-        const buildInfo = JSON.parse(await readFile(resolvePath(this.root, '.platformatic-build.json'), 'utf-8'))
-
-        if (buildInfo.standalone) {
-          this.#isStandalone = true
-          this.#nextVersion = parse(buildInfo.version)
-        }
-        return
-      } catch (error) {
-        // No-op
-      }
+    if (this.isProduction && this.config.next?.standalone) {
+      this.#isStandalone = true
+      return
     }
 
-    // This is needed to avoid Next.js to throw an error when the lockfile is not correct
-    // and the user is using npm but has pnpm in its $PATH.
-    //
-    // See: https://github.com/platformatic/composer-next-node-fastify/pull/3
-    //
-    // PS by Paolo: Sob.
-    process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
-
-    this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
-    const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
-    this.#nextVersion = parse(nextPackage.version)
-
-    if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
-      await import('./create-context-patch.js')
-    }
-
-    if (this.#nextVersion.major < 16 && this.config.next?.useExperimentalAdapter === true) {
-      this.config.next.useExperimentalAdapter = false
-    }
-
-    /* c8 ignore next 3 */
-    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
-      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
-    }
+    return this.#init()
   }
 
   async start ({ listen }) {
@@ -140,7 +108,7 @@ export class NextCapability extends BaseCapability {
 
   async build () {
     if (!this.#nextVersion) {
-      await this.init()
+      await this.#init()
     }
 
     const config = this.config
@@ -186,6 +154,33 @@ export class NextCapability extends BaseCapability {
     context.nextVersion = { major, minor }
 
     return context
+  }
+
+  async #init () {
+    // This is needed to avoid Next.js to throw an error when the lockfile is not correct
+    // and the user is using npm but has pnpm in its $PATH.
+    //
+    // See: https://github.com/platformatic/composer-next-node-fastify/pull/3
+    //
+    // PS by Paolo: Sob.
+    process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
+
+    this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
+    const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
+    this.#nextVersion = parse(nextPackage.version)
+
+    if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
+      await import('./create-context-patch.js')
+    }
+
+    if (this.#nextVersion.major < 16 && this.config.next?.useExperimentalAdapter === true) {
+      this.config.next.useExperimentalAdapter = false
+    }
+
+    /* c8 ignore next 3 */
+    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
+      throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
+    }
   }
 
   async #startDevelopment () {
@@ -383,9 +378,7 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const require = createRequire(serverEntrypoint)
-      const serverModule = require('next/dist/server/lib/start-server.js')
-      const { startServer } = serverModule.default ?? serverModule
+      const { startServer } = this.#requireStandaloneEntrypoint(serverEntrypoint)
 
       await startServer({
         dir: dirname(serverEntrypoint),
@@ -466,15 +459,18 @@ export class NextCapability extends BaseCapability {
       }
     }
 
-    // This is needed to allow to have a standalone server working correctly
-    if (existsSync(resolvePath(distDir, 'standalone'))) {
-      await writeFile(
-        resolvePath(distDir, 'standalone/.platformatic-build.json'),
-        JSON.stringify({ standalone: true, version: this.#nextVersion.version }),
-        'utf-8'
-      )
+    return distDir
+  }
+
+  #requireStandaloneEntrypoint (serverEntrypoint) {
+    let serverModule
+
+    try {
+      serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
+    } catch (e) { // Fallback to bundled capability
+      serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
     }
 
-    return distDir
+    return serverModule.default ?? serverModule
   }
 }

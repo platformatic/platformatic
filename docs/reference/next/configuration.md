@@ -61,6 +61,8 @@ Configures Next.js. Supported object properties:
   }
   ```
 
+- **`standalone`**: Set this to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output).
+
 <RuntimeInCapabilities />
 
 <Issues />

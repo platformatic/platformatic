@@ -532,9 +532,14 @@ export async function loadConfiguration (source, schema, options = {}) {
   return config
 }
 
-export function loadConfigurationModule (root, config, pkg) {
+export async function loadConfigurationModule (root, config, pkg) {
   pkg ??= extractModuleFromSchemaUrl(config, true).module
 
-  const require = createRequire(resolve(root, 'noop.js'))
-  return loadModule(require, pkg)
+  try {
+    const require = createRequire(resolve(root, 'noop.js'))
+    return await loadModule(require, pkg)
+  } catch (error) { // Fallback to the one bundled with Platformatic runtime
+    const require = createRequire(import.meta.filename)
+    return loadModule(require, pkg)
+  }
 }

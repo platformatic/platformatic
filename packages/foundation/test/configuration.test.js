@@ -1,7 +1,8 @@
 import { deepEqual, equal, ok, rejects, throws } from 'node:assert'
+import { deepStrictEqual } from 'node:assert/strict'
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import os from 'node:os'
-import { isAbsolute, join } from 'node:path'
+import { isAbsolute, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createValidator,
@@ -1052,9 +1053,24 @@ test('loadConfigurationModule - should extract module from schema URL when pkg n
 test('loadConfigurationModule - should throw when extracting module fails', async () => {
   const config = { someProperty: 'value' }
 
-  throws(() => loadConfigurationModule(process.cwd(), config), {
+  rejects(() => loadConfigurationModule(process.cwd(), config), {
     name: 'FastifyError'
   })
+})
+
+test('loadConfigurationModule - should fallback to import.meta.filename when root require fails', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  try {
+    await loadConfigurationModule(tmpDir, { module: '@platformatic/foundation' })
+    throw new Error('Expected loadConfigurationModule to fail but it succeeded')
+  } catch (error) {
+    deepStrictEqual(error.stack.split('\n')[2], `- ${resolve(import.meta.dirname, '../lib/configuration.js')}`)
+  }
 })
 
 test('parseYAML - should handle complex string scenarios with braces', async t => {

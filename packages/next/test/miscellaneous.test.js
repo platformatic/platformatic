@@ -101,6 +101,14 @@ test('should support Next.js in standalone mode', async t => {
     await updateFile(resolve(root, 'services/frontend/next.config.js'), contents => {
       return contents.replace('{}', '{ output: "standalone"}')
     })
+
+    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
+      const json = JSON.parse(raw)
+      json.next ??= {}
+      json.next.standalone = true
+
+      return JSON.stringify(json, null, 2)
+    })
   })
 
   await runtime.init()
