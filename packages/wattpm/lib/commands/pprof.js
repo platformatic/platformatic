@@ -2,6 +2,7 @@ import { RuntimeApiClient, getMatchingRuntime } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 export async function pprofStartCommand (logger, args) {
   const client = new RuntimeApiClient()
@@ -81,7 +82,8 @@ export async function pprofStopCommand (logger, args) {
     const { positionals, values } = parseArgs(
       args,
       {
-        type: { type: 'string', short: 't', default: 'cpu' }
+        type: { type: 'string', short: 't', default: 'cpu' },
+        dir: { type: 'string', short: 'd' }
       },
       false
     )
@@ -98,6 +100,7 @@ export async function pprofStopCommand (logger, args) {
     // Get application ID from remaining positional arguments or use all applications
     const applicationId = remainingPositionals[0]
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-')
+    const outputDir = values.dir || process.cwd()
 
     const options = { type }
 
@@ -110,22 +113,24 @@ export async function pprofStopCommand (logger, args) {
 
       const profileData = await client.stopApplicationProfiling(runtime.pid, applicationId, options)
       const filename = `pprof-${type}-${applicationId}-${timestamp}.pb`
-      await writeFile(filename, Buffer.from(profileData))
+      const filepath = resolve(outputDir, filename)
+      await writeFile(filepath, Buffer.from(profileData))
       logger.info(
-        `${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filename)}`
+        `${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filepath)}`
       )
-      logger.info(`Run ${bold(`npx @platformatic/flame generate ${filename}`)} to generate the flamegraph`)
+      logger.info(`Run ${bold(`npx @platformatic/flame generate ${filepath}`)} to generate the flamegraph`)
     } else {
       // Stop profiling for all applications
       for (const application of runtimeApplications) {
         try {
           const profileData = await client.stopApplicationProfiling(runtime.pid, application.id, options)
           const filename = `pprof-${type}-${application.id}-${timestamp}.pb`
-          await writeFile(filename, Buffer.from(profileData))
+          const filepath = resolve(outputDir, filename)
+          await writeFile(filepath, Buffer.from(profileData))
           logger.info(
-            `${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filename)}`
+            `${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filepath)}`
           )
-          logger.info(`Run ${bold(`npx @platformatic/flame generate ${filename}`)} to generate the flamegraph`)
+          logger.info(`Run ${bold(`npx @platformatic/flame generate ${filepath}`)} to generate the flamegraph`)
         } catch (error) {
           logger.warn(`Failed to stop profiling for application ${application.id}: ${error.message}`)
         }
@@ -173,6 +178,10 @@ export const help = {
       {
         name: '--node-modules-source-maps, -n',
         description: 'Comma-separated list of node_modules packages to load source maps from (e.g., "next,@next/next-server")'
+      },
+      {
+        name: '--dir, -d',
+        description: 'Directory to save the profile data to (default: current working directory). Only used with "stop" subcommand.'
       }
     ],
     args: [
@@ -199,6 +208,7 @@ export const help = {
       '  wattpm pprof start --type=cpu --source-maps my-app                # Start CPU profiling with source maps\n' +
       '  wattpm pprof start -s -n next,@next/next-server my-app            # Profile with Next.js source maps\n' +
       '  wattpm pprof stop --type=cpu my-app                               # Stop CPU profiling\n' +
-      '  wattpm pprof stop --type=heap my-app                              # Stop heap profiling'
+      '  wattpm pprof stop --type=heap my-app                              # Stop heap profiling\n' +
+      '  wattpm pprof stop --dir=/tmp/profiles my-app                      # Save profile to specific directory'
   }
 }
