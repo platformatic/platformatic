@@ -221,6 +221,30 @@ export class NodeCapability extends BaseCapability {
     return this.config.node?.hasServer !== false && this.#module?.hasServer !== false
   }
 
+  setClosing () {
+    super.setClosing()
+
+    if (!this.#server) return
+
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (!closeConnections) return
+
+    // For non-Fastify raw HTTP servers, add request listener to set Connection: close
+    if (!this.#isFastify) {
+      const self = this
+      this.#server.on('request', (req, res) => {
+        if (self.closing && !res.headersSent && req.httpVersionMajor !== 2) {
+          res.setHeader('Connection', 'close')
+        }
+      })
+    }
+
+    // For HTTP/2, send GOAWAY frames
+    if (this.#server.closeHttp2Sessions) {
+      this.#server.closeHttp2Sessions()
+    }
+  }
+
   async stop () {
     await super.stop()
 

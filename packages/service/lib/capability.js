@@ -61,6 +61,21 @@ export class ServiceCapability extends BaseCapability {
     if (!this.#app.hasRoute({ url: '/', method: 'GET' }) && !this.#app.hasRoute({ url: '/*', method: 'GET' })) {
       await this.#app.register(setupRoot)
     }
+
+    // Add hook to set Connection: close during graceful shutdown
+    // This runs BEFORE Fastify's own closing logic kicks in
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (closeConnections) {
+      this.#app.addHook('onRequest', (request, reply, done) => {
+        if (this.closing) {
+          // For HTTP/1.x, set Connection: close
+          if (request.raw.httpVersionMajor !== 2) {
+            reply.header('Connection', 'close')
+          }
+        }
+        done()
+      })
+    }
   }
 
   async start (startOptions) {
@@ -91,6 +106,15 @@ export class ServiceCapability extends BaseCapability {
   async stop () {
     await super.stop()
     await this.#app?.close()
+  }
+
+  setClosing () {
+    super.setClosing()
+
+    // For HTTP/2, send GOAWAY frames immediately
+    if (this.#app?.server?.closeHttp2Sessions) {
+      this.#app.server.closeHttp2Sessions()
+    }
   }
 
   async inject (injectParams, onInject) {

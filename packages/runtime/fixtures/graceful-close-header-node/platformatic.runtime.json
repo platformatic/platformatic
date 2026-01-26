@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
+  "gracefulShutdown": {
+    "runtime": 5000,
+    "application": 5000
+  },
+  "services": [
+    {
+      "id": "node-service",
+      "path": ".",
+      "config": "platformatic.node.json"
+    }
+  ]
+}

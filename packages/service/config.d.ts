@@ -423,6 +423,10 @@ export interface PlatformaticServiceConfig {
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;
+      /**
+       * Add Connection: close header to HTTP responses during graceful shutdown
+       */
+      closeConnections?: boolean;
     };
     health?: {
       enabled?: boolean | string;
