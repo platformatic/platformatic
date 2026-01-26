@@ -249,16 +249,11 @@ Next.js standalone mode creates a minimal, self-contained build that includes on
 #### Enable Standalone Mode
 
 Add `output: "standalone"` to your `next.config.js` or `next.config.mjs`.
-Note the `outputFileTracingIncludes`, which is necessary because `@platformatic/next` uses `next/dist/cli/next-start.js` which is stripped in standalone.
 
 ```js
   // next.config.mjs
   const nextConfig = {
-    output: "standalone",
-    // Next.js 15+ (top level). With lower versions should be in `experimental`
-    outputFileTracingIncludes: {
-      '/*': ['./node_modules/next/dist/**/*']
-    }
+    output: "standalone"
   }
 export default nextConfig
 ```
@@ -314,7 +309,9 @@ The trade-off is a slightly larger Docker image since Watt and its dependencies 
 
 #### Dockerfile for Standalone Mode
 
-Next.js standalone mode uses [@vercel/nft](https://github.com/vercel/nft) to trace dependencies and only includes packages that are actually imported by your application code. Since wattpm and @platformatic/next are used to orchestrate the app (not imported by it), they must be installed separately in the production image.
+Next.js standalone mode uses [@vercel/nft](https://github.com/vercel/nft) to trace dependencies and only includes packages that are actually imported by your application code.
+
+The `.next/static` folder and `public` folder must be copied manually if needed.
 
 ```Dockerfile
 # Stage 1: Build
@@ -327,39 +324,25 @@ RUN npm install && npm run build
 # Stage 2: Production
 FROM node:24-slim
 
-# Specify the Platformatic version 
-ARG PLT_VERSION=3.30.0
+# Specify the Platformatic version
+ARG PLT_VERSION=3.32.0-alpha.1
 
 WORKDIR /app
 
-# Copy standalone build and static files
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy the necessary files from the builder stage
+COPY --from=builder /app/.next/standalone .
+COPY --from=builder /app/watt.json ./watt.json
+COPY --from=builder /app/.next/static .next/static
+# Remove or comment out the following if you don't have a public folder
+COPY --from=builder /app/public ./public
 
-# Copy watt.json configuration
-COPY --from=builder /app/watt.json ./
-
-# Install wattpm and @platformatic/next globally with pnpm, then link to local.
-#
-# Why this works:
-# 1. `pnpm install -g` installs packages + all transitive deps to the global pnpm store
-# 2. `pnpm link --global` creates a symlink WITHOUT installing deps from package.json
-#    (unlike npm link which would install missing deps pruned by `standalone`)
-# 3. When Node.js resolves modules, it follows the symlink to the global store
-#    where all transitive dependencies are already available
-#
-# See: https://pnpm.io/cli/link
-ENV PNPM_HOME=/root/.local/share/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-RUN npm install -g pnpm@9 && \
-    mkdir -p $PNPM_HOME && \
-    pnpm install -g wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION} && \
-    pnpm link --global @platformatic/next
+# Install wattpm and @platformatic/next
+RUN npm install wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}  
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 ENV PORT=3042
 EXPOSE 3042
-CMD ["wattpm", "start"]
+CMD ["./node_modules/.bin/wattpm", "start"]
 ```
 
 **Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
