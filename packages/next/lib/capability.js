@@ -13,6 +13,7 @@ import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { glob, readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
@@ -32,6 +33,7 @@ export class NextCapability extends BaseCapability {
   #child
   #server
   #configModified
+  #standaloneEntrypoint
 
   constructor (root, config, context) {
     super('next', version, root, config, context)
@@ -39,7 +41,7 @@ export class NextCapability extends BaseCapability {
     this.exitOnUnhandledErrors = false
   }
 
-  async init () {
+  async init (building = false) {
     await super.init()
 
     // This is needed to avoid Next.js to throw an error when the lockfile is not correct
@@ -50,7 +52,13 @@ export class NextCapability extends BaseCapability {
     // PS by Paolo: Sob.
     process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
 
-    this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
+    if (!building && this.isProduction && this.config.next?.standalone) {
+      this.#standaloneEntrypoint = await this.#resolveStandaloneEntrypoint()
+      this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.#standaloneEntrypoint, 'next')), '../..')
+    } else {
+      this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
+    }
+
     const nextPackage = JSON.parse(await readFile(resolvePath(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
 
@@ -63,7 +71,7 @@ export class NextCapability extends BaseCapability {
     }
 
     /* c8 ignore next 3 */
-    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
+    if (!this.isProduction && !supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
@@ -123,18 +131,17 @@ export class NextCapability extends BaseCapability {
   }
 
   async build () {
-    if (!this.#nextVersion) {
-      await this.init()
-    }
-
     const config = this.config
     const loader = new URL('./loader.js', import.meta.url)
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     let command = config.application.commands.build
 
+    if (!command || !config.next?.standalone) {
+      await this.init(true)
+    }
+
     if (!command) {
-      await this.init()
       command = ['node', resolvePath(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
@@ -253,11 +260,10 @@ export class NextCapability extends BaseCapability {
       this.#getChildManagerScripts()
     )
 
-    this.verifyOutputDirectory(resolvePath(this.root, '.next'))
-
-    if (existsSync(resolvePath(this.root, '.next/standalone'))) {
+    if (this.#standaloneEntrypoint) {
       return this.#startProductionStandaloneNext()
     } else {
+      this.verifyOutputDirectory(resolvePath(this.root, '.next'))
       return this.#startProductionNext()
     }
   }
@@ -300,27 +306,6 @@ export class NextCapability extends BaseCapability {
   }
 
   async #startProductionStandaloneNext () {
-    const rootDir = resolvePath(this.root, '.next', 'standalone')
-
-    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
-    // inside .next/standalone due to turbopack limitations in determining the root of the project.
-    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
-    const serverEntrypoints = await Array.fromAsync(
-      glob(['**/server.js'], { cwd: rootDir, ignore: ['node_modules', '**/node_modules/**'] })
-    )
-
-    let serverEntrypoint
-    for (const entrypoint of serverEntrypoints) {
-      if (existsSync(resolvePath(rootDir, dirname(entrypoint), '.next'))) {
-        serverEntrypoint = resolvePath(rootDir, entrypoint)
-        break
-      }
-    }
-
-    if (!serverEntrypoint) {
-      throw new errors.StandaloneServerNotFound()
-    }
-
     // The default Next.js standalone server uses chdir, which is not supported in worker threads.
     // Therefore we need to reproduce the server.js logic here, which what we do in the rest of this method.
 
@@ -328,7 +313,7 @@ export class NextCapability extends BaseCapability {
     // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
     let nextConfig
     try {
-      const serverJsContent = await readFile(serverEntrypoint, 'utf-8')
+      const serverJsContent = await readFile(this.#standaloneEntrypoint, 'utf-8')
       const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
       nextConfig = JSON.parse(nextConfigMatch[1])
     } catch (e) {
@@ -370,10 +355,10 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const { startServer } = await importFile(resolvePath(this.#next, './dist/server/lib/start-server.js'))
+      const { startServer } = this.#requireStandaloneEntrypoint(this.#standaloneEntrypoint)
 
       await startServer({
-        dir: dirname(serverEntrypoint),
+        dir: dirname(this.#standaloneEntrypoint),
         isDev: false,
         config: nextConfig,
         hostname: serverOptions.hostname,
@@ -450,6 +435,47 @@ export class NextCapability extends BaseCapability {
         await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
       }
     }
+
     return distDir
+  }
+
+  async #resolveStandaloneEntrypoint () {
+    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
+    // inside .next/standalone due to turbopack limitations in determining the root of the project.
+    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
+    const serverEntrypoints = await Array.fromAsync(
+      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
+    )
+
+    let serverEntrypoint
+    for (const entrypoint of serverEntrypoints) {
+      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
+        const candidate = resolvePath(this.root, entrypoint)
+        const contents = await readFile(candidate, 'utf-8')
+
+        if (contents.includes('process.env.__NEXT_PRIVATE_STANDALONE_CONFIG =')) {
+          serverEntrypoint = candidate
+          break
+        }
+      }
+    }
+
+    if (!serverEntrypoint) {
+      throw new errors.StandaloneServerNotFound()
+    }
+
+    return serverEntrypoint
+  }
+
+  #requireStandaloneEntrypoint (serverEntrypoint) {
+    let serverModule
+
+    try {
+      serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
+    } catch (e) { // Fallback to bundled capability
+      serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
+    }
+
+    return serverModule.default ?? serverModule
   }
 }

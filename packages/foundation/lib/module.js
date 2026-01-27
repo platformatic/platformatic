@@ -173,7 +173,7 @@ export async function loadModule (require, path) {
     try {
       loaded = require(path)
     } catch (err) {
-      /* c8 ignore next 4 */
+      /* c8 ignore next 10 */
       if (err.code === 'ERR_REQUIRE_ESM') {
         const toLoad = require.resolve(path)
 

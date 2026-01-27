@@ -1,5 +1,6 @@
+import { safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
-import { cp } from 'node:fs/promises'
+import { cp, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -11,7 +12,6 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
-import { prepareRuntimeWithBackend } from './caching/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -83,7 +83,11 @@ test('should not show start in handle mode in production', async t => {
 })
 
 test('should support Next.js in standalone mode', async t => {
-  const { url } = await prepareRuntimeWithBackend(t, 'composer-with-prefix', true, false, ['frontend'], async root => {
+  const { root, runtime, } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
+    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
+      recursive: true
+    })
+
     for (const type of ['backend', 'composer']) {
       await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
         recursive: true
@@ -97,8 +101,26 @@ test('should support Next.js in standalone mode', async t => {
     await updateFile(resolve(root, 'services/frontend/next.config.js'), contents => {
       return contents.replace('{}', '{ output: "standalone"}')
     })
+
+    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
+      const json = JSON.parse(raw)
+      json.next ??= {}
+      json.next.standalone = true
+
+      return JSON.stringify(json, null, 2)
+    })
   })
 
+  await runtime.init()
+  await runtime.buildApplication('frontend')
+
+  // From the dist folder, remove everything and and only leave the standalone files and platformatic file
+  await cp(resolve(root, 'services/frontend/.next/standalone'), resolve(root, 'services/frontend-temp'), { recursive: true })
+  await cp(resolve(root, 'services/frontend/platformatic.application.json'), resolve(root, 'services/frontend-temp/platformatic.application.json'))
+  await safeRemove(resolve(root, 'services/frontend'))
+  await rename(resolve(root, 'services/frontend-temp'), resolve(root, 'services/frontend'))
+
+  const url = await startRuntime(t, runtime)
   const response = await fetch(url + '/frontend')
   const data = await response.text()
   const mo = data.match(/<div>Hello from v<!-- -->(.+)<\/div>/)

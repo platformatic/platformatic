@@ -42,6 +42,9 @@ export const cache = {
 const next = {
   type: 'object',
   properties: {
+    standalone: {
+      type: 'boolean',
+    },
     trailingSlash: {
       type: 'boolean',
       default: false
