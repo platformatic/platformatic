@@ -70,12 +70,8 @@ export class NextCapability extends BaseCapability {
       this.config.next.useExperimentalAdapter = false
     }
 
-    if (this.isProduction) {
-      return
-    }
-
     /* c8 ignore next 3 */
-    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
+    if (!this.isProduction && !supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new basicErrors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
@@ -141,8 +137,11 @@ export class NextCapability extends BaseCapability {
 
     let command = config.application.commands.build
 
-    if (!command) {
+    if (!command || !config.next?.standalone) {
       await this.init(true)
+    }
+
+    if (!command) {
       command = ['node', resolvePath(this.#next, './dist/bin/next'), 'build', this.root]
     }
 

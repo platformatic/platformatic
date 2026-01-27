@@ -283,6 +283,9 @@ And a minimal `watt.json`:
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.30.0.json",
+  "next": {
+    "standalone": true
+  },
   "runtime": {
     "server": {
       "hostname": "{PLT_SERVER_HOSTNAME}",
@@ -292,11 +295,9 @@ And a minimal `watt.json`:
 }
 ```
 
-#### How Watt Handles Standalone Mode
+The only required change is to insert `standalone: true` in the `next` section.
 
-When you build your Next.js application with standalone mode enabled, Watt automatically detects the `.next/standalone` directory at runtime and handles it appropriately.
-
-**Why use Watt with standalone instead of raw Next.js standalone?**
+#### Why use Watt with standalone instead of raw Next.js standalone?
 
 While Next.js standalone mode produces a minimal `server.js` that can run independently, using Watt provides additional enterprise features:
 - Prometheus metrics integration
@@ -324,9 +325,6 @@ RUN npm install && npm run build
 # Stage 2: Production
 FROM node:24-slim
 
-# Specify the Platformatic version
-ARG PLT_VERSION=3.32.0-alpha.1
-
 WORKDIR /app
 
 # Copy the necessary files from the builder stage
@@ -336,13 +334,14 @@ COPY --from=builder /app/.next/static .next/static
 # Remove or comment out the following if you don't have a public folder
 COPY --from=builder /app/public ./public
 
-# Install wattpm and @platformatic/next
-RUN npm install wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}  
+# Install Watt and Platformatic Next with a specific version
+ARG PLT_VERSION=3.33.0
+RUN npm install -g wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 ENV PORT=3042
 EXPOSE 3042
-CMD ["./node_modules/.bin/wattpm", "start"]
+CMD ["wattpm", "start"]
 ```
 
 **Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
