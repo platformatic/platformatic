@@ -1700,8 +1700,8 @@ importers:
         specifier: ^7.0.0
         version: 7.1.0
       mqemitter-redis:
-        specifier: ^6.0.0
-        version: 6.1.0
+        specifier: ^7.0.0
+        version: 7.2.0
     devDependencies:
       '@platformatic/sql-mapper':
         specifier: workspace:*
@@ -8698,12 +8698,9 @@ packages:
   moo@0.5.2:
     resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
 
-  mqemitter-redis@6.1.0:
-    resolution: {integrity: sha512-wZWs8I5VIzXIK2P/eFCKAcbX+iBgU/ka3HsS/KZtfe8VYyYwyyzhygJqrEf82TgH5HEBxbUjiJK33eDKh0ETEA==}
-
-  mqemitter@6.0.2:
-    resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
-    engines: {node: '>=16'}
+  mqemitter-redis@7.2.0:
+    resolution: {integrity: sha512-YdYZgSab9kQsk6JXFYylJVctzAND6q7ps/g8PeqczSd0s+WKH7dXXfpiTrlUNDwmLkMpKPw0DyuQNeo2CeBxLg==}
+    engines: {node: '>=20'}
 
   mqemitter@7.1.0:
     resolution: {integrity: sha512-GnBDNz3lxmllW201ne0mrmdy5tPOTnc79jjVcsfUa2LG2pUGeyGWVeiae6ZysfC/64XrYOqCKRAQYrB7pGyBVQ==}
@@ -19266,21 +19263,16 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mqemitter-redis@6.1.0:
+  mqemitter-redis@7.2.0:
     dependencies:
       hyperid: 3.3.0
       inherits: 2.0.4
       ioredis: 5.8.2
-      lru-cache: 10.4.3
-      mqemitter: 6.0.2
+      lru-cache: 11.2.4
+      mqemitter: 7.1.0
       msgpack-lite: 0.1.26
     transitivePeerDependencies:
       - supports-color
-
-  mqemitter@6.0.2:
-    dependencies:
-      fastparallel: 2.4.1
-      qlobber: 8.0.1
 
   mqemitter@7.1.0:
     dependencies:
@@ -19885,7 +19877,7 @@ snapshots:
 
   path-scurry@2.0.0:
     dependencies:
-      lru-cache: 11.2.2
+      lru-cache: 11.2.4
       minipass: 7.1.2
 
   path-scurry@2.0.1:
