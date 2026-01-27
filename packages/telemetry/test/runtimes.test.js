@@ -178,20 +178,23 @@ test('configure telemetry correctly with a gateway + node + fastify', async t =>
     return false
   })
 
-  const spanFastifyClient = spans.find(span => {
-    if (span.kind === SpanKind.CLIENT) {
-      return (
-        containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') &&
-        span.attributes['url.full'] === 'http://node.plt.local/' &&
-        span.traceId === traceId
-      )
+  const spanNodeServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-node') && span.traceId === traceId
     }
     return false
   })
 
-  const spanNodeServer = spans.find(span => {
-    if (span.kind === SpanKind.SERVER) {
-      return containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-node') && span.traceId === traceId
+  // Find spanFastifyClient by looking for the actual parent of spanNodeServer
+  // This is needed because there might be multiple CLIENT spans from the same service
+  // (e.g., from both HttpInstrumentation and UndiciInstrumentation)
+  const spanFastifyClient = spans.find(span => {
+    if (span.kind === SpanKind.CLIENT) {
+      return (
+        containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-fastify') &&
+        span.id === spanNodeServer.parentSpanContext.spanId &&
+        span.traceId === traceId
+      )
     }
     return false
   })
