@@ -287,8 +287,8 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
     collectHttpMetrics(registry, {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
+        const telemetryId = req.headers?.['x-plt-telemetry-id']
+        return telemetryId ? { telemetry_id: telemetryId } : {}
       },
       histogram: {
         name: 'http_request_all_duration_seconds',
@@ -344,8 +344,8 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
     collectHttpMetrics(registry, {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
+        const telemetryId = req.headers?.['x-plt-telemetry-id']
+        return telemetryId ? { telemetry_id: telemetryId } : {}
       },
       histogram: {
         name: 'http_request_all_duration_seconds',

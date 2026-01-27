@@ -126,3 +126,21 @@ test('httpMetrics summary resets after metric collection', async () => {
   assert.strictEqual(sum?.value || 0, 0, 'summary sum should be reset to 0')
   assert.strictEqual(count?.value || 0, 0, 'summary count should be reset to 0')
 })
+
+test('httpMetrics does not include telemetry_id label when header is not present', async () => {
+  const result = await collectMetrics('test-service', 1, { httpMetrics: true })
+
+  const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
+  assert.ok(histogramMetric, 'histogram metric should exist')
+
+  // Observe without telemetry_id (simulating request without x-plt-telemetry-id header)
+  histogramMetric.observe({ method: 'GET' }, 0.1)
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  const histogram = metrics.find(m => m.name === 'http_request_all_duration_seconds')
+
+  // Find a value that has our method label
+  const value = histogram.values.find(v => v.labels.method === 'GET')
+  assert.ok(value, 'should have a value with method=GET')
+  assert.strictEqual(value.labels.telemetry_id, undefined, 'telemetry_id should not be present when header is missing')
+})
