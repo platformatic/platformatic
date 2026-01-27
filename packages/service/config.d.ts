@@ -589,7 +589,7 @@ export interface PlatformaticServiceConfig {
           /**
            * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
            */
-          customLabels?: {
+          httpCustomLabels?: {
             /**
              * The label name to use in metrics
              */
