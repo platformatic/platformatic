@@ -2275,6 +2275,32 @@
                     "endpoint"
                   ],
                   "additionalProperties": false
+                },
+                "httpCustomLabels": {
+                  "type": "array",
+                  "description": "Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The label name to use in metrics"
+                      },
+                      "header": {
+                        "type": "string",
+                        "description": "The HTTP request header to extract the value from"
+                      },
+                      "default": {
+                        "type": "string",
+                        "description": "Default value when header is missing (defaults to \"unknown\")"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "header"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               },
               "additionalProperties": false

@@ -284,12 +284,12 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
   }
 
   if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
+    // Build custom labels configuration
+    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+
     collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
+      customLabels,
+      getCustomLabels,
       histogram: {
         name: 'http_request_all_duration_seconds',
         help: 'request duration in seconds summary for all requests',
@@ -311,6 +311,35 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
     registry,
     otlpBridge: null
   }
+}
+
+// Build custom labels configuration from metrics config
+// Returns { customLabels: string[], getCustomLabels: (req) => object }
+export function buildCustomLabelsConfig (customLabelsConfig) {
+  // Default: use telemetry_id from x-plt-telemetry-id header
+  if (!customLabelsConfig || customLabelsConfig.length === 0) {
+    return {
+      customLabels: ['telemetry_id'],
+      getCustomLabels: req => {
+        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      }
+    }
+  }
+
+  // Build custom labels from configuration
+  const customLabels = customLabelsConfig.map(label => label.name)
+
+  const getCustomLabels = req => {
+    const labels = {}
+    for (const labelConfig of customLabelsConfig) {
+      const headerValue = req.headers?.[labelConfig.header.toLowerCase()]
+      labels[labelConfig.name] = headerValue ?? labelConfig.default ?? 'unknown'
+    }
+    return labels
+  }
+
+  return { customLabels, getCustomLabels }
 }
 
 // Original function for backward compatibility (collects all metrics)
@@ -341,12 +370,12 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   }
 
   if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
+    // Build custom labels configuration
+    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+
     collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
+      customLabels,
+      getCustomLabels,
       histogram: {
         name: 'http_request_all_duration_seconds',
         help: 'request duration in seconds summary for all requests',
