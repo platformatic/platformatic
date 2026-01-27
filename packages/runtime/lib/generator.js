@@ -41,6 +41,10 @@ const NoApplicationNamedError = createError(
   "No application named '%s' has been added to this runtime."
 )
 const NoEntryPointError = createError(`${ERROR_PREFIX}_NO_ENTRYPOINT`, 'No entrypoint had been defined.')
+const InvalidApplicationGeneratorError = createError(
+  `${ERROR_PREFIX}_INVALID_APPLICATION_GENERATOR`,
+  "The application generator '%s' does not have a setRuntime method. Expected a BaseGenerator subclass but got %s."
+)
 
 function getRuntimeBaseEnvVars (config) {
   return {
@@ -66,6 +70,12 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   async addApplication (application, name) {
+    // Validate that application has the expected interface
+    if (typeof application?.setRuntime !== 'function') {
+      const constructorName = application?.constructor?.name || typeof application
+      throw new InvalidApplicationGeneratorError(name || 'unknown', constructorName)
+    }
+
     // ensure application config is correct
     const originalConfig = application.config
     const applicationName = name || generateDashedName()

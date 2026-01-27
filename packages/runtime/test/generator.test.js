@@ -94,6 +94,42 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   })
 })
 
+test('RuntimeGenerator - should throw an error for invalid application generator', async () => {
+  const rg = new RuntimeGenerator({
+    targetDirectory: '/tmp/runtime'
+  })
+
+  // Test with an object that doesn't have setRuntime method
+  const invalidGenerator = {
+    config: {},
+    reset: () => {},
+    setConfig: () => {}
+  }
+
+  await assert.rejects(
+    async () => rg.addApplication(invalidGenerator, 'invalid-app'),
+    {
+      code: 'PLT_RUNTIME_GEN_INVALID_APPLICATION_GENERATOR',
+      message: /does not have a setRuntime method/
+    }
+  )
+
+  // Test with null/undefined
+  await assert.rejects(
+    async () => rg.addApplication(null, 'null-app'),
+    {
+      code: 'PLT_RUNTIME_GEN_INVALID_APPLICATION_GENERATOR'
+    }
+  )
+
+  await assert.rejects(
+    async () => rg.addApplication(undefined, 'undefined-app'),
+    {
+      code: 'PLT_RUNTIME_GEN_INVALID_APPLICATION_GENERATOR'
+    }
+  )
+})
+
 test('RuntimeGenerator - should have a valid package.json', async () => {
   const rg = new RuntimeGenerator({
     name: 'test-runtime',
