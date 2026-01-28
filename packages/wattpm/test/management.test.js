@@ -237,7 +237,8 @@ test('config - should list configuration for an application', async t => {
     watch: false,
     gracefulShutdown: {
       runtime: 10000,
-      application: 10000
+      application: 10000,
+      closeConnections: true
     },
     health: {
       enabled: true,
