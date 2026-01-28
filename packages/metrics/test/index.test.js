@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
-import { client, collectMetrics } from '../index.js'
+import { buildCustomLabelsConfig, client, collectMetrics } from '../index.js'
 
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 
@@ -125,4 +125,116 @@ test('httpMetrics summary resets after metric collection', async () => {
   const count = summaryAfter.values.find(v => v.metricName === 'http_request_all_summary_seconds_count')
   assert.strictEqual(sum?.value || 0, 0, 'summary sum should be reset to 0')
   assert.strictEqual(count?.value || 0, 0, 'summary count should be reset to 0')
+})
+
+// Tests for buildCustomLabelsConfig
+test('buildCustomLabelsConfig returns default telemetry_id when no config provided', () => {
+  const result = buildCustomLabelsConfig(undefined)
+
+  assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
+  assert.strictEqual(typeof result.getCustomLabels, 'function')
+
+  // Test default getCustomLabels function
+  const labels = result.getCustomLabels({ headers: { 'x-plt-telemetry-id': 'test-id' } })
+  assert.deepStrictEqual(labels, { telemetry_id: 'test-id' })
+})
+
+test('buildCustomLabelsConfig returns default telemetry_id when empty array provided', () => {
+  const result = buildCustomLabelsConfig([])
+
+  assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
+})
+
+test('buildCustomLabelsConfig uses unknown as default when header is missing', () => {
+  const result = buildCustomLabelsConfig(undefined)
+
+  const labels = result.getCustomLabels({ headers: {} })
+  assert.deepStrictEqual(labels, { telemetry_id: 'unknown' })
+})
+
+test('buildCustomLabelsConfig builds custom labels from configuration', () => {
+  const config = [
+    { name: 'domain', header: 'x-forwarded-host' },
+    { name: 'api_version', header: 'x-api-version' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  assert.deepStrictEqual(result.customLabels, ['domain', 'api_version'])
+  assert.strictEqual(typeof result.getCustomLabels, 'function')
+})
+
+test('buildCustomLabelsConfig getCustomLabels extracts values from headers', () => {
+  const config = [
+    { name: 'domain', header: 'x-forwarded-host' },
+    { name: 'api_version', header: 'x-api-version' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  const labels = result.getCustomLabels({
+    headers: {
+      'x-forwarded-host': 'example.com',
+      'x-api-version': 'v2'
+    }
+  })
+
+  assert.deepStrictEqual(labels, { domain: 'example.com', api_version: 'v2' })
+})
+
+test('buildCustomLabelsConfig uses custom default value when header is missing', () => {
+  const config = [
+    { name: 'domain', header: 'x-forwarded-host', default: 'default-domain' },
+    { name: 'api_version', header: 'x-api-version' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  const labels = result.getCustomLabels({ headers: {} })
+
+  assert.deepStrictEqual(labels, { domain: 'default-domain', api_version: 'unknown' })
+})
+
+test('buildCustomLabelsConfig handles case-insensitive header names', () => {
+  const config = [
+    { name: 'domain', header: 'X-Forwarded-Host' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  // HTTP headers are case-insensitive, and Node.js lowercases them
+  const labels = result.getCustomLabels({
+    headers: {
+      'x-forwarded-host': 'example.com'
+    }
+  })
+
+  assert.deepStrictEqual(labels, { domain: 'example.com' })
+})
+
+test('httpMetrics with custom labels configuration', async () => {
+  const httpCustomLabels = [
+    { name: 'domain', header: 'x-forwarded-host', default: 'localhost' }
+  ]
+
+  const result = await collectMetrics('test-service', 1, {
+    httpMetrics: true,
+    httpCustomLabels
+  })
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  const histogram = metrics.find(m => m.name === 'http_request_all_duration_seconds')
+
+  assert.ok(histogram, 'histogram metric should exist')
+
+  // Verify custom label is used by observing a value
+  const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
+  histogramMetric.observe({ method: 'GET', domain: 'example.com' }, 0.1)
+
+  const metricsAfterObserve = await result.registry.getMetricsAsJSON()
+  const histogramAfterObserve = metricsAfterObserve.find(m => m.name === 'http_request_all_duration_seconds')
+
+  // Check that the domain label is present in the recorded values
+  const hasCustomLabel = histogramAfterObserve.values.some(v => v.labels?.domain === 'example.com')
+  assert.ok(hasCustomLabel, 'custom domain label should be present in histogram values')
 })
