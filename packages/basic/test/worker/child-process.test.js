@@ -236,3 +236,4 @@ test('ChildProcess - updateMetricsConfig should update metrics in subprocess', a
   await childManager.send(socket, 'done')
   await promise
 })
+
