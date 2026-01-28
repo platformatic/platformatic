@@ -20,6 +20,58 @@ import { updateUndiciInterceptors } from './interceptors.js'
 import { MessagingITC } from './messaging.js'
 import { kApplicationId, kITC, kId, kWorkerId } from './symbols.js'
 
+function startSubprocessRepl (port, childManager, clientWs, controller) {
+  // Start the REPL in the child process
+  childManager.send(clientWs, 'startRepl').catch(err => {
+    port.postMessage({ type: 'output', data: `Error starting REPL: ${err.message}\n` })
+    port.postMessage({ type: 'exit' })
+    port.close()
+  })
+
+  // Listen for repl:output notifications from the child process
+  function handleReplOutput ({ data }) {
+    port.postMessage({ type: 'output', data })
+  }
+
+  // Listen for repl:exit notifications from the child process
+  function handleReplExit () {
+    cleanup()
+    port.postMessage({ type: 'exit' })
+    port.close()
+  }
+
+  function cleanup () {
+    childManager.removeListener('repl:output', handleReplOutput)
+    childManager.removeListener('repl:exit', handleReplExit)
+  }
+
+  childManager.on('repl:output', handleReplOutput)
+  childManager.on('repl:exit', handleReplExit)
+
+  // Forward input from MessagePort to child process
+  port.on('message', (message) => {
+    if (message.type === 'input') {
+      childManager.send(clientWs, 'replInput', { data: message.data }).catch(() => {
+        // Ignore errors if the child process has exited
+      })
+    } else if (message.type === 'close') {
+      childManager.send(clientWs, 'replClose').catch(() => {
+        // Ignore errors if the child process has exited
+      })
+      cleanup()
+    }
+  })
+
+  port.on('close', () => {
+    childManager.send(clientWs, 'replClose').catch(() => {
+      // Ignore errors if the child process has exited
+    })
+    cleanup()
+  })
+
+  return { started: true }
+}
+
 async function safeHandleInITC (worker, fn) {
   try {
     // Make sure to catch when the worker exits, otherwise we're stuck forever
@@ -273,6 +325,14 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
       },
 
       startRepl (port) {
+        // Check if running in subprocess mode - forward through ChildManager
+        const childManager = controller.capability?.getChildManager?.()
+        const clientWs = controller.capability?.clientWs
+
+        if (childManager && clientWs) {
+          return startSubprocessRepl(port, childManager, clientWs, controller)
+        }
+
         // We are loading the repl module dynamically here to avoid loading it
         // when not needed (since it pulls in domain, which is quite expensive
         // as it monkey patches EventEmitter).

@@ -10,9 +10,10 @@ import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
-import { register } from 'node:module'
+import { createRequire, register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
+import { Duplex } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
@@ -76,6 +77,7 @@ export class ChildProcess extends ITC {
   #logger
   #metricsRegistry
   #pendingMessages
+  #replStream
 
   constructor (executable) {
     super({
@@ -90,6 +92,15 @@ export class ChildProcess extends ITC {
         },
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
+        },
+        startRepl: () => {
+          return this.#startRepl()
+        },
+        replInput: ({ data }) => {
+          return this.#replInput(data)
+        },
+        replClose: () => {
+          return this.#replClose()
         },
         close: signal => {
           let handled = false
@@ -333,6 +344,59 @@ export class ChildProcess extends ITC {
       format === 'json' ? await this.#metricsRegistry.getMetricsAsJSON() : await this.#metricsRegistry.metrics()
 
     return res
+  }
+
+  #startRepl () {
+    // Dynamically load node:repl to avoid loading it when not needed
+    // (since it pulls in domain, which is quite expensive as it monkey patches EventEmitter)
+    const repl = createRequire(import.meta.url)('node:repl')
+
+    // Create a duplex stream that sends output via notify
+    const replStream = new Duplex({
+      read () {},
+      write: (chunk, encoding, callback) => {
+        this.notify('repl:output', { data: chunk.toString() })
+        callback()
+      }
+    })
+
+    this.#replStream = replStream
+
+    // Start the REPL with the stream
+    const replServer = repl.start({
+      prompt: `${globalThis.platformatic.applicationId}> `,
+      input: replStream,
+      output: replStream,
+      terminal: false,
+      useColors: true,
+      ignoreUndefined: true,
+      preview: false
+    })
+
+    // Expose useful context - note that in subprocess mode, app/capability may not be available
+    replServer.context.platformatic = globalThis.platformatic
+    replServer.context.config = globalThis.platformatic.config
+    replServer.context.logger = globalThis.platformatic.logger
+
+    replServer.on('exit', () => {
+      this.notify('repl:exit', {})
+      this.#replStream = null
+    })
+
+    return { started: true }
+  }
+
+  #replInput (data) {
+    if (this.#replStream) {
+      this.#replStream.push(data)
+    }
+  }
+
+  #replClose () {
+    if (this.#replStream) {
+      this.#replStream.push(null)
+      this.#replStream = null
+    }
   }
 
   #setupLogger () {
