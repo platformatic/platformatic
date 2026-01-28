@@ -103,6 +103,32 @@ export class NestCapability extends BaseCapability {
     return this._closeServer(this.#server)
   }
 
+  setClosing () {
+    super.setClosing()
+
+    if (!this.#server) return
+
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (!closeConnections) return
+
+    // For non-Fastify (Express) servers, add request listener to set Connection: close
+    if (!this.#isFastify) {
+      const self = this
+      this.#server.on('request', (req, res) => {
+        if (self.closing && !res.headersSent && req.httpVersionMajor !== 2) {
+          res.setHeader('Connection', 'close')
+        }
+      })
+    }
+
+    // For Fastify, it handles Connection: close via its own hook in ServiceCapability pattern
+    // but we still need to close HTTP/2 sessions
+    const server = this.#isFastify ? this.#server.server : this.#server
+    if (server?.closeHttp2Sessions) {
+      server.closeHttp2Sessions()
+    }
+  }
+
   async build () {
     if (!this.#nestjsCore) {
       await this.init()

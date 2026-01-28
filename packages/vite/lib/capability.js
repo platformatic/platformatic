@@ -79,6 +79,23 @@ export class ViteCapability extends BaseCapability {
     }
   }
 
+  setClosing () {
+    super.setClosing()
+
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (!closeConnections) return
+
+    // In production mode with Fastify, close HTTP/2 sessions
+    if (this.isProduction && this.#app?.server?.closeHttp2Sessions) {
+      this.#app.server.closeHttp2Sessions()
+    }
+
+    // In development mode, Vite handles its own server
+    if (!this.isProduction && this.#server?.closeHttp2Sessions) {
+      this.#server.closeHttp2Sessions()
+    }
+  }
+
   async build () {
     const config = this.config
     const command = config.application.commands.build

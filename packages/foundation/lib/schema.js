@@ -995,6 +995,11 @@ export const runtimeProperties = {
           { type: 'string' }
         ],
         default: 10000
+      },
+      closeConnections: {
+        type: 'boolean',
+        default: true,
+        description: 'Add Connection: close header to HTTP responses during graceful shutdown'
       }
     },
     default: {},

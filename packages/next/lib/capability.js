@@ -130,6 +130,28 @@ export class NextCapability extends BaseCapability {
     }
   }
 
+  setClosing () {
+    super.setClosing()
+
+    if (!this.#server) return
+
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (!closeConnections) return
+
+    // Add request listener to set Connection: close for raw HTTP server
+    const self = this
+    this.#server.on('request', (req, res) => {
+      if (self.closing && !res.headersSent && req.httpVersionMajor !== 2) {
+        res.setHeader('Connection', 'close')
+      }
+    })
+
+    // For HTTP/2, send GOAWAY frames
+    if (this.#server.closeHttp2Sessions) {
+      this.#server.closeHttp2Sessions()
+    }
+  }
+
   async build () {
     const config = this.config
     const loader = new URL('./loader.js', import.meta.url)

@@ -60,6 +60,7 @@ export class BaseCapability extends EventEmitter {
   #metricsCollected
   #pendingDependenciesWaits
   #reuseTcpPortsSubscribers
+  #closing
 
   constructor (type, version, root, config, context, standardStreams = {}) {
     super()
@@ -96,6 +97,16 @@ export class BaseCapability extends EventEmitter {
     this.reuseTcpPorts = this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
+
+    // Track if graceful shutdown is in progress
+    this.#closing = false
+
+    // Listen for controller 'stopping' event to initiate graceful shutdown early
+    if (this.context.controller) {
+      this.context.controller.once('stopping', () => {
+        this.setClosing()
+      })
+    }
 
     // Setup globals
     this.registerGlobals({
@@ -430,6 +441,21 @@ export class BaseCapability extends EventEmitter {
       throw new Error(
         `Cannot access directory '${path}'. Please run the 'build' command before running in production mode.`
       )
+    }
+  }
+
+  get closing () {
+    return this.#closing
+  }
+
+  setClosing () {
+    if (this.#closing) return
+    this.#closing = true
+    this.emit('closing')
+
+    // Forward to child process if using childManager
+    if (this.childManager && this.clientWs) {
+      this.childManager.send(this.clientWs, 'setClosing', {}).catch(() => {})
     }
   }
 

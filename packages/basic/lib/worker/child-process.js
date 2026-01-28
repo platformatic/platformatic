@@ -124,6 +124,10 @@ export class ChildProcess extends ITC {
           }
 
           return handled
+        },
+        setClosing: () => {
+          globalThis.platformatic.closing = true
+          globalThis.platformatic.events.emit('closing')
         }
       }
     })
