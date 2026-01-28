@@ -39,6 +39,23 @@ export class ServiceCapability extends BaseCapability {
       }
     })
 
+    // Add hook to set Connection: close during graceful shutdown.
+    // This must be added BEFORE plugins are registered, because if a plugin
+    // calls app.ready() during registration and we add hooks afterwards,
+    // it can cause issues with Fastify's internal promise handling.
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (closeConnections) {
+      this.#app.addHook('onRequest', (request, reply, done) => {
+        if (this.closing) {
+          // For HTTP/1.x, set Connection: close
+          if (request.raw.httpVersionMajor !== 2) {
+            reply.header('Connection', 'close')
+          }
+        }
+        done()
+      })
+    }
+
     // This must be done before loading the plugins, so they can inspect if the
     // openTelemetry decorator exists and then configure accordingly.
     // Skip manual telemetry plugin if automatic instrumentation is already active
@@ -62,20 +79,6 @@ export class ServiceCapability extends BaseCapability {
       await this.#app.register(setupRoot)
     }
 
-    // Add hook to set Connection: close during graceful shutdown
-    // This runs BEFORE Fastify's own closing logic kicks in
-    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
-    if (closeConnections) {
-      this.#app.addHook('onRequest', (request, reply, done) => {
-        if (this.closing) {
-          // For HTTP/1.x, set Connection: close
-          if (request.raw.httpVersionMajor !== 2) {
-            reply.header('Connection', 'close')
-          }
-        }
-        done()
-      })
-    }
   }
 
   async start (startOptions) {
