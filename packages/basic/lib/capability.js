@@ -610,6 +610,11 @@ export class BaseCapability extends EventEmitter {
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
+    // Forward health signals from child process to runtime
+    childManager.on('healthSignals', ({ workerId, signals }) => {
+      globalThis[kITC]?.send('sendHealthSignals', { workerId, signals })
+    })
+
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     childManager.on('url', (url, clientWs) => {
