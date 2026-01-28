@@ -636,6 +636,11 @@ export class BaseCapability extends EventEmitter {
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
+    // Forward health signals from child process to runtime
+    childManager.on('healthSignals', ({ workerId, signals }) => {
+      globalThis[kITC]?.send('sendHealthSignals', { workerId, signals })
+    })
+
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     childManager.on('url', (url, clientWs) => {
@@ -645,13 +650,19 @@ export class BaseCapability extends EventEmitter {
   }
 
   async spawn (command) {
-    const [executable, ...args] = parseCommandString(command)
+    let [executable, ...args] = parseCommandString(command)
     const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
+
+    // Use the current Node.js executable instead of relying on PATH lookup
+    // This ensures subprocess uses the same Node.js version as the parent
+    if (executable === 'node') {
+      executable = process.execPath
+    }
 
     /* c8 ignore next 3 */
     const subprocess =
       platform() === 'win32'
-        ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
+        ? spawn(command.replace(/^node\b/, process.execPath), { cwd: this.root, shell: true, windowsVerbatimArguments: true })
         : spawn(executable, args, { cwd: this.root, shell: hasChainedCommands })
 
     subprocess.stdout.setEncoding('utf8')
