@@ -1,6 +1,6 @@
 {
   "name": "create-wattpm",
-  "version": "3.35.0",
+  "version": "3.34.1-alpha.3",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",

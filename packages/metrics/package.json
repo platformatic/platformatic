@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/metrics",
-  "version": "3.35.0",
+  "version": "3.34.1-alpha.3",
   "description": "Platformatic Capability Metrics",
   "main": "index.js",
   "type": "module",
