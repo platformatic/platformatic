@@ -312,59 +312,63 @@ test('should get json logs from thread applications when they are not pino defau
   )
 })
 
-test('should handle logs from thread applications as they are with captureStdio: false', { skip: isWindows }, async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
+test(
+  'should handle logs from thread applications as they are with captureStdio: false',
+  { skip: isWindows },
+  async t => {
+    const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
-  let responses = 0
-  let requested = false
-  const { stdout } = await execRuntime({
-    configPath,
-    onReady: async ({ url }) => {
-      await requestAndDump(url, { path: '/service/' })
-      await requestAndDump(url, { path: '/node/' })
-      requested = true
-    },
-    done: message => {
-      if (message.includes('call route / on service')) {
-        responses++
-      } else if (message.includes('call route / on node')) {
-        responses++
+    let responses = 0
+    let requested = false
+    const { stdout } = await execRuntime({
+      configPath,
+      onReady: async ({ url }) => {
+        await requestAndDump(url, { path: '/service/' })
+        await requestAndDump(url, { path: '/node/' })
+        requested = true
+      },
+      done: message => {
+        if (message.includes('call route / on service')) {
+          responses++
+        } else if (message.includes('call route / on node')) {
+          responses++
+        }
+        return requested && responses > 1
       }
-      return requested && responses > 1
-    }
-  })
-  const logs = stdioOutputToLogs(stdout)
-
-  ok(
-    logs.find(log => {
-      return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
     })
-  )
+    const logs = stdioOutputToLogs(stdout)
 
-  ok(
-    logs.find(log => {
-      return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
-    })
-  )
+    ok(
+      logs.find(log => {
+        return log.nodeLevel === 'debug' && log.name === 'node' && log.msg === 'call route / on node'
+      })
+    )
 
-  ok(
-    logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "node"...'
-    })
-  )
+    ok(
+      logs.find(log => {
+        return log.applicationLevel === 'debug' && log.name === 'service' && log.msg === 'call route / on service'
+      })
+    )
 
-  ok(
-    logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "service"...'
-    })
-  )
+    ok(
+      logs.find(log => {
+        return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "node"...'
+      })
+    )
 
-  ok(
-    logs.find(log => {
-      return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "composer"...'
-    })
-  )
-})
+    ok(
+      logs.find(log => {
+        return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "service"...'
+      })
+    )
+
+    ok(
+      logs.find(log => {
+        return log.customLevelName === 'info' && log.msg === 'Starting the worker 0 of the application "composer"...'
+      })
+    )
+  }
+)
 
 test('should handle logs from thread applications as they are with captureStdio: false and managementApi: false', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
@@ -544,7 +548,7 @@ test('should use colors when printing applications logs', async t => {
   ok(
     stdout.match(
       // eslint-disable-next-line no-control-regex, no-regex-spaces
-      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) composer:0 \| \u001b\[0m \u001b\[32m  INFO\u001b\[39m: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
+      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) composer:0 \|\u001b\[0m\u001b\[32m  INFO\u001b\[39m: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
     )
   )
 })
@@ -601,7 +605,10 @@ test('should inherit logger level from runtime when service does not specify log
   // The service should have inherited 'debug' level from runtime,
   // not the old default 'info' from schema
   ok(levelResponse, 'Level response received')
-  ok(levelResponse.level === 'debug', `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`)
+  ok(
+    levelResponse.level === 'debug',
+    `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`
+  )
 })
 
 // Same test but for @platformatic/node applications
@@ -627,5 +634,8 @@ test('should inherit logger level from runtime when node app does not specify lo
   // The node app should have inherited 'debug' level from runtime,
   // not the old default 'info' from schema
   ok(levelResponse, 'Level response received')
-  ok(levelResponse.level === 'debug', `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`)
+  ok(
+    levelResponse.level === 'debug',
+    `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`
+  )
 })

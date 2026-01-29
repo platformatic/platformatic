@@ -106,3 +106,14 @@ test('should inject request via the HTTP port if asked to', async t => {
   const logs = await getLogsFromFile(root)
   ok(!logs.map(m => m.msg).includes('injecting via light-my-request'))
 })
+
+test('should not be able to send requests to a background job', async t => {
+  const { runtime, url } = await prepareRuntimeWithApplications(t, 'node-server-and-background', false, 'js', '/')
+
+  const info = await runtime.getApplicationMeta('frontend')
+  ok(info.gateway.url)
+
+  await verifyJSONViaHTTP(url, '/frontend/inject', 500, {
+    message: 'Background services cannot receive HTTP requests via the mesh network.'
+  })
+})

@@ -157,7 +157,7 @@ test('logs stdio from the application thread', async t => {
     // Do not use deepStrictEqual as some other message might be logged but we don't care about all of them
     deepEqual(runtimeMessages, [
       {
-        level: 30,
+        level: 20,
         pid,
         hostname,
         name: undefined,

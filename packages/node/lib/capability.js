@@ -36,10 +36,18 @@ const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 's
 
 // Paolo: This is kinda hackish but there is no better way. I apologize.
 function isFastify (app) {
+  if (!app) {
+    return false
+  }
+
   return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
 }
 
 function isKoa (app) {
+  if (!app) {
+    return false
+  }
+
   return typeof app.callback === 'function'
 }
 
@@ -369,6 +377,14 @@ export class NodeCapability extends BaseCapability {
     return this.getDispatchFunc()
   }
 
+  async getDispatchFunc () {
+    if (!this.#hasServer()) {
+      return this.#backgroundServiceInject.bind(this)
+    }
+
+    return super.getDispatchFunc()
+  }
+
   async _listen () {
     // Make this idempotent
     /* c8 ignore next 3 */
@@ -474,5 +490,9 @@ export class NodeCapability extends BaseCapability {
       allow: config.watch?.allow,
       ignore
     }
+  }
+
+  #backgroundServiceInject (_, res) {
+    res.destroy(new Error('Background services cannot receive HTTP requests via the mesh network.'))
   }
 }

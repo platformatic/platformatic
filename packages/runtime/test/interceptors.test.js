@@ -160,3 +160,18 @@ test('update undici interceptor config', async t => {
   const runtimeConfig = await app.getRuntimeConfig()
   deepStrictEqual(runtimeConfig.undici, newUndiciConfig)
 })
+
+test('interceptor readiness timeout handling', async t => {
+  const configFile = join(fixturesDir, 'interceptors-timeout', 'platformatic.runtime.json')
+  const app = await createRuntime(configFile)
+
+  // Note that this throws only because restartOnError is set to false in the config.
+  // In the real world the app would keep trying to restart.
+  try {
+    await app.start()
+  } catch (err) {
+    strictEqual(err.message, 'The worker 0 of the application "main" failed to join the mesh network in 3000ms.')
+  }
+
+  t.after(() => app.close())
+})

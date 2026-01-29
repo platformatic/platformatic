@@ -139,7 +139,7 @@ function createPrettifier (context) {
         const current = context.current
         const level = current.caller ? current.caller : labelColorized.replace(label, label.padStart(6, ' '))
 
-        return `${current.prefix} | \u001B[0m ${level}`
+        return `${current.prefix} |\u001B[0m${level}`
       }
     }
   })

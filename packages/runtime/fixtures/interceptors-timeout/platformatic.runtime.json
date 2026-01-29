@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "main",
+  "services": [
+    {
+      "id": "main",
+      "path": "services/main"
+    }
+  ],
+  "logger": {
+    "level": "info"
+  },
+  "startTimeout": 3000,
+  "gracefulShutdown": {
+    "application": 1000,
+    "runtime": 1000
+  },
+  "restartOnError": false
+}

@@ -148,3 +148,7 @@ export const WorkerInterceptorNotReadyError = createError(
   `${ERROR_PREFIX}_WORKER_INTERCEPTOR_NOT_READY`,
   'The "%s" application worker interceptor is not ready'
 )
+export const WorkerInterceptorJoinTimeoutError = createError(
+  `${ERROR_PREFIX}_WORKER_INTERCEPTOR_JOIN_TIMEOUT`,
+  'The %s failed to join the mesh network in %dms.'
+)
