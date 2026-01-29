@@ -36,10 +36,18 @@ const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 's
 
 // Paolo: This is kinda hackish but there is no better way. I apologize.
 function isFastify (app) {
+  if (!app) {
+    return false
+  }
+
   return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
 }
 
 function isKoa (app) {
+  if (!app) {
+    return false
+  }
+
   return typeof app.callback === 'function'
 }
 

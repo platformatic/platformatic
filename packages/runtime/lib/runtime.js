@@ -10,13 +10,14 @@ import {
   parseMemorySize
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc'
-import { client as metricsClient, collectProcessMetrics } from '@platformatic/metrics'
+import { collectProcessMetrics, client as metricsClient } from '@platformatic/metrics'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
+import { availableParallelism } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -36,8 +37,8 @@ import {
   MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
-  WorkerNotFoundError,
-  WorkerInterceptorNotReadyError
+  WorkerInterceptorJoinTimeoutError,
+  WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
@@ -56,6 +57,7 @@ import {
   kFullId,
   kHealthCheckTimer,
   kId,
+  kInterceptorReadyPromise,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
@@ -63,8 +65,7 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
-  kWorkerStatus,
-  kInterceptorReadyPromise
+  kWorkerStatus
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -89,7 +90,7 @@ function parseOrigins (origins) {
   })
 }
 
-const MAX_CONCURRENCY = 5
+const MAX_CONCURRENCY = availableParallelism()
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
@@ -497,7 +498,7 @@ export class Runtime extends EventEmitter {
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
     for (const application of applications) {
-      this.logger.info(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
+      this.logger.debug(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
       this.emitAndNotify('application:added', application)
     }
 
@@ -534,7 +535,7 @@ export class Runtime extends EventEmitter {
     }
 
     for (const application of applications) {
-      this.logger.info(`Removed application "${application}".`)
+      this.logger.warn(`Removed application "${application}".`)
       this.emitAndNotify('application:removed', application)
     }
 
@@ -2058,7 +2059,7 @@ export class Runtime extends EventEmitter {
 
         if (workerUrl === kTimeout) {
           this.emitAndNotify('application:worker:startTimeout', eventPayload)
-          this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
+          this.logger.error(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
           throw new ApplicationStartTimeoutError(id, config.startTimeout)
         }
@@ -2072,7 +2073,11 @@ export class Runtime extends EventEmitter {
         this.#url = workerUrl
       }
 
-      await this.#waitForWorkerInterceptor(worker)
+      // Wait for the interceptor to be ready
+      const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
+      if (interceptorResult === kTimeout) {
+        throw new WorkerInterceptorJoinTimeoutError(label, config.startTimeout)
+      }
 
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
@@ -2982,25 +2987,5 @@ export class Runtime extends EventEmitter {
     }
 
     this.#loggerContext.updatePrefixes(ids)
-  }
-
-  async #waitForWorkerInterceptor (worker, timeout = 10000) {
-    const workerId = worker[kId]
-    const applicationId = worker[kApplicationId]
-
-    const interceptorReadyTimeout = setTimeout(() => {
-      this.logger.error(
-        { applicationId, workerId },
-        'The worker interceptor is not ready after 10s'
-      )
-      throw new WorkerInterceptorNotReadyError(applicationId)
-    }, timeout)
-
-    try {
-      await worker[kInterceptorReadyPromise]
-      worker[kInterceptorReadyPromise] = null
-    } finally {
-      clearTimeout(interceptorReadyTimeout)
-    }
   }
 }
