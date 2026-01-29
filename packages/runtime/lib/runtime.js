@@ -17,7 +17,6 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
-import { availableParallelism } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -90,7 +89,8 @@ function parseOrigins (origins) {
   })
 }
 
-const MAX_CONCURRENCY = availableParallelism()
+// Always run operations in parallel to avoid deadlocks when services have dependencies
+const MAX_CONCURRENCY = Infinity
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
