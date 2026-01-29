@@ -100,10 +100,10 @@ test('can abort waiting for dependencies if the runtime is stopped', async t => 
 })
 
 /*
-  Applications are always started in parallel to avoid deadlocks when services have dependencies.
-  This test verifies that applications with dependencies start correctly in parallel.
+  Setting concurrency to 1 here will force the runtime to start the applications sequentially.
+  This means that when composer is started, service-2 is already started.
 */
-test('starts applications in parallel regardless of concurrency setting', async t => {
+test('does not wait for dependencies that have already been started', async t => {
   const context = { concurrency: 1 }
   const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
   const runtime = await createRuntime(configFile, null, context)
@@ -117,12 +117,12 @@ test('starts applications in parallel regardless of concurrency setting', async 
   const logs = await readLogs(context.logsPath, 0)
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
-  // Both applications should start and complete successfully
-  // The exact order may vary since they start in parallel
-  ok(startLogs.includes('Starting the worker 0 of the application "service-1"...'))
-  ok(startLogs.includes('Starting the worker 0 of the application "composer"...'))
-  ok(startLogs.includes('Started the worker 0 of the application "service-1"...'))
-  ok(startLogs.includes('Started the worker 0 of the application "composer"...'))
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
 })
 
 test('applications wait for dependant applications before stopping', async t => {

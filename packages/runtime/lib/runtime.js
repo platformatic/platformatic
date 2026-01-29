@@ -89,6 +89,8 @@ function parseOrigins (origins) {
   })
 }
 
+// Always run operations in parallel to avoid deadlocks when services have dependencies
+const MAX_CONCURRENCY = Infinity
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
@@ -147,8 +149,7 @@ export class Runtime extends EventEmitter {
     this.#env = config[kMetadata].env
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
-    // Always run operations in parallel to avoid deadlocks when services have dependencies
-    this.#concurrency = Infinity
+    this.#concurrency = this.#context.concurrency ?? MAX_CONCURRENCY
     this.#applications = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
