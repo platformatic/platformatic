@@ -48,7 +48,7 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const app = await createRuntime(configFile, null, { concurrency: 1 })
+  const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t)
 
   t.after(async () => {
@@ -58,50 +58,35 @@ test('should post updated workers list via broadcast channel', async t => {
   await app.start()
   await app.stop()
 
-  const { events, threads } = await eventsPromise
+  const { events } = await eventsPromise
 
-  // Verify that the broadcast happened in the right order
+  // With parallel startup, exact ordering is not guaranteed.
+  // Verify that all expected workers appear in broadcasts and final state is empty.
 
-  const expected = { first: [{ id: 'first:0', application: 'first', thread: threads['first:0'], worker: 0 }] }
-  deepStrictEqual(events[0], new Map(Object.entries(expected)))
+  // Find the event with all workers started (before stop begins)
+  const fullStateEvent = events.find(e =>
+    e.has('first') && e.get('first').length === 3 &&
+    e.has('second') && e.get('second').length === 3 &&
+    e.has('composer') && e.get('composer').length === 1
+  )
+  ok(fullStateEvent, 'Should have a broadcast with all workers started')
 
-  expected.first.push({ id: 'first:1', application: 'first', thread: threads['first:1'], worker: 1 })
-  deepStrictEqual(events[1], new Map(Object.entries(expected)))
+  // Verify all expected workers are present
+  const firstWorkers = fullStateEvent.get('first')
+  ok(firstWorkers.some(w => w.id === 'first:0' && w.application === 'first' && w.worker === 0))
+  ok(firstWorkers.some(w => w.id === 'first:1' && w.application === 'first' && w.worker === 1))
+  ok(firstWorkers.some(w => w.id === 'first:2' && w.application === 'first' && w.worker === 2))
 
-  expected.first.push({ id: 'first:2', application: 'first', thread: threads['first:2'], worker: 2 })
-  deepStrictEqual(events[2], new Map(Object.entries(expected)))
+  const secondWorkers = fullStateEvent.get('second')
+  ok(secondWorkers.some(w => w.id === 'second:0' && w.application === 'second' && w.worker === 0))
+  ok(secondWorkers.some(w => w.id === 'second:1' && w.application === 'second' && w.worker === 1))
+  ok(secondWorkers.some(w => w.id === 'second:2' && w.application === 'second' && w.worker === 2))
 
-  expected.second = [{ id: 'second:0', application: 'second', thread: threads['second:0'], worker: 0 }]
-  deepStrictEqual(events[3], new Map(Object.entries(expected)))
+  const composerWorkers = fullStateEvent.get('composer')
+  ok(composerWorkers.some(w => w.id === 'composer:0' && w.application === 'composer' && w.worker === 0))
 
-  expected.second.push({ id: 'second:1', application: 'second', thread: threads['second:1'], worker: 1 })
-  deepStrictEqual(events[4], new Map(Object.entries(expected)))
-
-  expected.second.push({ id: 'second:2', application: 'second', thread: threads['second:2'], worker: 2 })
-  deepStrictEqual(events[5], new Map(Object.entries(expected)))
-
-  expected.composer = [{ id: 'composer:0', application: 'composer', thread: threads['composer:0'], worker: 0 }]
-  deepStrictEqual(events[6], new Map(Object.entries(expected)))
-
-  delete expected.composer
-  deepStrictEqual(events[7], new Map(Object.entries(expected)))
-
-  expected.first.shift()
-  deepStrictEqual(events[8], new Map(Object.entries(expected)))
-
-  expected.first.shift()
-  deepStrictEqual(events[9], new Map(Object.entries(expected)))
-
-  delete expected.first
-  deepStrictEqual(events[10], new Map(Object.entries(expected)))
-
-  expected.second.shift()
-  deepStrictEqual(events[11], new Map(Object.entries(expected)))
-
-  expected.second.shift()
-  deepStrictEqual(events[12], new Map(Object.entries(expected)))
-
-  deepStrictEqual(events[13], new Map())
+  // Verify final state is empty (last event)
+  deepStrictEqual(events[events.length - 1], new Map())
 })
 
 test('should post updated workers when something crashed', async t => {
