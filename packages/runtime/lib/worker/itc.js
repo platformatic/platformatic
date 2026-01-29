@@ -293,6 +293,19 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
       },
 
       async getHealth () {
+        // Check if running in subprocess mode - forward through ChildManager
+        const childManager = controller.capability?.getChildManager?.()
+        const clientWs = controller.capability?.clientWs
+
+        if (childManager && clientWs) {
+          try {
+            return await childManager.send(clientWs, 'getHealth')
+          } catch (err) {
+            throw new FailedToRetrieveHealthError(application.id, err.message)
+          }
+        }
+
+        // Existing thread implementation
         try {
           return await controller.getHealth()
         } catch (err) {

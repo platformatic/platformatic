@@ -236,3 +236,51 @@ test('ChildProcess - updateMetricsConfig should update metrics in subprocess', a
   await childManager.send(socket, 'done')
   await promise
 })
+
+test('ChildProcess - getHealth should return health metrics', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  const [, socket] = await once(childManager, 'ready')
+
+  // Get health metrics from the subprocess
+  const health = await childManager.send(socket, 'getHealth')
+
+  // Verify health metrics structure
+  ok(typeof health.elu === 'number', 'Expected ELU to be a number')
+  ok(health.elu >= 0 && health.elu <= 1, `Expected ELU to be between 0 and 1, got ${health.elu}`)
+  ok(typeof health.heapUsed === 'number', 'Expected heapUsed to be a number')
+  ok(health.heapUsed > 0, 'Expected heapUsed to be positive')
+  ok(typeof health.heapTotal === 'number', 'Expected heapTotal to be a number')
+  ok(health.heapTotal > 0, 'Expected heapTotal to be positive')
+  ok(health.heapUsed <= health.heapTotal, 'Expected heapUsed <= heapTotal')
+
+  // Signal done and wait for subprocess to exit
+  await childManager.send(socket, 'done')
+  await promise
+})
+
+test('ChildProcess - sendHealthSignal should be available in subprocess', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/health-signals-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  // Wait for health signals notification
+  const [healthSignalsData] = await once(childManager, 'healthSignals')
+
+  // Verify health signals structure
+  ok(healthSignalsData.signals, 'Expected signals array')
+  ok(Array.isArray(healthSignalsData.signals), 'Expected signals to be an array')
+  ok(healthSignalsData.signals.length > 0, 'Expected at least one signal')
+
+  const signal = healthSignalsData.signals[0]
+  equal(signal.type, 'test-signal', 'Expected signal type to be test-signal')
+  ok(typeof signal.timestamp === 'number', 'Expected timestamp to be a number')
+
+  await promise
+})

@@ -78,6 +78,7 @@ export class ChildProcess extends ITC {
   #metricsRegistry
   #pendingMessages
   #replStream
+  #lastELU
 
   constructor (executable) {
     super({
@@ -101,6 +102,13 @@ export class ChildProcess extends ITC {
         },
         replClose: () => {
           return this.#replClose()
+        },
+        getHealth: () => {
+          return this.#getHealth()
+        },
+        sendHealthSignals: ({ workerId, signals }) => {
+          // Forward health signals to the parent (ChildManager)
+          this.notify('healthSignals', { workerId, signals })
         },
         close: signal => {
           let handled = false
@@ -164,6 +172,9 @@ export class ChildProcess extends ITC {
       prometheus: { client, registry: this.#metricsRegistry },
       notifyConfig: this.#notifyConfig.bind(this)
     })
+
+    // Initialize health signals API for child processes
+    this.#initHealthSignalsApi()
   }
 
   registerGlobals (globals) {
@@ -401,6 +412,65 @@ export class ChildProcess extends ITC {
       this.#replStream.push(null)
       this.#replStream = null
     }
+  }
+
+  #getHealth () {
+    const currentELU = performance.eventLoopUtilization()
+    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
+    this.#lastELU = currentELU
+
+    const { heapUsed, heapTotal } = process.memoryUsage()
+
+    return {
+      elu,
+      heapUsed,
+      heapTotal
+    }
+  }
+
+  #initHealthSignalsApi () {
+    const queue = []
+    let isSending = false
+    let promise = null
+    const timeout = 1000
+
+    const sendHealthSignal = async (signal) => {
+      if (typeof signal !== 'object') {
+        throw new Error('Health signal must be an object')
+      }
+      if (typeof signal.type !== 'string') {
+        throw new Error('Health signal type must be a string')
+      }
+      if (!signal.timestamp || typeof signal.timestamp !== 'number') {
+        signal.timestamp = Date.now()
+      }
+
+      queue.push(signal)
+
+      if (!isSending) {
+        isSending = true
+        promise = new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            isSending = false
+            try {
+              const signals = queue.splice(0)
+              this.notify('healthSignals', {
+                workerId: globalThis.platformatic.workerId,
+                signals
+              })
+            } catch (err) {
+              reject(err)
+              return
+            }
+            resolve()
+          }, timeout)
+        })
+      }
+
+      return promise
+    }
+
+    globalThis.platformatic.sendHealthSignal = sendHealthSignal
   }
 
   #setupLogger () {
