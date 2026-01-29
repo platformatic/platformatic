@@ -78,7 +78,6 @@ export class ServiceCapability extends BaseCapability {
     if (!this.#app.hasRoute({ url: '/', method: 'GET' }) && !this.#app.hasRoute({ url: '/*', method: 'GET' })) {
       await this.#app.register(setupRoot)
     }
-
   }
 
   async start (startOptions) {
