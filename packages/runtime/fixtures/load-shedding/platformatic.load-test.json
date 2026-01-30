@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "services": [
+    {
+      "id": "service-busy",
+      "path": "./service-busy"
+    }
+  ],
+  "entrypoint": "service-busy",
+  "loadShedding": {
+    "enabled": true,
+    "maxELU": 0.5
+  }
+}

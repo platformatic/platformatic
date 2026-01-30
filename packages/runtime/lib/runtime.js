@@ -163,10 +163,7 @@ export class Runtime extends EventEmitter {
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
       timeout: this.#config.applicationTimeout,
-      onChannelCreation: this.#channelCreationHook,
-      canAccept: this.#loadSheddingConfig?.enabled
-        ? this.#canAcceptRequest.bind(this)
-        : undefined
+      onChannelCreation: this.#channelCreationHook
     })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
@@ -1918,7 +1915,7 @@ export class Runtime extends EventEmitter {
 
         // Update load shedding map with current worker health
         if (health) {
-          this.#updateWorkerLoadMap(worker, health)
+          await this.#updateWorkerLoadMap(worker, health)
         }
 
         const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
@@ -3001,33 +2998,11 @@ export class Runtime extends EventEmitter {
     worker[kWorkerHealthSignals].add(signals)
   }
 
-  #canAcceptRequest (ctx) {
-    // ctx: { hostname, method, path, headers, port, meta }
-    const { meta } = ctx
-
-    if (!meta?.workerId) {
-      return true // No metadata, allow request
-    }
-
-    const loadInfo = this.#workerLoadMap.get(meta.workerId)
-
-    if (!loadInfo) {
-      return true // No load info yet, allow request (startup grace period)
-    }
-
-    // Stale data check (> 2 seconds old)
-    if (Date.now() - loadInfo.timestamp > 2000) {
-      return true
-    }
-
-    return loadInfo.accepting
-  }
-
   #getLoadSheddingConfigForApp (applicationId) {
     return this.#loadSheddingConfig?.applications?.[applicationId]
   }
 
-  #updateWorkerLoadMap (worker, health) {
+  async #updateWorkerLoadMap (worker, health) {
     if (!this.#loadSheddingConfig?.enabled) {
       return
     }
@@ -3046,12 +3021,33 @@ export class Runtime extends EventEmitter {
     const heapRatio = health.heapTotal > 0 ? health.heapUsed / health.heapTotal : 0
     const accepting = health.elu < maxELU && heapRatio < maxHeapRatio
 
-    this.#workerLoadMap.set(worker[kId], {
+    const workerId = worker[kId]
+    const previousState = this.#workerLoadMap.get(workerId)
+    const wasAccepting = previousState?.accepting ?? true
+
+    this.#workerLoadMap.set(workerId, {
       elu: health.elu,
       heapRatio,
       accepting,
       timestamp: Date.now()
     })
+
+    // Pause or resume worker based on state change
+    if (wasAccepting && !accepting) {
+      this.logger.warn(`Worker ${workerId} exceeded load thresholds (ELU: ${health.elu.toFixed(3)}, heap: ${(heapRatio * 100).toFixed(1)}%), pausing`)
+      try {
+        await this.#meshInterceptor.pauseWorker(worker)
+      } catch (err) {
+        this.logger.error({ err }, `Failed to pause worker ${workerId}`)
+      }
+    } else if (!wasAccepting && accepting) {
+      this.logger.info(`Worker ${workerId} recovered (ELU: ${health.elu.toFixed(3)}, heap: ${(heapRatio * 100).toFixed(1)}%), resuming`)
+      try {
+        await this.#meshInterceptor.resumeWorker(worker)
+      } catch (err) {
+        this.logger.error({ err }, `Failed to resume worker ${workerId}`)
+      }
+    }
   }
 
   #updateLoggingPrefixes () {
