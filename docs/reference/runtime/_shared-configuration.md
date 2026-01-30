@@ -408,6 +408,32 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`healthChecksTimeouts`**: The number of milliseconds to wait for Prometheus liveness or readiness checks before considering them timed out. Default: `5000` (5 seconds).
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
+- **`httpCustomLabels`** (`array`): Optional configuration for custom HTTP metric labels. By default, HTTP metrics include a `telemetry_id` label extracted from the `x-plt-telemetry-id` header (omitted when header is not present). Use this option to customize or replace the default labels. Each array element is an object with:
+  - **`name`** (`string`, **required**): The label name to use in metrics.
+  - **`header`** (`string`, **required**): The HTTP header to extract the value from.
+  - **`default`** (`string`): Optional default value when the header is missing. If not specified, the label is omitted when the header is not present.
+
+```json title="Example: Rename telemetry_id to callerTelemetryId"
+{
+  "metrics": {
+    "httpCustomLabels": [
+      { "name": "callerTelemetryId", "header": "x-plt-telemetry-id" }
+    ]
+  }
+}
+```
+
+```json title="Example: Multiple custom labels with defaults"
+{
+  "metrics": {
+    "httpCustomLabels": [
+      { "name": "telemetry_id", "header": "x-plt-telemetry-id" },
+      { "name": "tenant", "header": "x-tenant-id", "default": "unknown" }
+    ]
+  }
+}
+```
+
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
 - **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
   - **`enabled`** (`boolean` or `string`): Enable or disable OTLP metrics export. Default: `true` if endpoint is configured.

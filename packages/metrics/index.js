@@ -316,25 +316,46 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
 // Build custom labels configuration from metrics config
 // Returns { customLabels: string[], getCustomLabels: (req) => object }
 export function buildCustomLabelsConfig (customLabelsConfig) {
-  // Default: use telemetry_id from x-plt-telemetry-id header
+  // Default: use telemetry_id from x-plt-telemetry-id header, omit when header is missing
   if (!customLabelsConfig || customLabelsConfig.length === 0) {
     return {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
+        const telemetryId = req.headers?.['x-plt-telemetry-id']
+        return telemetryId ? { telemetry_id: telemetryId } : {}
       }
     }
   }
 
-  // Build custom labels from configuration
+  // Check if x-plt-telemetry-id is already mapped by custom labels
+  const hasTelemetryIdMapping = customLabelsConfig.some(
+    label => label.header.toLowerCase() === 'x-plt-telemetry-id'
+  )
+
+  // Build custom labels from configuration, adding default telemetry_id if not mapped
   const customLabels = customLabelsConfig.map(label => label.name)
+  if (!hasTelemetryIdMapping) {
+    customLabels.push('telemetry_id')
+  }
 
   const getCustomLabels = req => {
     const labels = {}
     for (const labelConfig of customLabelsConfig) {
       const headerValue = req.headers?.[labelConfig.header.toLowerCase()]
-      labels[labelConfig.name] = headerValue ?? labelConfig.default ?? 'unknown'
+      // Only include label if header is present or explicit default is configured
+      if (headerValue !== undefined) {
+        labels[labelConfig.name] = headerValue
+      } else if (labelConfig.default !== undefined) {
+        labels[labelConfig.name] = labelConfig.default
+      }
+      // Omit label entirely if header is missing and no default configured
+    }
+    // Add default telemetry_id if not mapped by custom labels
+    if (!hasTelemetryIdMapping) {
+      const telemetryId = req.headers?.['x-plt-telemetry-id']
+      if (telemetryId) {
+        labels.telemetry_id = telemetryId
+      }
     }
     return labels
   }

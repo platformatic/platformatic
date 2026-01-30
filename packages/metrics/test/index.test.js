@@ -128,28 +128,27 @@ test('httpMetrics summary resets after metric collection', async () => {
 })
 
 // Tests for buildCustomLabelsConfig
-test('buildCustomLabelsConfig returns default telemetry_id when no config provided', () => {
+test('buildCustomLabelsConfig returns telemetry_id when no config provided', () => {
   const result = buildCustomLabelsConfig(undefined)
 
   assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
   assert.strictEqual(typeof result.getCustomLabels, 'function')
 
-  // Test default getCustomLabels function
   const labels = result.getCustomLabels({ headers: { 'x-plt-telemetry-id': 'test-id' } })
   assert.deepStrictEqual(labels, { telemetry_id: 'test-id' })
 })
 
-test('buildCustomLabelsConfig returns default telemetry_id when empty array provided', () => {
+test('buildCustomLabelsConfig returns telemetry_id when empty array provided', () => {
   const result = buildCustomLabelsConfig([])
 
   assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
 })
 
-test('buildCustomLabelsConfig uses unknown as default when header is missing', () => {
+test('buildCustomLabelsConfig returns empty object when header is missing', () => {
   const result = buildCustomLabelsConfig(undefined)
 
   const labels = result.getCustomLabels({ headers: {} })
-  assert.deepStrictEqual(labels, { telemetry_id: 'unknown' })
+  assert.deepStrictEqual(labels, {})
 })
 
 test('buildCustomLabelsConfig builds custom labels from configuration', () => {
@@ -160,7 +159,8 @@ test('buildCustomLabelsConfig builds custom labels from configuration', () => {
 
   const result = buildCustomLabelsConfig(config)
 
-  assert.deepStrictEqual(result.customLabels, ['domain', 'api_version'])
+  // Includes custom labels plus default telemetry_id (since x-plt-telemetry-id is not mapped)
+  assert.deepStrictEqual(result.customLabels, ['domain', 'api_version', 'telemetry_id'])
   assert.strictEqual(typeof result.getCustomLabels, 'function')
 })
 
@@ -192,7 +192,8 @@ test('buildCustomLabelsConfig uses custom default value when header is missing',
 
   const labels = result.getCustomLabels({ headers: {} })
 
-  assert.deepStrictEqual(labels, { domain: 'default-domain', api_version: 'unknown' })
+  // api_version is omitted because no header and no default configured
+  assert.deepStrictEqual(labels, { domain: 'default-domain' })
 })
 
 test('buildCustomLabelsConfig handles case-insensitive header names', () => {
@@ -210,6 +211,45 @@ test('buildCustomLabelsConfig handles case-insensitive header names', () => {
   })
 
   assert.deepStrictEqual(labels, { domain: 'example.com' })
+})
+
+test('buildCustomLabelsConfig adds default telemetry_id when not mapped by custom labels', () => {
+  const config = [
+    { name: 'tenant', header: 'x-tenant-id' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  // Should include both custom label and default telemetry_id
+  assert.deepStrictEqual(result.customLabels, ['tenant', 'telemetry_id'])
+
+  const labels = result.getCustomLabels({
+    headers: {
+      'x-tenant-id': 'acme',
+      'x-plt-telemetry-id': 'test-telemetry'
+    }
+  })
+
+  assert.deepStrictEqual(labels, { tenant: 'acme', telemetry_id: 'test-telemetry' })
+})
+
+test('buildCustomLabelsConfig does not add default telemetry_id when already mapped', () => {
+  const config = [
+    { name: 'callerTelemetryId', header: 'x-plt-telemetry-id' }
+  ]
+
+  const result = buildCustomLabelsConfig(config)
+
+  // Should only include the custom mapping, not the default
+  assert.deepStrictEqual(result.customLabels, ['callerTelemetryId'])
+
+  const labels = result.getCustomLabels({
+    headers: {
+      'x-plt-telemetry-id': 'test-telemetry'
+    }
+  })
+
+  assert.deepStrictEqual(labels, { callerTelemetryId: 'test-telemetry' })
 })
 
 test('httpMetrics with custom labels configuration', async () => {
