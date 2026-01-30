@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "service-1",
+  "applications": [
+    {
+      "id": "service-1",
+      "path": "./services/service-1",
+      "dependencies": ["service-2"]
+    },
+    {
+      "id": "service-2",
+      "path": "./services/service-2",
+      "dependencies": ["service-1"]
+    }
+  ]
+}

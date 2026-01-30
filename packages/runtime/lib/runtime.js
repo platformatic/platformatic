@@ -7,7 +7,8 @@ import {
   features,
   kMetadata,
   kTimeout,
-  parseMemorySize
+  parseMemorySize,
+  topologicalSort
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc'
 import { collectProcessMetrics, client as metricsClient } from '@platformatic/metrics'
@@ -91,61 +92,6 @@ function parseOrigins (origins) {
 }
 
 const MAX_CONCURRENCY = availableParallelism()
-
-// Topological sort using Kahn's algorithm to order applications by dependencies.
-// This ensures dependencies start before dependents, avoiding deadlocks with limited concurrency.
-function topologicalSortApplications (applications) {
-  const ids = applications.map(app => app.id)
-  const idSet = new Set(ids)
-
-  // Build adjacency list and in-degree count
-  const inDegree = new Map()
-  const dependents = new Map() // dependency -> [apps that depend on it]
-
-  for (const app of applications) {
-    inDegree.set(app.id, 0)
-    dependents.set(app.id, [])
-  }
-
-  for (const app of applications) {
-    const deps = app.dependencies ?? []
-    for (const dep of deps) {
-      // Only count dependencies that exist in the runtime
-      if (idSet.has(dep)) {
-        inDegree.set(app.id, inDegree.get(app.id) + 1)
-        dependents.get(dep).push(app.id)
-      }
-    }
-  }
-
-  // Start with apps that have no dependencies
-  const queue = []
-  for (const [id, degree] of inDegree) {
-    if (degree === 0) {
-      queue.push(id)
-    }
-  }
-
-  const sorted = []
-  while (queue.length > 0) {
-    const id = queue.shift()
-    sorted.push(id)
-
-    for (const dependent of dependents.get(id)) {
-      inDegree.set(dependent, inDegree.get(dependent) - 1)
-      if (inDegree.get(dependent) === 0) {
-        queue.push(dependent)
-      }
-    }
-  }
-
-  // If not all apps were sorted, there's a cycle - return original order
-  if (sorted.length !== ids.length) {
-    return ids
-  }
-
-  return sorted
-}
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
@@ -322,7 +268,7 @@ export class Runtime extends EventEmitter {
 
     try {
       // Sort applications by dependencies to avoid deadlocks with limited concurrency
-      const sortedIds = topologicalSortApplications(Array.from(this.#applications.values()))
+      const sortedIds = topologicalSort(Array.from(this.#applications.values()))
       await this.startApplications(sortedIds, silent)
 
       if (this.#config.inspectorOptions) {

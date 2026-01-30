@@ -152,3 +152,23 @@ test('applications wait for dependant applications before stopping', async t => 
     { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-1"...' }
   ])
 })
+
+test('fails to start with circular dependencies', async t => {
+  const context = {}
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.circular.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await rejects(
+    () => runtime.start(),
+    (err) => {
+      ok(err.message.includes('Circular dependency detected'))
+      ok(err.message.includes('service-1'))
+      ok(err.message.includes('service-2'))
+      return true
+    }
+  )
+})
