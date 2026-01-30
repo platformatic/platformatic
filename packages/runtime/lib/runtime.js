@@ -71,6 +71,7 @@ const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
+const kWorkerMeta = Symbol('plt.runtime.worker.meta')
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -138,6 +139,9 @@ export class Runtime extends EventEmitter {
 
   #channelCreationHook
 
+  #loadSheddingConfig
+  #workerLoadMap
+
   #processMetricsRegistry
 
   constructor (config, context) {
@@ -154,10 +158,15 @@ export class Runtime extends EventEmitter {
     this.#workers = new RoundRobinMap()
     this.#url = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
+    this.#loadSheddingConfig = config.loadShedding
+    this.#workerLoadMap = new Map()
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
       timeout: this.#config.applicationTimeout,
-      onChannelCreation: this.#channelCreationHook
+      onChannelCreation: this.#channelCreationHook,
+      canAccept: this.#loadSheddingConfig?.enabled
+        ? this.#canAcceptRequest.bind(this)
+        : undefined
     })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
@@ -1832,7 +1841,13 @@ export class Runtime extends EventEmitter {
     // Setup the interceptor
     // kInterceptorReadyPromise resolves when the worker
     // is ready to receive requests: after calling the replaceServer method
-    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
+    const workerMeta = {
+      workerId: worker[kId],
+      applicationId,
+      workerIndex: index
+    }
+    worker[kWorkerMeta] = workerMeta
+    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker, workerMeta)
 
     // Wait for initialization
     await waitEventFromITC(worker, 'init')
@@ -1849,9 +1864,14 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollectionIfNeeded () {
-    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
-    // or if any worker has health checks enabled
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling),
+    // if load shedding is enabled, or if any worker has health checks enabled
     let needsHealthMetrics = !!this.#dynamicWorkersScaler
+
+    // Also need health metrics for load shedding
+    if (!needsHealthMetrics && this.#loadSheddingConfig?.enabled) {
+      needsHealthMetrics = true
+    }
 
     if (!needsHealthMetrics) {
       // Check if any worker has health checks enabled
@@ -1894,6 +1914,11 @@ export class Runtime extends EventEmitter {
           this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
         } finally {
           worker[kLastHealthCheckELU] = health?.currentELU ?? null
+        }
+
+        // Update load shedding map with current worker health
+        if (health) {
+          this.#updateWorkerLoadMap(worker, health)
         }
 
         const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
@@ -2974,6 +2999,59 @@ export class Runtime extends EventEmitter {
 
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
+  }
+
+  #canAcceptRequest (ctx) {
+    // ctx: { hostname, method, path, headers, port, meta }
+    const { meta } = ctx
+
+    if (!meta?.workerId) {
+      return true // No metadata, allow request
+    }
+
+    const loadInfo = this.#workerLoadMap.get(meta.workerId)
+
+    if (!loadInfo) {
+      return true // No load info yet, allow request (startup grace period)
+    }
+
+    // Stale data check (> 2 seconds old)
+    if (Date.now() - loadInfo.timestamp > 2000) {
+      return true
+    }
+
+    return loadInfo.accepting
+  }
+
+  #getLoadSheddingConfigForApp (applicationId) {
+    return this.#loadSheddingConfig?.applications?.[applicationId]
+  }
+
+  #updateWorkerLoadMap (worker, health) {
+    if (!this.#loadSheddingConfig?.enabled) {
+      return
+    }
+
+    const applicationId = worker[kApplicationId]
+    const appConfig = this.#getLoadSheddingConfigForApp(applicationId)
+
+    // Check if load shedding is explicitly disabled for this app
+    if (appConfig?.enabled === false) {
+      return
+    }
+
+    const maxELU = appConfig?.maxELU ?? this.#loadSheddingConfig.maxELU ?? 0.9
+    const maxHeapRatio = appConfig?.maxHeapUsedRatio ?? this.#loadSheddingConfig.maxHeapUsedRatio ?? 0.95
+
+    const heapRatio = health.heapTotal > 0 ? health.heapUsed / health.heapTotal : 0
+    const accepting = health.elu < maxELU && heapRatio < maxHeapRatio
+
+    this.#workerLoadMap.set(worker[kId], {
+      elu: health.elu,
+      heapRatio,
+      accepting,
+      timestamp: Date.now()
+    })
   }
 
   #updateLoggingPrefixes () {
