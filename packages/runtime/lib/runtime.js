@@ -91,7 +91,7 @@ function parseOrigins (origins) {
   })
 }
 
-const MAX_CONCURRENCY = availableParallelism()
+const MAX_CONCURRENCY = Math.max(1, availableParallelism())
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
