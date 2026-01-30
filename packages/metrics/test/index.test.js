@@ -144,11 +144,11 @@ test('buildCustomLabelsConfig returns telemetry_id when empty array provided', (
   assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
 })
 
-test('buildCustomLabelsConfig returns empty object when header is missing', () => {
+test('buildCustomLabelsConfig returns empty telemetry_id when header is missing', () => {
   const result = buildCustomLabelsConfig(undefined)
 
   const labels = result.getCustomLabels({ headers: {} })
-  assert.deepStrictEqual(labels, {})
+  assert.deepStrictEqual(labels, { telemetry_id: '' })
 })
 
 test('buildCustomLabelsConfig builds custom labels from configuration', () => {
@@ -179,7 +179,8 @@ test('buildCustomLabelsConfig getCustomLabels extracts values from headers', () 
     }
   })
 
-  assert.deepStrictEqual(labels, { domain: 'example.com', api_version: 'v2' })
+  // telemetry_id added since x-plt-telemetry-id not mapped
+  assert.deepStrictEqual(labels, { domain: 'example.com', api_version: 'v2', telemetry_id: '' })
 })
 
 test('buildCustomLabelsConfig uses custom default value when header is missing', () => {
@@ -192,8 +193,8 @@ test('buildCustomLabelsConfig uses custom default value when header is missing',
 
   const labels = result.getCustomLabels({ headers: {} })
 
-  // api_version is omitted because no header and no default configured
-  assert.deepStrictEqual(labels, { domain: 'default-domain' })
+  // api_version is empty string (no header, no default), telemetry_id added since not mapped
+  assert.deepStrictEqual(labels, { domain: 'default-domain', api_version: '', telemetry_id: '' })
 })
 
 test('buildCustomLabelsConfig handles case-insensitive header names', () => {
@@ -210,10 +211,11 @@ test('buildCustomLabelsConfig handles case-insensitive header names', () => {
     }
   })
 
-  assert.deepStrictEqual(labels, { domain: 'example.com' })
+  // telemetry_id added since x-plt-telemetry-id not mapped
+  assert.deepStrictEqual(labels, { domain: 'example.com', telemetry_id: '' })
 })
 
-test('buildCustomLabelsConfig adds default telemetry_id when not mapped by custom labels', () => {
+test('buildCustomLabelsConfig adds telemetry_id when not mapped by custom labels', () => {
   const config = [
     { name: 'tenant', header: 'x-tenant-id' }
   ]

@@ -316,13 +316,13 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
 // Build custom labels configuration from metrics config
 // Returns { customLabels: string[], getCustomLabels: (req) => object }
 export function buildCustomLabelsConfig (customLabelsConfig) {
-  // Default: use telemetry_id from x-plt-telemetry-id header, omit when header is missing
+  // Default: use telemetry_id from x-plt-telemetry-id header
   if (!customLabelsConfig || customLabelsConfig.length === 0) {
     return {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id']
-        return telemetryId ? { telemetry_id: telemetryId } : {}
+        const telemetryId = req.headers?.['x-plt-telemetry-id'] || ''
+        return { telemetry_id: telemetryId }
       }
     }
   }
@@ -336,11 +336,12 @@ export function buildCustomLabelsConfig (customLabelsConfig) {
     }
   }
 
-  // Build custom labels from configuration, adding default telemetry_id if not mapped
+  // Build custom labels from configuration
   const customLabels = []
   for (let i = 0; i < customLabelsConfig.length; i++) {
     customLabels.push(customLabelsConfig[i].name)
   }
+  // Add default telemetry_id if not mapped by custom labels
   if (!hasTelemetryIdMapping) {
     customLabels.push('telemetry_id')
   }
@@ -349,20 +350,17 @@ export function buildCustomLabelsConfig (customLabelsConfig) {
     const labels = {}
     for (const labelConfig of customLabelsConfig) {
       const headerValue = req.headers?.[labelConfig.header.toLowerCase()]
-      // Only include label if header is present or explicit default is configured
       if (headerValue !== undefined) {
         labels[labelConfig.name] = headerValue
       } else if (labelConfig.default !== undefined) {
         labels[labelConfig.name] = labelConfig.default
+      } else {
+        labels[labelConfig.name] = ''
       }
-      // Omit label entirely if header is missing and no default configured
     }
     // Add default telemetry_id if not mapped by custom labels
     if (!hasTelemetryIdMapping) {
-      const telemetryId = req.headers?.['x-plt-telemetry-id']
-      if (telemetryId) {
-        labels.telemetry_id = telemetryId
-      }
+      labels.telemetry_id = req.headers?.['x-plt-telemetry-id'] || ''
     }
     return labels
   }
