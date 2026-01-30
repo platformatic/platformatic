@@ -50,10 +50,12 @@ test('starts applications according to their implicit or explicit dependencies',
 
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
+  // With topological sort, service-1 starts before service-2 (since service-2 depends on service-1)
+  // composer has no explicit deps so it starts first, but waits for implicit deps (gateway behavior)
   deepStrictEqual(startLogs, [
     'Starting the worker 0 of the application "composer"...',
-    'Starting the worker 0 of the application "service-2"...',
     'Starting the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "service-2"...',
     'Started the worker 0 of the application "service-1"...',
     'Started the worker 0 of the application "service-2"...',
     'Started the worker 0 of the application "composer"...'
