@@ -328,12 +328,19 @@ export function buildCustomLabelsConfig (customLabelsConfig) {
   }
 
   // Check if x-plt-telemetry-id is already mapped by custom labels
-  const hasTelemetryIdMapping = customLabelsConfig.some(
-    label => label.header.toLowerCase() === 'x-plt-telemetry-id'
-  )
+  let hasTelemetryIdMapping = false
+  for (let i = 0; i < customLabelsConfig.length; i++) {
+    if (customLabelsConfig[i].header.toLowerCase() === 'x-plt-telemetry-id') {
+      hasTelemetryIdMapping = true
+      break
+    }
+  }
 
   // Build custom labels from configuration, adding default telemetry_id if not mapped
-  const customLabels = customLabelsConfig.map(label => label.name)
+  const customLabels = []
+  for (let i = 0; i < customLabelsConfig.length; i++) {
+    customLabels.push(customLabelsConfig[i].name)
+  }
   if (!hasTelemetryIdMapping) {
     customLabels.push('telemetry_id')
   }
