@@ -645,6 +645,7 @@ export interface PlatformaticNextJsConfig {
     useExperimentalAdapter?: boolean;
   };
   cache?: {
+    enabled?: boolean | string;
     adapter: "redis" | "valkey";
     url: string;
     prefix?: string;

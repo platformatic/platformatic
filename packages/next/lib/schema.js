@@ -9,6 +9,16 @@ export const version = packageJson.version
 export const cache = {
   type: 'object',
   properties: {
+    enabled: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
+    },
     adapter: {
       type: 'string',
       enum: ['redis', 'valkey']

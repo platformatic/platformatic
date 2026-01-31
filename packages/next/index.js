@@ -36,7 +36,7 @@ export async function enhanceNextConfig (nextConfig, ...args) {
 
   const modifications = []
 
-  if (config.cache?.adapter) {
+  if (config.cache?.enabled !== false && config.cache?.adapter) {
     if (nextVersion.major > 15 && config.cache?.cacheComponents && typeof nextConfig.cacheComponents === 'undefined') {
       nextConfig.cacheComponents = true
       nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
