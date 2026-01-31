@@ -37,6 +37,7 @@ Configures an [Incremental Server Rendering cache](https://nextjs.org/docs/app/a
 
 Supported object properties:
 
+- **`enabled`** (`boolean` or `string`): If `false` the cache adapter is disabled. Default: `true`.
 - **`adapter`**: The adapter to use. The only supported value is `valkey` (of which `redis` is a synonym).
 - **`url`**: The URL of the Valkey/Redis server.
 - **`prefix`**: The prefix to use for all cache keys.

@@ -1398,3 +1398,57 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
     deepStrictEqual(applicationId, 'frontend')
   }
 })
+
+test('cache can be disabled via string enabled flag', async t => {
+  const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+    await setCacheSettings(root, cache => {
+      cache.enabled = 'false'
+    })
+  })
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  const response = await fetch(url)
+  ok(response.ok)
+
+  deepStrictEqual(valkeyCalls.length, 0)
+})
+
+test('cache can be disabled via boolean enabled flag', async t => {
+  const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+    await setCacheSettings(root, cache => {
+      cache.enabled = false
+    })
+  })
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  const response = await fetch(url)
+  ok(response.ok)
+
+  deepStrictEqual(valkeyCalls.length, 0)
+})
