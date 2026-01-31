@@ -2365,6 +2365,11 @@
     "cache": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Next.js cache handler"
+        },
         "adapter": {
           "type": "string",
           "enum": [
