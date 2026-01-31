@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "services": [
+    {
+      "id": "service-a",
+      "path": "./service-a"
+    },
+    {
+      "id": "service-b",
+      "path": "./service-b"
+    }
+  ],
+  "entrypoint": "service-a",
+  "loadShedding": {
+    "enabled": true,
+    "maxELU": 0.9,
+    "maxHeapUsedRatio": 0.95
+  }
+}

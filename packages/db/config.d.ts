@@ -917,6 +917,39 @@ export interface PlatformaticDatabaseConfig {
         [k: string]: string | [string, ...string[]];
       };
     };
+    loadShedding?: {
+      /**
+       * Enable load shedding to reject requests when workers are overloaded
+       */
+      enabled?: boolean;
+      /**
+       * Maximum Event Loop Utilization threshold before worker rejects requests
+       */
+      maxELU?: number;
+      /**
+       * Maximum heap used ratio (heapUsed/heapTotal) before worker rejects requests
+       */
+      maxHeapUsedRatio?: number;
+      /**
+       * Per-application load shedding configuration overrides
+       */
+      applications?: {
+        [k: string]: {
+          /**
+           * Override load shedding enabled state for this application
+           */
+          enabled?: boolean;
+          /**
+           * Override maxELU threshold for this application
+           */
+          maxELU?: number;
+          /**
+           * Override maxHeapUsedRatio threshold for this application
+           */
+          maxHeapUsedRatio?: number;
+        };
+      };
+    };
     compileCache?:
       | boolean
       | {
