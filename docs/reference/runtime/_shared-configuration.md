@@ -448,6 +448,7 @@ inside the OS temporary folder.
 
 - **`logs`** (`object`). Optional configuration for the runtime logs.
   - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
+- **`socket`** (`string`). Optional custom path for the control socket. If not specified, the default platform-specific location is used (`platformatic/runtimes/<PID>/socket` on Unix, `\\.\pipe\platformatic-<PID>` on Windows).
 
 ### `scheduler`
 

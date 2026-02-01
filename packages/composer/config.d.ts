@@ -376,6 +376,10 @@ export interface PlatformaticComposerConfig {
           logs?: {
             maxSize?: number;
           };
+          /**
+           * Custom path for the control socket. If not specified, uses the default platform-specific location.
+           */
+          socket?: string;
         };
     metrics?:
       | boolean
