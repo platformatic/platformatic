@@ -1,4 +1,5 @@
 import { deepStrictEqual, ok } from 'node:assert'
+import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from './helpers.js'
@@ -6,7 +7,7 @@ import { waitForEvents } from './multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('should restart the process if it exceeded maximum threshold', async t => {
+test('should restart the process if it exceeded maximum threshold', { skip: platform() === 'win32' }, async t => {
   const configFile = join(fixturesDir, 'configs', 'health-unhealthy.json')
   const server = await createRuntime(configFile)
 
