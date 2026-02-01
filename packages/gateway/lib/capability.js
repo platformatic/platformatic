@@ -21,19 +21,17 @@ export class GatewayCapability extends ServiceCapability {
     this.fastifyOptions.routerOptions.constraints = { notHost: notHostConstraints }
   }
 
-  async init () {
-    if (this.status) {
-      return
+  async getDependencies () {
+    if (!this.status) {
+      await ensureApplications(this.applicationId, this.config)
+      const composedApplications = this.config.gateway?.applications
+        .filter(this.#isLocalApplication.bind(this))
+        .map(a => a.id)
+
+      this.dependencies = Array.from(new Set([...this.dependencies, ...composedApplications]))
     }
 
-    await ensureApplications(this.applicationId, this.config)
-    const composedApplications = this.config.gateway?.applications
-      .filter(this.#isLocalApplication.bind(this))
-      .map(a => a.id)
-
-    this.dependencies = Array.from(new Set([...this.dependencies, ...composedApplications]))
-
-    await super.init()
+    return this.dependencies
   }
 
   async start () {

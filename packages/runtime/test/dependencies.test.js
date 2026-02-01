@@ -35,7 +35,7 @@ function hasLog (logs, source, msg, dependencies, dependents) {
   })
 }
 
-test('starts applications according to their implicit or explicit dependencies', async t => {
+test('starts applications according to their implicit or explicit dependencies, in order', async t => {
   const context = {}
   const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
   const runtime = await createRuntime(configFile, null, context)
@@ -50,10 +50,11 @@ test('starts applications according to their implicit or explicit dependencies',
 
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
+  // The defined order in the runtime file is 'composer', 'service-2', 'service-1'
   deepStrictEqual(startLogs, [
-    'Starting the worker 0 of the application "composer"...',
-    'Starting the worker 0 of the application "service-2"...',
     'Starting the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "service-2"...',
+    'Starting the worker 0 of the application "composer"...',
     'Started the worker 0 of the application "service-1"...',
     'Started the worker 0 of the application "service-2"...',
     'Started the worker 0 of the application "composer"...'

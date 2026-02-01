@@ -17,6 +17,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
+import { availableParallelism } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -29,6 +30,7 @@ import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
+  ApplicationsDependenciesCycleError,
   ApplicationStartTimeoutError,
   CannotRemoveEntrypointError,
   InvalidArgumentError,
@@ -45,6 +47,7 @@ import { createChannelCreationHook } from './policies.js'
 import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
+import { topologicalSort } from './utils.js'
 import { version } from './version.js'
 import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
@@ -90,7 +93,7 @@ function parseOrigins (origins) {
 }
 
 // Always run operations in parallel to avoid deadlocks when services have dependencies
-const MAX_CONCURRENCY = Infinity
+const MAX_CONCURRENCY = availableParallelism()
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
@@ -157,7 +160,9 @@ export class Runtime extends EventEmitter {
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
       timeout: this.#config.applicationTimeout,
-      onChannelCreation: this.#channelCreationHook
+      meshTimeout: this.#context.meshTimeout ?? true,
+      onChannelCreation: this.#channelCreationHook,
+      onError: this.#onMeshInterceptorError.bind(this)
     })
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
@@ -543,9 +548,24 @@ export class Runtime extends EventEmitter {
     return removed
   }
 
-  async startApplications (applicationsToStart, silent = false) {
+  async startApplications (applications, silent = false) {
+    // For each worker, get its dependencies from the first worker
+    const dependencies = new Map()
+    for (const applicationId of applications) {
+      const worker = await this.#getWorkerByIdOrNext(applicationId, 0)
+
+      dependencies.set(applicationId, await sendViaITC(worker, 'getDependencies'))
+    }
+
+    // Now, topological sort the applications based on their dependencies
+    try {
+      applications = topologicalSort(dependencies)
+    } catch (e) {
+      throw new ApplicationsDependenciesCycleError(e.path)
+    }
+
     const startInvocations = []
-    for (const application of applicationsToStart) {
+    for (const application of applications) {
       startInvocations.push([application, silent])
     }
 
@@ -1835,7 +1855,16 @@ export class Runtime extends EventEmitter {
     worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
 
     // Wait for initialization
-    await waitEventFromITC(worker, 'init')
+    try {
+      await waitEventFromITC(worker, 'init')
+    } catch (e) {
+      if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {
+        this.logger.error({ err: ensureLoggableError(e) }, `Failed to initialize the ${errorLabel}. Replacing it ...`)
+      }
+
+      this.#workers.delete(workerId)
+      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled)
+    }
 
     if (applicationConfig.entrypoint) {
       this.#entrypointId = applicationId
@@ -2987,5 +3016,17 @@ export class Runtime extends EventEmitter {
     }
 
     this.#loggerContext.updatePrefixes(ids)
+  }
+
+  #onMeshInterceptorError (error) {
+    const worker = error.port
+
+    this.logger.error(
+      { err: ensureLoggableError(error.cause) },
+      `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup. Replacing it ...`
+    )
+
+    this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
+    worker.terminate()
   }
 }
