@@ -7,7 +7,13 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { clearRegistry, client, collectThreadMetrics, ensureMetricsGroup, setupOtlpExporter } from '@platformatic/metrics'
+import {
+  clearRegistry,
+  client,
+  collectThreadMetrics,
+  ensureMetricsGroup,
+  setupOtlpExporter
+} from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -155,6 +161,10 @@ export class BaseCapability extends EventEmitter {
     await this.updateContext()
     this.updateStatus('init')
     this.status = 'init'
+  }
+
+  getDependencies () {
+    return this.dependencies ?? []
   }
 
   updateStatus (status) {
@@ -662,7 +672,11 @@ export class BaseCapability extends EventEmitter {
     /* c8 ignore next 3 */
     const subprocess =
       platform() === 'win32'
-        ? spawn(command.replace(/^node\b/, process.execPath), { cwd: this.root, shell: true, windowsVerbatimArguments: true })
+        ? spawn(command.replace(/^node\b/, process.execPath), {
+          cwd: this.root,
+          shell: true,
+          windowsVerbatimArguments: true
+        })
         : spawn(executable, args, { cwd: this.root, shell: hasChainedCommands })
 
     subprocess.stdout.setEncoding('utf8')
