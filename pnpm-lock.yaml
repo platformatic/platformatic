@@ -520,9 +520,9 @@ importers:
       split2:
         specifier: ^4.2.0
         version: 4.2.0
-      tsd:
-        specifier: ^0.33.0
-        version: 0.33.0
+      tstyche:
+        specifier: ^6.2.0
+        version: 6.2.0(typescript@5.9.3)
       typescript:
         specifier: ^5.5.4
         version: 5.9.3
@@ -10128,6 +10128,16 @@ packages:
   tsscmp@1.0.6:
     resolution: {integrity: sha512-LxhtAkPDTkVCMQjt2h6eBVY28KCjikZqZfMcC15YBeNjkgUpdCfBu5HoiOTDu86v6smE8yOjyEktJ8hlbANHQA==}
     engines: {node: '>=0.6.x'}
+
+  tstyche@6.2.0:
+    resolution: {integrity: sha512-WBiB6fGGsmQCFFRGwYaKq528pCLJ0CUUdrIdUm2rnVJ1Ineskbrv9uQADWsD3uHndEV/Hesdx1Gj8PdkBahxlQ==}
+    engines: {node: '>=22.12'}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=5.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   tsx@4.21.0:
     resolution: {integrity: sha512-5C1sg4USs1lfG0GFb2RLXsdpXqBSEhAaA/0kPL01wxzpMqLILNxIxIOKiILz+cdg/pLnOUxFYOR5yhHU666wbw==}
@@ -20481,6 +20491,10 @@ snapshots:
   tslib@2.8.1: {}
 
   tsscmp@1.0.6: {}
+
+  tstyche@6.2.0(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
 
   tsx@4.21.0:
     dependencies:
