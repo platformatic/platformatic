@@ -169,17 +169,47 @@ export class CacheHandler {
     }
   }
 
-  async refreshTags () {
-    // this.#logger.trace('refreshTags - Not implemented')
-  }
+  // This function is not necessary as we don't have a local state to synchronize.
+  async refreshTags () {}
 
   getExpiration (_tags) {
-    // this.#logger.trace({ tags: _tags }, 'getExpiration - Not implemented')
+    // Delegates the check to get method, only when appropriate.
     return Number.POSITIVE_INFINITY
   }
 
-  updateTags (_tags) {
-    // this.#logger.trace({ tags: _tags }, 'updateTags - Not implemented')
+  async updateTags (tags) {
+    if (typeof tags === 'string') {
+      tags = [tags]
+    }
+
+    try {
+      let promises = []
+
+      for (const tag of tags) {
+        const tagsKey = this.#keyFor(tag, sections.tags)
+
+        // For each key in the tag set, expire the key
+        for await (const keys of this.#store.sscanStream(tagsKey)) {
+          for (const key of keys) {
+            promises.push(this.#store.del(key))
+
+            // Batch full, execute it
+            if (promises.length >= MAX_BATCH_SIZE) {
+              await Promise.all(promises)
+              promises = []
+            }
+          }
+        }
+
+        // Delete the set, this will also take care of executing pending operation for a non full batch
+        promises.push(this.#store.del(tagsKey))
+        await Promise.all(promises)
+        promises = []
+      }
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot expire cache tags in Valkey')
+      throw new Error('Cannot expire cache tags in Valkey', { cause: e })
+    }
   }
 
   async #refreshKey (key, value) {
