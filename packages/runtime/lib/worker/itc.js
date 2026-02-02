@@ -213,7 +213,7 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
       },
 
       async getDependencies () {
-        return controller.capability.getDependencies()
+        return controller.capability.getDependencies?.() ?? []
       },
 
       async build () {
