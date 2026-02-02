@@ -1,6 +1,8 @@
 import { version } from '@platformatic/runtime'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
+import { randomUUID } from 'node:crypto'
+import { platform } from 'node:os'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -34,9 +36,11 @@ test('ps - should show running applications', async t => {
 
 test('ps - should support custom sockets', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const socketPath =
+    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(rootDir, 'custom.sock')
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
-    config.managementApi = { socket: resolve(rootDir, 'custom.sock') }
+    config.managementApi = { socket: socketPath }
 
     return config
   })
@@ -49,7 +53,7 @@ test('ps - should support custom sockets', async t => {
     return startProcess.catch(() => {})
   })
 
-  const psProcess = await wattpm('-S', resolve(rootDir, 'custom.sock'), 'ps')
+  const psProcess = await wattpm('-S', socketPath, 'ps')
   const lines = psProcess.stdout.split('\n').map(l =>
     l
       .split('|')
