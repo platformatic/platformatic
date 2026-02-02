@@ -183,7 +183,7 @@ export class CacheHandler {
     }
 
     try {
-      let promises = []
+      const toDelete = new Set()
 
       for (const tag of tags) {
         const tagsKey = this.#keyFor(tag, sections.tags)
@@ -191,20 +191,18 @@ export class CacheHandler {
         // For each key in the tag set, expire the key
         for await (const keys of this.#store.sscanStream(tagsKey)) {
           for (const key of keys) {
-            promises.push(this.#store.del(key))
+            toDelete.add(key)
 
             // Batch full, execute it
-            if (promises.length >= MAX_BATCH_SIZE) {
-              await Promise.all(promises)
-              promises = []
+            if (toDelete.length >= MAX_BATCH_SIZE) {
+              await this.#store.del(...toDelete)
+              toDelete.clear()
             }
           }
         }
 
-        // Delete the set, this will also take care of executing pending operation for a non full batch
-        promises.push(this.#store.del(tagsKey))
-        await Promise.all(promises)
-        promises = []
+        await this.#store.del(...toDelete)
+        await this.#store.del(tagsKey)
       }
     } catch (e) {
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot expire cache tags in Valkey')
