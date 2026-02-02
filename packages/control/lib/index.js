@@ -95,8 +95,8 @@ export class RuntimeApiClient {
   #webSockets = new Set()
   #socketPath
 
-  constructor (socketPath) {
-    this.#socketPath = socketPath
+  constructor (options = {}) {
+    this.#socketPath = options?.socket
   }
 
   async getMatchingRuntime (opts = {}) {

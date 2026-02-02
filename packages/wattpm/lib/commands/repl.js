@@ -16,7 +16,7 @@ const tableConfig = {
 export async function replCommand (logger, args) {
   const { positionals: allPositionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient(getSocket())
+  const client = new RuntimeApiClient({ socket: getSocket() })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]

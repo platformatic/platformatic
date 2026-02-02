@@ -4,7 +4,7 @@ import { bold } from 'colorette'
 import { getSocket } from '../utils.js'
 
 export async function metricsCommand (logger, args) {
-  const client = new RuntimeApiClient(getSocket())
+  const client = new RuntimeApiClient({ socket: getSocket() })
   try {
     const { values, positionals } = parseArgs(args, { format: { type: 'string', short: 'f', default: 'json' } }, false)
 

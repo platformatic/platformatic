@@ -71,7 +71,7 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
-  const client = new RuntimeApiClient(getSocket())
+  const client = new RuntimeApiClient({ socket: getSocket() })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]
