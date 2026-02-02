@@ -2,6 +2,7 @@ import { getExecutableName, getPackageManager, parseArgs } from '@platformatic/f
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { platform } from 'node:os'
+import { getSocket } from '../utils.js'
 
 export async function runDelegatedCommand (logger, packageManager, args) {
   if (!packageManager) {
@@ -13,6 +14,15 @@ export async function runDelegatedCommand (logger, packageManager, args) {
     runner = 'pnpx'
   } else {
     args.unshift('-y')
+  }
+
+  const socket = getSocket()
+  if (socket) {
+    if (packageManager === 'pnpm') {
+      args.push('--', socket)
+    } else {
+      args.push(socket)
+    }
   }
 
   logger.info(`Running ${bold(runner)} ${bold(args.join(' '))} ...`)
