@@ -20,6 +20,8 @@ import { setSocket } from './lib/utils.js'
 export * from './lib/schema.js'
 
 export async function main () {
+  globalThis.platformatic = { executable: getExecutableId() }
+
   const options = {
     'no-pretty': {
       short: 'r',
