@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { getSocket } from '../utils.js'
 
 function appendOutput (logger, stream, fullOutput, line) {
   if (isVerbose()) {
@@ -70,7 +71,7 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient(getSocket())
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]

@@ -1,4 +1,5 @@
 import { version } from '@platformatic/runtime'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -17,6 +18,38 @@ test('ps - should show running applications', async t => {
   })
 
   const psProcess = await wattpm('ps')
+  const lines = psProcess.stdout.split('\n').map(l =>
+    l
+      .split('|')
+      .map(t => t.trim())
+      .filter(t => t))
+
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+
+  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  deepStrictEqual(main[0], startProcess.pid.toString())
+  deepStrictEqual(main[2], version)
+  ok(main[3].match(/now|(\d+s)/))
+})
+
+test('ps - should support custom sockets', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+    config.managementApi = { socket: resolve(rootDir, 'custom.sock') }
+
+    return config
+  })
+
+  const startProcess = wattpm('start', rootDir)
+  const { url } = await waitForStart(startProcess)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const psProcess = await wattpm('-S', resolve(rootDir, 'custom.sock'), 'ps')
   const lines = psProcess.stdout.split('\n').map(l =>
     l
       .split('|')

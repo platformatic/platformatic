@@ -3,6 +3,7 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 import { createInterface } from 'node:readline'
 import { getBorderCharacters, table } from 'table'
+import { getSocket } from '../utils.js'
 
 const tableConfig = {
   /* c8 ignore next */
@@ -15,7 +16,7 @@ const tableConfig = {
 export async function replCommand (logger, args) {
   const { positionals: allPositionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient(getSocket())
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]
@@ -33,12 +34,7 @@ export async function replCommand (logger, args) {
           const { id, type, entrypoint } = app
           return [id, type, entrypoint ? 'Yes' : 'No']
         })
-        console.log(
-          table(
-            [[bold('Name'), bold('Type'), bold('Entrypoint')], ...rows],
-            tableConfig
-          )
-        )
+        console.log(table([[bold('Name'), bold('Type'), bold('Entrypoint')], ...rows], tableConfig))
         console.log('Usage: wattpm repl <application-name>\n')
         await client.close()
         return
@@ -60,7 +56,7 @@ export async function replCommand (logger, args) {
     })
 
     // Forward stdin to WebSocket
-    rl.on('line', (line) => {
+    rl.on('line', line => {
       ws.send(line + '\n')
     })
 
@@ -72,7 +68,7 @@ export async function replCommand (logger, args) {
     })
 
     // Forward WebSocket output to stdout
-    ws.on('message', (data) => {
+    ws.on('message', data => {
       process.stdout.write(data.toString())
     })
 
@@ -93,7 +89,7 @@ export async function replCommand (logger, args) {
       process.exit(0)
     })
 
-    ws.on('error', (error) => {
+    ws.on('error', error => {
       logger.error({ error: ensureLoggableError(error) }, 'WebSocket error')
       rl.close()
       client.close()
@@ -105,11 +101,7 @@ export async function replCommand (logger, args) {
     } else if (error.code === 'PLT_CTR_APPLICATION_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching application.')
     } else {
-      return logFatalError(
-        logger,
-        { error: ensureLoggableError(error) },
-        `Cannot start REPL: ${error.message}`
-      )
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot start REPL: ${error.message}`)
     }
   }
 }
@@ -126,7 +118,8 @@ export const help = {
       },
       {
         name: 'application',
-        description: 'The application name (if omitted, auto-connects when single application or lists available applications)'
+        description:
+          'The application name (if omitted, auto-connects when single application or lists available applications)'
       }
     ],
     footer: `

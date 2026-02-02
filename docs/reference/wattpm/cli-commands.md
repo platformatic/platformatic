@@ -29,6 +29,7 @@ These options are available for all `wattpm` commands:
 
 - `-r, --no-pretty` - Disable pretty-printed output for logs and console messages
 - `-v, --verbose` - Enable verbose output for detailed information
+- `-S, --socket <path>` - Path for the control socket. If not specified, the default platform-specific location is used.
 - `-V, --version` - Display the current wattpm version
 - `-h, --help` - Show help information
 
@@ -593,7 +594,7 @@ wattpm patch-config [directory] <patch-file>
 
 ```javascript
 // patch.js
-export default function  (runtime, applications) {
+export default function (runtime, applications) {
   return {
     runtime: [
       /* JSON Patch operations for runtime config */
