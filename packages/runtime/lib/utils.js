@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { ApplicationsDependenciesCycleError } from './errors.js'
 
 export function getArrayDifference (a, b) {
   return a.filter(element => {
@@ -30,9 +31,7 @@ export function topologicalSort (graph) {
     }
 
     if (path.includes(node)) {
-      const error = new Error('Detected circular dependency')
-      error.path = path.concat([node]).join(' -> ')
-      throw error
+      throw new ApplicationsDependenciesCycleError(path.concat([node]).join(' -> '))
     }
 
     path.push(node)

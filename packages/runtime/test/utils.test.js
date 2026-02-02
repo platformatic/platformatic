@@ -90,8 +90,7 @@ test('topologicalSort - should properly detect circular dependencies', () => {
   throws(
     () => topologicalSort(graph),
     err => {
-      deepStrictEqual(err.message, 'Detected circular dependency')
-      deepStrictEqual(err.path, 'A -> B -> C -> A')
+      deepStrictEqual(err.message, 'Detected a cycle in the applications dependencies: A -> B -> C -> A')
       return true
     }
   )
@@ -103,8 +102,7 @@ test('topologicalSort - should properly detect self-referencing nodes', () => {
   throws(
     () => topologicalSort(graph),
     err => {
-      deepStrictEqual(err.message, 'Detected circular dependency')
-      deepStrictEqual(err.path, 'A -> A')
+      deepStrictEqual(err.message, 'Detected a cycle in the applications dependencies: A -> A')
       return true
     }
   )
@@ -125,8 +123,7 @@ test('topologicalSort - should properly detect circular dependencies in a comple
   throws(
     () => topologicalSort(graph),
     err => {
-      deepStrictEqual(err.message, 'Detected circular dependency')
-      deepStrictEqual(err.path, 'D -> E -> F -> D')
+      deepStrictEqual(err.message, 'Detected a cycle in the applications dependencies: D -> E -> F -> D')
       return true
     }
   )

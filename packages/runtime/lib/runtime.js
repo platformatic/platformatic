@@ -30,7 +30,6 @@ import {
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
-  ApplicationsDependenciesCycleError,
   ApplicationStartTimeoutError,
   CannotRemoveEntrypointError,
   InvalidArgumentError,
@@ -557,12 +556,9 @@ export class Runtime extends EventEmitter {
       dependencies.set(applicationId, await sendViaITC(worker, 'getDependencies'))
     }
 
-    // Now, topological sort the applications based on their dependencies
-    try {
-      applications = topologicalSort(dependencies)
-    } catch (e) {
-      throw new ApplicationsDependenciesCycleError(e.path)
-    }
+    // Now, topological sort the applications based on their dependencies.
+    // If circular dependencies are detected, an error with proper error code is thrown.
+    applications = topologicalSort(dependencies)
 
     const startInvocations = []
     for (const application of applications) {
