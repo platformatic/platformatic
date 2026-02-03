@@ -193,6 +193,7 @@ export declare function buildPinoOptions (
 export declare function loadFormatters (require: NodeRequire, file: string): any
 export declare function disablePinoDirectWrite (): void
 export declare function noop (): void
+export declare function createDebugLogger (subject: string): debug.Debugger
 
 export declare const abstractLogger: Logger
 export declare const stdTimeFunctions: {

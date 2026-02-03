@@ -131,7 +131,7 @@ export async function startCommand (logger, args) {
 export async function stopCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 
@@ -153,7 +153,7 @@ export async function stopCommand (logger, args) {
 export async function restartCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
@@ -179,7 +179,7 @@ export async function restartCommand (logger, args) {
 export async function reloadCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 

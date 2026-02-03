@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/foundation'
+import { createDebugLogger, ensureLoggableError, safeRemove } from '@platformatic/foundation'
 import { exec, spawn } from 'node:child_process'
 import { access, readdir } from 'node:fs/promises'
 import { EOL, platform, tmpdir } from 'node:os'
@@ -94,13 +94,19 @@ export class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()
   #socketPath
+  #logger
+  #debugLogger
 
   constructor (options = {}) {
     this.#socketPath = options?.socket
+    this.#logger = options?.logger
+    this.#debugLogger = createDebugLogger('runtime:api')
   }
 
   async getMatchingRuntime (opts = {}) {
     const runtimes = await this.getRuntimes()
+
+    this.#debugLogger('Found runtimes', runtimes)
 
     let runtime = null
     if (opts.pid) {
@@ -124,9 +130,7 @@ export class RuntimeApiClient {
     const runtimePIDs = platform() === 'win32' ? await this.#getWindowsRuntimePIDs() : await this.#getUnixRuntimePIDs()
 
     const getMetadataRequests = await Promise.allSettled(
-      runtimePIDs.map(async runtimePID => {
-        return this.getRuntimeMetadata(runtimePID)
-      })
+      runtimePIDs.map(runtimePID => this.getRuntimeMetadata(runtimePID))
     )
 
     const runtimes = []
@@ -134,8 +138,18 @@ export class RuntimeApiClient {
       const runtimePID = runtimePIDs[i]
       const metadataRequest = getMetadataRequests[i]
 
+      this.#debugLogger(`Runtime ${runtimePID} get metadata result`, metadataRequest)
+
       if (metadataRequest.status === 'rejected') {
-        await this.#removeRuntimeTmpDir(runtimePID).catch(() => {})
+        // If it is just a non running runtime, we can remove its tmp dir, otherwise we log the error
+        if (metadataRequest.reason.code !== 'ECONNREFUSED') {
+          this.#logger?.warn(
+            { error: ensureLoggableError(metadataRequest.reason) },
+            `Failed to retrieve metadata for runtime with PID ${runtimePID}.`
+          )
+        } else {
+          await this.#removeRuntimeTmpDir(runtimePID).catch(() => {})
+        }
       } else {
         runtimes.push(metadataRequest.value)
       }
@@ -624,6 +638,8 @@ export class RuntimeApiClient {
   }
 
   async #getUnixRuntimePIDs () {
+    this.#debugLogger('Getting runtime PIDs from folder', PLATFORMATIC_TMP_DIR)
+
     try {
       await access(PLATFORMATIC_TMP_DIR)
     } catch {
@@ -633,18 +649,26 @@ export class RuntimeApiClient {
     const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR, { withFileTypes: true })
     const runtimePIDs = []
 
+    this.#debugLogger('Candidate runtime paths', runtimeDirs)
+
     for (const runtimeDir of runtimeDirs) {
       // Only consider directory that can be a PID
       if (runtimeDir.isDirectory() && runtimeDir.name.match(/^\d+$/)) {
         runtimePIDs.push(parseInt(runtimeDir.name))
       }
     }
+
+    this.#debugLogger('Runtime PIDS', runtimePIDs)
+
     return runtimePIDs
   }
 
   async #getWindowsRuntimePIDs () {
     const pipeNames = await this.#getWindowsNamedPipes()
     const runtimePIDs = []
+
+    this.#debugLogger('Available named pipes', pipeNames)
+
     for (const pipeName of pipeNames) {
       if (pipeName.startsWith(PLATFORMATIC_PIPE_PREFIX)) {
         const runtimePID = pipeName.replace(PLATFORMATIC_PIPE_PREFIX, '')
