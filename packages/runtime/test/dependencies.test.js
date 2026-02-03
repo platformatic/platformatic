@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { transform } from '../index.js'
 import { createRuntime, readLogs } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -165,4 +166,61 @@ test('should throw if circular dependencies are detected', async t => {
     () => runtime.start(),
     /Detected a cycle in the applications dependencies: application-1 -> application-2 -> application-1/
   )
+})
+
+test('startupConcurrency config option takes precedence over context.concurrency', async t => {
+  const context = {
+    concurrency: 10,
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.startupConcurrency = 1
+      return config
+    }
+  }
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
+
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
+})
+
+test('startupConcurrency has a minimum bound of 1', async t => {
+  const context = {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.startupConcurrency = 0
+      return config
+    }
+  }
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
+
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
 })

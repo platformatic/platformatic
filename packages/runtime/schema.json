@@ -2583,6 +2583,17 @@
       ],
       "default": 300000
     },
+    "startupConcurrency": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 1
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "messagingTimeout": {
       "anyOf": [
         {

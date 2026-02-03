@@ -527,6 +527,7 @@ export interface PlatformaticTanStackConfig {
       [k: string]: unknown;
     };
     applicationTimeout?: number | string;
+    startupConcurrency?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
