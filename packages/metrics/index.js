@@ -321,8 +321,8 @@ export function buildCustomLabelsConfig (customLabelsConfig) {
     return {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
+        const telemetryId = req.headers?.['x-plt-telemetry-id']
+        return telemetryId ? { telemetry_id: telemetryId } : {}
       }
     }
   }
