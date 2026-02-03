@@ -134,6 +134,7 @@ export class Runtime extends EventEmitter {
   #restartingApplications
   #restartingWorkers
   #dynamicWorkersScaler
+  #nextWorkerIndex
 
   #sharedHttpCache
   #scheduler
@@ -167,6 +168,7 @@ export class Runtime extends EventEmitter {
     this.#status = undefined
     this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
+    this.#nextWorkerIndex = new Map()
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -1354,7 +1356,8 @@ export class Runtime extends EventEmitter {
 
   async getApplicationResourcesInfo (id) {
     const workersCount = this.#workers.getKeys(id).length
-    const worker = await this.#getWorkerByIdOrNext(id, 0, false, false)
+    // Use round-robin to get any available worker instead of assuming index 0 exists
+    const worker = await this.#getWorkerByIdOrNext(id, null, false, false)
     const health = worker[kConfig].health
 
     return { workers: workersCount, health }
@@ -1603,6 +1606,9 @@ export class Runtime extends EventEmitter {
     }
 
     await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
+
+    // Initialize the next worker index counter (next index starts after initial workers)
+    this.#nextWorkerIndex.set(id, workers)
 
     await this.#dynamicWorkersScaler?.add(applicationConfig)
     this.emitAndNotify('application:init', id)
@@ -2265,10 +2271,17 @@ export class Runtime extends EventEmitter {
     return `worker ${workerId} of the application "${applicationId}"`
   }
 
-  async #restartCrashedWorker (config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt) {
-    const workerId = `${id}:${index}`
+  #getNextWorkerIndex (applicationId) {
+    const index = this.#nextWorkerIndex.get(applicationId) ?? 0
+    this.#nextWorkerIndex.set(applicationId, index + 1)
+    return index
+  }
 
-    let restartPromise = this.#restartingWorkers.get(workerId)
+  async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt) {
+    // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
+    const restartKey = `${id}:${oldIndex}`
+
+    let restartPromise = this.#restartingWorkers.get(restartKey)
     if (restartPromise) {
       await restartPromise
       return
@@ -2276,13 +2289,16 @@ export class Runtime extends EventEmitter {
 
     restartPromise = new Promise((resolve, reject) => {
       async function restart () {
-        this.#restartingWorkers.delete(workerId)
+        this.#restartingWorkers.delete(restartKey)
 
         // If some processes were scheduled to restart
         // but the runtime is stopped, ignore it
         if (!this.#status.startsWith('start')) {
           return
         }
+
+        // Get a new unique index for the restarted worker
+        const index = this.#getNextWorkerIndex(id)
 
         try {
           await this.#setupWorker(config, applicationConfig, workersCount, id, index)
@@ -2309,30 +2325,34 @@ export class Runtime extends EventEmitter {
       }
     })
 
-    this.#restartingWorkers.set(workerId, restartPromise)
+    this.#restartingWorkers.set(restartKey, restartPromise)
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker, silent) {
-    const workerId = `${applicationId}:${index}`
-    const label = this.#workerExtendedLabel(applicationId, index, workersCount)
+  async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
+    const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
     let newWorker
+
+    // Get a new unique index for the replacement worker
+    const newIndex = this.#getNextWorkerIndex(applicationId)
+    const newWorkerId = `${applicationId}:${newIndex}`
+    const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
 
     const stopBeforeStart =
       applicationConfig.entrypoint &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
 
     if (stopBeforeStart) {
-      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+      await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
 
     try {
       if (!silent) {
-        this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
+        this.logger.debug(`Preparing to start ${newLabel} as replacement for ${oldLabel} ...`)
       }
 
-      // Create a new worker
-      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
+      // Create a new worker with a new index
+      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, newIndex, false)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -2340,21 +2360,21 @@ export class Runtime extends EventEmitter {
       }
 
       // Add the worker to the mesh
-      await this.#startWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
+      await this.#startWorker(config, applicationConfig, workersCount, applicationId, newIndex, false, 0, newWorker, true)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
         return this.#discardWorker(newWorker)
       }
 
-      this.#workers.set(workerId, newWorker)
+      this.#workers.set(newWorkerId, newWorker)
     } catch (e) {
       newWorker?.terminate?.()
       throw e
     }
 
     if (!stopBeforeStart) {
-      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+      await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
   }
 

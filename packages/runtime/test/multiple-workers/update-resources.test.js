@@ -276,10 +276,13 @@ for (const heap of heapCases) {
     const applicationsId = ['node', 'service']
     const { runtime, resourcesInfo } = await prepareRuntime(t, applicationsId, 'update-service-heap')
 
+    // When workers are replaced, they get new unique indices starting from the initial worker count
     const expectedEvents = []
     for (const applicationId of applicationsId) {
-      for (let i = 0; i < resourcesInfo[applicationId].workers; i++) {
-        expectedEvents.push({ event: 'application:worker:started', application: applicationId, worker: i })
+      const workerCount = resourcesInfo[applicationId].workers
+      for (let i = 0; i < workerCount; i++) {
+        // New worker index is initial count + original position
+        expectedEvents.push({ event: 'application:worker:started', application: applicationId, worker: workerCount + i })
       }
     }
 
@@ -453,9 +456,12 @@ for (const heap of heapCases) {
       applicationsEvents.push(event)
     })
 
+    // When workers are replaced, they get new unique indices starting from the initial worker count
     const events = []
     for (const applicationId of applicationsId) {
-      events.push({ event: 'application:worker:started', application: applicationId, worker: 0 })
+      const workerCount = resourcesInfo[applicationId].workers
+      // First replaced worker gets index equal to initial worker count
+      events.push({ event: 'application:worker:started', application: applicationId, worker: workerCount })
     }
     const eventsPromise = waitForEvents(runtime, events)
 
