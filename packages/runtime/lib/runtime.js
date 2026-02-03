@@ -2857,13 +2857,16 @@ export class Runtime extends EventEmitter {
         await this.#updateApplicationConfigHealth(applicationId, health)
       }
 
-      for (let i = 0; i < currentWorkers; i++) {
+      // Get actual worker keys to iterate over existing workers (snapshot to avoid mutation during iteration)
+      const workerKeys = [...this.#workers.getKeys(applicationId)]
+      for (const workerKey of workerKeys) {
+        const workerIndex = parseInt(workerKey.split(':')[1], 10)
         this.logger.info(
           { health: { current: currentHealth, new: health } },
-          `Restarting application "${applicationId}" worker ${i} to update config health heap...`
+          `Restarting application "${applicationId}" worker ${workerIndex} to update config health heap...`
         )
 
-        const worker = await this.#getWorkerByIdOrNext(applicationId, i)
+        const worker = this.#workers.get(workerKey)
         if (health.maxHeapTotal) {
           worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
         }
@@ -2871,11 +2874,11 @@ export class Runtime extends EventEmitter {
           worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration
         }
 
-        await this.#replaceWorker(config, applicationConfig, currentWorkers, applicationId, i, worker)
-        report.updated.push(i)
+        await this.#replaceWorker(config, applicationConfig, currentWorkers, applicationId, workerIndex, worker)
+        report.updated.push(workerIndex)
         this.logger.info(
           { health: { current: currentHealth, new: health } },
-          `Restarted application "${applicationId}" worker ${i}`
+          `Restarted application "${applicationId}" worker ${workerIndex}`
         )
       }
       report.success = true
@@ -2908,9 +2911,10 @@ export class Runtime extends EventEmitter {
       report.started = []
       try {
         for (let i = currentWorkers; i < workers; i++) {
-          await this.#setupWorker(config, applicationConfig, workers, applicationId, i)
-          await this.#startWorker(config, applicationConfig, workers, applicationId, i, false, 0)
-          report.started.push(i)
+          const newIndex = this.#getNextWorkerIndex(applicationId)
+          await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
+          await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
+          report.started.push(newIndex)
           startedWorkersCount++
         }
         report.success = true
@@ -2929,11 +2933,19 @@ export class Runtime extends EventEmitter {
       // keep the current workers count until all the application workers are all stopped
       report.stopped = []
       try {
-        for (let i = currentWorkers - 1; i >= workers; i--) {
-          const worker = await this.#getWorkerByIdOrNext(applicationId, i, false, false)
+        // Get actual worker keys and sort by index descending to stop most recent first (snapshot to avoid mutation during iteration)
+        const workerKeys = [...this.#workers.getKeys(applicationId)]
+        const workerIndices = workerKeys
+          .map(key => parseInt(key.split(':')[1], 10))
+          .sort((a, b) => b - a) // descending order
+
+        const workersToStop = currentWorkers - workers
+        for (let i = 0; i < workersToStop && i < workerIndices.length; i++) {
+          const workerIndex = workerIndices[i]
+          const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
           await sendViaITC(worker, 'removeFromMesh')
-          await this.#stopWorker(currentWorkers, applicationId, i, false, worker, [])
-          report.stopped.push(i)
+          await this.#stopWorker(currentWorkers, applicationId, workerIndex, false, worker, [])
+          report.stopped.push(workerIndex)
           stoppedWorkersCount++
         }
         report.success = true
