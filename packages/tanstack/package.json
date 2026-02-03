@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/tanstack",
-  "version": "3.34.1",
+  "version": "3.36.0",
   "description": "Platformatic TanStack Capability",
   "main": "index.js",
   "type": "module",

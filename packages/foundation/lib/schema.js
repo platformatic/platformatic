@@ -1120,6 +1120,10 @@ export const runtimeProperties = {
               }
             },
             additionalProperties: false
+          },
+          socket: {
+            type: 'string',
+            description: 'Custom path for the control socket. If not specified, uses the default platform-specific location.'
           }
         },
         additionalProperties: false

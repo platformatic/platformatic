@@ -690,3 +690,81 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
   deepStrictEqual(applicationId, 'frontend')
   deepStrictEqual(workerId, 0)
 })
+
+test('should properly revalidate tags in Valkey', async t => {
+  const { root, runtime, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+
+  const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  const monitor = await valkey.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await monitor.disconnect()
+    await valkey.disconnect()
+  })
+
+  let version
+  let time
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+    time = mo[2]
+  }
+
+  {
+    const res = await fetch(url + '/revalidate')
+    ok(res.status, 200)
+  }
+
+  await once(runtime, 'application:worker:event:revalidated')
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    notDeepStrictEqual(mo[1], version)
+    notDeepStrictEqual(mo[2], time)
+  }
+
+  const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
+
+  verifyValkeySequence(valkeyCalls, [
+    ['get', key],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['sscan', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '0'],
+    ['del', key],
+    ['del', keyFor(valkeyPrefix, prefix, 'components:tags', 'first')],
+    ['sscan', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '0'],
+    ['del', key],
+    ['del', keyFor(valkeyPrefix, prefix, 'components:tags', 'second')],
+    ['sscan', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '0'],
+    ['del', key],
+    ['del', keyFor(valkeyPrefix, prefix, 'components:tags', 'third')],
+    ['get', key],
+    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120']
+  ])
+})

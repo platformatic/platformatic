@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/node/3.34.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/node/3.36.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Node.js Config",
   "type": "object",
@@ -1424,6 +1424,10 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "socket": {
+                  "type": "string",
+                  "description": "Custom path for the control socket. If not specified, uses the default platform-specific location."
                 }
               },
               "additionalProperties": false

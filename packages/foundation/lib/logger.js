@@ -1,3 +1,4 @@
+import debug from 'debug'
 import { createRequire } from 'node:module'
 import { hostname } from 'node:os'
 import path from 'node:path'
@@ -153,6 +154,11 @@ export function loadFormatters (require, file) {
 // See: https://github.com/pinojs/pino/blob/ad864b7ae02b314b9a548614f705a437e0db78c3/lib/tools.js#L330
 export function disablePinoDirectWrite () {
   process.stdout.write = process.stdout.write.bind(process.stdout)
+}
+
+/* c8 ignore next 3 - Debug utility */
+export function createDebugLogger (subject) {
+  return debug(`plt:${subject}`)
 }
 
 /* c8 ignore start - Nothing to test */

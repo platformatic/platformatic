@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.34.1.json",
-  "version": "3.34.1",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.36.0.json",
+  "version": "3.36.0",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -2048,6 +2048,10 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "socket": {
+                  "type": "string",
+                  "description": "Custom path for the control socket. If not specified, uses the default platform-specific location."
                 }
               },
               "additionalProperties": false
