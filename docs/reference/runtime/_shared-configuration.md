@@ -378,6 +378,23 @@ The number of milliseconds to wait when invoking another application using the i
 
 The number of milliseconds to wait when invoking another application using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
 
+### `startupConcurrency`
+
+The maximum number of concurrent operations during runtime startup, including application setup, starting/stopping workers, and health checks. This controls how many applications can be started in parallel.
+
+Default: `os.availableParallelism() * 2` (typically twice the number of CPU cores). Minimum: `1`.
+
+Setting a lower value can be useful when:
+- Applications have heavy initialization that competes for resources
+- You want more predictable startup ordering
+- Memory is constrained during startup
+
+```json title="Example configuration"
+{
+  "startupConcurrency": 4
+}
+```
+
 ### `metrics`
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime applications.
