@@ -26,7 +26,7 @@ export async function applicationsAddCommand (logger, args) {
     false
   )
 
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, allPositionals)
     const config = await client.getRuntimeConfig(runtime.pid, true)
@@ -101,7 +101,7 @@ export async function applicationsRemoveCommand (logger, args) {
     false
   )
 
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
