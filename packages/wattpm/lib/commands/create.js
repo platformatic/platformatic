@@ -19,9 +19,9 @@ export async function runDelegatedCommand (logger, packageManager, args) {
   const socket = getSocket()
   if (socket) {
     if (packageManager === 'pnpm') {
-      args.push('--', socket)
+      args.push('--', '--socket', socket)
     } else {
-      args.push(socket)
+      args.push('--socket', socket)
     }
   }
 

@@ -56,7 +56,7 @@ test('admin should propagate the socket (npm)', { skip: isWindows }, async t => 
   await wattpm('-S', 'socket', 'admin', { cwd: root, env: { PATH: root } })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'npx -y @platformatic/watt-admin socket')
+  deepStrictEqual(output.trim(), 'npx -y @platformatic/watt-admin --socket socket')
 })
 
 test('admin should propagate the socket (pnpm)', { skip: isWindows }, async t => {
@@ -64,5 +64,5 @@ test('admin should propagate the socket (pnpm)', { skip: isWindows }, async t =>
   await wattpm('-S', 'socket', 'admin', '-P', 'pnpm', { cwd: root, env: { PATH: root } })
 
   const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
-  deepStrictEqual(output.trim(), 'pnpx @platformatic/watt-admin -- socket')
+  deepStrictEqual(output.trim(), 'pnpx @platformatic/watt-admin -- --socket socket')
 })
