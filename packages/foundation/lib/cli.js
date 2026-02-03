@@ -45,9 +45,11 @@ export function setExecutableName (name) {
   executableName = name
 }
 
-export function logo (color = true) {
+export function logo (color = true, name = undefined) {
+  name ??= getExecutableName()
+
   /* c8 ignore next - else */
-  const executableName = color && isColorSupported ? bold(getExecutableName()) : getExecutableName()
+  const executableName = color && isColorSupported ? bold(name) : name
   const str = `
 
                                   //////

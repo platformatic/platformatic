@@ -93,6 +93,11 @@ export async function getMatchingRuntime (client, positionals) {
 export class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()
+  #socketPath
+
+  constructor (options = {}) {
+    this.#socketPath = options?.socket
+  }
 
   async getMatchingRuntime (opts = {}) {
     const runtimes = await this.getRuntimes()
@@ -112,6 +117,10 @@ export class RuntimeApiClient {
   }
 
   async getRuntimes () {
+    if (this.#socketPath) {
+      return [await this.getRuntimeMetadata(0)]
+    }
+
     const runtimePIDs = platform() === 'win32' ? await this.#getWindowsRuntimePIDs() : await this.#getUnixRuntimePIDs()
 
     const getMetadataRequests = await Promise.allSettled(
@@ -604,6 +613,10 @@ export class RuntimeApiClient {
   }
 
   #getSocketPathFromPid (pid) {
+    if (this.#socketPath) {
+      return this.#socketPath
+    }
+
     if (platform() === 'win32') {
       return PLATFORMATIC_PIPE_PREFIX + pid
     }

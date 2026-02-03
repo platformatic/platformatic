@@ -210,7 +210,7 @@ export class Runtime extends EventEmitter {
     const config = this.#config
 
     if (config.managementApi) {
-      this.#managementApi = await startManagementApi(this, this.#root)
+      this.#managementApi = await startManagementApi(this, config.managementApi)
     }
 
     if (config.metrics) {

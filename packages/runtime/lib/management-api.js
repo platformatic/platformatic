@@ -328,16 +328,19 @@ export async function managementApiPlugin (app, opts) {
   })
 }
 
-export async function startManagementApi (runtime) {
+export async function startManagementApi (runtime, config) {
   const runtimePID = process.pid
+  const customSocket = typeof config === 'object' ? config?.socket : null
 
   const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
-  if (platform() !== 'win32') {
+  if (platform() !== 'win32' && !customSocket) {
     await createDirectory(runtimePIDDir, true)
   }
 
   let socketPath = null
-  if (platform() === 'win32') {
+  if (customSocket) {
+    socketPath = customSocket
+  } else if (platform() === 'win32') {
     socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
   } else {
     socketPath = join(runtimePIDDir, 'socket')
@@ -348,7 +351,7 @@ export async function startManagementApi (runtime) {
   managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
 
   managementApi.addHook('onClose', async () => {
-    if (platform() !== 'win32') {
+    if (platform() !== 'win32' && !customSocket) {
       await safeRemove(runtimePIDDir)
     }
   })

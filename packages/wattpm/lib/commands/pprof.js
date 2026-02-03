@@ -3,9 +3,10 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { getSocket } from '../utils.js'
 
 export async function pprofStartCommand (logger, args) {
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ socket: getSocket() })
 
   try {
     const { positionals, values } = parseArgs(
@@ -76,7 +77,7 @@ export async function pprofStartCommand (logger, args) {
 }
 
 export async function pprofStopCommand (logger, args) {
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ socket: getSocket() })
 
   try {
     const { positionals, values } = parseArgs(
@@ -177,11 +178,13 @@ export const help = {
       },
       {
         name: '--node-modules-source-maps, -n',
-        description: 'Comma-separated list of node_modules packages to load source maps from (e.g., "next,@next/next-server")'
+        description:
+          'Comma-separated list of node_modules packages to load source maps from (e.g., "next,@next/next-server")'
       },
       {
         name: '--dir, -d',
-        description: 'Directory to save the profile data to (default: current working directory). Only used with "stop" subcommand.'
+        description:
+          'Directory to save the profile data to (default: current working directory). Only used with "stop" subcommand.'
       }
     ],
     args: [

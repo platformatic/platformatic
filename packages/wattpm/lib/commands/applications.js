@@ -3,6 +3,7 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 import { readFile, stat, writeFile } from 'node:fs/promises'
 import { basename, isAbsolute, relative, resolve } from 'node:path'
+import { getSocket } from '../utils.js'
 
 async function updateConfigFile (path, update) {
   const contents = JSON.parse(await readFile(path, 'utf-8'))
@@ -25,7 +26,7 @@ export async function applicationsAddCommand (logger, args) {
     false
   )
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, allPositionals)
     const config = await client.getRuntimeConfig(runtime.pid, true)
@@ -100,7 +101,7 @@ export async function applicationsRemoveCommand (logger, args) {
     false
   )
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
