@@ -6,7 +6,7 @@ import { resolve } from 'node:path'
 import { getSocket } from '../utils.js'
 
 export async function pprofStartCommand (logger, args) {
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
 
   try {
     const { positionals, values } = parseArgs(
@@ -77,7 +77,7 @@ export async function pprofStartCommand (logger, args) {
 }
 
 export async function pprofStopCommand (logger, args) {
-  const client = new RuntimeApiClient({ socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
 
   try {
     const { positionals, values } = parseArgs(
