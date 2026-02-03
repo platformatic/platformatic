@@ -28,7 +28,7 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig = await nextConfig(...args)
   }
 
-  const { basePath, config, nextVersion } = globalThis.platformatic
+  const { basePath, config, nextVersion, logger } = globalThis.platformatic
 
   if (typeof nextConfig.basePath === 'undefined') {
     nextConfig.basePath = basePath
@@ -36,19 +36,32 @@ export async function enhanceNextConfig (nextConfig, ...args) {
 
   const modifications = []
 
-  if (config.cache?.enabled !== false && config.cache?.adapter) {
-    if (nextVersion.major > 15 && config.cache?.cacheComponents && typeof nextConfig.cacheComponents === 'undefined') {
+  ;(function () {
+    if (!config.cache?.adapter || config.cache?.enabled === false) return
+
+    const existingCacheHandlers = typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers !== 'undefined'
+    if (existingCacheHandlers) {
+      return logger.warn('Next.js cache handlers are already defined in next.config.js. Skipping cache configuration.')
+    }
+
+    if (config.cache?.cacheComponents || nextConfig.cacheComponents) {
+      if (config.cache?.cacheComponents === false || nextConfig.cacheComponents === false) {
+        return logger.warn('Platformatic and Next.js Cache Components configs are conflicting. Skipping cache configuration.')
+      }
+      if (nextVersion.major <= 15) {
+        return logger.warn('Next.js Cache Components are only supported in Next.js 16 and above. Skipping cache configuration.')
+      }
       nextConfig.cacheComponents = true
       nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
       nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
       nextConfig.cacheMaxMemorySize = 0
       modifications.push(['componentsCache', config.cache.adapter])
-    } else if (typeof nextConfig.cacheHandler === 'undefined') {
+    } else {
       nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
       nextConfig.cacheMaxMemorySize = 0
       modifications.push(['isrCache', config.cache.adapter])
     }
-  }
+  })()
 
   if (config.next?.trailingSlash && typeof nextConfig.trailingSlash === 'undefined') {
     nextConfig.trailingSlash = true
