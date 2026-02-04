@@ -1338,6 +1338,15 @@ export const runtimeProperties = {
     ],
     default: 300000 // 5 minutes
   },
+  startupConcurrency: {
+    anyOf: [
+      {
+        type: 'number',
+        minimum: 1
+      },
+      { type: 'string' }
+    ]
+  },
   messagingTimeout: {
     anyOf: [
       {

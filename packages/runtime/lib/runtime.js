@@ -92,7 +92,7 @@ function parseOrigins (origins) {
 }
 
 // Always run operations in parallel to avoid deadlocks when services have dependencies
-const MAX_CONCURRENCY = availableParallelism()
+const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
@@ -151,7 +151,7 @@ export class Runtime extends EventEmitter {
     this.#env = config[kMetadata].env
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
-    this.#concurrency = this.#context.concurrency ?? MAX_CONCURRENCY
+    this.#concurrency = Math.max(1, config.startupConcurrency ?? this.#context.concurrency ?? DEFAULT_CONCURRENCY)
     this.#applications = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
