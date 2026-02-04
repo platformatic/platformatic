@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.36.0.json",
-  "version": "3.36.0",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.37.0.json",
+  "version": "3.37.0",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -2533,6 +2533,17 @@
             }
           ],
           "default": 300000
+        },
+        "startupConcurrency": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "messagingTimeout": {
           "anyOf": [

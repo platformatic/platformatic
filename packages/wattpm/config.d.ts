@@ -517,6 +517,7 @@ export type PlatformaticRuntimeConfig = {
     [k: string]: unknown;
   };
   applicationTimeout?: number | string;
+  startupConcurrency?: number | string;
   messagingTimeout?: number | string;
   resolvedApplicationsBasePath?: string;
   env?: {
