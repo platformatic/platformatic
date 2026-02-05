@@ -78,9 +78,9 @@ test('httpMetrics histogram resets after metric collection', async () => {
   const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
   assert.ok(histogramMetric, 'histogram metric should exist')
 
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.1)
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.2)
-  histogramMetric.observe({ method: 'GET', telemetry_id: 'test' }, 0.3)
+  histogramMetric.observe({ method: 'GET' }, 0.1)
+  histogramMetric.observe({ method: 'GET' }, 0.2)
+  histogramMetric.observe({ method: 'GET' }, 0.3)
 
   const metricsBefore = await result.registry.getMetricsAsJSON()
   const histogramBefore = metricsBefore.find(m => m.name === 'http_request_all_duration_seconds')
@@ -106,9 +106,9 @@ test('httpMetrics summary resets after metric collection', async () => {
   const summaryMetric = result.registry.getSingleMetric('http_request_all_summary_seconds')
   assert.ok(summaryMetric, 'summary metric should exist')
 
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.15)
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.25)
-  summaryMetric.observe({ method: 'POST', telemetry_id: 'test' }, 0.35)
+  summaryMetric.observe({ method: 'POST' }, 0.15)
+  summaryMetric.observe({ method: 'POST' }, 0.25)
+  summaryMetric.observe({ method: 'POST' }, 0.35)
 
   const metricsBefore = await result.registry.getMetricsAsJSON()
   const summaryBefore = metricsBefore.find(m => m.name === 'http_request_all_summary_seconds')
@@ -128,28 +128,19 @@ test('httpMetrics summary resets after metric collection', async () => {
 })
 
 // Tests for buildCustomLabelsConfig
-test('buildCustomLabelsConfig returns default telemetry_id when no config provided', () => {
+test('buildCustomLabelsConfig returns empty custom labels when no config provided', () => {
   const result = buildCustomLabelsConfig(undefined)
 
-  assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
+  assert.deepStrictEqual(result.customLabels, [])
   assert.strictEqual(typeof result.getCustomLabels, 'function')
-
-  // Test default getCustomLabels function
-  const labels = result.getCustomLabels({ headers: { 'x-plt-telemetry-id': 'test-id' } })
-  assert.deepStrictEqual(labels, { telemetry_id: 'test-id' })
+  assert.deepStrictEqual(result.getCustomLabels({}), {})
 })
 
-test('buildCustomLabelsConfig returns default telemetry_id when empty array provided', () => {
+test('buildCustomLabelsConfig returns empty custom labels when empty array provided', () => {
   const result = buildCustomLabelsConfig([])
 
-  assert.deepStrictEqual(result.customLabels, ['telemetry_id'])
-})
-
-test('buildCustomLabelsConfig returns empty object when header is missing', () => {
-  const result = buildCustomLabelsConfig(undefined)
-
-  const labels = result.getCustomLabels({ headers: {} })
-  assert.deepStrictEqual(labels, {})
+  assert.deepStrictEqual(result.customLabels, [])
+  assert.deepStrictEqual(result.getCustomLabels({}), {})
 })
 
 test('buildCustomLabelsConfig builds custom labels from configuration', () => {
@@ -239,20 +230,18 @@ test('httpMetrics with custom labels configuration', async () => {
   assert.ok(hasCustomLabel, 'custom domain label should be present in histogram values')
 })
 
-test('httpMetrics does not include telemetry_id label when header is not present', async () => {
+test('httpMetrics does not include telemetry_id label by default', async () => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
 
   const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
   assert.ok(histogramMetric, 'histogram metric should exist')
 
-  // Observe without telemetry_id (simulating request without x-plt-telemetry-id header)
   histogramMetric.observe({ method: 'GET' }, 0.1)
 
   const metrics = await result.registry.getMetricsAsJSON()
   const histogram = metrics.find(m => m.name === 'http_request_all_duration_seconds')
 
-  // Find a value that has our method label
   const value = histogram.values.find(v => v.labels.method === 'GET')
   assert.ok(value, 'should have a value with method=GET')
-  assert.strictEqual(value.labels.telemetry_id, undefined, 'telemetry_id should not be present when header is missing')
+  assert.strictEqual(value.labels.telemetry_id, undefined)
 })

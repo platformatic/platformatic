@@ -316,14 +316,10 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
 // Build custom labels configuration from metrics config
 // Returns { customLabels: string[], getCustomLabels: (req) => object }
 export function buildCustomLabelsConfig (customLabelsConfig) {
-  // Default: use telemetry_id from x-plt-telemetry-id header
   if (!customLabelsConfig || customLabelsConfig.length === 0) {
     return {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id']
-        return telemetryId ? { telemetry_id: telemetryId } : {}
-      }
+      customLabels: [],
+      getCustomLabels: () => ({})
     }
   }
 
