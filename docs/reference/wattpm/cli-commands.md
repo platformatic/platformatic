@@ -352,10 +352,38 @@ When manually editing your configuration file to add applications with git URLs,
 }
 ```
 
-**Example:**
+Example:
 
 ```bash
 wattpm-utils resolve --username myuser --password $GITHUB_TOKEN
+```
+
+**Packages Specification in Configuration:**
+
+You can specify npm packages, including version, by using the `npm:` protocol in the URL:
+
+```json
+{
+  "web": [
+    {
+      "id": "my-app",
+      "url": "npm:myapp"
+    }
+  ]
+}
+```
+
+The example above will install the latest version. But you can provide a version (including semver ranges):
+
+```json
+{
+  "web": [
+    {
+      "id": "my-app",
+      "url": "npm:myapp@0.2.0"
+    }
+  ]
+}
 ```
 
 ## Debugging and Inspection Commands
