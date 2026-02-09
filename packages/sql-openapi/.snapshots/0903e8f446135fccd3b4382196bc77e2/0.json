@@ -639,6 +639,7 @@
         ],
         "description": "Add new post to the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -688,6 +689,7 @@
         ],
         "description": "Update one or more posts in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1217,6 +1219,7 @@
         ],
         "description": "Update post in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
