@@ -422,6 +422,7 @@
         ],
         "description": "Add new page to the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -470,6 +471,7 @@
         ],
         "description": "Update one or more pages in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -805,6 +807,7 @@
         ],
         "description": "Update page in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
