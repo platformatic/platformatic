@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./images/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platformatic Gateway</title>
+    <style>
+      body {
+        width: 100%;
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        --secondary-color: #FFFFFF;
+        --primary-color: #00050B;
+        --primary-color-rgb: 0, 5, 11;
+        --secondary-color-rgb: 255, 255, 255;
+        --theme-img: url('./images/light_mode.svg');
+        --triangle-url: url('./images/triangle_light.svg');
+      }
+
+      body.light-theme {
+        --secondary-color: #001825;
+        --primary-color: #FFFFFF;
+        --secondary-color-rgb: 0, 5, 11;
+        --primary-color-rgb: 255, 255, 255;
+        --theme-img: url('./images/dark_mode.svg');
+        --triangle-url: url('./images/triangle_dark.svg');
+      }
+
+      body {
+        background: var(--primary-color);
+      }
+
+      :root {
+        font-family: Montserrat, Inter, Avenir, Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 24px;
+        font-weight: 400;
+
+        color-scheme: light dark;
+        color: inherit;
+        
+        position: relative;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-text-size-adjust: 100%;
+      }
+
+
+      a {
+        font-weight: 600;
+        color: var(--secondary-color);
+        text-decoration: inherit;
+        width: 100%;
+        text-align: center;
+        padding: 4px 0px;
+      }
+      .button-container a:hover {
+        background-color: rgba(var(--secondary-color-rgb), 0.3);
+      }
+
+      .text-opacque {
+        opacity: 0.7;
+      }
+      .text-center {
+        text-align: center;
+      }
+
+      .button-container {
+        display: flex;
+        column-gap: 0.5rem;
+        justify-content: center;
+        align-items: start;
+        margin: 2rem 0;
+      }
+
+      .buttons-list-container {
+        display: flex;
+        flex-direction: column;
+        row-gap: 1rem;
+        justify-content: center;
+        align-items: start;
+      }
+
+      .button-link {
+        width: 233px;
+        border: 1px solid var(--secondary-color);
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+      }
+
+      .button-link > img {
+        margin-right: 0.5rem;
+      }
+      button {
+        border-radius: 8px;
+        border: 1px solid transparent;
+        padding: 0.6em 1.2em;
+        font-size: 1em;
+        font-weight: 500;
+        font-family: inherit;
+        background-color: #1a1a1a;
+        cursor: pointer;
+        transition: border-color 0.25s;
+      }
+      button:hover {
+        border-color: #646cff;
+      }
+      button:focus,
+      button:focus-visible {
+        outline: 4px auto -webkit-focus-ring-color;
+      }
+
+      #root {
+        width: 100%;
+        min-height: inherit;
+        height: 100%;
+        display: flex;
+        position: relative;
+        z-index: 20;
+      }
+
+      #content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: auto;
+        position: relative;
+        z-index: 20;
+        color: var(--secondary-color);
+      }
+
+      .plt-triangle-container {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 25%;
+        height: 50vH;
+        z-index: -1;
+        content: ''; 
+        background: var(--triangle-url) repeat;
+        opacity: 0.25;
+      }
+
+      .plt-triangle-content-opacque {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        content: '';
+        background: linear-gradient(to top, rgba(var(--primary-color-rgb), 1), rgba(var(--primary-color-rgb), 0.2) 43%);
+      }
+
+      #button-theme-selector {
+        border: none;
+        position: absolute;
+        top: 2rem;
+        right: 3rem;
+        width: 40px;
+        height: 40px;
+        background: var(--theme-img);
+        outline: none;
+        z-index: 1;
+      }
+
+      .text-desktop-display {
+        font-family: Inter;
+        font-size: 4rem;
+        font-weight: 600;
+        line-height: 5rem;
+        text-align: center;
+        margin: 0;
+      }
+
+      .text-desktop-body-large {
+        font-family: Inter;
+        font-size: 1.125rem;
+        font-weight: 300;
+        line-height: 1.688rem;
+        text-align: center;
+      }
+      
+      a.external-link {
+        color: #2588E4;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="plt-triangle-container"><div class="plt-triangle-content-opacque"></div></div>
+      <button id="button-theme-selector" type="button" class="theme-selector" alt="theme selector" onclick="toggleLightMode()"></button>
+      
+      <div id="content">
+        <img id="logo" height="256" />
+        <p class="text-desktop-display"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Gateway</span></p>
+        <div class="button-container">
+          <a id="openapi-link" target="_blank" class="button-link">
+            <img src="./images/openapi.svg" />
+            OpenAPI Documentation
+          </a>
+          <a id="graphql-link" target="_blank" class="button-link">
+            <img src="./images/graphiql.svg" />
+            GraphiQL
+          </a>
+        </div>
+        <a href="https://docs.platformatic.dev" target="_blank" class="external-link">Explore our documentation</a>
+      </div>
+    </div>
+
+    <script>
+      let currentPath = window.location.pathname
+
+      if (!currentPath.endsWith('/')) {
+        currentPath += '/'
+      }
+    
+      const openApiLink = document.getElementById('openapi-link')
+      openApiLink.href = currentPath + 'documentation'
+
+      const graphqlLink = document.getElementById('graphql-link')
+      graphqlLink.href = currentPath + 'graphiql'
+
+      const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
+      if (prefersLightScheme.matches) {
+        document.body.classList.add('light-theme');
+        document.getElementById('logo').src = currentPath + 'images/platformatic-logo-light.svg'
+      } else {
+        document.body.classList.remove('light-theme');
+        document.getElementById('logo').src = currentPath + 'images/platformatic-logo-dark.svg'
+      }
+      
+      const toggleLightMode = function() {
+        document.body.classList.toggle('light-theme');
+        if (document.body.classList.contains('light-theme')) {
+          document.getElementById('logo').src = currentPath + 'images/platformatic-logo-light.svg'
+        } else {
+          document.getElementById('logo').src = currentPath + 'images/platformatic-logo-dark.svg'
+        }
+      }
+    </script>
+  </body>
+</html>

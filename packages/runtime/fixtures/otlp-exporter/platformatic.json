@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json",
+  "entrypoint": "main",
+  "watch": false,
+  "autoload": {
+    "path": "./services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "metrics": {
+    "hostname": "127.0.0.1",
+    "port": 9090,
+    "otlpExporter": {
+      "endpoint": "http://127.0.0.1:{PLT_OTLP_PORT}/v1/metrics",
+      "interval": 1000,
+      "serviceName": "test-service",
+      "serviceVersion": "1.0.0"
+    }
+  }
+}

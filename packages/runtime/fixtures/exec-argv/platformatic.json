@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "main",
+  "applications": [
+    {
+      "id": "main",
+      "path": "applications/main",
+      "execArgv": ["--import", "./fixtures/exec-argv/applications/main/import.js"]
+    }
+  ]
+}

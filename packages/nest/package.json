@@ -1,0 +1,50 @@
+{
+  "name": "@platformatic/nest",
+  "version": "3.37.0",
+  "description": "Platformatic Nest.js Capability",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@platformatic/basic": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
+    "get-port": "^7.1.0",
+    "light-my-request": "^6.0.0",
+    "pino-http": "^10.2.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@nestjs/core": "^11.1.2",
+    "@nestjs/platform-express": "^11.1.2",
+    "@nestjs/platform-fastify": "^11.1.2",
+    "@platformatic/gateway": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "json-schema-to-typescript": "^15.0.1",
+    "neostandard": "^0.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

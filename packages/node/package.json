@@ -1,16 +1,15 @@
 {
   "name": "@platformatic/node",
-  "version": "2.53.0",
-  "description": "Platformatic Node.js Stackable",
+  "version": "3.37.0",
+  "description": "Platformatic Node.js Capability",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "repository": {
@@ -25,21 +24,26 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
+    "@watchable/unpromise": "^1.0.2",
+    "json5": "^2.2.3",
     "light-my-request": "^6.0.0"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.19.0",
-    "express": "^4.19.2",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.0.0",
+    "express": "^4.19.2",
+    "fastify": "^5.7.0",
     "json-schema-to-typescript": "^15.0.1",
     "koa": "^2.15.3",
     "neostandard": "^0.12.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

@@ -1,17 +1,14 @@
-'use strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('composer', async (t) => {
+test('gateway', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -21,25 +18,24 @@ test('composer', async (t) => {
 
   {
     const res = await request(entryUrl)
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
-    assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
     const res = await request(entryUrl + '/service-app/')
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
-    assert.deepStrictEqual(data, { hello: 'hello123' })
+    deepStrictEqual(data, { hello: 'hello123' })
   }
 })
 
-test('composer-proxy', async (t) => {
+test('gateway-proxy', async t => {
   const configFile = join(fixturesDir, 'composer-proxy', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
@@ -47,5 +43,5 @@ test('composer-proxy', async (t) => {
 
   const entryUrl = await app.start()
 
-  assert.ok(entryUrl.startsWith('http://127.0.0.1'), 'entryUrl should start with http://127.0.0.1')
+  ok(entryUrl.startsWith('http://127.0.0.1'), 'entryUrl should start with http://127.0.0.1')
 })

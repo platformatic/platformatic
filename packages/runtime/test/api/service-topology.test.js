@@ -1,19 +1,15 @@
-'use strict'
+import { deepStrictEqual } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
-
-test('should get services topology', async t => {
+test('should get applications topology', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const monorepo = resolve(configFile, '../../monorepo/')
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -22,57 +18,69 @@ test('should get services topology', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
-  assert.deepStrictEqual(topology, {
+  deepStrictEqual(topology, {
     entrypoint: 'serviceApp',
     production: false,
-    services: [
+    applications: [
       {
         id: 'db-app',
         type: 'db',
         status: 'started',
-        version: platformaticVersion,
+        config: resolve(monorepo, 'dbApp', 'platformatic.db.json'),
+        path: resolve(monorepo, 'dbApp'),
+        version,
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        config: resolve(monorepo, 'serviceApp', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceApp'),
+        version,
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        config: resolve(monorepo, 'serviceAppWithLogger', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithLogger'),
+        version,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
+        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
+        version,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
-        dependencies: []
+        dependencies: [],
+        sourceMaps: false
       }
     ]
   })
 })
 
-test('should get services topology (composer)', async t => {
+test('should get applications topology (gateway)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const monorepo = resolve(configFile, '../../monorepo/')
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -81,77 +89,71 @@ test('should get services topology (composer)', async t => {
   })
 
   const entrypointDetails = await app.getEntrypointDetails()
-  const topology = await app.getServices()
+  const topology = await app.getApplications()
 
-  assert.deepStrictEqual(topology, {
+  deepStrictEqual(topology, {
     production: false,
-    services: [
+    applications: [
+      {
+        id: 'composerApp',
+        type: 'gateway',
+        status: 'started',
+        config: resolve(monorepo, 'composerApp', 'platformatic.composer.json'),
+        path: resolve(monorepo, 'composerApp'),
+        version,
+        localUrl: 'http://composerApp.plt.local',
+        entrypoint: true,
+        dependencies: ['with-logger', 'multi-plugin-service', 'serviceApp'],
+        url: entrypointDetails.url,
+        sourceMaps: false
+      },
       {
         id: 'dbApp',
         type: 'db',
         status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://dbApp.plt.local',
+        config: resolve(monorepo, 'dbApp', 'platformatic.db.json'),
+        path: resolve(monorepo, 'dbApp'),
+        version,
         entrypoint: false,
-        dependencies: []
+        localUrl: 'http://dbApp.plt.local',
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://serviceApp.plt.local',
+        config: resolve(monorepo, 'serviceApp', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceApp'),
+        version,
         entrypoint: false,
-        dependencies: []
+        localUrl: 'http://serviceApp.plt.local',
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://with-logger.plt.local',
+        config: resolve(monorepo, 'serviceAppWithLogger', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithLogger'),
+        version,
         entrypoint: false,
-        dependencies: []
+        localUrl: 'http://with-logger.plt.local',
+        dependencies: [],
+        sourceMaps: false
       },
       {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://multi-plugin-service.plt.local',
+        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
+        version,
         entrypoint: false,
-        dependencies: []
-      },
-      {
-        id: 'composerApp',
-        type: 'composer',
-        status: 'started',
-        version: platformaticVersion,
-        localUrl: 'http://composerApp.plt.local',
-        entrypoint: true,
-        dependencies: [
-          {
-            id: 'with-logger',
-            url: 'http://with-logger.plt.local',
-            local: true
-          },
-          {
-            id: 'multi-plugin-service',
-            url: 'http://multi-plugin-service.plt.local',
-            local: true
-          },
-          {
-            id: 'serviceApp',
-            url: 'http://serviceApp.plt.local',
-            local: true
-          },
-          {
-            id: 'external-service',
-            url: 'https://external-service.com',
-            local: false
-          }
-        ],
-        url: entrypointDetails.url
+        localUrl: 'http://multi-plugin-service.plt.local',
+        dependencies: [],
+        sourceMaps: false
       }
     ],
     entrypoint: 'composerApp'

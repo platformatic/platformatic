@@ -1,22 +1,16 @@
 import { expectAssignable } from 'tsd'
-import { BaseGenerator } from './lib/base-generator'
-import { generatePlugins, generateTests } from './index'
-import { FileGenerator } from './lib/file-generator'
+import { ConfigField, ConfigFieldDefinition } from './index.js'
 
-expectAssignable<BaseGenerator.ConfigFieldDefinition>({
+expectAssignable<ConfigFieldDefinition>({
   label: 'PLT_TESTING',
   var: 'testing',
   default: 'hello world',
   type: 'string',
-  configValue: 'someConfigValue',
+  configValue: 'someConfigValue'
 })
 
-expectAssignable<BaseGenerator.ConfigField>({
+expectAssignable<ConfigField>({
   var: 'testing',
   configValue: 'someConfigValue',
-  value: 'asd123',
+  value: 'asd123'
 })
-
-expectAssignable<FileGenerator.FileObject[]>(generatePlugins(true))
-
-expectAssignable<FileGenerator.FileObject[]>(generateTests(true, '@platformatic/service'))

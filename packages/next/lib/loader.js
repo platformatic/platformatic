@@ -11,87 +11,26 @@ import {
   variableDeclarator
 } from '@babel/types'
 import { readFile, realpath } from 'node:fs/promises'
-import { sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const originalId = '__pltOriginalNextConfig'
-
-let config
-let candidates
-let basePath = ''
+const originalId = '__pltEnhanceNextConfig'
+// Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
+let candidates = ['next.config.js', 'next.config.mjs']
 
 function parseSingleExpression (expr) {
   return parse(expr, { allowAwaitOutsideFunction: true }).program.body[0]
 }
 
-/*
-  Generates:
-  async function (...args) {
-    let __pltOriginalNextConfig = $ORIGINAL;
-
-    if (typeof __pltOriginalNextConfig === 'function') {
-      __pltOriginalNextConfig = await __pltOriginalNextConfig(...args);
-    }
-
-    if(typeof __pltOriginalNextConfig.basePath === 'undefined') {
-      __pltOriginalNextConfig.basePath = basePath
-    }
-
-    if(typeof __pltOriginalNextConfig.cacheHandler === 'undefined') {
-      __pltOriginalNextConfig.cacheHandler = $PATH
-      __pltOriginalNextConfig.cacheMaxMemorySize = 0
-    }
-
-    // This is to send the configuraion when Next is executed in a child process (development)
-    globalThis[Symbol.for('plt.children.itc')]?.notify('config', __pltOriginalNextConfig)
-
-    // This is to send the configuraion when Next is executed in the same process (production)
-    process.emit('plt:next:config', __pltOriginalNextConfig)
-
-    return __pltOriginalNextConfig;
-  }
-*/
 function createEvaluatorWrapperFunction (original) {
-  const cacheHandler = config?.cache?.adapter
-    ? fileURLToPath(new URL(`./caching/${config.cache.adapter}.js`, import.meta.url)).replaceAll(sep, '/')
-    : undefined
-
-  const trailingSlash = config?.next?.trailingSlash
-
   return functionDeclaration(
-    null,
+    identifier(originalId),
     [restElement(identifier('args'))],
-    blockStatement(
-      [
-        // This is to avoid https://github.com/vercel/next.js/issues/76981
-        parseSingleExpression("Headers.prototype[Symbol.for('nodejs.util.inspect.custom')] = undefined"),
-        variableDeclaration('let', [variableDeclarator(identifier(originalId), original)]),
-        parseSingleExpression(
-          `if (typeof ${originalId} === 'function') { ${originalId} = await ${originalId}(...args) }`
-        ),
-        parseSingleExpression(
-          `if (typeof ${originalId}.basePath === 'undefined') { ${originalId}.basePath = "${basePath}" }`
-        ),
-        cacheHandler
-          ? parseSingleExpression(`
-              if (typeof ${originalId}.cacheHandler === 'undefined') {
-                ${originalId}.cacheHandler = '${cacheHandler}'
-                ${originalId}.cacheMaxMemorySize = 0
-              }  
-            `)
-          : undefined,
-        trailingSlash
-          ? parseSingleExpression(`
-              if (typeof ${originalId}.trailingSlash === 'undefined') { 
-                ${originalId}.trailingSlash = true
-              }
-            `)
-          : undefined,
-        parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),
-        parseSingleExpression(`process.emit('plt:next:config', ${originalId})`),
-        returnStatement(identifier(originalId))
-      ].filter(e => e)
-    ),
+    blockStatement([
+      parseSingleExpression("const { enhanceNextConfig } = await import('@platformatic/next')"),
+      variableDeclaration('const', [variableDeclarator(identifier('original'), original)]),
+      parseSingleExpression('const enhanced = await enhanceNextConfig(original, ...args)'),
+      returnStatement(identifier('enhanced'))
+    ]),
     false,
     true
   )
@@ -154,10 +93,11 @@ export async function initialize (data) {
     realRoot.pathname += '/'
   }
 
-  // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
-  candidates = ['next.config.js', 'next.config.mjs'].map(c => new URL(c, realRoot).toString())
-  basePath = data.basePath ?? ''
-  config = data.config
+  if (data.config.next?.useExperimentalAdapter === true) {
+    return
+  }
+
+  candidates = candidates.map(c => new URL(c, realRoot).toString())
 }
 
 export async function load (url, context, nextLoad) {

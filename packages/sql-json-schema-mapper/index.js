@@ -1,9 +1,7 @@
-'use strict'
+import CodeBlockWriter from 'code-block-writer'
+import { property } from 'safe-identifier'
 
-const CodeBlockWriter = require('code-block-writer').default
-const { property } = require('safe-identifier')
-
-function mapSQLTypeToOpenAPIType (sqlType) {
+export function mapSQLTypeToOpenAPIType (sqlType) {
   // TODO support more types
   /* istanbul ignore next */
   switch (sqlType) {
@@ -60,7 +58,7 @@ function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
+export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   const fields = entity.fields
   const properties = {}
   const required = []
@@ -76,13 +74,13 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
       properties[field.camelcase] = {
         type: 'array',
         items: {
-          type,
-        },
+          type
+        }
       }
     } else if (field.sqlType === 'json' || field.sqlType === 'jsonb') {
       properties[field.camelcase] = {
         type: 'object',
-        additionalProperties: true,
+        additionalProperties: true
       }
     } else {
       properties[field.camelcase] = { type }
@@ -109,7 +107,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
     description: `A ${entity.name}`,
     type: 'object',
     properties,
-    additionalProperties: false,
+    additionalProperties: false
   }
 
   if (required.length > 0) {
@@ -119,10 +117,10 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   return res
 }
 
-function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
+export function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
   let { writer, addedProps } = opts
   addedProps ??= new Set()
-  writer ??= new CodeBlockWriter()
+  writer ??= new CodeBlockWriter({ indentNumberOfSpaces: opts.indentSpaces ?? 4 })
   const { title, description, properties, required, additionalProperties } = obj
   writer.write('/**').newLine()
   writer.write(` * ${title}`).newLine()
@@ -134,7 +132,14 @@ function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
   return writer.toString()
 }
 
-function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = [], fieldDefinitions = {}) {
+function renderProperties (
+  writer,
+  addedProps,
+  properties = {},
+  additionalProperties,
+  required = [],
+  fieldDefinitions = {}
+) {
   // Since Array.prototype.sort is guaranteed to be stable, we can sort by name first, then apply special sorting rules
   const keys = Object.keys(properties)
     .sort()
@@ -185,7 +190,7 @@ function renderProperties (writer, addedProps, properties = {}, additionalProper
             })
             writer.write('[]')
             break
-            // TODO support arrays in arrays
+          // TODO support arrays in arrays
           default:
             writer.write(`${JSONSchemaToTsType(items.type)}[]`)
         }
@@ -195,7 +200,14 @@ function renderProperties (writer, addedProps, properties = {}, additionalProper
           renderProperties(writer, addedProps, current.properties, current.additionalProperties, current.required)
         })
       } else if (type === 'string' && localProperty.enum) {
-        writer.write(localProperty.enum.sort().map((v) => `"${v}"`).join(' | '))
+        writer.write(
+          localProperty.enum
+            .sort()
+            .map(v => `"${v}"`)
+            .join(' | ')
+        )
+      } else if (fieldDefinitions[name]?.sqlType === 'bytea') {
+        writer.write('Buffer')
       } else {
         writer.write(JSONSchemaToTsType(type))
       }
@@ -227,5 +239,3 @@ function JSONSchemaToTsType (type) {
       return 'any'
   }
 }
-
-module.exports = { mapSQLTypeToOpenAPIType, mapSQLEntityToJSONSchema, mapOpenAPItoTypes }

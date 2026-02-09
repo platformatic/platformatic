@@ -1,124 +1,226 @@
-'use strict'
+import { deepStrictEqual, ok, rejects } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { transform } from '../index.js'
+import { createRuntime, readLogs } from './helpers.js'
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { Runtime } = require('../lib/runtime')
-const { getRuntimeLogsDir } = require('../lib/utils')
-const { Client } = require('undici')
+function extractLogs (raw) {
+  const log = { source: raw.name ?? 'runtime', msg: raw.msg }
 
-const fixturesDir = join(__dirname, '..', 'fixtures')
+  if (raw.dependencies) {
+    log.dependencies = raw.dependencies
+  }
 
-test('parses composer and client dependencies', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+  if (raw.dependents) {
+    log.dependents = raw.dependents
+  }
 
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  return log
+}
+
+function hasLog (logs, source, msg, dependencies, dependents) {
+  return logs.find(l => {
+    let dependenciesMatch = true
+    let dependentsMatch = true
+
+    if (dependencies) {
+      dependenciesMatch = Array.isArray(l.dependencies) && dependencies.every(d => l.dependencies.includes(d))
+    }
+
+    if (dependents) {
+      dependentsMatch = Array.isArray(l.dependents) && dependents.every(d => l.dependents.includes(d))
+    }
+
+    return l.source === source && l.msg === msg && dependenciesMatch && dependentsMatch
+  })
+}
+
+test('starts applications according to their implicit or explicit dependencies, in order', async t => {
+  const context = {}
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await runtime.close()
   })
 
-  await runtime.init()
-  const { services } = await runtime.getServices()
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
 
-  const mainService = services.find(service => service.id === 'main')
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
-  assert.deepStrictEqual(mainService.dependencies, [
-    { id: 'service-1', url: 'http://service-1.plt.local', local: true },
-    {
-      id: 'external-service-1',
-      url: 'http://external-dependency-1',
-      local: false
-    }
+  // The defined order in the runtime file is 'composer', 'service-2', 'service-1'
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "service-2"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-2"...',
+    'Started the worker 0 of the application "composer"...'
   ])
-
-  const service1 = services.find(service => service.id === 'service-1')
-  assert.deepStrictEqual(service1.dependencies, [])
-
-  const service2 = services.find(service => service.id === 'service-2')
-  assert.deepStrictEqual(service2.dependencies, [])
 })
 
-test('correct throws on missing dependencies', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+/*
+  The application service-3 will fail after 1.5s.
+  This will cause the runtime to stop all the other applications.
+  Therefore composer and service-2 will report a failure in the logs.
+*/
+test('can abort waiting for dependencies if the runtime is stopped', async t => {
+  const context = {}
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.with-failure.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
     await runtime.close()
   })
 
-  await assert.rejects(() => runtime.init(), {
-    name: 'FastifyError',
-    message: "Missing dependency: \"service 'composer' has unknown dependency: 'missing'.\""
-  })
-})
+  await rejects(() => runtime.start(), /Service 3 failed to start/)
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.level === 30 || m.level === 50).map(extractLogs)
 
-test('correct throws on missing dependencies, showing all services', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies2.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await assert.rejects(() => runtime.init(), {
-    name: 'FastifyError',
-    message: "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
-  })
-})
-
-test('correct warns on reversed dependencies', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-reversed-dependencies.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: runtime.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
-
-  await sleep(5000)
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/v1/logs/all'
-  })
-  assert.strictEqual(statusCode, 200)
-
-  const logs = await body.text()
-  assert.ok(
-    logs.includes(
-      'Service \\"main\\" depends on service \\"service-1\\", but it is defined and it will be started before it. Please check your configuration file.'
+  ok(hasLog(startLogs, 'composer', 'Waiting for dependencies to start.', ['service-2', 'service-3', 'service-1']))
+  ok(hasLog(startLogs, 'service-2', 'Waiting for dependencies to start.', ['service-1']))
+  ok(hasLog(startLogs, 'runtime', 'Failed to start worker 0 of the application "service-3": Service 3 failed to start'))
+  ok(
+    hasLog(
+      startLogs,
+      'runtime',
+      'Failed to start worker 0 of the application "composer": One of the service dependencies was unable to start.'
     )
   )
+
+  ok(
+    hasLog(
+      startLogs,
+      'runtime',
+      'Failed to start worker 0 of the application "service-2": One of the service dependencies was unable to start.'
+    )
+  )
+})
+
+/*
+  Setting concurrency to 1 here will force the runtime to start the applications sequentially.
+  This means that when composer is started, service-2 is already started.
+*/
+test('does not wait for dependencies that have already been started', async t => {
+  const context = { concurrency: 1 }
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
+
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
+})
+
+test('applications wait for dependant applications before stopping', async t => {
+  const context = {}
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const allLogs = await readLogs(context.logsPath, 0)
+
+  const logs = allLogs.filter(m => m.level === 30 && m.msg.match(/stop/i)).map(extractLogs)
+
+  deepStrictEqual(logs, [
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "composer"...' },
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "composer"...' },
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-2"...' },
+    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-1"...' },
+    { source: 'service-1', msg: 'Waiting for dependents to stop.', dependents: ['service-2'] },
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-2"...' },
+    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-1"...' }
+  ])
+})
+
+test('should throw if circular dependencies are detected', async t => {
+  const context = {}
+  const configFile = join(fixturesDir, 'circular-dependencies', 'platformatic.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await rejects(
+    () => runtime.start(),
+    /Detected a cycle in the applications dependencies: application-1 -> application-2 -> application-1/
+  )
+})
+
+test('startupConcurrency config option takes precedence over context.concurrency', async t => {
+  const context = {
+    concurrency: 10,
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.startupConcurrency = 1
+      return config
+    }
+  }
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
+
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
+})
+
+test('startupConcurrency has a minimum bound of 1', async t => {
+  const context = {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.startupConcurrency = 0
+      return config
+    }
+  }
+  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const runtime = await createRuntime(configFile, null, context)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+  await runtime.close()
+  const logs = await readLogs(context.logsPath, 0)
+  const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
+
+  deepStrictEqual(startLogs, [
+    'Starting the worker 0 of the application "service-1"...',
+    'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "composer"...',
+    'Started the worker 0 of the application "composer"...'
+  ])
 })

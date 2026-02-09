@@ -59,9 +59,7 @@ test('should configure metrics correctly with both node and http metrics', async
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
-    'http_request_all_duration_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
+    'http_request_all_duration_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -69,7 +67,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const entrypointRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="api"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('applicationId="api"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }
@@ -78,10 +76,38 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const internalRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="internal"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('applicationId="internal"'))
   if (!internalRequestCountMetric) {
     assert.fail('Expected internal request count metric not found')
   }
   const internalRequestCount = internalRequestCountMetric.split(' ')[1]
   assert.strictEqual(internalRequestCount, '1')
+
+  const lines = metrics.split('\n')
+
+  const labels = []
+  for (const line of lines) {
+    if (!line || line.startsWith('#')) continue
+    labels.push(line.split('{')[1].split('}')[0].split(','))
+  }
+  const applications = labels
+    .flat()
+    .filter(label => label.startsWith('applicationId='))
+    .reduce((acc, label) => {
+      const application = label.split('"')[1]
+      if (application) {
+        acc.push(application)
+      }
+      return acc
+    }, [])
+
+  const applicationIds = [...new Set(applications)].sort()
+
+  // We expect to find both entrypoint and internal applications in metrics
+  assert.deepEqual(applicationIds, ['api', 'internal'])
+})
+
+test('should disable metrics correctly', async t => {
+  const { runtime } = await createRuntime(t, 'express-api-no-metrics')
+  await t.assert.rejects(runtime.getMetrics())
 })

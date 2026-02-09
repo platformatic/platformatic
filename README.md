@@ -18,64 +18,103 @@
 
 <h1 align="center">
   <br/>
-  The Open Source Toolkit for Node.js
+  Watt - The Node.js Application Server
   <br/>
 </h1>
 
-<div align="center"> 
+<div align="center">
 
-  __Platformatic__'s Open Source toolkit helps you build modern Node.js  
-  applications without the endless loop of setup and maintenance. 
+Watt takes any Node.js application, written in any framework, and runs it as a worker thread so you can ship faster and scale smarter in any containerized environment.
+
 </div>
 <br/>
 
-## How does it work?
-Platformatic puts Node development on autopilot, with:
+## What problems was Watt built to solve?
 
-- 🧱 Opinionated structures and composable templates
-- 🔋 Batteries-included API setup
-- 📄 Out-of-the-box documentation, logs, and metrics
-- ⚙️ Shareable and reusable configurations 
+#### Speed and Stability at Scale
 
-## Ready to get started?
+When run as a single-thread, Node.js fails to efficiently consume the CPU allocated to it, causing the event-loop to become blocked during periods of heavy traffic, which leads to spikes in latency and crashes.
 
-### Install
-<hr />
+Even worse, because that single thread is also responsible for all your key telemetry data, you lose critical observability when your application crashes, leaving teams in the dark when troubleshooting performance issues. 
+
+Finally, container orchestrators don’t measure the metrics that actually matter for scaling Node.js, which means new pods aren’t scaled up until it’s already too late, forcing teams to drastically over-provision critical services or risk downtime.
+
+## Why Watt?
+
+#### Faster, better, stronger
+
+Using Watt to run your app(s) brings the following advantages: 
+
+**⚡ Radically More Performant:** take advantage of multiple CPU cores with Watt’s multi-threaded architectures to run your apps [up to 93% faster](https://blog.platformatic.dev/93-faster-nextjs-in-your-kubernetes)
+
+**⚖️ Stability at Scale** Watt auto-heals and scales worker threads in seconds, keeping latency low and users happy, even at p95 and above 
+
+👁️ **Built-in Observability**: out-of-the-box logging, metrics, tracing, performance profiling (for [memory](https://blog.platformatic.dev/announcing-heap-profiling-support-in-platformaticflame-and-watt-runtime) and [CPU](https://blog.platformatic.dev/introducing-next-gen-flamegraphs-for-nodejs)), and health checks, all managed outside of your worker threads so you don’t lose valuable data if your app crashes
+
+**🫂 Microservice Consolidation:** run services that are frequently orchestrated together (think BFFs, microfrontends) all in the same process, eliminating costly network calls that add complexity and degrade performance. 
+
+🧱 Composable Architecture \- HTTP services, API composers, frontend frameworks, and data services
+
+🧩 Framework Integration \- Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js.
+
+📦 Production Ready \- Docker deployment, environment configuration, and scaling built-in.
+
+🧷 TypeScript First \- Full type safety with auto-generated types and SDK.
+
+## Quick Start (2 minutes)
+
+Get your first Watt application running in under 2 minutes:
 
 ```bash
-# Create a new application
-npm create platformatic@latest
-
-# Or install manually:
-npm install platformatic
+npm install -g wattpm
+npx wattpm create my-first-app
+cd my-first-app && npm start
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) to get up and running with Platformatic.
+Your application will be running at `http://localhost:3042` with auto-generated REST and GraphQL APIs.
 
-### Documentation
-<hr />
+## Choose Your Learning Path
 
-- [Overview](https://docs.platformatic.dev/docs/Overview)
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
-- [Guides](https://docs.platformatic.dev/docs/guides/movie-quotes-app-tutorial)
+### 👋 New to Node.js?
 
-Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
+**Start Here:** [What is Watt?](https://docs.platformatic.dev/docs/Overview) → [Beginner Tutorial](https://docs.platformatic.dev/docs/learn/beginner/crud-application)  
+Build a complete Todo API from scratch in 30 minutes with step-by-step guidance.
 
-### Support
-<hr />
+### ⚡ Experienced Developer?
 
-Join our community on [Discord](https://discord.gg/platformatic).
-For a dedicated support, explore our [Enterprise Plans](https://www.platformatichq.com)
+**Jump In:** [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start) → [Architecture Overview](https://docs.platformatic.dev/docs/Overview)  
+Get running in 5 minutes, then dive into advanced patterns and integrations.
 
-## Platformatic for Teams 
-<hr />
+### 🔄 Migrating Existing Apps?
 
-Find out more about the enterprise command center that simplifies the development, management and operations of your Node.js apps at [platformaticHQ.com](https://www.platformatichq.com).
+**Migrate:** [Port Your App](https://docs.platformatic.dev/docs/getting-started/port-your-app) → [Integration Guides](https://docs.platformatic.dev/docs/guides/frameworks)  
+Add Watt to your existing Express, Fastify, or Next.js applications.
 
-![Command Center](./assets/Hompage_Solution_White.png)
+---
 
-## Issues
+## Documentation Structure
 
-If you run into a bug or have a suggestion for improvement, please raise an 
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+### 📖 [Overview](https://docs.platformatic.dev/docs/Overview)
 
+Understand what Watt is, why it exists, and how it fits your needs
+
+### 🛠️ [How-to Guides](https://docs.platformatic.dev/docs/guides)
+
+Solve specific problems with framework integration, deployment, and production setup
+
+### 📋 [Reference](https://docs.platformatic.dev/docs/reference)
+
+Complete technical specifications for CLI, configuration, and APIs
+
+## Get Support
+
+📖 **Documentation**: [docs.platformatic.dev](https://docs.platformatic.dev)  
+💬 **Community**: [Discord](https://discord.gg/platformatic)  
+🐛 **Issues**: [GitHub Issues](https://github.com/platformatic/platformatic/issues/new)  
+🏢 **Enterprise**: [PlatformaticHQ](https://www.platformatichq.com)
+
+---
+
+## Enterprise Solutions
+
+Platformatic provides enterprise support and architectural guidance for teams looking to use Watt for mission critical applications. Get in touch at sales@platformatic.dev.

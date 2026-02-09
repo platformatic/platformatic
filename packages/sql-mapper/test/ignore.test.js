@@ -1,18 +1,15 @@
-'use strict'
-
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const { connect } = require('..')
-const { clear, connInfo, createBasicPages } = require('./helper')
+import { equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {},
+  warn: () => {}
 }
 
-test('ignore a table', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 3 })
+test('ignore a table', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -29,8 +26,8 @@ test('ignore a table', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {
-      categories: true,
-    },
+      categories: true
+    }
   })
 
   const pageEntity = mapper.entities.page
@@ -40,9 +37,7 @@ test('ignore a table', async (t) => {
   equal(categoryEntity, undefined, 'category entity is ignored')
 })
 
-test('show a warning if there is no ignored table', async (t) => {
-  const { equal, ok } = tspl(t, { plan: 4 })
-
+test('show a warning if there is no ignored table', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -57,9 +52,9 @@ test('show a warning if there is no ignored table', async (t) => {
   const logger = {
     trace: () => {},
     error: () => {},
-    warn: (msg) => {
+    warn: msg => {
       equal(msg, 'Ignored table "missing_table_pages" not found. Did you mean "pages"?')
-    },
+    }
   }
 
   const mapper = await connect({
@@ -67,8 +62,8 @@ test('show a warning if there is no ignored table', async (t) => {
     log: logger,
     onDatabaseLoad,
     ignore: {
-      missing_table_pages: true,
-    },
+      missing_table_pages: true
+    }
   })
 
   const pageEntity = mapper.entities.page
@@ -78,9 +73,7 @@ test('show a warning if there is no ignored table', async (t) => {
   equal(categoryEntity.name, 'Category')
 })
 
-test('show a warning if the database is empty', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 2 })
-
+test('show a warning if the database is empty', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -94,9 +87,9 @@ test('show a warning if the database is empty', async (t) => {
   const logger = {
     trace: () => {},
     error: () => {},
-    warn: (msg) => {
+    warn: msg => {
       equal(msg, 'Ignored table "missing_table_pages" not found.')
-    },
+    }
   }
 
   await connect({
@@ -104,14 +97,12 @@ test('show a warning if the database is empty', async (t) => {
     log: logger,
     onDatabaseLoad,
     ignore: {
-      missing_table_pages: true,
-    },
+      missing_table_pages: true
+    }
   })
 })
 
-test('ignore a column', async (t) => {
-  const { ok, equal } = tspl(t, { plan: 5 })
-
+test('ignore a column', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -129,9 +120,9 @@ test('ignore a column', async (t) => {
     onDatabaseLoad,
     ignore: {
       categories: {
-        name: true,
-      },
-    },
+        name: true
+      }
+    }
   })
 
   const pageEntity = mapper.entities.page
@@ -143,9 +134,7 @@ test('ignore a column', async (t) => {
   equal(categoryEntity.fields.name, undefined, 'name column is ignored')
 })
 
-test('shows a warning if there is no ignored column', async (t) => {
-  const { equal, ok } = tspl(t, { plan: 4 })
-
+test('shows a warning if there is no ignored column', async t => {
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
     test.after(async () => {
@@ -160,9 +149,9 @@ test('shows a warning if there is no ignored column', async (t) => {
   const logger = {
     trace: () => {},
     error: () => {},
-    warn: (msg) => {
+    warn: msg => {
       equal(msg, 'Ignored column "missing_column_name" not found. Did you mean "name"?')
-    },
+    }
   }
 
   const mapper = await connect({
@@ -171,9 +160,9 @@ test('shows a warning if there is no ignored column', async (t) => {
     onDatabaseLoad,
     ignore: {
       categories: {
-        missing_column_name: true,
-      },
-    },
+        missing_column_name: true
+      }
+    }
   })
 
   const pageEntity = mapper.entities.page

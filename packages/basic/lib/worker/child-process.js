@@ -1,20 +1,33 @@
-import { ITC } from '@platformatic/itc'
-import { client, collectMetrics } from '@platformatic/metrics'
-import { disablePinoDirectWrite, ensureFlushedWorkerStdio, ensureLoggableError, features } from '@platformatic/utils'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  disablePinoDirectWrite,
+  ensureLoggableError
+} from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc/lib/index.js'
+import { clearRegistry, client, collectThreadMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
-import { register } from 'node:module'
+import { createRequire, register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
-import { basename, resolve } from 'node:path'
-import { isMainThread } from 'node:worker_threads'
+import { basename, join, resolve } from 'node:path'
+import { Duplex } from 'node:stream'
+import { fileURLToPath } from 'node:url'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+
+class ForwardingEventEmitter extends EventEmitter {
+  emitAndNotify (event, ...args) {
+    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    return super.emit(event, ...args)
+  }
+}
 
 const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
@@ -61,12 +74,13 @@ function createInterceptor () {
 export class ChildProcess extends ITC {
   #listener
   #socket
-  #child
   #logger
   #metricsRegistry
   #pendingMessages
+  #replStream
+  #lastELU
 
-  constructor () {
+  constructor (executable) {
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -74,8 +88,54 @@ export class ChildProcess extends ITC {
         collectMetrics: (...args) => {
           return this.#collectMetrics(...args)
         },
+        updateMetricsConfig: (...args) => {
+          return this.#updateMetricsConfig(...args)
+        },
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
+        },
+        startRepl: () => {
+          return this.#startRepl()
+        },
+        replInput: ({ data }) => {
+          return this.#replInput(data)
+        },
+        replClose: () => {
+          return this.#replClose()
+        },
+        getHealth: () => {
+          return this.#getHealth()
+        },
+        sendHealthSignals: ({ workerId, signals }) => {
+          // Forward health signals to the parent (ChildManager)
+          this.notify('healthSignals', { workerId, signals })
+        },
+        close: signal => {
+          let handled = false
+
+          try {
+            handled = globalThis.platformatic.events.emit('close', signal)
+          } catch (error) {
+            this.#logger.error({ err: ensureLoggableError(error) }, 'Error while handling close event.')
+            process.exitCode = 1
+          }
+
+          if (!handled) {
+            this.#logger.warn(
+              `Please register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+            )
+
+            // No user event, just exit without errors
+            setImmediate(() => {
+              process.exit(process.exitCode ?? 0)
+            })
+          }
+
+          return handled
+        },
+        setClosing: () => {
+          globalThis.platformatic.closing = true
+          globalThis.platformatic.events.emit('closing')
         }
       }
     })
@@ -87,25 +147,54 @@ export class ChildProcess extends ITC {
     this.#metricsRegistry = new client.Registry()
 
     this.listen()
-    this.#setupLogger()
-    this.#setupHandlers()
-    this.#setupServer()
-    this.#setupInterceptors()
 
-    this.on('close', () => {
-      if (!globalThis.platformatic.events.emit('close')) {
-        // No user event, just exit without errors
-        process.exit(0)
+    if (!windowsNpmExecutables.includes(executable)) {
+      this.#setupLogger()
+
+      if (globalThis.platformatic.exitOnUnhandledErrors) {
+        this.#setupHandlers()
       }
-    })
+
+      this.#setupServer()
+      this.#setupInterceptors()
+
+      if (globalThis.platformatic.reuseTcpPorts) {
+        this.#setupTcpPortsHandling()
+      }
+    }
 
     this.registerGlobals({
+      logger: this.#logger,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
-      prometheus: { client, registry: this.#metricsRegistry }
+      prometheus: { client, registry: this.#metricsRegistry },
+      notifyConfig: this.#notifyConfig.bind(this)
     })
+
+    // Initialize health signals API for child processes
+    this.#initHealthSignalsApi()
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+  }
+
+  setOpenapiSchema (schema) {
+    this.notify('openapiSchema', schema)
+  }
+
+  setGraphqlSchema (schema) {
+    this.notify('graphqlSchema', schema)
+  }
+
+  setConnectionString (connectionString) {
+    this.notify('connectionString', connectionString)
+  }
+
+  setBasePath (basePath) {
+    this.notify('basePath', basePath)
   }
 
   _setupListener (listener) {
@@ -157,9 +246,22 @@ export class ChildProcess extends ITC {
     this.#socket.close()
   }
 
-  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
-    await collectMetrics(serviceId, workerId, metricsConfig, this.#metricsRegistry)
+  async #collectMetrics ({ applicationId, workerId, metricsConfig }) {
+    // Use thread-specific metrics collection - process-level metrics are collected
+    // by the main runtime thread and duplicated with worker labels
+    await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
     this.#setHttpCacheMetrics()
+  }
+
+  async #updateMetricsConfig ({ applicationId, workerId, metricsConfig }) {
+    clearRegistry(this.#metricsRegistry)
+
+    if (metricsConfig.enabled !== false) {
+      // Use thread-specific metrics collection - process-level metrics are collected
+      // by the main runtime thread and duplicated with worker labels
+      await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
+      this.#setHttpCacheMetrics()
+    }
   }
 
   #setHttpCacheMetrics () {
@@ -183,6 +285,73 @@ export class ChildProcess extends ITC {
     globalThis.platformatic.onHttpCacheMiss = () => {
       cacheMissMetric.inc()
     }
+
+    const httpStatsFreeMetric = new client.Gauge({
+      name: 'http_client_stats_free',
+      help: 'Number of free (idle) http clients (sockets)',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsFree = (url, val) => {
+      httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const httpStatsConnectedMetric = new client.Gauge({
+      name: 'http_client_stats_connected',
+      help: 'Number of open socket connections',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsConnected = (url, val) => {
+      httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const httpStatsPendingMetric = new client.Gauge({
+      name: 'http_client_stats_pending',
+      help: 'Number of pending requests across all clients',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsPending = (url, val) => {
+      httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const httpStatsQueuedMetric = new client.Gauge({
+      name: 'http_client_stats_queued',
+      help: 'Number of queued requests across all clients',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsQueued = (url, val) => {
+      httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const httpStatsRunningMetric = new client.Gauge({
+      name: 'http_client_stats_running',
+      help: 'Number of currently active requests across all clients',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsRunning = (url, val) => {
+      httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const httpStatsSizeMetric = new client.Gauge({
+      name: 'http_client_stats_size',
+      help: 'Number of active, pending, or queued requests across all clients',
+      labelNames: ['dispatcher_stats_url'],
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsSize = (url, val) => {
+      httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
+    }
+
+    const activeResourcesEventLoopMetric = new client.Gauge({
+      name: 'active_resources_event_loop',
+      help: 'Number of active resources keeping the event loop alive',
+      registers: [registry]
+    })
+    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
   }
 
   async #getMetrics ({ format } = {}) {
@@ -192,23 +361,145 @@ export class ChildProcess extends ITC {
     return res
   }
 
-  #setupLogger () {
-    disablePinoDirectWrite()
-    ensureFlushedWorkerStdio()
+  #startRepl () {
+    // Dynamically load node:repl to avoid loading it when not needed
+    // (since it pulls in domain, which is quite expensive as it monkey patches EventEmitter)
+    const repl = createRequire(import.meta.url)('node:repl')
 
-    // Since this is executed by user code, make sure we only override this in the main thread
-    // The rest will be intercepted by the BaseStackable.
-    const pinoOptions = {
-      level: 'info',
-      name: globalThis.platformatic.serviceId
+    // Create a duplex stream that sends output via notify
+    const replStream = new Duplex({
+      read () {},
+      write: (chunk, encoding, callback) => {
+        this.notify('repl:output', { data: chunk.toString() })
+        callback()
+      }
+    })
+
+    this.#replStream = replStream
+
+    // Start the REPL with the stream
+    const replServer = repl.start({
+      prompt: `${globalThis.platformatic.applicationId}> `,
+      input: replStream,
+      output: replStream,
+      terminal: false,
+      useColors: true,
+      ignoreUndefined: true,
+      preview: false
+    })
+
+    // Expose useful context - note that in subprocess mode, app/capability may not be available
+    replServer.context.platformatic = globalThis.platformatic
+    replServer.context.config = globalThis.platformatic.config
+    replServer.context.logger = globalThis.platformatic.logger
+
+    replServer.on('exit', () => {
+      this.notify('repl:exit', {})
+      this.#replStream = null
+    })
+
+    return { started: true }
+  }
+
+  #replInput (data) {
+    if (this.#replStream) {
+      this.#replStream.push(data)
+    }
+  }
+
+  #replClose () {
+    if (this.#replStream) {
+      this.#replStream.push(null)
+      this.#replStream = null
+    }
+  }
+
+  #getHealth () {
+    const currentELU = performance.eventLoopUtilization()
+    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
+    this.#lastELU = currentELU
+
+    const { heapUsed, heapTotal } = process.memoryUsage()
+
+    return {
+      elu,
+      heapUsed,
+      heapTotal
+    }
+  }
+
+  #initHealthSignalsApi () {
+    const queue = []
+    let isSending = false
+    let promise = null
+    const timeout = 1000
+
+    const sendHealthSignal = async (signal) => {
+      if (typeof signal !== 'object') {
+        throw new Error('Health signal must be an object')
+      }
+      if (typeof signal.type !== 'string') {
+        throw new Error('Health signal type must be a string')
+      }
+      if (!signal.timestamp || typeof signal.timestamp !== 'number') {
+        signal.timestamp = Date.now()
+      }
+
+      queue.push(signal)
+
+      if (!isSending) {
+        isSending = true
+        promise = new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            isSending = false
+            try {
+              const signals = queue.splice(0)
+              this.notify('healthSignals', {
+                workerId: globalThis.platformatic.workerId,
+                signals
+              })
+            } catch (err) {
+              reject(err)
+              return
+            }
+            resolve()
+          }, timeout)
+        })
+      }
+
+      return promise
     }
 
-    if (typeof globalThis.platformatic.workerId !== 'undefined') {
+    globalThis.platformatic.sendHealthSignal = sendHealthSignal
+  }
+
+  #setupLogger () {
+    disablePinoDirectWrite()
+
+    // Since this is executed by user code, make sure we only override this in the main thread
+    // The rest will be intercepted by the BaseCapability.
+    const loggerOptions = globalThis.platformatic?.config?.logger ?? {}
+    const pinoOptions = {
+      ...loggerOptions,
+      level: loggerOptions.level ?? 'info',
+      name: globalThis.platformatic.applicationId
+    }
+    if (loggerOptions.formatters) {
+      pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
+    }
+    if (loggerOptions.timestamp) {
+      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
+    }
+
+    if (loggerOptions.base !== null) {
       pinoOptions.base = {
+        ...(pinoOptions.base ?? {}),
         pid: process.pid,
         hostname: hostname(),
         worker: parseInt(globalThis.platformatic.workerId)
       }
+    } else if (loggerOptions.base === null) {
+      pinoOptions.base = undefined
     }
 
     this.#logger = pino(pinoOptions)
@@ -224,19 +515,19 @@ export class ChildProcess extends ITC {
 
         const port = globalThis.platformatic.port
         const host = globalThis.platformatic.host
+        const additionalOptions = globalThis.platformatic.additionalServerOptions ?? {}
 
         if (port !== false) {
           const hasFixedPort = typeof port === 'number'
           options.port = hasFixedPort ? port : 0
-
-          if (hasFixedPort && features.node.reusePort) {
-            options.reusePort = true
-          }
         }
 
         if (typeof host === 'string') {
           options.host = host
         }
+
+        Object.assign(options, additionalOptions)
+        globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
       },
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
@@ -268,16 +559,21 @@ export class ChildProcess extends ITC {
     }
   }
 
+  #setupTcpPortsHandling () {
+    tracingChannel('net.server.listen').subscribe({
+      asyncStart ({ options }) {
+        options.reusePort = true
+      }
+    })
+  }
+
   #setupInterceptors () {
     const globalDispatcher = new Agent().compose(createInterceptor(this))
     setGlobalDispatcher(globalDispatcher)
   }
 
   #setupHandlers () {
-    const errorLabel =
-      typeof globalThis.platformatic.workerId !== 'undefined'
-        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
-        : `service "${globalThis.platformatic.serviceId}"`
+    const errorLabel = `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
@@ -288,26 +584,18 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+
+    process.on('newListener', event => {
+      if (event === 'uncaughtException' || event === 'unhandledRejection') {
+        this.#logger.warn(
+          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
+        )
+      }
+    })
   }
 
-  registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
-  }
-
-  setOpenapiSchema (schema) {
-    this.notify('openapiSchema', schema)
-  }
-
-  setGraphqlSchema (schema) {
-    this.notify('graphqlSchema', schema)
-  }
-
-  setConnectionString (connectionString) {
-    this.notify('connectionString', connectionString)
-  }
-
-  setBasePath (basePath) {
-    this.notify('basePath', basePath)
+  #notifyConfig (config) {
+    this.notify('config', config)
   }
 }
 
@@ -358,17 +646,62 @@ function stripBasePath (basePath) {
   }
 }
 
-async function main () {
-  const executable = basename(process.argv[1] ?? '')
-  if (!isMainThread || windowsNpmExecutables.includes(executable)) {
+// Enable compile cache if configured (Node.js 22.1.0+)
+async function setupCompileCache (contextData) {
+  const config = contextData?.compileCache
+
+  // Normalize boolean shorthand
+  const normalizeConfig = cfg => {
+    if (cfg === true) return { enabled: true }
+    if (cfg === false) return { enabled: false }
+    return cfg
+  }
+
+  const normalizedConfig = normalizeConfig(config)
+  if (!normalizedConfig?.enabled) {
     return
   }
+
+  // Check if API is available (Node.js 22.1.0+)
+  let moduleApi
+  try {
+    moduleApi = await import('node:module')
+    if (typeof moduleApi.enableCompileCache !== 'function') {
+      return
+    }
+  } catch {
+    return
+  }
+
+  // Use root from context data (capability's this.root as URL)
+  const root = contextData?.root ? fileURLToPath(contextData.root) : null
+  if (!root) {
+    return
+  }
+
+  const cacheDir =
+    typeof normalizedConfig === 'object' && normalizedConfig.directory
+      ? normalizedConfig.directory
+      : join(root, '.plt', 'compile-cache')
+
+  try {
+    moduleApi.enableCompileCache(cacheDir)
+  } catch {
+    // Silently ignore - cache is optional optimization
+  }
+}
+
+async function main () {
+  const executable = basename(process.argv[1] ?? '')
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
-  globalThis.platformatic = data
-  globalThis.platformatic.events = new EventEmitter()
+  // Enable compile cache early before loading user modules
+  await setupCompileCache(data)
+
+  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, data)
+  globalThis.platformatic.events = new ForwardingEventEmitter()
 
   if (loader) {
     register(loader, { data })
@@ -378,7 +711,10 @@ async function main () {
     await importFile(script)
   }
 
-  globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
+  const childProcess = new ChildProcess(executable)
+  globalThis[Symbol.for('plt.children.itc')] = childProcess
+  globalThis.platformatic.itc = childProcess
+  globalThis.platformatic.events.target = childProcess
 }
 
 await main()

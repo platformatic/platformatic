@@ -1,0 +1,498 @@
+import {
+  BaseCapability,
+  cleanBasePath,
+  createServerListener,
+  ensureTrailingSlash,
+  getServerUrl,
+  importFile,
+  injectViaRequest
+} from '@platformatic/basic'
+import { Unpromise } from '@watchable/unpromise'
+import inject from 'light-my-request'
+import { once } from 'node:events'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { Server } from 'node:http'
+import { createRequire } from 'node:module'
+import { dirname, resolve as resolvePath } from 'node:path'
+import { version } from './schema.js'
+import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
+
+const validFields = [
+  'main',
+  'exports',
+  'exports',
+  'exports#node',
+  'exports#import',
+  'exports#require',
+  'exports#default',
+  'exports#.#node',
+  'exports#.#import',
+  'exports#.#require',
+  'exports#.#default'
+]
+
+const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 'start', 'bundle', 'run', 'entrypoint']
+
+// Paolo: This is kinda hackish but there is no better way. I apologize.
+function isFastify (app) {
+  if (!app) {
+    return false
+  }
+
+  return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
+}
+
+function isKoa (app) {
+  if (!app) {
+    return false
+  }
+
+  return typeof app.callback === 'function'
+}
+
+async function getEntrypointInformation (root) {
+  let entrypoint
+  let packageJson
+  let hadEntrypointField = false
+
+  try {
+    packageJson = JSON.parse(await readFile(resolvePath(root, 'package.json'), 'utf-8'))
+  } catch {
+    // No package.json, we only load the index.js file
+    packageJson = {}
+  }
+
+  for (const field of validFields) {
+    let current = packageJson
+    const sequence = field.split('#')
+
+    while (current && sequence.length && typeof current !== 'string') {
+      current = current[sequence.shift()]
+    }
+
+    if (typeof current === 'string') {
+      entrypoint = current
+      hadEntrypointField = true
+      break
+    }
+  }
+
+  if (!entrypoint) {
+    for (const basename of validFilesBasenames) {
+      for (const ext of ['js', 'mjs', 'cjs']) {
+        const file = `${basename}.${ext}`
+
+        if (existsSync(resolvePath(root, file))) {
+          entrypoint = file
+          break
+        }
+      }
+
+      if (entrypoint) {
+        break
+      }
+    }
+  }
+
+  return { entrypoint, hadEntrypointField }
+}
+
+export class NodeCapability extends BaseCapability {
+  #module
+  #app
+  #server
+  #basePath
+  #dispatcher
+  #isFastify
+  #isKoa
+  #appClose
+  #useHttpForDispatch
+  #factory
+
+  constructor (root, config, context) {
+    super('nodejs', version, root, config, context)
+  }
+
+  async start ({ listen }) {
+    // Make this idempotent
+    if (this.url) {
+      return this.url
+    }
+
+    await super._start({ listen })
+
+    // Listen if entrypoint
+    if (this.#app && listen) {
+      await this._listen()
+      return this.url
+    }
+
+    const config = this.config
+
+    if (
+      !this.isProduction &&
+      config.node?.disableBuildInDevelopment !== true &&
+      (await isApplicationBuildable(this.root, config))
+    ) {
+      this.logger.info(`Building application "${this.applicationId}" before starting in development mode ...`)
+      try {
+        await this.build()
+      } catch (e) {
+        throw new Error(`Error while building application "${this.applicationId}": ${e.message}`, { cause: e })
+      }
+    }
+
+    const command = config.application.commands[this.isProduction ? 'production' : 'development']
+
+    if (command) {
+      return this.startWithCommand(command)
+    }
+
+    // Resolve the entrypoint
+    // The priority is platformatic.application.json, then package.json and finally autodetect.
+    // Only when autodetecting we eventually search in the dist folder when in production mode
+    const finalEntrypoint = await this._findEntrypoint()
+
+    // Require the application
+    this.#basePath = config.application?.basePath
+      ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
+      : undefined
+
+    this.registerGlobals({
+      basePath: this.#basePath
+    })
+
+    // The server promise must be created before requiring the entrypoint even if it's not going to be used
+    // at all. Otherwise there is chance we miss the listen event.
+    const serverOptions = this.serverConfig
+
+    const serverPromise = createServerListener(
+      serverOptions?.port ?? true,
+      serverOptions?.hostname ?? true,
+      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+    )
+
+    try {
+      const require = createRequire(dirname(finalEntrypoint))
+      this.#module = require(finalEntrypoint)
+    } catch (e) {
+      // If there is top-leve await or unsupported TS syntax, we try to import the file instead
+      if (e.code !== 'ERR_REQUIRE_ASYNC_MODULE' && e.code !== 'ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX') {
+        throw e
+      }
+
+      this.#module = await importFile(finalEntrypoint)
+    }
+
+    this.#module = this.#module.default || this.#module
+
+    // Deal with application
+    this.#factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
+    this.#appClose = this.#module['close']
+
+    if (this.#hasServer()) {
+      if (this.#factory) {
+        // We have build function, this Capability will not use HTTP unless it is the entrypoint
+        serverPromise.cancel()
+
+        this.#app = await this.#module[this.#factory]()
+        this.#isFastify = isFastify(this.#app)
+        this.#isKoa = isKoa(this.#app)
+
+        if (this.#isFastify) {
+          await this.#app.ready()
+        } else if (this.#isKoa) {
+          this.#dispatcher = this.#app.callback()
+        } else if (this.#app instanceof Server) {
+          this.#server = this.#app
+          this.#dispatcher = this.#server.listeners('request')[0]
+        }
+
+        if (listen) {
+          await this._listen()
+        }
+      } else {
+        // User blackbox function, we wait for it to listen on a port
+        this.#server = await serverPromise
+        this.#dispatcher = this.#server.listeners('request')[0]
+
+        this.url = getServerUrl(this.#server)
+      }
+    }
+
+    await this._collectMetrics()
+    return this.url
+  }
+
+  #hasServer () {
+    return this.config.node?.hasServer !== false && this.#module?.hasServer !== false
+  }
+
+  setClosing () {
+    super.setClosing()
+
+    if (!this.#server) return
+
+    const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
+    if (!closeConnections) return
+
+    // For non-Fastify raw HTTP servers, add request listener to set Connection: close
+    if (!this.#isFastify) {
+      const self = this
+      this.#server.on('request', (req, res) => {
+        if (self.closing && !res.headersSent && req.httpVersionMajor !== 2) {
+          res.setHeader('Connection', 'close')
+        }
+      })
+    }
+
+    // For HTTP/2, send GOAWAY frames
+    if (this.#server.closeHttp2Sessions) {
+      this.#server.closeHttp2Sessions()
+    }
+  }
+
+  async stop () {
+    await super.stop()
+
+    // Emit the close event so that an application can handle it
+    const closeHandled = globalThis.platformatic.events.emit('close')
+
+    if (!this.#isFastify && !this.#appClose && !closeHandled) {
+      this.logger.warn(
+        `Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+      )
+    }
+
+    if (this.status === 'starting') {
+      await Unpromise.race([once(this, 'started'), once(this, 'start:error')])
+    }
+
+    if (this.childManager) {
+      return this.stopCommand()
+    }
+
+    // If we have a close function, always invoke it
+    if (this.#appClose) {
+      await this.#appClose()
+    }
+
+    // for no-server apps, nothing else to do
+    if (!this.#hasServer()) {
+      return
+    }
+
+    // This is needed if the capability was subclassed
+    if (!this.#server && !this.#app) {
+      return
+    }
+
+    if (this.#isFastify && this.#app) {
+      return this.#app.close()
+    }
+
+    /* c8 ignore next 3 */
+    if (!this.#server?.listening) {
+      return
+    }
+
+    return this._closeServer(this.#server)
+  }
+
+  async build () {
+    const config = this.config
+    const disableChildManager = config.node?.disablePlatformaticInBuild
+    const command = config.application?.commands?.build
+
+    if (command) {
+      return this.buildWithCommand(command, null, { disableChildManager })
+    }
+
+    // If no command was specified, we try to see if there is a build script defined in package.json.
+    const hasBuildScript = await this.#hasBuildScript()
+
+    if (!hasBuildScript) {
+      this.logger.debug(
+        'No "application.commands.build" configuration value specified and no build script found in package.json. Skipping build ...'
+      )
+      return
+    }
+
+    return this.buildWithCommand('npm run build', null, { disableChildManager })
+  }
+
+  async inject (injectParams, onInject) {
+    let res
+
+    if (this.#useHttpForDispatch) {
+      this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
+      res = await injectViaRequest(this.url, injectParams, onInject)
+    } else {
+      if (this.#isFastify) {
+        this.logger.trace({ injectParams }, 'injecting via fastify')
+        res = await this.#app.inject(injectParams, onInject)
+      } else {
+        this.logger.trace({ injectParams }, 'injecting via light-my-request')
+        res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+      }
+    }
+
+    /* c8 ignore next 3 */
+    if (onInject) {
+      return
+    }
+
+    // Since inject might be called from the main thread directly via ITC, let's clean it up
+    const { statusCode, headers, body, payload, rawPayload } = res
+
+    return { statusCode, headers, body, payload, rawPayload }
+  }
+
+  _getWantsAbsoluteUrls () {
+    const config = this.config
+    return config.node.absoluteUrl
+  }
+
+  getMeta () {
+    return {
+      gateway: {
+        tcp: typeof this.url !== 'undefined',
+        url: this.url,
+        prefix: this.basePath ?? this.#basePath,
+        wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
+        needsRootTrailingSlash: true
+      },
+      connectionStrings: this.connectionString ? [this.connectionString] : []
+    }
+  }
+
+  async getDispatchTarget () {
+    this.#useHttpForDispatch = this.childManager || (this.url && this.config.node?.dispatchViaHttp === true)
+
+    if (this.#useHttpForDispatch) {
+      return this.getUrl()
+    }
+
+    return this.getDispatchFunc()
+  }
+
+  async getDispatchFunc () {
+    if (!this.#hasServer()) {
+      return this.#backgroundServiceInject.bind(this)
+    }
+
+    return super.getDispatchFunc()
+  }
+
+  async _listen () {
+    // Make this idempotent
+    /* c8 ignore next 3 */
+    if (this.url) {
+      return this.url
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+    createServerListener(
+      false,
+      false,
+      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+    )
+
+    if (this.#isFastify) {
+      await this.#app.listen(listenOptions)
+      this.url = getServerUrl(this.#app.server)
+    } else {
+      // Express / Node / Koa
+      this.#server = await new Promise((resolve, reject) => {
+        return this.#app
+          .listen(listenOptions, function () {
+            resolve(this)
+          })
+          .on('error', reject)
+      })
+
+      this.url = getServerUrl(this.#server)
+    }
+
+    return this.url
+  }
+
+  _getApplication () {
+    return this.#app
+  }
+
+  async _findEntrypoint () {
+    const config = this.config
+
+    if (config.node.main) {
+      return resolvePath(this.root, config.node.main)
+    }
+
+    const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)
+
+    // Only show the warning once
+    if (this.workerId === 0) {
+      if (!entrypoint) {
+        this.logger.error(
+          `The application "${this.applicationId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
+        )
+
+        process.exit(1)
+      }
+
+      if (!hadEntrypointField) {
+        this.logger.warn(
+          `The application "${this.applicationId}" had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
+        )
+      }
+    }
+
+    return resolvePath(this.root, entrypoint)
+  }
+
+  async #hasBuildScript () {
+    // If no command was specified, we try to see if there is a build script defined in package.json.
+    let hasBuildScript
+    try {
+      const packageJson = JSON.parse(await readFile(resolvePath(this.root, 'package.json'), 'utf-8'))
+      hasBuildScript = typeof packageJson.scripts.build === 'string' && packageJson.scripts.build
+    } catch (e) {
+      // No-op
+    }
+
+    return hasBuildScript
+  }
+
+  async getWatchConfig () {
+    const config = this.config
+
+    const enabled = config.watch?.enabled !== false
+
+    if (!enabled) {
+      return { enabled, path: this.root }
+    }
+
+    // ignore the outDir from tsconfig or application config if any
+    let ignore = config.watch?.ignore
+    if (!ignore) {
+      const tsConfig = await getTsconfig(this.root, config)
+      if (tsConfig) {
+        ignore = ignoreDirs(tsConfig?.compilerOptions?.outDir, tsConfig?.watchOptions?.excludeDirectories)
+      }
+    }
+
+    return {
+      enabled,
+      path: this.root,
+      allow: config.watch?.allow,
+      ignore
+    }
+  }
+
+  #backgroundServiceInject (_, res) {
+    res.destroy(new Error('Background services cannot receive HTTP requests via the mesh network.'))
+  }
+}

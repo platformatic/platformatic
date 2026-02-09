@@ -1,14 +1,11 @@
-'use strict'
-
-const os = require('node:os')
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { buildServer } = require('..')
-const { setTimeout: sleep } = require('timers/promises')
-const fs = require('fs/promises')
-const { safeRemove } = require('@platformatic/utils')
+import fs from 'fs/promises'
+import assert from 'node:assert'
+import os from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { LOGS_TIMEOUT, sleep } from '../../basic/test/helper.js'
+import { createFromConfig } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
   const options = {
@@ -23,56 +20,35 @@ test('config is adjusted to handle custom loggers', async t => {
         fatal () {},
         warn () {},
         trace () {},
-      },
-    },
+        child () {
+          return options.loggerInstance
+        }
+      }
+    }
   }
 
-  let called = false
-  Object.defineProperty(options.server.loggerInstance, 'child', {
-    value: function child () {
-      called = true
-      return this
-    },
-    enumerable: false,
-  })
-
-  await buildServer(options)
-  assert.strictEqual(called, true)
-})
-
-test('do not watch typescript outDir', async t => {
-  process.env.PLT_CLIENT_URL = 'http://localhost:3042'
-  const targetDir = join(__dirname, '..', 'fixtures', 'hello-client-ts')
-
-  try {
-    await safeRemove(join(targetDir, 'dist'))
-  } catch {}
-
-  const app = await buildServer(join(targetDir, 'platformatic.service.json'))
-  t.after(async () => {
-    await app.close()
-  })
-
-  assert.deepStrictEqual(app.platformatic.configManager.current.watch, {
-    enabled: false,
-    ignore: ['dist/**/*'],
-  })
+  const app = await createFromConfig(t, options)
+  assert.strictEqual(app.logger, options.server.loggerInstance)
 })
 
 test('start without server config', async t => {
-  const app = await buildServer({
+  const app = await createFromConfig(t, {
     watch: false,
-    metrics: false,
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    }
   })
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
 
-  const url = await app.start()
+  const url = await app.start({ listen: true })
   const res = await request(url)
   assert.strictEqual(res.statusCode, 200, 'add status code')
   assert.deepStrictEqual(await res.body.json(), {
-    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev',
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
   })
 })
 
@@ -85,21 +61,21 @@ test('transport logger', async t => {
       logger: {
         level: 'info',
         transport: {
-          target: join(__dirname, 'fixtures', 'custom-transport.js'),
+          target: join(import.meta.dirname, 'fixtures', 'custom-transport.js'),
           options: {
-            path: file,
-          },
-        },
-      },
-    },
+            path: file
+          }
+        }
+      }
+    }
   }
 
-  const server = await buildServer(options)
-  await server.start()
-  await server.close()
+  const server = await createFromConfig(t, options)
+  await server.start({ listen: true })
+  await server.stop()
 
-  await sleep(500)
-
+  // Ths is need as the write happens in a custom transport
+  await sleep(LOGS_TIMEOUT)
   const written = await fs.readFile(file, 'utf8')
   const parsed = JSON.parse(written)
 

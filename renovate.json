@@ -6,6 +6,7 @@
   "rangeStrategy": "update-lockfile",
   "ignoreDeps": [
     "camelcase",
+    "inquirer",
     "mysql",
     "swagger-ui-react",
     "leven",

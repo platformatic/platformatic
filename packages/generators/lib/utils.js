@@ -1,31 +1,30 @@
-'use strict'
+import { EOL } from 'node:os'
+import { join } from 'node:path'
+import { setTimeout } from 'timers/promises'
+import { request } from 'undici'
+import { WrongTypeError } from './errors.js'
 
-const { WrongTypeError } = require('./errors')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { setTimeout } = require('timers/promises')
-const PLT_ROOT = 'PLT_ROOT'
-const { EOL } = require('node:os')
-const { createDirectory } = require('@platformatic/utils')
+export const PLT_ROOT = 'PLT_ROOT'
 
 /**
  * Strip all extra characters from a simple semver version string
  * @param {string} version
  * @returns string
  */
-function stripVersion (version) {
+export function stripVersion (version) {
   const match = version.match(/(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/)
   if (match) {
     return match[0]
   }
+  /* c8 ignore next */
   return version
 }
 
-function convertServiceNameToPrefix (serviceName) {
-  return serviceName.replace(/-/g, '_').toUpperCase()
+export function convertApplicationNameToPrefix (applicationName) {
+  return applicationName.replace(/-/g, '_').toUpperCase()
 }
 
-function addPrefixToString (input, prefix) {
+export function addPrefixToString (input, prefix) {
   if (!prefix) {
     return input
   }
@@ -39,7 +38,7 @@ function addPrefixToString (input, prefix) {
   }
 }
 
-function envObjectToString (env) {
+export function envObjectToString (env) {
   const output = []
   Object.entries(env).forEach(kv => {
     output.push(`${kv[0]}=${kv[1]}`)
@@ -47,7 +46,7 @@ function envObjectToString (env) {
   return output.join(EOL)
 }
 
-function envStringToObject (envString) {
+export function envStringToObject (envString) {
   const output = {}
   const split = envString.split(/\r?\n/)
   split
@@ -60,17 +59,19 @@ function envStringToObject (envString) {
     })
   return output
 }
-function extractEnvVariablesFromText (text) {
+
+export function extractEnvVariablesFromText (text) {
   const match = text.match(/\{[a-zA-Z0-9-_]*\}/g)
   if (match) {
     return match.map(found => found.replace('{', '').replace('}', '')).filter(found => found !== '')
   }
   return []
 }
-function getPackageConfigurationObject (config, serviceName = '') {
+
+export function getPackageConfigurationObject (config, applicationName = '') {
   const output = {
     config: {},
-    env: {},
+    env: {}
   }
   let current = output.config
   for (const param of config) {
@@ -99,7 +100,7 @@ function getPackageConfigurationObject (config, serviceName = '') {
         if (!param.name) {
           current[prop] = value
         } else {
-          const key = addPrefixToString(param.name, convertServiceNameToPrefix(serviceName))
+          const key = addPrefixToString(param.name, convertApplicationNameToPrefix(applicationName))
           // If it's a path, we need to add it to the env only the relative part of the path
           if (isPath) {
             current[prop] = `${join(`{${PLT_ROOT}}`, `{${key}}`)}`
@@ -121,7 +122,7 @@ function getPackageConfigurationObject (config, serviceName = '') {
   return output
 }
 
-async function getLatestNpmVersion (pkg) {
+export async function getLatestNpmVersion (pkg) {
   const npmCall = request(`https://registry.npmjs.org/${pkg}`)
   const timeout = setTimeout(1000, null)
   const res = await Promise.race([npmCall, timeout])
@@ -135,6 +136,7 @@ async function getLatestNpmVersion (pkg) {
   }
   return null
 }
+
 /**
  * Flatten a deep-nested object to a single level depth one
  * i.e from
@@ -154,7 +156,7 @@ async function getLatestNpmVersion (pkg) {
  * @param {Object} ob
  * @returns Object
  */
-function flattenObject (ob) {
+export function flattenObject (ob) {
   const result = {}
   for (const i in ob) {
     if (typeof ob[i] === 'object' && !Array.isArray(ob[i])) {
@@ -169,26 +171,12 @@ function flattenObject (ob) {
   return result
 }
 
-function getServiceTemplateFromSchemaUrl (schemaUrl) {
+export function getApplicationTemplateFromSchemaUrl (schemaUrl) {
   const splitted = schemaUrl.split('/')
 
+  /* c8 ignore next 3 - Legacy interface */
   if (schemaUrl.startsWith('https://platformatic.dev/schemas')) {
     return `@platformatic/${splitted[splitted.length - 1]}`
   }
   return `@platformatic/${splitted[splitted.length - 2]}`
-}
-
-module.exports = {
-  addPrefixToString,
-  convertServiceNameToPrefix,
-  getPackageConfigurationObject,
-  envObjectToString,
-  envStringToObject,
-  extractEnvVariablesFromText,
-  flattenObject,
-  getServiceTemplateFromSchemaUrl,
-  createDirectory,
-  stripVersion,
-  PLT_ROOT,
-  getLatestNpmVersion,
 }

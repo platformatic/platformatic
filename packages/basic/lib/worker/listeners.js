@@ -1,8 +1,7 @@
-import { features, withResolvers } from '@platformatic/utils'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
-export function createServerListener (overridePort = true, overrideHost) {
-  const { promise, resolve, reject } = withResolvers()
+export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
+  const { promise, resolve, reject } = Promise.withResolvers()
 
   const subscribers = {
     asyncStart ({ options }) {
@@ -14,15 +13,14 @@ export function createServerListener (overridePort = true, overrideHost) {
       if (overridePort !== false) {
         const hasFixedPort = typeof overridePort === 'number'
         options.port = hasFixedPort ? overridePort : 0
-
-        if (hasFixedPort && features.node.reusePort) {
-          options.reusePort = true
-        }
       }
 
       if (typeof overrideHost === 'string') {
         options.host = overrideHost
       }
+
+      Object.assign(options, additionalOptions)
+      globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
     },
     asyncEnd ({ server }) {
       cancel()
@@ -48,7 +46,7 @@ export function createServerListener (overridePort = true, overrideHost) {
 }
 
 export function createChildProcessListener () {
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
 
   const handler = ({ process: child }) => {
     unsubscribe('child_process', handler)

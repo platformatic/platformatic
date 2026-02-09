@@ -1,8 +1,6 @@
 {
   "name": "service",
-  "scripts": {
-    "start": "platformatic start"
-  },
+  "type": "commonjs",
   "dependencies": {
     "@platformatic/service": "^2.3.1"
   }

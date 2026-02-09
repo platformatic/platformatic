@@ -1,19 +1,14 @@
-'use strict'
+import { deepStrictEqual } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { version } from '../../lib/version.js'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
-
-test('should get service details', async (t) => {
+test('should get application details', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -21,14 +16,17 @@ test('should get service details', async (t) => {
     await app.close()
   })
 
-  const serviceDetails = await app.getServiceDetails('with-logger')
-  assert.deepStrictEqual(serviceDetails, {
+  const applicationDetails = await app.getApplicationDetails('with-logger')
+  deepStrictEqual(applicationDetails, {
     id: 'with-logger',
     type: 'service',
     status: 'started',
-    version: platformaticVersion,
+    version,
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
+    config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
+    path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
     dependencies: [],
+    sourceMaps: false
   })
 })

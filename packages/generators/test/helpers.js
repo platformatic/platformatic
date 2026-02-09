@@ -1,60 +1,53 @@
-'use strict'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { join } from 'node:path'
+import { MockAgent, setGlobalDispatcher } from 'undici'
 
-const { join } = require('node:path')
-const { MockAgent, setGlobalDispatcher } = require('undici')
-const { safeRemove, createDirectory } = require('@platformatic/utils')
-
-const mockAgent = new MockAgent()
+export const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 mockAgent.disableNetConnect()
 
 let counter = 0
 
-async function getTempDir (baseDir) {
+export async function getTempDir (baseDir) {
   if (baseDir === undefined) {
-    baseDir = __dirname
+    baseDir = import.meta.dirname
   }
   const dir = join(baseDir, 'tmp', `platformatic-generators-${process.pid}-${Date.now()}-${counter++}`)
   await createDirectory(dir)
   return dir
 }
-async function moveToTmpdir (teardown) {
+
+export async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
 
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  if (!process.env.SKIP_RM_TMP) {
+  if (process.env.PLT_TESTS_DEBUG !== 'true') {
     teardown(() => safeRemove(dir))
   }
   return dir
 }
 
-function mockNpmJsRequestForPkgs (pkgs) {
+export function mockNpmJsRequestForPkgs (pkgs) {
   for (const pkg of pkgs) {
     mockAgent
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: `/${pkg}`,
+        path: `/${pkg}`
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.42.0',
-        },
+          latest: '1.42.0'
+        }
       })
   }
 }
 
-module.exports = {
-  fakeLogger: {
-    info: () => {},
-    debug: () => {},
-    warn: () => {},
-    error: () => {},
-  },
-  getTempDir,
-  moveToTmpdir,
-  mockNpmJsRequestForPkgs,
-  mockAgent,
+export const fakeLogger = {
+  info: () => {},
+  debug: () => {},
+  warn: () => {},
+  error: () => {}
 }

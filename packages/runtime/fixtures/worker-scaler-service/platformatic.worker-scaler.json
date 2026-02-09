@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/3.0.0.json",
+  "service": {
+    "openapi": true
+  },
+  "watch": true,
+  "plugins": {
+    "paths": ["./routes"]
+  },
+  "runtime": {
+    "verticalScaler": {
+      "enabled": true,
+      "maxWorkers": 2,
+      "maxTotalWorkers": 10
+    }
+  }
+}

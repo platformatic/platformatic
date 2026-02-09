@@ -1,16 +1,14 @@
-'use strict'
+import { deepEqual, ifError, ok, throws } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
-const { test } = require('node:test')
-const { tspl } = require('@matteo.collina/tspl')
-const { connect } = require('..')
-const { clear, connInfo, isSQLite } = require('./helper')
 const fakeLogger = {
   trace: () => {},
-  error: () => {},
+  error: () => {}
 }
 
-test('basic hooks', async (t) => {
-  const { ok, ifError, deepEqual } = tspl(t, { plan: 14 })
+test('basic hooks', async t => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -45,27 +43,27 @@ test('basic hooks', async (t) => {
 
           if (!input.id) {
             deepEqual(input, {
-              title: 'Hello',
+              title: 'Hello'
             })
 
             return original({
               input: {
-                title: 'Hello from hook',
+                title: 'Hello from hook'
               },
-              fields,
+              fields
             })
           } else {
             deepEqual(input, {
               id: 1,
-              title: 'Hello World',
+              title: 'Hello World'
             })
 
             return original({
               input: {
                 id: 1,
-                title: 'Hello from hook 2',
+                title: 'Hello from hook 2'
               },
-              fields,
+              fields
             })
           }
         },
@@ -74,13 +72,13 @@ test('basic hooks', async (t) => {
 
           deepEqual(args.where, {
             id: {
-              eq: '1',
-            },
+              eq: '1'
+            }
           })
           args.where = {
             id: {
-              eq: '2',
-            },
+              eq: '2'
+            }
           }
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
@@ -88,37 +86,39 @@ test('basic hooks', async (t) => {
         async insert (original, args) {
           ok('insert called')
 
-          deepEqual(args.inputs, [{
-            title: 'hello',
-          }, {
-            title: 'world',
-          }])
+          deepEqual(args.inputs, [
+            {
+              title: 'hello'
+            },
+            {
+              title: 'world'
+            }
+          ])
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const entity = mapper.entities.page
 
   deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
-    title: 'Hello from hook',
+    title: 'Hello from hook'
   })
 
   deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
   deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
-    title: 'Hello from hook 2',
+    title: 'Hello from hook 2'
   })
 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
-test('addEntityHooks', async (t) => {
-  const { ok, ifError, deepEqual, throws } = tspl(t, { plan: 15 })
+test('addEntityHooks', async t => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -142,7 +142,7 @@ test('addEntityHooks', async (t) => {
           title VARCHAR(42)
         );`)
       }
-    },
+    }
   })
 
   throws(() => mapper.addEntityHooks('user', {}), { message: 'Cannot find entity user' })
@@ -156,27 +156,27 @@ test('addEntityHooks', async (t) => {
 
       if (!input.id) {
         deepEqual(input, {
-          title: 'Hello',
+          title: 'Hello'
         })
 
         return original({
           input: {
-            title: 'Hello from hook',
+            title: 'Hello from hook'
           },
-          fields,
+          fields
         })
       } else {
         deepEqual(input, {
           id: 1,
-          title: 'Hello World',
+          title: 'Hello World'
         })
 
         return original({
           input: {
             id: 1,
-            title: 'Hello from hook 2',
+            title: 'Hello from hook 2'
           },
-          fields,
+          fields
         })
       }
     },
@@ -185,13 +185,13 @@ test('addEntityHooks', async (t) => {
 
       deepEqual(args.where, {
         id: {
-          eq: '1',
-        },
+          eq: '1'
+        }
       })
       args.where = {
         id: {
-          eq: '2',
-        },
+          eq: '2'
+        }
       }
       deepEqual(args.fields, ['id', 'title'])
       return original(args)
@@ -199,35 +199,37 @@ test('addEntityHooks', async (t) => {
     async insert (original, args) {
       ok('insert called')
 
-      deepEqual(args.inputs, [{
-        title: 'hello',
-      }, {
-        title: 'world',
-      }])
+      deepEqual(args.inputs, [
+        {
+          title: 'hello'
+        },
+        {
+          title: 'world'
+        }
+      ])
       deepEqual(args.fields, ['id', 'title'])
       return original(args)
-    },
+    }
   })
 
   const entity = mapper.entities.page
 
   deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
-    title: 'Hello from hook',
+    title: 'Hello from hook'
   })
 
   deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
   deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
-    title: 'Hello from hook 2',
+    title: 'Hello from hook 2'
   })
 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
-test('basic hooks with smaller cap name', async (t) => {
-  const { ok, ifError, deepEqual } = tspl(t, { plan: 14 })
+test('basic hooks with smaller cap name', async t => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -262,27 +264,27 @@ test('basic hooks with smaller cap name', async (t) => {
 
           if (!input.id) {
             deepEqual(input, {
-              title: 'Hello',
+              title: 'Hello'
             })
 
             return original({
               input: {
-                title: 'Hello from hook',
+                title: 'Hello from hook'
               },
-              fields,
+              fields
             })
           } else {
             deepEqual(input, {
               id: 1,
-              title: 'Hello World',
+              title: 'Hello World'
             })
 
             return original({
               input: {
                 id: 1,
-                title: 'Hello from hook 2',
+                title: 'Hello from hook 2'
               },
-              fields,
+              fields
             })
           }
         },
@@ -291,13 +293,13 @@ test('basic hooks with smaller cap name', async (t) => {
 
           deepEqual(args.where, {
             id: {
-              eq: '1',
-            },
+              eq: '1'
+            }
           })
           args.where = {
             id: {
-              eq: '2',
-            },
+              eq: '2'
+            }
           }
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
@@ -305,30 +307,33 @@ test('basic hooks with smaller cap name', async (t) => {
         async insert (original, args) {
           ok('insert called')
 
-          deepEqual(args.inputs, [{
-            title: 'hello',
-          }, {
-            title: 'world',
-          }])
+          deepEqual(args.inputs, [
+            {
+              title: 'hello'
+            },
+            {
+              title: 'world'
+            }
+          ])
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const entity = mapper.entities.page
 
   deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
-    title: 'Hello from hook',
+    title: 'Hello from hook'
   })
 
   deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
   deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
-    title: 'Hello from hook 2',
+    title: 'Hello from hook 2'
   })
 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })

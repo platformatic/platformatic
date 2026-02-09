@@ -22,12 +22,13 @@ jobs:
     environment: main
     permissions:
       contents: write
+      id-token: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       - run: npm install npm -g
@@ -40,7 +41,7 @@ jobs:
           command: pnpm install
       - name: Change version number and sync
         run: |
-          node scripts/update-version.mjs ${{ inputs.version }}
+          node scripts/update-version.js ${{ inputs.version }}
           sh scripts/sync-version.sh
           pnpm -r run --if-present prepublishOnly
       - name: update lockfile
@@ -56,10 +57,7 @@ jobs:
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped v${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
-        # TODO(mcollina): make the following work for both releases
       - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
         run: |
           pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}

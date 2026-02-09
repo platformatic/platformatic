@@ -1,17 +1,15 @@
-'use strict'
+import underPressure from '@fastify/under-pressure'
+import fp from 'fastify-plugin'
 
-const underPressure = require('@fastify/under-pressure')
-const fp = require('fastify-plugin')
-
-async function setupClients (app, opts) {
-  const healthCheck = opts
+async function setupHealthCheckPlugin (app, options) {
+  const healthCheck = options
 
   app.register(underPressure, {
     exposeStatusRoute: '/status',
     healthCheckInterval: healthCheck.interval !== undefined ? healthCheck.interval : 5000,
     ...healthCheck,
-    healthCheck: healthCheck.fn,
+    healthCheck: healthCheck.fn
   })
 }
 
-module.exports = fp(setupClients)
+export const setupHealthCheck = fp(setupHealthCheckPlugin)

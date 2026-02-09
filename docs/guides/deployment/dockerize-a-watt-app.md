@@ -1,16 +1,54 @@
-# Dockerizing Watt Applications
+# How to Dockerize Your Watt Application
 
-This guide will walk you through dockerizing a JavaScript Platformatic Watt Application.
+## Problem
 
-## Dockerfile for JavaScript Watt Application
+You need to containerize your Platformatic Watt application for production deployment or to ensure consistent environments across development, staging, and production.
 
-Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Watt application with a frontend, composer and DB service:
+## Solution Overview
+
+This guide shows you how to create a multi-stage Docker build that optimizes your Watt application for production deployment. You'll create a Dockerfile that:
+- Efficiently handles workspace dependencies
+- Optimizes build caching
+- Produces a minimal production image
+- Properly configures networking for containers
+
+## Prerequisites
+
+- Docker installed on your system
+- A Platformatic Watt application ready to containerize
+- Basic understanding of Docker concepts
+
+## Step 1: Configure Your Application for Containers
+
+Ensure your `watt.json` or `platformatic.json` uses environment variables for hostname and port:
+
+```json
+{
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
+  }
+}
+```
+
+In your development `.env` file:
+
+```env
+HOSTNAME=127.0.0.1
+PORT=3042
+```
+
+**Why this matters:** Containers need to bind to all network interfaces (`0.0.0.0`) to accept external connections, while development typically uses `127.0.0.1`.
+
+## Step 2: Create Your Dockerfile
+
+Create a `Dockerfile` in your project root with this multi-stage build configuration:
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7-labs
 
 # Stage 1: Build
-ARG NODE_VERSION=20
+ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
@@ -45,100 +83,101 @@ COPY --from=build /app ./
 # Install only production dependencies
 RUN --mount=type=cache,target=/root/.npm npm install --omit=dev
 
+# We must listen to all network interfaces
+ENV HOSTNAME=0.0.0.0
+
+# Set the environment variable for the port
+ENV PORT=3042
+
 # Expose the port
-EXPOSE 3042
+EXPOSE ${PORT}
 
 # Start the application
 CMD npm run start
 ```
 
-### Explanation
-- **WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
-- **COPY package.json .**: Copies the `package.json` file from the local directory to the `/app` directory in the container. It's important to do this for all files in each service. 
-- **RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
-- **--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
-- **COPY . .**: Copies all remaining files and folders into the /app directory in the container.
-- **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production.
-- **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
-- **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
+## Step 3: Build and Run Your Container
 
+Build your Docker image:
 
-## Dockerizing TypeScript Watt Application
-
-This guide will walk you through dockerizing a TypeScript Platformatic Watt Application.
-
-## Dockerfile for TypeScript Watt Application
-
-Ensure you have a `.dockerignore` file in your project root to avoid unnecessary files such as `node_modules`, `dist`, `.env`, and any other files that are not required being copied into your Docker image. Here is an example of a sample `.dockerignore` file:
-
-```sh 
-node_modules
-npm-debug.log
-Dockerfile
-.dockerignore
-.env
-*.log
-dist
+```bash
+docker build -t my-watt-app .
 ```
 
-This reduces the image size and speeds up the build process.
+Run the container:
 
-## Dockerizing a TypeScript Watt Application
+```bash
+docker run -p 3042:3042 --env-file .env my-watt-app
+```
 
-For a TypeScript-based application, Dockerizing requires TypeScript compilation before deployment. Here’s how to set it up.
+**Verification:** Open `http://localhost:3042` to confirm your application is running.
 
-### TypeScript Compilation
+## Understanding the Dockerfile
 
-Create a `tsconfig.json` to configure your TypeScript build process with the following settings: 
+### Multi-Stage Build Benefits
+
+**Build Stage:**
+- Installs all dependencies (including dev dependencies for building)
+- Runs build processes that may require dev tools
+- Creates optimized production assets
+
+**Production Stage:**
+- Copies only the built application files
+- Installs only production dependencies  
+- Results in a smaller, more secure final image
+
+### Key Configuration Points
+
+**Network Binding:**
+```dockerfile
+ENV HOSTNAME=0.0.0.0
+```
+Containers must bind to all interfaces (`0.0.0.0`) to accept external traffic, not just localhost.
+
+**Dependency Caching:**
+```dockerfile
+RUN --mount=type=cache,target=/root/.npm npm install
+```
+Caches npm downloads between builds, significantly speeding up subsequent builds.
+
+**Module Compile Cache:**
+
+Enable Node.js module compile cache in your `watt.json` for faster container startup times:
 
 ```json
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "target": "es2020",
-    "sourceMap": true,
-    "pretty": true,
-    "noEmitOnError": true,
-    "incremental": true,
-    "strict": true,
-    "outDir": "dist",
-    "skipLibCheck": true
-  },
-  "watchOptions": {
-    "watchFile": "fixedPollingInterval",
-    "watchDirectory": "fixedPollingInterval",
-    "fallbackPolling": "dynamicPriority",
-    "synchronousWatchDirectory": true,
-    "excludeDirectories": [
-      "**/node_modules",
-      "dist"
-    ]
-  }
+  "compileCache": true
 }
 ```
 
-Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For production, set `PLT_TYPESCRIPT=false` and compile TypeScript using:
+When enabled, the compile cache is populated during `npm run build` and baked into your Docker image. This means every container started from the image benefits from pre-compiled V8 code, significantly reducing startup time.
 
-```sh
-npx platformatic compile
+:::note
+Module compile cache requires Node.js 22.1.0 or later.
+:::
+
+**Workspace Handling:**
+```dockerfile
+COPY --parents ./web/*/package.json ./
 ```
+Preserves the workspace structure when copying package.json files from subdirectories.
 
-This step automatically compiles your TypeScript files and outputs them to the specified `outDir` during the `npm build` step in the Dockerfile.
+## Troubleshooting
 
-### Environment Setup
+**Container exits immediately:**
+- Check that your `npm start` script exists in package.json
+- Verify your application doesn't try to connect to localhost services
 
-Create a `.env `file with environment variables for local development:
+**Cannot reach application:**
+- Ensure you're using `HOSTNAME=0.0.0.0` in the container
+- Verify port mapping: `-p 3042:3042`
 
-```sh
-PORT=3042
-PLT_SERVER_HOSTNAME=127.0.0.1
-PLT_SERVER_LOGGER_LEVEL=debug
-DATABASE_URL=sqlite://.platformatic/data/movie-quotes
-```
+**Build failures:**
+- Check that all necessary files are copied before running build
+- Verify workspace dependencies are properly handled
 
-Add `.env` to `.gitignore` to avoid accidentally committing sensitive information:
+## Next Steps
 
-```sh 
-echo ".env" >> .gitignore
-```
+- [Deploy to Kubernetes](./k8s-readiness-liveness.md)
+- [Set up monitoring in production](../metrics.md)
+- [Configure logging for containers](../logging.md)

@@ -143,11 +143,11 @@
       "locked": false,
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Composer",
+      "text": "Gateway",
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Composer",
+      "originalText": "Gateway",
       "lineHeight": 1.25,
       "baseline": 18
     },

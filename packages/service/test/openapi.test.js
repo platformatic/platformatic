@@ -1,33 +1,31 @@
-'use strict'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig } from './helper.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { buildServer } = require('..')
-
-test('support prefix option', async (t) => {
+test('support prefix option', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      forceCloseConnections: true,
+      logger: { level: 'fatal' },
+      forceCloseConnections: true
     },
     service: {
       openapi: {
-        path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
-        swaggerPrefix: '/my-prefix',
-      },
+        path: join(import.meta.dirname, 'fixtures', 'openapi-spec-test.json'),
+        swaggerPrefix: '/my-prefix'
+      }
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
-  const app = await buildServer(config)
+  const app = await createFromConfig(t, config)
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   const res = await request(`${app.url}/my-prefix/json`)
   assert.strictEqual(res.statusCode, 200, 'status code')
@@ -42,40 +40,40 @@ test('support prefix option', async (t) => {
               type: 'object',
               properties: {
                 foo: {
-                  type: 'string',
+                  type: 'string'
                 },
                 bar: {
-                  type: 'string',
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   })
 })
-test('provide openapi spec from a file', async (t) => {
+test('provide openapi spec from a file', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      forceCloseConnections: true,
+      logger: { level: 'fatal' },
+      forceCloseConnections: true
     },
     service: {
       openapi: {
-        path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
-      },
+        path: join(import.meta.dirname, 'fixtures', 'openapi-spec-test.json')
+      }
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
-  const app = await buildServer(config)
+  const app = await createFromConfig(t, config)
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/documentation/json`)
@@ -91,17 +89,17 @@ test('provide openapi spec from a file', async (t) => {
                 type: 'object',
                 properties: {
                   foo: {
-                    type: 'string',
+                    type: 'string'
                   },
                   bar: {
-                    type: 'string',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     })
 
     assert.deepEqual(body.paths['/hello'].get, {
@@ -115,17 +113,17 @@ test('provide openapi spec from a file', async (t) => {
                 type: 'object',
                 properties: {
                   foo: {
-                    type: 'string',
+                    type: 'string'
                   },
                   bar: {
-                    type: 'string',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     })
   }
 })

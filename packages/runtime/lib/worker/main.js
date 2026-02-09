@@ -1,53 +1,35 @@
-'use strict'
-
-const { EventEmitter } = require('node:events')
-const { hostname } = require('node:os')
-const { join, resolve } = require('node:path')
-const { parentPort, workerData, threadId } = require('node:worker_threads')
-const { pathToFileURL } = require('node:url')
-const inspector = require('node:inspector')
-const diagnosticChannel = require('node:diagnostics_channel')
-const { ServerResponse } = require('node:http')
-
-const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
-const {
-  createRequire,
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
-  executeWithTimeout,
-  ensureLoggableError,
   getPrivateSymbol
-} = require('@platformatic/utils')
-const dotenv = require('dotenv')
-const pino = require('pino')
-const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
-const { wire } = require('undici-thread-interceptor')
-const undici = require('undici')
+} from '@platformatic/foundation'
+import { subscribe } from 'node:diagnostics_channel'
+import { EventEmitter } from 'node:events'
+import { ServerResponse } from 'node:http'
+import inspector from 'node:inspector'
+import { hostname } from 'node:os'
+import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { threadId, workerData } from 'node:worker_threads'
+import pino from 'pino'
+import { install as installUndiciGlobals } from 'undici'
+import { Controller } from './controller.js'
+import { setDispatcher } from './interceptors.js'
+import { setupITC } from './itc.js'
+import { SharedContext } from './shared-context.js'
+import { kId, kITC, kStderrMarker } from './symbols.js'
+import { initHealthSignalsApi } from './health-signals.js'
 
-const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
-const { PlatformaticApp } = require('./app')
-const { setupITC } = require('./itc')
-const { loadInterceptors } = require('./interceptors')
-const { kId, kITC, kStderrMarker } = require('./symbols')
-
-function handleUnhandled (app, type, err) {
-  const label =
-    workerData.worker.count > 1
-      ? `worker ${workerData.worker.index} of the service "${workerData.serviceConfig.id}"`
-      : `service "${workerData.serviceConfig.id}"`
-
-  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
-
-  executeWithTimeout(app?.stop(), 1000)
-    .catch()
-    .finally(() => {
-      process.exit(1)
-    })
+class ForwardingEventEmitter extends EventEmitter {
+  emitAndNotify (event, ...args) {
+    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    return this.emit(event, ...args)
+  }
 }
 
 function patchLogging () {
   disablePinoDirectWrite()
-  ensureFlushedWorkerStdio()
 
   const kFormatForStderr = getPrivateSymbol(console, 'kFormatForStderr')
 
@@ -69,10 +51,23 @@ function patchLogging () {
 }
 
 function createLogger () {
-  const pinoOptions = { level: 'trace', name: workerData.serviceConfig.id }
+  // Do not propagate runtime transports to the worker
+  if (workerData.config.logger) {
+    delete workerData.config.logger.transport
+  }
 
-  if (workerData.worker?.count > 1) {
-    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerData.worker.index }
+  const pinoOptions = {
+    level: 'trace',
+    name: workerData.applicationConfig.id,
+    base: { pid: process.pid, hostname: hostname(), worker: workerData.worker.index },
+    ...workerData.config.logger
+  }
+
+  if (pinoOptions.formatters) {
+    pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
+  }
+  if (pinoOptions.timestamp) {
+    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
   return pino(pinoOptions)
@@ -90,128 +85,103 @@ async function performPreloading (...sources) {
   }
 }
 
+// Enable compile cache if configured (Node.js 22.1.0+)
+async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
+  // Normalize boolean shorthand: true -> { enabled: true }
+  const normalizeConfig = cfg => {
+    if (cfg === true) return { enabled: true }
+    if (cfg === false) return { enabled: false }
+    return cfg
+  }
+
+  // Merge runtime and app-level config (app overrides runtime)
+  const runtimeCache = normalizeConfig(runtimeConfig.compileCache)
+  const appCache = normalizeConfig(applicationConfig.compileCache)
+  const config = { ...runtimeCache, ...appCache }
+
+  if (!config.enabled) {
+    return
+  }
+
+  // Check if API is available (Node.js 22.1.0+)
+  let moduleApi
+  try {
+    moduleApi = await import('node:module')
+    if (typeof moduleApi.enableCompileCache !== 'function') {
+      return
+    }
+  } catch {
+    return
+  }
+
+  // Determine cache directory - use applicationConfig.path for the app root
+  const cacheDir = config.directory ?? join(applicationConfig.path, '.plt', 'compile-cache')
+
+  try {
+    const result = moduleApi.enableCompileCache(cacheDir)
+
+    const { compileCacheStatus } = moduleApi.constants ?? {}
+
+    if (result.status === compileCacheStatus?.ENABLED) {
+      logger.debug({ directory: result.directory }, 'Module compile cache enabled')
+    } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+      logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
+    } else if (result.status === compileCacheStatus?.FAILED) {
+      logger.warn({ message: result.message }, 'Failed to enable module compile cache')
+    } else if (result.status === compileCacheStatus?.DISABLED) {
+      logger.debug('Module compile cache disabled via NODE_DISABLE_COMPILE_CACHE')
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Error enabling module compile cache')
+  }
+}
+
 async function main () {
-  globalThis.fetch = fetch
+  installUndiciGlobals(globalThis)
   globalThis[kId] = threadId
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
     logger: createLogger(),
-    events: new EventEmitter()
+    events: new ForwardingEventEmitter()
   })
 
-  const config = workerData.config
+  const runtimeConfig = workerData.config
+  const applicationConfig = workerData.applicationConfig
 
-  await performPreloading(config, workerData.serviceConfig)
+  // Enable compile cache early before loading user modules
+  await setupCompileCache(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
 
-  const service = workerData.serviceConfig
+  await performPreloading(runtimeConfig, applicationConfig)
 
-  // Load env file and mixin env vars from service config
+  // Load env file and mixin env vars from application config
   let envfile
-  if (service.envfile) {
-    envfile = resolve(workerData.dirname, service.envfile)
+  if (applicationConfig.envfile) {
+    envfile = resolve(workerData.dirname, applicationConfig.envfile)
   } else {
-    envfile = resolve(workerData.serviceConfig.path, '.env')
+    envfile = resolve(workerData.applicationConfig.path, '.env')
   }
 
   globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
 
-  dotenv.config({
-    path: envfile
-  })
-
-  if (config.env) {
-    Object.assign(process.env, config.env)
-  }
-  if (service.env) {
-    Object.assign(process.env, service.env)
+  try {
+    process.loadEnvFile(envfile)
+  } catch {
+    // Ignore if the file doesn't exist, similar to dotenv behavior
   }
 
-  // Setup undici
-  const interceptors = {}
-  const composedInterceptors = []
-
-  if (config.undici?.interceptors) {
-    const _require = createRequire(join(workerData.dirname, 'package.json'))
-    for (const key of ['Agent', 'Pool', 'Client']) {
-      if (config.undici.interceptors[key]) {
-        interceptors[key] = await loadInterceptors(_require, config.undici.interceptors[key])
-      }
-    }
-
-    if (Array.isArray(config.undici.interceptors)) {
-      composedInterceptors.push(...(await loadInterceptors(_require, config.undici.interceptors)))
-    }
+  if (runtimeConfig.env) {
+    Object.assign(process.env, runtimeConfig.env)
+  }
+  if (applicationConfig.env) {
+    Object.assign(process.env, applicationConfig.env)
   }
 
-  const dispatcherOpts = { ...config.undici }
+  const { threadDispatcher } = await setDispatcher(runtimeConfig)
 
-  if (Object.keys(interceptors).length > 0) {
-    const clientInterceptors = []
-    const poolInterceptors = []
-
-    if (interceptors.Agent) {
-      clientInterceptors.push(...interceptors.Agent)
-      poolInterceptors.push(...interceptors.Agent)
-    }
-
-    if (interceptors.Pool) {
-      poolInterceptors.push(...interceptors.Pool)
-    }
-
-    if (interceptors.Client) {
-      clientInterceptors.push(...interceptors.Client)
-    }
-
-    dispatcherOpts.factory = (origin, opts) => {
-      return opts && opts.connections === 1
-        ? new undici.Client(origin, opts).compose(clientInterceptors)
-        : new undici.Pool(origin, opts).compose(poolInterceptors)
-    }
-  }
-
-  const globalDispatcher = new Agent(dispatcherOpts).compose(composedInterceptors)
-
-  setGlobalDispatcher(globalDispatcher)
-
-  const { telemetry } = service
-  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
-  // Setup mesh networker
-  const threadDispatcher = wire({
-    // Specifying the domain is critical to avoid flooding the DNS
-    // with requests for a domain that's never going to exist.
-    domain: '.plt.local',
-    port: parentPort,
-    timeout: config.serviceTimeout,
-    ...hooks
-  })
-
-  if (config.httpCache) {
-    setGlobalDispatcher(
-      getGlobalDispatcher().compose(
-        httpCacheInterceptor({
-          store: new RemoteCacheStore({
-            onRequest: opts => {
-              globalThis.platformatic?.onHttpCacheRequest?.(opts)
-            },
-            onCacheHit: opts => {
-              globalThis.platformatic?.onHttpCacheHit?.(opts)
-            },
-            onCacheMiss: opts => {
-              globalThis.platformatic?.onHttpCacheMiss?.(opts)
-            },
-            logger: globalThis.platformatic.logger
-          }),
-          methods: config.httpCache.methods ?? ['GET', 'HEAD'],
-          logger: globalThis.platformatic.logger
-        })
-      )
-    )
-  }
-
-  // If the service is an entrypoint and runtime server config is defined, use it.
+  // If the application is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
-  if (config.server && service.entrypoint) {
-    serverConfig = config.server
-  } else if (service.useHttp) {
+  if (runtimeConfig.server && applicationConfig.entrypoint) {
+    serverConfig = runtimeConfig.server
+  } else if (applicationConfig.useHttp) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
@@ -234,46 +204,59 @@ async function main () {
     const res = await fetch(url)
     const [{ devtoolsFrontendUrl }] = await res.json()
 
-    console.log(`For ${service.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
+    console.log(`For ${applicationConfig.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
   }
 
   // Create the application
-  const app = new PlatformaticApp(
-    service,
-    workerData.worker.count > 1 ? workerData.worker.index : undefined,
-    service.telemetry,
-    config.logger,
+  // Add idLabel to metrics config to determine which label name to use (defaults to applicationId)
+  const metricsConfig = runtimeConfig.metrics
+    ? {
+        ...runtimeConfig.metrics,
+        idLabel: runtimeConfig.metrics.applicationLabel || 'applicationId'
+      }
+    : runtimeConfig.metrics
+
+  const controller = new Controller(
+    runtimeConfig,
+    applicationConfig,
+    workerData.worker.index,
     serverConfig,
-    config.metrics,
-    !!config.managementApi,
-    !!config.watch
+    metricsConfig
   )
 
-  process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
-  process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
+  await controller.init()
 
-  await app.init()
-
-  if (service.entrypoint && config.basePath) {
-    const meta = await app.stackable.getMeta()
-    if (!meta.composer.wantsAbsoluteUrls) {
-      stripBasePath(config.basePath)
+  if (applicationConfig.entrypoint && runtimeConfig.basePath) {
+    const meta = await controller.capability.getMeta()
+    if (!meta.gateway.wantsAbsoluteUrls) {
+      stripBasePath(runtimeConfig.basePath)
     }
   }
 
-  // Setup interaction with parent port
-  const itc = setupITC(app, service, threadDispatcher)
-  globalThis[kITC] = itc
+  const sharedContext = new SharedContext()
+  // Limit the amount of methods a user can call
+  globalThis.platformatic.sharedContext = {
+    get: () => sharedContext.get(),
+    update: (...args) => sharedContext.update(...args)
+  }
 
-  // Get the dependencies
-  const dependencies = await app.getBootstrapDependencies()
-  itc.notify('init', { dependencies })
+  // Setup interaction with parent port
+  const itc = setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
+  globalThis[kITC] = itc
+  globalThis.platformatic.itc = itc
+
+  initHealthSignalsApi({
+    workerId: workerData.worker.id,
+    applicationId: applicationConfig.id
+  })
+
+  itc.notify('init')
 }
 
 function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
 
-  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+  subscribe('http.server.request.start', ({ request, response }) => {
     if (request.url.startsWith(basePath)) {
       request.url = request.url.slice(basePath.length)
 

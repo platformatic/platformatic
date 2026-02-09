@@ -10,7 +10,7 @@ async function start (opts) {
 
   const signSync = createSigner({
     key: 'secret',
-    expiresIn: '1h',
+    expiresIn: '1h'
   })
 
   app.decorate('refreshToken', '')
@@ -28,7 +28,7 @@ async function start (opts) {
   port = app.server.address().port
 
   const refreshToken = signSync({
-    iss: `http://localhost:${port}`,
+    iss: `http://localhost:${port}`
   })
 
   app.refreshToken = refreshToken
@@ -41,7 +41,7 @@ async function start (opts) {
 module.exports = start
 
 if (require.main === module) {
-  start({ logger: { name: 'idp' }, port: process.env.PORT || 3000 }).catch((err) => {
+  start({ logger: { name: 'idp' }, port: process.env.PORT || 3000 }).catch(err => {
     console.error(err)
     process.exit(1)
   })

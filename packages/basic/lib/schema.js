@@ -1,11 +1,27 @@
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const version = packageJson.version
 
+// This is used by applications to have common properties.
 const application = {
   type: 'object',
+  properties: {},
+  additionalProperties: false,
+  required: [],
+  default: {}
+}
+
+/*
+  For legacy purposes, when an application is buildable (like Astro), it should use for the application properties.
+  Make sure this always extends the `application` schema above.
+*/
+
+const buildableApplication = {
+  type: 'object',
   properties: {
+    ...application.properties,
     basePath: {
       type: 'string'
     },
@@ -28,7 +44,7 @@ const application = {
           default: 'npm ci --omit-dev'
         },
         // All the following options purposely don't have a default so
-        // that stackables can detect if the user explicitly set them.
+        // that capabilities can detect if the user explicitly set them.
         build: {
           type: 'string'
         },
@@ -44,7 +60,10 @@ const application = {
     }
   },
   additionalProperties: false,
-  default: {}
+  required: [...application.required],
+  default: {
+    ...application.default
+  }
 }
 
 const watch = {
@@ -59,17 +78,18 @@ const watch = {
   ]
 }
 
-export const schemaComponents = { application, watch }
+export const schemaComponents = { application, buildableApplication, watch }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Stackable',
+  title: 'Platformatic Basic Config',
   type: 'object',
   properties: {
     $schema: {
       type: 'string'
-    }
+    },
+    runtime: utilsSchemaComponents.wrappedRuntime
   },
   additionalProperties: true
 }

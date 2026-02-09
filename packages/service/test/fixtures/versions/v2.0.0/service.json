@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.0.0.json",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "plugins": {
+    "paths": ["plugin.js"],
+    "typescript": {
+      "enabled": true,
+      "outDir": "dist"
+    }
+  }
+}

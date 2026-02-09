@@ -1,19 +1,17 @@
-'use strict'
-
-const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, ok: pass } = require('node:assert')
-const Fastify = require('fastify')
-const Gateway = require('@mercuriusjs/gateway')
-const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
+import { mercuriusFederationPlugin } from '@mercuriusjs/federation'
+import Gateway from '@mercuriusjs/gateway'
+import sqlMapper from '@platformatic/sql-mapper'
+import Fastify from 'fastify'
+import { ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createTestService (t, schema, resolvers = {}) {
   const service = Fastify({ logger: { level: 'error' } })
   service.register(mercuriusFederationPlugin, {
     schema,
-    resolvers,
+    resolvers
   })
   await service.listen({ port: 0 })
   return [service, service.server.address().port]
@@ -22,12 +20,12 @@ async function createTestService (t, schema, resolvers = {}) {
 const categories = {
   c1: {
     id: 'c1',
-    name: 'Food',
+    name: 'Food'
   },
   c2: {
     id: 'c2',
-    name: 'Places',
-  },
+    name: 'Places'
+  }
 }
 
 // This works because the database is reset between tests
@@ -35,7 +33,7 @@ const postCategory = {
   1: 'c1',
   2: 'c2',
   3: 'c1',
-  4: 'c1',
+  4: 'c1'
 }
 
 const categoryPost = Object.keys(postCategory).reduce((acc, key) => {
@@ -44,19 +42,24 @@ const categoryPost = Object.keys(postCategory).reduce((acc, key) => {
   return acc
 }, {})
 
-const posts = [{
-  title: 'Post 1',
-  longText: 'This is a long text 1',
-}, {
-  title: 'Post 2',
-  longText: 'This is a long text 2',
-}, {
-  title: 'Post 3',
-  longText: 'This is a long text 3',
-}, {
-  title: 'Post 4',
-  longText: 'This is a long text 4',
-}]
+const posts = [
+  {
+    title: 'Post 1',
+    longText: 'This is a long text 1'
+  },
+  {
+    title: 'Post 2',
+    longText: 'This is a long text 2'
+  },
+  {
+    title: 'Post 3',
+    longText: 'This is a long text 3'
+  },
+  {
+    title: 'Post 4',
+    longText: 'This is a long text 4'
+  }
+]
 
 async function createTestGatewayServer (t, cacheOpts) {
   const categoryServiceSchema = `
@@ -80,28 +83,30 @@ async function createTestGatewayServer (t, cacheOpts) {
       categories: (root, args, context, info) => {
         pass('Query.categories resolved')
         return Object.values(categories)
-      },
+      }
     },
     Category: {
       posts: (root, args, context, info) => {
         pass('Category.posts resolved')
-        return categoryPost[root.id]
-          ? categoryPost[root.id].map(id => ({ id }))
-          : []
+        return categoryPost[root.id] ? categoryPost[root.id].map(id => ({ id })) : []
       },
       __resolveReference: (category, args, context, info) => {
         pass('Category.__resolveReference')
         return categories[category.id]
-      },
+      }
     },
     Post: {
       category: (root, args, context, info) => {
         pass('Post.category resolved')
         return categories[postCategory[root.id]]
-      },
-    },
+      }
+    }
   }
-  const [categoryService, categoryServicePort] = await createTestService(t, categoryServiceSchema, categoryServiceResolvers)
+  const [categoryService, categoryServicePort] = await createTestService(
+    t,
+    categoryServiceSchema,
+    categoryServiceResolvers
+  )
 
   const postService = Fastify()
   postService.register(sqlMapper, {
@@ -124,10 +129,10 @@ async function createTestGatewayServer (t, cacheOpts) {
           long_text TEXT
         );`)
       }
-    },
+    }
   })
   postService.register(sqlGraphQL, {
-    federationMetadata: true,
+    federationMetadata: true
   })
   await postService.listen({ port: 0 })
   const postServicePort = postService.server.address().port
@@ -145,9 +150,9 @@ async function createTestGatewayServer (t, cacheOpts) {
           }
         `,
       variables: {
-        inputs: posts,
-      },
-    },
+        inputs: posts
+      }
+    }
   })
 
   const gateway = Fastify()
@@ -158,20 +163,23 @@ async function createTestGatewayServer (t, cacheOpts) {
   })
   gateway.register(Gateway, {
     gateway: {
-      services: [{
-        name: 'category',
-        url: `http://localhost:${categoryServicePort}/graphql`,
-      }, {
-        name: 'post',
-        url: `http://localhost:${postServicePort}/graphql`,
-      }],
-    },
+      services: [
+        {
+          name: 'category',
+          url: `http://localhost:${categoryServicePort}/graphql`
+        },
+        {
+          name: 'post',
+          url: `http://localhost:${postServicePort}/graphql`
+        }
+      ]
+    }
   })
 
   return gateway
 }
 
-test('extendable', async (t) => {
+test('extendable', async t => {
   const app = await createTestGatewayServer(t)
 
   const query = `query {
@@ -211,8 +219,8 @@ test('extendable', async (t) => {
               longText: 'This is a long text 1',
               category: {
                 id: 'c1',
-                name: 'Food',
-              },
+                name: 'Food'
+              }
             },
             {
               id: '3',
@@ -220,8 +228,8 @@ test('extendable', async (t) => {
               longText: 'This is a long text 3',
               category: {
                 id: 'c1',
-                name: 'Food',
-              },
+                name: 'Food'
+              }
             },
             {
               id: '4',
@@ -229,10 +237,10 @@ test('extendable', async (t) => {
               longText: 'This is a long text 4',
               category: {
                 id: 'c1',
-                name: 'Food',
-              },
-            },
-          ],
+                name: 'Food'
+              }
+            }
+          ]
         },
         {
           id: 'c2',
@@ -244,11 +252,11 @@ test('extendable', async (t) => {
               longText: 'This is a long text 2',
               category: {
                 id: 'c2',
-                name: 'Places',
-              },
-            },
-          ],
-        },
+                name: 'Places'
+              }
+            }
+          ]
+        }
       ],
       posts: [
         {
@@ -256,42 +264,42 @@ test('extendable', async (t) => {
           title: 'Post 1',
           category: {
             id: 'c1',
-            name: 'Food',
-          },
+            name: 'Food'
+          }
         },
         {
           id: '2',
           title: 'Post 2',
           category: {
             id: 'c2',
-            name: 'Places',
-          },
+            name: 'Places'
+          }
         },
         {
           id: '3',
           title: 'Post 3',
           category: {
             id: 'c1',
-            name: 'Food',
-          },
+            name: 'Food'
+          }
         },
         {
           id: '4',
           title: 'Post 4',
           category: {
             id: 'c1',
-            name: 'Food',
-          },
-        },
-      ],
-    },
+            name: 'Food'
+          }
+        }
+      ]
+    }
   }
 
   {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
-      body: { query },
+      body: { query }
     })
 
     same(res.json(), expected)
@@ -301,7 +309,7 @@ test('extendable', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
-      body: { query },
+      body: { query }
     })
 
     same(res.json(), expected)

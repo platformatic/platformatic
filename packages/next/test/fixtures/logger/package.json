@@ -1,0 +1,17 @@
+{
+  "name": "next-example",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/gateway": "^2.61.0",
+    "wattpm": "^2.61.0"
+  },
+  "workspaces": [
+    "web/*",
+    "external/*"
+  ]
+}

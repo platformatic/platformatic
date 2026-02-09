@@ -1,0 +1,17 @@
+{
+  "name": "service-2",
+  "scripts": {
+    "start": "platformatic start",
+    "test": "borp"
+  },
+  "devDependencies": {
+    "fastify": "^5.7.0",
+    "borp": "^0.19.0"
+  },
+  "dependencies": {
+    "@platformatic/service": "^2.70.0"
+  },
+  "engines": {
+    "node": "^18.8.0 || >=20.6.0"
+  }
+}

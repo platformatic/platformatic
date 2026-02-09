@@ -1,17 +1,13 @@
-'use strict'
+import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should kill the thread even if stop fails', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -19,7 +15,7 @@ test('should kill the thread even if stop fails', async t => {
     method: 'GET',
     url: '/crash-on-close'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   // Should not fail and hang
   const start = process.hrtime.bigint()
@@ -27,5 +23,6 @@ test('should kill the thread even if stop fails', async t => {
   const elapsed = Number(process.hrtime.bigint() - start) / 1e6
 
   // We are satisfied if killing took less that twice of the allowed timeout
-  assert.ok(elapsed < config.configManager.current.gracefulShutdown.runtime * 2)
+  const config = await app.getRuntimeConfig()
+  ok(elapsed < config.gracefulShutdown.application * 2)
 })

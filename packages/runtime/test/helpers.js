@@ -1,124 +1,127 @@
-'use strict'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { readFile, writeFile } from 'node:fs/promises'
+import { platform } from 'node:os'
+import { join, resolve } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { create, transform } from '../index.js'
 
-const { on } = require('node:events')
-const { readFile, writeFile } = require('node:fs/promises')
-const { platform } = require('node:os')
-const { join } = require('node:path')
-const { createDirectory } = require('@platformatic/utils')
-const { safeRemove } = require('@platformatic/utils')
-const { link } = require('fs/promises')
-const WebSocket = require('ws')
+export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
 
-let counter = 0
-async function getTempDir (baseDir) {
-  if (baseDir === undefined) {
-    baseDir = __dirname
-  }
-  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${counter++}`)
+export const isWindows = platform() === 'win32'
+export const isCIOnWindows = process.env.CI && isWindows
+export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
+
+let tempDirCounter = 0
+
+export const tempPath = resolve(import.meta.dirname, '../../../tmp/')
+
+export async function getTempDir () {
+  const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
 
-async function moveToTmpdir (teardown) {
+export async function createTemporaryDirectory (t, prefix) {
+  const directory = join(tempPath, `test-runtime-${prefix}-${process.pid}-${tempDirCounter++}`)
+
+  t.after(async () => {
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
+      return safeRemove(directory)
+    } else {
+      process._rawDebug(`Keeping temporary folder: ${directory}`)
+    }
+  })
+
+  await createDirectory(directory)
+  return directory
+}
+
+export async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  if (!process.env.SKIP_RM_TMP) {
+  if (process.env.PLT_TESTS_DEBUG !== 'true') {
     teardown(() => safeRemove(dir))
   }
   return dir
 }
 
-async function linkNodeModules (dir, pkgs) {
-  await createDirectory(join(dir, 'node_modules'))
-  for (const pkg of pkgs) {
-    if (pkg.startsWith('@')) {
-      const [scope, name] = pkg.split('/')
-      await createDirectory(join(dir, 'node_modules', scope))
-      await link(join(__dirname, '..', 'node_modules', scope, name), join(dir, 'node_modules', scope, name))
-    } else {
-      await link(join(__dirname, '..', 'node_modules', pkg), join(dir, 'node_modules', pkg))
+export async function updateFile (path, update) {
+  const contents = await readFile(path, 'utf-8')
+  await writeFile(path, await update(contents), 'utf-8')
+
+  return {
+    revert () {
+      return writeFile(path, contents, 'utf-8')
     }
   }
 }
 
-async function updateFile (path, update) {
-  const contents = await readFile(path, 'utf-8')
-  await writeFile(path, await update(contents), 'utf-8')
-}
-
-async function updateConfigFile (path, update) {
+export async function updateConfigFile (path, update) {
   const contents = JSON.parse(await readFile(path, 'utf-8'))
   await update(contents)
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')
 }
 
-async function openLogsWebsocket (app) {
-  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-  const managementApiWebsocket = new WebSocket(protocol + app.getManagementApiUrl() + ':/api/v1/logs/live')
-
-  await new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Timeout'))
-    }, 3000)
-
-    managementApiWebsocket.on('error', reject)
-
-    if (process.env.PLT_TESTS_VERBOSE === 'true') {
-      managementApiWebsocket.on('message', msg => {
-        for (const line of msg.toString().trim().split('\n')) {
-          process._rawDebug(line)
-        }
-      })
-    }
-
-    managementApiWebsocket.on('open', () => {
-      clearTimeout(timeout)
-      managementApiWebsocket.off('error', reject)
-      resolve()
-    })
-  })
-
-  return managementApiWebsocket
-}
-
-async function waitForLogs (socket, ...exprs) {
-  const toMatch = new Set(exprs)
-  const messages = []
-
-  for await (const [msg] of on(socket, 'message')) {
-    for (const line of msg.toString().trim().split('\n')) {
-      let message
-      try {
-        message = JSON.parse(line)
-        messages.push(message)
-      } catch (e) {
-        console.error('Ignoring an non JSON line coming from WebSocket: ', line)
-        continue
-      }
-
-      for (const expr of toMatch) {
-        const matches = typeof expr === 'string' ? message.msg?.startsWith(expr) : message.msg?.match(expr)
-
-        if (matches) {
-          toMatch.delete(expr)
-
-          if (toMatch.size === 0) {
-            return messages
-          }
-        }
-      }
-    }
+export async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
+  if (typeof delay !== 'number') {
+    delay = LOGS_TIMEOUT
   }
+
+  if (delay > 0) {
+    await sleep(delay)
+  }
+
+  const contents = await readFile(path, 'utf-8')
+
+  if (raw) {
+    return contents
+  }
+
+  return contents
+    .split('\n')
+    .filter(line => line.trim() !== '')
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch (err) {
+        return { __raw: line }
+      }
+    })
 }
 
-module.exports = {
-  getTempDir,
-  moveToTmpdir,
-  linkNodeModules,
-  updateFile,
-  updateConfigFile,
-  openLogsWebsocket,
-  waitForLogs
+export async function createRuntime (configOrRoot, sourceOrConfig, context) {
+  await createDirectory(tempPath)
+
+  const originalTransform = context?.transform ?? transform
+  context ??= {}
+  context.logsPath ??= resolve(tempPath, `log-${Date.now()}.txt`)
+
+  return create(configOrRoot, sourceOrConfig, {
+    ...context,
+    async transform (config, ...args) {
+      config = await originalTransform(config, ...args)
+      config.logger ??= {}
+
+      const debug = process.env.PLT_TESTS_DEBUG === 'true'
+      const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+
+      if (verbose) {
+        config.logger.level = debug ? 'trace' : 'info'
+      } else {
+        if (debug) {
+          config.logger.level = 'trace'
+          process._rawDebug('Runtime logs:', context.logsPath)
+        }
+
+        config.logger.transport ??= {
+          target: 'pino/file',
+          options: { destination: context.logsPath }
+        }
+      }
+
+      return config
+    }
+  })
 }

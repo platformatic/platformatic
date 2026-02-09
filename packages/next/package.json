@@ -1,16 +1,19 @@
 {
   "name": "@platformatic/next",
-  "version": "2.53.0",
-  "description": "Platformatic Next.js Stackable",
+  "version": "3.37.0",
+  "description": "Platformatic Next.js Capability",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "npm run test:main && npm run test:caching && npm run test:compatibility && npm run test:integration",
+    "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:caching": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/caching/*.test.js",
+    "test:compatibility": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
+    "test:integration": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/integration/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "repository": {
@@ -29,8 +32,7 @@
     "@babel/traverse": "^7.25.3",
     "@babel/types": "^7.25.2",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "amaro": "^0.3.0",
     "iovalkey": "^0.3.0",
     "msgpackr": "^1.11.2",
@@ -38,19 +40,22 @@
   },
   "devDependencies": {
     "@fastify/reply-from": "^12.0.0",
-    "@platformatic/composer": "workspace:*",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
-    "borp": "^0.19.0",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "execa": "^9.5.1",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "next": "^15.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.0.0",
     "typescript": "^5.5.4",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

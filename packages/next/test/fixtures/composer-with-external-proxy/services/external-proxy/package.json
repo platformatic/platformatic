@@ -1,12 +1,7 @@
 {
   "name": "external-proxy",
-  "scripts": {
-    "start": "platformatic start",
-    "test": "borp"
-  },
   "devDependencies": {
-    "borp": "^0.17.0",
-    "fastify": "^5.0.0-alpha.4"
+    "fastify": "^5.7.0"
   },
   "dependencies": {
     "@platformatic/service": "^2.3.1",

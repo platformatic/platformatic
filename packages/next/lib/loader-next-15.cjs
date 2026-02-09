@@ -29,7 +29,7 @@ function detectFormat (code) {
   return format
 }
 
-fsPromises.readFile = async function WTF (url, options) {
+fsPromises.readFile = async function readAndPatchNextConfigTS (url, options) {
   if (url.startsWith('file://')) {
     url = fileURLToPath(url)
   }
@@ -40,13 +40,18 @@ fsPromises.readFile = async function WTF (url, options) {
     return contents
   }
 
-  const { code } = transformSync(contents.toString('utf-8'), { mode: 'strip-only' })
+  let transformed = contents
 
-  const { transformESM, transformCJS } = await import('./loader.js')
-  const transformer = detectFormat(code) === 'esm' ? transformESM : transformCJS
-  const transformed = transformer(code)
+  if (!globalThis.platformatic.config.next?.useExperimentalAdapter) {
+    const { code } = transformSync(contents.toString('utf-8'), { mode: 'strip-only' })
 
-  // Restore the original method
-  fsPromises.readFile = originalReadFile
+    const { transformESM, transformCJS } = await import('./loader.js')
+    const transformer = detectFormat(code) === 'esm' ? transformESM : transformCJS
+    transformed = transformer(code)
+
+    // Restore the original method
+    fsPromises.readFile = originalReadFile
+  }
+
   return transformed
 }

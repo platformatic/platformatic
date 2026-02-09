@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.58.0.json",
+  "entrypoint": "runtime",
+  "services": [
+    {
+      "id": "runtime",
+      "path": "./services/runtime"
+    }
+  ],
+  "logger": {
+    "level": "trace"
+  }
+}

@@ -1,8 +1,7 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import pinoPretty from 'pino-pretty'
 import split2 from 'split2'
-import { getMatchingRuntime, parseArgs } from '../utils.js'
 
 export async function logsCommand (logger, args) {
   const { values, positionals: allPositionals } = parseArgs(
@@ -18,11 +17,11 @@ export async function logsCommand (logger, args) {
   /* c8 ignore next */
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
-  let service
+  let application
+  const client = new RuntimeApiClient()
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
-    service = positionals[0]
+    application = positionals[0]
 
     const logsStream = client.getRuntimeLiveLogsStream(runtime.pid)
 
@@ -37,30 +36,33 @@ export async function logsCommand (logger, args) {
     for await (const line of logsStream.pipe(split2())) {
       const parsed = JSON.parse(line)
 
-      if (parsed.level < minimumLevel || (service && parsed.name !== service)) {
+      if (parsed.level < minimumLevel || (application && parsed.name !== application)) {
         continue
       }
 
       output.write(line + '\n')
     }
-    /* c8 ignore next */ // Mistakenly reported as missing by c8
+    /* c8 ignore next - Mistakenly reported as uncovered by C8 */
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
-      /* c8 ignore next 6 */
+      return logFatalError(logger, 'Cannot find a matching runtime.')
+      /* c8 ignore next 8 */
     } else {
-      logger.fatal(
+      return logFatalError(
+        logger,
         { error: ensureLoggableError(error) },
-        `Cannot stream ${service ? 'service' : 'runtime'} logs: ${error.message}`
+        `Cannot stream ${application ? 'application' : 'runtime'} logs: ${error.message}`
       )
     }
+  } finally {
+    await client.close()
   }
 }
 
 export const help = {
   logs: {
-    usage: 'logs [id] [service]',
-    description: 'Streams logs from a running application or service',
+    usage: 'logs [id] [application]',
+    description: 'Streams logs from a running application or application',
     args: [
       {
         name: 'id',
@@ -68,10 +70,10 @@ export const help = {
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
-        name: 'service',
-        description: 'The service name'
+        name: 'application',
+        description: 'The application name'
       }
     ],
-    footer: 'If service is not specified, the command will stream logs from all services.'
+    footer: 'If application is not specified, the command will stream logs from all applications.'
   }
 }

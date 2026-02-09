@@ -3,6 +3,6 @@
   "dependencies": {
     "@platformatic/node": "^2.3.1",
     "express": "^4.19.2",
-    "@opentelemetry/instrumentation-express": "^0.47.0"
+    "@opentelemetry/instrumentation-express": "^0.52.0"
   }
 }

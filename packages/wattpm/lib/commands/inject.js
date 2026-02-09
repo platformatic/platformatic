@@ -1,14 +1,14 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, isVerbose, logFatalError, parseArgs } from '@platformatic/foundation'
 import { createWriteStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { getMatchingRuntime, parseArgs, verbose } from '../utils.js'
+import { getSocket } from '../utils.js'
 
 function appendOutput (logger, stream, fullOutput, line) {
-  if (verbose) {
+  if (isVerbose()) {
     logger.info(line)
   }
 
@@ -18,6 +18,7 @@ function appendOutput (logger, stream, fullOutput, line) {
 }
 
 export async function injectCommand (logger, args) {
+  const verbose = isVerbose()
   const {
     values: { method, path: url, header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
     positionals: allPositionals
@@ -36,7 +37,7 @@ export async function injectCommand (logger, args) {
       },
       header: {
         type: 'string',
-        short: 'h',
+        short: 'H',
         multiple: true,
         default: []
       },
@@ -70,15 +71,14 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
-
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
-    const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
-    let service = positionals[0]
+    let application = positionals[0]
 
-    if (!service) {
-      const servicesInfo = await client.getRuntimeServices(runtime.pid)
-      service = servicesInfo.entrypoint
+    if (!application) {
+      const applicationsInfo = await client.getRuntimeApplications(runtime.pid)
+      application = applicationsInfo.entrypoint
     }
 
     let body
@@ -98,7 +98,7 @@ export async function injectCommand (logger, args) {
     appendOutput(logger, outputStream, fullOutput, '>')
 
     // Perform the request
-    const response = await client.injectRuntime(runtime.pid, service, { url, method, headers, body })
+    const response = await client.injectRuntime(runtime.pid, application, { url, method, headers, body })
 
     // Track response
     appendOutput(logger, outputStream, fullOutput, `< HTTP/1.1 ${response.statusCode}`)
@@ -115,9 +115,13 @@ export async function injectCommand (logger, args) {
     if (response.statusCode === 500) {
       const json = JSON.parse(responseBody)
 
-      if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
-        const error = new Error('Cannot find a service.')
-        error.code = 'PLT_CTR_SERVICE_NOT_FOUND'
+      /* c8 ignore next 4 - else */
+      if (
+        json?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
+        json?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+      ) {
+        const error = new Error('Cannot find an application.')
+        error.code = 'PLT_CTR_APPLICATION_NOT_FOUND'
         throw error
       }
     }
@@ -134,33 +138,33 @@ export async function injectCommand (logger, args) {
       outputStream.end()
       await finished(outputStream)
     }
-
-    await client.close()
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
-    } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
-      logger.fatal('Cannot find a matching service.')
-      /* c8 ignore next 3 */
+      return logFatalError(logger, 'Cannot find a matching runtime.')
+    } else if (error.code === 'PLT_CTR_APPLICATION_NOT_FOUND') {
+      return logFatalError(logger, 'Cannot find a matching application.')
+      /* c8 ignore next 3 - Hard to test */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
 export const help = {
   inject: {
-    usage: 'inject [id] [service]',
+    usage: 'inject [id] [application]',
     description: 'Injects a request to a running application',
     footer: `
-The command sends a request to the runtime service and prints the
-response to the standard output. If the service is not specified the
+The command sends a request to the runtime application and prints the
+response to the standard output. If the application is not specified the
 request is sent to the runtime entrypoint.
     `,
     options: [
       { usage: '-m, --method <value>', description: 'The request method (the default is GET)' },
       { usage: '-p, --path <value>', description: 'The request path (the default is /)' },
-      { usage: '-h, --header <value>', description: 'The request header (it can be used multiple times)' },
+      { usage: '-H, --header <value>', description: 'The request header (it can be used multiple times)' },
       { usage: '-d, --data <value>', description: 'The request body' },
       { usage: '-D, --data-file <path>', description: 'Read the request body from the specified file' },
       { usage: '-o, --output <path>', description: 'Write the response to the specified file' },
@@ -173,8 +177,8 @@ request is sent to the runtime entrypoint.
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
-        name: 'service',
-        description: 'The service name (the default is the entrypoint)'
+        name: 'application',
+        description: 'The application name (the default is the entrypoint)'
       }
     ]
   }

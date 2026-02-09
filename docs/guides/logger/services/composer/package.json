@@ -1,0 +1,9 @@
+{
+  "name": "gateway",
+  "devDependencies": {
+    "fastify": "^5.0.0"
+  },
+  "dependencies": {
+    "@platformatic/gateway": "^2.61.0"
+  }
+}

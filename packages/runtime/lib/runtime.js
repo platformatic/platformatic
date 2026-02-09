@@ -1,229 +1,287 @@
-'use strict'
-
-const { ITC } = require('@platformatic/itc')
-const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
-const { once, EventEmitter } = require('node:events')
-const { createReadStream, watch, existsSync } = require('node:fs')
-const { readdir, readFile, stat, access } = require('node:fs/promises')
-const { STATUS_CODES } = require('node:http')
-const { join } = require('node:path')
-const { setTimeout: sleep, setImmediate: sleepUntilNextTick } = require('node:timers/promises')
-const { Worker } = require('node:worker_threads')
-const ts = require('tail-file-stream')
-const { Agent, interceptors: undiciInterceptors, request } = require('undici')
-const { createThreadInterceptor } = require('undici-thread-interceptor')
-
-const { checkDependencies, topologicalSort } = require('./dependencies')
-const errors = require('./errors')
-const { createLogger } = require('./logger')
-const { startManagementApi } = require('./management-api')
-const { startPrometheusServer } = require('./prom-server')
-const { createSharedStore } = require('./shared-http-cache')
-const { getRuntimeTmpDir } = require('./utils')
-const { sendViaITC, waitEventFromITC } = require('./worker/itc')
-const { RoundRobinMap } = require('./worker/round-robin-map.js')
-const {
-  kId,
-  kFullId,
-  kServiceId,
-  kWorkerId,
-  kITC,
-  kHealthCheckTimer,
+import {
+  deepmerge,
+  ensureError,
+  ensureLoggableError,
+  executeInParallel,
+  executeWithTimeout,
+  features,
+  kMetadata,
+  kTimeout,
+  parseMemorySize
+} from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import { collectProcessMetrics, client as metricsClient } from '@platformatic/metrics'
+import fastify from 'fastify'
+import { EventEmitter, once } from 'node:events'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { STATUS_CODES } from 'node:http'
+import { createRequire } from 'node:module'
+import { availableParallelism } from 'node:os'
+import { dirname, isAbsolute, join } from 'node:path'
+import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
+import { Worker } from 'node:worker_threads'
+import SonicBoom from 'sonic-boom'
+import { Agent, request, interceptors as undiciInterceptors } from 'undici'
+import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { pprofCapturePreloadPath } from './config.js'
+import {
+  ApplicationAlreadyStartedError,
+  ApplicationNotFoundError,
+  ApplicationNotStartedError,
+  ApplicationStartTimeoutError,
+  CannotRemoveEntrypointError,
+  InvalidArgumentError,
+  MessagingError,
+  MissingEntrypointError,
+  MissingPprofCapture,
+  RuntimeAbortedError,
+  WorkerInterceptorJoinTimeoutError,
+  WorkerNotFoundError
+} from './errors.js'
+import { abstractLogger, createLogger } from './logger.js'
+import { startManagementApi } from './management-api.js'
+import { createChannelCreationHook } from './policies.js'
+import { startPrometheusServer } from './prom-server.js'
+import { startScheduler } from './scheduler.js'
+import { createSharedStore } from './shared-http-cache.js'
+import { topologicalSort } from './utils.js'
+import { version } from './version.js'
+import { DynamicWorkersScaler } from './worker-scaler.js'
+import { HealthSignalsQueue } from './worker/health-signals.js'
+import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
+import { RoundRobinMap } from './worker/round-robin-map.js'
+import {
+  kApplicationId,
   kConfig,
-  kWorkerStatus,
-  kStderrMarker
-} = require('./worker/symbols')
+  kFullId,
+  kHealthCheckTimer,
+  kId,
+  kInterceptorReadyPromise,
+  kITC,
+  kLastHealthCheckELU,
+  kStderrMarker,
+  kWorkerHealthSignals,
+  kWorkerId,
+  kWorkersBroadcast,
+  kWorkerStartTime,
+  kWorkerStatus
+} from './worker/symbols.js'
 
-const fastify = require('fastify')
-
-const platformaticVersion = require('../package.json').version
-const kWorkerFile = join(__dirname, 'worker/main.js')
-
+const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
-const kForwardEvents = Symbol('plt.runtime.worker.forwardEvents')
+const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
+const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 
 const MAX_LISTENERS_COUNT = 100
-const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
-const COLLECT_METRICS_TIMEOUT = 1000
 
+function parseOrigins (origins) {
+  if (!origins) return undefined
+
+  return origins.map(origin => {
+    // Check if the origin is a regex pattern (starts and ends with /)
+    if (origin.startsWith('/') && origin.lastIndexOf('/') > 0) {
+      const lastSlash = origin.lastIndexOf('/')
+      const pattern = origin.slice(1, lastSlash)
+      const flags = origin.slice(lastSlash + 1)
+      return new RegExp(pattern, flags)
+    }
+    return origin
+  })
+}
+
+// Always run operations in parallel to avoid deadlocks when services have dependencies
+const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
+const MAX_WORKERS = 100
 
-const telemetryPath = require.resolve('@platformatic/telemetry')
-const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
+export class Runtime extends EventEmitter {
+  logger
+  error
 
-class Runtime extends EventEmitter {
-  #configManager
-  #isProduction
-  #runtimeTmpDir
-  #runtimeLogsDir
+  #loggerDestination
+  #loggerContext
+  #stdio
+
+  #status // starting, started, stopping, stopped, closed
+  #root
+  #config
   #env
-  #servicesIds
+  #context
+  #sharedContext
+  #isProduction
+  #concurrency
   #entrypointId
   #url
-  #loggerDestination
-  #metrics
-  #metricsTimeout
-  #status // starting, started, stopping, stopped, closed
+
+  #healthMetricsTimer
+
   #meshInterceptor
   #dispatcher
+
   #managementApi
   #prometheusServer
   #inspectorServer
-  #workers
-  #restartingWorkers
-  #sharedHttpCache
-  servicesConfigsPatches
+  #metricsLabelName
 
-  constructor (configManager, runtimeLogsDir, env) {
+  #applicationsConfigsPatches
+  #applications
+  #workers
+  #workersBroadcastChannel
+  #workerITCHandlers
+  #restartingApplications
+  #restartingWorkers
+  #dynamicWorkersScaler
+
+  #sharedHttpCache
+  #scheduler
+
+  #channelCreationHook
+
+  #processMetricsRegistry
+
+  constructor (config, context) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
-    this.#configManager = configManager
-    this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
-    this.#runtimeLogsDir = runtimeLogsDir
-    this.#env = env
+    this.#config = config
+    this.#root = config[kMetadata].root
+    this.#env = config[kMetadata].env
+    this.#context = context ?? {}
+    this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
+    this.#concurrency = Math.max(1, config.startupConcurrency ?? this.#context.concurrency ?? DEFAULT_CONCURRENCY)
+    this.#applications = new Map()
     this.#workers = new RoundRobinMap()
-    this.#servicesIds = []
     this.#url = undefined
+    this.#channelCreationHook = createChannelCreationHook(this.#config)
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
-      timeout: this.#configManager.current.serviceTimeout
+      timeout: this.#config.applicationTimeout,
+      meshTimeout: this.#context.meshTimeout ?? true,
+      onChannelCreation: this.#channelCreationHook,
+      onError: this.#onMeshInterceptorError.bind(this)
     })
+    this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
+    this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
-    this.servicesConfigsPatches = new Map()
+    this.#applicationsConfigsPatches = new Map()
+
+    if (!this.#config.logger.captureStdio) {
+      this.#stdio = {
+        stdout: new SonicBoom({ fd: process.stdout.fd }),
+        stderr: new SonicBoom({ fd: process.stderr.fd })
+      }
+    }
+
+    this.#workerITCHandlers = {
+      getApplicationMeta: this.getApplicationMeta.bind(this),
+      listApplications: this.getApplicationsIds.bind(this),
+      getApplications: this.getApplications.bind(this),
+      getWorkers: this.getWorkers.bind(this),
+      getWorkerMessagingChannel: this.#getWorkerMessagingChannel.bind(this),
+      getHttpCacheValue: this.#getHttpCacheValue.bind(this),
+      setHttpCacheValue: this.#setHttpCacheValue.bind(this),
+      deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
+      invalidateHttpCache: this.invalidateHttpCache.bind(this),
+      updateSharedContext: this.updateSharedContext.bind(this),
+      getSharedContext: this.getSharedContext.bind(this),
+      sendHealthSignals: this.#processHealthSignals.bind(this)
+    }
+    this.#sharedContext = {}
+
+    if (this.#isProduction) {
+      this.#env.PLT_DEV = 'false'
+      this.#env.PLT_ENVIRONMENT = 'production'
+    } else {
+      this.#env.PLT_DEV = 'true'
+      this.#env.PLT_ENVIRONMENT = 'development'
+    }
   }
 
   async init () {
-    const config = this.#configManager.current
-    const autoloadEnabled = config.autoload
+    if (typeof this.#status !== 'undefined') {
+      return
+    }
 
-    // This cannot be transferred to worker threads
-    delete config.configManager
+    const config = this.#config
 
     if (config.managementApi) {
-      this.#managementApi = await startManagementApi(this, this.#configManager)
+      this.#managementApi = await startManagementApi(this, config.managementApi)
     }
 
     if (config.metrics) {
+      // Use the configured application label name for metrics (defaults to 'applicationId')
+      this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
       this.#prometheusServer = await startPrometheusServer(this, config.metrics)
+    } else {
+      // Default to applicationId if metrics are not configured
+      this.#metricsLabelName = 'applicationId'
+    }
+
+    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // These metrics are the same across all workers and only need to be collected once
+    // We need this for management API as it can request metrics even without explicit metrics config
+    if (config.metrics || config.managementApi) {
+      this.#processMetricsRegistry = new metricsClient.Registry()
+      collectProcessMetrics(this.#processMetricsRegistry)
     }
 
     // Create the logger
-    const [logger, destination] = await createLogger(config, this.#runtimeLogsDir)
+    const [logger, destination, context] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
+    this.#loggerContext = context
 
-    this.#isProduction = this.#configManager.args?.production ?? false
-    this.#servicesIds = config.services.map(service => service.id)
-    this.#workers.configure(config.services, this.#configManager.current.workers, this.#isProduction)
+    this.#createWorkersBroadcastChannel()
 
-    if (this.#isProduction) {
-      this.#env['PLT_DEV'] = 'false'
-      this.#env['PLT_ENVIRONMENT'] = 'production'
-    } else {
-      this.#env['PLT_DEV'] = 'true'
-      this.#env['PLT_ENVIRONMENT'] = 'development'
-    }
-
-    // Create all services, each in is own worker thread
-    for (const serviceConfig of config.services) {
-      // If there is no service path, check if the service was resolved
-      if (!serviceConfig.path) {
-        if (serviceConfig.url) {
-          // Try to backfill the path for external services
-          serviceConfig.path = join(this.#configManager.dirname, config.resolvedServicesBasePath, serviceConfig.id)
-
-          if (!existsSync(serviceConfig.path)) {
-            const executable = globalThis.platformatic?.executable ?? 'platformatic'
-            this.logger.error(
-              `The path for service "%s" does not exist. Please run "${executable} resolve" and try again.`,
-              serviceConfig.id
-            )
-
-            await this.closeAndThrow(new errors.RuntimeAbortedError())
-          }
-        } else {
-          this.logger.error(
-            'The service "%s" has no path defined. Please check your configuration and try again.',
-            serviceConfig.id
-          )
-
-          await this.closeAndThrow(new errors.RuntimeAbortedError())
-        }
+    if (this.#config.workers.dynamic) {
+      if (this.#config.workers.dynamic === false) {
+        this.logger.warn(
+          `Worker scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
+        )
+      } else {
+        this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
       }
-
-      await this.#setupService(serviceConfig)
     }
 
-    try {
-      checkDependencies(config.services)
+    await this.addApplications(this.#config.applications)
+    await this.#setDispatcher(config.undici)
 
-      // Make sure the list exists before computing the dependencies, otherwise some services might not be stopped
-      if (autoloadEnabled) {
-        this.#workers = topologicalSort(this.#workers, config)
-      }
-
-      // Recompute the list of services after sorting
-      this.#servicesIds = config.services.map(service => service.id)
-
-      // When autoloading is disabled, add a warning if a service is defined before its dependencies
-      if (!autoloadEnabled) {
-        for (let i = 0; i < config.services.length; i++) {
-          const current = config.services[i]
-
-          for (const dep of current.dependencies ?? []) {
-            if (config.services.findIndex(s => s.id === dep.id) > i) {
-              this.logger.warn(
-                `Service "${current.id}" depends on service "${dep.id}", but it is defined and it will be started before it. Please check your configuration file.`
-              )
-            }
-          }
-        }
-      }
-    } catch (e) {
-      await this.closeAndThrow(e)
+    if (config.scheduler && !this.#context.build) {
+      this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
     }
-
-    const dispatcherOpts = { ...config.undici }
-    const interceptors = [this.#meshInterceptor]
-
-    if (config.httpCache) {
-      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
-      interceptors.push(
-        undiciInterceptors.cache({ store: this.#sharedHttpCache, methods: config.httpCache.methods ?? ['GET', 'HEAD'] })
-      )
-    }
-
-    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
 
     this.#updateStatus('init')
   }
 
   async start (silent = false) {
-    if (typeof this.#configManager.current.entrypoint === 'undefined') {
-      throw new errors.MissingEntrypointError()
+    if (typeof this.#status === 'undefined') {
+      await this.init()
+    }
+
+    if (typeof this.#config.entrypoint === 'undefined') {
+      throw new MissingEntrypointError()
     }
     this.#updateStatus('starting')
+    this.#createWorkersBroadcastChannel()
 
-    // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
-      for (const service of this.#servicesIds) {
-        await this.startService(service, silent)
-      }
+      await this.startApplications(this.getApplicationsIds(), silent)
 
-      if (this.#configManager.current.inspectorOptions) {
-        const { port } = this.#configManager.current.inspectorOptions
+      if (this.#config.inspectorOptions) {
+        const { port } = this.#config.inspectorOptions
 
         const server = fastify({
           loggerInstance: this.logger.child({ name: 'inspector' }, { level: 'warn' })
         })
 
-        const version = await fetch(
-          `http://127.0.0.1:${this.#configManager.current.inspectorOptions.port + 1}/json/version`
-        ).then(res => res.json())
+        const version = await fetch(`http://127.0.0.1:${this.#config.inspectorOptions.port + 1}/json/version`).then(
+          res => res.json()
+        )
 
         const data = await Promise.all(
           Array.from(this.#workers.values()).map(async worker => {
@@ -244,7 +302,7 @@ class Runtime extends EventEmitter {
 
         await server.listen({ port })
         this.logger.info(
-          'The inspector server is now listening for all services. Open `chrome://inspect` in Google Chrome to connect.'
+          'The inspector server is now listening for all applications. Open `chrome://inspect` in Google Chrome to connect.'
         )
         this.#inspectorServer = server
       }
@@ -254,10 +312,10 @@ class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    if (this.#managementApi && typeof this.#metrics === 'undefined') {
-      this.startCollectingMetrics()
-    }
+    // Start the global health metrics timer for all workers if needed
+    this.#startHealthMetricsCollectionIfNeeded()
 
+    await this.#dynamicWorkersScaler?.start()
     this.#showUrl()
     return this.#url
   }
@@ -269,72 +327,74 @@ class Runtime extends EventEmitter {
 
     this.#updateStatus('stopping')
 
+    if (this.#scheduler) {
+      await this.#scheduler.stop()
+    }
+
     if (this.#inspectorServer) {
       await this.#inspectorServer.close()
     }
 
+    await this.#dynamicWorkersScaler?.stop()
+
     // Stop the entrypoint first so that no new requests are accepted
     if (this.#entrypointId) {
-      await this.stopService(this.#entrypointId, silent)
+      await this.stopApplication(this.#entrypointId, silent)
     }
 
-    // Stop services in reverse order to ensure services which depend on others are stopped first
-    for (const service of this.#servicesIds.reverse()) {
-      // The entrypoint has been stopped above
-      if (service === this.#entrypointId) {
-        continue
-      }
-
-      await this.stopService(service, silent)
-    }
+    await this.stopApplications(this.getApplicationsIds(), silent)
 
     await this.#meshInterceptor.close()
+    this.#workersBroadcastChannel?.close()
+
     this.#updateStatus('stopped')
   }
 
-  async restart () {
-    this.emit('restarting')
+  async restart (applications = []) {
+    this.emitAndNotify('restarting')
 
-    await this.stop()
-    this.#meshInterceptor.restart()
-    await this.start()
+    const toRestart = []
+    for (const application of this.getApplicationsIds()) {
+      if (applications.length === 0 || applications.includes(application)) {
+        toRestart.push(application)
+      }
+    }
+    await this.restartApplications(toRestart)
 
-    this.emit('restarted')
+    this.emitAndNotify('restarted')
 
     return this.#url
   }
 
-  getRuntimeStatus () {
-    return this.#status
-  }
-
   async close (silent = false) {
-    this.#updateStatus('closing')
-
-    clearInterval(this.#metricsTimeout)
+    clearTimeout(this.#healthMetricsTimer)
 
     await this.stop(silent)
+    this.#updateStatus('closing')
 
-    if (this.#managementApi) {
-      // This allow a close request coming from the management API to correctly be handled
-      setImmediate(() => {
-        this.#managementApi.close()
-      })
-    }
+    // The management API autocloses by itself via event in management-api.js.
+    // This is needed to let management API stop endpoint to reply.
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
     }
 
-    if (this.logger) {
-      this.#loggerDestination.end()
-
-      this.logger = null
-      this.#loggerDestination = null
+    // Clean up process metrics registry
+    if (this.#processMetricsRegistry) {
+      this.#processMetricsRegistry.clear()
+      this.#processMetricsRegistry = null
     }
 
     if (this.#sharedHttpCache?.close) {
       await this.#sharedHttpCache.close()
+    }
+
+    if (this.logger) {
+      this.#loggerDestination?.end()
+
+      this.logger = abstractLogger
+      this.#loggerDestination = null
+      this.#loggerContext = null
     }
 
     this.#updateStatus('closed')
@@ -342,6 +402,7 @@ class Runtime extends EventEmitter {
 
   async closeAndThrow (error) {
     this.#updateStatus('errored', error)
+    this.error = error
 
     // Wait for the next tick so that any pending logging is properly flushed
     await sleep(1)
@@ -350,71 +411,9 @@ class Runtime extends EventEmitter {
     throw error
   }
 
-  async startService (id, silent = false) {
-    // Since when a service is stopped the worker is deleted, we consider a service start if its first service
-    // is no longer in the init phase
-    const firstWorker = this.#workers.get(`${id}:0`)
-    if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
-      throw new errors.ApplicationAlreadyStartedError()
-    }
-
-    const config = this.#configManager.current
-    const serviceConfig = config.services.find(s => s.id === id)
-
-    if (!serviceConfig) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#servicesIds).join(', '))
-    }
-
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-
-    this.emit('service:starting', id)
-
-    for (let i = 0; i < workersCount; i++) {
-      await this.#startWorker(config, serviceConfig, workersCount, id, i, silent)
-    }
-
-    this.emit('service:started', id)
-  }
-
-  async stopService (id, silent = false) {
-    const config = this.#configManager.current
-    const serviceConfig = config.services.find(s => s.id === id)
-
-    if (!serviceConfig) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#servicesIds).join(', '))
-    }
-
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-
-    this.emit('service:stopping', id)
-
-    for (let i = 0; i < workersCount; i++) {
-      await this.#stopWorker(workersCount, id, i, silent)
-    }
-
-    this.emit('service:stopped', id)
-  }
-
-  async buildService (id) {
-    const service = await this.#getServiceById(id)
-
-    this.emit('service:building', id)
-    try {
-      await sendViaITC(service, 'build')
-      this.emit('service:built', id)
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
   async inject (id, injectParams) {
-    // Make sure the service exists
-    await this.#getServiceById(id, true)
+    // Make sure the application exists
+    await this.#getApplicationById(id, true)
 
     if (typeof injectParams === 'string') {
       injectParams = { url: injectParams }
@@ -457,118 +456,561 @@ class Runtime extends EventEmitter {
     }
   }
 
-  startCollectingMetrics () {
-    this.#metrics = []
-    this.#metricsTimeout = setInterval(async () => {
-      if (this.#status !== 'started') {
-        return
-      }
+  emitAndNotify (event, ...payload) {
+    for (const worker of this.#workers.values()) {
+      worker[kITC].notify('runtime:event', { event, payload })
+    }
 
-      let metrics = null
-      try {
-        metrics = await this.getFormattedMetrics()
-      } catch (error) {
-        if (!(error instanceof errors.RuntimeExitedError)) {
-          // TODO(mcollina): use the logger
-          console.error('Error collecting metrics', error)
-        }
-        return
-      }
-
-      this.emit('metrics', metrics)
-      this.#metrics.push(metrics)
-      if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
-        this.#metrics.shift()
-      }
-    }, COLLECT_METRICS_TIMEOUT).unref()
+    this.logger.trace({ event, payload }, 'Runtime event')
+    return this.emit(event, ...payload)
   }
 
-  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
-    endLogId = endLogId || Infinity
-    runtimePID = runtimePID ?? process.pid
+  async sendCommandToApplication (id, name, message) {
+    const application = await this.#getApplicationById(id)
 
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+    try {
+      return await sendViaITC(application, name, message)
+    } catch (e) {
+      // The application exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
 
-    if (runtimeLogFiles.length === 0) {
-      writableStream.end()
+      throw e
+    }
+  }
+
+  async addApplications (applications, start = false) {
+    const setupInvocations = []
+
+    const toStart = []
+    for (const application of applications) {
+      const workers = application.workers
+
+      if ((workers.static > 1 || workers.minimum > 1) && application.entrypoint && !features.node.reusePort) {
+        this.logger.warn(
+          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
+        )
+        application.workers = { dynamic: false, static: 1 }
+      }
+
+      this.#applications.set(application.id, application)
+      setupInvocations.push([application])
+      toStart.push(application.id)
+    }
+
+    await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
+
+    for (const application of applications) {
+      this.logger.debug(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
+      this.emitAndNotify('application:added', application)
+    }
+
+    if (start) {
+      await this.startApplications(toStart)
+    }
+
+    const created = []
+    for (const { id } of applications) {
+      created.push(await this.getApplicationDetails(id))
+    }
+
+    this.#updateLoggingPrefixes()
+    return created
+  }
+
+  async removeApplications (applications, silent = false) {
+    if (applications.includes(this.#entrypointId)) {
+      throw new CannotRemoveEntrypointError()
+    }
+
+    const removed = []
+    for (const application of applications) {
+      const details = await this.getApplicationDetails(application)
+      details.status = 'removed'
+      removed.push(details)
+    }
+
+    await this.stopApplications(applications, silent, true)
+
+    for (const application of applications) {
+      this.#dynamicWorkersScaler?.remove(application)
+      this.#applications.delete(application)
+    }
+
+    for (const application of applications) {
+      this.logger.warn(`Removed application "${application}".`)
+      this.emitAndNotify('application:removed', application)
+    }
+
+    this.#updateLoggingPrefixes()
+    return removed
+  }
+
+  async startApplications (applications, silent = false) {
+    // For each worker, get its dependencies from the first worker
+    const dependencies = new Map()
+    for (const applicationId of applications) {
+      const worker = await this.#getWorkerByIdOrNext(applicationId, 0)
+
+      dependencies.set(applicationId, await sendViaITC(worker, 'getDependencies'))
+    }
+
+    // Now, topological sort the applications based on their dependencies.
+    // If circular dependencies are detected, an error with proper error code is thrown.
+    applications = topologicalSort(dependencies)
+
+    const startInvocations = []
+    for (const application of applications) {
+      startInvocations.push([application, silent])
+    }
+
+    return executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+  }
+
+  async stopApplications (applicationsToStop, silent = false, skipDependencies = false) {
+    const stopInvocations = []
+
+    // Construct the reverse dependency graph
+    const dependents = {}
+
+    if (!skipDependencies) {
+      try {
+        const { applications } = await this.getApplications(true)
+        for (const application of applications) {
+          for (const dependency of application.dependencies ?? []) {
+            let applicationDependents = dependents[dependency]
+            if (!applicationDependents) {
+              applicationDependents = new Set()
+              dependents[dependency] = applicationDependents
+            }
+
+            applicationDependents.add(application.id)
+          }
+        }
+      } catch (e) {
+        // Noop - This only happens if stop is invoked after a failed start, in which case we don't care about deps
+      }
+    }
+
+    for (const application of applicationsToStop) {
+      // The entrypoint has been stopped above
+      if (application === this.#entrypointId) {
+        continue
+      }
+
+      stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
+    }
+
+    return executeInParallel(this.stopApplication.bind(this), stopInvocations, this.#concurrency)
+  }
+
+  async restartApplications (applicationsToRestart) {
+    const restartInvocations = []
+
+    for (const application of applicationsToRestart) {
+      restartInvocations.push([application])
+    }
+
+    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+  }
+
+  async startApplication (id, silent = false) {
+    const config = this.#config
+    const applicationConfig = this.#applications.get(id)
+
+    if (!applicationConfig) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const workers = applicationConfig.workers.static
+    for (let i = 0; i < workers; i++) {
+      const worker = this.#workers.get(`${id}:${i}`)
+      const status = worker?.[kWorkerStatus]
+
+      if (status && status !== 'boot' && status !== 'init') {
+        throw new ApplicationAlreadyStartedError()
+      }
+    }
+
+    this.emitAndNotify('application:starting', id)
+
+    for (let i = 0; i < workers; i++) {
+      await this.#startWorker(config, applicationConfig, workers, id, i, silent)
+    }
+
+    this.emitAndNotify('application:started', id)
+  }
+
+  async stopApplication (id, silent = false, dependents = []) {
+    if (!this.#applications.has(id)) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const workersIds = this.#workers.getKeys(id)
+    const workersCount = workersIds.length
+
+    this.emitAndNotify('application:stopping', id)
+
+    if (typeof workersCount === 'number') {
+      const stopInvocations = []
+      for (const workerId of workersIds) {
+        const i = parseInt(workerId.split(':')[1])
+        stopInvocations.push([workersCount, id, i, silent, undefined, dependents])
+      }
+
+      await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
+    }
+
+    this.emitAndNotify('application:stopped', id)
+  }
+
+  async restartApplication (id) {
+    const applicationConfig = this.#applications.get(id)
+
+    if (!applicationConfig) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    if (this.#restartingApplications.has(id)) {
+      return
+    }
+    this.#restartingApplications.add(id)
+
+    try {
+      const config = this.#config
+      const workersIds = await this.#workers.getKeys(id)
+      const workersCount = workersIds.length
+
+      this.emitAndNotify('application:restarting', id)
+
+      for (let i = 0; i < workersCount; i++) {
+        const workerId = workersIds[i]
+        const worker = this.#workers.get(workerId)
+
+        if (i > 0 && config.workersRestartDelay > 0) {
+          await sleep(config.workersRestartDelay)
+        }
+
+        await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+      }
+
+      this.emitAndNotify('application:restarted', id)
+    } finally {
+      this.#restartingApplications.delete(id)
+    }
+  }
+
+  async buildApplication (id) {
+    const application = await this.#getApplicationById(id)
+
+    this.emitAndNotify('application:building', id)
+    try {
+      await sendViaITC(application, 'build')
+      this.emitAndNotify('application:built', id)
+    } catch (e) {
+      // The application exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
+  async startApplicationProfiling (id, options = {}, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+    this.#validatePprofCapturePreload()
+
+    return sendViaITC(service, 'startProfiling', options)
+  }
+
+  async stopApplicationProfiling (id, options = {}, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+    this.#validatePprofCapturePreload()
+
+    return sendViaITC(service, 'stopProfiling', options)
+  }
+
+  async startApplicationRepl (id, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    // Create a MessageChannel for REPL communication
+    const { port1, port2 } = new MessageChannel()
+
+    // Send port1 to the worker to start the REPL
+    await sendViaITC(service, 'startRepl', port1, [port1])
+
+    // Return port2 for the caller to use
+    return port2
+  }
+
+  async updateUndiciInterceptors (undiciConfig) {
+    this.#config.undici = undiciConfig
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(sendViaITC(worker, 'updateUndiciInterceptors', undiciConfig))
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+    }
+  }
+
+  /**
+   * Updates the metrics configuration at runtime without restarting the runtime or workers.
+   *
+   * This method allows you to:
+   * - Enable or disable metrics collection
+   * - Change Prometheus server settings (port, endpoint, authentication)
+   * - Update custom labels for metrics
+   *
+   * @example
+   * // Enable metrics with custom port
+   * await runtime.updateMetricsConfig({
+   *   enabled: true,
+   *   port: 9091,
+   *   labels: { environment: 'production' }
+   * })
+   *
+   * // Disable metrics
+   * await runtime.updateMetricsConfig({ enabled: false })
+   */
+  async updateMetricsConfig (metricsConfig) {
+    if (this.#prometheusServer) {
+      await this.#prometheusServer.close()
+      this.#prometheusServer = null
+    }
+
+    this.#config.metrics = metricsConfig
+    this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
+
+    if (metricsConfig.enabled !== false) {
+      this.#prometheusServer = await startPrometheusServer(this, metricsConfig)
+    }
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      if (worker[kWorkerStatus] === 'started') {
+        promises.push(sendViaITC(worker, 'updateMetricsConfig', metricsConfig))
+      }
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
+      }
+    }
+
+    this.logger.info({ metricsConfig }, 'Metrics configuration updated')
+    return { success: true, config: metricsConfig }
+  }
+
+  // TODO: Remove in next major version
+  startCollectingMetrics () {
+    this.logger.warn(
+      'startCollectingMetrics() is deprecated and no longer collects metrics. Metrics are now polled on-demand by the management API.'
+    )
+  }
+
+  // TODO: Remove in next major version
+  getCachedMetrics () {
+    this.logger.warn('getCachedMetrics() is deprecated and returns an empty array. Metrics are no longer cached.')
+    return []
+  }
+
+  invalidateHttpCache (options = {}) {
+    const { keys, tags } = options
+
+    if (!this.#sharedHttpCache) {
       return
     }
 
-    let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
-
-    let fileStream = null
-    let fileId = startLogId ?? latestFileId
-    let isClosed = false
-
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-
-    const watcher = watch(runtimeLogsDir, async (event, filename) => {
-      if (event === 'rename' && filename.startsWith('logs')) {
-        const logFileId = parseInt(filename.slice('logs.'.length))
-        if (logFileId > latestFileId) {
-          latestFileId = logFileId
-          fileStream.unwatch()
-        }
-      }
-    }).unref()
-
-    const streamLogFile = () => {
-      if (fileId > endLogId) {
-        writableStream.end()
-        return
-      }
-
-      const fileName = 'logs.' + fileId
-      const filePath = join(runtimeLogsDir, fileName)
-
-      const prevFileStream = fileStream
-
-      fileStream = ts.createReadStream(filePath)
-      fileStream.pipe(writableStream, { end: false, persistent: false })
-
-      if (prevFileStream) {
-        prevFileStream.unpipe(writableStream)
-        prevFileStream.destroy()
-      }
-
-      fileStream.on('close', () => {
-        if (latestFileId > fileId && !isClosed) {
-          streamLogFile(++fileId)
-        }
-      })
-
-      fileStream.on('error', err => {
-        isClosed = true
-        logger.error(err, 'Error streaming log file')
-        fileStream.destroy()
-        watcher.close()
-        writableStream.end()
-      })
-
-      fileStream.on('eof', () => {
-        if (fileId >= endLogId) {
-          writableStream.end()
-          return
-        }
-        if (latestFileId > fileId) {
-          fileStream.unwatch()
-        }
-      })
-
-      return fileStream
+    const promises = []
+    if (keys && keys.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteKeys(keys))
     }
 
-    streamLogFile(fileId)
+    if (tags && tags.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteTags(tags))
+    }
+
+    return Promise.all(promises)
+  }
+
+  async addLoggerDestination (writableStream) {
+    // Add the stream - We output everything we get
+    this.#loggerDestination.add({ stream: writableStream, level: 1 })
+
+    // Immediately get the counter of the lastId so we can use it to later remove it
+    const id = this.#loggerDestination.lastId
 
     const onClose = () => {
-      isClosed = true
-      watcher.close()
-      fileStream.destroy()
+      writableStream.removeListener('close', onClose)
+      writableStream.removeListener('error', onClose)
+      this.removeListener('closed', onClose)
+      this.#loggerDestination.remove(id)
     }
 
     writableStream.on('close', onClose)
     writableStream.on('error', onClose)
     this.on('closed', onClose)
+  }
+
+  async updateSharedContext (options = {}) {
+    const { context, overwrite = false } = options
+
+    const sharedContext = overwrite ? {} : this.#sharedContext
+    Object.assign(sharedContext, context)
+
+    this.#sharedContext = sharedContext
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(sendViaITC(worker, 'setSharedContext', sharedContext))
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, 'Cannot update shared context')
+      }
+    }
+
+    return sharedContext
+  }
+
+  setApplicationConfigPatch (id, patch) {
+    this.#applicationsConfigsPatches.set(id, patch)
+  }
+
+  removeApplicationConfigPatch (id) {
+    this.#applicationsConfigsPatches.delete(id)
+  }
+
+  /**
+   * Updates the resources of the applications, such as the number of workers and health configurations (e.g., heap memory settings).
+   *
+   * This function handles three update scenarios for each application:
+   *  1. **Updating workers only**: Adjusts the number of workers for the application.
+   *  2. **Updating health configurations only**: Updates health parameters like `maxHeapTotal` or `maxYoungGeneration`.
+   *  3. **Updating both workers and health configurations**: Scales the workers and also applies health settings.
+   *
+   * When updating both workers and health:
+   *  - **Scaling down workers**: Stops extra workers, then restarts the remaining workers with the previous settings.
+   *  - **Scaling up workers**: Starts new workers with the updated heap settings, then restarts the old workers with the updated settings.
+   *
+   * Scaling up new resources (workers and/or heap memory) may fails due to insufficient memory, in this case the operation may fail partially or entirely.
+   * Scaling down is expected to succeed without issues.
+   *
+   * @param {Array<Object>} updates - An array of objects that define the updates for each application.
+   * @param {string} updates[].application - The ID of the application to update.
+   * @param {number} [updates[].workers] - The desired number of workers for the application. If omitted, workers will not be updated.
+   * @param {Object} [updates[].health] - The health configuration to update for the application, which may include:
+   *   @param {string|number} [updates[].health.maxHeapTotal] - The maximum heap memory for the application. Can be a valid memory string (e.g., '1G', '512MB') or a number representing bytes.
+   *   @param {string|number} [updates[].health.maxYoungGeneration] - The maximum young generation memory for the application. Can be a valid memory string (e.g., '128MB') or a number representing bytes.
+   *
+   * @returns {Promise<Array<Object>>} - A promise that resolves to an array of reports for each application, detailing the success or failure of the operations:
+   *   - `application`: The application ID.
+   *   - `workers`: The workers' update report, including the current, new number of workers, started workers, and success status.
+   *   - `health`: The health update report, showing the current and new heap settings, updated workers, and success status.
+   *
+   * @example
+   * await runtime.updateApplicationsResources([
+   *   { application: 'application-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
+   *   { application: 'application-2', health: { maxHeapTotal: '1G' } },
+   *   { application: 'application-3', workers: 2 },
+   * ])
+   *
+   * In this example:
+   * - `application-1` will have 2 workers and updated heap memory configurations.
+   * - `application-2` will have updated heap memory settings (without changing workers).
+   * - `application-3` will have its workers set to 2 but no change in memory settings.
+   *
+   * @throws {InvalidArgumentError} - Throws if any update parameter is invalid, such as:
+   *   - Missing application ID.
+   *   - Invalid worker count (not a positive integer).
+   *   - Invalid memory size format for `maxHeapTotal` or `maxYoungGeneration`.
+   * @throws {ApplicationNotFoundError} - Throws if the specified application ID does not exist in the current application configuration.
+   */
+  async updateApplicationsResources (updates) {
+    if (this.#status === 'stopping' || this.#status === 'closed') {
+      this.logger.warn('Cannot update application resources when the runtime is stopping or closed')
+      return
+    }
+
+    const ups = await this.#validateUpdateApplicationResources(updates)
+    const config = this.#config
+
+    const report = []
+    for (const update of ups) {
+      const { applicationId, config: applicationConfig, workers, health, currentWorkers, currentHealth } = update
+
+      if (workers && health) {
+        const r = await this.#updateApplicationWorkersAndHealth(
+          applicationId,
+          config,
+          applicationConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        )
+        report.push({
+          application: applicationId,
+          workers: r.workers,
+          health: r.health
+        })
+      } else if (health) {
+        const r = await this.#updateApplicationHealth(
+          applicationId,
+          config,
+          applicationConfig,
+          currentWorkers,
+          currentHealth,
+          health
+        )
+        report.push({
+          application: applicationId,
+          health: r.health
+        })
+      } else if (workers) {
+        const r = await this.#updateApplicationWorkers(
+          applicationId,
+          config,
+          applicationConfig,
+          workers,
+          currentWorkers
+        )
+        report.push({
+          application: applicationId,
+          workers: r.workers
+        })
+      }
+    }
+
+    return report
+  }
+
+  setConcurrency (concurrency) {
+    this.#concurrency = concurrency
+  }
+
+  getRoot () {
+    return this.#root
+  }
+
+  getUrl () {
+    return this.#url
+  }
+
+  getRuntimeStatus () {
+    return this.#status
   }
 
   async getRuntimeMetadata () {
@@ -582,20 +1024,25 @@ class Runtime extends EventEmitter {
       uptimeSeconds: Math.floor(process.uptime()),
       execPath: process.execPath,
       nodeVersion: process.version,
-      projectDir: this.#configManager.dirname,
+      projectDir: this.#root,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion
+      platformaticVersion: version
     }
   }
 
   getRuntimeEnv () {
-    return this.#configManager.env
+    return this.#env
   }
 
-  getRuntimeConfig () {
-    return this.#configManager.current
+  getRuntimeConfig (includeMeta = false) {
+    if (includeMeta) {
+      return this.#config
+    }
+
+    const { [kMetadata]: _, ...config } = this.#config
+    return config
   }
 
   getInterceptor () {
@@ -611,148 +1058,116 @@ class Runtime extends EventEmitter {
   }
 
   getManagementApiUrl () {
-    return this.#managementApi?.server.address()
+    return this.#managementApi?.server.address() ?? null
   }
 
   async getEntrypointDetails () {
-    return this.getServiceDetails(this.#entrypointId)
-  }
-
-  async getServices () {
-    return {
-      entrypoint: this.#entrypointId,
-      production: this.#isProduction,
-      services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id)))
-    }
-  }
-
-  async getWorkers () {
-    const status = {}
-
-    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${service}:${i}`
-        const worker = this.#workers.get(label)
-
-        status[label] = {
-          service,
-          worker: i,
-          status: worker?.[kWorkerStatus] ?? 'exited',
-          thread: worker?.threadId
-        }
-      }
-    }
-
-    return status
+    return this.getApplicationDetails(this.#entrypointId)
   }
 
   async getCustomHealthChecks () {
-    const status = {}
+    const invocations = []
 
-    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
-      for (let i = 0; i < count; i++) {
-        const label = `${service}:${i}`
-        const worker = this.#workers.get(label)
-
-        status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+    for (const id of this.#applications.keys()) {
+      const workersIds = this.#workers.getKeys(id)
+      for (const workerId of workersIds) {
+        invocations.push([workerId, this.#workers.get(workerId)])
       }
     }
 
-    return status
+    return sendMultipleViaITC(
+      invocations,
+      'getCustomHealthCheck',
+      undefined,
+      [],
+      this.#concurrency,
+      this.#config.metrics.healthChecksTimeout,
+      {}
+    )
   }
 
-  async getServiceDetails (id, allowUnloaded = false) {
-    let service
+  async getCustomReadinessChecks () {
+    const invocations = []
 
-    try {
-      service = await this.#getServiceById(id)
-    } catch (e) {
-      if (allowUnloaded) {
-        return { id, status: 'stopped' }
+    for (const id of this.#applications.keys()) {
+      const workersIds = this.#workers.getKeys(id)
+      for (const workerId of workersIds) {
+        invocations.push([workerId, this.#workers.get(workerId)])
       }
-
-      throw e
     }
 
-    const { entrypoint, dependencies, localUrl } = service[kConfig]
-
-    const status = await sendViaITC(service, 'getStatus')
-    const { type, version } = await sendViaITC(service, 'getServiceInfo')
-
-    const serviceDetails = {
-      id,
-      type,
-      status,
-      version,
-      localUrl,
-      entrypoint,
-      dependencies
-    }
-
-    if (this.#isProduction) {
-      serviceDetails.workers = this.#workers.getCount(id)
-    }
-
-    if (entrypoint) {
-      serviceDetails.url = status === 'started' ? this.#url : null
-    }
-
-    return serviceDetails
-  }
-
-  async getService (id, ensureStarted = true) {
-    return this.#getServiceById(id, ensureStarted)
-  }
-
-  async getServiceConfig (id, ensureStarted = true) {
-    const service = await this.#getServiceById(id, ensureStarted)
-
-    return sendViaITC(service, 'getServiceConfig')
-  }
-
-  async getServiceEnv (id, ensureStarted = true) {
-    const service = await this.#getServiceById(id, ensureStarted)
-
-    return sendViaITC(service, 'getServiceEnv')
-  }
-
-  async getServiceOpenapiSchema (id) {
-    const service = await this.#getServiceById(id, true)
-
-    return sendViaITC(service, 'getServiceOpenAPISchema')
-  }
-
-  async getServiceGraphqlSchema (id) {
-    const service = await this.#getServiceById(id, true)
-
-    return sendViaITC(service, 'getServiceGraphQLSchema')
+    return sendMultipleViaITC(
+      invocations,
+      'getCustomReadinessCheck',
+      undefined,
+      [],
+      this.#concurrency,
+      this.#config.metrics.healthChecksTimeout,
+      {}
+    )
   }
 
   async getMetrics (format = 'json') {
     let metrics = null
 
+    // Get process-level metrics once from main thread registry (if available)
+    let processMetricsJson = null
+    if (this.#processMetricsRegistry) {
+      processMetricsJson = await this.#processMetricsRegistry.getMetricsAsJSON()
+    }
+
     for (const worker of this.#workers.values()) {
       try {
-        // The service might be temporarily unavailable
+        // The application might be temporarily unavailable
         if (worker[kWorkerStatus] !== 'started') {
           continue
         }
 
-        const serviceMetrics = await sendViaITC(worker, 'getMetrics', format)
-        if (serviceMetrics) {
+        // Get thread-specific metrics from worker
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', format),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
           }
 
+          // Build worker labels including custom labels from metrics config
+          const workerLabels = {
+            ...this.#config.metrics?.labels,
+            [this.#metricsLabelName]: worker[kApplicationId]
+          }
+          const workerId = worker[kWorkerId]
+          if (workerId >= 0) {
+            workerLabels.workerId = workerId
+          }
+
           if (format === 'json') {
-            metrics.push(...serviceMetrics)
+            // Duplicate process metrics with worker labels and add to output
+            if (processMetricsJson) {
+              this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
+            }
+            // Add worker's thread-specific metrics
+            for (let i = 0; i < applicationMetrics.length; i++) {
+              metrics.push(applicationMetrics[i])
+            }
           } else {
-            metrics += serviceMetrics
+            // Text format: format process metrics with worker labels
+            if (processMetricsJson) {
+              metrics += this.#formatProcessMetricsText(processMetricsJson, workerLabels)
+            }
+            metrics += applicationMetrics
           }
         }
       } catch (e) {
-        // The service exited while we were sending the ITC, skip it
-        if (e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' || e.code === 'PLT_RUNTIME_SERVICE_EXIT') {
+        // The application exited while we were sending the ITC, skip it
+        if (
+          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+        ) {
           continue
         }
 
@@ -763,8 +1178,63 @@ class Runtime extends EventEmitter {
     return { metrics }
   }
 
-  getCachedMetrics () {
-    return this.#metrics
+  // Apply labels to process metrics and push to output array (for JSON format)
+  #applyLabelsToMetrics (processMetrics, labels, outputArray) {
+    for (let i = 0; i < processMetrics.length; i++) {
+      const metric = processMetrics[i]
+      const newValues = []
+      const values = metric.values
+      for (let j = 0; j < values.length; j++) {
+        const v = values[j]
+        newValues.push({
+          value: v.value,
+          labels: { ...labels, ...v.labels },
+          metricName: v.metricName
+        })
+      }
+      outputArray.push({
+        name: metric.name,
+        help: metric.help,
+        type: metric.type,
+        aggregator: metric.aggregator,
+        values: newValues
+      })
+    }
+  }
+
+  // Format process metrics as Prometheus text format with labels
+  #formatProcessMetricsText (processMetricsJson, labels) {
+    let output = ''
+
+    for (let i = 0; i < processMetricsJson.length; i++) {
+      const metric = processMetricsJson[i]
+      const name = metric.name
+      const help = metric.help
+      const type = metric.type
+
+      // Add HELP and TYPE lines
+      output += `# HELP ${name} ${help}\n`
+      output += `# TYPE ${name} ${type}\n`
+
+      const values = metric.values
+      for (let j = 0; j < values.length; j++) {
+        const v = values[j]
+        const combinedLabels = { ...labels, ...v.labels }
+        const labelParts = []
+
+        for (const [key, val] of Object.entries(combinedLabels)) {
+          // Escape label values for Prometheus format
+          const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+          labelParts.push(`${key}="${escapedVal}"`)
+        }
+
+        const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
+        const metricName = v.metricName || name
+        output += `${metricName}${labelStr} ${v.value}\n`
+      }
+    }
+
+    return output
   }
 
   async getFormattedMetrics () {
@@ -785,7 +1255,7 @@ class Runtime extends EventEmitter {
         'http_request_all_summary_seconds'
       ]
 
-      const servicesMetrics = {}
+      const applicationsMetrics = {}
 
       for (const metric of metrics) {
         const { name, values } = metric
@@ -794,15 +1264,16 @@ class Runtime extends EventEmitter {
         if (!values || values.length === 0) continue
 
         const labels = values[0].labels
-        const serviceId = labels?.serviceId
+        // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
+        const applicationId = labels?.[this.#metricsLabelName]
 
-        if (!serviceId) {
-          throw new Error('Missing serviceId label in metrics')
+        if (!applicationId) {
+          throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
         }
 
-        let serviceMetrics = servicesMetrics[serviceId]
-        if (!serviceMetrics) {
-          serviceMetrics = {
+        let applicationMetrics = applicationsMetrics[applicationId]
+        if (!applicationMetrics) {
+          applicationMetrics = {
             cpu: 0,
             rss: 0,
             totalHeapSize: 0,
@@ -817,45 +1288,45 @@ class Runtime extends EventEmitter {
               p99: 0
             }
           }
-          servicesMetrics[serviceId] = serviceMetrics
+          applicationsMetrics[applicationId] = applicationMetrics
         }
 
-        parsePromMetric(serviceMetrics, metric)
+        parsePromMetric(applicationMetrics, metric)
       }
 
-      function parsePromMetric (serviceMetrics, promMetric) {
+      function parsePromMetric (applicationMetrics, promMetric) {
         const { name } = promMetric
 
         if (name === 'process_cpu_percent_usage') {
-          serviceMetrics.cpu = promMetric.values[0].value
+          applicationMetrics.cpu = promMetric.values[0].value
           return
         }
         if (name === 'process_resident_memory_bytes') {
-          serviceMetrics.rss = promMetric.values[0].value
+          applicationMetrics.rss = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_size_total_bytes') {
-          serviceMetrics.totalHeapSize = promMetric.values[0].value
+          applicationMetrics.totalHeapSize = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_size_used_bytes') {
-          serviceMetrics.usedHeapSize = promMetric.values[0].value
+          applicationMetrics.usedHeapSize = promMetric.values[0].value
           return
         }
         if (name === 'nodejs_heap_space_size_total_bytes') {
           const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
           const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
 
-          serviceMetrics.newSpaceSize = newSpaceSize.value
-          serviceMetrics.oldSpaceSize = oldSpaceSize.value
+          applicationMetrics.newSpaceSize = newSpaceSize.value
+          applicationMetrics.oldSpaceSize = oldSpaceSize.value
           return
         }
         if (name === 'nodejs_eventloop_utilization') {
-          serviceMetrics.elu = promMetric.values[0].value
+          applicationMetrics.elu = promMetric.values[0].value
           return
         }
         if (name === 'http_request_all_summary_seconds') {
-          serviceMetrics.latency = {
+          applicationMetrics.latency = {
             p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
             p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
             p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
@@ -867,7 +1338,7 @@ class Runtime extends EventEmitter {
       return {
         version: 1,
         date: new Date().toISOString(),
-        services: servicesMetrics
+        applications: applicationsMetrics
       }
     } catch (err) {
       // If any metric is missing, return nothing
@@ -877,13 +1348,39 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getServiceMeta (id) {
-    const service = await this.#getServiceById(id)
+  getSharedContext () {
+    return this.#sharedContext
+  }
+
+  async getApplicationResourcesInfo (id) {
+    const workersCount = this.#workers.getKeys(id).length
+    const worker = await this.#getWorkerByIdOrNext(id, 0, false, false)
+    const health = worker[kConfig].health
+
+    return { workers: workersCount, health }
+  }
+
+  getApplicationsIds () {
+    return Array.from(this.#applications.keys())
+  }
+
+  async getApplications (allowUnloaded = false) {
+    return {
+      entrypoint: this.#entrypointId,
+      production: this.#isProduction,
+      applications: await Promise.all(
+        this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
+      )
+    }
+  }
+
+  async getApplicationMeta (id) {
+    const application = await this.#getApplicationById(id)
 
     try {
-      return await sendViaITC(service, 'getServiceMeta')
+      return await sendViaITC(application, 'getApplicationMeta')
     } catch (e) {
-      // The service exports no meta, return an empty object
+      // The application exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
         return {}
       }
@@ -892,50 +1389,123 @@ class Runtime extends EventEmitter {
     }
   }
 
-  setServiceConfigPatch (id, patch) {
-    this.servicesConfigsPatches.set(id, patch)
-  }
+  async getApplicationDetails (id, allowUnloaded = false) {
+    let application
 
-  removeServiceConfigPatch (id) {
-    this.servicesConfigsPatches.delete(id)
-  }
-
-  async getLogIds (runtimePID) {
-    runtimePID = runtimePID ?? process.pid
-
-    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-    const runtimeLogIds = []
-
-    for (const logFile of runtimeLogFiles) {
-      const logId = parseInt(logFile.slice('logs.'.length))
-      runtimeLogIds.push(logId)
-    }
-    return runtimeLogIds
-  }
-
-  async getAllLogIds () {
-    const runtimesLogFiles = await this.#getAllLogsFiles()
-    const runtimesLogsIds = []
-
-    for (const runtime of runtimesLogFiles) {
-      const runtimeLogIds = []
-      for (const logFile of runtime.runtimeLogFiles) {
-        const logId = parseInt(logFile.slice('logs.'.length))
-        runtimeLogIds.push(logId)
+    try {
+      application = await this.#getApplicationById(id)
+    } catch (e) {
+      if (allowUnloaded) {
+        return { id, status: 'stopped' }
       }
-      runtimesLogsIds.push({
-        pid: runtime.runtimePID,
-        indexes: runtimeLogIds
-      })
+
+      throw e
     }
 
-    return runtimesLogsIds
+    const { entrypoint, localUrl, config, path } = application[kConfig]
+
+    const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
+    const status = await sendViaITC(application, 'getStatus')
+    const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')
+
+    const applicationDetails = {
+      id,
+      type,
+      config,
+      path,
+      status,
+      dependencies,
+      version,
+      localUrl,
+      entrypoint,
+      sourceMaps
+    }
+
+    if (this.#isProduction) {
+      applicationDetails.workers = this.#workers.getKeys(id).length
+    }
+
+    if (entrypoint) {
+      applicationDetails.url = status === 'started' ? this.#url : null
+    }
+
+    return applicationDetails
   }
 
-  async getLogFileStream (logFileId, runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
-    return createReadStream(filePath)
+  async getApplication (id, ensureStarted = true) {
+    return this.#getApplicationById(id, ensureStarted)
+  }
+
+  async getApplicationConfig (id, ensureStarted = true) {
+    const application = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(application, 'getApplicationConfig')
+  }
+
+  async getApplicationEnv (id, ensureStarted = true) {
+    const application = await this.#getApplicationById(id, ensureStarted)
+
+    return sendViaITC(application, 'getApplicationEnv')
+  }
+
+  async getApplicationOpenapiSchema (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationOpenAPISchema')
+  }
+
+  async getApplicationGraphqlSchema (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationGraphQLSchema')
+  }
+
+  async getWorkers (includeRaw = false) {
+    const status = {}
+
+    for (const [key, worker] of this.#workers.entries()) {
+      const [application, index] = key.split(':')
+
+      status[key] = {
+        application,
+        worker: index,
+        status: worker[kWorkerStatus],
+        thread: worker.threadId,
+        raw: includeRaw ? worker : undefined
+      }
+    }
+
+    return status
+  }
+
+  async getWorkerHealth (worker, options = {}) {
+    const currentELU = worker.performance.eventLoopUtilization()
+    const previousELU = options.previousELU
+
+    let elu = currentELU
+    if (previousELU) {
+      elu = worker.performance.eventLoopUtilization(elu, previousELU)
+    }
+
+    if (!features.node.worker.getHeapStatistics) {
+      return { elu: elu.utilization, currentELU }
+    }
+
+    // Only check heap statistics every 60 health checks (once per minute)
+    const counter = (worker[kHeapCheckCounter] ?? 0) + 1
+    worker[kHeapCheckCounter] = counter >= 60 ? 0 : counter
+
+    if (counter >= 60 || !worker[kLastHeapStats]) {
+      const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+      worker[kLastHeapStats] = { heapUsed, heapTotal }
+    }
+
+    const { heapUsed, heapTotal } = worker[kLastHeapStats]
+    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
+  }
+
+  getDynamicWorkersScaler () {
+    return this.#dynamicWorkersScaler
   }
 
   #getHttpCacheValue ({ request }) {
@@ -962,127 +1532,170 @@ class Runtime extends EventEmitter {
     return this.#sharedHttpCache.delete(request)
   }
 
-  invalidateHttpCache (options = {}) {
-    const { keys, tags } = options
+  async #setDispatcher (undiciConfig) {
+    const config = this.#config
 
-    if (!this.#sharedHttpCache) {
-      return
+    const dispatcherOpts = { ...undiciConfig }
+    const interceptors = [this.#meshInterceptor]
+
+    if (config.httpCache) {
+      this.#sharedHttpCache = await createSharedStore(this.#root, config.httpCache)
+      interceptors.push(
+        undiciInterceptors.cache({
+          store: this.#sharedHttpCache,
+          methods: config.httpCache.methods ?? ['GET', 'HEAD'],
+          origins: parseOrigins(config.httpCache.origins),
+          cacheByDefault: config.httpCache.cacheByDefault,
+          type: config.httpCache.type
+        })
+      )
     }
-
-    const promises = []
-    if (keys && keys.length > 0) {
-      promises.push(this.#sharedHttpCache.deleteKeys(keys))
-    }
-
-    if (tags && tags.length > 0) {
-      promises.push(this.#sharedHttpCache.deleteTags(tags))
-    }
-
-    return Promise.all(promises)
-  }
-
-  async sendCommandToService (id, name, message) {
-    const service = await this.#getServiceById(id)
-
-    try {
-      return await sendViaITC(service, name, message)
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
-  emit (event, payload) {
-    for (const worker of this.#workers.values()) {
-      if (worker[kForwardEvents]) {
-        worker[kITC].notify('runtime:event', { event, payload })
-      }
-    }
-
-    return super.emit(event, payload)
+    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
   }
 
   #updateStatus (status, args) {
     this.#status = status
-    this.emit(status, args)
+    this.emitAndNotify(status, args)
   }
 
   #showUrl () {
     this.logger.info(`Platformatic is now listening at ${this.#url}`)
   }
 
-  async #setupService (serviceConfig) {
-    if (this.#status === 'stopping' || this.#status === 'closed') return
-
-    const config = this.#configManager.current
-    const workersCount = await this.#workers.getCount(serviceConfig.id)
-    const id = serviceConfig.id
-
-    for (let i = 0; i < workersCount; i++) {
-      await this.#setupWorker(config, serviceConfig, workersCount, id, i)
+  async #setupApplication (applicationConfig) {
+    if (this.#status === 'stopping' || this.#status === 'closed') {
+      return
     }
 
-    this.emit('service:init', id)
+    const id = applicationConfig.id
+    const config = this.#config
+
+    if (!applicationConfig.path) {
+      // If there is no application path, check if the application was resolved
+      if (applicationConfig.url) {
+        // Try to backfill the path for external applications
+        applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
+
+        if (!existsSync(applicationConfig.path)) {
+          const executable = globalThis.platformatic?.executable ?? 'platformatic'
+          this.logger.error(
+            `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+            id
+          )
+
+          await this.closeAndThrow(new RuntimeAbortedError())
+        }
+      } else {
+        this.logger.error(
+          'The application "%s" has no path defined. Please check your configuration and try again.',
+          id
+        )
+
+        await this.closeAndThrow(new RuntimeAbortedError())
+      }
+    }
+
+    const workers = applicationConfig.workers.static
+    const setupInvocations = []
+
+    for (let i = 0; i < workers; i++) {
+      setupInvocations.push([config, applicationConfig, workers, id, i])
+    }
+
+    await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
+
+    await this.#dynamicWorkersScaler?.add(applicationConfig)
+    this.emitAndNotify('application:init', id)
   }
 
-  async #setupWorker (config, serviceConfig, workersCount, serviceId, index, enabled = true) {
+  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true) {
     const { restartOnError } = config
-    const workerId = `${serviceId}:${index}`
+    const workerId = `${applicationId}:${index}`
 
     // Handle inspector
     let inspectorOptions
 
-    if (this.#configManager.current.inspectorOptions) {
+    if (this.#config.inspectorOptions) {
       inspectorOptions = {
-        ...this.#configManager.current.inspectorOptions
+        ...this.#config.inspectorOptions
       }
 
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
     if (config.telemetry) {
-      serviceConfig.telemetry = {
+      applicationConfig.telemetry = {
         ...config.telemetry,
-        ...serviceConfig.telemetry,
-        serviceName: `${config.telemetry.serviceName}-${serviceConfig.id}`
+        ...applicationConfig.telemetry,
+        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
       }
     }
 
-    const errorLabel = this.#workerExtendedLabel(serviceId, index, workersCount)
-    const health = deepmerge(config.health ?? {}, serviceConfig.health ?? {})
+    const errorLabel = this.#workerExtendedLabel(applicationId, index, workersCount)
+    const health = deepmerge(config.health ?? {}, applicationConfig.health ?? {})
 
-    const execArgv = []
+    const execArgv = applicationConfig.execArgv ?? []
 
-    if (!serviceConfig.isPLTService && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+      const require = createRequire(import.meta.url)
+      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
+      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
+
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-      execArgv.push('--experimental-loader', '@opentelemetry/instrumentation/hook.mjs')
-      execArgv.push('--require', openTelemetrySetupPath)
+      execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
+      execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
     }
 
-    if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {
+    if ((applicationConfig.sourceMaps ?? config.sourceMaps) === true) {
       execArgv.push('--enable-source-maps')
+    }
+
+    if (applicationConfig.permissions?.fs) {
+      execArgv.push(...this.#setupPermissions(applicationConfig))
+    }
+
+    let preload = config.preload
+    if (execArgv.includes('--permission')) {
+      // Remove wattpm-pprof-capture from preload since it is not supported
+      const pprofCapturePath = pprofCapturePreloadPath()
+      preload = preload.filter(p => p !== pprofCapturePath)
     }
 
     const workerEnv = structuredClone(this.#env)
 
-    if (serviceConfig.nodeOptions?.trim().length > 0) {
-      const originalNodeOptions = workerEnv['NODE_OPTIONS'] ?? ''
+    if (applicationConfig.nodeOptions?.trim().length > 0) {
+      const originalNodeOptions = workerEnv.NODE_OPTIONS ?? ''
 
-      workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
+      workerEnv.NODE_OPTIONS = `${originalNodeOptions} ${applicationConfig.nodeOptions}`.trim()
     }
+
+    const maxHeapTotal =
+      typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration =
+      typeof health.maxYoungGeneration === 'string'
+        ? parseMemorySize(health.maxYoungGeneration)
+        : health.maxYoungGeneration
+    const codeRangeSize =
+      typeof health.codeRangeSize === 'string' ? parseMemorySize(health.codeRangeSize) : health.codeRangeSize
+
+    const maxOldGenerationSizeMb = Math.floor(
+      (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
+    )
+    const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
+    const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
-        config,
-        serviceConfig: {
-          ...serviceConfig,
+        config: {
+          ...config,
+          preload
+        },
+        applicationConfig: {
+          ...applicationConfig,
           isProduction: this.#isProduction,
-          configPatch: this.servicesConfigsPatches.get(serviceId)
+          configPatch: this.#applicationsConfigsPatches.get(applicationId)
         },
         worker: {
           id: workerId,
@@ -1090,26 +1703,29 @@ class Runtime extends EventEmitter {
           count: workersCount
         },
         inspectorOptions,
-        dirname: this.#configManager.dirname,
-        runtimeLogsDir: this.#runtimeLogsDir
+        dirname: this.#root
       },
-      argv: serviceConfig.arguments,
+      argv: applicationConfig.arguments,
       execArgv,
       env: workerEnv,
       resourceLimits: {
-        maxOldGenerationSizeMb: health.maxHeapTotal
+        maxOldGenerationSizeMb,
+        maxYoungGenerationSizeMb,
+        codeRangeSizeMb
       },
       stdout: true,
-      stderr: true
+      stderr: true,
+      name: workerId
     })
 
-    this.#handleWorkerStandardStreams(worker, serviceId, workersCount > 1 ? index : undefined)
+    this.#handleWorkerStandardStreams(worker, applicationId, index)
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
     worker.setMaxListeners(1e3)
 
-    // Track service exiting
-    const eventPayload = { service: serviceId, worker: index, workersCount }
+    // Track application exiting
+    const eventPayload = { application: applicationId, worker: index, workersCount }
+
     worker.once('exit', code => {
       if (worker[kWorkerStatus] === 'exited') {
         return
@@ -1117,7 +1733,7 @@ class Runtime extends EventEmitter {
 
       const started = worker[kWorkerStatus] === 'started'
       worker[kWorkerStatus] = 'exited'
-      this.emit('service:worker:exited', eventPayload)
+      this.emitAndNotify('application:worker:exited', eventPayload)
 
       this.#cleanupWorker(worker)
 
@@ -1128,11 +1744,13 @@ class Runtime extends EventEmitter {
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
         if (started && (!config.watch || code !== 0)) {
-          this.emit('service:worker:error', { ...eventPayload, code })
+          this.emitAndNotify('application:worker:error', { ...eventPayload, code })
+          this.#broadcastWorkers()
+
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
-        // Restart the service if it was started
+        // Restart the application if it was started
         if (started && this.#status === 'started') {
           if (restartOnError > 0) {
             if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
@@ -1141,29 +1759,30 @@ class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, serviceConfig, workersCount, serviceId, index, false, 0).catch(err => {
-              this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
-            })
+            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0).catch(
+              err => {
+                this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+              }
+            )
           } else {
-            this.emit('service:worker:unvailable', eventPayload)
+            this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
           }
         }
       })
     })
 
-    worker[kId] = workersCount > 1 ? workerId : serviceId
+    worker[kId] = workerId
     worker[kFullId] = workerId
-    worker[kServiceId] = serviceId
-    worker[kWorkerId] = workersCount > 1 ? index : undefined
+    worker[kApplicationId] = applicationId
+    worker[kWorkerId] = index
     worker[kWorkerStatus] = 'boot'
-    worker[kForwardEvents] = false
 
     if (inspectorOptions) {
       worker[kInspectorOptions] = {
         port: inspectorOptions.port,
-        id: serviceId,
-        dirname: this.#configManager.dirname
+        id: applicationId,
+        dirname: this.#root
       }
     }
 
@@ -1171,46 +1790,52 @@ class Runtime extends EventEmitter {
     worker[kITC] = new ITC({
       name: workerId + '-runtime',
       port: worker,
-      handlers: {
-        getServiceMeta: this.getServiceMeta.bind(this),
-        listServices: () => this.#servicesIds,
-        getServices: this.getServices.bind(this),
-        getWorkers: this.getWorkers.bind(this),
-        getHttpCacheValue: this.#getHttpCacheValue.bind(this),
-        setHttpCacheValue: this.#setHttpCacheValue.bind(this),
-        deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
-        invalidateHttpCache: this.invalidateHttpCache.bind(this),
-        setEventsForwarding (value) {
-          worker[kForwardEvents] = value
-        }
-      }
+      handlers: this.#workerITCHandlers
     })
     worker[kITC].listen()
 
+    // Forward events from the worker
+    // Do not use emitAndNotify here since we don't want to forward unknown events
+    worker[kITC].on('event', ({ event, payload }) => {
+      event = `application:worker:event:${event}`
+
+      this.emit(event, ...payload, workerId, applicationId, index)
+      this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
+    })
+
+    worker[kITC].on('request:restart', async () => {
+      try {
+        await this.restartApplication(applicationId)
+      } catch (e) {
+        this.logger.error(e)
+      }
+    })
+
     // Only activate watch for the first instance
     if (index === 0) {
-      // Handle services changes
-      // This is not purposely activated on when this.#configManager.current.watch === true
-      // so that services can eventually manually trigger a restart. This mechanism is current
-      // used by the composer.
+      // Handle applications changes
+      // This is not purposely activated on when this.#config.watch === true
+      // so that applications can eventually manually trigger a restart. This mechanism is current
+      // used by the gateway.
       worker[kITC].on('changed', async () => {
-        this.emit('service:worker:changed', eventPayload)
+        this.emitAndNotify('application:worker:changed', eventPayload)
 
         try {
           const wasStarted = worker[kWorkerStatus].startsWith('start')
-          await this.stopService(serviceId)
+          await this.stopApplication(applicationId)
 
           if (wasStarted) {
-            await this.startService(serviceId)
+            await this.startApplication(applicationId)
           }
 
-          this.logger?.info(`Service "${serviceId}" has been successfully reloaded ...`)
+          this.logger.info(`The application "${applicationId}" has been successfully reloaded.`)
+          this.emitAndNotify('application:worker:reloaded', eventPayload)
 
-          if (serviceConfig.entrypoint) {
+          if (applicationConfig.entrypoint) {
             this.#showUrl()
           }
         } catch (e) {
-          this.logger?.error(e)
+          this.logger.error(e)
         }
       })
     }
@@ -1218,99 +1843,211 @@ class Runtime extends EventEmitter {
     if (enabled) {
       // Store locally
       this.#workers.set(workerId, worker)
-
-      // Setup the interceptor
-      this.#meshInterceptor.route(serviceId, worker)
     }
 
-    // Store dependencies
-    const [{ dependencies }] = await waitEventFromITC(worker, 'init')
+    // Setup the interceptor
+    // kInterceptorReadyPromise resolves when the worker
+    // is ready to receive requests: after calling the replaceServer method
+    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
 
-    if (serviceConfig.entrypoint) {
-      this.#entrypointId = serviceId
-    }
-
-    serviceConfig.dependencies = dependencies
-    for (const { envVar, url } of dependencies) {
-      if (envVar) {
-        serviceConfig.localServiceEnvVars.set(envVar, url)
+    // Wait for initialization
+    try {
+      await waitEventFromITC(worker, 'init')
+    } catch (e) {
+      if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {
+        this.logger.error({ err: ensureLoggableError(e) }, `Failed to initialize the ${errorLabel}. Replacing it ...`)
       }
+
+      this.#workers.delete(workerId)
+      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled)
     }
 
-    // This must be done here as the dependencies are filled above
-    worker[kConfig] = { ...serviceConfig, health }
+    if (applicationConfig.entrypoint) {
+      this.#entrypointId = applicationId
+    }
+
+    worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
-    this.emit('service:worker:init', eventPayload)
+    this.emitAndNotify('application:worker:init', eventPayload)
 
     return worker
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, workerId, worker, errorLabel) {
-    // Clear the timeout when exiting
-    worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
+  #startHealthMetricsCollectionIfNeeded () {
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
+    // or if any worker has health checks enabled
+    let needsHealthMetrics = !!this.#dynamicWorkersScaler
 
-    const { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
+    if (!needsHealthMetrics) {
+      // Check if any worker has health checks enabled
+      for (const worker of this.#workers.values()) {
+        const healthConfig = worker[kConfig]?.health
+        if (healthConfig?.enabled && this.#config.restartOnError > 0) {
+          needsHealthMetrics = true
+          break
+        }
+      }
+    }
+
+    if (needsHealthMetrics) {
+      this.#startHealthMetricsCollection()
+    }
+  }
+
+  #startHealthMetricsCollection () {
+    const collectHealthMetrics = async () => {
+      if (this.#status !== 'started') {
+        return
+      }
+
+      // Iterate through all workers and collect health metrics
+      for (const worker of this.#workers.values()) {
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
+
+        const id = worker[kApplicationId]
+        const index = worker[kWorkerId]
+        const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
+
+        let health = null
+        try {
+          health = await this.getWorkerHealth(worker, {
+            previousELU: worker[kLastHealthCheckELU]
+          })
+        } catch (err) {
+          this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
+        } finally {
+          worker[kLastHealthCheckELU] = health?.currentELU ?? null
+        }
+
+        const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
+
+        // We use emit instead of emitAndNotify to avoid sending a postMessages
+        // to each workers even if they are not interested in health metrics.
+        // No one of the known capabilities use this event yet.
+        this.emit('application:worker:health:metrics', {
+          id: worker[kId],
+          application: id,
+          worker: index,
+          currentHealth: health,
+          healthSignals
+        })
+      }
+
+      // Reschedule the next check. We are not using .refresh() because it's more
+      // expensive (weird).
+      this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
+    }
+
+    // Start the collection
+    this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
+  }
+
+  #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {
+    let healthMetricsListener = null
+
+    // Clear the timeout and listener when exiting
+    worker.on('exit', () => {
+      clearTimeout(worker[kHealthCheckTimer])
+      if (healthMetricsListener) {
+        this.removeListener('application:worker:health:metrics', healthMetricsListener)
+      }
+    })
+
+    const healthConfig = worker[kConfig].health
+
+    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
+
+    if (typeof maxHeapTotal === 'string') {
+      maxHeapTotal = parseMemorySize(maxHeapTotal)
+    }
+
+    if (interval < 1000) {
+      interval = 1000
+      this.logger.warn(
+        `The health check interval for the "${errorLabel}" is set to ${healthConfig.interval}ms. ` +
+          'The minimum health check interval is 1s. It will be set to 1000ms.'
+      )
+    }
+
+    let lastHealthMetrics = null
+
+    healthMetricsListener = healthCheck => {
+      if (healthCheck.id === worker[kId]) {
+        lastHealthMetrics = healthCheck
+      }
+    }
+
+    this.on('application:worker:health:metrics', healthMetricsListener)
+
     let unhealthyChecks = 0
 
     worker[kHealthCheckTimer] = setTimeout(async () => {
-      const health = await worker[kITC].send('getHealth')
-      const { elu, heapUsed } = health
-      const memoryUsage = heapUsed / maxHeapTotal
-      const unhealthy = elu > maxELU || memoryUsage > maxHeapUsed
+      if (worker[kWorkerStatus] !== 'started') return
 
-      const serviceId = worker[kServiceId]
-      this.emit('health', {
-        id: worker[kId],
-        service: serviceId,
-        worker: worker[kWorkerId],
-        currentHealth: health,
-        unhealthy,
-        healthConfig: worker[kConfig].health
-      })
+      if (lastHealthMetrics) {
+        const health = lastHealthMetrics.currentHealth
+        const memoryUsage = health.heapUsed / maxHeapTotal
+        const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
 
-      if (unhealthy) {
-        if (elu > maxELU) {
+        this.emit('application:worker:health', {
+          id: worker[kId],
+          application: id,
+          worker: index,
+          currentHealth: health,
+          unhealthy,
+          healthConfig
+        })
+
+        if (health.elu > maxELU) {
           this.logger.error(
-            `The ${errorLabel} has an ELU of ${(elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
+              `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
           )
         }
 
         if (memoryUsage > maxHeapUsed) {
           this.logger.error(
-            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
+            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
+              `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
           )
         }
 
-        unhealthyChecks++
-      } else {
-        unhealthyChecks = 0
-      }
-
-      if (unhealthyChecks === maxUnhealthyChecks) {
-        try {
-          this.logger.error(
-            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
-            `The ${errorLabel} is unhealthy. Replacing it ...`
-          )
-
-          await this.#replaceWorker(config, serviceConfig, workersCount, id, index, workerId, worker)
-        } catch (e) {
-          this.logger.error(
-            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
-            `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
-          )
-
-          worker.terminate()
+        if (unhealthy) {
+          unhealthyChecks++
+        } else {
+          unhealthyChecks = 0
         }
-      } else {
-        worker[kHealthCheckTimer].refresh()
+
+        if (unhealthyChecks === maxUnhealthyChecks) {
+          try {
+            this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
+
+            this.logger.error(
+              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+              `The ${errorLabel} is unhealthy. Replacing it ...`
+            )
+
+            await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
+          } catch (e) {
+            this.logger.error(
+              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+              `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
+            )
+
+            worker.terminate()
+          }
+        } else {
+          worker[kHealthCheckTimer].refresh()
+        }
       }
-    }, interval)
+    }, interval).unref()
   }
 
   async #startWorker (
     config,
-    serviceConfig,
+    applicationConfig,
     workersCount,
     id,
     index,
@@ -1319,38 +2056,37 @@ class Runtime extends EventEmitter {
     worker = undefined,
     disableRestartAttempts = false
   ) {
-    const workerId = `${id}:${index}`
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Starting the ${label}...`)
+      this.logger.info(`Starting the ${label}...`)
     }
 
     if (!worker) {
-      worker = await this.#getWorkerById(id, index, false, false)
+      worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
 
-    const eventPayload = { service: id, worker: index, workersCount }
+    const eventPayload = { application: id, worker: index, workersCount }
 
-    // The service was stopped, recreate the thread
+    // The application was stopped, recreate the thread
     if (!worker) {
-      await this.#setupService(serviceConfig, index)
-      worker = await this.#getWorkerById(id, index)
+      await this.#setupApplication(applicationConfig, index)
+      worker = await this.#getWorkerByIdOrNext(id, index)
     }
 
     worker[kWorkerStatus] = 'starting'
-    this.emit('service:worker:starting', eventPayload)
+    this.emitAndNotify('application:worker:starting', eventPayload)
 
     try {
       let workerUrl
       if (config.startTimeout > 0) {
         workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
-        if (workerUrl === 'timeout') {
-          this.emit('service:worker:startTimeout', eventPayload)
-          this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
+        if (workerUrl === kTimeout) {
+          this.emitAndNotify('application:worker:startTimeout', eventPayload)
+          this.logger.error(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
-          throw new errors.ServiceStartTimeoutError(id, config.startTimeout)
+          throw new ApplicationStartTimeoutError(id, config.startTimeout)
         }
       } else {
         workerUrl = await sendViaITC(worker, 'start')
@@ -1362,38 +2098,58 @@ class Runtime extends EventEmitter {
         this.#url = workerUrl
       }
 
+      // Wait for the interceptor to be ready
+      const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
+      if (interceptorResult === kTimeout) {
+        throw new WorkerInterceptorJoinTimeoutError(label, config.startTimeout)
+      }
+
       worker[kWorkerStatus] = 'started'
-      this.emit('service:worker:started', eventPayload)
+      worker[kWorkerStartTime] = Date.now()
+
+      this.emitAndNotify('application:worker:started', eventPayload)
+      this.#broadcastWorkers()
 
       if (!silent) {
-        this.logger?.info(`Started the ${label}...`)
+        this.logger.info(`Started the ${label}...`)
       }
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        worker[kHealthCheckTimer] = setTimeout(
+        // if gracePeriod is 0, it will be set to 1 to start health checks immediately
+        // however, the health event will start when the worker is started
+        setTimeout(
           () => {
-            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, workerId, worker, label)
+            this.#setupHealthCheck(config, applicationConfig, workersCount, id, index, worker, label)
           },
           gracePeriod > 0 ? gracePeriod : 1
-        )
+        ).unref()
       }
-    } catch (error) {
+    } catch (err) {
+      const error = ensureError(err)
+      worker[kITC].notify('application:worker:start:processed')
+
       // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE') throw error
+      if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
 
       this.#cleanupWorker(worker)
 
       if (worker[kWorkerStatus] !== 'exited') {
-        // This prevent the exit handler to restart service
+        // This prevent the exit handler to restart application
         worker[kWorkerStatus] = 'exited'
-        await worker.terminate()
+
+        // Wait for the worker to exit gracefully, otherwise we terminate it
+        const waitTimeout = await executeWithTimeout(once(worker, 'exit'), config.gracefulShutdown.application)
+
+        if (waitTimeout === kTimeout) {
+          await worker.terminate()
+        }
       }
 
-      this.emit('service:worker:start:error', { ...eventPayload, error })
+      this.emitAndNotify('application:worker:start:error', { ...eventPayload, error })
 
-      if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
-        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      if (error.code !== 'PLT_RUNTIME_APPLICATION_START_TIMEOUT') {
+        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}: ${error.message}`)
       }
 
       const restartOnError = config.restartOnError
@@ -1404,6 +2160,7 @@ class Runtime extends EventEmitter {
 
       if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
         this.logger.error(`Failed to start ${label} after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
+        this.emitAndNotify('application:worker:start:failed', { ...eventPayload, error })
         throw error
       }
 
@@ -1417,13 +2174,13 @@ class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
+      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
   }
 
-  async #stopWorker (workersCount, id, index, silent, worker = undefined) {
+  async #stopWorker (workersCount, id, index, silent, worker, dependents) {
     if (!worker) {
-      worker = await this.#getWorkerById(id, index, false, false)
+      worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
 
     if (!worker) {
@@ -1435,47 +2192,53 @@ class Runtime extends EventEmitter {
       return this.#discardWorker(worker)
     }
 
-    const eventPayload = { service: id, worker: index, workersCount }
+    const eventPayload = { application: id, worker: index, workersCount }
 
     worker[kWorkerStatus] = 'stopping'
-    this.emit('service:worker:stopping', eventPayload)
+    worker[kITC].removeAllListeners('changed')
+    this.emitAndNotify('application:worker:stopping', eventPayload)
 
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Stopping the ${label}...`)
+      this.logger.info(`Stopping the ${label}...`)
     }
 
-    const exitTimeout = this.#configManager.current.gracefulShutdown.runtime
+    const exitTimeout = this.#config.gracefulShutdown.application
     const exitPromise = once(worker, 'exit')
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
+      await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
     } catch (error) {
-      this.emit('service:worker:stop:timeout', eventPayload)
-      this.logger?.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.emitAndNotify('application:worker:stop:error', eventPayload)
+      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
+      worker[kITC].notify('application:worker:stop:processed')
+      // Wait for the processed message to be received
+      await sleep(1)
+
       worker[kITC].close()
     }
 
     if (!silent) {
-      this.logger?.info(`Stopped the ${label}...`)
+      this.logger.info(`Stopped the ${label}...`)
     }
 
-    // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
+    // Wait for the worker thread to finish, we're going to create a new one if the application is ever restarted
     const res = await executeWithTimeout(exitPromise, exitTimeout)
 
     // If the worker didn't exit in time, kill it
-    if (res === 'timeout') {
-      this.emit('service:worker:exit:timeout', eventPayload)
+    if (res === kTimeout) {
+      this.emitAndNotify('application:worker:exit:timeout', eventPayload)
       await worker.terminate()
     }
 
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
-    this.emit('service:worker:stopped', eventPayload)
+    this.emitAndNotify('application:worker:stopped', eventPayload)
+    this.#broadcastWorkers()
   }
 
   #cleanupWorker (worker) {
@@ -1491,18 +2254,18 @@ class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    this.#meshInterceptor.unroute(worker[kServiceId], worker, true)
+    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
     return this.#cleanupWorker(worker)
   }
 
-  #workerExtendedLabel (serviceId, workerId, workersCount) {
-    return workersCount > 1 ? `worker ${workerId} of the service "${serviceId}"` : `service "${serviceId}"`
+  #workerExtendedLabel (applicationId, workerId, _workersCount) {
+    return `worker ${workerId} of the application "${applicationId}"`
   }
 
-  async #restartCrashedWorker (config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt) {
+  async #restartCrashedWorker (config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt) {
     const workerId = `${id}:${index}`
 
     let restartPromise = this.#restartingWorkers.get(workerId)
@@ -1522,9 +2285,12 @@ class Runtime extends EventEmitter {
         }
 
         try {
-          await this.#setupWorker(config, serviceConfig, workersCount, id, index)
-          await this.#startWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
+          await this.#setupWorker(config, applicationConfig, workersCount, id, index)
+          await this.#startWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
 
+          this.logger.info(
+            `The ${this.#workerExtendedLabel(id, index, workersCount)} has been successfully restarted ...`
+          )
           resolve()
         } catch (err) {
           // The runtime was stopped while the restart was happening, ignore any error.
@@ -1547,12 +2313,26 @@ class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, serviceConfig, workersCount, serviceId, index, workerId, worker) {
+  async #replaceWorker (config, applicationConfig, workersCount, applicationId, index, worker, silent) {
+    const workerId = `${applicationId}:${index}`
+    const label = this.#workerExtendedLabel(applicationId, index, workersCount)
     let newWorker
 
+    const stopBeforeStart =
+      applicationConfig.entrypoint &&
+      (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
+
+    if (stopBeforeStart) {
+      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+    }
+
     try {
+      if (!silent) {
+        this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
+      }
+
       // Create a new worker
-      newWorker = await this.#setupWorker(config, serviceConfig, workersCount, serviceId, index, false)
+      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -1560,7 +2340,7 @@ class Runtime extends EventEmitter {
       }
 
       // Add the worker to the mesh
-      await this.#startWorker(config, serviceConfig, workersCount, serviceId, index, false, 0, newWorker, true)
+      await this.#startWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -1568,112 +2348,159 @@ class Runtime extends EventEmitter {
       }
 
       this.#workers.set(workerId, newWorker)
-      this.#meshInterceptor.route(serviceId, newWorker)
-
-      // Remove the old worker and then kill it
-      await sendViaITC(worker, 'removeFromMesh')
     } catch (e) {
       newWorker?.terminate?.()
       throw e
     }
 
-    await this.#stopWorker(workersCount, serviceId, index, false, worker)
+    if (!stopBeforeStart) {
+      await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
+    }
   }
 
-  async #getServiceById (serviceId, ensureStarted = false, mustExist = true) {
-    // If the serviceId includes the worker, properly split
+  async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
+    if (!silent) {
+      this.logger.debug(`Preparing to stop the old version of ${label} ...`)
+    }
+
+    // Remove the old worker and then kill it
+    await sendViaITC(worker, 'removeFromMesh')
+
+    // Stop the old worker to free the port
+    await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
+  }
+
+  async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {
     let workerId
-    const matched = serviceId.match(/^(.+):(\d+)$/)
+    const matched = applicationId.match(/^(.+):(\d+)$/)
 
     if (matched) {
-      serviceId = matched[1]
+      applicationId = matched[1]
       workerId = matched[2]
     }
 
-    return this.#getWorkerById(serviceId, workerId, ensureStarted, mustExist)
-  }
-
-  async #getWorkerById (serviceId, workerId, ensureStarted = false, mustExist = true) {
-    let worker
-
-    if (typeof workerId !== 'undefined') {
-      worker = this.#workers.get(`${serviceId}:${workerId}`)
-    } else {
-      worker = this.#workers.next(serviceId)
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
     }
 
+    return this.#getWorkerByIdOrNext(applicationId, workerId, ensureStarted, mustExist)
+  }
+
+  // This method can work in two modes: when workerId is provided, it will return the specific worker
+  // otherwise it will return the next available worker for the application.
+  async #getWorkerByIdOrNext (applicationId, workerId, ensureStarted = false, mustExist = true) {
+    let worker
+
+    // Note that in this class "== null" is purposely used instead of "===" to check for both null and undefined
+    if (workerId == null) {
+      worker = this.#workers.next(applicationId)
+    } else {
+      worker = this.#workers.get(`${applicationId}:${workerId}`)
+    }
+
+    const applicationsIds = this.getApplicationsIds()
+
     if (!worker) {
-      if (!mustExist && this.#servicesIds.includes(serviceId)) {
+      if (!mustExist && applicationsIds.includes(applicationId)) {
         return null
       }
 
-      throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+      if (applicationsIds.includes(applicationId)) {
+        const availableWorkers = this.#workers
+          .getKeys(applicationId)
+          .map(key => key.split(':')[1])
+          .join(', ')
+        throw new WorkerNotFoundError(workerId, applicationId, availableWorkers)
+      } else {
+        throw new ApplicationNotFoundError(applicationId, applicationsIds.join(', '))
+      }
     }
 
     if (ensureStarted) {
-      const serviceStatus = await sendViaITC(worker, 'getStatus')
+      const applicationStatus = await sendViaITC(worker, 'getStatus')
 
-      if (serviceStatus !== 'started') {
-        throw new errors.ServiceNotStartedError(serviceId)
+      if (applicationStatus !== 'started') {
+        throw new ApplicationNotStartedError(applicationId)
       }
     }
 
     return worker
   }
 
+  async #createWorkersBroadcastChannel () {
+    this.#workersBroadcastChannel?.close()
+    this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
+  }
+
+  async #broadcastWorkers () {
+    const workers = new Map()
+
+    // Create the list of workers
+    for (const worker of this.#workers.values()) {
+      if (worker[kWorkerStatus] !== 'started') {
+        continue
+      }
+
+      const application = worker[kApplicationId]
+      let applicationWorkers = workers.get(application)
+
+      if (!applicationWorkers) {
+        applicationWorkers = []
+        workers.set(application, applicationWorkers)
+      }
+
+      applicationWorkers.push({
+        id: worker[kId],
+        application: worker[kApplicationId],
+        worker: worker[kWorkerId],
+        thread: worker.threadId
+      })
+    }
+
+    try {
+      this.#workersBroadcastChannel.postMessage(workers)
+    } catch (err) {
+      this.logger?.error({ err }, 'Error when broadcasting workers')
+    }
+  }
+
+  async #getWorkerMessagingChannel ({ id, application, worker }, context) {
+    if (this.#channelCreationHook?.(id, application) === false) {
+      throw new MessagingError(
+        application,
+        `Communication channels are disabled between applications "${id}" and "${application}".`
+      )
+    }
+
+    const target = await this.#getWorkerByIdOrNext(application, worker, true, true)
+
+    const { port1, port2 } = new MessageChannel()
+
+    // Send the first port to the target
+    const response = await executeWithTimeout(
+      sendViaITC(target, 'saveMessagingChannel', port1, [port1]),
+      this.#config.messagingTimeout
+    )
+
+    if (response === kTimeout) {
+      throw new MessagingError(application, 'Timeout while establishing a communication channel.')
+    }
+
+    context.transferList = [port2]
+    this.emitAndNotify('application:worker:messagingChannel', { application, worker })
+    return port2
+  }
+
   async #getRuntimePackageJson () {
-    const runtimeDir = this.#configManager.dirname
+    const runtimeDir = this.#root
     const packageJsonPath = join(runtimeDir, 'package.json')
     const packageJsonFile = await readFile(packageJsonPath, 'utf8')
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson
   }
 
-  #getRuntimeLogsDir (runtimePID) {
-    return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
-  }
-
-  async #getRuntimeLogFiles (runtimePID) {
-    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-    const runtimeLogsFiles = await readdir(runtimeLogsDir)
-    return runtimeLogsFiles
-      .filter(file => file.startsWith('logs'))
-      .sort((log1, log2) => {
-        const index1 = parseInt(log1.slice('logs.'.length))
-        const index2 = parseInt(log2.slice('logs.'.length))
-        return index1 - index2
-      })
-  }
-
-  async #getAllLogsFiles () {
-    try {
-      await access(this.#runtimeTmpDir)
-    } catch (err) {
-      this.logger.error({ err: ensureLoggableError(err) }, 'Cannot access temporary folder.')
-      return []
-    }
-
-    const runtimePIDs = await readdir(this.#runtimeTmpDir)
-    const runtimesLogFiles = []
-
-    for (const runtimePID of runtimePIDs) {
-      const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
-      const runtimeLogsDirStat = await stat(runtimeLogsDir)
-      const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-      const lastModified = runtimeLogsDirStat.mtime
-
-      runtimesLogFiles.push({
-        runtimePID: parseInt(runtimePID),
-        runtimeLogFiles,
-        lastModified
-      })
-    }
-
-    return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
-  }
-
-  #handleWorkerStandardStreams (worker, serviceId, workerId) {
-    const binding = { name: serviceId }
+  #handleWorkerStandardStreams (worker, applicationId, workerId) {
+    const binding = { name: applicationId }
 
     if (typeof workerId !== 'undefined') {
       binding.worker = workerId
@@ -1688,26 +2515,26 @@ class Runtime extends EventEmitter {
 
     worker.stdout.setEncoding('utf8')
     worker.stdout.on('data', raw => {
-      let selector = selectors.stdout
-
       if (raw.includes(kStderrMarker)) {
-        selector = selectors.stderr
-        raw = raw.replaceAll(kStderrMarker, '')
+        this.#forwardThreadLog(logger, selectors.stderr, raw.replaceAll(kStderrMarker, ''), 'stderr')
+      } else {
+        this.#forwardThreadLog(logger, selectors.stdout, raw, 'stdout')
       }
-
-      this.#forwardThreadLog(logger, selector, raw)
     })
 
     // Whatever is outputted here, it come from a direct process.stderr.write in the thread.
     // There's nothing we can do about it in regard of out of order logs due to a Node bug.
     worker.stderr.setEncoding('utf8')
     worker.stderr.on('data', raw => {
-      this.#forwardThreadLog(logger, selectors.stderr, raw)
+      this.#forwardThreadLog(logger, selectors.stderr, raw, 'stderr')
     })
   }
 
-  #forwardThreadLog (logger, { level, caller }, data) {
-    if (!this.#loggerDestination) {
+  // label is the key in the logger object, either 'stdout' or 'stderr'
+  #forwardThreadLog (logger, { level, caller }, data, label) {
+    // When captureStdio is false, write directly to the logger destination
+    if (!this.#config.logger.captureStdio) {
+      this.#stdio[label].write(data)
       return
     }
 
@@ -1715,32 +2542,51 @@ class Runtime extends EventEmitter {
     for (const raw of data.split('\n')) {
       // First of all, try to parse the message as JSON
       let message
-      try {
-        message = JSON.parse(raw)
-      } catch (e) {
-        // No-op, we assume the message is raw
+      let json
+      // The message is a JSON object if it has at least 2 bytes
+      if (raw.length >= 2) {
+        try {
+          message = JSON.parse(raw)
+          json = true
+        } catch {
+          // No-op, we assume the message is raw
+        }
       }
 
-      // Not a Pino JSON, accumulate the message and continue
-      if (typeof message?.level !== 'number' || typeof message?.time !== 'number') {
-        plainMessages += (plainMessages.length ? '\n' : '') + raw
+      let pinoLog
+
+      if (message !== null && typeof message === 'object') {
+        pinoLog =
+          typeof message.level === 'number' &&
+          // We want to accept both pino raw time (number) and time as formatted string
+          (typeof message.time === 'number' || typeof message.time === 'string') &&
+          typeof message.msg === 'string'
+      }
+
+      // Directly write to the Pino destination
+      if (pinoLog) {
+        if (!this.#loggerDestination) {
+          continue
+        }
+
+        this.#loggerDestination.lastLevel = message.level
+        this.#loggerDestination.lastTime = message.time
+        this.#loggerDestination.lastMsg = message.msg
+        this.#loggerDestination.lastObj = message
+        this.#loggerDestination.lastLogger = logger
+        this.#loggerDestination.write(raw + '\n')
         continue
       }
 
-      // Before continuing, write any previous plain messages
-      if (plainMessages.length > 0) {
-        logger[level]({ caller }, plainMessages.replace(/\n$/, ''))
-        plainMessages = ''
+      if (json) {
+        logger[level]({ caller, [label]: message })
+        continue
       }
 
-      // Now we directly write to the Pino destination
-      this.#loggerDestination.lastLevel = message.level
-      this.#loggerDestination.lastTime = message.time
-      this.#loggerDestination.lastMsg = message.msg
-      this.#loggerDestination.lastObj = message
-      this.#loggerDestination.lastLogger = logger
-
-      this.#loggerDestination.write(raw + '\n')
+      // Not a Pino JSON nor a JSON object, accumulate the message
+      if (!pinoLog && !json) {
+        plainMessages += (plainMessages.length ? '\n' : '') + raw
+      }
     }
 
     // Write whatever is left
@@ -1754,9 +2600,429 @@ class Runtime extends EventEmitter {
   // Let's wait few more ticks to ensure the right order.
   async #avoidOutOfOrderThreadLogs () {
     for (let i = 0; i < 2; i++) {
-      await sleepUntilNextTick()
+      await immediate()
     }
   }
-}
 
-module.exports = { Runtime }
+  async #updateApplicationConfigWorkers (applicationId, workers) {
+    this.logger.info(`Updating application "${applicationId}" config workers to ${workers}`)
+
+    this.#applications.get(applicationId).workers.static = workers
+
+    const workersIds = this.#workers.getKeys(applicationId)
+    const promises = []
+
+    for (const workerId of workersIds) {
+      const worker = this.#workers.get(workerId)
+      promises.push(sendViaITC(worker, 'updateWorkersCount', { applicationId, workers }))
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, `Cannot update application "${applicationId}" workers`)
+        throw result.reason
+      }
+    }
+
+    this.#updateLoggingPrefixes()
+  }
+
+  async #updateApplicationConfigHealth (applicationId, health) {
+    this.logger.info(`Updating application "${applicationId}" config health heap to ${JSON.stringify(health)}`)
+    const { maxHeapTotal, maxYoungGeneration } = health
+
+    const application = this.#applications.get(applicationId)
+    if (maxHeapTotal) {
+      application.health.maxHeapTotal = maxHeapTotal
+    }
+    if (maxYoungGeneration) {
+      application.health.maxYoungGeneration = maxYoungGeneration
+    }
+  }
+
+  async #validateUpdateApplicationResources (updates) {
+    if (!Array.isArray(updates)) {
+      throw new InvalidArgumentError('updates', 'must be an array')
+    }
+    if (updates.length === 0) {
+      throw new InvalidArgumentError('updates', 'must have at least one element')
+    }
+
+    const validatedUpdates = []
+    for (const update of updates) {
+      const { application: applicationId } = update
+
+      if (!applicationId) {
+        throw new InvalidArgumentError('application', 'must be a string')
+      }
+      const applicationConfig = this.#applications.get(applicationId)
+      if (!applicationConfig) {
+        throw new ApplicationNotFoundError(applicationId, Array.from(this.getApplicationsIds()).join(', '))
+      }
+
+      const { workers: currentWorkers, health: currentHealth } = await this.getApplicationResourcesInfo(applicationId)
+
+      let workers
+      if (update.workers !== undefined) {
+        if (typeof update.workers !== 'number') {
+          throw new InvalidArgumentError('workers', 'must be a number')
+        }
+        if (update.workers <= 0) {
+          throw new InvalidArgumentError('workers', 'must be greater than 0')
+        }
+        if (update.workers > MAX_WORKERS) {
+          throw new InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
+        }
+
+        if (currentWorkers === update.workers) {
+          this.logger.warn(
+            { applicationId, workers: update.workers },
+            'No change in the number of workers for application'
+          )
+        } else {
+          workers = update.workers
+        }
+      }
+
+      let maxHeapTotal, maxYoungGeneration
+      if (update.health) {
+        if (update.health.maxHeapTotal !== undefined) {
+          if (typeof update.health.maxHeapTotal === 'string') {
+            try {
+              maxHeapTotal = parseMemorySize(update.health.maxHeapTotal)
+            } catch {
+              throw new InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxHeapTotal === 'number') {
+            maxHeapTotal = update.health.maxHeapTotal
+            if (update.health.maxHeapTotal <= 0) {
+              throw new InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
+            }
+          } else {
+            throw new InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
+          }
+
+          if (currentHealth.maxHeapTotal === maxHeapTotal) {
+            this.logger.warn({ applicationId, maxHeapTotal }, 'No change in the max heap total for application')
+            maxHeapTotal = undefined
+          }
+        }
+
+        if (update.health.maxYoungGeneration !== undefined) {
+          if (typeof update.health.maxYoungGeneration === 'string') {
+            try {
+              maxYoungGeneration = parseMemorySize(update.health.maxYoungGeneration)
+            } catch {
+              throw new InvalidArgumentError('maxYoungGeneration', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxYoungGeneration === 'number') {
+            maxYoungGeneration = update.health.maxYoungGeneration
+            if (update.health.maxYoungGeneration <= 0) {
+              throw new InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
+            }
+          } else {
+            throw new InvalidArgumentError(
+              'maxYoungGeneration',
+              'must be a number or a string representing a memory size'
+            )
+          }
+
+          if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
+            this.logger.warn(
+              { applicationId, maxYoungGeneration },
+              'No change in the max young generation for application'
+            )
+            maxYoungGeneration = undefined
+          }
+        }
+      }
+
+      if (workers || maxHeapTotal || maxYoungGeneration) {
+        let health
+        if (maxHeapTotal || maxYoungGeneration) {
+          health = {}
+          if (maxHeapTotal) {
+            health.maxHeapTotal = maxHeapTotal
+          }
+          if (maxYoungGeneration) {
+            health.maxYoungGeneration = maxYoungGeneration
+          }
+        }
+        validatedUpdates.push({
+          applicationId,
+          config: applicationConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        })
+      }
+    }
+
+    return validatedUpdates
+  }
+
+  async #updateApplicationWorkersAndHealth (
+    applicationId,
+    config,
+    applicationConfig,
+    workers,
+    health,
+    currentWorkers,
+    currentHealth
+  ) {
+    if (currentWorkers > workers) {
+      // stop workers
+      const reportWorkers = await this.#updateApplicationWorkers(
+        applicationId,
+        config,
+        applicationConfig,
+        workers,
+        currentWorkers
+      )
+      // update heap for current workers
+      const reportHealth = await this.#updateApplicationHealth(
+        applicationId,
+        config,
+        applicationConfig,
+        workers,
+        currentHealth,
+        health
+      )
+
+      return { workers: reportWorkers, health: reportHealth }
+    } else {
+      // update application heap
+      await this.#updateApplicationConfigHealth(applicationId, health)
+      // start new workers with new heap
+      const reportWorkers = await this.#updateApplicationWorkers(
+        applicationId,
+        config,
+        applicationConfig,
+        workers,
+        currentWorkers
+      )
+      // update heap for current workers
+      const reportHealth = await this.#updateApplicationHealth(
+        applicationId,
+        config,
+        applicationConfig,
+        currentWorkers,
+        currentHealth,
+        health,
+        false
+      )
+
+      return { workers: reportWorkers, health: reportHealth }
+    }
+  }
+
+  async #updateApplicationHealth (
+    applicationId,
+    config,
+    applicationConfig,
+    currentWorkers,
+    currentHealth,
+    health,
+    updateConfig = true
+  ) {
+    const report = {
+      current: currentHealth,
+      new: health,
+      updated: []
+    }
+    try {
+      if (updateConfig) {
+        await this.#updateApplicationConfigHealth(applicationId, health)
+      }
+
+      for (let i = 0; i < currentWorkers; i++) {
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarting application "${applicationId}" worker ${i} to update config health heap...`
+        )
+
+        const worker = await this.#getWorkerByIdOrNext(applicationId, i)
+        if (health.maxHeapTotal) {
+          worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
+        }
+        if (health.maxYoungGeneration) {
+          worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration
+        }
+
+        await this.#replaceWorker(config, applicationConfig, currentWorkers, applicationId, i, worker)
+        report.updated.push(i)
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarted application "${applicationId}" worker ${i}`
+        )
+      }
+      report.success = true
+
+      if (report.success) {
+        this.emitAndNotify('application:resources:health:updated', { application: applicationId, health })
+      }
+    } catch (err) {
+      if (report.updated.length < 1) {
+        this.logger.error({ err }, 'Cannot update application health heap, no worker updated')
+        await this.#updateApplicationConfigHealth(applicationId, currentHealth)
+      } else {
+        this.logger.error(
+          { err },
+          `Cannot update application health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`
+        )
+      }
+      report.success = false
+    }
+    return report
+  }
+
+  async #updateApplicationWorkers (applicationId, config, applicationConfig, workers, currentWorkers) {
+    const report = { current: currentWorkers, new: workers }
+
+    let startedWorkersCount = 0
+    let stoppedWorkersCount = 0
+
+    if (currentWorkers < workers) {
+      report.started = []
+      try {
+        for (let i = currentWorkers; i < workers; i++) {
+          await this.#setupWorker(config, applicationConfig, workers, applicationId, i)
+          await this.#startWorker(config, applicationConfig, workers, applicationId, i, false, 0)
+          report.started.push(i)
+          startedWorkersCount++
+        }
+        report.success = true
+      } catch (err) {
+        if (startedWorkersCount < 1) {
+          this.logger.error({ err }, 'Cannot start application workers, no worker started')
+        } else {
+          this.logger.error(
+            { err },
+            `Cannot start application workers, started workers: ${startedWorkersCount} out of ${workers}`
+          )
+        }
+        report.success = false
+      }
+    } else {
+      // keep the current workers count until all the application workers are all stopped
+      report.stopped = []
+      try {
+        for (let i = currentWorkers - 1; i >= workers; i--) {
+          const worker = await this.#getWorkerByIdOrNext(applicationId, i, false, false)
+          await sendViaITC(worker, 'removeFromMesh')
+          await this.#stopWorker(currentWorkers, applicationId, i, false, worker, [])
+          report.stopped.push(i)
+          stoppedWorkersCount++
+        }
+        report.success = true
+      } catch (err) {
+        if (stoppedWorkersCount < 1) {
+          this.logger.error({ err }, 'Cannot stop application workers, no worker stopped')
+        } else {
+          this.logger.error(
+            { err },
+            `Cannot stop application workers, stopped workers: ${stoppedWorkersCount} out of ${workers}`
+          )
+        }
+        report.success = false
+      }
+    }
+
+    const newWorkersCount = currentWorkers + startedWorkersCount - stoppedWorkersCount
+    if (newWorkersCount !== currentWorkers) {
+      await this.#updateApplicationConfigWorkers(applicationId, newWorkersCount)
+    }
+
+    if (report.success) {
+      this.emitAndNotify('application:resources:workers:updated', { application: applicationId, workers })
+    }
+
+    return report
+  }
+
+  #validatePprofCapturePreload () {
+    const found = this.#config.preload?.some(p => p.includes('wattpm-pprof-capture'))
+
+    if (!found) {
+      throw new MissingPprofCapture()
+    }
+  }
+
+  #setupPermissions (applicationConfig) {
+    const argv = []
+    const allows = new Set()
+    const { read, write } = applicationConfig.permissions.fs
+
+    if (read?.length) {
+      for (const p of read) {
+        allows.add(`--allow-fs-read=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
+      }
+    }
+
+    if (write?.length) {
+      for (const p of write) {
+        allows.add(`--allow-fs-write=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
+      }
+    }
+
+    if (allows.size === 0) {
+      return argv
+    }
+
+    // We need to allow read access to the node_modules folder both at the runtime level and at the application level
+    allows.add(`--allow-fs-read=${join(this.#root, 'node_modules', '*')}`)
+    allows.add(`--allow-fs-read=${join(applicationConfig.path, 'node_modules', '*')}`)
+
+    // Since we can't really predict how dependencies are installed (symlinks, pnpm store, and so forth), we also
+    // add any node_modules folder found in the ancestors of the current file
+    let lastPath = import.meta.dirname
+    let currentPath = import.meta.dirname
+
+    do {
+      lastPath = currentPath
+      const nodeModules = join(currentPath, 'node_modules')
+      if (existsSync(nodeModules)) {
+        allows.add(`--allow-fs-read=${join(nodeModules, '*')}`)
+      }
+
+      currentPath = dirname(currentPath)
+    } while (lastPath !== currentPath)
+
+    argv.push('--permission', ...allows)
+    return argv
+  }
+
+  #processHealthSignals ({ workerId, signals }) {
+    const worker = this.#workers.get(workerId)
+
+    worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
+    worker[kWorkerHealthSignals].add(signals)
+  }
+
+  #updateLoggingPrefixes () {
+    if (!this.#loggerContext) {
+      return
+    }
+
+    const ids = []
+    for (const worker of this.#workers.values()) {
+      ids.push(`${worker[kFullId]}`)
+    }
+
+    this.#loggerContext.updatePrefixes(ids)
+  }
+
+  #onMeshInterceptorError (error) {
+    const worker = error.port
+
+    this.logger.error(
+      { err: ensureLoggableError(error.cause) },
+      `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup. Replacing it ...`
+    )
+
+    this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
+    worker.terminate()
+  }
+}

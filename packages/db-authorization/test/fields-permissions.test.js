@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual, ok } = require('node:assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
-const auth = require('..')
+import core from '@platformatic/db-core'
+import fastify from 'fastify'
+import { deepEqual, equal, ok } from 'node:assert'
+import { test } from 'node:test'
+import auth from '../index.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -38,39 +36,42 @@ test('users can find only the authorized fields', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
-        fields: ['id', 'title', 'topic'],
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic']
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -80,7 +81,7 @@ test('users can find only the authorized fields', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -88,7 +89,7 @@ test('users can find only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -101,21 +102,25 @@ test('users can find only the authorized fields', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'TITLE_1',
-          author: 'AUTHOR_1',
-          topic: 'TOPIC_1',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'TITLE_1',
+            author: 'AUTHOR_1',
+            topic: 'TOPIC_1',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -123,7 +128,7 @@ test('users can find only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -134,19 +139,23 @@ test('users can find only the authorized fields', async () => {
               topic
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'TITLE_1',
-          topic: 'TOPIC_1',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'TITLE_1',
+            topic: 'TOPIC_1'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -154,7 +163,7 @@ test('users can find only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -165,45 +174,51 @@ test('users can find only the authorized fields', async () => {
               topic
             }
           }
-        `,
-      },
+        `
+      }
     })
 
-    deepEqual(res.json(), {
-      data: {
-        pages: null,
-      },
-      errors: [
-        {
-          message: 'field not allowed: author',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'pages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: null
         },
-      ],
-    }, 'pages response')
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['pages']
+          }
+        ]
+      },
+      'pages response'
+    )
   }
 
   {
     const res = await app.inject({
       url: '/pages',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 401, 'GET /pages status code (Unauthorized)')
-    deepEqual(res.json(), {
-      statusCode: 401,
-      error: 'Unauthorized',
-      code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
-      message: 'field not allowed: author',
-    }, 'GET /pages status response (Unauthorized)')
+    deepEqual(
+      res.json(),
+      {
+        statusCode: 401,
+        error: 'Unauthorized',
+        code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
+        message: 'field not allowed: author'
+      },
+      'GET /pages status response (Unauthorized)'
+    )
   }
 })
 
@@ -216,39 +231,42 @@ test('users can save only the authorized fields', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-        fields: ['id', 'title', 'topic', 'reviewedBy'],
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic', 'reviewedBy']
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -258,7 +276,7 @@ test('users can save only the authorized fields', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -267,7 +285,7 @@ test('users can save only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -278,19 +296,23 @@ test('users can save only the authorized fields', async () => {
               topic
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'TITLE_1',
-          topic: 'TOPIC_1',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'TITLE_1',
+            topic: 'TOPIC_1'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -298,7 +320,7 @@ test('users can save only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -310,20 +332,24 @@ test('users can save only the authorized fields', async () => {
               author
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'TITLE_1',
-          topic: 'TOPIC_1',
-          author: null,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'TITLE_1',
+            topic: 'TOPIC_1',
+            author: null
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -332,7 +358,7 @@ test('users can save only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -343,28 +369,30 @@ test('users can save only the authorized fields', async () => {
               topic
             }
           }
-        `,
-      },
+        `
+      }
     })
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'field not allowed: author',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -373,7 +401,7 @@ test('users can save only the authorized fields', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -385,28 +413,30 @@ test('users can save only the authorized fields', async () => {
               author
             }
           }
-        `,
-      },
+        `
+      }
     })
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'field not allowed: author',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 })
 
@@ -419,39 +449,42 @@ test('users can insert only the authorized fields', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-        fields: ['id', 'title', 'topic', 'reviewedBy'],
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic', 'reviewedBy']
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -461,26 +494,29 @@ test('users can insert only the authorized fields', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
     // Successful insert
-    const books = [{
-      title: 'TITLE_1',
-      topic: 'TOPIC_1',
-      reviewedBy: 'REV_1',
-    }, {
-      title: 'TITLE_2',
-      topic: 'TOPIC_2',
-      reviewedBy: 'REV_2',
-    }]
+    const books = [
+      {
+        title: 'TITLE_1',
+        topic: 'TOPIC_1',
+        reviewedBy: 'REV_1'
+      },
+      {
+        title: 'TITLE_2',
+        topic: 'TOPIC_2',
+        reviewedBy: 'REV_2'
+      }
+    ]
 
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -493,42 +529,52 @@ test('users can insert only the authorized fields', async () => {
 
         `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: [{
-          id: 1,
-          title: 'TITLE_1',
-        }, {
-          id: 2,
-          title: 'TITLE_2',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            {
+              id: 1,
+              title: 'TITLE_1'
+            },
+            {
+              id: 2,
+              title: 'TITLE_2'
+            }
+          ]
+        }
       },
-    }, 'insertPages response')
+      'insertPages response'
+    )
   }
 
   {
     // One of the records has a not allowed field: fail
-    const books = [{
-      title: 'TITLE_1',
-      topic: 'TOPIC_1',
-      reviewedBy: 'REV_1',
-    }, {
-      title: 'TITLE_2',
-      topic: 'TOPIC_2',
-      reviewedBy: 'REV_2',
-      author: 'FORBIDDEN',
-    }]
+    const books = [
+      {
+        title: 'TITLE_1',
+        topic: 'TOPIC_1',
+        reviewedBy: 'REV_1'
+      },
+      {
+        title: 'TITLE_2',
+        topic: 'TOPIC_2',
+        reviewedBy: 'REV_2',
+        author: 'FORBIDDEN'
+      }
+    ]
 
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -541,30 +587,32 @@ test('users can insert only the authorized fields', async () => {
 
         `,
         variables: {
-          inputs: books,
-        },
-      },
+          inputs: books
+        }
+      }
     })
 
-    deepEqual(res.json(), {
-      data: {
-        insertPages: null,
-      },
-      errors: [
-        {
-          message: 'field not allowed: author',
-          locations: [
-            {
-              line: 3,
-              column: 15,
-            },
-          ],
-          path: [
-            'insertPages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: null
         },
-      ],
-    }, 'insertPages response')
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [
+              {
+                line: 3,
+                column: 15
+              }
+            ],
+            path: ['insertPages']
+          }
+        ]
+      },
+      'insertPages response'
+    )
   }
 })
 
@@ -577,39 +625,42 @@ test('app should not start if there are not nullable and not allowed fields in s
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-        fields: ['id', 'title'],
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title']
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()

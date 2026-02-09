@@ -1,13 +1,11 @@
-'use strict'
+import { deepEqual } from 'node:assert'
+import { test } from 'node:test'
+import { connect } from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual } = require('node:assert')
-const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
-  // trace: console.log,
-  error: () => {},
+  error: () => {}
 }
 
 test('composite primary keys', async () => {
@@ -83,24 +81,24 @@ test('composite primary keys', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {},
+    hooks: {}
   })
   const pageEntity = mapper.entities.page
   const userEntity = mapper.entities.user
   const editorEntity = mapper.entities.editor
 
   const page = await pageEntity.save({
-    input: { theTitle: 'foobar' },
+    input: { theTitle: 'foobar' }
   })
   deepEqual(page, { id: '1', theTitle: 'foobar' })
 
   const user = await userEntity.save({
-    input: { username: 'mcollina' },
+    input: { username: 'mcollina' }
   })
   deepEqual(user, { id: '1', username: 'mcollina' })
 
   const user2 = await userEntity.save({
-    input: { username: 'lucamaraschi' },
+    input: { username: 'lucamaraschi' }
   })
   deepEqual(user2, { id: '2', username: 'lucamaraschi' })
 
@@ -108,8 +106,8 @@ test('composite primary keys', async () => {
     input: {
       pageId: '1',
       userId: '1',
-      role: 'admin',
-    },
+      role: 'admin'
+    }
   })
   deepEqual(editor1, { pageId: '1', userId: '1', role: 'admin' })
 
@@ -117,8 +115,8 @@ test('composite primary keys', async () => {
     input: {
       pageId: '1',
       userId: '2',
-      role: 'author',
-    },
+      role: 'author'
+    }
   })
   deepEqual(editor2, { pageId: '1', userId: '2', role: 'author' })
 
@@ -126,41 +124,50 @@ test('composite primary keys', async () => {
     input: {
       pageId: '1',
       userId: '1',
-      role: 'captain',
-    },
+      role: 'captain'
+    }
   })
 
   const editors = await editorEntity.find({ orderBy: [{ field: 'userId', direction: 'ASC' }] })
-  deepEqual(editors, [{
-    pageId: '1',
-    userId: '1',
-    role: 'captain',
-  }, {
-    pageId: '1',
-    userId: '2',
-    role: 'author',
-  }])
+  deepEqual(editors, [
+    {
+      pageId: '1',
+      userId: '1',
+      role: 'captain'
+    },
+    {
+      pageId: '1',
+      userId: '2',
+      role: 'author'
+    }
+  ])
 
   await editorEntity.delete({})
 
   const editorsInserted = await editorEntity.insert({
-    inputs: [{
+    inputs: [
+      {
+        pageId: '1',
+        userId: '1',
+        role: 'admin'
+      },
+      {
+        pageId: '1',
+        userId: '2',
+        role: 'author'
+      }
+    ]
+  })
+  deepEqual(editorsInserted, [
+    {
       pageId: '1',
       userId: '1',
-      role: 'admin',
-    }, {
+      role: 'admin'
+    },
+    {
       pageId: '1',
       userId: '2',
-      role: 'author',
-    }],
-  })
-  deepEqual(editorsInserted, [{
-    pageId: '1',
-    userId: '1',
-    role: 'admin',
-  }, {
-    pageId: '1',
-    userId: '2',
-    role: 'author',
-  }])
+      role: 'author'
+    }
+  ])
 })

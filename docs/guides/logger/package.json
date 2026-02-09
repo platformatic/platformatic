@@ -1,0 +1,12 @@
+{
+  "name": "next-example",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "wattpm": "^2.61.0"
+  }
+}

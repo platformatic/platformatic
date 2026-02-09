@@ -88,6 +88,36 @@
           },
           {
             "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Include cursor headers in response. Cursor keys built from orderBy clause"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            },
+            "in": "query",
+            "name": "startAfter",
+            "required": false,
+            "description": "Cursor for forward pagination. List objects after this cursor position"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            },
+            "in": "query",
+            "name": "endBefore",
+            "required": false,
+            "description": "Cursor for backward pagination. List objects before this cursor position"
+          },
+          {
+            "schema": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -494,6 +524,24 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "id",
+                  "name",
+                  "parentId"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Person",
@@ -1097,6 +1145,23 @@
         "parameters": [
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -1109,6 +1174,15 @@
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "totalCount",
             "required": false
           },
           {

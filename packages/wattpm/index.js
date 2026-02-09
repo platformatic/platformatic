@@ -1,39 +1,53 @@
+import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
+import { loadApplicationsCommands } from '@platformatic/runtime'
+import * as colorette from 'colorette'
 import { bold } from 'colorette'
-import { buildCommand, installCommand, updateCommand } from './lib/commands/build.js'
+import { adminCommand } from './lib/commands/admin.js'
+import { applicationsAddCommand, applicationsRemoveCommand } from './lib/commands/applications.js'
+import { buildCommand } from './lib/commands/build.js'
+import { createCommand } from './lib/commands/create.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
-import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
-import { initCommand } from './lib/commands/init.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
-import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
+import { applicationsCommand, configCommand, envCommand, psCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
-import { patchConfigCommand } from './lib/commands/patch-config.js'
+import { pprofCommand } from './lib/commands/pprof.js'
+import { replCommand } from './lib/commands/repl.js'
 import { version } from './lib/schema.js'
-import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
+import { setSocket } from './lib/utils.js'
+
+export * from './lib/schema.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: 'watt' }
-
-  const logger = createLogger('info')
-
-  overrideFatal(logger)
+  globalThis.platformatic = { executable: getExecutableId() }
 
   const options = {
+    'no-pretty': {
+      short: 'r',
+      type: 'boolean'
+    },
     verbose: {
       short: 'v',
       type: 'boolean'
+    },
+    socket: {
+      short: 'S',
+      type: 'string'
     },
     version: {
       short: 'V',
       type: 'boolean'
     },
     help: {
+      short: 'h',
       type: 'boolean'
     }
   }
 
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
+
+  const logger = createCliLogger('info', values['no-pretty'])
 
   if (values.version || unparsed[0] === 'version') {
     console.log(version)
@@ -41,7 +55,10 @@ export async function main () {
   }
 
   if (values.help) {
-    helpCommand([])
+    helpCommand(logger, [])
+    return
+  } else if (unparsed.includes('-h') || unparsed.includes('--help')) {
+    helpCommand(logger, unparsed)
     return
   }
 
@@ -49,11 +66,14 @@ export async function main () {
     setVerbose(true)
   }
 
+  if (values.socket) {
+    setSocket(values.socket)
+  }
+
   let command
-  switch (unparsed[0]) {
-    case 'init':
-      command = initCommand
-      break
+  const requestedCommand = unparsed[0] || 'help'
+  let applicationCommandContext
+  switch (requestedCommand) {
     case 'build':
       command = buildCommand
       break
@@ -75,8 +95,8 @@ export async function main () {
     case 'ps':
       command = psCommand
       break
-    case 'services':
-      command = servicesCommand
+    case 'applications':
+      command = applicationsCommand
       break
     case 'config':
       command = configCommand
@@ -90,38 +110,60 @@ export async function main () {
     case 'inject':
       command = injectCommand
       break
-    case 'import':
-      command = importCommand
+    case 'metrics':
+      command = metricsCommand
       break
-    case 'resolve':
-      command = resolveCommand
+    case 'pprof':
+      command = pprofCommand
       break
-    case 'patch-config':
-      command = patchConfigCommand
+    case 'repl':
+      command = replCommand
       break
-    case 'install':
-      command = installCommand
+    case 'applications:add':
+      command = applicationsAddCommand
       break
-    case 'update':
-      command = updateCommand
+    case 'applications:remove':
+      command = applicationsRemoveCommand
+      break
+    case 'admin':
+      command = adminCommand
+      break
+    /* c8 ignore next 2 - aliases */
+    case 'init':
+    case 'add':
+    case 'create':
+      command = createCommand
       break
     case 'help':
       command = helpCommand
       break
-    case 'metrics':
-      command = metricsCommand
-      break
     default:
-      logger.fatal(
-        `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
-      )
+      if (requestedCommand) {
+        const applicationsCommands = await loadApplicationsCommands()
+        const applicationCommand = applicationsCommands.commands[requestedCommand]
+
+        if (applicationCommand) {
+          applicationCommandContext = applicationsCommands.applications[requestedCommand]
+          command = applicationCommand
+        }
+      }
+
       break
   }
 
-  await command(logger, unparsed.slice(1))
+  if (!command) {
+    logFatalError(
+      logger,
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+    )
+
+    return
+  }
+
+  if (applicationCommandContext) {
+    process.chdir(applicationCommandContext.path)
+    return command(logger, applicationCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
+  } else {
+    await command(logger, unparsed.slice(1))
+  }
 }
-
-export * from './lib/schema.js'
-
-export { resolveServices } from './lib/commands/external.js'
-export { patchConfig } from './lib/commands/patch-config.js'

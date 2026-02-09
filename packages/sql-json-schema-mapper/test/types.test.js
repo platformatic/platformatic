@@ -1,19 +1,17 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual: same, notEqual } = require('node:assert')
-const dtsgenerator = require('dtsgenerator')
-const { mapOpenAPItoTypes } = require('..')
+import dtsgenerator, { parseSchema } from 'dtsgenerator'
+import { notEqual, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import { mapOpenAPItoTypes } from '../index.js'
 
 let structuredClone = globalThis.structuredClone
 if (structuredClone === undefined) {
-  structuredClone = (obj) => JSON.parse(JSON.stringify(obj))
+  structuredClone = obj => JSON.parse(JSON.stringify(obj))
 }
 
 function referenceTest (name, obj, opts = {}) {
   const { only } = opts
   test(name, { only }, async t => {
-    const reference = await dtsgenerator.default({ contents: [dtsgenerator.parseSchema(structuredClone(obj))] })
+    const reference = await dtsgenerator.default({ contents: [parseSchema(structuredClone(obj))] })
     const cloned = structuredClone(obj)
     const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true } })
     notEqual(cloned, obj)
@@ -29,28 +27,26 @@ referenceTest('p1', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     description: {
       type: 'string',
-      nullable: true,
+      nullable: true
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true,
+      nullable: true
     },
     section: {
       type: 'number',
-      nullable: true,
+      nullable: true
     },
     title: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  required: [
-    'title',
-  ],
+  required: ['title']
 })
 
 referenceTest('p2', {
@@ -60,23 +56,23 @@ referenceTest('p2', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     description: {
       type: 'string',
-      nullable: true,
+      nullable: true
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true,
+      nullable: true
     },
     section: {
       type: 'number',
-      nullable: true,
-    },
+      nullable: true
+    }
   },
-  required: [],
+  required: []
 })
 
 referenceTest('p3', {
@@ -86,24 +82,24 @@ referenceTest('p3', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     test: {
       type: 'integer',
-      nullable: true,
+      nullable: true
     },
     testStored: {
       type: 'integer',
       nullable: true,
-      readOnly: true,
+      readOnly: true
     },
     testVirtual: {
       type: 'integer',
       nullable: true,
-      readOnly: true,
-    },
+      readOnly: true
+    }
   },
-  required: [],
+  required: []
 })
 
 referenceTest('multiple types', {
@@ -113,27 +109,25 @@ referenceTest('multiple types', {
   type: 'object',
   properties: {
     id: {
-      type: ['integer', 'string'],
+      type: ['integer', 'string']
     },
     description: {
       type: 'string',
-      nullable: true,
+      nullable: true
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true,
+      nullable: true
     },
     section: {
-      type: ['number', 'null'],
+      type: ['number', 'null']
     },
     title: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  required: [
-    'title',
-  ],
+  required: ['title']
 })
 
 referenceTest('arrays', {
@@ -143,21 +137,19 @@ referenceTest('arrays', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     tags: {
       type: 'array',
       items: {
-        type: 'string',
-      },
+        type: 'string'
+      }
     },
     title: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  required: [
-    'title',
-  ],
+  required: ['title']
 })
 
 referenceTest('objects in arrays', {
@@ -167,7 +159,7 @@ referenceTest('objects in arrays', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     tags: {
       type: 'array',
@@ -175,18 +167,16 @@ referenceTest('objects in arrays', {
         type: 'object',
         properties: {
           foo: {
-            type: 'string',
-          },
-        },
-      },
+            type: 'string'
+          }
+        }
+      }
     },
     title: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  required: [
-    'title',
-  ],
+  required: ['title']
 })
 
 referenceTest('enums', {
@@ -196,17 +186,50 @@ referenceTest('enums', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
+      type: 'integer'
     },
     color: {
       type: 'string',
-      enum: ['amber', 'green', 'red'],
+      enum: ['amber', 'green', 'red']
     },
     title: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  required: [
-    'title',
-  ],
+  required: ['title']
+})
+
+test('bytea fields are mapped to Buffer type', async t => {
+  const schema = {
+    id: 'FileData',
+    title: 'FileData',
+    description: 'A FileData',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'integer'
+      },
+      content: {
+        type: 'string'
+      },
+      metadata: {
+        type: 'string'
+      }
+    },
+    required: ['id']
+  }
+
+  const fieldDefinitions = {
+    id: { primaryKey: true },
+    content: { sqlType: 'bytea' },
+    metadata: { sqlType: 'text' }
+  }
+
+  const result = mapOpenAPItoTypes(schema, fieldDefinitions)
+
+  // Verify that bytea field is mapped to Buffer
+  same(result.includes('content?: Buffer;'), true, 'bytea field should be mapped to Buffer type')
+  // Verify that non-bytea fields are mapped normally
+  same(result.includes('metadata?: string;'), true, 'non-bytea string field should be mapped to string type')
+  same(result.includes('id: number;'), true, 'id field should be mapped to number type')
 })

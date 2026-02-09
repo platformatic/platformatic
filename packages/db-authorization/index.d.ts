@@ -47,11 +47,14 @@ export type AuthorizationRule<T> = AuthorizationRuleEntity<T> | AuthorizationRul
 export type SetupDBAuthorizationUserDecorator = () => Promise<void>
 export type AddRulesForRoles = <T>(rules: Iterable<AuthorizationRule<T>>) => void
 
+export type RoleMergeStrategy = 'first-match' | 'most-permissive'
+
 export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPluginOptions {
   adminSecret?: string
   roleKey?: string
   isRolePath?: boolean
   anonymousRole?: string
+  roleMergeStrategy?: RoleMergeStrategy
   rules?: Array<AuthorizationRule<T>>
 }
 

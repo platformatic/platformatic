@@ -1,15 +1,16 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "2.53.0",
+  "version": "3.37.0",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mariadb": "DB=mariadb borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mysql": "DB=mysql borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mysql8": "DB=mysql8 borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:sqlite": "DB=sqlite borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test": "npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test:postgresql": "DB=postgresql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:mariadb": "DB=mariadb node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:typescript": "tsd",
     "lint": "eslint"
   },
@@ -24,24 +25,26 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.19.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "ioredis": "^5.3.2",
     "neostandard": "^0.12.0",
-    "tsd": "^0.31.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
-    "mqemitter": "^6.0.0",
-    "mqemitter-redis": "^6.0.0"
+    "mqemitter": "^7.0.0",
+    "mqemitter-redis": "^7.0.0"
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

@@ -1,27 +1,16 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal } = require('node:assert')
-const { join } = require('path')
-const { platformaticRuntime } = require('../../index.js')
-const { ConfigManager } = require('@platformatic/config')
-const { version } = require('../../package.json')
+import { loadConfiguration } from '@platformatic/foundation'
+import { equal } from 'node:assert'
+import { test } from 'node:test'
+import { join } from 'path'
+import { transform } from '../../lib/config.js'
+import { upgrade } from '../../lib/upgrade.js'
+import { version } from '../../lib/version.js'
 
 test('remove the watch config', async () => {
-  const file = join(__dirname, 'fixtures', '1.4.0.json')
-
-  const configManager = new ConfigManager({
-    ...platformaticRuntime.configManagerConfig,
-    source: file,
-    fixPaths: true,
-    onMissingEnv (key) {
-      return ''
-    },
+  const config = await loadConfiguration(join(import.meta.dirname, 'fixtures', '1.4.0.json'), null, {
+    transform,
+    upgrade
   })
-
-  await configManager.parse()
-
-  const config = configManager.current
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`)
   equal(config.watch, true)

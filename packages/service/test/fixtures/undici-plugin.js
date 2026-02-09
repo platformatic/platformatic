@@ -1,8 +1,6 @@
-'use strict'
+import undici from 'undici'
 
-const undici = require('undici')
-
-module.exports = async function (app) {
+export default function (app) {
   app.get('/request', async function () {
     try {
       const res = await undici.request('http://localhost:42')

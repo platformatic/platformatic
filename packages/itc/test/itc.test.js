@@ -1,12 +1,10 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { once } = require('node:events')
-const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { MessageChannel } = require('node:worker_threads')
-const { ITC } = require('../index.js')
-const { generateItcRequest, generateItcResponse } = require('./helper.js')
+import { deepStrictEqual, fail, ifError, throws } from 'node:assert'
+import { once } from 'node:events'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { MessageChannel } from 'node:worker_threads'
+import { ITC } from '../lib/index.js'
+import { generateItcRequest, generateItcResponse } from './helper.js'
 
 test('should send a request between threads', async t => {
   const { port1, port2 } = new MessageChannel()
@@ -31,8 +29,8 @@ test('should send a request between threads', async t => {
   t.after(() => itc2.close())
 
   const response = await itc1.send(requestName, testRequest)
-  assert.deepStrictEqual(response, testResponse)
-  assert.deepStrictEqual(requests, [testRequest])
+  deepStrictEqual(response, testResponse)
+  deepStrictEqual(requests, [testRequest])
 })
 
 test('should support close while replying to a message', async t => {
@@ -66,8 +64,8 @@ test('should support close while replying to a message', async t => {
   t.after(() => itc2.close())
 
   const response = await itc1.send(requestName, testRequest)
-  assert.deepStrictEqual(response, testResponse)
-  assert.deepStrictEqual(requests, [testRequest])
+  deepStrictEqual(response, testResponse)
+  deepStrictEqual(requests, [testRequest])
 })
 
 test('should throw an error if send req before listen', async t => {
@@ -78,10 +76,10 @@ test('should throw an error if send req before listen', async t => {
 
   try {
     await itc.send('test', 'test-request')
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_SEND_BEFORE_LISTEN')
-    assert.strictEqual(error.message, 'ITC cannot send requests before listening')
+    deepStrictEqual(error.code, 'PLT_ITC_SEND_BEFORE_LISTEN')
+    deepStrictEqual(error.message, 'ITC cannot send requests before listening')
   }
 })
 
@@ -95,10 +93,10 @@ test('should throw an error if request name is not a string', async t => {
 
   try {
     await itc.send(true, 'test-request')
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_REQUEST_NAME_IS_NOT_STRING')
-    assert.strictEqual(error.message, 'ITC request name is not a string: "true"')
+    deepStrictEqual(error.code, 'PLT_ITC_REQUEST_NAME_IS_NOT_STRING')
+    deepStrictEqual(error.message, 'ITC request name is not a string: "true"')
   }
 })
 
@@ -116,7 +114,7 @@ test('should send a notification between threads', async t => {
 
   await itc1.notify(notificationName, testNotification)
   const [receivedNotification] = await once(itc2, notificationName)
-  assert.deepStrictEqual(testNotification, receivedNotification)
+  deepStrictEqual(testNotification, receivedNotification)
 })
 
 test('should throw if call listen twice', async t => {
@@ -129,10 +127,10 @@ test('should throw if call listen twice', async t => {
 
   try {
     itc.listen()
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_ALREADY_LISTENING')
-    assert.strictEqual(error.message, 'ITC is already listening')
+    deepStrictEqual(error.code, 'PLT_ITC_ALREADY_LISTENING')
+    deepStrictEqual(error.message, 'ITC is already listening')
   }
 })
 
@@ -156,11 +154,11 @@ test('should throw an error if handler fails', async t => {
 
   try {
     await itc1.send(requestName, 'test-request')
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_HANDLER_FAILED')
-    assert.strictEqual(error.message, 'Handler failed with error: test-error')
-    assert.strictEqual(error.handlerError.message, 'test-error')
+    deepStrictEqual(error.code, 'PLT_ITC_HANDLER_FAILED')
+    deepStrictEqual(error.message, 'Handler failed with error: test-error')
+    deepStrictEqual(error.handlerError.message, 'test-error')
   }
 })
 
@@ -180,10 +178,10 @@ test('should throw if handler is not found', async t => {
 
   try {
     await itc1.send(requestName, 'test-request')
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_HANDLER_NOT_FOUND')
-    assert.strictEqual(error.message, 'Handler not found for request: "test-command"')
+    deepStrictEqual(error.code, 'PLT_ITC_HANDLER_NOT_FOUND')
+    deepStrictEqual(error.message, 'Handler not found for request: "test-command"')
   }
 })
 
@@ -201,7 +199,7 @@ test('should allow missing handlers using throwOnMissingHandler', async t => {
   t.after(() => itc1.close())
   t.after(() => itc2.close())
 
-  assert.ifError(await itc1.send(requestName, 'test-request'))
+  ifError(await itc1.send(requestName, 'test-request'))
 })
 
 test('should skip non-platformatic message', async t => {
@@ -227,7 +225,7 @@ test('should skip non-platformatic message', async t => {
 
   await itc2.send('test', 'test-message')
 
-  assert.deepStrictEqual(requests, ['test-message'])
+  deepStrictEqual(requests, ['test-message'])
 })
 
 test('should emit unhandledError if request version is wrong', (t, done) => {
@@ -243,8 +241,8 @@ test('should emit unhandledError if request version is wrong', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_INVALID_REQUEST_VERSION')
-    assert.strictEqual(error.message, 'Invalid ITC request version: "0.0.0"')
+    deepStrictEqual(error.code, 'PLT_ITC_INVALID_REQUEST_VERSION')
+    deepStrictEqual(error.message, 'Invalid ITC request version: "0.0.0"')
     done()
   })
 
@@ -265,8 +263,8 @@ test('should emit unhandledError if request reqId is missing', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_MISSING_REQUEST_REQ_ID')
-    assert.strictEqual(error.message, 'ITC request reqId is missing')
+    deepStrictEqual(error.code, 'PLT_ITC_MISSING_REQUEST_REQ_ID')
+    deepStrictEqual(error.message, 'ITC request reqId is missing')
     done()
   })
 
@@ -289,8 +287,8 @@ test('should emit unhandledError if request name is missing', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_MISSING_REQUEST_NAME')
-    assert.strictEqual(error.message, 'ITC request name is missing')
+    deepStrictEqual(error.code, 'PLT_ITC_MISSING_REQUEST_NAME')
+    deepStrictEqual(error.message, 'ITC request name is missing')
     done()
   })
 
@@ -313,8 +311,8 @@ test('should emit unhandledError if response version is wrong', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_INVALID_RESPONSE_VERSION')
-    assert.strictEqual(error.message, 'Invalid ITC response version: "0.0.0"')
+    deepStrictEqual(error.code, 'PLT_ITC_INVALID_RESPONSE_VERSION')
+    deepStrictEqual(error.message, 'Invalid ITC response version: "0.0.0"')
     done()
   })
 
@@ -335,8 +333,8 @@ test('should emit unhandledError if response reqId is missing', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_MISSING_RESPONSE_REQ_ID')
-    assert.strictEqual(error.message, 'ITC response reqId is missing')
+    deepStrictEqual(error.code, 'PLT_ITC_MISSING_RESPONSE_REQ_ID')
+    deepStrictEqual(error.message, 'ITC response reqId is missing')
     done()
   })
 
@@ -359,8 +357,8 @@ test('should emit unhandledError if response name is missing', (t, done) => {
   itc2.listen()
 
   itc2.on('unhandledError', error => {
-    assert.strictEqual(error.code, 'PLT_ITC_MISSING_RESPONSE_NAME')
-    assert.strictEqual(error.message, 'ITC response name is missing')
+    deepStrictEqual(error.code, 'PLT_ITC_MISSING_RESPONSE_NAME')
+    deepStrictEqual(error.message, 'ITC response name is missing')
     done()
   })
 
@@ -403,8 +401,8 @@ test('should sanitize a request before sending', async t => {
   t.after(() => itc2.close())
 
   const response = await itc1.send(requestName, testRequest)
-  assert.deepStrictEqual(response, testResponse)
-  assert.deepStrictEqual(requests, [
+  deepStrictEqual(response, testResponse)
+  deepStrictEqual(requests, [
     {
       test: 'test-req-message',
       nested: { test: 'test-req-message' },
@@ -424,7 +422,7 @@ test('should throw if receiver ITC port was closed', async t => {
 
   itc2.handle(requestName, async () => {
     await sleep(10000)
-    assert.fail('Handler should not be called')
+    fail('Handler should not be called')
   })
 
   itc1.listen()
@@ -437,10 +435,10 @@ test('should throw if receiver ITC port was closed', async t => {
 
   try {
     await itc1.send(requestName, testRequest)
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
-    assert.strictEqual(error.message, 'ITC MessagePort is closed')
+    deepStrictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
+    deepStrictEqual(error.message, 'ITC MessagePort is closed')
   }
 })
 
@@ -454,15 +452,15 @@ test('should throw if sender ITC port was closed', async t => {
 
   try {
     await itc.send('test-command', 'test-req-message')
-    assert.fail('Expected an error to be thrown')
+    fail('Expected an error to be thrown')
   } catch (error) {
-    assert.strictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
-    assert.strictEqual(error.message, 'ITC MessagePort is closed')
+    deepStrictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
+    deepStrictEqual(error.message, 'ITC MessagePort is closed')
   }
 })
 
 test('should throw if ITC is created without a name', async t => {
-  assert.throws(() => new ITC({}))
+  throws(() => new ITC({}))
 })
 
 test('should send a Buffer through', async t => {
@@ -489,6 +487,36 @@ test('should send a Buffer through', async t => {
   t.after(() => itc2.close())
 
   const response = await itc1.send(requestName, testRequest)
-  assert.deepStrictEqual(Buffer.from(response.buffer), Buffer.from('test-response'))
-  assert.deepStrictEqual(Buffer.from(requests[0].buffer), Buffer.from('test-request'))
+  deepStrictEqual(Buffer.from(response.buffer), Buffer.from('test-response'))
+  deepStrictEqual(Buffer.from(requests[0].buffer), Buffer.from('test-request'))
+})
+
+test('should allow to get handlers', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  const requestName = 'test-command'
+  const testRequest = { test: 'test-req-message' }
+  const testResponse = { test: 'test-res-message' }
+
+  const fn = async request => {
+    requests.push(request)
+    return testResponse
+  }
+
+  const requests = []
+  itc2.handle(requestName, fn)
+  deepStrictEqual(itc2.getHandler(requestName), fn)
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  const response = await itc1.send(requestName, testRequest)
+  deepStrictEqual(response, testResponse)
+  deepStrictEqual(requests, [testRequest])
 })

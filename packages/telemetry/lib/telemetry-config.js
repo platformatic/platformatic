@@ -1,27 +1,14 @@
-'use strict'
+import { formatParamUrl } from '@fastify/swagger'
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { resourceFromAttributes } from '@opentelemetry/resources'
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
+import fastUri from 'fast-uri'
+import { fastifyTextMapGetter, fastifyTextMapSetter } from './fastify-text-map.js'
+import { PlatformaticContext } from './platformatic-context.js'
+import { PlatformaticTracerProvider } from './platformatic-trace-provider.js'
+import { getSpanProcessors } from './span-processors.js'
 
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { PlatformaticContext } = require('./platformatic-context')
-const {
-  fastifyTextMapGetter,
-  fastifyTextMapSetter,
-} = require('./fastify-text-map')
-const { formatParamUrl } = require('@fastify/swagger')
-const fastUri = require('fast-uri')
-const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } = require('@opentelemetry/semantic-conventions')
-const {
-  ConsoleSpanExporter,
-  BatchSpanProcessor,
-  SimpleSpanProcessor,
-  InMemorySpanExporter,
-} = require('@opentelemetry/sdk-trace-base')
-
-const FileSpanExporter = require('./file-span-exporter')
-
-const { Resource } = require('@opentelemetry/resources')
-const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
-
-const { name: moduleName, version: moduleVersion } = require('../package.json')
+import { name as moduleName, version as moduleVersion } from './version.js'
 
 // Platformatic telemetry plugin.
 // Supported Exporters:
@@ -30,7 +17,7 @@ const { name: moduleName, version: moduleVersion } = require('../package.json')
 // - zipkin (https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-exporter-zipkin/README.md)
 // - memory: for testing
 
-function formatSpanName (request, route) {
+export function formatSpanName (request, route) {
   if (route) {
     route = formatParamUrl(route)
   }
@@ -39,7 +26,7 @@ function formatSpanName (request, route) {
   return `${method} ${route ?? url}`
 }
 
-const formatSpanAttributes = {
+export const formatSpanAttributes = {
   request (request, route) {
     const { hostname, method, url, protocol = 'http' } = request
     // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
@@ -52,7 +39,7 @@ const formatSpanAttributes = {
       'http.request.method': method,
       'url.full': fullUrl,
       'url.path': urlData.path,
-      'url.scheme': protocol,
+      'url.scheme': protocol
     }
 
     if (route) {
@@ -71,112 +58,53 @@ const formatSpanAttributes = {
   },
   reply (reply) {
     return {
-      'http.response.status_code': reply.statusCode,
+      'http.response.status_code': reply.statusCode
     }
   },
   error (error) {
     return {
       'error.name': error.name,
       'error.message': error.message,
-      'error.stack': error.stack,
+      'error.stack': error.stack
     }
-  },
+  }
 }
 
 const initTelemetry = (opts, logger) => {
-  const { serviceName, version } = opts
-  let exporter = opts.exporter
-  if (!exporter) {
-    logger.warn('No exporter configured, defaulting to console.')
-    exporter = { type: 'console' }
-  }
-
-  const exporters = Array.isArray(exporter) ? exporter : [exporter]
-
-  logger.debug(
-    `Setting up platformatic telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
-  )
+  const { exporters, spanProcessors } = getSpanProcessors(opts, logger)
+  const { applicationName, version } = opts
 
   const provider = new PlatformaticTracerProvider({
-    resource: new Resource({
-      [ATTR_SERVICE_NAME]: serviceName,
-      [ATTR_SERVICE_VERSION]: version,
-    }),
+    resource: resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: applicationName,
+      [ATTR_SERVICE_VERSION]: version
+    })
   })
-
-  const exporterObjs = []
-  const spanProcessors = []
-  for (const exporter of exporters) {
-    // Exporter config:
-    // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, serviceName }
-
-    let exporterObj
-    if (exporter.type === 'console') {
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    } else if (exporter.type === 'otlp') {
-      // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-      const {
-        OTLPTraceExporter,
-      } = require('@opentelemetry/exporter-trace-otlp-proto')
-      exporterObj = new OTLPTraceExporter(exporterOptions)
-    } else if (exporter.type === 'zipkin') {
-      const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
-      exporterObj = new ZipkinExporter(exporterOptions)
-    } else if (exporter.type === 'memory') {
-      exporterObj = new InMemorySpanExporter()
-    } else if (exporter.type === 'file') {
-      exporterObj = new FileSpanExporter(exporterOptions)
-    } else {
-      logger.warn(
-        `Unknown exporter type: ${exporter.type}, defaulting to console.`
-      )
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    }
-
-    let spanProcessor
-    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    // , unless "processor" is set to "simple" (used only in tests)
-    if (exporter.processor === 'simple' || ['memory', 'console', 'file'].includes(exporter.type)) {
-      spanProcessor = new SimpleSpanProcessor(exporterObj)
-    } else {
-      spanProcessor = new BatchSpanProcessor(exporterObj)
-    }
-    spanProcessors.push(spanProcessor)
-    exporterObjs.push(exporterObj)
-  }
 
   provider.addSpanProcessor(spanProcessors)
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
 
-  return { tracer, exporters: exporterObjs, propagator, provider, spanProcessors }
+  return { tracer, exporters, propagator, provider, spanProcessors }
 }
 
-function setupTelemetry (opts, logger) {
+export function setupTelemetry (opts, logger) {
   const openTelemetryAPIs = initTelemetry(opts, logger)
   const { tracer, propagator, provider } = openTelemetryAPIs
   const skipOperations =
-    opts?.skip?.map((skip) => {
+    opts?.skip?.map(skip => {
       const { method, path } = skip
       return `${method}${path}`
     }) || []
 
   const startHTTPSpan = async (request, reply) => {
     if (skipOperations.includes(`${request.method}${request.url}`)) {
-      request.log.debug(
-        { operation: `${request.method}${request.url}` },
-        'Skipping telemetry'
-      )
+      request.log.debug({ operation: `${request.method}${request.url}` }, 'Skipping telemetry')
       return
     }
 
     // We populate the context with the incoming request headers
-    let context = propagator.extract(
-      new PlatformaticContext(),
-      request,
-      fastifyTextMapGetter
-    )
+    let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
 
     const route = request.routeOptions?.url ?? null
     const span = tracer.startSpan(formatSpanName(request, route), {}, context)
@@ -210,13 +138,13 @@ function setupTelemetry (opts, logger) {
   }
 
   //* Client APIs
-  const getSpanPropagationHeaders = (span) => {
+  const getSpanPropagationHeaders = span => {
     const context = span.context
     const headers = {}
     propagator.inject(context, headers, {
       set (_carrier, key, value) {
         headers[key] = value
-      },
+      }
     })
     return headers
   }
@@ -231,10 +159,7 @@ function setupTelemetry (opts, logger) {
     const urlObj = fastUri.parse(url)
 
     if (skipOperations.includes(`${method}${urlObj.path}`)) {
-      logger.debug(
-        { operation: `${method}${urlObj.path}` },
-        'Skipping telemetry'
-      )
+      logger.debug({ operation: `${method}${urlObj.path}` }, 'Skipping telemetry')
       return
     }
 
@@ -258,7 +183,7 @@ function setupTelemetry (opts, logger) {
           'http.request.method': method,
           'url.full': url,
           'url.path': urlObj.path,
-          'url.scheme': urlObj.scheme,
+          'url.scheme': urlObj.scheme
         }
       : {}
     span.setAttributes(attributes)
@@ -282,7 +207,7 @@ function setupTelemetry (opts, logger) {
         spanStatus.code = SpanStatusCode.ERROR
       }
       span.setAttributes({
-        'http.response.status_code': response.statusCode,
+        'http.response.status_code': response.statusCode
       })
 
       const httpCacheId = response.headers?.['x-plt-http-cache-id']
@@ -298,7 +223,7 @@ function setupTelemetry (opts, logger) {
     } else {
       span.setStatus({
         code: SpanStatusCode.ERROR,
-        message: 'No response received',
+        message: 'No response received'
       })
     }
     span.end()
@@ -330,7 +255,7 @@ function setupTelemetry (opts, logger) {
     if (error) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
-        message: error.message,
+        message: error.message
       })
     } else {
       const spanStatus = { code: SpanStatusCode.OK }
@@ -358,12 +283,6 @@ function setupTelemetry (opts, logger) {
     startSpan,
     endSpan,
     shutdown,
-    openTelemetryAPIs,
+    openTelemetryAPIs
   }
-}
-
-module.exports = {
-  setupTelemetry,
-  formatSpanName,
-  formatSpanAttributes
 }

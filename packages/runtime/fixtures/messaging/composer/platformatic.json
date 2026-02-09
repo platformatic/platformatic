@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.69.0.json",
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  }
+}

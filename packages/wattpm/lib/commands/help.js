@@ -1,19 +1,26 @@
-import { bold, isColorSupported } from 'colorette'
-import { logo } from '../logo.js'
+import { getExecutableId, getExecutableName, logFatalError, logo } from '@platformatic/foundation'
+import { loadApplicationsCommands } from '@platformatic/runtime'
+import { bold } from 'colorette'
+
+function sanitizeHelp (raw) {
+  return (typeof raw === 'function' ? raw() : raw).trim()
+}
 
 async function loadCommands () {
   const commands = {}
 
   for (const file of [
-    'init',
     'build',
+    'create',
     'execution',
+    'applications',
     'management',
+    'admin',
     'logs',
     'inject',
-    'external',
-    'patch-config',
-    'metrics'
+    'metrics',
+    'pprof',
+    'repl'
   ]) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
@@ -24,36 +31,65 @@ async function loadCommands () {
   return commands
 }
 
-async function showGeneralHelp () {
+export async function showGeneralHelp (logger) {
+  if (typeof logger !== 'function') {
+    logger = console.log
+  }
+
+  const executableId = getExecutableId()
   const commands = Object.values(await loadCommands())
+  const applicationsCommands = Object.values((await loadApplicationsCommands()).help)
+
   const options = [
-    { usage: '-V, --version', description: 'Show wattpm version' },
+    { usage: '-V, --version', description: `Show ${executableId} version` },
     { usage: '-v, --verbose', description: 'Show more information' },
+    {
+      usage: '-S, --socket <path>',
+      description: 'Path for the control socket. If not specified, the default platform-specific location is used.'
+    },
     { usage: '--help', description: 'Show this help' }
   ]
 
-  console.log('\nUsage: wattpm [options] [command]\n')
+  logger(logo())
+  logger(`\nUsage: ${executableId} [options] [command]\n`)
 
   // Compute the maximum length of options or commands
-  const maximumLength = Math.max(...options.map(c => c.usage.length), ...commands.map(c => c.usage.length)) + 5
+  const maximumLength =
+    Math.max(
+      ...options.map(c => c.usage.length),
+      ...commands.map(c => c.usage.length),
+      ...applicationsCommands.map(c => c.usage.length)
+    ) + 5
 
   // Print all options
-  console.log('Options:\n')
+  logger('Options:\n')
   for (const { usage, description } of options) {
-    console.log(`  ${usage.padEnd(maximumLength, ' ')} ${description}`)
+    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
   }
-  console.log('')
+  logger('')
 
   // Print all commands
-  console.log('Commands:\n')
+  logger('Commands:\n')
   for (const { usage, description } of commands) {
-    console.log(`  ${usage.padEnd(maximumLength, ' ')} ${description}`)
+    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
   }
-  console.log('')
+  logger('')
+
+  if (applicationsCommands.length) {
+    logger('Applications Commands:\n')
+    for (const { usage, description } of applicationsCommands) {
+      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)})`)
+    }
+    logger('')
+  }
 }
 
-function showHelp (command) {
-  console.log(`\nUsage: wattpm ${command.usage}\n\n${command.description}.\n`)
+export function showHelp (command, logger) {
+  if (typeof logger !== 'function') {
+    logger = console.log
+  }
+
+  logger(`\nUsage: ${getExecutableId()} ${sanitizeHelp(command.usage)}\n\n${sanitizeHelp(command.description)}.\n`)
 
   let { options, args } = command
   options ??= []
@@ -64,24 +100,24 @@ function showHelp (command) {
 
   // Print all options
   if (options.length) {
-    console.log('Options:\n')
+    logger('Options:\n')
     for (const { usage, description } of options) {
-      console.log(`  ${usage.padEnd(maximumLength, ' ')} ${description}`)
+      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
     }
-    console.log('')
+    logger('')
   }
 
   // Print all arguments
   if (args.length) {
-    console.log('Arguments:\n')
+    logger('Arguments:\n')
     for (const { name, description } of args) {
-      console.log(`  ${name.padEnd(maximumLength, ' ')} ${description}`)
+      logger(`  ${name.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
     }
-    console.log('')
+    logger('')
   }
 
   if (command.footer) {
-    console.log(command.footer.trim() + '\n')
+    logger(sanitizeHelp(command.footer) + '\n')
   }
 }
 
@@ -89,23 +125,38 @@ export async function helpCommand (logger, args) {
   const command = args?.[0]
 
   if (!command) {
-    /* c8 ignore next 3 */
-    if (isColorSupported && process.stdout.isTTY) {
-      console.log(logo)
-    }
-
     return showGeneralHelp()
   }
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    logger.fatal(`Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
+    const applicationsCommands = (await loadApplicationsCommands()).help
+
+    if (applicationsCommands[command]) {
+      // If the command is an application command, we show the help for that command
+      return showHelp(applicationsCommands[command])
+    }
+
+    return logFatalError(
+      logger,
+      `Unknown command ${bold(command)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+    )
   }
 
   showHelp(commands[command])
 }
 
 export const help = {
-  help: { usage: 'help [command]', description: 'Show help about Watt or one of its commands' },
-  version: { usage: 'version', description: 'Show current Watt version' }
+  help: {
+    usage: 'help [command]',
+    description () {
+      return `Show help about ${getExecutableName()} or one of its commands`
+    }
+  },
+  version: {
+    usage: 'version',
+    description () {
+      return `Show current ${getExecutableName()} version`
+    }
+  }
 }

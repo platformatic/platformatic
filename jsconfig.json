@@ -1,15 +1,41 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    // General settings
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    // Module settings
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "allowJs": true,
     "checkJs": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "strict": false,
-    "skipLibCheck": true,
-    "resolveJsonModule": true
+    // Language settings
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": false,
+    // Transpilation settings
+    "removeComments": true,
+    "newLine": "lf",
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
   },
-  "exclude": ["node_modules"]
+  "include": ["packages/**/*.js", "scripts/**/*.js", "packages/**/*.ts", "scripts/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "tmp",
+    "dist",
+    "node_modules/**",
+    "tmp/**",
+    "dist/**",
+    "**/node_modules",
+    "**/tmp",
+    "**/dist"
+  ]
 }

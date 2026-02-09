@@ -1,99 +1,186 @@
-import { RuntimeApiClient } from '@platformatic/control'
-import { startCommand as pltStartCommand } from '@platformatic/runtime'
-import { ensureLoggableError } from '@platformatic/utils'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
+import {
+  ensureLoggableError,
+  FileWatcher,
+  findRuntimeConfigurationFile,
+  getRoot,
+  logFatalError,
+  parseArgs
+} from '@platformatic/foundation'
+import { create } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
-import { watch } from 'node:fs/promises'
-import { findConfigurationFile, getMatchingRuntime, getRoot, parseArgs } from '../utils.js'
+import { createInterface } from 'node:readline'
+import { getSocket } from '../utils.js'
 
 export async function devCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
-  /* c8 ignore next */
-  const root = getRoot(positionals)
-
-  const configurationFile = await findConfigurationFile(logger, root)
-  let runtime = await pltStartCommand(['-c', configurationFile], true, true)
-
-  // Add a watcher on the configurationFile so that we can eventually restart the runtime
-  const watcher = watch(configurationFile, { persistent: false })
-  // eslint-disable-next-line no-unused-vars
-  for await (const _ of watcher) {
-    runtime.logger.info('The configuration file has changed, reloading the application ...')
-    await runtime.close()
-    runtime = await pltStartCommand(['-c', configurationFile], true, true)
-  }
-  /* c8 ignore next */
-}
-
-export async function startCommand (logger, args) {
-  const { positionals, values } = parseArgs(
+  const {
+    values: { config, env },
+    positionals
+  } = parseArgs(
     args,
     {
-      inspect: {
-        type: 'boolean',
-        short: 'i'
+      config: {
+        type: 'string',
+        short: 'c'
+      },
+      env: {
+        type: 'string',
+        short: 'e'
       }
     },
     false
   )
-  /* c8 ignore next */
   const root = getRoot(positionals)
 
-  const configurationFile = await findConfigurationFile(logger, root)
-  const cmd = ['--production', '-c', configurationFile]
-  if (values.inspect) {
-    cmd.push('--inspect')
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+
+  /* c8 ignore next 3 - Hard to test */
+  if (!configurationFile) {
+    return
   }
-  await pltStartCommand(cmd, true)
+  /* c8 ignore next 15 - covered */
+
+  let runtime
+  try {
+    runtime = await create(root, configurationFile, { start: true, envFile: env })
+  } catch (err) {
+    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
+      return logFatalError(
+        logger,
+        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
+      )
+    }
+
+    throw err
+  }
+
+  // Handle reloading via either file changes or stdin "rs" command
+  const { promise, reject } = Promise.withResolvers()
+
+  async function reloadApplication () {
+    await runtime.close()
+    runtime = await create(root, configurationFile, { start: true, reloaded: true })
+  }
+
+  const watcher = new FileWatcher({ path: configurationFile })
+  watcher.startWatching()
+  watcher.on('update', () => {
+    runtime.logger.info('The configuration file has changed, reloading the application ...')
+    reloadApplication().catch(reject)
+  })
+
+  const rl = createInterface({ input: process.stdin })
+  rl.on('line', line => {
+    if (line.trim() !== 'rs') {
+      return
+    }
+
+    runtime.logger.info('Received "rs" from the stdin, Reloading the application ...')
+    reloadApplication().catch(reject)
+  })
+
+  return promise
+}
+
+export async function startCommand (logger, args) {
+  const {
+    positionals,
+    values: { inspect, config, env }
+  } = parseArgs(
+    args,
+    {
+      config: {
+        type: 'string',
+        short: 'c'
+      },
+      inspect: {
+        type: 'boolean',
+        short: 'i'
+      },
+      env: {
+        type: 'string',
+        short: 'e'
+      }
+    },
+    false
+  )
+
+  const root = getRoot(positionals)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+
+  /* c8 ignore next 3 - Hard to test */
+  if (!configurationFile) {
+    return
+  }
+
+  try {
+    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
+  } catch (err) {
+    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
+      return logFatalError(
+        logger,
+        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
+      )
+    }
+
+    throw err
+  }
 }
 
 export async function stopCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
 
     await client.stopRuntime(runtime.pid)
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} have been stopped.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      return logFatalError(logger, 'Cannot find a matching runtime.')
+      /* c8 ignore next 3 - Hard to test */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
 export async function restartCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
-    const client = new RuntimeApiClient()
-    const [runtime] = await getMatchingRuntime(client, positionals)
+    const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
-    await client.restartRuntime(runtime.pid)
-    await client.close()
+    await client.restartRuntime(runtime.pid, ...applications)
 
     logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      return logFatalError(logger, 'Cannot find a matching runtime.')
+      /* c8 ignore next 7 - Hard to test */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
+      return logFatalError(
+        logger,
+        { error: ensureLoggableError(error) },
+        `Cannot restart the runtime: ${error.message}`
+      )
     }
+  } finally {
+    await client.close()
   }
 }
 
 export async function reloadCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
-    const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
 
     // Stop the previous runtime
@@ -110,16 +197,17 @@ export async function reloadCommand (logger, args) {
     })
 
     child.unref()
-    await client.close()
 
     logger.done(`Runtime ${bold(runtime.packageName)} have been reloaded and it is now running as PID ${child.pid}.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      return logFatalError(logger, 'Cannot find a matching runtime.')
+      /* c8 ignore next 3 - Hard to test */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
+  } finally {
+    await client.close()
   }
 }
 
@@ -130,7 +218,17 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
+      }
+    ],
+    options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
+      {
+        usage: '-e, --env <path>',
+        description: 'Path to a custom .env file to load environment variables from'
       }
     ]
   },
@@ -140,13 +238,21 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (the default is the current directory)'
+        description: 'The directory containing the project (the default is the current directory)'
       }
     ],
     options: [
       {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
+      {
         usage: '-i --inspect',
-        description: 'Enables the inspector for each service'
+        description: 'Enables the inspector for each application'
+      },
+      {
+        usage: '-e, --env <path>',
+        description: 'Path to a custom .env file to load environment variables from'
       }
     ]
   },
@@ -162,13 +268,19 @@ export const help = {
     ]
   },
   restart: {
-    usage: 'restart [id]',
-    description: 'Restarts all services of a running application',
+    usage: 'restart [id] [application...]',
+    description: 'Restarts applications',
+    footer:
+      'All applications are restarted in parallel, and within each application, workers are replaced one at a time.',
     args: [
       {
         name: 'id',
         description:
           'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+      },
+      {
+        name: 'application',
+        description: 'The name of the application to restart (if omitted, all applications are restarted)'
       }
     ]
   },

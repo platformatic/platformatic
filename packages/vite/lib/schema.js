@@ -1,8 +1,10 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
 const vite = {
   type: 'object',
@@ -24,7 +26,7 @@ const vite = {
       default: {}
     },
     ssr: {
-      oneOf: [
+      anyOf: [
         {
           type: 'object',
           properties: {
@@ -39,6 +41,23 @@ const vite = {
         { type: 'boolean' }
       ],
       default: false
+    },
+    notFoundHandler: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            path: { type: 'string', default: 'index.html' },
+            contentType: { type: 'string', default: 'text/html; charset=utf-8' },
+            statusCode: { type: 'number', default: 200 }
+          },
+          additionalProperties: false
+        }
+      ],
+      default: false
     }
   },
   default: {},
@@ -50,7 +69,7 @@ export const schemaComponents = { vite }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Vite Stackable',
+  title: 'Platformatic Vite Config',
   type: 'object',
   properties: {
     $schema: {
@@ -59,7 +78,8 @@ export const schema = {
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
-    application: basicSchemaComponents.application,
+    application: basicSchemaComponents.buildableApplication,
+    runtime: utilsSchemaComponents.wrappedRuntime,
     vite
   },
   additionalProperties: false

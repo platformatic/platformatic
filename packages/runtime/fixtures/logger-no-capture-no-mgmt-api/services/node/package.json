@@ -1,0 +1,8 @@
+{
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@platformatic/node": "^2.63.0",
+    "fastify": "^5.7.0"
+  }
+}

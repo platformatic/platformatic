@@ -1,17 +1,13 @@
-'use strict'
+import { fail, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should fail to start running service', async (t) => {
+test('should fail to start running application', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -20,9 +16,9 @@ test('should fail to start running service', async (t) => {
   })
 
   try {
-    await app.startService('with-logger')
-    assert.fail('should have thrown')
+    await app.startApplication('with-logger')
+    fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, 'Application is already started')
+    strictEqual(err.message, 'Application is already started')
   }
 })

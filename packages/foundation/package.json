@@ -1,0 +1,53 @@
+{
+  "name": "@platformatic/foundation",
+  "version": "3.37.0",
+  "description": "Platformatic Foundation",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@fastify/deepmerge": "^2.0.0",
+    "@fastify/error": "^4.0.0",
+    "@iarna/toml": "^2.2.5",
+    "@watchable/unpromise": "^1.0.2",
+    "ajv": "^8.12.0",
+    "boring-name-generator": "^1.0.3",
+    "colorette": "^2.0.19",
+    "debug": "^4.4.3",
+    "fast-json-patch": "^3.1.1",
+    "json5": "^2.2.3",
+    "leven": "~3.1.0",
+    "pino": "^9.9.0",
+    "pino-pretty": "^13.0.0",
+    "semver": "^7.6.3",
+    "undici": "7.18.2",
+    "yaml": "^2.4.1"
+  },
+  "devDependencies": {
+    "c8": "^10.0.0",
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "fastify": "^5.7.0",
+    "neostandard": "^0.12.0",
+    "pino": "^9.9.0",
+    "pino-test": "^1.0.1",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

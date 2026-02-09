@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.60.0.json",
+  "entrypoint": "frontend",
+  "services": [
+    {
+      "id": "frontend",
+      "path": "./services/frontend"
+    }
+  ],
+  "logger": {
+    "level": "debug"
+  },
+  "managementApi": false
+}

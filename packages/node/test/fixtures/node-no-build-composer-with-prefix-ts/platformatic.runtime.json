@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "entrypoint": "composer",
+  "services": [
+    {
+      "id": "frontend",
+      "path": "./services/frontend"
+    },
+    {
+      "id": "backend",
+      "config": "platformatic.json",
+      "path": "./services/backend"
+    },
+    {
+      "id": "composer",
+      "config": "platformatic.json",
+      "path": "./services/composer"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  }
+}

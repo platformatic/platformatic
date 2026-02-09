@@ -1,17 +1,13 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should stop service by service id', async (t) => {
+test('should stop application by application id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -20,14 +16,14 @@ test('should stop service by service id', async (t) => {
   })
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('with-logger')
+    strictEqual(applicationDetails.status, 'started')
   }
 
-  await app.stopService('with-logger')
+  await app.stopApplication('with-logger')
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger', true)
-    assert.strictEqual(serviceDetails.status, 'stopped')
+    const applicationDetails = await app.getApplicationDetails('with-logger', true)
+    strictEqual(applicationDetails.status, 'stopped')
   }
 })

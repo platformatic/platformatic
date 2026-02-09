@@ -21,7 +21,7 @@
     }
   },
   "logger": {
-    "level": "error"
+    "level": "trace"
   },
   "restartOnError": 1000,
   "gracefulShutdown": {
@@ -30,7 +30,7 @@
   },
   "health": {
     "enabled": true,
-    "gracePeriod": 100,
+    "gracePeriod": 50,
     "interval": 500
   },
   "metrics": true

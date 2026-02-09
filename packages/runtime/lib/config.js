@@ -1,37 +1,292 @@
-'use strict'
+import { importCapabilityAndConfig, validationOptions } from '@platformatic/basic'
+import {
+  extractModuleFromSchemaUrl,
+  findConfigurationFile,
+  kMetadata,
+  loadConfiguration,
+  loadConfigurationModule,
+  loadModule,
+  omitProperties,
+  runtimeUnwrappablePropertiesList
+} from '@platformatic/foundation'
+import { readdir, readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { isAbsolute, join, resolve as resolvePath } from 'node:path'
 
-const { readdir } = require('node:fs/promises')
-const { join, resolve: pathResolve, isAbsolute } = require('node:path')
+import {
+  InspectAndInspectBrkError,
+  InspectorHostError,
+  InspectorPortError,
+  InvalidArgumentError,
+  InvalidEntrypointError,
+  MissingEntrypointError
+} from './errors.js'
+import { schema } from './schema.js'
+import { upgrade } from './upgrade.js'
 
-const { createRequire, loadModule } = require('@platformatic/utils')
-const ConfigManager = require('@platformatic/config')
-const { Store } = require('@platformatic/config')
+// Validate and coerce workers values early to avoid runtime hangs when invalid
+function coercePositiveInteger (value) {
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value) || value < 1) return null
+    return value
+  }
+  if (typeof value === 'string') {
+    // Trim to handle accidental spaces
+    const trimmed = value.trim()
+    if (trimmed.length === 0) return null
+    const num = Number(trimmed)
+    if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) return null
+    return num
+  }
+  return null
+}
 
-const errors = require('./errors')
-const { schema } = require('./schema')
-const upgrade = require('./upgrade')
-const { parseArgs } = require('node:util')
+function raiseInvalidWorkersError (location, received, hint) {
+  const extra = hint ? ` (${hint})` : ''
+  throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
+}
 
-async function _transformConfig (configManager, args) {
-  const config = configManager.current
+function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
+  if (typeof config.workers !== 'undefined') {
+    // Number
+    if (typeof config.workers !== 'object') {
+      const coerced = coercePositiveInteger(config.workers)
 
-  const { values } = parseArgs({
-    args,
-    strict: false,
-    options: { production: { type: 'boolean', short: 'p', default: false } }
+      if (coerced === null) {
+        const raw = config.workers
+        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+        raiseInvalidWorkersError(prefix, config.workers, hint)
+      } else {
+        config.workers = { static: coerced, dynamic: false }
+      }
+      // Object
+    } else {
+      for (const key of ['minimum', 'maximum', 'static']) {
+        if (typeof config.workers[key] === 'undefined') {
+          continue
+        }
+
+        const coerced = coercePositiveInteger(config.workers[key])
+        if (coerced === null) {
+          const raw = config.workers
+          const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
+          raiseInvalidWorkersError(`${prefix} ${key}`, config.workers, hint)
+        } else {
+          config.workers[key] = coerced
+        }
+      }
+    }
+  } else {
+    config.workers = {}
+  }
+
+  // Fill missing values from defaults
+  for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
+    if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
+      config.workers[key] = defaultWorkers[key]
+    }
+  }
+
+  // Additional validations
+  if (config.workers.maximum < config.workers.minimum) {
+    const t = config.workers.minimum
+    config.workers.minimum = config.workers.maximum
+    config.workers.maximum = t
+  }
+
+  if (typeof config.workers.static === 'undefined') {
+    config.workers.static = config.workers.minimum
+  }
+}
+
+export function pprofCapturePreloadPath () {
+  const require = createRequire(import.meta.url)
+
+  let pprofCapturePath
+  try {
+    pprofCapturePath = require.resolve('@platformatic/wattpm-pprof-capture')
+  } catch (err) {
+    // No-op
+  }
+
+  return pprofCapturePath
+}
+
+export function autoDetectPprofCapture (config) {
+  const pprofCapturePath = pprofCapturePreloadPath()
+
+  // Add to preload if not already present
+  if (!config.preload) {
+    config.preload = []
+  } else if (typeof config.preload === 'string') {
+    config.preload = [config.preload]
+  }
+
+  if (pprofCapturePath && !config.preload.includes(pprofCapturePath)) {
+    config.preload.push(pprofCapturePath)
+  }
+
+  return config
+}
+
+export async function wrapInRuntimeConfig (config, context) {
+  let applicationId = 'main'
+  try {
+    const packageJson = JSON.parse(await readFile(join(config[kMetadata].root, 'package.json'), 'utf-8'))
+    applicationId = packageJson?.name ?? 'main'
+
+    if (applicationId.startsWith('@')) {
+      applicationId = applicationId.split('/')[1]
+    }
+  } catch (err) {
+    // on purpose, the package.json might be missing
+  }
+
+  // If the application supports its (so far, only @platformatic/service and descendants)
+  const { hostname, port, http2, https } = config.server ?? {}
+  const server = { hostname, port, http2, https }
+  const production = context?.isProduction ?? context?.production
+
+  const runtimeConfig = config.runtime ?? {}
+
+  // Important: do not change the order of the properties in this object
+  /* c8 ignore next */
+  const wrapped = {
+    $schema: schema.$id,
+    server,
+    watch: !production,
+    ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
+    entrypoint: applicationId,
+    applications: [
+      {
+        id: applicationId,
+        path: config[kMetadata].root,
+        config: config[kMetadata].path,
+        ...(runtimeConfig.application ?? {})
+      }
+    ]
+  }
+
+  return loadConfiguration(wrapped, context?.schema ?? schema, {
+    validationOptions,
+    transform,
+    upgrade,
+    replaceEnv: true,
+    root: config[kMetadata].root,
+    ...context
   })
-  const production = values.production
+}
 
-  let services
-  if (config.web?.length) {
-    if (config.services?.length) {
-      throw new errors.InvalidServicesWithWebError()
+export function parseInspectorOptions (config, inspect, inspectBreak) {
+  const hasInspect = inspect != null
+  const hasInspectBrk = inspectBreak != null
+
+  if (hasInspect && hasInspectBrk) {
+    throw new InspectAndInspectBrkError()
+  }
+
+  const value = inspectBreak ?? inspect
+
+  if (!value) {
+    return
+  }
+
+  let host = '127.0.0.1'
+  let port = 9229
+
+  if (typeof value === 'string' && value.length > 0) {
+    const splitAt = value.lastIndexOf(':')
+
+    if (splitAt === -1) {
+      port = value
+    } else {
+      host = value.substring(0, splitAt)
+      port = value.substring(splitAt + 1)
     }
 
-    services = config.web
-  } else {
-    services = config.services ?? []
+    port = Number.parseInt(port, 10)
+
+    if (!(port === 0 || (port >= 1024 && port <= 65535))) {
+      throw new InspectorPortError()
+    }
+
+    if (!host) {
+      throw new InspectorHostError()
+    }
   }
+
+  config.inspectorOptions = { host, port, breakFirstLine: hasInspectBrk, watchDisabled: !!config.watch }
+  config.watch = false
+}
+
+export async function prepareApplication (config, application, defaultWorkers) {
+  // We need to have absolute paths here, ot the `loadConfig` will fail
+  // Make sure we don't resolve if env var was not replaced
+  if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
+    application.path = resolvePath(config[kMetadata].root, application.path)
+  }
+
+  if (application.path && application.config) {
+    application.config = resolvePath(application.path, application.config)
+  }
+
+  // Skip capability detection for external services (url without path)
+  // These services will have their path resolved later in runtime.js #setupApplication
+  // Attempting to detect capability here would cause slow glob operations on the cwd
+  if (application.url && !application.path) {
+    application.type = 'unknown'
+  } else {
+    try {
+      let pkg
+
+      if (application.config) {
+        const config = await loadConfiguration(application.config)
+        pkg = await loadConfigurationModule(application.path, config)
+
+        application.type = extractModuleFromSchemaUrl(config, true).module
+        application.skipTelemetryHooks = pkg.skipTelemetryHooks
+      } else {
+        const { moduleName, capability } = await importCapabilityAndConfig(application.path)
+        pkg = capability
+
+        application.type = moduleName
+      }
+
+      application.skipTelemetryHooks = pkg.skipTelemetryHooks
+
+      // This is needed to work around Rust bug on dylibs:
+      // https://github.com/rust-lang/rust/issues/91979
+      // https://github.com/rollup/rollup/issues/5761
+      const _require = createRequire(application.path)
+      for (const m of pkg.modulesToLoad ?? []) {
+        const toLoad = _require.resolve(m)
+        loadModule(_require, toLoad).catch(() => {})
+      }
+    } catch (err) {
+      // This should not happen, it happens on running some unit tests if we prepare the runtime
+      // when not all the applications configs are available. Given that we are running this only
+      // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
+      application.type = 'unknown'
+    }
+  }
+
+  // Validate and coerce per-service workers
+  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
+
+  application.entrypoint = application.id === config.entrypoint
+  application.dependencies ??= []
+  application.localUrl = `http://${application.id}.plt.local`
+
+  if (typeof application.watch === 'undefined') {
+    application.watch = config.watch
+  }
+
+  return application
+}
+
+export async function transform (config, _, context) {
+  const production = context?.isProduction ?? context?.production
+  const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
 
   const watchType = typeof config.watch
   if (watchType === 'string') {
@@ -40,16 +295,60 @@ async function _transformConfig (configManager, args) {
     config.watch = !production
   }
 
+  // Migrate the old verticalScaler property, only applied if the new settings are not set, otherwise workers takes precedence
+  // TODO: Remove in the next major version
+  if (config.verticalScaler) {
+    config.workers ??= {}
+    config.workers.total ??= config.verticalScaler.maxTotalWorkers
+    config.workers.dynamic ??= config.verticalScaler.enabled
+    config.workers.minimum ??= config.verticalScaler.minWorkers ?? 1
+    config.workers.maximum ??= config.verticalScaler.maxWorkers ?? config.verticalScaler.maxTotalWorkers ?? 1
+    config.workers.maxMemory ??= config.verticalScaler.maxTotalMemory
+
+    if (config.verticalScaler.cooldownSec) {
+      config.workers.cooldown ??= config.verticalScaler.cooldownSec * 1000
+    }
+    if (config.verticalScaler.gracePeriod) {
+      config.workers.gracePeriod ??= config.verticalScaler.gracePeriod
+    }
+    if (config.verticalScaler.scaleUpELU) {
+      config.workers.scaleUpELU ??= config.verticalScaler.scaleUpELU
+    }
+    if (config.verticalScaler.scaleDownELU) {
+      config.workers.scaleDownELU ??= config.verticalScaler.scaleDownELU
+    }
+
+    if (config.verticalScaler.applications) {
+      for (const appId in config.verticalScaler.applications) {
+        let appConfig = applications.find((app) => app.id === appId)
+        if (!appConfig) {
+          appConfig = { id: appId, workers: {} }
+          applications.push(appConfig)
+        }
+
+        const scaleConfig = config.verticalScaler.applications[appId]
+        const workersConfig = appConfig.workers
+
+        workersConfig.minimum ??= scaleConfig.minWorkers ?? config.workers.minimum
+        workersConfig.maximum ??= scaleConfig.maxWorkers ?? config.workers.maximum
+
+        if (scaleConfig.scaleUpELU) {
+          workersConfig.scaleUpELU ??= scaleConfig.scaleUpELU
+        }
+        if (scaleConfig.scaleDownELU) {
+          workersConfig.scaleDownELU ??= scaleConfig.scaleDownELU
+        }
+      }
+    }
+
+    config.verticalScaler = undefined
+  }
+
   if (config.autoload) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
-    // This is a hack, but it's the only way to not fix the paths for the autoloaded services
-    // while we are upgrading the config
-    if (configManager._fixPaths) {
-      path = pathResolve(configManager.dirname, path)
-    }
-
+    path = resolvePath(config[kMetadata].root, path)
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -64,286 +363,114 @@ async function _transformConfig (configManager, args) {
       const entryPath = join(path, entry.name)
 
       let config
-      const configFilename = mapping.config ?? (await ConfigManager.findConfigFile(entryPath))
+      const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))
 
       if (typeof configFilename === 'string') {
         config = join(entryPath, configFilename)
       }
 
-      const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp, health: mapping.health }
-      const existingServiceId = services.findIndex(service => service.id === id)
+      const application = { id, config, path: entryPath, ...mapping }
+      const existingApplicationId = applications.findIndex(application => application.id === id)
 
-      if (existingServiceId !== -1) {
-        services[existingServiceId] = { ...service, ...services[existingServiceId] }
+      if (existingApplicationId !== -1) {
+        applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
       } else {
-        services.push(service)
+        applications.push(application)
       }
     }
   }
 
-  configManager.current.serviceMap = new Map()
-  configManager.current.inspectorOptions = undefined
+  config.inspectorOptions = undefined
+  parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   let hasValidEntrypoint = false
 
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
+  // Root-level workers
+  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
+  const defaultWorkers = config.workers
 
-    // We need to have absolute paths here, ot the `loadConfig` will fail
-    // Make sure we don't resolve if env var was not replaced
-    if (service.path && !isAbsolute(service.path) && !service.path.match(/^\{.*\}$/)) {
-      service.path = pathResolve(configManager.dirname, service.path)
-    }
+  for (let i = 0; i < applications.length; ++i) {
+    const application = await prepareApplication(config, applications[i], defaultWorkers)
 
-    if (configManager._fixPaths && service.path && service.config) {
-      service.config = pathResolve(service.path, service.config)
-    }
-
-    if (service.config) {
-      try {
-        const store = new Store({ cwd: service.path })
-        const serviceConfig = await store.loadConfig(service)
-        service.isPLTService = !!serviceConfig.app.isPLTService
-        service.type = serviceConfig.app.configType
-        const _require = createRequire(service.path)
-        // This is needed to work around Rust bug on dylibs:
-        // https://github.com/rust-lang/rust/issues/91979
-        // https://github.com/rollup/rollup/issues/5761
-        // TODO(mcollina): we should expose this inside every stackable configuration.
-        serviceConfig.app.modulesToLoad?.forEach(m => {
-          const toLoad = _require.resolve(m)
-          loadModule(_require, toLoad).catch(() => {})
-        })
-      } catch (err) {
-        // Fallback if for any reason a dependency is not found
-        try {
-          const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
-          await manager.parse()
-          const config = manager.current
-          const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
-          service.type = type
-          service.isPLTService = !!config.isPLTService
-        } catch (err) {
-          // This should not happen, it happens on running some unit tests if we prepare the runtime
-          // when not all the services configs are available. Given that we are running this only
-          // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
-          service.type = 'unknown'
-          service.isPLTService = false
-        }
-      }
-    } else {
-      // We need to identify the service type
-      const basic = await import('@platformatic/basic')
-      service.isPLTService = false
-      try {
-        const imported = await basic.importStackableAndConfig(service.path)
-        service.type = imported.stackable.default.configType
-        const _require = createRequire(service.path)
-        // This is needed to work around Rust bug on dylibs:
-        // https://github.com/rust-lang/rust/issues/91979
-        // https://github.com/rollup/rollup/issues/5761
-        // TODO(mcollina): we should expose this inside every stackable configuration.
-        imported.stackable.default.modulesToLoad?.forEach(m => {
-          const toLoad = _require.resolve(m)
-          loadModule(_require, toLoad).catch(() => {})
-        })
-      } catch {
-        // Nothing to do here
-      }
-    }
-
-    service.entrypoint = service.id === config.entrypoint
-    service.dependencies = []
-    service.localServiceEnvVars = new Map()
-    service.localUrl = `http://${service.id}.plt.local`
-
-    if (typeof service.watch === 'undefined') {
-      service.watch = config.watch
-    }
-
-    if (service.entrypoint) {
+    if (application.entrypoint) {
       hasValidEntrypoint = true
     }
-
-    configManager.current.serviceMap.set(service.id, service)
   }
 
   // If there is no entrypoint, autodetect one
   if (!config.entrypoint) {
-    // If there is only one service, it becomes the entrypoint
-    if (services.length === 1) {
-      services[0].entrypoint = true
-      config.entrypoint = services[0].id
+    // If there is only one application, it becomes the entrypoint
+    if (applications.length === 1) {
+      applications[0].entrypoint = true
+      config.entrypoint = applications[0].id
       hasValidEntrypoint = true
     } else {
-      // Search if exactly service uses @platformatic/composer
-      const composers = []
+      // Search if exactly application uses @platformatic/gateway
+      const gateways = []
 
-      for (const service of services) {
-        if (!service.config) {
+      for (const application of applications) {
+        if (!application.config) {
           continue
         }
 
-        if (service.type === 'composer') {
-          composers.push(service.id)
+        if (application.type === '@platformatic/gateway') {
+          gateways.push(application.id)
         }
       }
 
-      if (composers.length === 1) {
-        services.find(s => s.id === composers[0]).entrypoint = true
-        config.entrypoint = composers[0]
+      if (gateways.length === 1) {
+        applications.find(s => s.id === gateways[0]).entrypoint = true
+        config.entrypoint = gateways[0]
         hasValidEntrypoint = true
       }
     }
   }
 
-  if (!hasValidEntrypoint) {
+  if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
     if (config.entrypoint) {
-      throw new errors.InvalidEntrypointError(config.entrypoint)
-    } else if (services.length >= 1) {
-      throw new errors.MissingEntrypointError()
+      throw new InvalidEntrypointError(config.entrypoint)
+    } else if (applications.length >= 1) {
+      throw new MissingEntrypointError()
     }
-    // If there are no services, and no entrypoint it's an empty app.
+    // If there are no applications, and no entrypoint it's an empty app.
     // It won't start, but we should be able to parse and operate on it,
-    // like adding other services.
+    // like adding other applications.
   }
 
-  configManager.current.services = services
-  configManager.current.web = undefined
+  if (typeof config.metrics === 'boolean') {
+    config.metrics = {
+      enabled: config.metrics,
+      timeout: 1000
+    }
+  }
+
+  if (config.policies?.deny) {
+    for (const [from, to] of Object.entries(config.policies.deny)) {
+      if (typeof to === 'string') {
+        config.policies.deny[from] = [to]
+      }
+    }
+  }
+
+  config.applications = applications
+  config.web = undefined
+  config.services = undefined
+  config.logger ??= {}
 
   if (production) {
     // Any value below 10 is considered as "immediate restart" and won't be processed via setTimeout or similar
     // Important: do not use 2 otherwise ajv will convert to boolean `true`
-    configManager.current.restartOnError = 2
+    config.restartOnError = 2
   } else {
-    if (configManager.current.restartOnError === true) {
-      configManager.current.restartOnError = 5000
-    } else if (configManager.current.restartOnError < 0) {
-      configManager.current.restartOnError = 0
+    if (config.restartOnError === true) {
+      config.restartOnError = 5000
+    } else if (config.restartOnError < 0) {
+      config.restartOnError = 0
     }
   }
-}
 
-async function platformaticRuntime () {
-  // No-op. Here for consistency with other app types.
-}
+  // Auto-detect and add pprof capture if available
+  autoDetectPprofCapture(config)
 
-platformaticRuntime[Symbol.for('skip-override')] = true
-platformaticRuntime.schema = schema
-platformaticRuntime.configType = 'runtime'
-platformaticRuntime.configManagerConfig = {
-  version: require('../package.json').version,
-  schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  async transformConfig (args) {
-    await _transformConfig(this, args)
-  },
-  upgrade
-}
-
-async function wrapConfigInRuntimeConfig ({ configManager, args }) {
-  let serviceId = 'main'
-  try {
-    const packageJson = join(configManager.dirname, 'package.json')
-    serviceId = require(packageJson).name || 'main'
-    if (serviceId.startsWith('@')) {
-      serviceId = serviceId.split('/')[1]
-    }
-  } catch (err) {
-    // on purpose, the package.json might be missing
-  }
-
-  /* c8 ignore next */
-  const wrapperConfig = {
-    $schema: schema.$id,
-    entrypoint: serviceId,
-    watch: true,
-    services: [
-      {
-        id: serviceId,
-        path: configManager.dirname,
-        config: configManager.fullPath
-      }
-    ]
-  }
-  const cm = new ConfigManager({
-    source: wrapperConfig,
-    schema,
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false
-    },
-    transformConfig (args) {
-      return _transformConfig(this, args)
-    }
-  })
-
-  await cm.parseAndValidate()
-  return cm
-}
-
-function parseInspectorOptions (configManager) {
-  const { current, args } = configManager
-  const hasInspect = 'inspect' in args
-  const hasInspectBrk = 'inspect-brk' in args
-  let inspectFlag
-
-  if (hasInspect) {
-    inspectFlag = args.inspect
-
-    if (hasInspectBrk) {
-      throw new errors.InspectAndInspectBrkError()
-    }
-  } else if (hasInspectBrk) {
-    inspectFlag = args['inspect-brk']
-  }
-
-  if (inspectFlag !== undefined) {
-    let host = '127.0.0.1'
-    let port = 9229
-
-    if (typeof inspectFlag === 'string' && inspectFlag.length > 0) {
-      const splitAt = inspectFlag.lastIndexOf(':')
-
-      if (splitAt === -1) {
-        port = inspectFlag
-      } else {
-        host = inspectFlag.substring(0, splitAt)
-        port = inspectFlag.substring(splitAt + 1)
-      }
-
-      port = Number.parseInt(port, 10)
-
-      if (!(port === 0 || (port >= 1024 && port <= 65535))) {
-        throw new errors.InspectorPortError()
-      }
-
-      if (!host) {
-        throw new errors.InspectorHostError()
-      }
-    }
-
-    current.inspectorOptions = {
-      host,
-      port,
-      breakFirstLine: hasInspectBrk,
-      watchDisabled: !!current.watch
-    }
-
-    current.watch = false
-  }
-}
-
-module.exports = {
-  parseInspectorOptions,
-  platformaticRuntime,
-  wrapConfigInRuntimeConfig
+  return config
 }

@@ -1,11 +1,11 @@
-# Platformatic Composer API
+# Platformatic Gateway API
 
-This is a generated [Platformatic Composer](https://docs.platformatic.dev/docs/composer/overview) application.
+This is a generated [Platformatic Gateway](https://docs.platformatic.dev/docs/gateway/overview) application.
 
 ## Requirements
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
+You'll need to have [Node.js](https://nodejs.org/) >= v22.19.0
 
 ## Setup
 
@@ -24,7 +24,6 @@ npm start
 ```
 
 ### Explore
-- ⚡ The Platformatic Composer server is running at http://localhost:3042/
+
+- ⚡ The Platformatic Gateway server is running at http://localhost:3042/
 - 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation/
-
-

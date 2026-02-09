@@ -1,16 +1,17 @@
 {
   "name": "@platformatic/basic",
-  "version": "2.53.0",
+  "version": "3.37.0",
   "description": "",
   "main": "index.js",
+  "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test:typescript": "tsd",
+    "test": "npm run test:typescript && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "repository": {
@@ -25,14 +26,13 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@platformatic/config": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
-    "pino": "^9.3.2",
+    "pino": "^9.9.0",
     "pino-abstract-transport": "^2.0.0",
     "semver": "^7.6.3",
     "split2": "^4.2.0",
@@ -40,17 +40,20 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "borp": "^0.19.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "express": "^4.19.2",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "get-port": "^7.1.0",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",
-    "next": "^15.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.0"
+    "tsd": "^0.33.0",
+    "typescript": "^5.5.4"
+  },
+  "tsd": {
+    "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

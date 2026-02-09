@@ -1,63 +1,60 @@
-'use strict'
-
-const { features } = require('@platformatic/utils')
-
-class RoundRobinMap extends Map {
+export class RoundRobinMap extends Map {
   #instances
 
-  constructor (iterable, instances) {
-    super(iterable)
-    this.#instances = instances
-  }
-
-  get configuration () {
-    return { ...this.#instances }
-  }
-
-  // In development or for the entrypoint always use 1 worker
-  configure (services, defaultInstances, production) {
+  constructor () {
+    super()
     this.#instances = {}
-
-    for (const service of services) {
-      let count = service.workers ?? defaultInstances
-
-      if (!production || (service.entrypoint && !features.node.reusePort)) {
-        count = 1
-      }
-
-      this.#instances[service.id] = { next: 0, count }
-    }
   }
 
-  getCount (service) {
-    return this.#instances[service].count
+  set (key, worker) {
+    const hasKey = super.has(key)
+    if (!hasKey) {
+      const application = key.split(':')[0]
+
+      if (!this.#instances[application]) {
+        this.#instances[application] = { keys: [] }
+      }
+      this.#instances[application].next = null
+      this.#instances[application].keys.push(key)
+    }
+
+    return super.set(key, worker)
   }
 
-  next (service) {
-    if (!this.#instances[service]) {
-      return undefined
-    }
+  delete (key) {
+    const removed = super.delete(key)
 
-    let worker
-    let { next, count } = this.#instances[service]
+    if (removed) {
+      const application = key.split(':')[0]
 
-    // Try count times to get the next worker. This is to handle the case where a worker is being restarted.
-    for (let i = 0; i < count; i++) {
-      const current = next++
-      if (next >= count) {
-        next = 0
-      }
-
-      worker = this.get(`${service}:${current}`)
-
-      if (worker) {
-        break
+      if (this.#instances[application]) {
+        const keys = this.#instances[application].keys
+        if (keys.length <= 1) {
+          delete this.#instances[application]
+        } else {
+          const keys = this.#instances[application].keys
+          keys.splice(keys.indexOf(key), 1)
+          this.#instances[application].next = null
+        }
       }
     }
 
-    this.#instances[service].next = next
-    return worker
+    return removed
+  }
+
+  getKeys (application) {
+    return this.#instances[application]?.keys ?? []
+  }
+
+  next (application) {
+    if (!this.#instances[application]) return
+
+    let { next, keys } = this.#instances[application]
+    if (next === null) {
+      next = Math.floor(Math.random() * keys.length)
+    }
+    this.#instances[application].next = (next + 1) % keys.length
+
+    return this.get(keys[next])
   }
 }
-
-module.exports = { RoundRobinMap }

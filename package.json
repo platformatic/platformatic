@@ -1,26 +1,28 @@
 {
   "name": "platformatic",
-  "version": "2.53.0",
+  "type": "module",
+  "version": "3.37.0",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
+    "test:cleanup": "rm -vrf tmp packages/**/tmp",
     "gen-schema": "pnpm -r --workspace-concurrency=1 run --if-present gen-schema",
     "gen-types": "pnpm -r --workspace-concurrency=1 run --if-present gen-types",
     "build": "pnpm -r --workspace-concurrency=1 run --if-present build",
     "lint": "pnpm -r --workspace-concurrency=1 --if-present lint",
     "lint:markdown": "markdownlint-cli2",
+    "lint:updated-only": "node ./scripts/lint-updated-packages.js",
+    "gen-schemas-types": "node ./scripts/gen-schemas-types.js",
     "postinstall": "node ./scripts/postinstall.js",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
-    "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc"
+    "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
+    "global-links": "cd packages/cli && pnpm link --global && cd ../wattpm && pnpm link --global && cd ../create-wattpm && pnpm link --global"
   },
   "packageManager": "pnpm@9.15.9",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
-    "desm": "^1.3.1",
-    "markdownlint-cli2": "^0.17.0"
+    "markdownlint-cli2": "^0.18.0"
   },
-  "pre-commit": [
-    "lint"
-  ]
+  "pre-commit": "lint:updated-only, gen-schemas-types"
 }

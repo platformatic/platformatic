@@ -1,16 +1,12 @@
 {
   "scripts": {
-    "start": "platformatic start",
     "test": "node --test test/**"
   },
   "devDependencies": {
-    "fastify": "^5.0.0"
+    "fastify": "^5.7.0"
   },
   "dependencies": {
     "platformatic": "^2.0.0",
     "@platformatic/service": "^2.0.0"
-  },
-  "engines": {
-    "node": ">=20.16.0"
   }
 }

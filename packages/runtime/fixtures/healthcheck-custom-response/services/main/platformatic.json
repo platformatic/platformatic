@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.61.0.json",
+  "gateway": {
+    "services": [
+      {
+        "id": "service",
+        "proxy": {
+          "prefix": "/service"
+        }
+      }
+    ]
+  }
+}

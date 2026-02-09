@@ -1,32 +1,30 @@
-'use strict'
-
-const { test, describe } = require('node:test')
-const { EOL } = require('node:os')
-const assert = require('node:assert')
-const {
-  convertServiceNameToPrefix,
-  envObjectToString,
-  extractEnvVariablesFromText,
-  getPackageConfigurationObject,
+import { deepEqual, equal, fail } from 'node:assert'
+import { EOL } from 'node:os'
+import { describe, test } from 'node:test'
+import {
   addPrefixToString,
-} = require('../lib/utils')
-const { flattenObject } = require('../lib/utils')
-const { getServiceTemplateFromSchemaUrl } = require('../lib/utils')
-const { envStringToObject } = require('../lib/utils')
+  convertApplicationNameToPrefix,
+  envObjectToString,
+  envStringToObject,
+  extractEnvVariablesFromText,
+  flattenObject,
+  getApplicationTemplateFromSchemaUrl,
+  getPackageConfigurationObject
+} from '../lib/utils.js'
 
 describe('utils', () => {
-  describe('convertServiceNameToPrefix', () => {
-    test('should convert service name to env prefix', async (t) => {
+  describe('convertApplicationNameToPrefix', () => {
+    test('should convert application name to env prefix', async t => {
       const expectations = {
-        'my-service': 'MY_SERVICE',
+        'my-application': 'MY_APPLICATION',
         a: 'A',
-        MY_SERVICE: 'MY_SERVICE',
-        asderas123: 'ASDERAS123',
+        MY_APPLICATION: 'MY_APPLICATION',
+        asderas123: 'ASDERAS123'
       }
 
-      Object.entries(expectations).forEach((exp) => {
-        const converted = convertServiceNameToPrefix(exp[0])
-        assert.equal(exp[1], converted)
+      Object.entries(expectations).forEach(exp => {
+        const converted = convertApplicationNameToPrefix(exp[0])
+        equal(exp[1], converted)
       })
     })
   })
@@ -35,10 +33,10 @@ describe('utils', () => {
     test('should convert env object to string', async () => {
       const env = {
         FOO: 'bar',
-        DATABASE_URL: 'sqlite://./db.sqlite',
+        DATABASE_URL: 'sqlite://./db.sqlite'
       }
 
-      assert.equal(envObjectToString(env), `FOO=bar${EOL}DATABASE_URL=sqlite://./db.sqlite`)
+      equal(envObjectToString(env), `FOO=bar${EOL}DATABASE_URL=sqlite://./db.sqlite`)
     })
   })
 
@@ -50,7 +48,7 @@ describe('utils', () => {
       DATABASE_URL={DATABASE_URL}
       `
       const env = extractEnvVariablesFromText(text)
-      assert.deepEqual(env, ['ENV_VAR', 'DATABASE_URL'])
+      deepEqual(env, ['ENV_VAR', 'DATABASE_URL'])
     })
 
     test('should not extract {} as empty env var', async () => {
@@ -58,13 +56,13 @@ describe('utils', () => {
         but this {} should not be parsed
       `
       const env = extractEnvVariablesFromText(text)
-      assert.deepEqual(env, ['ENV_VAR'])
+      deepEqual(env, ['ENV_VAR'])
     })
 
     test('should return empty array if no env vars are detected', async () => {
       const text = 'This is a sample text without any env var. This {} should not be parsed'
       const env = extractEnvVariablesFromText(text)
-      assert.deepEqual(env, [])
+      deepEqual(env, [])
     })
   })
 
@@ -73,57 +71,57 @@ describe('utils', () => {
       {
         path: 'prefix',
         value: '/foo',
-        type: 'string',
+        type: 'string'
       },
       {
         path: 'foo.fooOption1',
         value: 'value1',
-        type: 'string',
+        type: 'string'
       },
       {
         path: 'foo.fooOption2',
         value: 'value2',
-        type: 'string',
+        type: 'string'
       },
       {
         path: 'foo.fooOption3',
         value: 'value3',
         type: 'string',
-        name: 'THE_FOO_OPTION_3',
+        name: 'THE_FOO_OPTION_3'
       },
       {
         path: 'foobar',
         value: '123',
-        type: 'number',
+        type: 'number'
       },
       {
         path: 'boolean.truthy',
         value: 'true',
-        type: 'boolean',
+        type: 'boolean'
       },
       {
         path: 'boolean.falsey',
         value: 'false',
-        type: 'boolean',
-      },
+        type: 'boolean'
+      }
     ]
     const output = getPackageConfigurationObject(input)
-    assert.deepEqual(output.config, {
+    deepEqual(output.config, {
       prefix: '/foo',
       foo: {
         fooOption1: 'value1',
         fooOption2: 'value2',
-        fooOption3: '{THE_FOO_OPTION_3}',
+        fooOption3: '{THE_FOO_OPTION_3}'
       },
       foobar: 123,
       boolean: {
         truthy: true,
-        falsey: false,
-      },
+        falsey: false
+      }
     })
 
-    assert.deepEqual(output.env, {
-      THE_FOO_OPTION_3: 'value3',
+    deepEqual(output.env, {
+      THE_FOO_OPTION_3: 'value3'
     })
 
     // should throw
@@ -132,21 +130,21 @@ describe('utils', () => {
         {
           path: 'wrong',
           type: 'object',
-          value: {},
-        },
+          value: {}
+        }
       ])
-      assert.fail()
+      fail()
     } catch (err) {
-      assert.equal(err.code, 'PLT_GEN_WRONG_TYPE')
-      assert.equal(err.message, "Invalid value type. Accepted values are 'string', 'number' and 'boolean', found 'object'.")
+      equal(err.code, 'PLT_GEN_WRONG_TYPE')
+      equal(err.message, "Invalid value type. Accepted values are 'string', 'number' and 'boolean', found 'object'.")
     }
   })
 
   describe('addPrefixToString', () => {
     test('should add prefix to string', async () => {
-      assert.equal(addPrefixToString('PLT_SERVICE_FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
-      assert.equal(addPrefixToString('FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
-      assert.equal(addPrefixToString('FOO', ''), 'FOO')
+      equal(addPrefixToString('PLT_APPLICATION_FOO', 'APPLICATION'), 'PLT_APPLICATION_FOO')
+      equal(addPrefixToString('FOO', 'APPLICATION'), 'PLT_APPLICATION_FOO')
+      equal(addPrefixToString('FOO', ''), 'FOO')
     })
   })
 
@@ -159,12 +157,12 @@ describe('utils', () => {
           credentials: {
             client: {
               id: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
-              secret: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}',
-            },
+              secret: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}'
+            }
           },
           startRedirectPath: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
-          callbackUri: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}',
-        },
+          callbackUri: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
+        }
       }
       const expected = {
         name: '@fastify/oauth2',
@@ -172,21 +170,21 @@ describe('utils', () => {
         'options.credentials.client.id': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
         'options.credentials.client.secret': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}',
         'options.startRedirectPath': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
-        'options.callbackUri': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}',
+        'options.callbackUri': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
       }
-      assert.deepEqual(flattenObject(packageObject), expected)
+      deepEqual(flattenObject(packageObject), expected)
     })
   })
 
-  describe('getServiceTemplateFromSchemaUrl', () => {
+  describe('getApplicationTemplateFromSchemaUrl', () => {
     test('should get the right template name from schema url', () => {
-      const composerSchema = 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
-      const serviceSchema = 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json'
+      const gatewaySchema = 'https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json'
+      const applicationSchema = 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json'
       const dbSchema = 'https://schemas.platformatic.dev/@platformatic/db/1.52.0.json'
 
-      assert.equal(getServiceTemplateFromSchemaUrl(composerSchema), '@platformatic/composer')
-      assert.equal(getServiceTemplateFromSchemaUrl(serviceSchema), '@platformatic/service')
-      assert.equal(getServiceTemplateFromSchemaUrl(dbSchema), '@platformatic/db')
+      equal(getApplicationTemplateFromSchemaUrl(gatewaySchema), '@platformatic/gateway')
+      equal(getApplicationTemplateFromSchemaUrl(applicationSchema), '@platformatic/service')
+      equal(getApplicationTemplateFromSchemaUrl(dbSchema), '@platformatic/db')
     })
   })
 
@@ -196,15 +194,15 @@ describe('utils', () => {
         '',
         '# this is a comment that will be not parsed',
         'MY_VAR=value',
-        'PLT_SERVICE_NAME_FOOBAR=foobar',
+        'PLT_APPLICATION_NAME_FOOBAR=foobar'
       ]
 
       const expected = {
         MY_VAR: 'value',
-        PLT_SERVICE_NAME_FOOBAR: 'foobar',
+        PLT_APPLICATION_NAME_FOOBAR: 'foobar'
       }
 
-      assert.deepEqual(envStringToObject(template.join(EOL)), expected)
+      deepEqual(envStringToObject(template.join(EOL)), expected)
     })
   })
 })

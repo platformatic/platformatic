@@ -1,17 +1,27 @@
-'use strict'
-const { test, after } = require('node:test')
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { moveToTmpdir } = require('./helpers')
-const { cp, readFile, writeFile, stat } = require('node:fs/promises')
-const RuntimeGenerator = require('../lib/generator/runtime-generator')
-const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
-const { DotEnvTool } = require('dotenv-tool')
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import { createDirectory, createEnvFileTool } from '@platformatic/foundation'
+import { Generator as ServiceGenerator } from '@platformatic/service'
+import assert from 'node:assert'
+import { cp, readFile, stat, symlink, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import test, { after } from 'node:test'
+import { MockAgent, setGlobalDispatcher } from 'undici'
+import { RuntimeGenerator } from '../lib/generator.js'
+import { moveToTmpdir } from './helpers.js'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
 mockAgent.disableNetConnect()
+
+async function setupTemporaryDirectory (fixture) {
+  const dir = await moveToTmpdir(after)
+
+  await cp(fixture, dir, { recursive: true })
+  await createDirectory(resolve(dir, 'node_modules/@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
+
+  return dir
+}
 
 function mockNpmJsRequestForPkgs (pkgs) {
   for (const pkg of pkgs) {
@@ -19,50 +29,46 @@ function mockNpmJsRequestForPkgs (pkgs) {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: `/${pkg}`,
+        path: `/${pkg}`
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.42.0',
-        },
+          latest: '1.42.0'
+        }
       })
   }
 }
 
-test('should remove a service', async (t) => {
-  const dir = await moveToTmpdir(after)
+test('should remove an application', async t => {
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
-  await cp(fixture, dir, { recursive: true })
-
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  assert.equal(rg.services.length, 2)
-  assert.equal(rg.services[0].name, 'foobar')
-  assert.equal(rg.services[1].name, 'rival')
+  assert.equal(rg.applications.length, 2)
+  assert.equal(rg.applications[0].name, 'foobar')
+  assert.equal(rg.applications[1].name, 'rival')
   const updatedFoobar = {
     name: 'foobar',
     template: '@platformatic/service',
     fields: [],
-    plugins: [],
+    plugins: []
   }
   await rg.update({
-    services: [updatedFoobar], // the original service was removed
+    applications: [updatedFoobar] // the original application was removed
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  // no env values related to 'rival' service are in the env file anymore
-  runtimeDotEnv.getKeys().forEach((k) => assert.ok(!k.startsWith('PLT_RIVAL')))
+  // no env values related to 'rival' application are in the env file anymore
+  runtimeDotEnv.getKeys().forEach(k => assert.ok(!k.startsWith('PLT_RIVAL')))
 
   // the other plugin values should be there
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_TYPESCRIPT'), 'true')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_TYPESCRIPT'), 'true')
   // the only dependency has been removed
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -76,69 +82,70 @@ test('should remove a service', async (t) => {
   }
 })
 
-test('should add a new service with new env variables', async (t) => {
+test('should add a new application with new env variables', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  assert.equal(rg.services.length, 1)
-  assert.equal(rg.services[0].name, 'rival')
+  assert.equal(rg.applications.length, 1)
+  assert.equal(rg.applications[0].name, 'rival')
   const sg = new ServiceGenerator()
-  const serviceData = await sg.loadFromDir('rival', dir)
+  const applicationData = await sg.loadFromDir('rival', dir)
 
-  const newService = {
+  const newApplication = {
     name: 'foobar',
     template: '@platformatic/service',
     fields: [],
-    plugins: [{
-      name: '@fastify/foo-plugin',
-      options: [
-        {
-          name: 'FST_PLUGIN_FOO_TEST_VALUE',
-          path: 'testValue',
-          type: 'string',
-          value: 'foobar',
-        },
-        {
-          name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
-          path: 'credentials.name',
-          type: 'string',
-          value: 'johndoe',
-        },
-      ],
-    }],
+    plugins: [
+      {
+        name: '@fastify/foo-plugin',
+        options: [
+          {
+            name: 'FST_PLUGIN_FOO_TEST_VALUE',
+            path: 'testValue',
+            type: 'string',
+            value: 'foobar'
+          },
+          {
+            name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
+            path: 'credentials.name',
+            type: 'string',
+            value: 'johndoe'
+          }
+        ]
+      }
+    ]
   }
   await rg.update({
-    services: [serviceData, newService], // the original service was removed
-    entrypoint: 'foobar', // update the entrypoint with the new service
+    applications: [applicationData, newApplication], // the original application was removed
+    entrypoint: 'foobar' // update the entrypoint with the new application
   })
 
-  // the new service has been generated
-  const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
-  assert.deepEqual(serviceConfigFile.plugins.packages[0], {
+  // the new application has been generated
+  const applicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+  )
+  assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
     options: {
       testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}',
-      },
-    },
+        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
+      }
+    }
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -151,101 +158,107 @@ test('should add a new service with new env variables', async (t) => {
   assert.equal(runtimePlatformaticJson.entrypoint, 'foobar')
 })
 
-test('should update existing service\'s plugin options', async (t) => {
+test("should update existing application's plugin options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2'])
 
-  const dir = await moveToTmpdir(after)
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
-
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  // load previous service config file
-  const updatedService = {
+  const oldApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  // load previous application config file
+  const updatedApplication = {
     name: 'rival',
     template: '@platformatic/service',
     fields: [],
-    plugins: [{
-      name: '@fastify/oauth2',
-      options: [
-        {
-          name: 'FST_PLUGIN_OAUTH2_NAME',
-          path: 'name',
-          type: 'string',
-          value: 'new_oauth2_name',
-        },
-        {
-          name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
-          path: 'credentials.client.id',
-          type: 'string',
-          value: 'sample_client_id_updated',
-        },
-        {
-          name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
-          path: 'credentials.client.secret',
-          type: 'string',
-          value: 'sample_client_secret_updated',
-        },
-        {
-          name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
-          path: 'startRedirectPath',
-          type: 'string',
-          value: '/login/google',
-        },
-        {
-          name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
-          path: 'callbackUri',
-          type: 'string',
-          value: 'http://localhost:3000/login/google/callback',
-        },
-      ],
-    }],
+    plugins: [
+      {
+        name: '@fastify/oauth2',
+        options: [
+          {
+            name: 'FST_PLUGIN_OAUTH2_NAME',
+            path: 'name',
+            type: 'string',
+            value: 'new_oauth2_name'
+          },
+          {
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
+            path: 'credentials.client.id',
+            type: 'string',
+            value: 'sample_client_id_updated'
+          },
+          {
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
+            path: 'credentials.client.secret',
+            type: 'string',
+            value: 'sample_client_secret_updated'
+          },
+          {
+            name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
+            path: 'startRedirectPath',
+            type: 'string',
+            value: '/login/google'
+          },
+          {
+            name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
+            path: 'callbackUri',
+            type: 'string',
+            value: 'http://localhost:3000/login/google/callback'
+          }
+        ]
+      }
+    ]
   }
   await rg.update({
-    services: [updatedService], // the original service was removed
+    applications: [updatedApplication] // the original application was removed
   })
 
   // the config file should be left unchanged
-  const newServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  assert.deepEqual(oldServiceConfigFile, newServiceConfigFile)
+  const newApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  assert.deepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), 'sample_client_id_updated')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), 'sample_client_secret_updated')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), '/login/google')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), 'http://localhost:3000/login/google/callback')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), 'sample_client_id_updated')
+  assert.equal(
+    runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'),
+    'sample_client_secret_updated'
+  )
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), '/login/google')
+  assert.equal(
+    runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'),
+    'http://localhost:3000/login/google/callback'
+  )
 })
 
-test('should add new service\'s plugin and options', async (t) => {
+test("should add new application's plugin and options", async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport', '@fastify/oauth2'])
 
-  const dir = await moveToTmpdir(after)
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
-
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   // create a sample file that will be checked after
   const sampleRouteFilePath = join(dir, 'services', 'rival', 'routes', 'sample.js')
-  const samplerouteFileContents = 'console.log(\'hello world\')'
+  const samplerouteFileContents = "console.log('hello world')"
   await writeFile(sampleRouteFilePath, samplerouteFileContents)
   await rg.loadFromDir(dir)
-  const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  // load previous service config file
-  const updatedService = {
+  const oldApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  // load previous application config file
+  const updatedApplication = {
     name: 'rival',
     template: '@platformatic/service',
     fields: [],
@@ -257,9 +270,9 @@ test('should add new service\'s plugin and options', async (t) => {
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy',
-          },
-        ],
+            value: 'italy'
+          }
+        ]
       },
       {
         name: '@fastify/oauth2',
@@ -268,78 +281,80 @@ test('should add new service\'s plugin and options', async (t) => {
             name: 'FST_PLUGIN_OAUTH2_NEW_OPTION',
             path: 'new.option',
             type: 'string',
-            value: 'new_options_value',
+            value: 'new_options_value'
           },
           {
             name: 'FST_PLUGIN_OAUTH2_NAME',
             path: 'name',
             type: 'string',
-            value: 'new_oauth2_name',
+            value: 'new_oauth2_name'
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
             path: 'credentials.client.id',
             type: 'string',
-            value: 'sample_client_id_updated',
+            value: 'sample_client_id_updated'
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
             path: 'credentials.client.secret',
             type: 'string',
-            value: 'sample_client_secret_updated',
+            value: 'sample_client_secret_updated'
           },
           {
             name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
             path: 'startRedirectPath',
             type: 'string',
-            value: '/login/google',
+            value: '/login/google'
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
             path: 'callbackUri',
             type: 'string',
-            value: 'http://localhost:3000/login/google/callback',
-          },
-        ],
-      },
-    ],
+            value: 'http://localhost:3000/login/google/callback'
+          }
+        ]
+      }
+    ]
   }
   await rg.update({
-    services: [updatedService], // the original service was removed
+    applications: [updatedApplication] // the original application was removed
   })
 
   // the config file should be updated with the new plugin
-  const newServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  assert.notDeepEqual(oldServiceConfigFile, newServiceConfigFile)
+  const newApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
   // all properties except "packages" should be the same
-  const equalRootProperties = ['$schema', 'service', 'watch']
+  const equalRootProperties = ['$schema', 'application', 'watch']
   const equalPluginsProperties = ['paths']
   for (const prop in equalRootProperties) {
-    assert.deepEqual(oldServiceConfigFile[prop], newServiceConfigFile[prop])
+    assert.deepEqual(oldApplicationConfigFile[prop], newApplicationConfigFile[prop])
   }
   for (const prop in equalPluginsProperties) {
-    assert.deepEqual(oldServiceConfigFile.plugins[prop], newServiceConfigFile.plugins[prop])
+    assert.deepEqual(oldApplicationConfigFile.plugins[prop], newApplicationConfigFile.plugins[prop])
   }
 
   // new configuration has 2 packages
-  assert.equal(newServiceConfigFile.plugins.packages.length, 2)
-  assert.deepEqual(newServiceConfigFile.plugins.packages[0], {
+  assert.equal(newApplicationConfigFile.plugins.packages.length, 2)
+  assert.deepEqual(newApplicationConfigFile.plugins.packages[0], {
     name: '@fastify/passport',
-    options: { country: '{PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY}' },
+    options: { country: '{PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY}' }
   })
 
   // the first package has been updated with a new option
-  assert.deepEqual(newServiceConfigFile.plugins.packages[1].options.new, {
-    option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}',
+  assert.deepEqual(newApplicationConfigFile.plugins.packages[1].options.new, {
+    option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}'
   })
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION'), 'new_options_value')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION'), 'new_options_value')
   // ensure the sample file is still there
   assert.equal(await readFile(sampleRouteFilePath, 'utf-8'), samplerouteFileContents)
 
@@ -350,79 +365,19 @@ test('should add new service\'s plugin and options', async (t) => {
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
 })
 
-test('should remove a plugin from an existing service', async (t) => {
+test('should remove a plugin from an existing application', async t => {
   mockNpmJsRequestForPkgs(['@fastify/passport'])
-  const dir = await moveToTmpdir(after)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  // load previous service config file
-  const updatedService = {
-    name: 'rival',
-    template: '@platformatic/service',
-    fields: [],
-    plugins: [{
-      name: '@fastify/passport',
-      options: [
-        {
-          name: 'FST_PLUGIN_PASSPORT_COUNTRY',
-          path: 'country',
-          type: 'string',
-          value: 'italy',
-        },
-      ],
-    }],
-  }
-  await rg.update({
-    services: [updatedService], // the original service was removed
-  })
-
-  // the config file should be left unchanged
-  const newServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
-  assert.notDeepEqual(oldServiceConfigFile, newServiceConfigFile)
-
-  // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
-  })
-
-  await runtimeDotEnv.load()
-
-  // new value
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
-  // removed values
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), null)
-  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), null)
-
-  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
-
-  assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
-  assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
-})
-
-test('should remove a plugin from a service and add the same on the other', async (t) => {
-  mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
-
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
-
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
-  await rg.loadFromDir(dir)
-  assert.equal(rg.services.length, 1)
-  assert.equal(rg.services[0].name, 'rival')
-  const updatedService = {
+  const oldApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  // load previous application config file
+  const updatedApplication = {
     name: 'rival',
     template: '@platformatic/service',
     fields: [],
@@ -434,13 +389,73 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy',
-          },
-        ],
-      },
-    ],
+            value: 'italy'
+          }
+        ]
+      }
+    ]
   }
-  const newService = {
+  await rg.update({
+    applications: [updatedApplication] // the original application was removed
+  })
+
+  // the config file should be left unchanged
+  const newApplicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+  )
+  assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
+
+  // the runtime .env should be updated
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
+  })
+
+  await runtimeDotEnv.load()
+
+  // new value
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
+  // removed values
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), null)
+  assert.equal(runtimeDotEnv.getValue('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), null)
+
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
+
+  assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
+  assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
+})
+
+test('should remove a plugin from an application and add the same on the other', async t => {
+  mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
+
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
+
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
+  await rg.loadFromDir(dir)
+  assert.equal(rg.applications.length, 1)
+  assert.equal(rg.applications[0].name, 'rival')
+  const updatedApplication = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/passport',
+        options: [
+          {
+            name: 'FST_PLUGIN_PASSPORT_COUNTRY',
+            path: 'country',
+            type: 'string',
+            value: 'italy'
+          }
+        ]
+      }
+    ]
+  }
+  const newApplication = {
     name: 'foobar',
     template: '@platformatic/db',
     fields: [],
@@ -452,15 +467,15 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_FOO_TEST_VALUE',
             path: 'testValue',
             type: 'string',
-            value: 'foobar',
+            value: 'foobar'
           },
           {
             name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
             path: 'credentials.name',
             type: 'string',
-            value: 'johndoe',
-          },
-        ],
+            value: 'johndoe'
+          }
+        ]
       },
       {
         name: '@fastify/oauth2',
@@ -469,38 +484,40 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_OAUTH2_NAME',
             path: 'name',
             type: 'string',
-            value: 'new_oauth2_name',
-          },
-        ],
-      },
-    ],
+            value: 'new_oauth2_name'
+          }
+        ]
+      }
+    ]
   }
   await rg.update({
-    services: [updatedService, newService], // the original service was removed
+    applications: [updatedApplication, newApplication] // the original application was removed
   })
 
-  // the new service has been generated
-  const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
-  assert.deepEqual(serviceConfigFile.plugins.packages[0], {
+  // the new application has been generated
+  const applicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+  )
+  assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
     options: {
       testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}',
-      },
-    },
+        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
+      }
+    }
   })
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
@@ -508,20 +525,17 @@ test('should remove a plugin from a service and add the same on the other', asyn
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
 })
 
-test('should handle new fields on new service', async (t) => {
+test('should handle new fields on new application', async t => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
-  const dir = await moveToTmpdir(after)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
-  await cp(fixture, dir, { recursive: true })
+  const fixture = join(import.meta.dirname, '..', 'fixtures', 'sample-runtime')
+  const dir = await setupTemporaryDirectory(fixture)
 
-  const rg = new RuntimeGenerator({
-    targetDirectory: dir,
-  })
+  const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  assert.equal(rg.services.length, 1)
-  assert.equal(rg.services[0].name, 'rival')
-  const updatedService = {
+  assert.equal(rg.applications.length, 1)
+  assert.equal(rg.applications[0].name, 'rival')
+  const updatedApplication = {
     name: 'rival',
     template: '@platformatic/service',
     fields: [],
@@ -533,13 +547,13 @@ test('should handle new fields on new service', async (t) => {
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy',
-          },
-        ],
-      },
-    ],
+            value: 'italy'
+          }
+        ]
+      }
+    ]
   }
-  const newService = {
+  const newApplication = {
     name: 'foobar',
     template: '@platformatic/db',
     fields: [
@@ -547,33 +561,35 @@ test('should handle new fields on new service', async (t) => {
         var: 'DATABASE_URL',
         value: 'sqlite://./db.sqlite',
         configValue: 'connectionString',
-        type: 'string',
+        type: 'string'
       },
       {
         var: 'PLT_APPLY_MIGRATIONS',
         value: 'true',
-        type: 'boolean',
-      },
+        type: 'boolean'
+      }
     ],
-    plugins: [],
+    plugins: []
   }
   await rg.update({
-    services: [updatedService, newService], // the original service was removed
+    applications: [updatedApplication, newApplication] // the original application was removed
   })
 
-  // the new service has been generated
-  const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
-  assert.equal(serviceConfigFile.plugins.packages, undefined)
+  // the new application has been generated
+  const applicationConfigFile = JSON.parse(
+    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+  )
+  assert.equal(applicationConfigFile.plugins.packages, undefined)
 
   // the runtime .env should be updated
-  const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env'),
+  const runtimeDotEnv = createEnvFileTool({
+    path: join(dir, '.env')
   })
 
   await runtimeDotEnv.load()
 
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_DATABASE_URL'), 'sqlite://./db.sqlite')
-  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_APPLY_MIGRATIONS'), 'true')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_DATABASE_URL'), 'sqlite://./db.sqlite')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_APPLY_MIGRATIONS'), 'true')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])

@@ -1,15 +1,13 @@
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+import { deepStrictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('should get meta for db services in runtime schema', async t => {
+test('should get meta for db applications in runtime schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -17,12 +15,12 @@ test('should get meta for db services in runtime schema', async t => {
     await app.close()
   })
 
-  const dbMeta = await app.getServiceMeta('db-app')
+  const dbMeta = await app.getApplicationMeta('db-app')
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
-  assert.deepStrictEqual(dbMeta, {
-    composer: {
-      needsRootRedirect: false,
-      prefix: 'db-app',
+  deepStrictEqual(dbMeta, {
+    gateway: {
+      needsRootTrailingSlash: false,
+      prefix: '/db-app/',
       wantsAbsoluteUrls: false,
       tcp: false,
       url: undefined

@@ -137,3 +137,9 @@ packages/runtime/test/tmp
 .next
 .astro
 .remix
+
+# Claude Code
+.claude
+packages/*/CLAUDE.md
+.githuman
+.plt

@@ -1,7 +1,6 @@
-'use strict'
-const { createDirectory } = require('@platformatic/utils')
-const { join } = require('node:path')
-const { writeFile, readFile } = require('node:fs/promises')
+import { createDirectory } from '@platformatic/foundation'
+import { readFile, writeFile } from 'node:fs/promises'
+import { dirname, isAbsolute, join } from 'node:path'
 
 /* c8 ignore start */
 const fakeLogger = {
@@ -9,11 +8,11 @@ const fakeLogger = {
   warn: () => {},
   debug: () => {},
   trace: () => {},
-  error: () => {},
+  error: () => {}
 }
 /* c8 ignore start */
 
-class FileGenerator {
+export class FileGenerator {
   constructor (opts = {}) {
     this.files = []
     this.logger = opts.logger || fakeLogger
@@ -31,15 +30,16 @@ class FileGenerator {
     return this.getFileObject(file, path)
   }
 
-  addFile ({ path, file, contents, options = {} }) {
+  addFile ({ path, file, contents, options = {}, tags }) {
     const fileObject = this.getFileObject(file, path)
     if (path.startsWith('/')) {
       path = path.substring(1)
     }
     if (fileObject) {
       fileObject.contents = contents
+      fileObject.tags = tags ?? []
     } else {
-      this.files.push({ path, file, contents, options })
+      this.files.push({ path, file, contents, options, tags: tags ?? [] })
     }
   }
 
@@ -61,29 +61,35 @@ class FileGenerator {
     }
     await createDirectory(this.targetDirectory)
     for (const fileToWrite of this.files) {
-      if (fileToWrite.contents.length === 0) {
+      if (fileToWrite.contents.length === 0 && !fileToWrite.file.match(/^\..+keep$/)) {
         continue
       }
-      const baseDir = join(this.targetDirectory, fileToWrite.path)
-      if (fileToWrite.path !== '') {
-        await createDirectory(baseDir)
+
+      let fullFilePath = join(fileToWrite.path, fileToWrite.file)
+
+      if (!isAbsolute(fullFilePath)) {
+        fullFilePath = join(this.targetDirectory, fullFilePath)
       }
-      const fullFilePath = join(baseDir, fileToWrite.file)
+
+      await createDirectory(dirname(fullFilePath))
       await writeFile(fullFilePath, fileToWrite.contents, fileToWrite.options)
+
       this.logger.info(`${fullFilePath} written!`)
     }
   }
 
   getFileObject (name, path = '') {
-    const output = this.files.find((file) => {
+    const output = this.files.find(file => {
       return file.path === path && file.file === name
     })
-    if (!output) { return null }
+    if (!output) {
+      return null
+    }
     return output
   }
 
   listFiles () {
-    return this.files.map((fileObject) => {
+    return this.files.map(fileObject => {
       return join(fileObject.path, fileObject.file)
     })
   }
@@ -92,6 +98,3 @@ class FileGenerator {
     this.files = []
   }
 }
-
-module.exports = FileGenerator
-module.exports.FileGenerator = FileGenerator

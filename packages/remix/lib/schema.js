@@ -1,9 +1,11 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { schemaComponents as viteSchemaComponents } from '@platformatic/vite'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
 export const remix = {
   type: 'object',
@@ -22,7 +24,7 @@ export const schemaComponents = { remix }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/remix/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Remix Stackable',
+  title: 'Platformatic Remix Config',
   type: 'object',
   properties: {
     $schema: {
@@ -31,7 +33,8 @@ export const schema = {
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
-    application: basicSchemaComponents.application,
+    application: basicSchemaComponents.buildableApplication,
+    runtime: utilsSchemaComponents.wrappedRuntime,
     vite: viteSchemaComponents.vite,
     remix
   },

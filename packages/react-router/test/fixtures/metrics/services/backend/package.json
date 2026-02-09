@@ -1,0 +1,6 @@
+{
+  "name": "service",
+  "dependencies": {
+    "@platformatic/service": "^2.56.0"
+  }
+}

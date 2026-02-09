@@ -3,84 +3,102 @@ title: Introduction
 label: Welcome to Platformatic
 ---
 
-# Welcome to Platformatic
+# Watt - The Node.js Application Server
 
-Welcome to the Platformatic documentation. Platformatic is an open-source platform that simplifies backend development by providing tools to quickly build and deploy APIs with GraphQL, REST, and SQL capabilities. 
+**Watt** is Platformatic's flagship Node.js Application Server that transforms how you build, deploy, and scale Node.js applications. Instead of managing multiple applications, databases, and frameworks separately, Watt provides a unified platform where everything runs together seamlessly.
 
-It enhances productivity through features like auto-generated schemas, a built-in authorization system, and easy integration with existing databases and frontend frameworks
+## What is Watt?
 
-## Why Choose Platformatic?
+Watt is a complete Node.js application server that handles the complex infrastructure so you can focus on building features. Think of it as the runtime that powers your entire backend - from APIs and databases to frontend frameworks and microservices.
 
-Platformatic enables developers to efficiently develop and run APIs at scale. Historically, API developers have had to repetitively build infrastructure to satisfy foundational requirements, like authentication, authorization, caching, and connection to databases, and have had to manage microservices with technologies such as service mesh or centralized registries. 
+**Key Benefits:**
 
-This is time-consuming, and painstakingly complex. With growing demands of SaaS applications, the amount of API permutations has grown exponentially and has become a development bottleneck. This has led large organizations to create dedicated platform API engineering teams to help teams deliver on business demands.
+- 🚀 **Unified Development** - Run databases, APIs, and frontend frameworks in a single application server
+- ⚡ **Built-in Observability** - Automatic logging, metrics, and distributed tracing
+- 🔧 **Zero Configuration** - Sensible defaults that work out of the box
+- 📊 **Auto-Generated APIs** - REST and GraphQL endpoints from your database schema
+- 🎨 **Framework Agnostic** - Works with Next.js, React, Vue, Express, Fastify, and more
 
-At Platformatic, Our goal is to make API development simple: we aim to remove friction from the day-to-day of backend developers.
+## Why Choose Watt?
 
+Modern Node.js development is fragmented. You need separate tools for databases, APIs, frontend frameworks, monitoring, and deployment. Watt unifies all of this into a single, coherent application server.
 
-## Platformatic Service
+**Before Watt:**
 
-![Platformatic Service](./images/Platformatic_Service_Diagram_(Light_Mode).png)
+- Multiple servers to manage (database, API, frontend)
+- Complex deployment pipelines
+- Fragmented monitoring and logging
+- Inconsistent development environments
 
-A Platformatic Service is an HTTP server based on [Fastify](https://www.fastify.io/) that allows developers to build robust APIs with Node.js.
+**With Watt:**
 
-With Platformatic Service you can:
-- Add custom functionality in a [Fastify plugin](https://fastify.dev/docs/latest/Reference/Plugins)
-- Write plugins in JavaScript or [TypeScript](https://www.typescriptlang.org/)
-- Optionally use TypeScript to write your application code
+- Single application server runs everything
+- One-command deployment
+- Unified observability across all components
+- Consistent development and production environments
 
+## What You Can Build with Watt
 
+Watt provides a comprehensive set of capabilities:
 
-## Platformatic DB
+- **Database APIs** - Auto-generated REST and GraphQL endpoints from SQL databases (Platformatic DB)
+- **HTTP Services** - Custom application logic and APIs built on Fastify
+- **API Gateways** - Aggregate multiple applications into unified endpoints
+- **Framework Integration** - [Next.js, Astro, Remix, Vite, NestJS applications](/docs/guides/frameworks)
+- **Microservice Orchestration** - Multi-application deployments as single units
+- **Built-in Authorization** - Role-based access control and JWT authentication
+- **Real-time Features** - WebSocket and GraphQL subscriptions
+- **Production Monitoring** - Prometheus metrics, OpenTelemetry tracing, structured logging
 
-![Platformatic DB Architecture](./images/Platformatic_DB_Diagram_(Light_Mode).png)
+## How Watt Works
 
-Platformatic DB can expose an SQL database by dynamically mapping it to REST/OpenAPI
-and GraphQL endpoints. It supports a limited subset of the SQL query language, but
-also allows developers to add their own custom routes and resolvers.
+Watt acts as the foundation that runs and orchestrates different types of applications within a single Node.js application. Each application type serves a specific purpose while benefiting from shared infrastructure like logging, metrics, and configuration.
 
-Platformatic DB is composed of a few key libraries:
+### 🔍 Observability by Default
 
-1. `@platformatic/sql-mapper` - follows the [Data Mapper pattern](https://en.wikipedia.org/wiki/Data_mapper_pattern) to build an API on top of a SQL database.
-   Internally it uses the [`@database` project](https://www.atdatabases.org/).
-2. `@platformatic/sql-openapi` - uses `sql-mapper` to create a series of REST routes and matching OpenAPI definitions.
-   Internally it uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger).
-3. `@platformatic/sql-graphql` - uses `sql-mapper` to create a GraphQL endpoint and schema. `sql-graphql` also support Federation.
-   Internally it uses [`mercurius`](https://github.com/mercurius-js/mercurius).
-4. SQL database migrations - uses `sql-mapper` to perform schema migrations. Internally it uses [`postgrator`](https://www.npmjs.com/package/postgrator) library.
+Every Watt application includes production-ready monitoring:
 
-Platformatic DB allows you to load a [Fastify plugin](https://www.fastify.io/docs/latest/Reference/Plugins/) during server startup that contains your own application-specific code.
-The plugin can add more routes or resolvers — these will automatically be shown in the OpenAPI and GraphQL schemas.
+- **Structured logging** with configurable levels
+- **Prometheus metrics** for monitoring
+- **OpenTelemetry tracing** for distributed systems
+- **Health checks** for Kubernetes deployments
 
+## Get Started with Watt
 
-## Platformatic Composer
+Ready to build your first Watt application? Choose your path:
 
-![Platformatic Composer Architecture](./images/Platformatic_Composer_Diagram_(Light_Mode).png)
+### 🚀 [Quick Start (2 minutes)](/docs/getting-started/quick-start)
 
-Platformatic Composer is an HTTP server that automatically aggregates multiple services APIs into a single API. 
-The composer acts as a proxy for the underlying services, and automatically generates an OpenAPI definition that combines all the services' routes, acting as reverse proxy for the composed services. 
+Get a running Watt application with database APIs in under 2 minutes.
 
-## Platformatic Runtime 
+### 📚 [Step-by-Step Tutorial](/docs/learn/beginner/crud-application)
 
-![Platformatic Runtime Architecture](./images/Platformatic_Runtime_Diagram_(Light_Mode).png)
+Build a complete application with guided instructions.
 
-Platformatic Runtime is an environment for running multiple Platformatic microservices as a single monolithic deployment unit.
+### 🔧 [Migration Guide](/docs/getting-started/port-your-app)
 
-In a Platformatic Runtime, each service is a separate process that communicates with Interservice communication using private message passing.
-The Runtime exposes an "entrypoint" API for the whole runtime. Only the entrypoint binds to an operating system port and can be reached from outside the runtime.
+Migrate your existing Node.js application to Watt.
 
-## Platformatic Stackables 
+## What You Can Build
 
-![Platformatic Stackables Architecture](./images/Platformatic_Stackables_Diagram_(Light_Mode).png)
+Watt is perfect for:
 
-Platformatic Stackables are reusable components that can be used to build Platformatic Services. Services can extend these modules and add custom functionalities.
+- **Full-stack applications** with unified backend/frontend deployment
+- **Microservices** that need to run as a single unit
+- **Database-first APIs** with auto-generated endpoints
+- **Multi-tenant SaaS applications** with built-in authorization
+- **Real-time applications** with WebSocket and GraphQL subscriptions
 
-This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI, or to create a specialized template for your organization to allow for centralized bugfixes and updates.
+## Next Steps
 
-## Other Resources 
+- **New to Node.js?** Start with our [beginner tutorial](/docs/learn/beginner/crud-application)
+- **Experienced developer?** Jump into the [quick start](/docs/getting-started/quick-start)
+- **Need specific help?** Browse our [how-to guides](/docs/guides/build-modular-monolith)
+- **Want technical details?** Check the [reference documentation](/docs/reference-overview)
 
-- Check out our [Blog](https://blog.platformatic.dev/) and watch tutorials on [YouTube](https://www.youtube.com/channel/UCLuqTMhiF1BHGPTLYO4M3Gw).
-- Join our Community on [Discord](https://discord.gg/platformatic) for updates and share your thoughts.
-- Follow us on [Twitter](https://twitter.com/platformatic).
+## Community & Support
 
-
+- **Discord** - Join our [community](https://discord.gg/platformatic) for real-time help
+- **GitHub** - Report issues and contribute at [platformatic/platformatic](https://github.com/platformatic/platformatic)
+- **Blog** - Read tutorials and updates at [blog.platformatic.dev](https://blog.platformatic.dev/)
+- **YouTube** - Watch video tutorials on our [channel](https://www.youtube.com/channel/UCLuqTMhiF1BHGPTLYO4M3Gw)

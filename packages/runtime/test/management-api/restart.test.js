@@ -1,17 +1,15 @@
-'use strict'
+import { strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should restart all services with a management api', async t => {
+test('should restart all applications with a management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -37,15 +35,15 @@ test('should restart all services with a management api', async t => {
   })
   await body.text()
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-1')
+    strictEqual(applicationDetails.status, 'started')
   }
 
   {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'started')
+    const applicationDetails = await app.getApplicationDetails('service-2')
+    strictEqual(applicationDetails.status, 'started')
   }
 })

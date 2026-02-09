@@ -1,67 +1,68 @@
-'use strict'
-
-const { connect, dropAllTables } = require('..')
+import { connect, dropAllTables } from '../index.js'
 
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-const connInfo = {
+export const connInfo = {
   autoTimestamp: {
     createdAt: 'inserted_at',
-    updatedAt: 'updated_at',
-  },
+    updatedAt: 'updated_at'
+  }
 }
+
+export let isPg = false
+export let isMysql = false
+export let isMysql8 = false
+export let isSQLite = false
+export let expectedTelemetryPrefix = 'pg'
+export let expectedPort = 5432
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  module.exports.isPg = true
-  module.exports.expectedTelemetryPrefix = 'pg'
-  module.exports.expectedPort = 5432
+  isPg = true
+  expectedTelemetryPrefix = 'pg'
+  expectedPort = 5432
 } else if (process.env.DB === 'mariadb') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = 3307
+  isMysql = true
+  expectedTelemetryPrefix = 'mysql'
+  expectedPort = 3307
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = 3306
+  isMysql = true
+  expectedTelemetryPrefix = 'mysql'
+  expectedPort = 3306
 } else if (process.env.DB === 'mysql8') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
-  module.exports.isMysql = true
-  module.exports.isMysql8 = true
-  module.exports.expectedTelemetryPrefix = 'mysql'
-  module.exports.expectedPort = 3308
+  isMysql = true
+  isMysql8 = true
+  expectedTelemetryPrefix = 'mysql'
+  expectedPort = 3308
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
-  module.exports.isSQLite = true
-  module.exports.expectedTelemetryPrefix = 'sqlite'
+  isSQLite = true
+  expectedTelemetryPrefix = 'sqlite'
 }
 
-module.exports.connInfo = connInfo
-
-module.exports.clear = async function (db, sql) {
+export async function clear (db, sql) {
   await dropAllTables(db, sql)
-  await dropAllTables(db, sql, ['test1', 'test2'])
+  await dropAllTables(db, sql, ['test1', 'test2', 'test_3'])
 }
 
 const fakeLogger = {
-  trace: () => { },
-  debug: () => { },
-  info: () => { },
-  warn: () => { },
-  error: () => { },
-  fatal: () => { },
+  trace: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  fatal: () => {}
 }
 
-module.exports.fakeLogger = fakeLogger
-
-module.exports.setupDatabase = async function ({ seed, cache, t }) {
+export async function setupDatabase ({ seed, cache, t }) {
   return connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
@@ -74,12 +75,12 @@ module.exports.setupDatabase = async function ({ seed, cache, t }) {
     },
     ignore: {},
     hooks: {},
-    cache,
+    cache
   })
 }
 
-module.exports.createBasicPages = async function (db, sql) {
-  if (module.exports.isSQLite) {
+export async function createBasicPages (db, sql) {
+  if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42)

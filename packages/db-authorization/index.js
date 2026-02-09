@@ -1,17 +1,9 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const leven = require('leven')
-const fastifyUser = require('fastify-user')
-const errors = require('./lib/errors')
-
-const findRule = require('./lib/find-rule')
-const { getRequestFromContext, getRoles } = require('./lib/utils')
-const {
-  Unauthorized,
-  UnauthorizedField,
-  MissingNotNullableError,
-} = require('./lib/errors')
+import fp from 'fastify-plugin'
+import fastifyUser from 'fastify-user'
+import leven from 'leven'
+import { MissingNotNullableError, Unauthorized, UnauthorizedField } from './lib/errors.js'
+import { findRule } from './lib/find-rule.js'
+import { getRequestFromContext, getRoles } from './lib/utils.js'
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 
@@ -21,6 +13,7 @@ async function auth (app, opts) {
   const roleKey = opts.rolePath || opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const isRolePath = !!opts.rolePath // if `true` the role is intepreted as path like `user.role`
   const anonymousRole = opts.anonymousRole || 'anonymous'
+  const roleMergeStrategy = opts.roleMergeStrategy || 'first-match'
 
   app.decorateRequest('setupDBAuthorizationUser', setupUser)
 
@@ -49,7 +42,7 @@ async function auth (app, opts) {
               value = PLT_ADMIN_ROLE
             }
             return value
-          },
+          }
         })
       }
     }
@@ -58,14 +51,14 @@ async function auth (app, opts) {
       // We replace just the role in `request.user`, all the rest is untouched
       request.user = {
         ...request.user,
-        [roleKey]: PLT_ADMIN_ROLE,
+        [roleKey]: PLT_ADMIN_ROLE
       }
     }
   }
 
   const rules = opts.rules || []
 
-  app.platformatic.addRulesForRoles = (_rules) => {
+  app.platformatic.addRulesForRoles = _rules => {
     for (const rule of _rules) {
       rules.push(rule)
     }
@@ -76,14 +69,17 @@ async function auth (app, opts) {
       // There is an unknown entity. Let's find out the nearest one for a nice error message
       const entities = Object.keys(app.platformatic.entities)
 
-      const nearest = entities.reduce((acc, entity) => {
-        const distance = leven(ruleEntity, entity)
-        if (distance < acc.distance) {
-          acc.distance = distance
-          acc.entity = entity
-        }
-        return acc
-      }, { distance: Infinity, entity: null })
+      const nearest = entities.reduce(
+        (acc, entity) => {
+          const distance = leven(ruleEntity, entity)
+          if (distance < acc.distance) {
+            acc.distance = distance
+            acc.entity = entity
+          }
+          return acc
+        },
+        { distance: Infinity, entity: null }
+      )
       return nearest
     }
 
@@ -105,7 +101,9 @@ async function auth (app, opts) {
         const newRule = { ...rule, entity: ruleEntity, entities: undefined }
         if (!app.platformatic.entities[newRule.entity]) {
           const nearest = findNearestEntity(ruleEntity)
-          throw new Error(`Unknown entity '${ruleEntity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
+          throw new Error(
+            `Unknown entity '${ruleEntity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`
+          )
         }
 
         if (!entityRules[ruleEntity]) {
@@ -131,7 +129,9 @@ async function auth (app, opts) {
           }
           const keys = Object.keys(checks)
           if (keys.length !== 1) {
-            throw new Error(`Subscription requires that the role "${rule.role}" has only one check in the find rule for entity "${rule.entity}"`)
+            throw new Error(
+              `Subscription requires that the role "${rule.role}" has only one check in the find rule for entity "${rule.entity}"`
+            )
           }
           const key = keys[0]
 
@@ -153,7 +153,7 @@ async function auth (app, opts) {
           role: PLT_ADMIN_ROLE,
           find: true,
           save: true,
-          delete: true,
+          delete: true
         })
       }
 
@@ -175,7 +175,7 @@ async function auth (app, opts) {
             return originalFind({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
           checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
@@ -187,7 +187,7 @@ async function auth (app, opts) {
             return originalSave({ ctx, input, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -220,6 +220,7 @@ async function auth (app, opts) {
               where,
               ctx,
               fields,
+              tx: restOpts.tx
             })
 
             if (found.length === 0) {
@@ -237,7 +238,7 @@ async function auth (app, opts) {
             return originalInsert({ inputs, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -268,7 +269,7 @@ async function auth (app, opts) {
             return originalDelete({ where, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
@@ -280,7 +281,7 @@ async function auth (app, opts) {
             return originalUpdateMany({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
           where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
 
@@ -311,7 +312,7 @@ async function auth (app, opts) {
           }
 
           return originalTopic
-        },
+        }
       })
     }
   })
@@ -333,19 +334,19 @@ async function fromRuleToWhere (ctx, rule, where, user) {
       for (const key of Object.keys(checks)) {
         const clauses = checks[key]
         if (typeof clauses === 'string') {
-        // case: "userId": "X-PLATFORMATIC-USER-ID"
+          // case: "userId": "X-PLATFORMATIC-USER-ID"
           where[key] = {
-            eq: request.user[clauses],
+            eq: request.user[clauses]
           }
         } else {
-        // case:
-        // userId: {
-        //   eq: 'X-PLATFORMATIC-USER-ID'
-        // }
+          // case:
+          // userId: {
+          //   eq: 'X-PLATFORMATIC-USER-ID'
+          // }
           for (const clauseKey of Object.keys(clauses)) {
             const clause = clauses[clauseKey]
             where[key] = {
-              [clauseKey]: request.user[clause],
+              [clauseKey]: request.user[clause]
             }
           }
         }
@@ -357,11 +358,11 @@ async function fromRuleToWhere (ctx, rule, where, user) {
   return where
 }
 
-async function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole, isRolePath = false) {
+async function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole, isRolePath = false, roleMergeStrategy = 'first-match') {
   const request = getRequestFromContext(ctx)
   await request.setupDBAuthorizationUser()
   const roles = getRoles(request, roleKey, anonymousRole, isRolePath)
-  const rule = findRule(rules, roles)
+  const rule = findRule(rules, roles, roleMergeStrategy)
   if (!rule) {
     ctx.reply.request.log.warn({ roles, rules }, 'no rule for roles')
     throw new Unauthorized()
@@ -412,10 +413,9 @@ function checkInputFromRuleFields (rule, inputs) {
 
 function checkSaveMandatoryFieldsInRules (type, rules) {
   // List of not nullable, not PKs field to validate save/insert when allowed fields are specified on the rule
-  const mandatoryFields =
-    Object.values(type.fields)
-      .filter(k => (!k.isNullable && !k.primaryKey))
-      .map(({ camelcase }) => (camelcase))
+  const mandatoryFields = Object.values(type.fields)
+    .filter(k => !k.isNullable && !k.primaryKey)
+    .map(({ camelcase }) => camelcase)
 
   for (const rule of rules) {
     const { entity, save } = rule
@@ -430,5 +430,5 @@ function checkSaveMandatoryFieldsInRules (type, rules) {
   }
 }
 
-module.exports = fp(auth)
-module.exports.errors = errors
+export default fp(auth)
+export * as errors from './lib/errors.js'

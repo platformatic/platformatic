@@ -1,12 +1,10 @@
-'use strict'
-
-const MQEmitter = require('mqemitter')
-const fp = require('fastify-plugin')
-const camelcase = require('camelcase')
-const { PassThrough } = require('stream')
-const MQEmitterRedis = require('mqemitter-redis')
-const { promisify } = require('util')
-const errors = require('./errors')
+import camelcase from 'camelcase'
+import fp from 'fastify-plugin'
+import MQEmitter from 'mqemitter'
+import MQEmitterRedis from 'mqemitter-redis'
+import { PassThrough } from 'stream'
+import { promisify } from 'util'
+import * as errors from './lib/errors.js'
 
 async function fastifySqlEvents (app, opts) {
   setupEmitter({ ...opts, mapper: app.platformatic, log: app.log })
@@ -14,7 +12,7 @@ async function fastifySqlEvents (app, opts) {
   app.addHook('onClose', () => promisify(mq.close.bind(mq)))
 }
 
-function setupEmitter ({ log, mq, mapper, connectionString }) {
+export function setupEmitter ({ log, mq, mapper, connectionString }) {
   if (connectionString) {
     mq = MQEmitterRedis({ connectionString })
   } else if (!mq) {
@@ -38,21 +36,24 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
         if (topic) {
           const payload = {
-            [primaryKey]: res[primaryKey],
+            [primaryKey]: res[primaryKey]
           }
           _log.trace({ topic, payload }, 'publishing event')
-          await new Promise((resolve) => {
-            mq.emit({
-              topic,
-              payload,
-            }, resolve)
+          await new Promise(resolve => {
+            mq.emit(
+              {
+                topic,
+                payload
+              },
+              resolve
+            )
           })
         }
         return res
       },
 
       delete: multiElement('delete'),
-      insert: multiElement('save'),
+      insert: multiElement('save')
     })
 
     function multiElement (action) {
@@ -62,20 +63,25 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         const _log = ctx?.reply?.request?.log || log
         const res = await original(data)
 
-        await Promise.all(res.map(async (payload) => {
-          const topic = await entity.getPublishTopic({ action, data: payload, ctx })
-          if (topic) {
-            _log.trace({ topic, payload }, 'publishing event')
-            return new Promise((resolve) => {
-              mq.emit({
-                topic,
-                payload: {
-                  [primaryKey]: payload[primaryKey],
-                },
-              }, resolve)
-            })
-          }
-        }))
+        await Promise.all(
+          res.map(async payload => {
+            const topic = await entity.getPublishTopic({ action, data: payload, ctx })
+            if (topic) {
+              _log.trace({ topic, payload }, 'publishing event')
+              return new Promise(resolve => {
+                mq.emit(
+                  {
+                    topic,
+                    payload: {
+                      [primaryKey]: payload[primaryKey]
+                    }
+                  },
+                  resolve
+                )
+              })
+            }
+          })
+        )
 
         return res
       }
@@ -126,14 +132,15 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         mq.removeListener(topic, forward, noop)
       }
     })
-    return Promise.all(topics.map((topic) => {
-      return new Promise((resolve) => mq.on(topic, forward, resolve))
-    })).then(() => stream)
+    return Promise.all(
+      topics.map(topic => {
+        return new Promise(resolve => mq.on(topic, forward, resolve))
+      })
+    ).then(() => stream)
   }
 }
 
 function noop () {}
 
-module.exports = fp(fastifySqlEvents)
-module.exports.setupEmitter = setupEmitter
-module.exports.errors = errors
+export default fp(fastifySqlEvents)
+export * as errors from './lib/errors.js'

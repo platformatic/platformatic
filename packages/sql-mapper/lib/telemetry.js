@@ -1,7 +1,7 @@
-'use strict'
-
-function wrapQuery (app, db, request) {
+export function wrapQuery (app, db, request) {
   const { startSpan, endSpan, SpanKind } = app.openTelemetry
+  // Bind the query method to preserve the correct 'this' context for private class fields
+  const originalQuery = db.query.bind(db)
   async function wrappedQuery () {
     const query = arguments[0]
     const connectionInfo = db.connectionInfo
@@ -18,8 +18,8 @@ function wrapQuery (app, db, request) {
     }
 
     const format = {
-      escapeIdentifier: (str) => (str),
-      formatValue: (value, index) => ({ placeholder: `$${index + 1}`, value }),
+      escapeIdentifier: str => str,
+      formatValue: (value, index) => ({ placeholder: `$${index + 1}`, value })
     }
     const { text: queryText } = query.format(format)
     // We get the name form the first 20 characters of the query
@@ -33,7 +33,7 @@ function wrapQuery (app, db, request) {
     const telemetryAttributes = {
       'db.statement': queryText,
       'db.system': dbSystem,
-      'db.name': database,
+      'db.name': database
     }
 
     if (!db.isSQLite) {
@@ -46,7 +46,8 @@ function wrapQuery (app, db, request) {
     let span
     try {
       span = startSpan(spanName, ctx, telemetryAttributes, SpanKind.CLIENT)
-      const result = await db.query.apply(db, arguments)
+      // Call the bound query method with the original arguments
+      const result = await originalQuery(...arguments)
       endSpan(span)
       return result
     } catch (err) /* istanbul ignore next */ {
@@ -57,22 +58,24 @@ function wrapQuery (app, db, request) {
   return wrappedQuery
 }
 
-function wrapDB (app, db, request) {
+export function wrapDB (app, db, request) {
   const newDb = Object.create(db)
   const connectionInfo = db.connectionInfo
   newDb.query = wrapQuery(app, db, request)
-  newDb.tx = function wrappedTx (func) {
-    return db.tx((db) => {
-      db.connectionInfo = connectionInfo
-      const _newDb = Object.create(db)
-      _newDb.query = wrapQuery(app, db, request)
-      return func(_newDb)
-    })
+  if (typeof db.tx === 'function') {
+    newDb.tx = function wrappedTx (func) {
+      return db.tx(txDb => {
+        txDb.connectionInfo = connectionInfo
+        const _newDb = Object.create(txDb)
+        _newDb.query = wrapQuery(app, txDb, request)
+        return func(_newDb)
+      })
+    }
   }
   return newDb
 }
 
-const setupTelemetry = app => {
+export function setupTelemetry (app) {
   // Decorate the request with the wrapped DB.
   // We need that for the queries written directly using `db`
   if (app.platformatic.db) {
@@ -80,9 +83,4 @@ const setupTelemetry = app => {
       return wrapDB(app, app.platformatic.db, this)
     })
   }
-}
-
-module.exports = {
-  setupTelemetry,
-  wrapDB,
 }

@@ -1,16 +1,17 @@
-'use strict'
-
-const { test } = require('node:test')
-const { deepEqual, equal, ok } = require('assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const auth = require('..')
-const { request } = require('undici')
+import fastifyCookie from '@fastify/cookie'
+import fastifySession from '@fastify/session'
+import core from '@platformatic/db-core'
+import { deepEqual, equal, ok } from 'assert'
+import fastify from 'fastify'
+import { randomUUID } from 'node:crypto'
+import { test } from 'node:test'
+import { request } from 'undici'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 test('admin can impersonate a users', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -18,36 +19,45 @@ test('admin can impersonate a users', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'x-platformatic-user-id',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        find: {
+          checks: {
+            userId: 'x-platformatic-user-id'
+          }
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        },
+        updateMany: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false,
+        updateMany: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -62,7 +72,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -73,19 +83,23 @@ test('admin can impersonate a users', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -95,7 +109,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -106,19 +120,23 @@ test('admin can impersonate a users', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -128,7 +146,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -138,18 +156,22 @@ test('admin can impersonate a users', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -159,7 +181,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -169,18 +191,22 @@ test('admin can impersonate a users', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -190,7 +216,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 43,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -200,29 +226,31 @@ test('admin can impersonate a users', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -232,7 +260,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 43,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -243,15 +271,19 @@ test('admin can impersonate a users', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: null,
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: null
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -261,7 +293,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -274,24 +306,24 @@ test('admin can impersonate a users', async () => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: [
-          { id: 2, title: 'Page 1', userId: 42 },
-          { id: 3, title: 'Page 2', userId: 42 },
-          { id: 4, title: 'Page 3', userId: 42 },
-        ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            { id: 2, title: 'Page 1', userId: 42 },
+            { id: 3, title: 'Page 2', userId: 42 },
+            { id: 4, title: 'Page 3', userId: 42 }
+          ]
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -301,7 +333,7 @@ test('admin can impersonate a users', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -311,35 +343,37 @@ test('admin can impersonate a users', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 })
 
 test('only admin usage', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -347,34 +381,37 @@ test('only admin usage', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      find: {
-        checks: {
-          userId: 'x-platformatic-user-id',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        find: {
+          checks: {
+            userId: 'x-platformatic-user-id'
+          }
+        },
+        save: {
+          checks: { userId: 'X-PLATFORMATIC-USER-ID' }
+        }
       },
-      save: {
-        checks: { userId: 'X-PLATFORMATIC-USER-ID' },
-      },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -389,7 +426,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -400,19 +437,23 @@ test('only admin usage', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -422,7 +463,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -433,19 +474,23 @@ test('only admin usage', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -455,7 +500,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -465,18 +510,22 @@ test('only admin usage', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -486,7 +535,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -496,18 +545,22 @@ test('only admin usage', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -517,7 +570,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 43,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -527,29 +580,31 @@ test('only admin usage', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -559,7 +614,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 43,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -570,15 +625,19 @@ test('only admin usage', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: null,
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: null
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -588,7 +647,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -601,24 +660,24 @@ test('only admin usage', async () => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: [
-          { id: 2, title: 'Page 1', userId: 42 },
-          { id: 3, title: 'Page 2', userId: 42 },
-          { id: 4, title: 'Page 3', userId: 42 },
-        ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            { id: 2, title: 'Page 1', userId: 42 },
+            { id: 3, title: 'Page 2', userId: 42 },
+            { id: 4, title: 'Page 3', userId: 42 }
+          ]
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -628,7 +687,7 @@ test('only admin usage', async () => {
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': 'user',
+        'X-PLATFORMATIC-ROLE': 'user'
       },
       body: {
         query: `
@@ -638,35 +697,37 @@ test('only admin usage', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
         },
-      ],
-    }, 'deletePages response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'deletePages response'
+    )
   }
 })
 
 test('platformatic-admin role', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -674,10 +735,10 @@ test('platformatic-admin role', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
-    adminSecret,
+    adminSecret
   })
   test.after(() => {
     app.close()
@@ -690,7 +751,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -700,18 +761,22 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -719,7 +784,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -729,18 +794,22 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -748,7 +817,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -758,18 +827,22 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -777,7 +850,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -787,18 +860,22 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello World',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -813,29 +890,31 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: null,
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'savePage',
-          ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: null
         },
-      ],
-    }, 'savePage response')
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['savePage']
+          }
+        ]
+      },
+      'savePage response'
+    )
   }
 
   {
@@ -843,7 +922,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -855,24 +934,24 @@ test('platformatic-admin role', async () => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        insertPages: [
-          { id: 2, title: 'Page 1' },
-          { id: 3, title: 'Page 2' },
-          { id: 4, title: 'Page 3' },
-        ],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          insertPages: [
+            { id: 2, title: 'Page 1' },
+            { id: 3, title: 'Page 2' },
+            { id: 4, title: 'Page 3' }
+          ]
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -880,7 +959,7 @@ test('platformatic-admin role', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -890,24 +969,30 @@ test('platformatic-admin role', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 2,
-          title: 'Page 1',
-        }],
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
+            {
+              id: 2,
+              title: 'Page 1'
+            }
+          ]
+        }
       },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 })
 
 test('admin with no rules', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -915,10 +1000,10 @@ test('admin with no rules', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
-    adminSecret,
+    adminSecret
   })
   test.after(() => {
     app.close()
@@ -931,7 +1016,7 @@ test('admin with no rules', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -941,18 +1026,22 @@ test('admin with no rules', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -960,7 +1049,7 @@ test('admin with no rules', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -970,24 +1059,28 @@ test('admin with no rules', async () => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getPageById status code')
-    deepEqual(res.json(), {
-      data: {
-        getPageById: {
-          id: 1,
-          title: 'Hello',
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id: 1,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'getPageById response')
+      'getPageById response'
+    )
   }
 })
 
 test('platformatic-admin has lower priority to allow user impersonation', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -995,32 +1088,35 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: false,
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -1035,7 +1131,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin'],
+        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin']
       },
       body: {
         query: `
@@ -1046,19 +1142,23 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: 1,
-          title: 'Hello',
-          userId: 42,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: 1,
+            title: 'Hello',
+            userId: 42
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -1068,7 +1168,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
         'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin'],
+        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin']
       },
       body: {
         query: `
@@ -1078,66 +1178,74 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: null,
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
+        },
+        errors: [
+          {
+            message: 'operation not allowed',
+            locations: [
+              {
+                line: 3,
+                column: 13
+              }
+            ],
+            path: ['deletePages']
+          }
+        ]
       },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
+      'deletePages response'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-USER-ID': 42,
+        'X-PLATFORMATIC-ROLE': ['platformatic-admin']
+      },
+      body: {
+        query: `
+          mutation {
+            deletePages(where: { title: { eq: "Hello" } }) {
+              id
+              title
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'deletePages status code')
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: [
             {
-              line: 3,
-              column: 13,
-            },
-          ],
-          path: [
-            'deletePages',
-          ],
-        },
-      ],
-    }, 'deletePages response')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/graphql',
-      headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
-        'X-PLATFORMATIC-USER-ID': 42,
-        'X-PLATFORMATIC-ROLE': ['platformatic-admin'],
-      },
-      body: {
-        query: `
-          mutation {
-            deletePages(where: { title: { eq: "Hello" } }) {
-              id
-              title
+              id: 1,
+              title: 'Hello'
             }
-          }
-        `,
+          ]
+        }
       },
-    })
-    equal(res.statusCode, 200, 'deletePages status code')
-    deepEqual(res.json(), {
-      data: {
-        deletePages: [{
-          id: 1,
-          title: 'Hello',
-        }],
-      },
-    }, 'deletePages response')
+      'deletePages response'
+    )
   }
 })
 
 test('adminSecret set admin role as only role if jwt is set', async () => {
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -1145,28 +1253,31 @@ test('adminSecret set admin role as only role if jwt is set', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      },
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -1176,7 +1287,7 @@ test('adminSecret set admin role as only role if jwt is set', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   {
@@ -1186,7 +1297,7 @@ test('adminSecret set admin role as only role if jwt is set', async () => {
       url: '/graphql',
       headers: {
         'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -1197,19 +1308,23 @@ test('adminSecret set admin role as only role if jwt is set', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: '1',
-          title: 'Hello',
-          userId: null,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: '1',
+            title: 'Hello',
+            userId: null
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })
 
@@ -1217,17 +1332,17 @@ test('adminSecret set admin as only role if webhook is set', async () => {
   async function buildAuthorizer (opts = {}) {
     // We need forceCloseConnection otherwise the test will hang with node16
     const app = fastify({ forceCloseConnections: true })
-    app.register(require('@fastify/cookie'))
-    app.register(require('@fastify/session'), {
+    app.register(fastifyCookie)
+    app.register(fastifySession, {
       cookieName: 'sessionId',
       secret: 'a secret with minimum length of 32 characters',
-      cookie: { secure: false },
+      cookie: { secure: false }
     })
 
     app.post('/login', async (request, reply) => {
       request.session.user = request.body
       return {
-        status: 'ok',
+        status: 'ok'
       }
     })
 
@@ -1249,7 +1364,7 @@ test('adminSecret set admin as only role if webhook is set', async () => {
   }
 
   const app = fastify()
-  const adminSecret = require('crypto').randomUUID()
+  const adminSecret = randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -1257,41 +1372,44 @@ test('adminSecret set admin as only role if webhook is set', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
 
   const authorizer = await buildAuthorizer()
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`,
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
     },
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      },
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   async function getCookie (userId, role) {
     const res = await request(`http://localhost:${authorizer.server.address().port}/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         'X-PLATFORMATIC-USER-ID': userId,
-        'X-PLATFORMATIC-ROLE': role,
-      }),
+        'X-PLATFORMATIC-ROLE': role
+      })
     })
 
     res.body.resume()
@@ -1312,7 +1430,7 @@ test('adminSecret set admin as only role if webhook is set', async () => {
       url: '/graphql',
       headers: {
         cookie,
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
       },
       body: {
         query: `
@@ -1323,18 +1441,22 @@ test('adminSecret set admin as only role if webhook is set', async () => {
               userId
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    deepEqual(res.json(), {
-      data: {
-        savePage: {
-          id: '1',
-          title: 'Hello',
-          userId: null,
-        },
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id: '1',
+            title: 'Hello',
+            userId: null
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })

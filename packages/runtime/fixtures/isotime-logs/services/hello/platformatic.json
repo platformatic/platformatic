@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.60.0.json",
+  "logger": {
+    "level": "info",
+    "timestamp": "isoTime"
+  }
+}

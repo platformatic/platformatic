@@ -1,11 +1,14 @@
-'use strict'
+import { CompositePropagator, merge, W3CTraceContextPropagator } from '@opentelemetry/core'
+import { emptyResource } from '@opentelemetry/resources'
+import { AlwaysOnSampler } from '@opentelemetry/sdk-trace-base'
+import { createRequire } from 'node:module'
+import { MultiSpanProcessor } from './multispan-processor.js'
 
-const { Resource } = require('@opentelemetry/resources')
-const { AlwaysOnSampler, merge, CompositePropagator, W3CTraceContextPropagator } = require('@opentelemetry/core')
-const { Tracer } = require('@opentelemetry/sdk-trace-base')
-const { MultiSpanProcessor } = require('./multispan-processor')
+const require = createRequire(import.meta.url)
+// We need to import the Tracer to write our own TracerProvider that does NOT extend the OpenTelemetry one.
+const { Tracer } = require('@opentelemetry/sdk-trace-base/build/src/Tracer')
 
-class PlatformaticTracerProvider {
+export class PlatformaticTracerProvider {
   activeSpanProcessor = null
   _registeredSpanProcessors = []
   // This MUST be called `resource`, see: https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/Tracer.ts#L57
@@ -16,19 +19,19 @@ class PlatformaticTracerProvider {
     const mergedConfig = merge(
       {},
       {
-        sampler: new AlwaysOnSampler(),
+        sampler: new AlwaysOnSampler()
       },
       config
     )
-    this.resource = mergedConfig.resource ?? Resource.empty()
+    this.resource = mergedConfig.resource ?? emptyResource
     this._config = Object.assign({}, mergedConfig, {
-      resource: this.resource,
+      resource: this.resource
     })
   }
 
   // This is the only mandatory API: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#get-a-tracer
-  getTracer (name, version, options) {
-    return new Tracer({ name, version }, this._config, this)
+  getTracer (name, version) {
+    return new Tracer({ name, version }, this._config, this.resource, this.activeSpanProcessor)
   }
 
   addSpanProcessor (spanProcessor) {
@@ -37,9 +40,7 @@ class PlatformaticTracerProvider {
     } else {
       this._registeredSpanProcessors.push(spanProcessor)
     }
-    this.activeSpanProcessor = new MultiSpanProcessor(
-      this._registeredSpanProcessors
-    )
+    this.activeSpanProcessor = new MultiSpanProcessor(this._registeredSpanProcessors)
   }
 
   getActiveSpanProcessor () {
@@ -49,14 +50,13 @@ class PlatformaticTracerProvider {
   getPropagator () {
     return new CompositePropagator({
       propagators: [
-        new W3CTraceContextPropagator(), // see: https://www.w3.org/TR/trace-context/
-      ],
+        new W3CTraceContextPropagator() // see: https://www.w3.org/TR/trace-context/
+      ]
     })
   }
 
   forceFlush () {
     // Let's do a fire-and-forget of forceFlush on all the processor for the time being.
-    // TODO: manage errors
     this._registeredSpanProcessors.forEach(spanProcessor => spanProcessor.forceFlush())
   }
 
@@ -64,5 +64,3 @@ class PlatformaticTracerProvider {
     return this.activeSpanProcessor.shutdown()
   }
 }
-
-module.exports = { PlatformaticTracerProvider }

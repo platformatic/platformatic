@@ -1,0 +1,8 @@
+{
+  "main": "index.js",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "@platformatic/node": "^2.56.0"
+  }
+}

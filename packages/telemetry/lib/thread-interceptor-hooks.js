@@ -1,45 +1,54 @@
-'use strict'
+import { context, propagation, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
+import fastUri from 'fast-uri'
+import { formatSpanAttributes, formatSpanName } from './telemetry-config.js'
+import { name as moduleName, version as moduleVersion } from './version.js'
 
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { formatSpanName, formatSpanAttributes } = require('./telemetry-config')
-const api = require('@opentelemetry/api')
-const fastUri = require('fast-uri')
-const packageJson = require('../package.json')
+// Get tracer from our isolated TracerProvider stored in globalThis.platformatic
+function getTracer () {
+  const tracerProvider = globalThis.platformatic?.tracerProvider
+  if (tracerProvider) {
+    return tracerProvider.getTracer(moduleName, moduleVersion)
+  }
+  // Fallback to global tracer if our provider isn't set up yet
+  return trace.getTracer(moduleName, moduleVersion)
+}
 
-const tracer = api.trace.getTracer(packageJson.name, packageJson.version)
-
-const createTelemetryThreadInterceptorHooks = () => {
+export function createTelemetryThreadInterceptorHooks () {
   const onServerRequest = (req, cb) => {
-    const activeContext = api.propagation.extract(api.context.active(), req.headers)
+    const activeContext = propagation.extract(context.active(), req.headers)
 
     const route = req.routeOptions?.url ?? null
-    const span = tracer.startSpan(formatSpanName(req, route), {
-      attributes: formatSpanAttributes.request(req, route),
-      kind: SpanKind.SERVER
-    }, activeContext)
-    const ctx = api.trace.setSpan(activeContext, span)
+    const span = getTracer().startSpan(
+      formatSpanName(req, route),
+      {
+        attributes: formatSpanAttributes.request(req, route),
+        kind: SpanKind.SERVER
+      },
+      activeContext
+    )
+    const ctx = trace.setSpan(activeContext, span)
 
-    api.context.with(ctx, cb)
+    context.with(ctx, cb)
   }
 
   const onServerResponse = (_req, _res) => {
-    const activeContext = api.context.active()
-    const span = api.trace.getSpan(activeContext)
+    const activeContext = context.active()
+    const span = trace.getSpan(activeContext)
     if (span) {
       span.end()
     }
   }
 
   const onServerError = (_req, _res, error) => {
-    const activeContext = api.context.active()
-    const span = api.trace.getSpan(activeContext)
+    const activeContext = context.active()
+    const span = trace.getSpan(activeContext)
     if (span) {
       span.setAttributes(formatSpanAttributes.error(error))
     }
   }
 
   const onClientRequest = (req, ctx) => {
-    const activeContext = api.context.active()
+    const activeContext = context.active()
 
     const { origin, method = '', path } = req
     const targetUrl = `${origin}${path}`
@@ -51,26 +60,30 @@ const createTelemetryThreadInterceptorHooks = () => {
     } else {
       name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
     }
-    const span = tracer.startSpan(name, {
-      attributes: {
-        'server.address': urlObj.host,
-        'server.port': urlObj.port,
-        'http.request.method': method,
-        'url.full': targetUrl,
-        'url.path': urlObj.path,
-        'url.scheme': urlObj.scheme,
+    const span = getTracer().startSpan(
+      name,
+      {
+        attributes: {
+          'server.address': urlObj.host,
+          'server.port': urlObj.port,
+          'http.request.method': method,
+          'url.full': targetUrl,
+          'url.path': urlObj.path,
+          'url.scheme': urlObj.scheme
+        },
+        kind: SpanKind.CLIENT
       },
-      kind: SpanKind.CLIENT
-    }, activeContext)
+      activeContext
+    )
 
     // Headers propagation
     const headers = {}
     // This line is important, otherwise it will use the old context
-    const newCtx = api.trace.setSpan(activeContext, span)
-    api.propagation.inject(newCtx, headers, {
+    const newCtx = trace.setSpan(activeContext, span)
+    propagation.inject(newCtx, headers, {
       set (_carrier, key, value) {
         headers[key] = value
-      },
+      }
     })
     req.headers = {
       ...req.headers,
@@ -91,7 +104,7 @@ const createTelemetryThreadInterceptorHooks = () => {
         spanStatus.code = SpanStatusCode.ERROR
       }
       span.setAttributes({
-        'http.response.status_code': res.statusCode,
+        'http.response.status_code': res.statusCode
       })
 
       const httpCacheId = res.headers?.['x-plt-http-cache-id']
@@ -107,7 +120,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     } else {
       span.setStatus({
         code: SpanStatusCode.ERROR,
-        message: 'No response received',
+        message: 'No response received'
       })
     }
     span.end()
@@ -129,8 +142,4 @@ const createTelemetryThreadInterceptorHooks = () => {
     onClientResponseEnd,
     onClientError
   }
-}
-
-module.exports = {
-  createTelemetryThreadInterceptorHooks
 }

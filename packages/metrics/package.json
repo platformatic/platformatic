@@ -1,11 +1,11 @@
 {
   "name": "@platformatic/metrics",
-  "version": "2.53.0",
-  "description": "Platformatic Stackable Metrics",
+  "version": "3.37.0",
+  "description": "Platformatic Capability Metrics",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "test": "npm run lint",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "lint": "eslint"
   },
   "repository": {
@@ -19,13 +19,16 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@platformatic/http-metrics": "^0.2.1",
-    "prom-client": "^15.1.2",
-    "thread-cpu-usage": "^0.2.0"
+    "@platformatic/http-metrics": "^0.3.0",
+    "@platformatic/promotel": "^0.1.0",
+    "@platformatic/prom-client": "^1.0.0"
   },
   "devDependencies": {
-    "borp": "^0.19.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

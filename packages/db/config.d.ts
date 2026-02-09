@@ -22,7 +22,7 @@ export type CrudOperationAuth =
     }
   | boolean;
 
-export interface PlatformaticDB {
+export interface PlatformaticDatabaseConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -49,7 +49,7 @@ export interface PlatformaticDB {
     logger?:
       | boolean
       | {
-          level: (
+          level?: (
             | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
             | {
                 [k: string]: unknown;
@@ -80,6 +80,21 @@ export interface PlatformaticDB {
             options?: {
               [k: string]: unknown;
             };
+          };
+          formatters?: {
+            path: string;
+          };
+          timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+          redact?: {
+            paths: string[];
+            censor?: string;
+          };
+          base?: {
+            [k: string]: unknown;
+          } | null;
+          messageKey?: string;
+          customLevels?: {
+            [k: string]: unknown;
           };
           [k: string]: unknown;
         };
@@ -325,6 +340,7 @@ export interface PlatformaticDB {
           find?: CrudOperationAuth;
           save?: CrudOperationAuth;
           delete?: CrudOperationAuth;
+          updateMany?: CrudOperationAuth;
         }
       | {
           /**
@@ -344,6 +360,7 @@ export interface PlatformaticDB {
           find?: CrudOperationAuth;
           save?: CrudOperationAuth;
           delete?: CrudOperationAuth;
+          updateMany?: CrudOperationAuth;
         }
     )[];
   };
@@ -370,24 +387,6 @@ export interface PlatformaticDB {
      */
     currentSchema?: string;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   types?: {
     /**
      * Should types be auto generated.
@@ -401,18 +400,612 @@ export interface PlatformaticDB {
   plugins?: {
     [k: string]: unknown;
   };
-  telemetry?: OpenTelemetry;
-  clients?: {
-    serviceId?: string;
-    name?: string;
-    type?: "openapi" | "graphql";
-    path?: string;
-    schema?: string;
-    url?: string;
-    fullResponse?: boolean;
-    fullRequest?: boolean;
-    validateResponse?: boolean;
-  }[];
+  application?: {};
+  telemetry?: {
+    enabled?: boolean | string;
+    /**
+     * The name of the application. Defaults to the folder name if not specified.
+     */
+    applicationName: string;
+    /**
+     * The version of the application (optional)
+     */
+    version?: string;
+    /**
+     * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+     */
+    skip?: {
+      /**
+       * The path to skip. Can be a string or a regex.
+       */
+      path?: string;
+      /**
+       * HTTP method to skip
+       */
+      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+      [k: string]: unknown;
+    }[];
+    exporter?:
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        }[]
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        };
+  };
+  runtime?: {
+    preload?: string | string[];
+    basePath?: string;
+    services?: {
+      [k: string]: unknown;
+    }[];
+    workers?:
+      | number
+      | string
+      | {
+          static?: number;
+          dynamic?: boolean;
+          minimum?: number;
+          maximum?: number;
+          total?: number;
+          maxMemory?: number;
+          cooldown?: number;
+          gracePeriod?: number;
+          scaleUpELU?: number;
+          scaleDownELU?: number;
+          [k: string]: unknown;
+        };
+    workersRestartDelay?: number | string;
+    logger?: {
+      level?: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
+      transport?:
+        | {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          }
+        | {
+            targets?: {
+              target?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              level?: string;
+            }[];
+            options?: {
+              [k: string]: unknown;
+            };
+          };
+      pipeline?: {
+        target?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+      formatters?: {
+        path: string;
+      };
+      timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+      redact?: {
+        paths: string[];
+        censor?: string;
+      };
+      base?: {
+        [k: string]: unknown;
+      } | null;
+      messageKey?: string;
+      customLevels?: {
+        [k: string]: unknown;
+      };
+      [k: string]: unknown;
+    };
+    server?: {
+      hostname?: string;
+      port?: number | string;
+      /**
+       * The maximum length of the queue of pending connections
+       */
+      backlog?: number;
+      http2?: boolean;
+      https?: {
+        allowHTTP1?: boolean;
+        key:
+          | string
+          | {
+              path?: string;
+            }
+          | (
+              | string
+              | {
+                  path?: string;
+                }
+            )[];
+        cert:
+          | string
+          | {
+              path?: string;
+            }
+          | (
+              | string
+              | {
+                  path?: string;
+                }
+            )[];
+        requestCert?: boolean;
+        rejectUnauthorized?: boolean;
+      };
+    };
+    reuseTcpPorts?: boolean;
+    startTimeout?: number;
+    restartOnError?: boolean | number;
+    exitOnUnhandledErrors?: boolean;
+    gracefulShutdown?: {
+      runtime: number | string;
+      application: number | string;
+      /**
+       * Add Connection: close header to HTTP responses during graceful shutdown
+       */
+      closeConnections?: boolean;
+    };
+    health?: {
+      enabled?: boolean | string;
+      interval?: number | string;
+      gracePeriod?: number | string;
+      maxUnhealthyChecks?: number | string;
+      maxELU?: number | string;
+      maxHeapUsed?: number | string;
+      maxHeapTotal?: number | string;
+      maxYoungGeneration?: number | string;
+      codeRangeSize?: number | string;
+    };
+    undici?: {
+      agentOptions?: {
+        [k: string]: unknown;
+      };
+      interceptors?:
+        | {
+            module: string;
+            options: {
+              [k: string]: unknown;
+            };
+            [k: string]: unknown;
+          }[]
+        | {
+            Client?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            Pool?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            Agent?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            [k: string]: unknown;
+          };
+      [k: string]: unknown;
+    };
+    httpCache?:
+      | boolean
+      | {
+          store?: string;
+          /**
+           * @minItems 1
+           */
+          methods?: [string, ...string[]];
+          cacheTagsHeader?: string;
+          maxSize?: number;
+          maxEntrySize?: number;
+          maxCount?: number;
+          /**
+           * Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\/\\/.*\\.example\\.com/").
+           */
+          origins?: string[];
+          /**
+           * Default cache duration in seconds for responses without explicit expiration headers.
+           */
+          cacheByDefault?: number;
+          /**
+           * Cache type. "shared" caches may be shared between users, "private" caches are user-specific.
+           */
+          type?: "shared" | "private";
+          [k: string]: unknown;
+        };
+    watch?: boolean | string;
+    managementApi?:
+      | boolean
+      | string
+      | {
+          logs?: {
+            maxSize?: number;
+          };
+          /**
+           * Custom path for the control socket. If not specified, uses the default platform-specific location.
+           */
+          socket?: string;
+        };
+    metrics?:
+      | boolean
+      | {
+          port?: number | string;
+          enabled?: boolean | string;
+          hostname?: string;
+          endpoint?: string;
+          auth?: {
+            username: string;
+            password: string;
+          };
+          labels?: {
+            [k: string]: string;
+          };
+          /**
+           * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
+           */
+          applicationLabel?: string;
+          readiness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          liveness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          healthChecksTimeouts?: number | string;
+          plugins?: string[];
+          timeout?: number | string;
+          /**
+           * Configuration for exporting metrics to an OTLP endpoint
+           */
+          otlpExporter?: {
+            /**
+             * Enable or disable OTLP metrics export
+             */
+            enabled?: boolean | string;
+            /**
+             * OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)
+             */
+            endpoint: string;
+            /**
+             * Interval in milliseconds between metric pushes
+             */
+            interval?: number | string;
+            /**
+             * Additional HTTP headers for authentication
+             */
+            headers?: {
+              [k: string]: string;
+            };
+            /**
+             * Service name for OTLP resource attributes
+             */
+            serviceName?: string;
+            /**
+             * Service version for OTLP resource attributes
+             */
+            serviceVersion?: string;
+          };
+          /**
+           * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
+           */
+          httpCustomLabels?: {
+            /**
+             * The label name to use in metrics
+             */
+            name: string;
+            /**
+             * The HTTP request header to extract the value from
+             */
+            header: string;
+            /**
+             * Default value when header is missing (defaults to "unknown")
+             */
+            default?: string;
+          }[];
+        };
+    telemetry?: {
+      enabled?: boolean | string;
+      /**
+       * The name of the application. Defaults to the folder name if not specified.
+       */
+      applicationName: string;
+      /**
+       * The version of the application (optional)
+       */
+      version?: string;
+      /**
+       * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+       */
+      skip?: {
+        /**
+         * The path to skip. Can be a string or a regex.
+         */
+        path?: string;
+        /**
+         * HTTP method to skip
+         */
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+        [k: string]: unknown;
+      }[];
+      exporter?:
+        | {
+            type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+            /**
+             * Options for the exporter. These are passed directly to the exporter.
+             */
+            options?: {
+              /**
+               * The URL to send the traces to. Not used for console or memory exporters.
+               */
+              url?: string;
+              /**
+               * Headers to send to the exporter. Not used for console or memory exporters.
+               */
+              headers?: {
+                [k: string]: unknown;
+              };
+              /**
+               * The path to write the traces to. Only for file exporter.
+               */
+              path?: string;
+              [k: string]: unknown;
+            };
+            additionalProperties?: never;
+            [k: string]: unknown;
+          }[]
+        | {
+            type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+            /**
+             * Options for the exporter. These are passed directly to the exporter.
+             */
+            options?: {
+              /**
+               * The URL to send the traces to. Not used for console or memory exporters.
+               */
+              url?: string;
+              /**
+               * Headers to send to the exporter. Not used for console or memory exporters.
+               */
+              headers?: {
+                [k: string]: unknown;
+              };
+              /**
+               * The path to write the traces to. Only for file exporter.
+               */
+              path?: string;
+              [k: string]: unknown;
+            };
+            additionalProperties?: never;
+            [k: string]: unknown;
+          };
+    };
+    verticalScaler?: {
+      enabled?: boolean;
+      maxTotalWorkers?: number;
+      maxTotalMemory?: number;
+      minWorkers?: number;
+      maxWorkers?: number;
+      cooldownSec?: number;
+      gracePeriod?: number;
+      scaleUpELU?: number;
+      scaleDownELU?: number;
+      /**
+       * @deprecated
+       */
+      timeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleDownTimeWindowSec?: number;
+      /**
+       * @deprecated
+       */
+      scaleIntervalSec?: number;
+    };
+    inspectorOptions?: {
+      host?: string;
+      port?: number;
+      breakFirstLine?: boolean;
+      watchDisabled?: boolean;
+      [k: string]: unknown;
+    };
+    applicationTimeout?: number | string;
+    startupConcurrency?: number | string;
+    messagingTimeout?: number | string;
+    env?: {
+      [k: string]: string;
+    };
+    sourceMaps?: boolean;
+    nodeModulesSourceMaps?: string[];
+    scheduler?: {
+      enabled?: boolean | string;
+      name: string;
+      cron: string;
+      callbackUrl: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+      headers?: {
+        [k: string]: string;
+      };
+      body?:
+        | string
+        | {
+            [k: string]: unknown;
+          };
+      maxRetries?: number;
+      [k: string]: unknown;
+    }[];
+    policies?: {
+      deny: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: string | [string, ...string[]];
+      };
+    };
+    compileCache?:
+      | boolean
+      | {
+          /**
+           * Enable Node.js module compile cache for faster startup
+           */
+          enabled?: boolean;
+          /**
+           * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+           */
+          directory?: string;
+        };
+    application?: {
+      reuseTcpPorts?: boolean;
+      workers?:
+        | number
+        | string
+        | {
+            static?: number;
+            minimum?: number;
+            maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
+            [k: string]: unknown;
+          };
+      health?: {
+        enabled?: boolean | string;
+        interval?: number | string;
+        gracePeriod?: number | string;
+        maxUnhealthyChecks?: number | string;
+        maxELU?: number | string;
+        maxHeapUsed?: number | string;
+        maxHeapTotal?: number | string;
+        maxYoungGeneration?: number | string;
+        codeRangeSize?: number | string;
+      };
+      arguments?: string[];
+      env?: {
+        [k: string]: string;
+      };
+      envfile?: string;
+      sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
+      packageManager?: "npm" | "pnpm" | "yarn";
+      preload?: string | string[];
+      nodeOptions?: string;
+      execArgv?: string[];
+      permissions?: {
+        fs?: {
+          read?: string[];
+          write?: string[];
+        };
+      };
+      telemetry?: {
+        /**
+         * An array of instrumentations loaded if telemetry is enabled
+         */
+        instrumentations?: (
+          | string
+          | {
+              package: string;
+              exportName?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }
+        )[];
+        [k: string]: unknown;
+      };
+      compileCache?:
+        | boolean
+        | {
+            /**
+             * Enable Node.js module compile cache for faster startup
+             */
+            enabled?: boolean;
+            /**
+             * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+             */
+            directory?: string;
+          };
+    };
+  };
   watch?:
     | {
         enabled?: boolean | string;
@@ -640,80 +1233,4 @@ export interface Tag {
    * via the `patternProperty` "^x-".
    */
   [k: string]: unknown;
-}
-export interface OpenTelemetry {
-  enabled?: boolean | string;
-  /**
-   * The name of the service. Defaults to the folder name if not specified.
-   */
-  serviceName: string;
-  /**
-   * The version of the service (optional)
-   */
-  version?: string;
-  /**
-   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
-   */
-  skip?: {
-    /**
-     * The path to skip. Can be a string or a regex.
-     */
-    path?: string;
-    /**
-     * HTTP method to skip
-     */
-    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-    [k: string]: unknown;
-  }[];
-  exporter?:
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      }[]
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      };
 }

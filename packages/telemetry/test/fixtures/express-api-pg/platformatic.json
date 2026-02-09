@@ -16,13 +16,15 @@
       "id": "express",
       "path": "./api/express",
       "telemetry": {
-        "instrumentations": []
+        "instrumentations": [
+          "@opentelemetry/instrumentation-pg"
+        ]
       }
     }
   ],
   "basePath": "/",
   "telemetry": {
-    "serviceName": "test-pg",
+    "applicationName": "test-pg",
     "version": "1.0.0",
     "exporter": {
       "type": "file"

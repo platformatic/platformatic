@@ -1,17 +1,17 @@
 // @ts-expect-error
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
+import { getGlobal } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
-// @ts-expect-error
-const prefix = globalThis.platformatic?.basePath ?? ''
+const platformatic = getGlobal()
+const prefix = platformatic.basePath ?? ''
 
 const server = createServer((req, res) => {
   if (req.url === ensureTrailingSlash(cleanBasePath(prefix))) {
     res.writeHead(200, {
       'content-type': 'application/json',
       connection: 'close',
-      // @ts-expect-error
-      'x-plt-worker-id': globalThis.platformatic.workerId ?? 'only'
+      'x-plt-worker-id': platformatic.workerId
     })
     res.end(JSON.stringify({ production: process.env.NODE_ENV === 'production' }))
   } else {

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "application-1"
+      },
+      {
+        "id": "application-2"
+      },
+      {
+        "id": "application-3"
+      }
+    ]
+  }
+}

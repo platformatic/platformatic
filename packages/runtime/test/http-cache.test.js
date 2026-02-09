@@ -1,24 +1,20 @@
-'use strict'
+import { parseNDJson } from '@platformatic/telemetry/test/helper.js'
+import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
+import { rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { gunzipSync } from 'node:zlib'
+import { request } from 'undici'
+import { transform } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const assert = require('node:assert')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { rm } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const zlib = require('node:zlib')
-const { buildServer, platformaticRuntime } = require('..')
+const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
-
-const fixturesDir = join(__dirname, '..', 'fixtures')
-
-test('should cache http requests', async (t) => {
+test('should cache http requests', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -31,21 +27,21 @@ test('should cache http requests', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
     const cacheEntryId = res.headers['x-plt-http-cache-id']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-    assert.ok(cacheEntryId)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    ok(cacheEntryId)
 
     if (firstCacheEntryId === null) {
       firstCacheEntryId = cacheEntryId
     } else {
-      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+      strictEqual(cacheEntryId, firstCacheEntryId)
     }
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   await sleep(cacheTimeoutSec * 1000)
@@ -54,22 +50,21 @@ test('should cache http requests', async (t) => {
     query: { maxAge: cacheTimeoutSec }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
   const cacheEntryId = res.headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-  assert.ok(cacheEntryId)
-  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
+  strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  ok(cacheEntryId)
+  notStrictEqual(cacheEntryId, firstCacheEntryId)
 
   const { counter } = await res.body.json()
-  assert.strictEqual(counter, 2)
+  strictEqual(counter, 2)
 })
 
-test('should get response cached by another service', async (t) => {
+test('should get response cached by another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -83,14 +78,14 @@ test('should get response cached by another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 1)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 1)
+    strictEqual(service, 'service-3')
   }
 
   {
@@ -100,14 +95,14 @@ test('should get response cached by another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 1)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 1)
+    strictEqual(service, 'service-3')
   }
 
   // Wait for the cache to expire
@@ -120,33 +115,35 @@ test('should get response cached by another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter, service } = await res.body.json()
-    assert.strictEqual(counter, 2)
-    assert.strictEqual(service, 'service-3')
+    strictEqual(counter, 2)
+    strictEqual(service, 'service-3')
   }
 })
 
-test('should use a custom cache storage', async (t) => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
+test('should use a custom cache storage', async t => {
   const cacheStoreOptions = {
     maxCount: 42,
     maxSize: 424242,
     maxEntrySize: 4242
   }
 
-  config.configManager.current.httpCache = {
-    store: join(fixturesDir, 'http-cache', 'custom-cache-store.js'),
-    ...cacheStoreOptions
-  }
-
-  const app = await buildServer(config.configManager.current)
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        store: join(fixturesDir, 'http-cache', 'custom-cache-store.js'),
+        ...cacheStoreOptions
+      }
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -158,10 +155,10 @@ test('should use a custom cache storage', async (t) => {
     const { statusCode, body } = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(statusCode, 200)
+    strictEqual(statusCode, 200)
 
     const { counter } = await body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
 
     await sleep(1000)
   }
@@ -169,22 +166,21 @@ test('should use a custom cache storage', async (t) => {
   const { statusCode, headers, body } = await request(entryUrl + '/service-1/cached-req-counter', {
     query: { maxAge: cacheTimeoutSec }
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const { message, options, entries } = await body.json()
-  assert.strictEqual(message, 'Custom cache store response')
-  assert.deepStrictEqual(options, cacheStoreOptions)
-  assert.strictEqual(entries.length, 1)
+  strictEqual(message, 'Custom cache store response')
+  deepStrictEqual(options, cacheStoreOptions)
+  strictEqual(entries.length, 1)
 
   const cacheEntry = entries[0]
   const cacheEntryId = headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheEntry.key.id, cacheEntryId)
+  strictEqual(cacheEntry.key.id, cacheEntryId)
 })
 
-test('should remove a url from an http cache', async (t) => {
+test('should remove a url from an http cache', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -197,13 +193,13 @@ test('should remove a url from an http cache', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -212,21 +208,23 @@ test('should remove a url from an http cache', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   await app.invalidateHttpCache({
-    keys: [{
-      origin: 'http://service-1.plt.local',
-      path: '/cached-req-counter?maxAge=100',
-      method: 'GET'
-    }]
+    keys: [
+      {
+        origin: 'http://service-1.plt.local',
+        path: '/cached-req-counter?maxAge=100',
+        method: 'GET'
+      }
+    ]
   })
 
   {
@@ -234,20 +232,19 @@ test('should remove a url from an http cache', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
-test('should invalidate cache from another service', async (t) => {
+test('should invalidate cache from another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -260,13 +257,13 @@ test('should invalidate cache from another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -275,13 +272,13 @@ test('should invalidate cache from another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -292,14 +289,16 @@ test('should invalidate cache from another service', async (t) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        keys: [{
-          origin: 'http://service-1.plt.local',
-          path: '/cached-req-counter?maxAge=100',
-          method: 'GET',
-        }]
+        keys: [
+          {
+            origin: 'http://service-1.plt.local',
+            path: '/cached-req-counter?maxAge=100',
+            method: 'GET'
+          }
+        ]
       })
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   {
@@ -307,25 +306,27 @@ test('should invalidate cache from another service', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
-test('should invalidate cache by cache tags', async (t) => {
+test('should invalidate cache by cache tags', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
-  config.configManager.current.httpCache = {
-    cacheTagsHeader: 'Cache-Tags'
-  }
-
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        cacheTagsHeader: 'Cache-Tags'
+      }
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -341,16 +342,16 @@ test('should invalidate cache by cache tags', async (t) => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const cacheTags = res.headers['cache-tags']
-    assert.strictEqual(cacheTags, 'tag1,tag2')
+    strictEqual(cacheTags, 'tag1,tag2')
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -359,19 +360,19 @@ test('should invalidate cache by cache tags', async (t) => {
       query: {
         maxAge: cacheTimeoutSec,
         cacheTags: ['tag1', 'tag2']
-      },
+      }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const cacheTags = res.headers['cache-tags']
-    assert.strictEqual(cacheTags, 'tag1,tag2')
+    strictEqual(cacheTags, 'tag1,tag2')
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 1)
+    strictEqual(counter, 1)
   }
 
   {
@@ -383,7 +384,7 @@ test('should invalidate cache by cache tags', async (t) => {
       },
       body: JSON.stringify({ tags: ['tag1'] })
     })
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
   }
 
   {
@@ -394,34 +395,36 @@ test('should invalidate cache by cache tags', async (t) => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
 
     const { counter } = await res.body.json()
-    assert.strictEqual(counter, 2)
+    strictEqual(counter, 2)
   }
 })
 
-test('should set an opentelemetry attribute', async (t) => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const config = configManager.current
-
+test('should set an opentelemetry attribute', async t => {
   const telemetryFilePath = join(tmpdir(), 'telemetry.ndjson')
   await rm(telemetryFilePath, { force: true }).catch(() => {})
 
-  config.telemetry = {
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'file',
-      options: { path: telemetryFilePath }
-    }
-  }
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.telemetry = {
+        applicationName: 'test-service',
+        version: '1.0.0',
+        exporter: {
+          type: 'file',
+          options: { path: telemetryFilePath }
+        }
+      }
 
-  const app = await buildServer(config)
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -435,7 +438,7 @@ test('should set an opentelemetry attribute', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
     const error = await body.text()
-    assert.strictEqual(statusCode, 200, error)
+    strictEqual(statusCode, 200, error)
   }
 
   await sleep(100)
@@ -446,23 +449,23 @@ test('should set an opentelemetry attribute', async (t) => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    assert.strictEqual(serverTraces.length, 4)
-    assert.strictEqual(clientTraces.length, 3)
+    strictEqual(serverTraces.length, 4)
+    strictEqual(clientTraces.length, 3)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.strictEqual(cacheIdAttribute, undefined)
-      assert.strictEqual(cacheHitAttribute, undefined)
+      strictEqual(cacheIdAttribute, undefined)
+      strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.ok(cacheIdAttribute)
-      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, 'false')
+      ok(cacheIdAttribute)
+      notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      strictEqual(cacheHitAttribute, 'false')
       previousCacheIdAttribute = cacheIdAttribute
     }
 
@@ -478,7 +481,7 @@ test('should set an opentelemetry attribute', async (t) => {
       query: { maxAge: cacheTimeoutSec }
     })
     const error = await body.text()
-    assert.strictEqual(statusCode, 200, error)
+    strictEqual(statusCode, 200, error)
   }
 
   await sleep(100)
@@ -488,35 +491,34 @@ test('should set an opentelemetry attribute', async (t) => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    assert.strictEqual(serverTraces.length, 1)
-    assert.strictEqual(clientTraces.length, 1)
+    strictEqual(serverTraces.length, 1)
+    strictEqual(clientTraces.length, 1)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.strictEqual(cacheIdAttribute, undefined)
-      assert.strictEqual(cacheHitAttribute, undefined)
+      strictEqual(cacheIdAttribute, undefined)
+      strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
       const cacheHitAttribute = trace.attributes['http.cache.hit']
-      assert.ok(cacheIdAttribute)
-      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, 'true')
+      ok(cacheIdAttribute)
+      notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      strictEqual(cacheHitAttribute, 'true')
       previousCacheIdAttribute = cacheIdAttribute
     }
 
     const resultCacheId2 = clientTraces.at(-1).attributes['http.cache.id']
-    assert.strictEqual(resultCacheId1, resultCacheId2)
+    strictEqual(resultCacheId1, resultCacheId2)
   }
 })
 
-test('should cache http requests gzipped', async (t) => {
+test('should cache http requests gzipped', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -532,22 +534,22 @@ test('should cache http requests gzipped', async (t) => {
       }
     })
 
-    assert.strictEqual(res.statusCode, 200)
+    strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
     const cacheEntryId = res.headers['x-plt-http-cache-id']
-    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-    assert.ok(cacheEntryId)
+    strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    ok(cacheEntryId)
 
     if (firstCacheEntryId === null) {
       firstCacheEntryId = cacheEntryId
     } else {
-      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+      strictEqual(cacheEntryId, firstCacheEntryId)
     }
 
     const buf = await res.body.arrayBuffer()
-    const { counter } = JSON.parse(zlib.gunzipSync(buf))
-    assert.strictEqual(counter, 1)
+    const { counter } = JSON.parse(gunzipSync(buf))
+    strictEqual(counter, 1)
   }
 
   await sleep(cacheTimeoutSec * 1000)
@@ -559,14 +561,200 @@ test('should cache http requests gzipped', async (t) => {
     }
   })
 
-  assert.strictEqual(res.statusCode, 200)
+  strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
   const cacheEntryId = res.headers['x-plt-http-cache-id']
-  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-  assert.ok(cacheEntryId)
-  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
+  strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  ok(cacheEntryId)
+  notStrictEqual(cacheEntryId, firstCacheEntryId)
 
-  const { counter } = JSON.parse(zlib.gunzipSync(await res.body.arrayBuffer()))
-  assert.strictEqual(counter, 2)
+  const { counter } = JSON.parse(gunzipSync(await res.body.arrayBuffer()))
+  strictEqual(counter, 2)
+})
+
+test('should accept origins configuration with string values', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // String origins should be accepted
+        origins: ['http://service-1.plt.local', 'http://service-3.plt.local']
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // Verify that the runtime starts and caching works with origins configured
+  {
+    const res1 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should be cached
+    const res2 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Same counter means cached
+  }
+})
+
+test('should cache requests to origins matching regex pattern', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // Regex pattern to match all .plt.local origins
+        origins: ['/http:\\/\\/.*\\.plt\\.local/']
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // Both service-1 and service-3 should be cached due to regex match
+  {
+    const res1 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached
+  }
+
+  {
+    const res1 = await request(entryUrl + '/service-1/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached due to regex match
+  }
+})
+
+test('should use cacheByDefault for responses without explicit expiration', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        cacheByDefault: 10000 // 10 seconds default cache (in ms)
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  // The /no-cache-header-counter endpoint doesn't set Cache-Control
+  // With cacheByDefault, it should still be cached
+  {
+    const res1 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should be cached due to cacheByDefault
+    const res2 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Same counter means cached
+  }
+})
+
+test('should not cache responses without explicit expiration when cacheByDefault is not set', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        // No cacheByDefault set
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  // The /no-cache-header-counter endpoint doesn't set Cache-Control
+  // Without cacheByDefault, it should NOT be cached
+  {
+    const res1 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    // Second request should NOT be cached
+    const res2 = await request(entryUrl + '/service-1/no-cache-header-counter')
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 2) // Different counter means not cached
+  }
+})
+
+test('should respect cache type configuration with private cache', async t => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        type: 'private'
+      }
+      return config
+    }
+  })
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  // With type: 'private', caching should work for requests with max-age (not s-maxage)
+  {
+    const res1 = await request(entryUrl + '/service-1/private-cached-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res1.statusCode, 200)
+    const body1 = await res1.body.json()
+    strictEqual(body1.counter, 1)
+
+    const res2 = await request(entryUrl + '/service-1/private-cached-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    strictEqual(res2.statusCode, 200)
+    const body2 = await res2.body.json()
+    strictEqual(body2.counter, 1) // Cached
+  }
 })

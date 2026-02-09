@@ -7,6 +7,7 @@ import {
   verifyDevelopmentFrontendWithoutPrefix,
   verifyDevelopmentMode
 } from '../../basic/test/helper.js'
+import { copyServerEntrypoint } from './helper.js'
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -72,7 +73,8 @@ const configurations = [
     check: verifyDevelopmentFrontendStandalone,
     htmlContents: ['<title>Vite App</title>'],
     hmrTriggerFile: hmrTriggerFileSSR,
-    language: 'js'
+    language: 'js',
+    additionalSetup: copyServerEntrypoint
   },
   {
     id: 'ssr-with-prefix',
@@ -80,7 +82,8 @@ const configurations = [
     check: verifyDevelopmentFrontendWithPrefix,
     htmlContents: htmlContentsSSR,
     hmrTriggerFile: hmrTriggerFileSSR,
-    language: 'js'
+    language: 'js',
+    additionalSetup: copyServerEntrypoint
   },
   {
     id: 'ssr-without-prefix',
@@ -88,7 +91,8 @@ const configurations = [
     check: verifyDevelopmentFrontendWithoutPrefix,
     htmlContents: htmlContentsSSR,
     hmrTriggerFile: hmrTriggerFileSSR,
-    language: 'js'
+    language: 'js',
+    additionalSetup: copyServerEntrypoint
   },
   {
     id: 'ssr-autodetect-prefix',
@@ -96,7 +100,8 @@ const configurations = [
     check: verifyDevelopmentFrontendWithAutodetectPrefix,
     htmlContents: htmlContentsSSR,
     hmrTriggerFile: hmrTriggerFileSSR,
-    language: 'js'
+    language: 'js',
+    additionalSetup: copyServerEntrypoint
   },
   {
     id: 'ssr-custom-commands',
@@ -104,7 +109,8 @@ const configurations = [
     check: verifyDevelopmentFrontendWithPrefix,
     htmlContents: htmlContentsSSR,
     hmrTriggerFile: hmrTriggerFileSSR,
-    language: 'js'
+    language: 'js',
+    additionalSetup: copyServerEntrypoint
   }
 ]
 

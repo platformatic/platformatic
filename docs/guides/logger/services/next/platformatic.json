@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.60.0.json",
+  "application": {
+    "basePath": "/next"    
+  },
+  "logger": {
+    "level": "debug"
+  }
+}

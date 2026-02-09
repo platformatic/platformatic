@@ -1,5 +1,11 @@
+import fastifyWebsocket from '@fastify/websocket'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { version } from '@platformatic/runtime'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
+import fastify from 'fastify'
 import { deepStrictEqual, ok } from 'node:assert'
+import { randomUUID } from 'node:crypto'
+import { platform, tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -9,7 +15,7 @@ test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  const url = await waitForStart(startProcess)
+  const { url } = await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -21,15 +27,48 @@ test('ps - should show running applications', async t => {
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
-  deepStrictEqual(lines[4][0], startProcess.pid.toString())
-  deepStrictEqual(lines[4][1], 'main')
-  deepStrictEqual(lines[4][2], version)
-  ok(lines[4][3].match(/now|(\d+s)/))
-  deepStrictEqual(lines[4][4], url)
+
+  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  deepStrictEqual(main[0], startProcess.pid.toString())
+  deepStrictEqual(main[2], version)
+  ok(main[3].match(/now|(\d+s)/))
+})
+
+test('ps - should support custom sockets', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const socketPath =
+    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(rootDir, 'custom.sock')
+
+  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+    config.managementApi = { socket: socketPath }
+
+    return config
+  })
+
+  const startProcess = wattpm('start', rootDir)
+  const { url } = await waitForStart(startProcess)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const psProcess = await wattpm('-S', socketPath, 'ps')
+  const lines = psProcess.stdout.split('\n').map(l =>
+    l
+      .split('|')
+      .map(t => t.trim())
+      .filter(t => t))
+
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+
+  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  deepStrictEqual(main[0], startProcess.pid.toString())
+  deepStrictEqual(main[2], version)
+  ok(main[3].match(/now|(\d+s)/))
 })
 
 test('ps - should warn when no runtimes are available', async t => {
@@ -39,7 +78,61 @@ test('ps - should warn when no runtimes are available', async t => {
   ok(logsProcess.stdout.includes('No runtimes found.'))
 })
 
-test('services - should list services for an application with no workers information in development mode', async t => {
+test('ps - should warn when some runtimes error during metadata retrieval', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const startProcess = wattpm('start', rootDir)
+  const { url } = await waitForStart(startProcess)
+
+  // Create a dummy socket that will reply with an error
+  const runtimePID = Math.floor(1e6 + Math.random() * 1e9).toString()
+  const runtimePIDDir = resolve(tmpdir(), 'platformatic', 'runtimes', runtimePID)
+  await createDirectory(runtimePIDDir, true)
+
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
+  } else {
+    socketPath = resolve(runtimePIDDir, 'socket')
+  }
+
+  const server = fastify()
+  server.register(fastifyWebsocket)
+  server.get('/api/v1/metadata', async () => {
+    throw new Error('KABOOM!')
+  })
+  await server.listen({ path: socketPath })
+
+  t.after(async () => {
+    await server.close()
+    await safeRemove(runtimePIDDir)
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const psProcess = await wattpm('ps')
+  const lines = psProcess.stdout
+    .split('\n')
+    .slice(-7)
+    .map(l =>
+      l
+        .split('|')
+        .map(t => t.trim())
+        .filter(t => t))
+
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+
+  ok(psProcess.stdout.includes('Failed to retrieve metadata for runtime with PID ' + runtimePID))
+  ok(psProcess.stdout.includes('"code": "PLT_CTR_FAILED_TO_GET_RUNTIME_METADATA"'))
+  ok(psProcess.stdout.includes('KABOOM!'))
+
+  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  deepStrictEqual(main[0], startProcess.pid.toString())
+  deepStrictEqual(main[2], version)
+  ok(main[3].match(/now|(\d+s)/))
+})
+
+test('applications - should list applications for an application with no workers information in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('dev', rootDir)
@@ -50,20 +143,19 @@ test('services - should list services for an application with no workers informa
     return startProcess.catch(() => {})
   })
 
-  const servicesProcess = await wattpm('services', 'main')
-  const lines = servicesProcess.stdout.split('\n').map(l =>
+  const applicationsProcess = await wattpm('applications', 'main')
+  const lines = applicationsProcess.stdout.split('\n').map(l =>
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', 'nodejs', 'No'])
   deepStrictEqual(lines[5], ['main', 'nodejs', 'Yes'])
 })
 
-test('services - should list services for an application with workers information in production mode', async t => {
+test('applications - should list applications for an application with workers information in production mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -74,27 +166,26 @@ test('services - should list services for an application with workers informatio
     return startProcess.catch(() => {})
   })
 
-  const servicesProcess = await wattpm('services', 'main')
-  const lines = servicesProcess.stdout.split('\n').map(l =>
+  const applicationsProcess = await wattpm('applications', 'main')
+  const lines = applicationsProcess.stdout.split('\n').map(l =>
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', '1', 'nodejs', 'No'])
   deepStrictEqual(lines[5], ['main', '1', 'nodejs', 'Yes'])
 })
 
-test('services - should complain when a runtime is not found', async t => {
-  const servicesProcess = await wattpm('services', 'p-' + Date.now.toString(), { reject: false })
+test('applications - should complain when a runtime is not found', async t => {
+  const applicationsProcess = await wattpm('applications', 'p-' + Date.now.toString(), { reject: false })
 
-  deepStrictEqual(servicesProcess.exitCode, 1)
-  ok(servicesProcess.stdout.includes('Cannot find a matching runtime.'))
+  deepStrictEqual(applicationsProcess.exitCode, 1)
+  ok(applicationsProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
-test('env - should list environment variable for an application', async t => {
+test('env - should list environment variable for a server', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -124,7 +215,7 @@ test('env - should list environment variable for an application in tabular way',
   ok(envProcess.stdout.match(/\|\s+RUNTIME_ENV\s+\|\s+foo/))
 })
 
-test('env - should list environment variable for an service', async t => {
+test('env - should list environment variable for an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -136,7 +227,7 @@ test('env - should list environment variable for an service', async t => {
   })
 
   const envProcess = await wattpm('env', 'main', 'main')
-  ok(envProcess.stdout.includes('SERVICE_ENV=bar'))
+  ok(envProcess.stdout.includes('APPLICATION_ENV=bar'))
 })
 
 test('env - should complain when a runtime is not found', async t => {
@@ -146,7 +237,7 @@ test('env - should complain when a runtime is not found', async t => {
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
-test('env - should complain when a service is not found', async t => {
+test('env - should complain when an application is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -160,13 +251,13 @@ test('env - should complain when a service is not found', async t => {
   const envProcess = await wattpm('env', 'main', 'invalid', { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
-  ok(envProcess.stdout.includes('Cannot find a matching service.'))
+  ok(envProcess.stdout.includes('Cannot find a matching application.'))
 })
 
 test('config - should list configuration for an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const alternativeServiceDir = resolve(rootDir, 'web/alternative')
-  const mainServiceDir = resolve(rootDir, 'web/main')
+  const alternativeApplicationDir = resolve(rootDir, 'web/alternative')
+  const mainApplicationDir = resolve(rootDir, 'web/main')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -184,7 +275,8 @@ test('config - should list configuration for an application', async t => {
       hostname: '127.0.0.1'
     },
     logger: {
-      level: 'info'
+      captureStdio: true,
+      level: 'trace'
     },
     entrypoint: 'main',
     autoload: {
@@ -192,44 +284,55 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     sourceMaps: false,
+    nodeModulesSourceMaps: [],
+    reuseTcpPorts: true,
     restartOnError: 2,
+    exitOnUnhandledErrors: true,
     startTimeout: 30000,
+    messagingTimeout: 30000,
     managementApi: true,
-    serviceMap: {},
-    services: [
+    preload: [resolve('../wattpm-pprof-capture/index.js')],
+    applications: [
       {
         id: 'alternative',
-        isPLTService: false,
-        type: 'nodejs',
-        path: alternativeServiceDir,
-        config: resolve(alternativeServiceDir, 'watt.json'),
-        useHttp: false,
+        type: '@platformatic/node',
+        path: alternativeApplicationDir,
+        config: resolve(alternativeApplicationDir, 'watt.json'),
         entrypoint: false,
         watch: false,
+        workers: {
+          dynamic: false,
+          static: 1
+        },
         dependencies: [],
-        localServiceEnvVars: {},
         localUrl: 'http://alternative.plt.local'
       },
       {
         id: 'main',
-        isPLTService: false,
-        type: 'nodejs',
-        path: mainServiceDir,
-        config: resolve(mainServiceDir, 'watt.json'),
-        useHttp: false,
+        type: '@platformatic/node',
+        path: mainApplicationDir,
+        config: resolve(mainApplicationDir, 'watt.json'),
         entrypoint: true,
         watch: false,
+        workers: {
+          dynamic: false,
+          static: 1
+        },
         dependencies: [],
-        localServiceEnvVars: {},
         localUrl: 'http://main.plt.local'
       }
     ],
-    serviceTimeout: 300000,
-    workers: 1,
+    applicationTimeout: 300000,
+    workers: {
+      dynamic: false,
+      static: 1
+    },
+    workersRestartDelay: 0,
     watch: false,
     gracefulShutdown: {
       runtime: 10000,
-      service: 10000
+      application: 10000,
+      closeConnections: true
     },
     health: {
       enabled: true,
@@ -238,13 +341,19 @@ test('config - should list configuration for an application', async t => {
       maxELU: 0.99,
       maxHeapTotal: 4294967296,
       maxHeapUsed: 0.99,
-      maxUnhealthyChecks: 10
+      maxUnhealthyChecks: 10,
+      maxYoungGeneration: 134217728,
+      codeRangeSize: 268435456
     },
-    resolvedServicesBasePath: 'external'
+    resolvedApplicationsBasePath: 'external',
+    metrics: {
+      enabled: true,
+      timeout: 1000
+    }
   })
 })
 
-test('config - should list configuration for an service', async t => {
+test('config - should list configuration for an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -259,9 +368,7 @@ test('config - should list configuration for an service', async t => {
 
   deepStrictEqual(JSON.parse(configProcess.stdout), {
     $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
-    logger: {
-      level: 'info'
-    },
+    logger: {},
     application: {
       outputDirectory: 'dist',
       include: ['dist'],
@@ -273,8 +380,14 @@ test('config - should list configuration for an service', async t => {
       absoluteUrl: false,
       main: 'index.js',
       dispatchViaHttp: false,
-      disablePlatformaticInBuild: false
-    }
+      disablePlatformaticInBuild: false,
+      disableBuildInDevelopment: false,
+      hasServer: true
+    },
+    watch: {
+      enabled: false
+    },
+    telemetry: {}
   })
 })
 
@@ -285,7 +398,7 @@ test('config - should complain when a runtime is not found', async t => {
   ok(configProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
-test('config - should complain when a service is not found', async t => {
+test('config - should complain when an application is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -299,5 +412,5 @@ test('config - should complain when a service is not found', async t => {
   const configProcess = await wattpm('config', 'main', 'invalid', { reject: false })
 
   deepStrictEqual(configProcess.exitCode, 1)
-  ok(configProcess.stdout.includes('Cannot find a matching service.'))
+  ok(configProcess.stdout.includes('Cannot find a matching application.'))
 })

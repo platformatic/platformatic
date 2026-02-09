@@ -1,40 +1,22 @@
-'use strict'
+import { execa } from 'execa'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { test } from 'node:test'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { existsSync } = require('node:fs')
-
-test('stackable example', async t => {
-  const { execa } = await import('execa')
-
-  // if this fails, it will throw an error
-  await execa('node', ['--test'], {
-    cwd: join(__dirname, '..', 'fixtures', 'acme-base'),
-  })
-
-  const tsd = (await import('tsd')).default
-
-  const diagnostics = await tsd.default()
-  assert.strictEqual(diagnostics.length, 0, 'no type errors')
+test('capability example', async t => {
+  const cwd = join(import.meta.dirname, './fixtures/acme-base')
+  await execa('node', ['--test'], { cwd })
 })
 
-test('stackable in typescript', async t => {
-  const { execa } = await import('execa')
+test('capability in typescript', async t => {
+  const cwd = join(import.meta.dirname, './fixtures/acme-base-ts')
 
-  const cwd = join(__dirname, '..', 'fixtures', 'acme-base-ts')
-
-  let tscPath = join(__dirname, '..', 'node_modules', '.bin', 'tsc')
-
+  let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')
   // If the local npm installation should use global tsc in the root
   if (!existsSync(tscPath)) {
-    tscPath = join(__dirname, '../../..', 'node_modules', '.bin', 'tsc')
+    tscPath = join(import.meta.dirname, '../../..', 'node_modules', '.bin', 'tsc')
   }
 
   await execa(tscPath, { cwd, stdio: 'inherit' })
-
-  // if this fails, it will throw an error
-  await execa('node', ['--test'], {
-    cwd: join(cwd, 'dist'),
-  })
+  await execa('node', ['--test'], { cwd: join(cwd, 'dist') })
 })

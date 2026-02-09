@@ -4,6 +4,6 @@
   "dependencies": {
     "@platformatic/basic": "^2.3.1",
     "@platformatic/node": "^2.3.1",
-    "fastify": "^4.28.1"
+    "fastify": "^5.7.0"
   }
 }

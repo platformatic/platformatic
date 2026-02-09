@@ -1,30 +1,45 @@
 {
   "name": "@platformatic/generators",
-  "version": "2.53.0",
+  "version": "3.37.0",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
-  "scripts": {
-    "lint": "eslint",
-    "test": "pnpm run lint && borp --timeout=300000 -C -X fixtures -X test --concurrency=1 && tsd"
+  "type": "module",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "keywords": [],
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
+  "scripts": {
+    "lint": "eslint",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "posttest": "tsd"
+  },
+  "keywords": [],
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "change-case-all": "^2.1.0",
-    "fastify": "^5.0.0",
-    "pino": "^9.0.0",
+    "execa": "^9.6.0",
+    "fastify": "^5.7.0",
+    "pino": "^9.9.0",
     "undici": "^7.0.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "borp": "^0.19.0",
     "c8": "^10.0.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
-    "tsd": "^0.31.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

@@ -1,55 +1,35 @@
-'use strict'
+import { features } from '@platformatic/foundation'
+import { ok, strictEqual } from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime, updateConfigFile, updateFile } from '../helpers.js'
+import { getExpectedEvents, prepareRuntime, waitForEvents } from './helper.js'
 
-const { ok } = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
-const { features } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
-const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
-const { getExpectedMessages, prepareRuntime } = require('./helper')
-
-test('services are started with multiple workers according to the configuration', async t => {
+test('applications are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
-  const expectedMessages = getExpectedMessages('composer', { composer: 3, service: 3, node: 5 })
-  const waitPromise = waitForLogs(managementApiWebsocket, ...expectedMessages.start)
+  const expectedEvents = getExpectedEvents('composer', { composer: 3, service: 3, node: 5 })
+  const startEventsPromise = waitForEvents(app, expectedEvents.start)
 
   await app.start()
+  const startEvents = await startEventsPromise
 
-  const startMessages = (await waitPromise).map(m => m.msg)
+  ok(!startEvents.has('event=application:worker:stopped, application=service, worker=3'))
+  ok(!startEvents.has('event=application:worker:stopped, application=service, worker=4'))
 
-  if (features.node.reusePort) {
-    ok(!startMessages.includes('Starting the service "composer"...'))
-  } else {
-    ok(!startMessages.includes('Starting the worker 0 of the service "composer"...'))
-  }
-
-  ok(!startMessages.includes('Starting the worker 3 of the service "service"...'))
-  ok(!startMessages.includes('Starting the worker 4 of the service "service"...'))
-
-  const stopMessagesPromise = waitForLogs(managementApiWebsocket, ...expectedMessages.stop)
+  const stopEventsPromise = waitForEvents(app, expectedEvents.stop)
   await app.stop()
-  const stopMessages = (await stopMessagesPromise).map(m => m.msg)
-
-  if (features.node.reusePort) {
-    ok(!startMessages.includes('Stopping the service "composer"...'))
-  } else {
-    ok(!stopMessages.includes('Stopping the worker 0 of the service "composer"...'))
-  }
+  await stopEventsPromise
 })
 
-test('services are started with a single workers when no workers information is specified in the files', async t => {
-  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+test('applications are started with a single workers when no workers information is specified in the files', async t => {
+  const root = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
@@ -57,68 +37,25 @@ test('services are started with a single workers when no workers information is 
     delete contents.services[0].workers
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const events = []
+  app.on('application:worker:started', payload => {
+    events.push(payload)
+  })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
-
-  const messagesPromise = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "service"...',
-    'Starting the service "node"...',
-    'Starting the service "composer"...',
-    'Stopping the service "service"...',
-    'Stopping the service "node"...',
-    'Stopping the service "composer"...'
-  )
 
   await app.start()
   await app.stop()
-  const messages = (await messagesPromise).map(m => m.msg)
 
-  ok(!messages.includes('Starting the worker 0 of the service "service"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "node"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "composer"...'))
-})
-
-test('services are started with a single workers in development', async t => {
-  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
-
-  t.after(async () => {
-    await app.close()
-    managementApiWebsocket.terminate()
-  })
-
-  const messagesPromise = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "service"...',
-    'Starting the service "node"...',
-    'Starting the service "composer"...',
-    'Stopping the service "service"...',
-    'Stopping the service "node"...',
-    'Stopping the service "composer"...'
-  )
-
-  await app.start()
-  await app.stop()
-  const messages = (await messagesPromise).map(m => m.msg)
-
-  ok(!messages.includes('Starting the worker 0 of the service "service"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "node"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "composer"...'))
+  ok(!events.some(e => e.workersCount > 1))
 })
 
 // Note: this cannot be tested in production mode as watching is always disabled
-test('can detect changes and restart all workers for a service', async t => {
+test('can detect changes and restart all workers for a application', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -131,46 +68,31 @@ test('can detect changes and restart all workers for a service', async t => {
     contents.watch = true
   })
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await createRuntime(configFile, null)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
-  const waitPromise1 = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "node"...',
-    'start watching files',
-    'Platformatic is now listening'
-  )
-
   await app.start()
-  await waitPromise1
 
-  const waitPromise2 = waitForLogs(
-    managementApiWebsocket,
-    'files changed',
-    'Stopping the service "node"...',
-    'Starting the service "node"...',
-    'Service "node" has been successfully reloaded ...'
+  const events = waitForEvents(
+    app,
+    { event: 'application:worker:changed', application: 'node', worker: 0 },
+    { event: 'application:worker:started', application: 'node', worker: 0 }
   )
 
   await updateFile(resolve(root, 'node/index.mjs'), contents => {
     return contents.replace("{ from: 'node' }", "{ from: 'node-after-reload' }")
   })
 
-  await waitPromise2
+  await events
 })
 
 test('can collect metrics with worker label', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -180,25 +102,25 @@ test('can collect metrics with worker label', async t => {
 
   const { metrics } = await app.getMetrics()
 
-  const servicesMetrics = metrics.filter(s => {
+  const applicationsMetrics = metrics.filter(s => {
     const firstValue = s.values[0]
 
     if (!firstValue) {
       return false
     }
 
-    return 'serviceId' in firstValue.labels && 'workerId' in firstValue.labels
+    return 'applicationId' in firstValue.labels && 'workerId' in firstValue.labels
   })
 
   const received = new Set()
   ok(
-    servicesMetrics.every(s => {
+    applicationsMetrics.every(s => {
       const firstValue = s.values[0]
-      const serviceId = firstValue?.labels?.['serviceId']
+      const applicationId = firstValue?.labels?.['applicationId']
       const workerId = firstValue?.labels?.['workerId']
 
-      received.add(`${serviceId}:${workerId}`)
-      switch (serviceId) {
+      received.add(`${applicationId}:${workerId}`)
+      switch (applicationId) {
         case 'composer':
           if (features.node.reusePort) {
             return typeof workerId === 'number' && workerId >= 0 && workerId < 3
@@ -206,12 +128,12 @@ test('can collect metrics with worker label', async t => {
             return workerId === 0 || typeof workerId === 'undefined'
           }
 
-        case 'service':
+        case 'application':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 3
         case 'node':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 5
         default:
-          // No serviceId, all good
+          // No applicationId, all good
           return true
       }
     })
@@ -224,8 +146,28 @@ test('can collect metrics with worker label', async t => {
     'node:2',
     'node:3',
     'node:4',
-    'service:0',
-    'service:1',
-    'service:2'
+    'application:0',
+    'application:1',
+    'application:2'
   ])
+})
+
+test('worker threads have correct threadName property set', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+  const app = await createRuntime(configFile, null, { isProduction: true })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const workers = await app.getWorkers(true)
+
+  for (const [workerId, workerInfo] of Object.entries(workers)) {
+    strictEqual(workerInfo.raw.threadName, workerId, `Worker ${workerId} should have threadName property set to its workerId`)
+  }
+
+  await app.stop()
 })

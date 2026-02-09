@@ -1,11 +1,22 @@
 #! /usr/bin/env node
-'use strict'
 
-const { metrics, server, plugins, watch, openApiDefs, openApiBase, clients } = require('@platformatic/service').schemas
-const telemetry = require('@platformatic/telemetry').schema
-const pkg = require('../package.json')
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import {
+  fastifyServer as server,
+  schemaComponents as utilsSchemaComponents,
+  watch,
+  wrappedRuntime
+} from '@platformatic/foundation'
+import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const db = {
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
+
+const { plugins, openApiBase, $defs } = serviceSchemaComponents
+
+export const db = {
   type: 'object',
   properties: {
     connectionString: {
@@ -234,7 +245,7 @@ const db = {
   required: ['connectionString']
 }
 
-const sharedAuthorizationRule = {
+export const sharedAuthorizationRule = {
   role: {
     type: 'string',
     description: 'the role name to match the rule'
@@ -254,10 +265,13 @@ const sharedAuthorizationRule = {
   },
   delete: {
     $ref: '#/$defs/crud-operation-auth'
+  },
+  updateMany: {
+    $ref: '#/$defs/crud-operation-auth'
   }
 }
 
-const authorization = {
+export const authorization = {
   type: 'object',
   properties: {
     adminSecret: {
@@ -363,7 +377,7 @@ const authorization = {
   additionalProperties: false
 }
 
-const migrations = {
+export const migrations = {
   type: 'object',
   properties: {
     dir: {
@@ -406,7 +420,7 @@ const migrations = {
   required: ['dir']
 }
 
-const types = {
+export const types = {
   type: 'object',
   properties: {
     autogenerate: {
@@ -429,10 +443,18 @@ const types = {
   additionalProperties: false
 }
 
-const platformaticDBschema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`,
+export const schemaComponents = {
+  db,
+  sharedAuthorizationRule,
+  authorization,
+  migrations,
+  types
+}
+
+export const schema = {
+  $id: `https://schemas.platformatic.dev/@platformatic/db/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic DB',
+  title: 'Platformatic Database Config',
   type: 'object',
   properties: {
     basePath: {
@@ -451,11 +473,11 @@ const platformaticDBschema = {
     db,
     authorization,
     migrations,
-    metrics,
     types,
     plugins,
-    telemetry,
-    clients,
+    application: basicSchemaComponents.application,
+    telemetry: utilsSchemaComponents.telemetry,
+    runtime: wrappedRuntime,
     watch: {
       anyOf: [
         watch,
@@ -477,7 +499,7 @@ const platformaticDBschema = {
   additionalProperties: false,
   required: ['db'],
   $defs: {
-    ...openApiDefs,
+    ...$defs,
     'crud-operation-auth': {
       oneOf: [
         {
@@ -529,8 +551,7 @@ const platformaticDBschema = {
   }
 }
 
-module.exports.schema = platformaticDBschema
-
-if (require.main === module) {
-  console.log(JSON.stringify(platformaticDBschema, null, 2))
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
+  console.log(JSON.stringify(schema, null, 2))
 }

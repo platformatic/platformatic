@@ -1,0 +1,16 @@
+{
+  "name": "test",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "devDependencies": {
+    "fastify": "^5.7.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@platformatic/runtime": "^2.60.0",
+    "@platformatic/vite": "^2.60.0",
+    "platformatic": "^2.60.0"
+  }
+}

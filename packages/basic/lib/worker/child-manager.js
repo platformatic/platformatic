@@ -1,23 +1,24 @@
-import { ITC } from '@platformatic/itc'
-import { createDirectory, createRequire, ensureLoggableError } from '@platformatic/utils'
+import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc/lib/index.js'
+import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { register } from 'node:module'
+import { createRequire, register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
-import { ensureFileUrl } from '../utils.js'
+import { ensureFileUrl, importFile } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
 // UNIX socket length limitation on MacOS, we don't.
 export function generateChildrenId (context) {
-  return [process.pid, Date.now()].join('-')
+  return [process.pid, randomBytes(4).toString('hex')].join('-')
 }
 
 export function getSocketPath (id) {
@@ -137,7 +138,7 @@ export class ChildManager extends ITC {
   async inject () {
     await this.listen()
 
-    // Serialize data into a JSON file for the stackable to use
+    // Serialize data into a JSON file for the capability to use
     this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
     await createDirectory(dirname(this.#dataPath))
 
@@ -162,7 +163,7 @@ export class ChildManager extends ITC {
     const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
 
     let telemetryInclude = ''
-    if (this.#context.telemetryConfig) {
+    if (this.#context.telemetryConfig && this.#context.telemetryConfig.enabled !== false) {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
@@ -185,9 +186,13 @@ export class ChildManager extends ITC {
     return this.#clients
   }
 
-  register () {
+  async register () {
     Object.assign(globalThis.platformatic, this.#context)
     register(this.#loader, { data: this.#context })
+
+    for (const script of this.#scripts) {
+      await importFile(script)
+    }
   }
 
   emit (...args) {

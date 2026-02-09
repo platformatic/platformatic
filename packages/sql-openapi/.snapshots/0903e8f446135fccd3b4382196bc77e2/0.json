@@ -94,6 +94,36 @@
           },
           {
             "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Include cursor headers in response. Cursor keys built from orderBy clause"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            },
+            "in": "query",
+            "name": "startAfter",
+            "required": false,
+            "description": "Cursor for forward pagination. List objects after this cursor position"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            },
+            "in": "query",
+            "name": "endBefore",
+            "required": false,
+            "description": "Cursor for backward pagination. List objects before this cursor position"
+          },
+          {
+            "schema": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -617,6 +647,25 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "counter",
+                  "id",
+                  "longText",
+                  "title"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "A Post",

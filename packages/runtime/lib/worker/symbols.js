@@ -1,25 +1,20 @@
-'use strict'
-
-const kConfig = Symbol.for('plt.runtime.config')
-const kId = Symbol.for('plt.runtime.id') // This is also used to detect if we are running in a Platformatic runtime thread
-const kFullId = Symbol.for('plt.runtime.fullId')
-const kServiceId = Symbol.for('plt.runtime.service.id')
-const kWorkerId = Symbol.for('plt.runtime.worker.id')
-const kITC = Symbol.for('plt.runtime.itc')
-const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
-const kWorkerStatus = Symbol('plt.runtime.worker.status')
+export const kConfig = Symbol.for('plt.runtime.config')
+export const kId = Symbol.for('plt.runtime.id') // This is also used to detect if we are running in a Platformatic runtime thread
+export const kFullId = Symbol.for('plt.runtime.fullId')
+export const kApplicationId = Symbol.for('plt.runtime.application.id')
+export const kWorkerId = Symbol.for('plt.runtime.worker.id')
+export const kITC = Symbol.for('plt.runtime.itc')
+export const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
+export const kWorkerStatus = Symbol('plt.runtime.worker.status')
+export const kWorkerHealthSignals = Symbol.for('plt.runtime.worker.healthSignals')
+export const kWorkerStartTime = Symbol.for('plt.runtime.worker.startTime')
+export const kInterceptors = Symbol.for('plt.runtime.worker.interceptors')
+export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
+export const kLastWorkerScalerELU = Symbol.for('plt.runtime.worker.lastWorkerScalerELU')
+export const kInterceptorReadyPromise = Symbol.for('plt.runtime.worker.interceptorReadyPromise')
 
 // This string marker should be safe to use since it belongs to Unicode private area
-const kStderrMarker = '\ue002'
+export const kStderrMarker = '\ue002'
 
-module.exports = {
-  kConfig,
-  kId,
-  kFullId,
-  kServiceId,
-  kWorkerId,
-  kITC,
-  kHealthCheckTimer,
-  kWorkerStatus,
-  kStderrMarker
-}
+// Note that this is used to create a BroadcastChannel so it must be a string
+export const kWorkersBroadcast = 'plt.runtime.workers'

@@ -1,10 +1,12 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "2.53.0",
+  "version": "3.37.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "posttest": "tsd",
     "lint": "eslint"
   },
   "types": "index.d.ts",
@@ -17,19 +19,18 @@
   "devDependencies": {
     "@fastify/cookie": "^11.0.0",
     "@fastify/session": "^11.0.0",
-    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.19.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "fast-jwt": "^5.0.0",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
+    "get-jwks": "^11.0.0",
     "neostandard": "^0.12.0",
-    "tsd": "^0.31.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4",
     "why-is-node-running": "^2.2.2",
-    "ws": "^8.16.0",
-    "get-jwks": "^11.0.0"
+    "ws": "^8.16.0"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
@@ -41,5 +42,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

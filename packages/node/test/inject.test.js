@@ -3,8 +3,8 @@ import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
-  getLogs,
-  prepareRuntimeWithServices,
+  getLogsFromFile,
+  prepareRuntimeWithApplications,
   setFixturesDir,
   updateFile,
   verifyJSONViaHTTP
@@ -13,7 +13,7 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject request via IPC even if a server is started', async t => {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     'node-no-configuration-composer-with-prefix',
     false,
@@ -40,20 +40,21 @@ test('should inject request via IPC even if a server is started', async t => {
     }
   )
 
-  const info = await runtime.getServiceMeta('frontend')
-  ok(info.composer.url)
+  const info = await runtime.getApplicationMeta('frontend')
+  ok(info.gateway.url)
 
   // Close the server so that we can verify the IPC injection
-  await runtime.sendCommandToService('frontend', 'closeServer')
+  await runtime.sendCommandToApplication('frontend', 'closeServer')
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: false })
 
-  const logs = await getLogs(runtime)
+  await runtime.close()
+  const logs = await getLogsFromFile(root)
   ok(logs.map(m => m.msg).includes('injecting via light-my-request'))
 })
 
 test('should inject request via the HTTP port if asked to', async t => {
-  const { runtime, url } = await prepareRuntimeWithServices(
+  const { root, runtime, url } = await prepareRuntimeWithApplications(
     t,
     'node-no-configuration-composer-with-prefix',
     false,
@@ -89,18 +90,30 @@ test('should inject request via the HTTP port if asked to', async t => {
     }
   )
 
-  const info = await runtime.getServiceMeta('frontend')
-  ok(info.composer.url)
+  const info = await runtime.getApplicationMeta('frontend')
+  ok(info.gateway.url)
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 200, { socket: true })
 
-  const logs = await getLogs(runtime)
-  ok(!logs.map(m => m.msg).includes('injecting via light-my-request'))
-
   // To double verify it, close the HTTP server and verify we get a connection refused
-  await runtime.sendCommandToService('frontend', 'closeServer')
+  await runtime.sendCommandToApplication('frontend', 'closeServer')
 
   await verifyJSONViaHTTP(url, '/frontend/inject', 500, content => {
     ok(content.message.includes('ECONNREFUSED'))
+  })
+
+  await runtime.close()
+  const logs = await getLogsFromFile(root)
+  ok(!logs.map(m => m.msg).includes('injecting via light-my-request'))
+})
+
+test('should not be able to send requests to a background job', async t => {
+  const { runtime, url } = await prepareRuntimeWithApplications(t, 'node-server-and-background', false, 'js', '/')
+
+  const info = await runtime.getApplicationMeta('frontend')
+  ok(info.gateway.url)
+
+  await verifyJSONViaHTTP(url, '/frontend/inject', 500, {
+    message: 'Background services cannot receive HTTP requests via the mesh network.'
   })
 })

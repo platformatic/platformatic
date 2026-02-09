@@ -1,0 +1,25 @@
+{
+  "name": "tanstack",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@platformatic/tanstack": "^3.0.0",
+    "@tanstack/react-start": "^1.139.7",
+    "@tanstack/react-router": "^1.139.7",
+    "@vitejs/plugin-react": "^5.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vite": "^7.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}

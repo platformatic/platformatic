@@ -31,3 +31,5 @@ app.get('/main-time', async (request, reply) => {
   reply.code(response.status)
   return response.json()
 })
+
+globalThis.platformatic.events.on('close', () => app.close())

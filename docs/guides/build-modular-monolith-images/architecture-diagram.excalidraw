@@ -99,14 +99,14 @@
       "updated": 1688575547461,
       "link": null,
       "locked": false,
-      "text": "Platformatic Composer\nRuntime Entrypoint\nPublic Service",
+      "text": "Platformatic Gateway\nRuntime Entrypoint\nPublic Service",
       "fontSize": 16,
       "fontFamily": 3,
       "textAlign": "center",
       "verticalAlign": "top",
       "baseline": 54,
       "containerId": null,
-      "originalText": "Platformatic Composer\nRuntime Entrypoint\nPublic Service",
+      "originalText": "Platformatic Gateway\nRuntime Entrypoint\nPublic Service",
       "lineHeight": 1.2
     },
     {

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
   "server": {
     "hostname": "127.0.0.1",
     "port": 0,
@@ -8,13 +8,16 @@
     },
     "pluginTimeout": 0
   },
-  "composer": {
+  "gateway": {
     "services": [
       {
         "id": "with-logger",
         "openapi": {
           "url": "/documentation/json",
           "prefix": "/with-logger"
+        },
+        "proxy": {
+          "prefix": "/proxy/with-logger"
         }
       },
       {
@@ -29,6 +32,9 @@
         "openapi": {
           "url": "/documentation/json",
           "prefix": "/service-app"
+        },
+        "proxy": {
+          "prefix": "/proxy/service-app"
         }
       },
       {

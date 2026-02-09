@@ -1,13 +1,14 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "2.53.0",
+  "version": "3.37.0",
   "description": "A data mapper utility for SQL databases",
-  "main": "mapper.js",
-  "types": "mapper.d.ts",
+  "main": "index.js",
+  "type": "module",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
-    "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:runner": "borp --pattern 'test/**/*.test.{js, mjs}' --concurrency=1 --timeout=300000",
+    "test": "npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test:runner": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:postgresql": "DB=postgresql npm run test:runner",
     "test:mariadb": "DB=mariadb npm run test:runner",
     "test:mysql": "DB=mysql npm run test:runner",
@@ -26,13 +27,12 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.1",
-    "@opentelemetry/api": "^1.8.0",
-    "borp": "^0.19.0",
+    "@opentelemetry/api": "^1.9.0",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.0.0",
+    "fastify": "^5.7.0",
     "neostandard": "^0.12.0",
-    "tsd": "^0.31.0",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
@@ -42,8 +42,8 @@
     "@fastify/error": "^4.0.0",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.6.0",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
@@ -51,5 +51,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

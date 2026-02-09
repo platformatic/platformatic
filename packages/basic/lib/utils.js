@@ -1,5 +1,5 @@
-import { createRequire } from '@platformatic/utils'
-import { pathToFileURL } from 'node:url'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
@@ -60,12 +60,24 @@ export function importFile (path) {
 }
 
 /* c8 ignore next 6 */
-export function resolvePackage (root, pkg) {
+export function resolvePackageViaCJS (root, pkg) {
   const require = createRequire(root)
   // We need to add the main module paths to the require.resolve call
   // Note that `require.main` is not defined in `next` if we set sthe instrumentation hook reequired for ESM applications.
   // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-  return require.resolve(pkg, { paths: [root, ...require.main?.paths || []] })
+  return require.resolve(pkg, { paths: [root, ...(require.main?.paths || [])] })
+}
+
+/* c8 ignore next 14 */
+export async function resolvePackageViaESM (root, pkg) {
+  // Use import.meta.resolve if available first, since it also understands ESM only packages
+  try {
+    const url = await import.meta.resolve(pkg)
+    return fileURLToPath(new URL(url))
+  } catch {
+    // Fallback to CJS resolution
+    return resolvePackageViaCJS(root, pkg)
+  }
 }
 
 export function cleanBasePath (basePath) {
@@ -75,3 +87,6 @@ export function cleanBasePath (basePath) {
 export function ensureTrailingSlash (basePath) {
   return basePath ? `${basePath}${basePath.endsWith('/') ? '' : '/'}` : '/'
 }
+
+// TODO: This is for backwards compatibility, remove in future major release
+export const resolvePackage = resolvePackageViaCJS

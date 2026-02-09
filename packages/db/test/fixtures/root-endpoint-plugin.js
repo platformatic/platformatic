@@ -1,7 +1,4 @@
-'use strict'
-
-module.exports = async function (app) {
-  console.log('plugin loaded')
+export default async function (app) {
   app.get('/', async function () {
     return { message: 'Root Plugin' }
   })

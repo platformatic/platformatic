@@ -1,6 +1,9 @@
-'use strict'
-
-const fastify = require('fastify')
+import fastifyAccepts from '@fastify/accepts'
+import fastifyBasicAuth from '@fastify/basic-auth'
+import { loadModule } from '@platformatic/foundation'
+import fastify from 'fastify'
+import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -18,26 +21,62 @@ const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 
 async function checkReadiness (runtime) {
   const workers = await runtime.getWorkers()
+  const applications = await runtime.getApplicationsIds()
 
+  // Make sure there is at least one started worker
+  const started = new Set()
   for (const worker of Object.values(workers)) {
-    if (worker.status !== 'started') {
-      return false
+    if (worker.status === 'started') {
+      started.add(worker.application)
     }
   }
-  return true
+
+  if (started.size !== applications.length) {
+    return { status: false }
+  }
+
+  // perform custom readiness checks, get custom response content if any
+  const checks = await runtime.getCustomReadinessChecks()
+
+  let response
+  const status = Object.values(checks).every(check => {
+    if (typeof check === 'boolean') {
+      return check
+    } else if (typeof check === 'object') {
+      response = check
+      return check.status
+    }
+    return false
+  })
+
+  return { response, status }
 }
 
 async function checkLiveness (runtime) {
-  if (!(await checkReadiness(runtime))) {
-    return false
+  const { status: ready, response: readinessResponse } = await checkReadiness(runtime)
+  if (!ready) {
+    return { status: false, readiness: readinessResponse }
   }
+  // TODO test, doc
+  // in case of readiness check failure, if custom readiness response is set, we return the readiness check response on health check endpoint
 
   const checks = await runtime.getCustomHealthChecks()
 
-  return Object.values(checks).every(check => check)
+  let response
+  const status = Object.values(checks).every(check => {
+    if (typeof check === 'boolean') {
+      return check
+    } else if (typeof check === 'object') {
+      response = check
+      return check.status || false
+    }
+    return false
+  })
+
+  return { response, status }
 }
 
-async function startPrometheusServer (runtime, opts) {
+export async function startPrometheusServer (runtime, opts) {
   if (opts.enabled === false) {
     return
   }
@@ -46,22 +85,46 @@ async function startPrometheusServer (runtime, opts) {
   const metricsEndpoint = opts.endpoint ?? DEFAULT_METRICS_ENDPOINT
   const auth = opts.auth ?? null
 
-  const promServer = fastify({ name: 'Prometheus server' })
+  const promServer = fastify({ name: 'Prometheus server', loggerInstance: runtime.logger })
+  promServer.register(fastifyAccepts)
 
   let onRequestHook
   if (auth) {
     const { username, password } = auth
 
-    await promServer.register(require('@fastify/basic-auth'), {
+    await promServer.register(fastifyBasicAuth, {
       validate: function (user, pass, req, reply, done) {
         if (username !== user || password !== pass) {
           return reply.code(401).send({ message: 'Unauthorized' })
         }
         return done()
-      },
+      }
     })
     onRequestHook = promServer.basicAuth
   }
+
+  const readinessEndpoint = opts.readiness?.endpoint ?? DEFAULT_READINESS_ENDPOINT
+  const livenessEndpoint = opts.liveness?.endpoint ?? DEFAULT_LIVENESS_ENDPOINT
+
+  promServer.route({
+    url: '/',
+    method: 'GET',
+    logLevel: 'warn',
+    handler (req, reply) {
+      reply.type('text/plain')
+      let response = `Hello from Platformatic Prometheus Server!\nThe metrics are available at ${metricsEndpoint}.`
+
+      if (opts.readiness !== false) {
+        response += `\nThe readiness endpoint is available at ${readinessEndpoint}.`
+      }
+
+      if (opts.liveness !== false) {
+        response += `\nThe liveness endpoint is available at ${livenessEndpoint}.`
+      }
+
+      return response
+    }
+  })
 
   promServer.route({
     url: metricsEndpoint,
@@ -69,10 +132,13 @@ async function startPrometheusServer (runtime, opts) {
     logLevel: 'warn',
     onRequest: onRequestHook,
     handler: async (req, reply) => {
-      reply.type('text/plain')
-      const { metrics } = await runtime.getMetrics('text')
-      return metrics
-    },
+      const accepts = req.accepts()
+      const reqType = !accepts.type('text/plain') && accepts.type('application/json') ? 'json' : 'text'
+      if (reqType === 'text') {
+        reply.type('text/plain')
+      }
+      return (await runtime.getMetrics(reqType)).metrics
+    }
   })
 
   if (opts.readiness !== false) {
@@ -82,20 +148,35 @@ async function startPrometheusServer (runtime, opts) {
     const failBody = opts.readiness?.fail?.body ?? DEFAULT_READINESS_FAIL_BODY
 
     promServer.route({
-      url: opts.readiness?.endpoint ?? DEFAULT_READINESS_ENDPOINT,
+      url: readinessEndpoint,
       method: 'GET',
       logLevel: 'warn',
-      handler: async (req, reply) => {
+      handler: async (_req, reply) => {
         reply.type('text/plain')
 
-        const ready = await checkReadiness(runtime)
+        const { status, response } = await checkReadiness(runtime)
 
-        if (ready) {
-          reply.status(successStatusCode).send(successBody)
-        } else {
-          reply.status(failStatusCode).send(failBody)
+        if (typeof response === 'boolean') {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(failBody)
+          }
+        } else if (typeof response === 'object') {
+          const { status, body, statusCode } = response
+          if (status) {
+            reply.status(statusCode || successStatusCode).send(body || successBody)
+          } else {
+            reply.status(statusCode || failStatusCode).send(body || failBody)
+          }
+        } else if (!response) {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(failBody)
+          }
         }
-      },
+      }
     })
   }
 
@@ -106,27 +187,44 @@ async function startPrometheusServer (runtime, opts) {
     const failBody = opts.liveness?.fail?.body ?? DEFAULT_LIVENESS_FAIL_BODY
 
     promServer.route({
-      url: opts.liveness?.endpoint ?? DEFAULT_LIVENESS_ENDPOINT,
+      url: livenessEndpoint,
       method: 'GET',
       logLevel: 'warn',
-      handler: async (req, reply) => {
+      handler: async (_req, reply) => {
         reply.type('text/plain')
 
-        const live = await checkLiveness(runtime)
+        const { status, response, readiness } = await checkLiveness(runtime)
 
-        if (live) {
-          reply.status(successStatusCode).send(successBody)
-        } else {
-          reply.status(failStatusCode).send(failBody)
+        if (typeof response === 'boolean') {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(readiness?.body || failBody)
+          }
+        } else if (typeof response === 'object') {
+          const { status, body, statusCode } = response
+          if (status) {
+            reply.status(statusCode || successStatusCode).send(body || successBody)
+          } else {
+            reply.status(statusCode || failStatusCode).send(body || readiness?.body || failBody)
+          }
+        } else if (!response) {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(readiness?.body || failBody)
+          }
         }
-      },
+      }
     })
+  }
+
+  const require = createRequire(resolve(import.meta.filename))
+  for (const pluginPath of opts.plugins ?? []) {
+    const plugin = await loadModule(require, pluginPath)
+    await promServer.register(plugin)
   }
 
   await promServer.listen({ port, host })
   return promServer
-}
-
-module.exports = {
-  startPrometheusServer,
 }

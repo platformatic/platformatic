@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.60.0.json",
+  "entrypoint": "composer",
+  "autoload": {
+    "path": "services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0"
+  },
+  "watch": false,
+  "managementApi": false,
+  "logger": {
+    "level": "debug",
+    "formatters": {
+      "path": "logger-formatters.js"
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "paths": [
+        "secret"
+      ],
+      "censor": "***HIDDEN***"
+    }
+  }
+}

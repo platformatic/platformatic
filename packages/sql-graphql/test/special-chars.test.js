@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { ok as pass, deepEqual as same } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('node:test')
-const { deepEqual: same, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('should correctly get the special characters', { skip: isSQLite }, async (t) => {
+test('should correctly get the special characters', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -32,7 +30,7 @@ test('should correctly get the special characters', { skip: isSQLite }, async (t
           PRIMARY KEY (id)
         );`)
       }
-    },
+    }
   })
 
   app.register(sqlGraphQL)
@@ -42,7 +40,6 @@ test('should correctly get the special characters', { skip: isSQLite }, async (t
     await app.ready()
     same(true, true, 'Special characters are properly configured')
   } catch (err) {
-    console.log(err)
     same(true, false, 'Previous call should never fail')
   }
 })

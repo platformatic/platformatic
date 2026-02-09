@@ -1,9 +1,29 @@
-# Using Watt With Node Config
+# How to Use Watt with Node Config
 
-[Node-config](https://www.npmjs.com/package/config) is a popular configuration management package that helps organize settings across different deployment environments in your application. It creates a unified configuration system that works seamlessly with both [Watt](https://platformatic.dev/docs/watt/overview) and other `npm` modules.
-When building a Watt application with multiple services, each service can maintain its own independent configuration using `node-config`. This allows different services to use different environment configurations as needed.
+## Problem
 
+You need sophisticated configuration management for your Watt application that:
 
+- Organizes settings across multiple environments (dev, staging, production)
+- Supports complex configuration hierarchies and inheritance
+- Validates configuration values at startup
+- Allows per-application configuration in multi-application applications
+
+**When to use this solution:**
+
+- Applications with complex configuration requirements
+- Multi-environment deployments with different settings
+- Team environments where configuration consistency is critical
+- Applications requiring configuration validation and type safety
+
+## Solution Overview
+
+[Node-config](https://www.npmjs.com/package/config) provides hierarchical configuration management that works seamlessly with Watt. This guide shows you how to:
+
+1. Set up node-config in your Watt application
+2. Create environment-specific configurations
+3. Configure individual applications with their own settings
+4. Validate and access configuration values safely
 
 ## Installation and Setup
 
@@ -13,14 +33,14 @@ First, install `node-config` in the root of your Watt application:
 npm install config
 ```
 
-Create a `config` directory in your `service` folder and set up your default configuration for each service:
+Create a `config` directory in your `application` folder and set up your default configuration for each application:
 
 ```sh
 mkdir config
 touch config/default.json
 ```
 
-In `{service}/config/default.json`, add your base configuration:
+In `{application}/config/default.json`, add your base configuration:
 
 ```sh
 {
@@ -28,7 +48,7 @@ In `{service}/config/default.json`, add your base configuration:
 }
 ```
 
-## Environment-specific configuration 
+## Environment-specific configuration
 
 For development-specific settings, create a separate configuration file:
 
@@ -36,7 +56,7 @@ For development-specific settings, create a separate configuration file:
 touch config/dev.json
 ```
 
-In `{service}/config/dev.json`, override any default values:
+In `{application}/config/dev.json`, override any default values:
 
 ```sh
 {
@@ -66,29 +86,29 @@ Instead of using simple key-value pairs, consider organizing your configurations
 ```
 
 :::important
-It's important to note that for a secure configuration, use your environment variables for your application  secrets and validate your configuration values when you run your application. 
+It's important to note that for a secure configuration, use your environment variables for your application secrets and validate your configuration values when you run your application.
 :::
 
-## Service-Specific Configuration 
+## Application-Specific Configuration
 
-You can configure each [service](https://platformatic.dev/docs/service/overview) environment variables in your Watt configuration file:
+You can configure each application's environment variables in your Watt configuration file:
 
 ```json
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
+      "id": "application-a",
+      "path": "./applications/application-a",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-a/config",
+        "NODE_CONFIG_DIR": "./applications/application-a/config",
         "NODE_ENV": "development"
       }
     },
     {
-      "id": "service-b",
-      "path": "./services/service-b",
+      "id": "application-b",
+      "path": "./applications/application-b",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-b/config",
+        "NODE_CONFIG_DIR": "./applications/application-b/config",
         "NODE_ENV": "production"
       }
     }
@@ -96,25 +116,25 @@ You can configure each [service](https://platformatic.dev/docs/service/overview)
 }
 ```
 
-Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `service-a` directory:
+Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `APPLICATION_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `application-a` directory:
 
-1.  Set your service-specific environment variable: 
+1.  Set your application-specific environment variable:
 
 ```sh
-SERVICE_A_NODE_ENV=development
+APPLICATION_A_NODE_ENV=development
 ```
 
 2.  Use interpolation syntax `${VARIABLE_NAME}` in your Watt configuration to reference it:
 
 ```json
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
+      "id": "application-a",
+      "path": "./applications/application-a",
       "env": {
-        "NODE_CONFIG_DIR": "./services/service-a/config",
-        "NODE_ENV": `${YOUR_SERVICE_NODE_ENV}`
+        "NODE_CONFIG_DIR": "./applications/application-a/config",
+        "NODE_ENV": `${YOUR_APPLICATION_NODE_ENV}`
       }
     }
   ]
@@ -124,18 +144,18 @@ SERVICE_A_NODE_ENV=development
 You can alsp use this pattern with `env` file:
 
 ```env
-SERVICE_A_NODE_ENV=development
+APPLICATION_A_NODE_ENV=development
 ```
 
-You can also specify environment files per Platformatic service:
+You can also specify environment files per Watt application:
 
 ```
 {
-  "services": [
+  "applications": [
     {
-      "id": "service-a",
-      "path": "./services/service-a",
-      "envfile": "./services/service-a/.env"
+      "id": "application-a",
+      "path": "./applications/application-a",
+      "envfile": "./applications/application-a/.env"
     }
   ]
 }
@@ -168,16 +188,17 @@ When you start your application, `node-config` automatically loads the appropria
 For production mode:
 
 ```sh
-npm start 
+wattpm start
 ```
 
 For development mode:
 
 ```sh
-NODE_ENV=development npm start
+wattpm dev
 ```
 
 ## **Advanced Usage Tips**
+
 `node-config` follows this loading order:
 
 1. `default.json` (base configuration)
@@ -203,7 +224,103 @@ try {
 
 We recommend using schema validation libraries like [TypeBox](https://github.com/sinclairzx81/typebox), [Ajv](https://ajv.js.org/), or [Zod](https://zod.dev/) to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
 
+## Verification and Testing
+
+### Test Configuration Loading
+
+**1. Create a test script to verify configuration:**
+
+```js
+// test-config.js
+import config from 'config'
+
+console.log('Configuration loaded successfully:')
+console.log('Environment:', process.env.NODE_ENV || 'default')
+console.log('Server config:', config.get('server'))
+console.log('Database config:', config.get('database'))
+
+// Test configuration validation
+try {
+  const apiTimeout = config.get('api.timeout')
+  if (apiTimeout < 1000) {
+    console.warn('API timeout is very low:', apiTimeout)
+  }
+} catch (error) {
+  console.error('Configuration error:', error.message)
+}
+```
+
+**2. Test different environments:**
+
+```bash
+# Test default configuration
+node test-config.js
+
+# Test development environment
+NODE_ENV=development node test-config.js
+
+# Test production environment
+NODE_ENV=production node test-config.js
+```
+
+### Verify Application-Specific Configuration
+
+**Test that each application loads its own configuration:**
+
+```bash
+# Start your Watt application
+npm run dev
+
+# Check application logs for configuration loading
+# Each application should show its specific config values
+```
+
+## Troubleshooting
+
+### Configuration Not Loading
+
+**Problem:** Config values are undefined or using defaults
+
+**Solutions:**
+
+- Verify `NODE_CONFIG_DIR` points to correct directory
+- Check configuration file naming (`default.json`, `development.json`, etc.)
+- Ensure JSON syntax is valid
+- Verify environment variable `NODE_ENV` is set correctly
+
+### Application Configuration Conflicts
+
+**Problem:** Applications are using wrong configuration
+
+**Solutions:**
+
+- Check that each application has its own `NODE_CONFIG_DIR` environment variable
+- Verify application-specific configuration files exist
+- Ensure no configuration file naming conflicts
+- Review application startup logs for configuration loading messages
+
+### Environment Variable Issues
+
+**Problem:** Environment variables not being interpolated
+
+**Solutions:**
+
+- Verify environment variables are set before starting application
+- Check interpolation syntax: `${VARIABLE_NAME}`
+- Ensure variables exist in current shell environment
+- Test variable substitution with simple values first
+
+## Next Steps
+
+Now that you have sophisticated configuration management:
+
+- **[Set up monitoring](/docs/guides/monitoring)** - Monitor configuration across environments
+- **[Deploy with multiple environments](/docs/guides/deployment/)** - Production deployment patterns
+- **[Add configuration validation](/docs/guides/validation/)** - Ensure configuration correctness
+- **[Implement feature flags](/docs/guides/feature-flags/)** - Dynamic configuration management
+
 ## Additional Resources
 
-- For more details on setting up a Watt application, see our [Watt setup guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
-- Learn more about configuration patterns in the [node-config documentation](https://www.npmjs.com/package/config)
+- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Node-config Documentation](https://www.npmjs.com/package/config) - Complete configuration patterns and options
+- [Environment Variables Guide](/docs/learn/beginner/environment-variables) - Basic environment variable usage with Watt

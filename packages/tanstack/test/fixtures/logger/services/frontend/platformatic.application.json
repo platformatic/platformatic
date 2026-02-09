@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/tanstack/3.0.0.json",
+  "logger": {
+    "level": "debug",
+    "formatters": {
+      "path": "logger-formatters.js"
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "paths": ["req.headers.authorization"],
+      "censor": "***HIDDEN***"
+    }
+  }
+}

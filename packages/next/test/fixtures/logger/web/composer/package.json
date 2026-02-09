@@ -1,0 +1,12 @@
+{
+  "name": "gateway",
+  "devDependencies": {
+    "fastify": "^5.7.0"
+  },
+  "dependencies": {
+    "@platformatic/gateway": "^2.61.0"
+  },
+  "engines": {
+    "node": "^18.8.0 || >=20.6.0"
+  }
+}

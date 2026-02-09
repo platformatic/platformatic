@@ -1,13 +1,11 @@
-'use strict'
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass, deepEqual as same } from 'node:assert'
+import { skip, test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
-const { clear, connInfo, isPg, isMysql, isSQLite } = require('./helper')
-const { test, skip } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-
-test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
+test('[PG] simple db simple graphql schema', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -34,7 +32,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
         a_decimal decimal,
         an_enum simple_enum
       );`)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -82,30 +80,34 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               anEnum
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
-    same(res.json(), {
-      data: {
-        saveSimpleType: {
-          id: '1',
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtDate: '2021-11-11',
-          bornAtTime: '12:42:00',
-          bornAtTimetz: '12:42:00',
-          bornAtTimestamp: timestamp.toISOString(),
-          bornAtTimestamptz: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: '42',
-          anEnum: 'value1',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveSimpleType: {
+            id: '1',
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtDate: '2021-11-11',
+            bornAtTime: '12:42:00',
+            bornAtTimetz: '12:42:00',
+            bornAtTimestamp: timestamp.toISOString(),
+            bornAtTimestamptz: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: '42',
+            anEnum: 'value1'
+          }
+        }
       },
-    }, 'saveSimpleType response')
+      'saveSimpleType response'
+    )
   }
 
   {
@@ -132,34 +134,38 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               anEnum
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
-    same(res.json(), {
-      data: {
-        getSimpleTypeById: {
-          id: 1,
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtDate: '2021-11-11',
-          bornAtTime: '12:42:00',
-          bornAtTimetz: '12:42:00',
-          bornAtTimestamp: timestamp.toISOString(),
-          bornAtTimestamptz: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: 42,
-          anEnum: 'value1',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getSimpleTypeById: {
+            id: 1,
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtDate: '2021-11-11',
+            bornAtTime: '12:42:00',
+            bornAtTimetz: '12:42:00',
+            bornAtTimestamp: timestamp.toISOString(),
+            bornAtTimestamptz: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: 42,
+            anEnum: 'value1'
+          }
+        }
       },
-    }, 'getSimpleTypeById response')
+      'getSimpleTypeById response'
+    )
   }
 })
 
-test('[PG] - UUID', { skip: !isPg }, async (t) => {
+test('[PG] - UUID', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -174,7 +180,7 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
         id uuid PRIMARY KEY default uuid_generate_v1(),
         title VARCHAR(42)
       );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -194,19 +200,23 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -221,18 +231,22 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -247,22 +261,26 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })
 
-test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) => {
+test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -287,7 +305,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
         a_decimal decimal,
         an_enum enum ('value1', 'value2')
       );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -332,28 +350,32 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
               anEnum
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
-    same(res.json(), {
-      data: {
-        saveSimpleType: {
-          id: '1',
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtDate: '2021-11-11',
-          bornAtTime: '12:42:00',
-          bornAtTimestamp: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: '42',
-          anEnum: 'value1',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveSimpleType: {
+            id: '1',
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtDate: '2021-11-11',
+            bornAtTime: '12:42:00',
+            bornAtTimestamp: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: '42',
+            anEnum: 'value1'
+          }
+        }
       },
-    }, 'saveSimpleType response')
+      'saveSimpleType response'
+    )
   }
 
   {
@@ -378,32 +400,36 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
               anEnum
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
-    same(res.json(), {
-      data: {
-        getSimpleTypeById: {
-          id: 1,
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtDate: '2021-11-11',
-          bornAtTime: '12:42:00',
-          bornAtTimestamp: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: '42',
-          anEnum: 'value1',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getSimpleTypeById: {
+            id: 1,
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtDate: '2021-11-11',
+            bornAtTime: '12:42:00',
+            bornAtTimestamp: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: '42',
+            anEnum: 'value1'
+          }
+        }
       },
-    }, 'getSimpleTypeById response')
+      'getSimpleTypeById response'
+    )
   }
 })
 
-test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
+test('[MySQL] - UUID', { skip: !isMysql }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -420,7 +446,7 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
         id uuid PRIMARY KEY default UUID(),
         title VARCHAR(42)
       );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -445,19 +471,23 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -472,18 +502,22 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -498,22 +532,26 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })
 
-test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) => {
+test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -533,7 +571,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
         a_smallint smallint,
         a_decimal decimal
       );`)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -570,25 +608,29 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
               aDecimal
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
-    same(res.json(), {
-      data: {
-        saveSimpleType: {
-          id: '1',
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtTimestamp: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: '42',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveSimpleType: {
+            id: '1',
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtTimestamp: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: '42'
+          }
+        }
       },
-    }, 'saveSimpleType response')
+      'saveSimpleType response'
+    )
   }
 
   {
@@ -610,29 +652,33 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
               aDecimal
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
-    same(res.json(), {
-      data: {
-        getSimpleTypeById: {
-          id: 1,
-          published: true,
-          current: 42,
-          longText: 'abc',
-          bornAtTimestamp: timestamp.toISOString(),
-          uuid: '12345678-1234-1234-1234-123456789012',
-          aReal: 1.2,
-          aSmallint: 42,
-          aDecimal: '42',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getSimpleTypeById: {
+            id: 1,
+            published: true,
+            current: 42,
+            longText: 'abc',
+            bornAtTimestamp: timestamp.toISOString(),
+            uuid: '12345678-1234-1234-1234-123456789012',
+            aReal: 1.2,
+            aSmallint: 42,
+            aDecimal: '42'
+          }
+        }
       },
-    }, 'getSimpleTypeById response')
+      'getSimpleTypeById response'
+    )
   }
 })
 
-test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
+test('[SQLite] - UUID', { skip: !isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -646,7 +692,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
         id uuid PRIMARY KEY,
         title VARCHAR(42)
       );`)
-    },
+    }
   })
   app.register(sqlGraphQL)
 
@@ -667,19 +713,23 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -694,18 +744,22 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -720,22 +774,26 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello World',
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 })
 
-test('BIGINT!', { skip: isSQLite }, async (t) => {
+test('BIGINT!', { skip: isSQLite }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -749,7 +807,7 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
         id SERIAL PRIMARY KEY,
         counter BIGINT
       );`)
-    },
+    }
   })
   t.after(() => app.close())
 
@@ -773,18 +831,22 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
               counter
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
-    same(res.json(), {
-      data: {
-        saveSimpleType: {
-          id: '1',
-          counter,
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          saveSimpleType: {
+            id: '1',
+            counter
+          }
+        }
       },
-    }, 'saveSimpleType response')
+      'saveSimpleType response'
+    )
   }
 
   {
@@ -799,17 +861,21 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
               counter
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
-    same(res.json(), {
-      data: {
-        getSimpleTypeById: {
-          id: 1,
-          counter,
-        },
+    same(
+      res.json(),
+      {
+        data: {
+          getSimpleTypeById: {
+            id: 1,
+            counter
+          }
+        }
       },
-    }, 'getSimpleTypeById response')
+      'getSimpleTypeById response'
+    )
   }
 })

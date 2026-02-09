@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import {
-  internalServicesFiles,
-  isCIOnWindows,
+  internalApplicationsFiles,
   isWindows,
   setFixturesDir,
   verifyBuildAndProductionMode,
@@ -11,9 +10,10 @@ import {
   verifyFrontendOnPrefix,
   verifyFrontendOnRoot,
   verifyHTMLViaHTTP,
-  verifyPlatformaticComposer,
+  verifyPlatformaticGateway,
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
+import { copyServerEntrypoint } from './helper.js'
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -58,11 +58,10 @@ const configurations = [
     prefix: ''
   },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
-    files: [...files, ...internalServicesFiles],
-    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    files: [...files, ...internalApplicationsFiles],
+    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
   },
@@ -70,7 +69,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'Vite (in composer without prefix)',
     files,
-    checks: [verifyFrontendWithBundleOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendWithBundleOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -78,16 +77,15 @@ const configurations = [
     id: 'composer-autodetect-prefix',
     name: 'Vite (in composer with autodetected prefix)',
     files,
-    checks: [verifyFrontendWithBundleOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendWithBundleOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
   {
-    only: isCIOnWindows,
     id: 'composer-custom-commands',
     name: 'Vite (in composer with prefix using custom commands)',
     files,
-    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   },
@@ -99,7 +97,8 @@ const configurations = [
     files: filesSSR,
     checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot],
     language: 'js',
-    prefix: ''
+    prefix: '',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -107,9 +106,10 @@ const configurations = [
     id: 'ssr-with-prefix',
     name: 'Vite SSR (in composer with prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/frontend'
+    prefix: '/frontend',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -117,9 +117,10 @@ const configurations = [
     id: 'ssr-without-prefix',
     name: 'Vite SSR (in composer without prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnRoot, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: ''
+    prefix: '',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -127,9 +128,10 @@ const configurations = [
     id: 'ssr-autodetect-prefix',
     name: 'Vite SSR (in composer with autodetected prefix)',
     files: filesSSR,
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/nested/base/dir'
+    prefix: '/nested/base/dir',
+    additionalSetup: copyServerEntrypoint
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
@@ -137,9 +139,10 @@ const configurations = [
     id: 'ssr-custom-commands',
     name: 'Vite SSR (in composer with prefix using custom commands)',
     files: filesSSR,
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
-    prefix: '/frontend'
+    prefix: '/frontend',
+    additionalSetup: copyServerEntrypoint
   }
 ]
 

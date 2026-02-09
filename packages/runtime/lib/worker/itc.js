@@ -1,13 +1,76 @@
-'use strict'
+import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import { Unpromise } from '@watchable/unpromise'
+import { once } from 'node:events'
+import { createRequire } from 'node:module'
+import { Duplex } from 'node:stream'
+import { parentPort, workerData } from 'node:worker_threads'
+import {
+  ApplicationExitedError,
+  FailedToPerformCustomHealthCheckError,
+  FailedToPerformCustomReadinessCheckError,
+  FailedToRetrieveGraphQLSchemaError,
+  FailedToRetrieveHealthError,
+  FailedToRetrieveMetaError,
+  FailedToRetrieveMetricsError,
+  FailedToRetrieveOpenAPISchemaError,
+  WorkerExitedError
+} from '../errors.js'
+import { updateUndiciInterceptors } from './interceptors.js'
+import { MessagingITC } from './messaging.js'
+import { kApplicationId, kITC, kId, kWorkerId } from './symbols.js'
 
-const { once } = require('node:events')
-const { parentPort } = require('node:worker_threads')
+function startSubprocessRepl (port, childManager, clientWs, controller) {
+  // Start the REPL in the child process
+  childManager.send(clientWs, 'startRepl').catch(err => {
+    port.postMessage({ type: 'output', data: `Error starting REPL: ${err.message}\n` })
+    port.postMessage({ type: 'exit' })
+    port.close()
+  })
 
-const { ITC } = require('@platformatic/itc')
-const { Unpromise } = require('@watchable/unpromise')
+  // Listen for repl:output notifications from the child process
+  function handleReplOutput ({ data }) {
+    port.postMessage({ type: 'output', data })
+  }
 
-const errors = require('../errors')
-const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
+  // Listen for repl:exit notifications from the child process
+  function handleReplExit () {
+    cleanup()
+    port.postMessage({ type: 'exit' })
+    port.close()
+  }
+
+  function cleanup () {
+    childManager.removeListener('repl:output', handleReplOutput)
+    childManager.removeListener('repl:exit', handleReplExit)
+  }
+
+  childManager.on('repl:output', handleReplOutput)
+  childManager.on('repl:exit', handleReplExit)
+
+  // Forward input from MessagePort to child process
+  port.on('message', message => {
+    if (message.type === 'input') {
+      childManager.send(clientWs, 'replInput', { data: message.data }).catch(() => {
+        // Ignore errors if the child process has exited
+      })
+    } else if (message.type === 'close') {
+      childManager.send(clientWs, 'replClose').catch(() => {
+        // Ignore errors if the child process has exited
+      })
+      cleanup()
+    }
+  })
+
+  port.on('close', () => {
+    childManager.send(clientWs, 'replClose').catch(() => {
+      // Ignore errors if the child process has exited
+    })
+    cleanup()
+  })
+
+  return { started: true }
+}
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -24,9 +87,9 @@ async function safeHandleInITC (worker, fn) {
 
     if (typeof exitCode === 'number') {
       if (typeof worker[kWorkerId] !== 'undefined') {
-        throw new errors.WorkerExitedError(worker[kWorkerId], worker[kServiceId], exitCode)
+        throw new WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
       } else {
-        throw new errors.ServiceExitedError(worker[kId], exitCode)
+        throw new ApplicationExitedError(worker[kId], exitCode)
       }
     } else {
       ac.abort()
@@ -46,59 +109,115 @@ async function safeHandleInITC (worker, fn) {
   }
 }
 
-async function sendViaITC (worker, name, message) {
-  return safeHandleInITC(worker, () => worker[kITC].send(name, message))
+async function closeITC (dispatcher, itc, messaging) {
+  await dispatcher.interceptor.close()
+  itc.close()
+  messaging.close()
 }
 
-async function waitEventFromITC (worker, event) {
+export async function sendViaITC (worker, name, message, transferList) {
+  return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
+}
+
+export async function sendMultipleViaITC (
+  idsAndWorkerPairs,
+  name,
+  message,
+  transferList,
+  concurrency,
+  timeout = 5000,
+  timeoutFallbackValue = kTimeout
+) {
+  const results = await executeInParallel(
+    async (id, worker) => {
+      return [
+        id,
+        await executeWithTimeout(sendViaITC(worker, name, message, transferList), timeout, timeoutFallbackValue)
+      ]
+    },
+    idsAndWorkerPairs,
+    concurrency
+  )
+
+  return Object.fromEntries(results)
+}
+
+export async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-function setupITC (app, service, dispatcher) {
+export function setupITC (controller, application, dispatcher, sharedContext) {
+  const logger = globalThis.platformatic.logger
+  const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
+
+  Object.assign(globalThis.platformatic ?? {}, {
+    messaging: {
+      handle: messaging.handle.bind(messaging),
+      send: messaging.send.bind(messaging),
+      notify: messaging.notify.bind(messaging)
+    }
+  })
+
   const itc = new ITC({
-    name: app.appConfig.id + '-worker',
+    name: controller.applicationConfig.id + '-worker',
     port: parentPort,
     handlers: {
       async start () {
-        const status = app.getStatus()
+        const status = controller.getStatus()
 
         if (status === 'starting') {
-          await once(app, 'start')
+          await once(controller, 'start')
         } else {
-          // This gives a chance to a stackable to perform custom logic
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('start')
 
-          await app.start()
+          try {
+            await controller.start()
+          } catch (e) {
+            await controller.stop(true)
+
+            // Reply to the runtime that the start failed, so it can cleanup
+            once(itc, 'application:worker:start:processed').then(() => {
+              closeITC(dispatcher, itc, messaging).catch(() => {})
+            })
+
+            throw ensureLoggableError(e)
+          }
         }
 
-        if (service.entrypoint) {
-          await app.listen()
+        if (application.entrypoint) {
+          await controller.listen()
         }
 
-        dispatcher.replaceServer(await app.stackable.getDispatchTarget())
-        return service.entrypoint ? app.stackable.getUrl() : null
+        dispatcher.replaceServer(await controller.capability.getDispatchTarget())
+        return application.entrypoint ? controller.capability.getUrl() : null
       },
 
-      async stop () {
-        const status = app.getStatus()
+      async stop ({ force, dependents }) {
+        const status = controller.getStatus()
 
-        if (status === 'starting') {
-          await once(app, 'start')
+        if (!force && status === 'starting') {
+          await once(controller, 'start')
         }
 
-        if (status.startsWith('start')) {
-          // This gives a chance to a stackable to perform custom logic
+        if (force || status.startsWith('start')) {
+          // This gives a chance to a capability to perform custom logic
           globalThis.platformatic.events.emit('stop')
 
-          await app.stop()
+          await controller.stop(force, dependents)
         }
 
-        await dispatcher.interceptor.close()
-        itc.close()
+        once(itc, 'application:worker:stop:processed').then(() => {
+          closeITC(dispatcher, itc, messaging).catch(() => {})
+        })
+      },
+
+      async getDependencies () {
+        return controller.capability.getDependencies?.() ?? []
       },
 
       async build () {
-        return app.stackable.build()
+        return controller.capability.build()
       },
 
       async removeFromMesh () {
@@ -106,84 +225,193 @@ function setupITC (app, service, dispatcher) {
       },
 
       inject (injectParams) {
-        return app.stackable.inject(injectParams)
+        return controller.capability.inject(injectParams)
+      },
+
+      async updateUndiciInterceptors (undiciConfig) {
+        await updateUndiciInterceptors(undiciConfig)
+      },
+
+      async updateMetricsConfig (metricsConfig) {
+        if (controller && typeof controller.updateMetricsConfig === 'function') {
+          await controller.updateMetricsConfig(metricsConfig)
+        }
+        return { success: true }
+      },
+
+      async updateWorkersCount (data) {
+        const { workers } = data
+        workerData.applicationConfig.workers = workers
+        workerData.worker.count = workers
       },
 
       getStatus () {
-        return app.getStatus()
+        return controller.getStatus()
       },
 
-      getServiceInfo () {
-        return app.stackable.getInfo()
+      getApplicationInfo () {
+        return controller.capability.getInfo()
       },
 
-      async getServiceConfig () {
-        const current = await app.stackable.getConfig()
+      async getApplicationConfig () {
+        const current = await controller.capability.getConfig()
         // Remove all undefined keys from the config
         return JSON.parse(JSON.stringify(current))
       },
 
-      async getServiceEnv () {
+      async getApplicationEnv () {
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.stackable.getEnv()) }))
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await controller.capability.getEnv()) }))
       },
 
-      async getServiceOpenAPISchema () {
+      async getApplicationOpenAPISchema () {
         try {
-          return await app.stackable.getOpenapiSchema()
+          return await controller.capability.getOpenapiSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
+          throw new FailedToRetrieveOpenAPISchemaError(application.id, err.message)
         }
       },
 
-      async getServiceGraphQLSchema () {
+      async getApplicationGraphQLSchema () {
         try {
-          return await app.stackable.getGraphqlSchema()
+          return await controller.capability.getGraphqlSchema()
         } catch (err) {
-          throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
+          throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
       },
 
-      async getServiceMeta () {
+      async getApplicationMeta () {
         try {
-          return await app.stackable.getMeta()
+          return await controller.capability.getMeta()
         } catch (err) {
-          throw new errors.FailedToRetrieveMetaError(service.id, err.message)
+          throw new FailedToRetrieveMetaError(application.id, err.message)
         }
       },
 
       async getMetrics (format) {
         try {
-          return await app.getMetrics({ format })
+          return await controller.getMetrics({ format })
         } catch (err) {
-          throw new errors.FailedToRetrieveMetricsError(service.id, err.message)
+          throw new FailedToRetrieveMetricsError(application.id, err.message)
         }
       },
 
       async getHealth () {
+        // Check if running in subprocess mode - forward through ChildManager
+        const childManager = controller.capability?.getChildManager?.()
+        const clientWs = controller.capability?.clientWs
+
+        if (childManager && clientWs) {
+          try {
+            return await childManager.send(clientWs, 'getHealth')
+          } catch (err) {
+            throw new FailedToRetrieveHealthError(application.id, err.message)
+          }
+        }
+
+        // Existing thread implementation
         try {
-          return await app.getHealth()
+          return await controller.getHealth()
         } catch (err) {
-          throw new errors.FailedToRetrieveHealthError(service.id, err.message)
+          throw new FailedToRetrieveHealthError(application.id, err.message)
         }
       },
 
       async getCustomHealthCheck () {
         try {
-          return await app.stackable.getCustomHealthCheck()
+          return await controller.capability.getCustomHealthCheck()
         } catch (err) {
-          throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
+          throw new FailedToPerformCustomHealthCheckError(application.id, err.message)
         }
+      },
+
+      async getCustomReadinessCheck () {
+        try {
+          return await controller.capability.getCustomReadinessCheck()
+        } catch (err) {
+          throw new FailedToPerformCustomReadinessCheckError(application.id, err.message)
+        }
+      },
+
+      setSharedContext (context) {
+        sharedContext._set(context)
+      },
+
+      saveMessagingChannel (channel) {
+        messaging.addSource(channel)
+      },
+
+      startRepl (port) {
+        // Check if running in subprocess mode - forward through ChildManager
+        const childManager = controller.capability?.getChildManager?.()
+        const clientWs = controller.capability?.clientWs
+
+        if (childManager && clientWs) {
+          return startSubprocessRepl(port, childManager, clientWs, controller)
+        }
+
+        // We are loading the repl module dynamically here to avoid loading it
+        // when not needed (since it pulls in domain, which is quite expensive
+        // as it monkey patches EventEmitter).
+        // We must use local require() instead of import
+        // because dynamic import() is async and the
+        // startRepl handler is sync.
+        const repl = createRequire(import.meta.url)('node:repl')
+
+        // Create a duplex stream that wraps the MessagePort
+        const replStream = new Duplex({
+          read () {},
+          write (chunk, _, callback) {
+            port.postMessage({ type: 'output', data: chunk.toString() })
+            callback()
+          }
+        })
+
+        port.on('message', message => {
+          if (message.type === 'input') {
+            replStream.push(message.data)
+          } else if (message.type === 'close') {
+            replStream.push(null)
+          }
+        })
+
+        port.on('close', () => {
+          replStream.push(null)
+        })
+
+        // Start the REPL with the stream
+        const replServer = repl.start({
+          prompt: `${controller.applicationConfig.id}> `,
+          input: replStream,
+          output: replStream,
+          terminal: false,
+          useColors: true,
+          ignoreUndefined: true,
+          preview: false
+        })
+
+        // Expose useful context
+        // For service-based capabilities, expose the Fastify app
+        replServer.context.app = controller.capability?.getApplication?.()
+        replServer.context.capability = controller.capability
+        replServer.context.platformatic = globalThis.platformatic
+        replServer.context.config = controller.applicationConfig
+        replServer.context.logger = globalThis.platformatic?.logger
+
+        replServer.on('exit', () => {
+          port.postMessage({ type: 'exit' })
+          port.close()
+        })
+
+        return { started: true }
       }
     }
   })
 
-  app.on('changed', () => {
+  controller.on('changed', () => {
     itc.notify('changed')
   })
 
   itc.listen()
   return itc
 }
-
-module.exports = { sendViaITC, setupITC, waitEventFromITC }

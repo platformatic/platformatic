@@ -1,0 +1,54 @@
+{
+  "name": "wattpm-utils",
+  "version": "3.37.0",
+  "description": "The Node.js Application Server Utilities Commands",
+  "main": "index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "build": "node scripts/list-package.js > lib/packages.js",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint"
+  },
+  "bin": {
+    "watt-utils": "./bin/cli.js",
+    "wattpm-utils": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "index.js",
+    "lib"
+  ],
+  "dependencies": {
+    "@platformatic/foundation": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "colorette": "^2.0.20",
+    "create-wattpm": "workspace:*",
+    "dotenv": "^16.4.5",
+    "execa": "^9.4.0",
+    "semver": "^7.7.0"
+  },
+  "devDependencies": {
+    "@platformatic/node": "workspace:*",
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "inspector-client": "^0.2.0",
+    "json-schema-to-typescript": "^15.0.0",
+    "neostandard": "^0.12.0",
+    "typescript": "^5.5.4",
+    "undici": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

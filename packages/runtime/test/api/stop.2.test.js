@@ -1,27 +1,26 @@
-'use strict'
+import { fail, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-test('should fail to stop service with a wrong id', async (t) => {
+test('should fail to stop application with a wrong id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await createRuntime(configFile)
+  await app.init()
 
   t.after(async () => {
     await app.close()
   })
 
   try {
-    await app.stopService('wrong-service-id')
-    assert.fail('should have thrown')
+    await app.stopApplication('wrong-service-id')
+    fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message,
-      'Service wrong-service-id not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service')
+    strictEqual(
+      err.message,
+      'Application wrong-service-id not found. Available applications are: db-app, serviceApp, with-logger, multi-plugin-service'
+    )
   }
 })

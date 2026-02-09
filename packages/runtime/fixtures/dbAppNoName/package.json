@@ -1,4 +1,5 @@
 {
   "version": "0.0.1",
-  "description": "test package.json"
+  "description": "test package.json",
+  "type": "commonjs"
 }

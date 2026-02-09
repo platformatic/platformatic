@@ -1,65 +1,73 @@
-/// <reference types="mercurius" />
-/// <reference types="@fastify/swagger" />
-import { FastifyInstance, FastifyBaseLogger } from 'fastify'
-import ConfigManager from '@platformatic/config'
-import type { Stackable as _Stackable, StackableInterface, ConfigManagerConfig } from '@platformatic/config'
+import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
-import { PlatformaticService } from './config'
-import type { JSONSchemaType } from 'ajv'
-import { ServiceGenerator } from './lib/generator/service-generator'
+import { JSONSchemaType } from 'ajv'
+import { FastifyInstance } from 'fastify'
+import type { PlatformaticServiceConfig } from './config.d.ts'
 
-export import Generator = ServiceGenerator.ServiceGenerator
+export type { PlatformaticServiceConfig } from './config.d.ts'
 
-export interface PlatformaticApp<T> {
-  configManager: ConfigManager<T>
-  config: T
+export interface ServiceContext extends BaseContext {
+  applicationFactory?: typeof platformaticService
+  fastifyPlugins?: Function[]
 }
 
-export type PlatformaticServiceConfig = PlatformaticService
-
-export function buildServer (opts: object, app?: object, ConfigManagerConstructor?: object): Promise<FastifyInstance>
-export function start<ConfigType> (app: Stackable<ConfigType>, args: string[]): Promise<void>
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    restart: () => Promise<void>
-  }
+export interface PlatformaticApplication<Config> {
+  config: Configuration<Config>
 }
 
-type DefaultGenerator = new () => BaseGenerator.BaseGenerator
-
-export interface Stackable<ConfigType, Generator = DefaultGenerator> extends _Stackable<ConfigType> {
-  app: (app: FastifyInstance, opts: object) => Promise<void>
-  Generator?: Generator
-  version?: string
-  upgrade?: (config: any, version: string) => Promise<any>
-  transformConfig?: (config: any) => Promise<any>
-  buildStackable: (opts: { config: string }, app?: object) => Promise<StackableInterface>
+export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyInstance & {
+  platformatic: PlatformaticApplication<Configuration>
 }
 
-interface TSCompilerOptions {
-  clean: boolean
+export type ServiceConfiguration<T = {}> = Configuration<PlatformaticServiceConfig & T>
+
+export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration>
+
+export declare function loadConfiguration (
+  root: string | PlatformaticServiceConfig,
+  source?: string | PlatformaticServiceConfig,
+  context?: ConfigurationOptions
+): Promise<Configuration<PlatformaticServiceConfig>>
+
+export declare function create (
+  root: string | PlatformaticServiceConfig,
+  source?: string | PlatformaticServiceConfig,
+  context?: ConfigurationOptions
+): Promise<ServiceCapability>
+
+export declare const skipTelemetryHooks: boolean
+
+export declare function platformaticService (app: FastifyInstance, capability: ServiceCapability): Promise<void>
+
+export declare class Generator extends BaseGenerator {}
+export declare function applyTestHelperCustomizations (
+  helper: string,
+  mod: string,
+  customizations: Record<string, string>
+): string
+
+export declare const packageJson: Record<string, unknown>
+
+export declare const schema: JSONSchemaType<PlatformaticServiceConfig>
+
+export declare const schemaComponents: {
+  $defs: JSONSchemaType<object>
+  plugins: JSONSchemaType<object>
+  openApiBase: JSONSchemaType<object>
+  openapi: JSONSchemaType<object>
+  proxy: JSONSchemaType<object>
+  graphqlBase: JSONSchemaType<object>
+  graphql: JSONSchemaType<object>
+  application: JSONSchemaType<object>
 }
-interface TSCompiler {
-  compile: (cwd: string, config: object, originalLogger: FastifyBaseLogger, options: TSCompilerOptions) => Promise<boolean>
+
+export declare const version: string
+
+export declare class ServiceCapability<Config = PlatformaticServiceConfig> extends BaseCapability<
+  Config,
+  BaseOptions<ServiceContext>
+> {
+  constructor (root: string, config: Config, context?: object)
+  getApplication (): FastifyInstance
 }
-
-export const schema: JSONSchemaType<PlatformaticServiceConfig>
-export const configManagerConfig: ConfigManagerConfig<PlatformaticServiceConfig>
-
-export declare const platformaticService: Stackable<PlatformaticServiceConfig>
-
-export declare const app: (app: FastifyInstance, opts: object) => Promise<void>
-
-export const tsCompiler: TSCompiler
-
-type defaultExport = Stackable<PlatformaticServiceConfig> & {
-  buildServer: (opts: object, app?: object, ConfigManagerConstructor?: object) => Promise<FastifyInstance>,
-  start: <ConfigType>(app: Stackable<ConfigType>, args: string[]) => Promise<void>,
-  tsCompiler: TSCompiler,
-  schema: JSONSchemaType<PlatformaticServiceConfig>,
-}
-
-export function buildStackable (opts: { config: string }, app?: object): Promise<StackableInterface>
-
-export default defaultExport

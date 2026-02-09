@@ -1,10 +1,5 @@
 {
   "name": "service",
-  "scripts": {
-    "start": "platformatic start",
-    "clean": "rm -fr ./dist",
-    "build": "platformatic compile"
-  },
   "devDependencies": {
     "typescript": "^5.5.4"
   },

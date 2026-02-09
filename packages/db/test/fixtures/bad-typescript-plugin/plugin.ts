@@ -1,4 +1,3 @@
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 
-export default async function (app: FastifyInstance) {
-}
+export default async function (app: FastifyInstance) {}

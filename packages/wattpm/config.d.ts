@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevWattpm2530Json = {
+export type PlatformaticRuntimeConfig = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -20,7 +20,18 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
         id: string;
         config?: string;
         useHttp?: boolean;
-        workers?: number | string;
+        reuseTcpPorts?: boolean;
+        workers?:
+          | number
+          | string
+          | {
+              static?: number;
+              minimum?: number;
+              maximum?: number;
+              scaleUpELU?: number;
+              scaleDownELU?: number;
+              [k: string]: unknown;
+            };
         health?: {
           enabled?: boolean | string;
           interval?: number | string;
@@ -29,22 +40,87 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
           maxELU?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
+          maxYoungGeneration?: number | string;
+          codeRangeSize?: number | string;
         };
-        preload?: string | string[];
+        dependencies?: string[];
         arguments?: string[];
+        env?: {
+          [k: string]: string;
+        };
+        envfile?: string;
+        sourceMaps?: boolean;
+        nodeModulesSourceMaps?: string[];
+        packageManager?: "npm" | "pnpm" | "yarn";
+        preload?: string | string[];
         nodeOptions?: string;
+        execArgv?: string[];
+        permissions?: {
+          fs?: {
+            read?: string[];
+            write?: string[];
+          };
+        };
+        telemetry?: {
+          /**
+           * An array of instrumentations loaded if telemetry is enabled
+           */
+          instrumentations?: (
+            | string
+            | {
+                package: string;
+                exportName?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+                [k: string]: unknown;
+              }
+          )[];
+          [k: string]: unknown;
+        };
+        compileCache?:
+          | boolean
+          | {
+              /**
+               * Enable Node.js module compile cache for faster startup
+               */
+              enabled?: boolean;
+              /**
+               * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+               */
+              directory?: string;
+            };
       };
     };
   };
+  applications?: {
+    [k: string]: unknown;
+  }[];
   services?: {
     [k: string]: unknown;
   }[];
-  workers?: number | string;
   web?: {
     [k: string]: unknown;
   }[];
+  workers?:
+    | number
+    | string
+    | {
+        static?: number;
+        dynamic?: boolean;
+        minimum?: number;
+        maximum?: number;
+        total?: number;
+        maxMemory?: number;
+        cooldown?: number;
+        gracePeriod?: number;
+        scaleUpELU?: number;
+        scaleDownELU?: number;
+        [k: string]: unknown;
+      };
+  workersRestartDelay?: number | string;
   logger?: {
-    level: (
+    level?: (
       | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
       | {
           [k: string]: unknown;
@@ -76,13 +152,34 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
         [k: string]: unknown;
       };
     };
+    formatters?: {
+      path: string;
+    };
+    timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+    redact?: {
+      paths: string[];
+      censor?: string;
+    };
+    base?: {
+      [k: string]: unknown;
+    } | null;
+    messageKey?: string;
+    customLevels?: {
+      [k: string]: unknown;
+    };
+    captureStdio?: boolean;
     [k: string]: unknown;
   };
   server?: {
     hostname?: string;
     port?: number | string;
+    /**
+     * The maximum length of the queue of pending connections
+     */
+    backlog?: number;
     http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -105,13 +202,21 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
                 path?: string;
               }
           )[];
+      requestCert?: boolean;
+      rejectUnauthorized?: boolean;
     };
   };
+  reuseTcpPorts?: boolean;
   startTimeout?: number;
   restartOnError?: boolean | number;
+  exitOnUnhandledErrors?: boolean;
   gracefulShutdown?: {
     runtime: number | string;
-    service: number | string;
+    application: number | string;
+    /**
+     * Add Connection: close header to HTTP responses during graceful shutdown
+     */
+    closeConnections?: boolean;
   };
   health?: {
     enabled?: boolean | string;
@@ -121,17 +226,43 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
     maxELU?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
+    maxYoungGeneration?: number | string;
+    codeRangeSize?: number | string;
   };
   undici?: {
     agentOptions?: {
       [k: string]: unknown;
     };
     interceptors?:
-      | UndiciInterceptor[]
       | {
-          Client?: UndiciInterceptor[];
-          Pool?: UndiciInterceptor[];
-          Agent?: UndiciInterceptor[];
+          module: string;
+          options: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }[]
+      | {
+          Client?: {
+            module: string;
+            options: {
+              [k: string]: unknown;
+            };
+            [k: string]: unknown;
+          }[];
+          Pool?: {
+            module: string;
+            options: {
+              [k: string]: unknown;
+            };
+            [k: string]: unknown;
+          }[];
+          Agent?: {
+            module: string;
+            options: {
+              [k: string]: unknown;
+            };
+            [k: string]: unknown;
+          }[];
           [k: string]: unknown;
         };
     [k: string]: unknown;
@@ -148,6 +279,18 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
         maxSize?: number;
         maxEntrySize?: number;
         maxCount?: number;
+        /**
+         * Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\/\\/.*\\.example\\.com/").
+         */
+        origins?: string[];
+        /**
+         * Default cache duration in seconds for responses without explicit expiration headers.
+         */
+        cacheByDefault?: number;
+        /**
+         * Cache type. "shared" caches may be shared between users, "private" caches are user-specific.
+         */
+        type?: "shared" | "private";
         [k: string]: unknown;
       };
   watch?: boolean | string;
@@ -158,6 +301,10 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
         logs?: {
           maxSize?: number;
         };
+        /**
+         * Custom path for the control socket. If not specified, uses the default platform-specific location.
+         */
+        socket?: string;
       };
   metrics?:
     | boolean
@@ -173,6 +320,10 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
         labels?: {
           [k: string]: string;
         };
+        /**
+         * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
+         */
+        applicationLabel?: string;
         readiness?:
           | boolean
           | {
@@ -199,10 +350,165 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
                 body?: string;
               };
             };
-        additionalProperties?: never;
-        [k: string]: unknown;
+        healthChecksTimeouts?: number | string;
+        plugins?: string[];
+        timeout?: number | string;
+        /**
+         * Configuration for exporting metrics to an OTLP endpoint
+         */
+        otlpExporter?: {
+          /**
+           * Enable or disable OTLP metrics export
+           */
+          enabled?: boolean | string;
+          /**
+           * OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)
+           */
+          endpoint: string;
+          /**
+           * Interval in milliseconds between metric pushes
+           */
+          interval?: number | string;
+          /**
+           * Additional HTTP headers for authentication
+           */
+          headers?: {
+            [k: string]: string;
+          };
+          /**
+           * Service name for OTLP resource attributes
+           */
+          serviceName?: string;
+          /**
+           * Service version for OTLP resource attributes
+           */
+          serviceVersion?: string;
+        };
+        /**
+         * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
+         */
+        httpCustomLabels?: {
+          /**
+           * The label name to use in metrics
+           */
+          name: string;
+          /**
+           * The HTTP request header to extract the value from
+           */
+          header: string;
+          /**
+           * Default value when header is missing (defaults to "unknown")
+           */
+          default?: string;
+        }[];
       };
-  telemetry?: OpenTelemetry;
+  telemetry?: {
+    enabled?: boolean | string;
+    /**
+     * The name of the application. Defaults to the folder name if not specified.
+     */
+    applicationName: string;
+    /**
+     * The version of the application (optional)
+     */
+    version?: string;
+    /**
+     * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+     */
+    skip?: {
+      /**
+       * The path to skip. Can be a string or a regex.
+       */
+      path?: string;
+      /**
+       * HTTP method to skip
+       */
+      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+      [k: string]: unknown;
+    }[];
+    exporter?:
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        }[]
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        };
+  };
+  verticalScaler?: {
+    enabled?: boolean;
+    maxTotalWorkers?: number;
+    maxTotalMemory?: number;
+    minWorkers?: number;
+    maxWorkers?: number;
+    cooldownSec?: number;
+    gracePeriod?: number;
+    scaleUpELU?: number;
+    scaleDownELU?: number;
+    /**
+     * @deprecated
+     */
+    timeWindowSec?: number;
+    /**
+     * @deprecated
+     */
+    scaleDownTimeWindowSec?: number;
+    /**
+     * @deprecated
+     */
+    scaleIntervalSec?: number;
+    applications?: {
+      [k: string]: {
+        minWorkers?: number;
+        maxWorkers?: number;
+        scaleUpELU?: number;
+        scaleDownELU?: number;
+      };
+    };
+  };
   inspectorOptions?: {
     host?: string;
     port?: number;
@@ -210,94 +516,51 @@ export type HttpsSchemasPlatformaticDevWattpm2530Json = {
     watchDisabled?: boolean;
     [k: string]: unknown;
   };
-  serviceTimeout?: number | string;
-  resolvedServicesBasePath?: string;
+  applicationTimeout?: number | string;
+  startupConcurrency?: number | string;
+  messagingTimeout?: number | string;
+  resolvedApplicationsBasePath?: string;
   env?: {
     [k: string]: string;
   };
   sourceMaps?: boolean;
-};
-
-export interface UndiciInterceptor {
-  module: string;
-  options: {
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
-}
-export interface OpenTelemetry {
-  enabled?: boolean | string;
-  /**
-   * The name of the service. Defaults to the folder name if not specified.
-   */
-  serviceName: string;
-  /**
-   * The version of the service (optional)
-   */
-  version?: string;
-  /**
-   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
-   */
-  skip?: {
-    /**
-     * The path to skip. Can be a string or a regex.
-     */
-    path?: string;
-    /**
-     * HTTP method to skip
-     */
-    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+  nodeModulesSourceMaps?: string[];
+  scheduler?: {
+    enabled?: boolean | string;
+    name: string;
+    cron: string;
+    callbackUrl: string;
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    headers?: {
+      [k: string]: string;
+    };
+    body?:
+      | string
+      | {
+          [k: string]: unknown;
+        };
+    maxRetries?: number;
     [k: string]: unknown;
   }[];
-  exporter?:
+  policies?: {
+    deny: {
+      /**
+       * This interface was referenced by `undefined`'s JSON-Schema definition
+       * via the `patternProperty` "^.*$".
+       */
+      [k: string]: string | [string, ...string[]];
+    };
+  };
+  compileCache?:
+    | boolean
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
-         * Options for the exporter. These are passed directly to the exporter.
+         * Enable Node.js module compile cache for faster startup
          */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      }[]
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+        enabled?: boolean;
         /**
-         * Options for the exporter. These are passed directly to the exporter.
+         * Directory to store compile cache. Defaults to .plt/compile-cache in app root
          */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
+        directory?: string;
       };
-}
+};

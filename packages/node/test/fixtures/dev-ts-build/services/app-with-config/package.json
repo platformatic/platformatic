@@ -1,0 +1,13 @@
+{
+  "name": "service",
+  "scripts": {
+    "clean": "rm -fr ./dist",
+    "build": "tsc -p ."
+  },
+  "devDependencies": {
+    "typescript": "^5.8"
+  },
+  "dependencies": {
+    "@platformatic/service": "^2.56.0"
+  }
+}

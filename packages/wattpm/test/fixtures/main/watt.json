@@ -4,10 +4,11 @@
     "hostname": "127.0.0.1"
   },
   "logger": {
-    "level": "info"
+    "level": "trace"
   },
   "entrypoint": "main",
   "autoload": {
     "path": "web"
-  }
+  },
+  "metrics": true
 }

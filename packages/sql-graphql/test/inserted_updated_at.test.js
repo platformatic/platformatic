@@ -1,12 +1,10 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { test } = require('node:test')
-const { equal, ok: pass, notEqual } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
-const { setTimeout } = require('timers/promises')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, notEqual, ok as pass } from 'node:assert'
+import { test } from 'node:test'
+import { setTimeout } from 'timers/promises'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -33,20 +31,20 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('inserted_at updated_at happy path', async (t) => {
+test('inserted_at updated_at happy path', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     autoTimestamp: {
       createdAt: 'inserted_at',
-      updatedAt: 'updated_at',
+      updatedAt: 'updated_at'
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -69,15 +67,13 @@ test('inserted_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
     notEqual(data.savePage.insertedAt, null, 'insertedAt')
     notEqual(data.savePage.updatedAt, null, 'updatedAt')
-    console.log(`insertedAt: ${data.savePage.insertedAt}`)
-    console.log(`updatedAt: ${data.savePage.updatedAt}`)
     original = data.savePage
   }
 
@@ -95,15 +91,13 @@ test('inserted_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
     equal(data.getPageById.insertedAt, original.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, original.updatedAt, 'updatedAt')
-    console.log(`insertedAt: ${data.getPageById.insertedAt}`)
-    console.log(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -123,15 +117,13 @@ test('inserted_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     const data = res.json().data
     equal(data.savePage.insertedAt, original.insertedAt, 'insertedAt')
     notEqual(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
     updated = data.savePage
-    console.log(`insertedAt: ${data.savePage.insertedAt}`)
-    console.log(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -148,32 +140,30 @@ test('inserted_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
     equal(data.getPageById.insertedAt, updated.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, updated.updatedAt, 'updatedAt')
-    console.log(`insertedAt: ${data.getPageById.insertedAt}`)
-    console.log(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 })
 
-test('cannot set inserted_at', async (t) => {
+test('cannot set inserted_at', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     autoTimestamp: {
       createdAt: 'inserted_at',
-      updatedAt: 'updated_at',
+      updatedAt: 'updated_at'
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -194,8 +184,8 @@ test('cannot set inserted_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 400, 'savePage status code')
     const data = res.json()
@@ -203,20 +193,20 @@ test('cannot set inserted_at', async (t) => {
   }
 })
 
-test('cannot set updated_at', async (t) => {
+test('cannot set updated_at', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     autoTimestamp: {
       createdAt: 'inserted_at',
-      updatedAt: 'updated_at',
+      updatedAt: 'updated_at'
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -237,15 +227,13 @@ test('cannot set updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
     notEqual(data.savePage.insertedAt, null, 'insertedAt')
     notEqual(data.savePage.updatedAt, null, 'updatedAt')
-    console.log(`insertedAt: ${data.savePage.insertedAt}`)
-    console.log(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -262,8 +250,8 @@ test('cannot set updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 400, 'savePage status code')
     const data = res.json()
@@ -271,7 +259,7 @@ test('cannot set updated_at', async (t) => {
   }
 })
 
-test('do not assign inserted_at updated_at', async (t) => {
+test('do not assign inserted_at updated_at', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -281,7 +269,7 @@ test('do not assign inserted_at updated_at', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -302,8 +290,8 @@ test('do not assign inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -325,8 +313,8 @@ test('do not assign inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -348,8 +336,8 @@ test('do not assign inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     const data = res.json().data
     equal(data.savePage.insertedAt, null, 'insertedAt')
@@ -370,8 +358,8 @@ test('do not assign inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -380,20 +368,20 @@ test('do not assign inserted_at updated_at', async (t) => {
   }
 })
 
-test('bulk insert adds inserted_at updated_at', async (t) => {
+test('bulk insert adds inserted_at updated_at', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     autoTimestamp: {
       createdAt: 'inserted_at',
-      updatedAt: 'updated_at',
+      updatedAt: 'updated_at'
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -414,8 +402,8 @@ test('bulk insert adds inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -439,13 +427,9 @@ test('bulk insert adds inserted_at updated_at', async (t) => {
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages
@@ -470,8 +454,8 @@ test('bulk insert adds inserted_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `,
-      },
+        `
+      }
     })
     equal(res.statusCode, 200, 'pages status code')
     const pages = res.json().data.pages
@@ -483,7 +467,7 @@ test('bulk insert adds inserted_at updated_at', async (t) => {
   }
 })
 
-test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async (t) => {
+test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -493,7 +477,7 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -516,13 +500,9 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
           }
         `,
         variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' },
-          ],
-        },
-      },
+          inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
+        }
+      }
     })
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages

@@ -1,8 +1,10 @@
-import { schemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
 export const cache = {
   type: 'object',
@@ -16,6 +18,9 @@ export const cache = {
     },
     prefix: {
       type: 'string'
+    },
+    cacheComponents: {
+      type: 'boolean'
     },
     maxTTL: {
       default: 86400 * 7, // One week
@@ -37,7 +42,14 @@ export const cache = {
 const next = {
   type: 'object',
   properties: {
+    standalone: {
+      type: 'boolean',
+    },
     trailingSlash: {
+      type: 'boolean',
+      default: false
+    },
+    useExperimentalAdapter: {
       type: 'boolean',
       default: false
     }
@@ -46,10 +58,12 @@ const next = {
   additionalProperties: false
 }
 
+export const schemaComponents = { next }
+
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/next/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Next.js Stackable',
+  title: 'Platformatic Next.js Config',
   type: 'object',
   properties: {
     $schema: {
@@ -57,8 +71,9 @@ export const schema = {
     },
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
-    watch: schemaComponents.watch,
-    application: schemaComponents.application,
+    watch: basicSchemaComponents.watch,
+    application: basicSchemaComponents.buildableApplication,
+    runtime: utilsSchemaComponents.wrappedRuntime,
     next,
     cache
   },

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.71.0.json",
+  "gateway": {
+    "services": []
+  }
+}

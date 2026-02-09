@@ -1,12 +1,10 @@
-'use strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
-
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 const expectedMetricNames = [
   'nodejs_active_handles',
@@ -42,25 +40,35 @@ const expectedMetricNames = [
   'thread_cpu_system_seconds_total',
   'thread_cpu_seconds_total',
   'thread_cpu_percent_usage',
-  'http_request_duration_seconds',
-  'http_request_summary_seconds',
+  'http_request_all_duration_seconds',
+  'http_request_all_summary_seconds',
+  'http_client_stats_free',
+  'http_client_stats_connected',
+  'http_client_stats_pending',
+  'http_client_stats_queued',
+  'http_client_stats_running',
+  'http_client_stats_size',
+  'active_resources_event_loop'
 ]
 
 test('should get prom metrics from the management api', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
     await client.close()
@@ -71,7 +79,7 @@ test('should get prom metrics from the management api', async t => {
     method: 'GET',
     path: '/api/v1/metrics'
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.text()
   const metricsNames = metrics
@@ -80,25 +88,28 @@ test('should get prom metrics from the management api', async t => {
     .map(line => line.split(' ')[2])
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+    ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
 })
 
 test('should get prom metrics from the management api in the json format', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
     await client.close()
@@ -112,12 +123,49 @@ test('should get prom metrics from the management api in the json format', async
       Accept: 'application/json'
     }
   })
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
   const metrics = await body.json()
   const metricsNames = metrics.map(metric => metric.name)
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+    ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
+})
+
+test('should only receive an error message if the metrics are disabled', async t => {
+  const projectDir = join(fixturesDir, 'management-api-without-metrics')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
+
+  t.after(async () => {
+    await client.close()
+    await app.close()
+  })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/metrics',
+    headers: {
+      Accept: 'application/json'
+    }
+  })
+  strictEqual(statusCode, 501)
+
+  const metrics = await body.json()
+  deepStrictEqual(metrics, { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
 })

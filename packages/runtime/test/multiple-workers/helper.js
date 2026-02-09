@@ -1,25 +1,34 @@
-'use strict'
+import { createDirectory, features, safeRemove } from '@platformatic/foundation'
+import { deepStrictEqual } from 'node:assert'
+import { cp, symlink } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { request } from 'undici'
 
-const { cp, symlink, writeFile } = require('node:fs/promises')
-const { deepStrictEqual } = require('node:assert')
-const { join, resolve, dirname } = require('node:path')
-const { request } = require('undici')
-const { createDirectory, safeRemove, features } = require('@platformatic/utils')
+export const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
+export const tmpDir = resolve(import.meta.dirname, '../../tmp')
 
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 
-const tmpDir = resolve(__dirname, '../../tmp')
-
-async function prepareRuntime (t, name, dependencies) {
+export async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
 
+  if (process.env.PLT_TESTS_PRINT_TMP === 'true') {
+    process._rawDebug(`Runtime root: ${root}`)
+  }
+
   await createDirectory(root)
-  t.after(() => safeRemove(root))
+  t.after(() => {
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
+      return safeRemove(root)
+    } else {
+      process._rawDebug(`Keeping temporary folder: ${root}`)
+    }
+  })
 
   await cp(resolve(fixturesDir, name), root, { recursive: true })
 
-  for (const [service, deps] of Object.entries(dependencies)) {
-    const depsRoot = resolve(root, service, 'node_modules/@platformatic')
+  for (const [application, deps] of Object.entries(dependencies)) {
+    const depsRoot = resolve(root, application, 'node_modules/@platformatic')
     await createDirectory(depsRoot)
 
     for (const dep of deps) {
@@ -27,63 +36,160 @@ async function prepareRuntime (t, name, dependencies) {
     }
   }
 
-  process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
-  await createDirectory(dirname(process.env.PLT_RUNTIME_LOGGER_STDOUT))
-  await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
   return root
 }
 
-async function verifyResponse (baseUrl, service, expectedWorker, socket, additionalChecks) {
-  const res = await request(baseUrl + `/${service}/hello`)
-  const json = await res.body.json()
-
-  deepStrictEqual(res.statusCode, 200)
-  deepStrictEqual(res.headers['x-plt-socket'], socket)
-  deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
-  deepStrictEqual(json, { from: service })
-  additionalChecks?.(res, json)
-}
-
-async function verifyInject (client, service, expectedWorker, additionalChecks) {
-  const res = await client.request({ method: 'GET', path: `/api/v1/services/${service}/proxy/hello` })
+export async function verifyInject (client, application, expectedWorker, additionalChecks) {
+  const res = await client.request({ method: 'GET', path: `/api/v1/applications/${application}/proxy/hello` })
   const json = await res.body.json()
 
   deepStrictEqual(res.statusCode, 200)
   deepStrictEqual(res.headers['x-plt-worker-id'], expectedWorker.toString())
-  deepStrictEqual(json, { from: service })
+  deepStrictEqual(json, { from: application })
   additionalChecks?.(res, json)
 }
 
-function getExpectedMessages (entrypoint, workers) {
+export async function testRoundRobin (baseUrl, services) {
+  // Calculate iterations needed to check all sequences at least twice
+  // For a service with N workers, we need at least 2*N requests to verify 2 complete cycles
+  const maxWorkerCount = Math.max(...services.map(s => s.workerCount))
+  const iterations = maxWorkerCount * 2
+
+  for (const service of services) {
+    service.workers = []
+    service.additionalData = []
+  }
+
+  // Collect worker IDs and additional data from multiple requests
+  for (let i = 0; i < iterations; i++) {
+    for (const service of services) {
+      const res = await request(baseUrl + `/${service.name}/hello`)
+      const json = await res.body.json()
+
+      deepStrictEqual(res.statusCode, 200)
+      deepStrictEqual(res.headers['x-plt-socket'], service.expectedSocket)
+      deepStrictEqual(json, { from: service.name })
+
+      const workerId = parseInt(res.headers['x-plt-worker-id'])
+      service.workers.push(workerId)
+
+      if (service.verifyAdditional) {
+        service.verifyAdditional(res, workerId, service.additionalData)
+      }
+    }
+  }
+
+  // Verify round-robin pattern for each service
+  for (const service of services) {
+    const { workers, workerCount, name } = service
+
+    // Verify pattern repeats every workerCount requests
+    for (let i = workerCount; i < workers.length; i++) {
+      deepStrictEqual(workers[i], workers[i - workerCount],
+        `${name}: worker at position ${i} should match position ${i - workerCount}`)
+    }
+
+    // Verify all workers are used (complete coverage)
+    const uniqueWorkers = new Set(workers.slice(0, workerCount))
+    deepStrictEqual(uniqueWorkers.size, workerCount,
+      `${name}: all ${workerCount} workers should be used`)
+
+    // Verify we tested at least 2 complete cycles
+    deepStrictEqual(workers.length >= workerCount * 2, true,
+      `${name}: should have at least ${workerCount * 2} requests to verify 2 complete cycles`)
+  }
+}
+
+export function formatEvent (event) {
+  return Object.entries(event)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(', ')
+}
+
+export function getExpectedEvents (entrypoint, workers) {
   const start = []
   const stop = []
 
   if (!features.node.reusePort) {
-    start.push(`Starting the service "${entrypoint}"...`)
-    stop.push(`Stopping the service "${entrypoint}"...`)
+    start.push({ event: 'application:started', application: entrypoint })
+    stop.push({ event: 'application:stopped', application: entrypoint })
   }
 
-  for (const [service, count] of Object.entries(workers)) {
-    if (service === entrypoint && !features.node.reusePort) {
+  for (const [application, count] of Object.entries(workers)) {
+    if (application === entrypoint && !features.node.reusePort) {
       continue
     }
 
     for (let i = 0; i < count; i++) {
-      start.push(`Starting the worker ${i} of the service "${service}"...`)
-      stop.push(`Stopping the worker ${i} of the service "${service}"...`)
+      start.push({ event: 'application:worker:started', application, worker: i })
+      stop.push({ event: 'application:worker:stopped', application, worker: i })
     }
   }
 
-  start.push('Platformatic is now listening')
+  start.push({ event: 'started' })
 
   return { start, stop }
 }
 
-module.exports = {
-  fixturesDir,
-  tmpDir,
-  prepareRuntime,
-  verifyResponse,
-  verifyInject,
-  getExpectedMessages
+export function waitForEvents (app, ...events) {
+  const timeout = typeof events.at(-1) === 'number' ? events.pop() : WAIT_TIMEOUT
+
+  events = events.flat(Number.POSITIVE_INFINITY)
+  const missing = new Set(events.map(formatEvent))
+  const received = new Set()
+
+  const { promise, resolve, reject } = Promise.withResolvers()
+  let rejected = false
+
+  const timeoutHandle = setTimeout(() => {
+    rejected = true
+    reject(new Error(`Timeout waiting for events: ${Array.from(missing).join('; ')}`))
+  }, timeout)
+
+  const toListen = new Set(events.map(e => e.event))
+  const listeners = []
+
+  for (const event of toListen) {
+    function listener (payload) {
+      if (rejected) {
+        return
+      }
+
+      if (typeof payload === 'string') {
+        payload = { application: payload }
+      }
+
+      const { application, worker } = payload ?? {}
+      let found = { event }
+
+      if (application) {
+        found.application = application
+      }
+
+      if (worker !== undefined) {
+        found.worker = worker
+      }
+
+      found = formatEvent(found)
+      missing.delete(found)
+      received.add(found)
+
+      if (missing.size === 0) {
+        resolve(received)
+      }
+    }
+
+    app.on(event, listener)
+    listeners.push({ event, listener })
+  }
+
+  promise.finally(() => {
+    clearTimeout(timeoutHandle)
+
+    for (const { event, listener } of listeners) {
+      app.off(event, listener)
+    }
+  })
+
+  return promise
 }

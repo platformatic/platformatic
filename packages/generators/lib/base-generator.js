@@ -1,32 +1,32 @@
-'use strict'
-
-const { generateDashedName } = require('@platformatic/utils')
-const { readFile } = require('node:fs/promises')
-const {
-  convertServiceNameToPrefix,
+import { generateDashedName } from '@platformatic/foundation'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { generateGitignore } from './create-gitignore.js'
+import { MissingEnvVariable, ModuleNeeded, PrepareError } from './errors.js'
+import { FileGenerator } from './file-generator.js'
+import {
+  convertApplicationNameToPrefix,
+  envStringToObject,
   extractEnvVariablesFromText,
+  flattenObject,
+  getApplicationTemplateFromSchemaUrl,
+  getLatestNpmVersion,
   getPackageConfigurationObject,
   PLT_ROOT,
-  getLatestNpmVersion,
-  stripVersion,
-} = require('./utils')
-const { join } = require('node:path')
-const { FileGenerator } = require('./file-generator')
-const { generateTests, generatePlugins } = require('./create-plugin')
-const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
-const { generateGitignore } = require('./create-gitignore')
-const { getServiceTemplateFromSchemaUrl } = require('./utils')
-const { flattenObject } = require('./utils')
-const { envStringToObject } = require('./utils')
+  stripVersion
+} from './utils.js'
+
 /* c8 ignore start */
 const fakeLogger = {
   info: () => {},
   warn: () => {},
   debug: () => {},
   trace: () => {},
-  error: () => {},
+  error: () => {}
 }
 /* c8 ignore start */
+
+const DEFAULT_SERVICES_PATH = 'applications'
 
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
@@ -40,9 +40,15 @@ class BaseGenerator extends FileGenerator {
     this.config = this.getDefaultConfig()
     this.packages = []
     this.module = opts.module
+    this.runtime = null
+    this.runtimeConfig = opts.runtimeConfig ?? 'platformatic.json'
     if (!this.module) {
       throw ModuleNeeded()
     }
+  }
+
+  setRuntime (runtime) {
+    this.runtime = runtime
   }
 
   getDefaultConfig () {
@@ -56,11 +62,11 @@ class BaseGenerator extends FileGenerator {
       dependencies: {},
       devDependencies: {},
       isRuntimeContext: false,
-      serviceName: '',
+      applicationName: '',
       envPrefix: '',
       env: {},
       defaultEnv: {},
-      isUpdating: false,
+      isUpdating: false
     }
   }
 
@@ -71,9 +77,11 @@ class BaseGenerator extends FileGenerator {
   setConfigFields (fields) {
     const availableConfigFields = this.getConfigFieldsDefinitions()
     function shouldHandleConfigField (field) {
-      return availableConfigFields.filter((f) => {
-        return f.configValue === field.configValue && f.var === field.var
-      }).length > 0
+      return (
+        availableConfigFields.filter(f => {
+          return f.configValue === field.configValue && f.var === field.var
+        }).length > 0
+      )
     }
     for (const field of fields) {
       if (shouldHandleConfigField(field)) {
@@ -137,16 +145,16 @@ class BaseGenerator extends FileGenerator {
     this.config = {
       ...this.getDefaultConfig(),
       ...oldConfig,
-      ...config,
+      ...config
     }
 
     if (this.config.isRuntimeContext) {
-      if (!this.config.serviceName) {
-        this.config.serviceName = generateDashedName()
+      if (!this.config.applicationName) {
+        this.config.applicationName = generateDashedName()
       }
       // set envPrefix
-      if (this.config.serviceName && !this.config.envPrefix) {
-        this.config.envPrefix = convertServiceNameToPrefix(this.config.serviceName)
+      if (this.config.applicationName && !this.config.envPrefix) {
+        this.config.envPrefix = convertApplicationNameToPrefix(this.config.applicationName)
       }
     }
     this.setEnvVars(this.config.env)
@@ -163,7 +171,7 @@ class BaseGenerator extends FileGenerator {
       const newConfig = await this.inquirer.prompt(this.questions)
       this.setConfig({
         ...this.config,
-        ...newConfig,
+        ...newConfig
       })
     }
   }
@@ -175,8 +183,8 @@ class BaseGenerator extends FileGenerator {
       if (this.config.isUpdating) {
         // only the packages options may have changed, let's update those
         await this.generateConfigFile()
-        const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
-        const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
+        const generatedConfigFile = JSON.parse(this.getFileObject(this.runtimeConfig, '').contents)
+        const fileFromDisk = await this.loadFile({ file: this.runtimeConfig, path: '' })
         const currentConfigFile = JSON.parse(fileFromDisk.contents)
         if (currentConfigFile.plugins) {
           if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
@@ -189,8 +197,8 @@ class BaseGenerator extends FileGenerator {
         this.reset()
         this.addFile({
           path: '',
-          file: 'platformatic.json',
-          contents: JSON.stringify(currentConfigFile, null, 2),
+          file: this.runtimeConfig,
+          contents: JSON.stringify(currentConfigFile, null, 2)
         })
       } else {
         await this.getFastifyVersion()
@@ -203,30 +211,12 @@ class BaseGenerator extends FileGenerator {
         this.addFile({
           path: '',
           file: 'package.json',
-          contents: JSON.stringify(template, null, 2),
+          contents: JSON.stringify(template, null, 2)
         })
 
         await this.generateConfigFile()
 
         await this.generateEnv()
-
-        if (this.config.typescript) {
-          // create tsconfig.json
-          this.addFile({
-            path: '',
-            file: 'tsconfig.json',
-            contents: JSON.stringify(this.getTsConfig(), null, 2),
-          })
-        }
-
-        if (this.config.plugin) {
-          // create plugin
-          this.files.push(...generatePlugins(this.config.typescript))
-          if (this.config.tests) {
-            // create tests
-            this.files.push(...generateTests(this.config.typescript, this.module))
-          }
-        }
 
         this.files.push(generateGitignore())
 
@@ -236,7 +226,7 @@ class BaseGenerator extends FileGenerator {
       }
       return {
         targetDirectory: this.targetDirectory,
-        env: this.config.env,
+        env: this.config.env
       }
     } catch (err) {
       if (err.code?.startsWith('PLT_GEN')) {
@@ -251,7 +241,7 @@ class BaseGenerator extends FileGenerator {
 
   checkEnvVariablesInConfigFile () {
     const excludedEnvs = [PLT_ROOT]
-    const configFileName = 'platformatic.json'
+    const configFileName = this.runtimeConfig
     const fileObject = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileObject.contents)
     const envKeys = Object.keys(this.config.env)
@@ -269,30 +259,6 @@ class BaseGenerator extends FileGenerator {
     return true
   }
 
-  getTsConfig () {
-    return {
-      compilerOptions: {
-        module: 'commonjs',
-        esModuleInterop: true,
-        target: 'es2020',
-        sourceMap: true,
-        pretty: true,
-        noEmitOnError: true,
-        incremental: true,
-        strict: true,
-        outDir: 'dist',
-        skipLibCheck: true,
-      },
-      watchOptions: {
-        watchFile: 'fixedPollingInterval',
-        watchDirectory: 'fixedPollingInterval',
-        fallbackPolling: 'dynamicPriority',
-        synchronousWatchDirectory: true,
-        excludeDirectories: ['**/node_modules', 'dist'],
-      },
-    }
-  }
-
   async prepareQuestions () {
     if (!this.config.isRuntimeContext) {
       if (!this.config.targetDirectory) {
@@ -300,48 +266,44 @@ class BaseGenerator extends FileGenerator {
         this.questions.push({
           type: 'input',
           name: 'targetDirectory',
-          message: 'Where would you like to create your project?',
+          message: 'Where would you like to create your project?'
         })
       }
 
-      // typescript
-      this.questions.push({
-        type: 'list',
-        name: 'typescript',
-        message: 'Do you want to use TypeScript?',
-        default: false,
-        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
-      })
-
       // port
-      this.questions.push({
-        type: 'input',
-        name: 'port',
-        message: 'What port do you want to use?',
-      })
+      if (!this.config.skipPort) {
+        this.questions.push({
+          type: 'input',
+          name: 'port',
+          message: 'What port do you want to use?'
+        })
+      }
     }
   }
 
   async generateConfigFile () {
-    const configFileName = 'platformatic.json'
+    const configFileName = this.runtimeConfig
     const contents = await this._getConfigFileContents()
     // handle packages
     if (this.packages.length > 0) {
       if (!contents.plugins) {
         contents.plugins = {}
       }
-      contents.plugins.packages = this.packages.map((packageDefinition) => {
-        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
+      contents.plugins.packages = this.packages.map(packageDefinition => {
+        const packageConfigOutput = getPackageConfigurationObject(
+          packageDefinition.options,
+          this.config.applicationName
+        )
         if (Object.keys(packageConfigOutput.env).length > 0) {
           const envForPackages = {}
-          Object.entries(packageConfigOutput.env).forEach((kv) => {
+          Object.entries(packageConfigOutput.env).forEach(kv => {
             envForPackages[kv[0]] = kv[1]
           })
           this.addEnvVars(envForPackages)
         }
         return {
           name: packageDefinition.name,
-          options: packageConfigOutput.config,
+          options: packageConfigOutput.config
         }
       })
     }
@@ -349,8 +311,10 @@ class BaseGenerator extends FileGenerator {
     this.addFile({
       path: '',
       file: configFileName,
-      contents: JSON.stringify(contents, null, 2),
+      contents: JSON.stringify(contents, null, 2)
     })
+
+    return contents
   }
 
   /**
@@ -361,7 +325,7 @@ class BaseGenerator extends FileGenerator {
     if (this.pkgData) {
       return this.pkgData
     }
-    const currentPackageJsonPath = join(__dirname, '..', 'package.json')
+    const currentPackageJsonPath = join(import.meta.dirname, '..', 'package.json')
     this.pkgData = JSON.parse(await readFile(currentPackageJsonPath, 'utf8'))
     return this.pkgData
   }
@@ -378,57 +342,63 @@ class BaseGenerator extends FileGenerator {
 
   async generatePackageJson () {
     const template = {
-      name: `${this.config.serviceName}`,
+      name: `${this.config.applicationName}`,
       scripts: {
-        start: 'platformatic start',
-        test: 'borp',
+        dev: 'wattpm dev',
+        start: 'wattpm start',
+        build: 'wattpm build',
+        test: 'node --test'
       },
       devDependencies: {
         fastify: `^${this.fastifyVersion}`,
-        borp: `${this.pkgData.devDependencies.borp}`,
-        ...this.config.devDependencies,
+        ...this.config.devDependencies
       },
       dependencies: {
-        ...this.config.dependencies,
+        ...this.config.dependencies
       },
       engines: {
-        node: '^18.8.0 || >=20.6.0',
-      },
+        node: '>=22.19.0'
+      }
     }
 
     if (this.config.typescript) {
-      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8')).devDependencies.typescript
-      template.scripts.clean = 'rm -fr ./dist'
-      template.scripts.build = 'platformatic compile'
+      const typescriptVersion = JSON.parse(await readFile(join(import.meta.dirname, '..', 'package.json'), 'utf-8'))
+        .devDependencies.typescript
       template.devDependencies.typescript = typescriptVersion
     }
     return template
   }
 
   async generateEnv () {
-    if (!this.config.isRuntimeContext) {
-      this.addFile({
-        path: '',
-        file: '.env',
-        contents: serializeEnvVars(this.config.env),
-      })
-
-      const emptyEnvVars = {}
-      for (const envVarName of Object.keys(this.config.env)) {
-        if (!this.config.defaultEnv[envVarName]) {
-          emptyEnvVars[envVarName] = ''
-        }
-      }
-
-      this.addFile({
-        path: '',
-        file: '.env.sample',
-        contents: serializeEnvVars({
-          ...this.config.defaultEnv,
-          ...emptyEnvVars,
-        }),
-      })
+    if (this.config.isRuntimeContext) {
+      return
     }
+
+    const serializedEnv = serializeEnvVars(this.config.env)
+
+    this.addFile({
+      path: '',
+      file: '.env',
+      contents: serializedEnv
+    })
+
+    const emptyEnvVars = {}
+    for (const envVarName of Object.keys(this.config.env)) {
+      if (!this.config.defaultEnv[envVarName]) {
+        emptyEnvVars[envVarName] = ''
+      }
+    }
+
+    this.addFile({
+      path: '',
+      file: '.env.sample',
+      contents: serializeEnvVars({
+        ...this.config.defaultEnv,
+        ...emptyEnvVars
+      })
+    })
+
+    return serializedEnv
   }
 
   async run () {
@@ -450,31 +420,33 @@ class BaseGenerator extends FileGenerator {
     this.packages.push(pkg)
   }
 
-  async loadFromDir (serviceName, runtimeRootPath) {
-    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, 'platformatic.json'), 'utf-8'))
-    const servicesPath = runtimePkgConfigFileData.autoload.path
-    const servicePkgJsonFileData = JSON.parse(await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8'))
+  async loadFromDir (applicationName, runtimeRootPath) {
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
+    const applicationsPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
+    const applicationPkgJsonFileData = JSON.parse(
+      await readFile(join(runtimeRootPath, applicationsPath, applicationName, 'platformatic.json'), 'utf-8')
+    )
     const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
-    const serviceNamePrefix = convertServiceNameToPrefix(serviceName)
+    const applicationNamePrefix = convertApplicationNameToPrefix(applicationName)
     const plugins = []
-    if (servicePkgJsonFileData.plugins && servicePkgJsonFileData.plugins.packages) {
-      for (const pkg of servicePkgJsonFileData.plugins.packages) {
+    if (applicationPkgJsonFileData.plugins && applicationPkgJsonFileData.plugins.packages) {
+      for (const pkg of applicationPkgJsonFileData.plugins.packages) {
         const flattened = flattenObject(pkg)
         const output = {
           name: flattened.name,
-          options: [],
+          options: []
         }
         if (pkg.options) {
           Object.entries(flattened)
             .filter(([key, value]) => key.indexOf('options.') === 0 && flattened[key].startsWith('{PLT_'))
             .forEach(([key, value]) => {
               const runtimeEnvVarKey = value.replace(/[{}]/g, '')
-              const serviceEnvVarKey = runtimeEnvVarKey.replace(`PLT_${serviceNamePrefix}_`, '')
+              const applicationEnvVarKey = runtimeEnvVarKey.replace(`PLT_${applicationNamePrefix}_`, '')
               const option = {
-                name: serviceEnvVarKey,
+                name: applicationEnvVarKey,
                 path: key.replace('options.', ''),
                 type: 'string',
-                value: runtimeEnv[runtimeEnvVarKey],
+                value: runtimeEnv[runtimeEnvVarKey]
               }
               output.options.push(option)
             })
@@ -485,10 +457,10 @@ class BaseGenerator extends FileGenerator {
     }
 
     return {
-      name: serviceName,
-      template: getServiceTemplateFromSchemaUrl(servicePkgJsonFileData.$schema),
+      name: applicationName,
+      template: getApplicationTemplateFromSchemaUrl(applicationPkgJsonFileData.$schema),
       fields: [],
-      plugins,
+      plugins
     }
   }
 
@@ -497,7 +469,9 @@ class BaseGenerator extends FileGenerator {
   async postInstallActions () {}
   async _beforePrepare () {}
   async _afterPrepare () {}
-  async _getConfigFileContents () { return {} }
+  async _getConfigFileContents () {
+    return {}
+  }
 }
 
 function serializeEnvVars (envVars) {
@@ -509,5 +483,6 @@ function serializeEnvVars (envVars) {
   return envVarsString
 }
 
-module.exports = BaseGenerator
-module.exports.BaseGenerator = BaseGenerator
+export default BaseGenerator
+const _BaseGenerator = BaseGenerator
+export { _BaseGenerator as BaseGenerator }

@@ -1,20 +1,17 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual, ok, rejects } = require('node:assert')
-const fastify = require('fastify')
-const core = require('@platformatic/db-core')
-const { connInfo, clear, createBasicPages } = require('./helper')
-const auth = require('..')
-const WebSocket = require('ws')
-const { once } = require('events')
-const { PassThrough } = require('stream')
-const { promisify } = require('util')
-const sleep = promisify(setTimeout)
+import core from '@platformatic/db-core'
+import { once } from 'events'
+import fastify from 'fastify'
+import { deepEqual, equal, ok, rejects } from 'node:assert'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { PassThrough } from 'stream'
+import WebSocket, { createWebSocketStream } from 'ws'
+import auth from '../index.js'
+import { clear, connInfo, createBasicPages } from './helper.js'
 
 function createWebSocketClient (app) {
-  const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')
-  const client = WebSocket.createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
+  const ws = new WebSocket('ws://localhost:' + app.server.address().port + '/graphql', 'graphql-ws')
+  const client = createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
   client.setEncoding('utf8')
   return { client, ws }
 }
@@ -29,38 +26,41 @@ test('GraphQL subscription authorization (same user)', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      delete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: true,
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -69,19 +69,23 @@ test('GraphQL subscription authorization (same user)', async () => {
   await app.listen({ port: 0 })
 
   const { client } = createWebSocketClient(app)
-  test.after(() => { client.destroy() })
+  test.after(() => {
+    client.destroy()
+  })
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
-  client.write(JSON.stringify({
-    type: 'connection_init',
-    payload: {
-      authorization: `Bearer ${token}`,
-    },
-  }))
+  client.write(
+    JSON.stringify({
+      type: 'connection_init',
+      payload: {
+        authorization: `Bearer ${token}`
+      }
+    })
+  )
 
   {
     const query = `subscription {
@@ -90,13 +94,15 @@ test('GraphQL subscription authorization (same user)', async () => {
         title
       }
     }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -105,13 +111,15 @@ test('GraphQL subscription authorization (same user)', async () => {
         id
       }
     }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -121,7 +129,12 @@ test('GraphQL subscription authorization (same user)', async () => {
   }
 
   const events = []
-  const wrap = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  const wrap = new PassThrough({
+    objectMode: true,
+    transform (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk))
+    }
+  })
   client.pipe(wrap)
 
   {
@@ -129,18 +142,22 @@ test('GraphQL subscription authorization (same user)', async () => {
       method: 'POST',
       url: '/pages',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello',
-      },
+        title: 'Hello'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello',
-      userId: 42,
-    }, 'POST /pages response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello',
+        userId: 42
+      },
+      'POST /pages response'
+    )
   }
 
   {
@@ -148,17 +165,21 @@ test('GraphQL subscription authorization (same user)', async () => {
       method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello World',
-      },
+        title: 'Hello World'
+      }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-    }, 'PUT /pages/1 response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World'
+      },
+      'PUT /pages/1 response'
+    )
   }
 
   // There is a race condition that could lead to the pageDeleted event
@@ -170,15 +191,19 @@ test('GraphQL subscription authorization (same user)', async () => {
       method: 'DELETE',
       url: '/pages/1',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-      userId: 42,
-    }, 'DELETE /pages/1')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World',
+        userId: 42
+      },
+      'DELETE /pages/1'
+    )
   }
 
   for await (const data of wrap) {
@@ -188,42 +213,50 @@ test('GraphQL subscription authorization (same user)', async () => {
     }
   }
 
-  deepEqual(events, [{
-    id: 1,
-    type: 'data',
-    payload: {
-      data: {
-        pageSaved: {
-          id: 1,
-          title: 'Hello',
-        },
+  deepEqual(
+    events,
+    [
+      {
+        id: 1,
+        type: 'data',
+        payload: {
+          data: {
+            pageSaved: {
+              id: 1,
+              title: 'Hello'
+            }
+          }
+        }
       },
-    },
-  }, {
-    id: 1,
-    type: 'data',
-    payload: {
-      data: {
-        pageSaved: {
-          id: 1,
-          title: 'Hello World',
-        },
+      {
+        id: 1,
+        type: 'data',
+        payload: {
+          data: {
+            pageSaved: {
+              id: 1,
+              title: 'Hello World'
+            }
+          }
+        }
       },
-    },
-  }, {
-    id: 1,
-    type: 'data',
-    payload: {
-      data: {
-        pageDeleted: {
-          id: 1,
-        },
-      },
-    },
-  }], 'events')
+      {
+        id: 1,
+        type: 'data',
+        payload: {
+          data: {
+            pageDeleted: {
+              id: 1
+            }
+          }
+        }
+      }
+    ],
+    'events'
+  )
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data)', async () => {
+test("GraphQL subscription authorization (two users, they can' see each other data)", async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -233,42 +266,45 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      delete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -277,20 +313,24 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   await app.listen({ port: 0 })
 
   const client1 = createWebSocketClient(app).client
-  test.after(() => { client1.destroy() })
+  test.after(() => {
+    client1.destroy()
+  })
 
   {
     const token = await app.jwt.sign({
       'X-PLATFORMATIC-USER-ID': 42,
-      'X-PLATFORMATIC-ROLE': 'user',
+      'X-PLATFORMATIC-ROLE': 'user'
     })
 
-    client1.write(JSON.stringify({
-      type: 'connection_init',
-      payload: {
-        authorization: `Bearer ${token}`,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        type: 'connection_init',
+        payload: {
+          authorization: `Bearer ${token}`
+        }
+      })
+    )
   }
 
   {
@@ -300,13 +340,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client1.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -315,13 +357,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         id
       }
     }`
-    client1.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -331,23 +375,32 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }
 
   const events1 = []
-  const wrap1 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  const wrap1 = new PassThrough({
+    objectMode: true,
+    transform (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk))
+    }
+  })
   client1.pipe(wrap1)
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   const client2 = createWebSocketClient(app).client
-  test.after(() => { client2.destroy() })
+  test.after(() => {
+    client2.destroy()
+  })
 
-  client2.write(JSON.stringify({
-    type: 'connection_init',
-    payload: {
-      authorization: `Bearer ${token}`,
-    },
-  }))
+  client2.write(
+    JSON.stringify({
+      type: 'connection_init',
+      payload: {
+        authorization: `Bearer ${token}`
+      }
+    })
+  )
 
   {
     const query = `subscription {
@@ -356,13 +409,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client2.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client2.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -371,13 +426,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         id
       }
     }`
-    client2.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client2.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -387,7 +444,12 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }
 
   const events2 = []
-  const wrap2 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  const wrap2 = new PassThrough({
+    objectMode: true,
+    transform (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk))
+    }
+  })
   client2.pipe(wrap2)
 
   {
@@ -395,18 +457,22 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'POST',
       url: '/pages',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello',
-      },
+        title: 'Hello'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello',
-      userId: 43,
-    }, 'POST /pages response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello',
+        userId: 43
+      },
+      'POST /pages response'
+    )
   }
 
   {
@@ -414,17 +480,21 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello World',
-      },
+        title: 'Hello World'
+      }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-    }, 'PUT /pages/1 response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World'
+      },
+      'PUT /pages/1 response'
+    )
   }
 
   // There is a race condition that could lead to the pageDeleted event
@@ -436,15 +506,19 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'DELETE',
       url: '/pages/1',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-      userId: 43,
-    }, 'DELETE /pages/1')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World',
+        userId: 43
+      },
+      'DELETE /pages/1'
+    )
   }
 
   client1.end()
@@ -465,42 +539,50 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  deepEqual(events2, [{
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageSaved: {
-          id: '1',
-          title: 'Hello',
-        },
+  deepEqual(
+    events2,
+    [
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageSaved: {
+              id: '1',
+              title: 'Hello'
+            }
+          }
+        }
       },
-    },
-  }, {
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageSaved: {
-          id: '1',
-          title: 'Hello World',
-        },
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageSaved: {
+              id: '1',
+              title: 'Hello World'
+            }
+          }
+        }
       },
-    },
-  }, {
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageDeleted: {
-          id: '1',
-        },
-      },
-    },
-  }], 'events')
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageDeleted: {
+              id: '1'
+            }
+          }
+        }
+      }
+    ],
+    'events'
+  )
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data) - full eq check', async () => {
+test("GraphQL subscription authorization (two users, they can' see each other data) - full eq check", async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -510,44 +592,47 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: {
-        checks: {
-          userId: {
-            eq: 'X-PLATFORMATIC-USER-ID',
-          },
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: {
+          checks: {
+            userId: {
+              eq: 'X-PLATFORMATIC-USER-ID'
+            }
+          }
         },
-      },
-      delete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -556,20 +641,24 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   await app.listen({ port: 0 })
 
   const client1 = createWebSocketClient(app).client
-  test.after(() => { client1.destroy() })
+  test.after(() => {
+    client1.destroy()
+  })
 
   {
     const token = await app.jwt.sign({
       'X-PLATFORMATIC-USER-ID': 42,
-      'X-PLATFORMATIC-ROLE': 'user',
+      'X-PLATFORMATIC-ROLE': 'user'
     })
 
-    client1.write(JSON.stringify({
-      type: 'connection_init',
-      payload: {
-        authorization: `Bearer ${token}`,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        type: 'connection_init',
+        payload: {
+          authorization: `Bearer ${token}`
+        }
+      })
+    )
   }
 
   {
@@ -579,13 +668,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client1.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -594,13 +685,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         id
       }
     }`
-    client1.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client1.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -610,23 +703,32 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }
 
   const events1 = []
-  const wrap1 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  const wrap1 = new PassThrough({
+    objectMode: true,
+    transform (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk))
+    }
+  })
   client1.pipe(wrap1)
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user',
+    'X-PLATFORMATIC-ROLE': 'user'
   })
 
   const client2 = createWebSocketClient(app).client
-  test.after(() => { client2.destroy() })
+  test.after(() => {
+    client2.destroy()
+  })
 
-  client2.write(JSON.stringify({
-    type: 'connection_init',
-    payload: {
-      authorization: `Bearer ${token}`,
-    },
-  }))
+  client2.write(
+    JSON.stringify({
+      type: 'connection_init',
+      payload: {
+        authorization: `Bearer ${token}`
+      }
+    })
+  )
 
   {
     const query = `subscription {
@@ -635,13 +737,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client2.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client2.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -650,13 +754,15 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         id
       }
     }`
-    client2.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query,
-      },
-    }))
+    client2.write(
+      JSON.stringify({
+        id: 1,
+        type: 'start',
+        payload: {
+          query
+        }
+      })
+    )
   }
 
   {
@@ -666,7 +772,12 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }
 
   const events2 = []
-  const wrap2 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  const wrap2 = new PassThrough({
+    objectMode: true,
+    transform (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk))
+    }
+  })
   client2.pipe(wrap2)
 
   {
@@ -674,18 +785,22 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'POST',
       url: '/pages',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello',
-      },
+        title: 'Hello'
+      }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello',
-      userId: 43,
-    }, 'POST /pages response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello',
+        userId: 43
+      },
+      'POST /pages response'
+    )
   }
 
   {
@@ -693,17 +808,21 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: {
-        title: 'Hello World',
-      },
+        title: 'Hello World'
+      }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-    }, 'PUT /pages/1 response')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World'
+      },
+      'PUT /pages/1 response'
+    )
   }
 
   // There is a race condition that could lead to the pageDeleted event
@@ -715,15 +834,19 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       method: 'DELETE',
       url: '/pages/1',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    deepEqual(res.json(), {
-      id: 1,
-      title: 'Hello World',
-      userId: 43,
-    }, 'DELETE /pages/1')
+    deepEqual(
+      res.json(),
+      {
+        id: 1,
+        title: 'Hello World',
+        userId: 43
+      },
+      'DELETE /pages/1'
+    )
   }
 
   client1.end()
@@ -744,47 +867,55 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  deepEqual(events2, [{
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageSaved: {
-          id: '1',
-          title: 'Hello',
-        },
+  deepEqual(
+    events2,
+    [
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageSaved: {
+              id: '1',
+              title: 'Hello'
+            }
+          }
+        }
       },
-    },
-  }, {
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageSaved: {
-          id: '1',
-          title: 'Hello World',
-        },
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageSaved: {
+              id: '1',
+              title: 'Hello World'
+            }
+          }
+        }
       },
-    },
-  }, {
-    type: 'data',
-    id: 1,
-    payload: {
-      data: {
-        pageDeleted: {
-          id: '1',
-        },
-      },
-    },
-  }], 'events')
+      {
+        type: 'data',
+        id: 1,
+        payload: {
+          data: {
+            pageDeleted: {
+              id: '1'
+            }
+          }
+        }
+      }
+    ],
+    'events'
+  )
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data) - only one check for now', async () => {
+test("GraphQL subscription authorization (two users, they can' see each other data) - only one check for now", async () => {
   const app = fastify({
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
     // the process to finish correctly
-    pluginTimeout: 1000,
+    pluginTimeout: 1000
   })
   app.register(core, {
     ...connInfo,
@@ -794,53 +925,59 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: {
-        checks: {
-          userId: {
-            eq: 'X-PLATFORMATIC-USER-ID',
-          },
-          value: {
-            gt: 42,
-          },
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: {
+          checks: {
+            userId: {
+              eq: 'X-PLATFORMATIC-USER-ID'
+            },
+            value: {
+              gt: 42
+            }
+          }
         },
-      },
-      elete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        elete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
   })
 
-  await rejects(app.ready(), new Error('Subscription requires that the role "user" has only one check in the find rule for entity "page"'))
+  await rejects(
+    app.ready(),
+    new Error('Subscription requires that the role "user" has only one check in the find rule for entity "page"')
+  )
 })
 
 test('GraphQL subscription authorization - contrasting rules', async () => {
@@ -848,7 +985,7 @@ test('GraphQL subscription authorization - contrasting rules', async () => {
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
     // the process to finish correctly
-    pluginTimeout: 1000,
+    pluginTimeout: 1000
   })
   app.register(core, {
     ...connInfo,
@@ -858,44 +995,47 @@ test('GraphQL subscription authorization - contrasting rules', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: {
-        checks: {
-          userId: {
-            eq: 'X-PLATFORMATIC-USER-ID',
-          },
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: {
+          checks: {
+            userId: {
+              eq: 'X-PLATFORMATIC-USER-ID'
+            }
+          }
         },
-      },
-      delete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: true,
-      delete: false,
-      save: false,
-    }],
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: true,
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
@@ -909,7 +1049,7 @@ test('GraphQL subscription authorization - contrasting rules / 2', async () => {
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
     // the process to finish correctly
-    pluginTimeout: 1000,
+    pluginTimeout: 1000
   })
   app.register(core, {
     ...connInfo,
@@ -919,54 +1059,60 @@ test('GraphQL subscription authorization - contrasting rules / 2', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret',
+      secret: 'supersecret'
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: {
-        checks: {
-          userId: {
-            eq: 'X-PLATFORMATIC-USER-ID',
-          },
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        find: {
+          checks: {
+            userId: {
+              eq: 'X-PLATFORMATIC-USER-ID'
+            }
+          }
         },
-      },
-      delete: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
         },
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID',
-      },
-      save: {
-        checks: {
-          userId: 'X-PLATFORMATIC-USER-ID',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
         },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
       },
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: {
-        checks: {
-          title: {
-            eq: 'foo',
-          },
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: {
+          checks: {
+            title: {
+              eq: 'foo'
+            }
+          }
         },
-      },
-      delete: false,
-      save: false,
-    }],
+        delete: false,
+        save: false
+      }
+    ]
   })
   test.after(() => {
     app.close()
   })
 
-  await rejects(app.ready(), new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find'))
+  await rejects(
+    app.ready(),
+    new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find')
+  )
 })

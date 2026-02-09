@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 export const dynamic = 'force-static'
 export const revalidate = 120
 
-export async function GET(request) {
+export async function GET (request) {
   const version = Date.now()
   let time
 
@@ -28,6 +28,10 @@ export async function GET(request) {
   } catch (e) {
     time = 0
   }
+
+  setTimeout(() => {
+    globalThis.platformatic.events.emitAndNotify('completed')
+  }, 100)
 
   return Response.json({ delay, version, time })
 }

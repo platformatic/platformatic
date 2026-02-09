@@ -1,4 +1,3 @@
-import { MercuriusContext } from 'mercurius'
 interface IRules {
   [key: string]: {
     role: string,
@@ -11,4 +10,6 @@ interface IRules {
   }
 }
 
-export default function findRule (ctx: MercuriusContext, rules: IRules[], roleKey: string, anonymousRole: string)
+export type RoleMergeStrategy = 'first-match' | 'most-permissive'
+
+export default function findRule (rules: IRules[], roles: string[], strategy?: RoleMergeStrategy): IRules | null

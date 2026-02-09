@@ -1,11 +1,9 @@
-'use strict'
-
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { test } = require('node:test')
-const { equal, ok: pass } = require('node:assert')
-const sqlGraphQL = require('..')
-const sqlMapper = require('@platformatic/sql-mapper')
-const fastify = require('fastify')
+import sqlMapper from '@platformatic/sql-mapper'
+import fastify from 'fastify'
+import { equal, ok as pass } from 'node:assert'
+import { test } from 'node:test'
+import sqlGraphQL from '../index.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -21,7 +19,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('no modification of entity', async (t) => {
+test('no modification of entity', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -30,7 +28,7 @@ test('no modification of entity', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -44,7 +42,7 @@ test('no modification of entity', async (t) => {
   }
 })
 
-test('no modification of entity with nested data', async (t) => {
+test('no modification of entity with nested data', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -93,7 +91,7 @@ test('no modification of entity with nested data', async (t) => {
           );
         `)
       }
-    },
+    }
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())

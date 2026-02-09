@@ -1,16 +1,15 @@
 {
   "name": "@platformatic/astro",
-  "version": "2.53.0",
-  "description": "Platformatic Astro Stackable",
+  "version": "3.37.0",
+  "description": "Platformatic Astro Capability",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout",
-    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
     "lint": "eslint"
   },
   "repository": {
@@ -27,22 +26,26 @@
     "@fastify/middie": "^9.0.0",
     "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
-    "@platformatic/utils": "workspace:*",
-    "fastify": "^5.0.0",
+    "@platformatic/foundation": "workspace:*",
+    "fastify": "^5.7.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@astrojs/node": "^8.3.3",
-    "@platformatic/composer": "workspace:*",
+    "@astrojs/node": "^9.2.0",
+    "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "astro": "^4.14.4",
-    "borp": "^0.19.0",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
+    "astro": "^5.7.1",
+    "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
     "typescript": "^5.5.4",
-    "vite": "^5.4.4",
+    "vite": "^7.0.0",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   }
 }

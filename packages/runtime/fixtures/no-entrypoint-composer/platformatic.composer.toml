@@ -1,4 +1,4 @@
-"$schema" = 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
+"$schema" = 'https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json'
 watch = false
 
 [server]
@@ -9,8 +9,8 @@ pluginTimeout = 0
 [server.logger]
 level = 'info'
 
-[composer]
+[gateway]
 refreshTimeout = 5000
   
-[[composer.services]]
+[[gateway.services]]
 id = 'main'

@@ -1,17 +1,30 @@
-'use strict'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { loadConfiguration, Runtime, transform } from '../../index.js'
+import { getTempDir } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-test('can start applications programmatically from object', async (t) => {
+test('can start applications programmatically from object', async t => {
+  const root = await getTempDir()
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const config = await loadConfiguration(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      config.logger ??= {}
+      config.logger.transport = {
+        target: 'pino/file',
+        options: { destination: join(root, 'logs.txt') }
+      }
+
+      return config
+    }
+  })
+  const app = new Runtime(config)
+
   const entryUrl = await app.start()
 
   t.after(async () => {
@@ -21,6 +34,6 @@ test('can start applications programmatically from object', async (t) => {
 
   const res = await request(entryUrl)
 
-  assert.strictEqual(res.statusCode, 200)
-  assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
+  strictEqual(res.statusCode, 200)
+  deepStrictEqual(await res.body.json(), { hello: 'hello123' })
 })

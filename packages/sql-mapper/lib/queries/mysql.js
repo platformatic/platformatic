@@ -1,18 +1,14 @@
-'use strict'
+import { MissingValueForPrimaryKeyError } from '../errors.js'
+import { tableName } from '../utils.js'
+import { insertPrep } from './shared.js'
 
-const { insertPrep } = require('./shared')
-const shared = require('./mysql-shared')
-const { tableName } = require('../utils')
-const errors = require('../errors')
+export * from './mysql-shared.js'
 
-function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
-  const keysToSql = Object.keys(input).map((key) => sql.ident(key))
-  const keys = sql.join(
-    keysToSql,
-    sql`, `
-  )
+export function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  const keysToSql = Object.keys(input).map(key => sql.ident(key))
+  const keys = sql.join(keysToSql, sql`, `)
 
-  const valuesToSql = Object.keys(input).map((key) => {
+  const valuesToSql = Object.keys(input).map(key => {
     /* istanbul ignore next */
     if (input[key] && typeof input[key] === 'object' && !(input[key] instanceof Date)) {
       // This is a JSON field
@@ -20,10 +16,7 @@ function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve
     }
     return sql.value(input[key])
   })
-  const values = sql.join(
-    valuesToSql,
-    sql`, `
-  )
+  const values = sql.join(valuesToSql, sql`, `)
 
   if (primaryKeys.length === 1 && input[primaryKeys[0].key] === undefined) {
     return db.tx(async function (db) {
@@ -49,7 +42,7 @@ function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve
       // TODO write a test that cover this
       /* istanbul ignore next */
       if (!input[key]) {
-        throw new errors.MissingValueForPrimaryKeyError(key)
+        throw new MissingValueForPrimaryKeyError(key)
       }
       where.push(sql`${sql.ident(key)} = ${input[key]}`)
     }
@@ -72,7 +65,7 @@ function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve
   }
 }
 
-function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKeys, fieldsToRetrieve, fields) {
+export function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKeys, fieldsToRetrieve, fields) {
   return db.tx(async function (db) {
     const { keys, values } = insertPrep(inputs, inputToFieldMap, fields, sql)
     const insert = sql`
@@ -111,7 +104,7 @@ function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKey
   })
 }
 
-function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
+export function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   return db.tx(async function (db) {
     let selectQuery = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
@@ -143,11 +136,4 @@ function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
 
     return res
   })
-}
-
-module.exports = {
-  ...shared,
-  insertOne,
-  insertMany,
-  deleteAll,
 }

@@ -1,19 +1,16 @@
-'use strict'
+import { getPlatformaticVersion } from '@platformatic/foundation'
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { Client } from 'undici'
+import { createRuntime } from '../helpers.js'
 
-const assert = require('node:assert')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { Client } = require('undici')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const { buildServer } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
-const platformaticVersion = require('../../package.json').version
-
-test('should get service config', async t => {
+test('should get application config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await createRuntime(configFile)
 
   await app.start()
 
@@ -35,14 +32,15 @@ test('should get service config', async t => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/config'
+    path: '/api/v1/applications/service-1/config'
   })
 
-  assert.strictEqual(statusCode, 200)
+  strictEqual(statusCode, 200)
 
-  const serviceConfig = await body.json()
+  const applicationConfig = await body.json()
+  const platformaticVersion = await getPlatformaticVersion()
 
-  assert.deepStrictEqual(serviceConfig, {
+  deepStrictEqual(applicationConfig, {
     $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
@@ -52,22 +50,13 @@ test('should get service config', async t => {
         level: 'trace'
       }
     },
+    application: {},
     service: { openapi: true },
     plugins: {
       paths: [join(projectDir, 'services', 'service-1', 'plugin.js')]
     },
     watch: {
       enabled: true
-    },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: true
-      },
-      labels: {
-        serviceId: 'service-1',
-        custom_label: 'custom-value'
-      }
     }
   })
 })

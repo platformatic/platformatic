@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { createStackable, getExecutedCommandLogMessage } from '../helper.js'
+import { create, getExecutedCommandLogMessage } from '../helper.js'
 
 function serverHandler (_, res) {
   res.writeHead(200, {
@@ -18,11 +18,11 @@ function serverHandler (_, res) {
   res.end(JSON.stringify({ ok: true }))
 }
 
-async function getChildManager (stackable) {
+async function getChildManager (capability) {
   let manager = null
 
   while (!manager) {
-    manager = stackable.getChildManager()
+    manager = capability.getChildManager()
     await setTimeout(10)
   }
 
@@ -30,36 +30,36 @@ async function getChildManager (stackable) {
 }
 
 test('ChildProcess - can load a script with additional loader and scripts', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
-  await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {
+  await capability.buildWithCommand(['node', executablePath], import.meta.dirname, {
     loader: new URL('../fixtures/loader.js', import.meta.url).toString(),
     scripts: [new URL('../fixtures/imported.js', import.meta.url)]
   })
 
-  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
-  deepStrictEqual(stackable.stdout.messages.slice(1), ['IMPORTED', 'LOADED true'])
+  ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(capability.stdout.messages.slice(1), ['IMPORTED', 'LOADED true'])
 })
 
 test('ChildProcess - the process will close upon request', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(stackable)
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
 
   const [, socket] = await once(childManager, 'ready')
-  await childManager.notify(socket, 'close')
+  await childManager.send(socket, 'close')
   await rejects(() => promise, /Process exited with non zero exit code/)
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(stackable)
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
 
   await once(childManager, 'ready')
 
@@ -68,19 +68,19 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
 })
 
 test('ChildProcess - the process exits in case of errors', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/delayed-error.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
+  const promise = capability.buildWithCommand(['node', executablePath])
   await rejects(() => promise, /Process exited with non zero exit code 20./)
 })
 
 test('ChildProcess - should not modify HTTP options for UNIX sockets', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/unix-socket-server.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(stackable)
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
 
   const [path] = await once(childManager, 'path')
 
@@ -107,7 +107,7 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
 })
 
 test('ChildProcess - should notify listen error', async t => {
-  const stackable = await createStackable(t, {
+  const capability = await create(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -116,8 +116,8 @@ test('ChildProcess - should notify listen error', async t => {
   })
 
   const executablePath = fileURLToPath(new URL('../fixtures/server.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(stackable)
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
 
   const [error] = await once(childManager, 'error')
 
@@ -140,7 +140,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
   interceptor.route('service', tcpWirer)
   setGlobalDispatcher(new Agent().compose(interceptor))
 
-  const stackable = await createStackable(t, {
+  const capability = await create(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -149,8 +149,8 @@ test('ChildProcess - should intercept fetch calls', async t => {
   })
 
   const executablePath = fileURLToPath(new URL('../fixtures/fetch.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath], null, { context: { interceptLogging: true } })
-  const manager = await getChildManager(stackable)
+  const promise = capability.buildWithCommand(['node', executablePath], null, { context: { interceptLogging: true } })
+  const manager = await getChildManager(capability)
 
   await once(manager, 'ready')
 
@@ -160,10 +160,10 @@ test('ChildProcess - should intercept fetch calls', async t => {
   await server.close()
   tcpWirer.terminate()
 
-  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(
     // eslint-disable-next-line no-control-regex
-    stackable.stdout.messages.slice(1).map(l => l.replace(/(\x1b\[[0-9;]+m)/gi, '')),
+    capability.stdout.messages.slice(1).map(l => l.replace(/(\x1b\[[0-9;]+m)/gi, '')),
     [
       '200 { ok: true }',
       '200 { ok: true }',
@@ -174,18 +174,113 @@ test('ChildProcess - should intercept fetch calls', async t => {
 })
 
 test('ChildProcess - should properly setup globals', async t => {
-  const stackable = await createStackable(t)
+  const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
-  await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {
+  await capability.buildWithCommand(['node', executablePath], import.meta.dirname, {
     loader: new URL('../fixtures/loader.js', import.meta.url).toString(),
     scripts: [new URL('../fixtures/imported.js', import.meta.url)]
   })
-  stackable.setOpenapiSchema('TEST_OPENAPI_SCHEMA')
-  stackable.setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
-  stackable.setConnectionString('TEST_CONNECTION_STRING')
+  capability.setOpenapiSchema('TEST_OPENAPI_SCHEMA')
+  capability.setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
+  capability.setConnectionString('TEST_CONNECTION_STRING')
 
-  equal(stackable.openapiSchema, 'TEST_OPENAPI_SCHEMA')
-  equal(stackable.graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
-  equal(stackable.connectionString, 'TEST_CONNECTION_STRING')
+  equal(capability.openapiSchema, 'TEST_OPENAPI_SCHEMA')
+  equal(capability.graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
+  equal(capability.connectionString, 'TEST_CONNECTION_STRING')
+})
+
+test('ChildProcess - updateMetricsConfig should update metrics in subprocess', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  const [, socket] = await once(childManager, 'ready')
+
+  // Initialize metrics collection in the subprocess
+  await childManager.send(socket, 'collectMetrics', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: true, defaultMetrics: true, httpMetrics: false }
+  })
+
+  // Verify metrics were collected using the built-in getMetrics handler
+  const beforeDisable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  ok(beforeDisable.length > 0, 'Expected metrics to be collected initially')
+
+  // Update metrics config to disable metrics
+  await childManager.send(socket, 'updateMetricsConfig', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: false }
+  })
+
+  // Verify metrics were cleared
+  const afterDisable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  equal(afterDisable.length, 0, 'Expected metrics to be cleared after disabling')
+
+  // Re-enable metrics
+  await childManager.send(socket, 'updateMetricsConfig', {
+    applicationId: 'test-app',
+    workerId: 0,
+    metricsConfig: { enabled: true, defaultMetrics: true, httpMetrics: false }
+  })
+
+  // Verify metrics were re-collected
+  const afterEnable = await childManager.send(socket, 'getMetrics', { format: 'json' })
+  ok(afterEnable.length > 0, 'Expected metrics to be re-collected after enabling')
+
+  // Signal done and wait for subprocess to exit
+  await childManager.send(socket, 'done')
+  await promise
+})
+
+test('ChildProcess - getHealth should return health metrics', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  const [, socket] = await once(childManager, 'ready')
+
+  // Get health metrics from the subprocess
+  const health = await childManager.send(socket, 'getHealth')
+
+  // Verify health metrics structure
+  ok(typeof health.elu === 'number', 'Expected ELU to be a number')
+  ok(health.elu >= 0 && health.elu <= 1, `Expected ELU to be between 0 and 1, got ${health.elu}`)
+  ok(typeof health.heapUsed === 'number', 'Expected heapUsed to be a number')
+  ok(health.heapUsed > 0, 'Expected heapUsed to be positive')
+  ok(typeof health.heapTotal === 'number', 'Expected heapTotal to be a number')
+  ok(health.heapTotal > 0, 'Expected heapTotal to be positive')
+  ok(health.heapUsed <= health.heapTotal, 'Expected heapUsed <= heapTotal')
+
+  // Signal done and wait for subprocess to exit
+  await childManager.send(socket, 'done')
+  await promise
+})
+
+test('ChildProcess - sendHealthSignal should be available in subprocess', async t => {
+  const capability = await create(t, { metricsConfig: { enabled: true } })
+
+  const executablePath = fileURLToPath(new URL('../fixtures/health-signals-subprocess.js', import.meta.url))
+  const promise = capability.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(capability)
+
+  // Wait for health signals notification
+  const [healthSignalsData] = await once(childManager, 'healthSignals')
+
+  // Verify health signals structure
+  ok(healthSignalsData.signals, 'Expected signals array')
+  ok(Array.isArray(healthSignalsData.signals), 'Expected signals to be an array')
+  ok(healthSignalsData.signals.length > 0, 'Expected at least one signal')
+
+  const signal = healthSignalsData.signals[0]
+  equal(signal.type, 'test-signal', 'Expected signal type to be test-signal')
+  ok(typeof signal.timestamp === 'number', 'Expected timestamp to be a number')
+
+  await promise
 })

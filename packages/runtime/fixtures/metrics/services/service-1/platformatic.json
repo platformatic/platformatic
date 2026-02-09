@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
+  "plugins": {
+    "paths": ["plugin.js"]
+  },
+  "gateway": {
+    "services": [
+      {
+        "id": "service-2"
+      }
+    ]
+  },
+  "watch": true,
+  "server": {
+    "logger": {
+      "level": "silent"
+    }
+  }
+}
