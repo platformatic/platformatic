@@ -514,6 +514,7 @@
         ],
         "description": "Add new item to the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -562,6 +563,7 @@
         ],
         "description": "Update one or more items in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -985,6 +987,7 @@
         ],
         "description": "Update item in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {

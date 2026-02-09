@@ -516,6 +516,7 @@
         ],
         "description": "Add new person to the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -577,6 +578,7 @@
         ],
         "description": "Update one or more people in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1026,6 +1028,7 @@
         ],
         "description": "Update person in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
