@@ -426,6 +426,22 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
+- **`httpCustomLabels`** (array of `object`): Custom labels to add to HTTP metrics (`http_request_all_duration_seconds` and `http_request_all_summary_seconds`). Each label extracts its value from an HTTP request header. By default, no custom labels are added. Each object supports:
+  - **`name`** (**required**, `string`): The label name to use in metrics.
+  - **`header`** (**required**, `string`): The HTTP request header to extract the value from.
+  - **`default`** (`string`): Default value when the header is missing. Defaults to `"unknown"`.
+
+```json title="Example httpCustomLabels Configuration"
+{
+  "metrics": {
+    "enabled": true,
+    "httpCustomLabels": [
+      { "name": "callerTelemetryId", "header": "x-plt-telemetry-id", "default": "" }
+    ]
+  }
+}
+```
+
 - **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
   - **`enabled`** (`boolean` or `string`): Enable or disable OTLP metrics export. Default: `true` if endpoint is configured.
   - **`endpoint`** (**required**, `string`): OTLP endpoint URL for metrics (e.g., `http://localhost:4318/v1/metrics`).

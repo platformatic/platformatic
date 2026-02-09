@@ -29,13 +29,11 @@ test('should get runtime metrics in a json format', async t => {
   await Promise.all([
     app.inject('service-1', {
       method: 'GET',
-      url: '/hello',
-      headers: { 'x-plt-telemetry-id': 'service-1-client' }
+      url: '/hello'
     }),
     app.inject('service-2', {
       method: 'GET',
-      url: '/service-2/hello',
-      headers: { 'x-plt-telemetry-id': 'service-2-client' }
+      url: '/service-2/hello'
     })
   ])
 
@@ -106,10 +104,6 @@ test('should get runtime metrics in a json format', async t => {
 
         strictEqual(labels.applicationId, applicationId)
         strictEqual(labels.custom_label, 'custom-value')
-
-        if (metricName.startsWith('http_request')) {
-          strictEqual(labels.telemetry_id, `${applicationId}-client`)
-        }
       }
     }
   }
