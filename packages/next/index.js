@@ -30,8 +30,6 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
     if (!config.cache.ignoreNextConfig) {
       return logger.warn('Next.js cache handlers are already defined in next.config.js. Skipping cache configuration.')
     }
-    delete nextConfig.cacheHandler
-    delete nextConfig.cacheHandlers
   }
 
   const cacheComponentsConflict = typeof config.cache?.cacheComponents !== 'undefined' && typeof nextConfig.cacheComponents !== 'undefined' && config.cache?.cacheComponents !== nextConfig.cacheComponents
@@ -52,6 +50,7 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
     nextConfig.cacheMaxMemorySize = 0
     modifications.push(['componentsCache', config.cache.adapter])
   } else {
+    delete nextConfig.cacheHandlers
     nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
     nextConfig.cacheMaxMemorySize = 0
     modifications.push(['isrCache', config.cache.adapter])
