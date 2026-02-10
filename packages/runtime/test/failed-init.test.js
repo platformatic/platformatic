@@ -1,4 +1,4 @@
-import { deepStrictEqual, rejects } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -7,7 +7,7 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('should restart an worker when it fails initialization', async t => {
+test('should not fail when adding an application and an existing worker has no message handlers', async t => {
   const configFile = join(fixturesDir, 'failed-init')
   const runtime = await createRuntime(configFile, null, { meshTimeout: 1000 })
 
@@ -21,21 +21,20 @@ test('should restart an worker when it fails initialization', async t => {
 
   await removedEvent
 
-  // Add the second application. Since application-1 has no messages handlers anymore, mesh setup will always fail.
-  const failedEvent = once(runtime, 'application:worker:init:failed')
-  await rejects(async () => {
-    return runtime.addApplications(
-      [
-        await prepareApplication(runtime.getRuntimeConfig(true), {
-          id: 'application-2',
-          path: './application-2'
-        })
-      ],
-      true
-    )
-  })
+  // Add the second application. Since application-1 has no messages handlers anymore,
+  // mesh setup will timeout but it is non-fatal (Promise.allSettled in undici-thread-interceptor).
+  await runtime.addApplications(
+    [
+      await prepareApplication(runtime.getRuntimeConfig(true), {
+        id: 'application-2',
+        path: './application-2'
+      })
+    ],
+    true
+  )
 
-  const [failed] = await failedEvent
+  deepStrictEqual(runtime.getApplicationsIds(), ['application-1', 'application-2'])
 
-  deepStrictEqual(failed, { application: 'application-2', worker: 0 })
+  const details = await runtime.getApplicationDetails('application-2')
+  strictEqual(details.status, 'started')
 })
