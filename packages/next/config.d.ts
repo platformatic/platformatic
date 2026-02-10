@@ -651,5 +651,6 @@ export interface PlatformaticNextJsConfig {
     prefix?: string;
     cacheComponents?: boolean;
     maxTTL?: number | string;
+    ignoreNextConfig?: boolean | string;
   };
 }

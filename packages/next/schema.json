@@ -2402,6 +2402,16 @@
               "type": "string"
             }
           ]
+        },
+        "ignoreNextConfig": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "required": [

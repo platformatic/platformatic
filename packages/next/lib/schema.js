@@ -43,6 +43,16 @@ export const cache = {
           type: 'string'
         }
       ]
+    },
+    ignoreNextConfig: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
     }
   },
   required: ['adapter', 'url'],

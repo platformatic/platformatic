@@ -1,4 +1,4 @@
-import { deepEqual, ok, strictEqual, } from 'node:assert'
+import { deepEqual, notStrictEqual, ok, strictEqual, } from 'node:assert'
 import {
   afterEach,
   describe,
@@ -33,10 +33,12 @@ afterEach(() => {
 })
 
 const assertIsrCacheHandler = (nextConfig) => {
+  notStrictEqual(nextConfig.cacheComponents, true)
   ok(nextConfig.cacheHandler.includes('redis-isr'))
   strictEqual(nextConfig.cacheHandlers, undefined)
 }
 const assertComponentsCacheHandlers = (nextConfig) => {
+  notStrictEqual(nextConfig.cacheComponents, false)
   ok(nextConfig.cacheHandler.includes('null-isr'))
   ok(nextConfig.cacheHandlers.default.includes('redis-components'))
 }
@@ -122,5 +124,52 @@ describe('enhanceNextConfig with caching', () => {
       cacheComponents: true
     })
     assertNoCacheHandlers(nextConfig)
+  })
+
+  test('overrides existing cache handler when ignoreNextConfig is true', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.ignoreNextConfig = true
+    })
+    const nextConfig = await enhanceNextConfig({
+      cacheHandler: 'custom-cache-handler',
+      cacheHandlers: { default: 'custom-cache-handler' }
+    })
+    assertIsrCacheHandler(nextConfig)
+  })
+
+  test('overrides existing cache handlers with components cache when ignoreNextConfig is true', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.ignoreNextConfig = true
+      config.cache.cacheComponents = true
+    })
+    const nextConfig = await enhanceNextConfig({
+      cacheHandler: 'custom-cache-handler',
+      cacheHandlers: { default: 'custom-cache-handler' }
+    })
+    assertComponentsCacheHandlers(nextConfig)
+  })
+
+  test('prioritizes platformatic config.cache.cacheComponents when ignoreNextConfig=true and conflict exists', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.ignoreNextConfig = true
+      config.cache.cacheComponents = true
+    })
+    const nextConfig = await enhanceNextConfig({
+      cacheComponents: false
+    })
+    assertComponentsCacheHandlers(nextConfig)
+    strictEqual(nextConfig.cacheComponents, true)
+  })
+
+  test('prioritizes platformatic config.cache.cacheComponents=false when ignoreNextConfig=true and conflict exists', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.ignoreNextConfig = true
+      config.cache.cacheComponents = false
+    })
+    const nextConfig = await enhanceNextConfig({
+      cacheComponents: true
+    })
+    assertIsrCacheHandler(nextConfig)
+    strictEqual(nextConfig.cacheComponents, false)
   })
 })

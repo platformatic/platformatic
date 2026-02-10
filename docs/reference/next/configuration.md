@@ -43,7 +43,8 @@ Supported object properties:
 - **`prefix`**: The prefix to use for all cache keys.
 - **`maxTTL`**: The maximum life of a server key, in seconds. If the Next.js `revalidate` value is greater than this value, then
   the adapter will refresh the key expire time as long as it is accessed every `maxTTL` seconds. The default value is `604800` (one week).
-- **`cacheComponents`**: If to use [Cache Components](https://nextjs.org/docs/app/getting-started/cache-components) instead of the Incremental Server Rendering Cache. Alternative to setting `cacheComponents: true` in next.config.js. This is only supported from Next.js 16.0.
+- **`cacheComponents`**: If to use [Cache Components](https://nextjs.org/docs/app/getting-started/cache-components) instead of the Incremental Server Rendering Cache. Alternative to setting `cacheComponents: true` in `next.config.js`. This is only supported from Next.js 16.0.
+- **`ignoreNextConfig`**: If to ignore Next.js cache config and override as needed.
 
 ## `next`
 
