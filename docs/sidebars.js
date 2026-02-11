@@ -202,6 +202,7 @@ const sidebars = {
               items: [
                 'reference/next/overview',
                 'reference/next/configuration',
+                'reference/next/image-optimizer',
                 'reference/next/experimental-adapter-path'
               ]
             },

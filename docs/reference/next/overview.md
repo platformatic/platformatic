@@ -7,7 +7,7 @@ import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Next
 
-The Platformatic Next allows to run a [Next](https://nextjs.org/) application as a Platformatic Runtime application with no modifications.
+The Platformatic Next allows to run a [Next](https://nextjs.org/) application as a Platformatic Runtime application with no modifications. It also provides additional capabilities like a standalone Image Optimizer service for optimizing images on-the-fly.
 
 ## Getting Started
 
@@ -34,9 +34,32 @@ Create a `watt.json` in the root folder of your application with the following c
 }
 ```
 
+### Example with Image Optimizer
+
+To enable the standalone Image Optimizer service:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.0.0.json",
+  "application": {
+    "basePath": "/frontend"
+  },
+  "next": {
+    "imageOptimizer": {
+      "enabled": true,
+      "fallback": "backend"
+    }
+  }
+}
+```
+
 ## Architecture
 
 When starting Next.js in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
+
+## Features
+
+- **Image Optimizer**: Run a standalone image optimization service. See the [Image Optimizer](./image-optimizer.md) documentation.
 
 ## Configuration
 
