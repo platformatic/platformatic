@@ -4,7 +4,7 @@
 
 You need to build a microservices application where:
 
-- Applications are developed and maintained in separate Git repositories
+- Applications are developed and maintained in separate Git repositories or npm packages in public or private registries
 - Different teams work on different applications independently
 - You want to combine applications from multiple repos into a single Watt application
 - You need flexible application resolution for local development vs. production
@@ -20,8 +20,8 @@ You need to build a microservices application where:
 
 Watt's multi-repository application resolution allows you to:
 
-1. Define applications from different Git repositories in your main application
-2. Automatically resolve and integrate applications from remote repositories
+1. Define applications from different Git repositories or npm packages in your main application
+2. Automatically resolve and integrate applications from remote repositories or npm packages
 3. Override application locations for local development
 4. Build and deploy unified applications from distributed applications
 
@@ -107,7 +107,7 @@ Configure your `watt.json` to include applications from multiple repositories:
     {
       "id": "frontend",
       "path": "{PLT_FRONTEND_PATH}",
-      "url": "https://github.com/your-org/nextjs-frontend.git"
+      "url": "npm:@your-org/frontend"
     }
   ]
 }
@@ -189,7 +189,7 @@ build/
 
 **Why ignore resolved applications:**
 
-- Applications are pulled from their own repositories
+- Applications are pulled from their own repositories or npm packages
 - Prevents committing resolved application code to main repo
 - Keeps main repo focused on orchestration configuration
 
@@ -205,7 +205,7 @@ npm run resolve
 
 **What this does:**
 
-- Clones applications from Git repositories if not found locally
+- Clones applications from Git repositories or installs npm packages if not found locally
 - Installs dependencies for each resolved application
 - Links applications according to workspace configuration
 - Prepares applications for building and running
@@ -283,7 +283,7 @@ npm run dev
 **Benefits of this approach:**
 
 - Develop locally on applications you're working on
-- Use stable versions of other applications from Git
+- Use stable versions of other applications from Git or npm
 - Quickly switch between local and remote application versions
 - Test integration without affecting other applications
 

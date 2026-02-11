@@ -1,5 +1,6 @@
 import {
   applicationToEnvVariable,
+  createDirectory,
   detectApplicationType,
   ensureLoggableError,
   findConfigurationFile,
@@ -9,6 +10,7 @@ import {
   loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
   parseArgs,
+  safeRemove,
   saveConfigurationFile
 } from '@platformatic/foundation'
 import { loadConfiguration } from '@platformatic/runtime'
@@ -16,8 +18,10 @@ import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { parseEnv } from 'node:util'
+import { extract } from 'tar'
 import { version } from '../version.js'
 import { installDependencies } from './dependencies.js'
 
@@ -326,6 +330,71 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
   await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
 }
 
+async function resolveNpmApplication (application, root, childLogger) {
+  const absolutePath = application.path
+  const relativePath = relative(root, absolutePath)
+  const pkg = application.url.replace(/^npm:/, '')
+
+  childLogger.info(`Resolving application ${bold(application.id)} ...`)
+
+  // Download the package using npm pack. We do that in a temporary directory.
+  let temporaryDirectory
+  const originalWorkingDirectory = process.cwd()
+  try {
+    childLogger.info(`Downloading npm package ${bold(pkg)} into ${bold(relativePath)} ...`)
+
+    temporaryDirectory = join(tmpdir(), `wattpm-utils-resolve--${process.pid}-${Date.now()}`)
+    await createDirectory(temporaryDirectory)
+    process.chdir(temporaryDirectory)
+
+    // The last line of the output is the name of the generated tarball
+    const { stdout } = await execa('npm', ['pack', pkg])
+    const archive = stdout.trim().split('\n').at(-1)
+
+    await createDirectory(absolutePath)
+    await extract({ file: resolve(temporaryDirectory, archive), cwd: absolutePath, strip: 1 })
+  } finally {
+    await safeRemove(temporaryDirectory)
+    process.chdir(originalWorkingDirectory)
+  }
+}
+
+async function resolveGitApplication (application, root, childLogger, username, password) {
+  const absolutePath = application.path
+  const relativePath = relative(root, absolutePath)
+
+  childLogger.info(`Resolving application ${bold(application.id)} ...`)
+
+  const parsedGitUrl = parseGitUrl(application.url)
+  let url = parsedGitUrl.url
+  const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch
+
+  if (url.startsWith('http') && username && password) {
+    const parsed = new URL(url)
+    parsed.username ||= username
+    parsed.password ||= password
+    url = parsed.toString()
+  }
+
+  const cloneArgs = ['clone', url, absolutePath, '--single-branch', '--depth', 1]
+
+  let branchLabel = ''
+  if (effectiveBranch && effectiveBranch !== 'main') {
+    cloneArgs.push('--branch', effectiveBranch)
+    branchLabel = ` (branch ${bold(effectiveBranch)})`
+  }
+
+  if (username) {
+    childLogger.info(
+      `Cloning ${bold(application.url)}${branchLabel} as user ${bold(username)} into ${bold(relativePath)} ...`
+    )
+  } else {
+    childLogger.info(`Cloning ${bold(application.url)}${branchLabel} into ${bold(relativePath)} ...`)
+  }
+
+  await execa('git', cloneArgs)
+}
+
 export async function resolveApplications (
   logger,
   root,
@@ -393,45 +462,20 @@ export async function resolveApplications (
   for (const application of toResolve) {
     const childLogger = logger.child({ name: application.id })
 
+    let operation
     try {
-      const absolutePath = application.path
-      const relativePath = relative(root, absolutePath)
-
-      childLogger.info(`Resolving application ${bold(application.id)} ...`)
-
-      const parsedGitUrl = parseGitUrl(application.url)
-      let url = parsedGitUrl.url
-      const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch
-
-      if (url.startsWith('http') && username && password) {
-        const parsed = new URL(url)
-        parsed.username ||= username
-        parsed.password ||= password
-        url = parsed.toString()
-      }
-
-      const cloneArgs = ['clone', url, absolutePath, '--single-branch', '--depth', 1]
-
-      let branchLabel = ''
-      if (effectiveBranch && effectiveBranch !== 'main') {
-        cloneArgs.push('--branch', effectiveBranch)
-        branchLabel = ` (branch ${bold(effectiveBranch)})`
-      }
-
-      if (username) {
-        childLogger.info(
-          `Cloning ${bold(application.url)}${branchLabel} as user ${bold(username)} into ${bold(relativePath)} ...`
-        )
+      if (application.url.startsWith('npm')) {
+        operation = 'download npm package'
+        await resolveNpmApplication(application, root, childLogger)
       } else {
-        childLogger.info(`Cloning ${bold(application.url)}${branchLabel} into ${bold(relativePath)} ...`)
+        operation = 'clone repository'
+        await resolveGitApplication(application, root, childLogger, username, password)
       }
-
-      await execa('git', cloneArgs)
     } catch (error) {
       return logFatalError(
         childLogger,
         { error: ensureLoggableError(error) },
-        `Unable to clone repository of the application ${bold(application.id)}`
+        `Unable to ${operation} of the application ${bold(application.id)}.`
       )
     }
   }
