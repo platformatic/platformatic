@@ -2380,6 +2380,16 @@
     "cache": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
         "adapter": {
           "type": "string",
           "enum": [
@@ -2402,6 +2412,16 @@
             {
               "type": "number",
               "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ignoreNextConfig": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "type": "string"

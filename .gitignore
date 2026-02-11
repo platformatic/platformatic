@@ -115,6 +115,7 @@ packages/db/test/fixtures/sqlite/db
 .vim
 .vscode
 .idea
+.zed
 
 *.sqlite
 
