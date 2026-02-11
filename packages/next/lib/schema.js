@@ -63,7 +63,7 @@ const next = {
   type: 'object',
   properties: {
     standalone: {
-      type: 'boolean',
+      type: 'boolean'
     },
     trailingSlash: {
       type: 'boolean',
@@ -72,6 +72,20 @@ const next = {
     useExperimentalAdapter: {
       type: 'boolean',
       default: false
+    },
+    imageOptimizer: {
+      type: 'object',
+      properties: {
+        enabled: {
+          type: 'boolean',
+          default: false
+        },
+        fallback: {
+          type: 'string'
+        }
+      },
+      required: ['enabled', 'fallback'],
+      additionalProperties: false
     }
   },
   default: {},

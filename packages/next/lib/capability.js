@@ -20,7 +20,7 @@ import { parse, satisfies } from 'semver'
 import * as errors from './errors.js'
 import { version } from './schema.js'
 
-const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
+export const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
 export function getCacheHandlerPath (name) {
   return fileURLToPath(new URL(`./caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
@@ -494,7 +494,8 @@ export class NextCapability extends BaseCapability {
 
     try {
       serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
-    } catch (e) { // Fallback to bundled capability
+    } catch (e) {
+      // Fallback to bundled capability
       serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
     }
 

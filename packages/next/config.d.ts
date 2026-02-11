@@ -648,6 +648,10 @@ export interface PlatformaticNextJsConfig {
     standalone?: boolean;
     trailingSlash?: boolean;
     useExperimentalAdapter?: boolean;
+    imageOptimizer?: {
+      enabled: boolean;
+      fallback: string;
+    };
   };
   cache?: {
     enabled?: boolean | string;

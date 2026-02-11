@@ -64,6 +64,11 @@ Configures Next.js. Supported object properties:
   ```
 
 - **`standalone`**: Set this to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output).
+- **`imageOptimizer`**: Configures the Next.js Image Optimizer API. This enables a standalone image optimization service that can handle image optimization requests without running the full Next.js application. Supported object properties:
+  - **`enabled`**: Boolean flag to enable the image optimizer service. Default is `false`.
+  - **`fallback`**: The URL or service name to fetch the original images from. This can be:
+    - A full URL (e.g., `https://example.com`)
+    - A local service name (e.g., `backend`) which will be resolved to `http://backend.plt.local`
 
 <RuntimeInCapabilities />
 
