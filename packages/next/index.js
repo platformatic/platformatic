@@ -25,7 +25,7 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
 
   if (!config.cache?.adapter || config.cache?.enabled === false) return
 
-  const existingCacheHandlers = typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers !== 'undefined'
+  const existingCacheHandlers = typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers?.default !== 'undefined'
   if (existingCacheHandlers) {
     if (!config.cache.ignoreNextConfig) {
       return logger.warn('Next.js cache handlers are already defined in next.config.js. Skipping cache configuration.')
