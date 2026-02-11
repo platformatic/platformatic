@@ -43,6 +43,10 @@ export async function showGeneralHelp (logger) {
   const options = [
     { usage: '-V, --version', description: `Show ${executableId} version` },
     { usage: '-v, --verbose', description: 'Show more information' },
+    {
+      usage: '-S, --socket <path>',
+      description: 'Path for the control socket. If not specified, the default platform-specific location is used.'
+    },
     { usage: '--help', description: 'Show this help' }
   ]
 

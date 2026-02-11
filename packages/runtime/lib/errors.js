@@ -40,6 +40,10 @@ export const ApplicationStartTimeoutError = createError(
   `${ERROR_PREFIX}_APPLICATION_START_TIMEOUT`,
   "Application with id '%s' failed to start in %dms."
 )
+export const ApplicationsDependenciesCycleError = createError(
+  `${ERROR_PREFIX}_APPLICATIONS_DEPENDENCIES_CYCLE`,
+  'Detected a cycle in the applications dependencies: %s'
+)
 export const FailedToRetrieveOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`,
   'Failed to retrieve OpenAPI schema for application with id "%s": %s'

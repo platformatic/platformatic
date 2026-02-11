@@ -1120,6 +1120,10 @@ export const runtimeProperties = {
               }
             },
             additionalProperties: false
+          },
+          socket: {
+            type: 'string',
+            description: 'Custom path for the control socket. If not specified, uses the default platform-specific location.'
           }
         },
         additionalProperties: false
@@ -1333,6 +1337,15 @@ export const runtimeProperties = {
       { type: 'string' }
     ],
     default: 300000 // 5 minutes
+  },
+  startupConcurrency: {
+    anyOf: [
+      {
+        type: 'number',
+        minimum: 1
+      },
+      { type: 'string' }
+    ]
   },
   messagingTimeout: {
     anyOf: [

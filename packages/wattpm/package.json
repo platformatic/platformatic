@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.34.1",
+  "version": "3.37.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -33,6 +33,7 @@
     "lib"
   ],
   "dependencies": {
+    "@fastify/websocket": "^11.0.0",
     "@platformatic/control": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/runtime": "workspace:*",
@@ -46,6 +47,7 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "execa": "^9.4.0",
+    "fastify": "5.7.4",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",

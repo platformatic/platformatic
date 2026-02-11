@@ -15,6 +15,7 @@ import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
 import { version } from './lib/schema.js'
+import { setSocket } from './lib/utils.js'
 
 export * from './lib/schema.js'
 
@@ -29,6 +30,10 @@ export async function main () {
     verbose: {
       short: 'v',
       type: 'boolean'
+    },
+    socket: {
+      short: 'S',
+      type: 'string'
     },
     version: {
       short: 'V',
@@ -59,6 +64,10 @@ export async function main () {
 
   if (values.verbose) {
     setVerbose(true)
+  }
+
+  if (values.socket) {
+    setSocket(values.socket)
   }
 
   let command

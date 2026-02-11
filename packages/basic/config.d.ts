@@ -211,6 +211,10 @@ export interface PlatformaticBasicConfig {
           logs?: {
             maxSize?: number;
           };
+          /**
+           * Custom path for the control socket. If not specified, uses the default platform-specific location.
+           */
+          socket?: string;
         };
     metrics?:
       | boolean
@@ -415,6 +419,7 @@ export interface PlatformaticBasicConfig {
       [k: string]: unknown;
     };
     applicationTimeout?: number | string;
+    startupConcurrency?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
