@@ -8,6 +8,7 @@ import {
 import {
   enhanceNextConfig
 } from '../index.js'
+import { keyFor } from '../lib/caching/valkey-common.js'
 import { abstractLogger } from '@platformatic/foundation'
 
 const setupGlobal = (additionalSetup = (platformatic) => {}) => {
@@ -46,6 +47,48 @@ const assertNoCacheHandlers = (nextConfig) => {
   strictEqual(nextConfig.cacheHandler, undefined)
   strictEqual(nextConfig.cacheHandlers, undefined)
 }
+
+describe('keyFor', () => {
+  test('generates key with all parts', () => {
+    const result = keyFor('prefix', 'subprefix', 'section', 'mykey')
+    const encodedKey = Buffer.from('mykey').toString('base64url')
+    strictEqual(result, `prefix:cache:next:subprefix:section:${encodedKey}`)
+  })
+
+  test('generates key without prefix', () => {
+    const result = keyFor('', 'subprefix', 'section', 'mykey')
+    const encodedKey = Buffer.from('mykey').toString('base64url')
+    strictEqual(result, `cache:next:subprefix:section:${encodedKey}`)
+  })
+
+  test('generates key without subprefix', () => {
+    const result = keyFor('prefix', '', 'section', 'mykey')
+    const encodedKey = Buffer.from('mykey').toString('base64url')
+    strictEqual(result, `prefix:cache:next:section:${encodedKey}`)
+  })
+
+  test('generates key without section', () => {
+    const result = keyFor('prefix', 'subprefix', '', 'mykey')
+    const encodedKey = Buffer.from('mykey').toString('base64url')
+    strictEqual(result, `prefix:cache:next:subprefix:${encodedKey}`)
+  })
+
+  test('generates key without key', () => {
+    const result = keyFor('prefix', 'subprefix', 'section', '')
+    strictEqual(result, 'prefix:cache:next:subprefix:section')
+  })
+
+  test('all parts are separated by colons', () => {
+    const result = keyFor('prefix', 'subprefix', 'section', 'mykey')
+    const parts = result.split(':')
+    strictEqual(parts[0], 'prefix')
+    strictEqual(parts[1], 'cache')
+    strictEqual(parts[2], 'next')
+    strictEqual(parts[3], 'subprefix')
+    strictEqual(parts[4], 'section')
+    strictEqual(parts[5], Buffer.from('mykey').toString('base64url'))
+  })
+})
 
 describe('enhanceNextConfig with caching', () => {
   test('adds ISR caching handler', async () => {
