@@ -24,7 +24,7 @@ export function keyFor (prefix, subprefix, section, key) {
   }
 
   if (key?.length) {
-    result += ":" + Buffer.from(key).toString('base64url')
+    result += ':' + Buffer.from(key).toString('base64url')
   }
 
   return result
