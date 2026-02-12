@@ -1,8 +1,6 @@
-'use strict'
-
-const Swagger = require('@fastify/swagger')
-const deepmerge = require('@fastify/deepmerge')({ all: true })
-const fp = require('fastify-plugin')
+import Swagger from '@fastify/swagger'
+import { deepmerge } from '@platformatic/foundation'
+import fp from 'fastify-plugin'
 
 // For some unknown reason, c8 is not detecting any of this
 // pf
@@ -70,7 +68,7 @@ async function setupOpenAPIPlugin (app, options) {
   )
 
   app.register(scalarApiReference, {
-    ...opts,
+    ...options,
     ...openapi,
     routePrefix,
     publicPath: './',
