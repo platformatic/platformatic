@@ -84,6 +84,24 @@ export async function installDependencies (logger, root, applications, productio
         )} using ${applicationPackageManager} ...`
       )
 
+      // yarn v1 will skip folders that have no version field in their package.json, so we need to add it if it's missing
+      if (applicationPackageManager === 'yarn') {
+        const packageJsonPath = resolve(root, path, 'package.json')
+
+        if (existsSync(packageJsonPath)) {
+          const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+
+          if (!packageJson.version) {
+            logger.warn(
+              `The package.json of the application ${bold(id)} is missing the ${bold('version')} field, which is required by yarn version. Setting version to 0.1.0 ...`
+            )
+
+            packageJson.version = '0.1.0'
+            await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
+          }
+        }
+      }
+
       await executeCommand(root, applicationPackageManager, applicationPackageArgs, {
         cwd: resolve(root, path),
         stdio: 'inherit',

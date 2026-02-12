@@ -83,6 +83,31 @@ test('install - should install dependencies of application and its applications 
   ok(installProcess.stdout.includes('Installing dependencies for the application main using pnpm ...'))
 })
 
+test('install - should setup package version to 0.1.0 when using yarn', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const originalPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/alternative/package.json'))
+  ok(typeof originalPackageJson.version === 'undefined')
+  const installProcess = await wattpmUtils('install', rootDir, '-P', 'yarn')
+
+  ok(
+    installProcess.stdout.includes(
+      'The package.json of the application main is missing the version field, which is required by yarn version. Setting version to 0.1.0 ...'
+    )
+  )
+  ok(
+    installProcess.stdout.includes(
+      'The package.json of the application alternative is missing the version field, which is required by yarn version. Setting version to 0.1.0 ...'
+    )
+  )
+
+  const updatePackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/alternative/package.json'))
+  deepStrictEqual(updatePackageJson.version, '0.1.0')
+})
+
 test('install - should respect the application package manager, if any', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))

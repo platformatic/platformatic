@@ -343,6 +343,7 @@ class BaseGenerator extends FileGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.config.applicationName}`,
+      version: '0.1.0',
       scripts: {
         dev: 'wattpm dev',
         start: 'wattpm start',

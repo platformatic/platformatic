@@ -429,7 +429,7 @@ test('import - when importing folders already in the project root, should not cr
     {
       path: '',
       file: join(targetDir, 'my-app', 'package.json'),
-      contents: '{\n  "dependencies": {\n    "@platformatic/service": "^1.0.0"\n  }\n}',
+      contents: '{\n  "version": "0.1.0",\n  "dependencies": {\n    "@platformatic/service": "^1.0.0"\n  }\n}',
       options: {},
       tags: []
     }
