@@ -159,6 +159,7 @@ export class ImportGenerator extends BaseGenerator {
       // No-op, we will create a new package.json
     }
 
+    packageJson.version ??= '0.1.0'
     packageJson.dependencies ??= {}
     packageJson.dependencies[pkg] = `^${version}`
     if (packageJson.devDependencies?.[pkg]) {
