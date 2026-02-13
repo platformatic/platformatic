@@ -82,8 +82,52 @@ test('should not show start in handle mode in production', async t => {
   )
 })
 
+test('should support standalone mode with custom build command', async t => {
+  // This test verifies issue #4604: build fails when using both
+  // a custom build command AND standalone: true
+  const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
+    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
+      recursive: true
+    })
+
+    for (const type of ['backend', 'composer']) {
+      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
+        recursive: true
+      })
+    }
+
+    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+      return contents.replace('$PREFIX', '')
+    })
+
+    await updateFile(resolve(root, 'services/frontend/next.config.js'), contents => {
+      return contents.replace('{}', '{ output: "standalone"}')
+    })
+
+    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
+      const json = JSON.parse(raw)
+      json.next ??= {}
+      json.next.standalone = true
+      // Add custom build command - this triggers the bug
+      json.application ??= {}
+      json.application.commands ??= {}
+      json.application.commands.build = 'npm run build'
+
+      return JSON.stringify(json, null, 2)
+    })
+  })
+
+  // This used to fail with:
+  // TypeError: Cannot read properties of undefined (reading 'major')
+  // because #nextVersion was never initialized when both custom build command
+  // and standalone: true were set
+  await runtime.init()
+  await runtime.buildApplication('frontend')
+  ok(true, 'Build succeeded with custom command and standalone mode')
+})
+
 test('should support Next.js in standalone mode', async t => {
-  const { root, runtime, } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
+  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
