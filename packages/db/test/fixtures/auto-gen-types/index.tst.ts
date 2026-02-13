@@ -1,30 +1,30 @@
 /// <reference types="./plt-env.d.ts" />
 
-import { fastify, FastifyInstance } from 'fastify'
-import { expectType } from 'tsd'
-import { AggregateRating } from './types/aggregateRating'
-import { Movie } from './types/movie'
+import { fastify, type FastifyInstance } from 'fastify'
+import { expect } from 'tstyche'
+import type { AggregateRating } from './types/aggregateRating.js'
+import type { Movie } from './types/movie.js'
 
 const app: FastifyInstance = fastify()
 
 const aggregateRatings = await app.platformatic.entities.aggregateRating.find()
-expectType<Partial<AggregateRating>[]>(aggregateRatings)
+expect(aggregateRatings).type.toBe<Partial<AggregateRating>[]>()
 
 const aggregateRating = aggregateRatings[0] as AggregateRating
-expectType<{
+expect(aggregateRating).type.toBe<{
   id?: number
   movieId: number
   rating: number
   ratingType: string
-}>(aggregateRating)
+}>()
 
 const movies = await app.platformatic.entities.movie.find()
-expectType<Partial<Movie>[]>(movies)
+expect(movies).type.toBe<Partial<Movie>[]>()
 
 const movie = movies[0] as Movie
-expectType<{
+expect(movie).type.toBe<{
   id?: number
   title: string
   boxOffice?: number | null
   year: number
-}>(movie)
+}>()
