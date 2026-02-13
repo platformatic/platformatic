@@ -16,3 +16,7 @@ export const MigrationsToApplyError = createError(
   `${ERROR_PREFIX}_MIGRATIONS_TO_APPLY_ERROR`,
   'You have migrations to apply.'
 )
+export const InvalidSchemaLockError = createError(
+  `${ERROR_PREFIX}_INVALID_SCHEMA_LOCK_ERROR`,
+  'Invalid schema lock format.'
+)
