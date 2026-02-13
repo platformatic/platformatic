@@ -14,7 +14,8 @@ import {
   FailedToRetrieveMetaError,
   FailedToRetrieveMetricsError,
   FailedToRetrieveOpenAPISchemaError,
-  WorkerExitedError
+  WorkerExitedError,
+  exitCodes
 } from '../errors.js'
 import { updateUndiciInterceptors } from './interceptors.js'
 import { MessagingITC } from './messaging.js'
@@ -86,7 +87,7 @@ async function safeHandleInITC (worker, fn) {
     ])
 
     if (typeof exitCode === 'number') {
-      if (typeof worker[kWorkerId] !== 'undefined') {
+      if (typeof worker[kWorkerId] !== 'undefined' && exitCode !== exitCodes.PROCESS_UNHANDLED_ERROR) {
         throw new WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
       } else {
         throw new ApplicationExitedError(worker[kId], exitCode)

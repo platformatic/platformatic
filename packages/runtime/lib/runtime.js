@@ -1608,7 +1608,7 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:init', id)
   }
 
-  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true) {
+  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true, attempt = 0) {
     const { restartOnError } = config
     const workerId = `${applicationId}:${index}`
 
@@ -1854,12 +1854,21 @@ export class Runtime extends EventEmitter {
     try {
       await waitEventFromITC(worker, 'init')
     } catch (e) {
+      if (attempt === MAX_BOOTSTRAP_ATTEMPTS) {
+        const error = new RuntimeAbortedError({ cause: e })
+        error.message = `Unable to initialize the ${errorLabel}.`
+        throw e
+      }
+
       if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {
-        this.logger.error({ err: ensureLoggableError(e) }, `Failed to initialize the ${errorLabel}. Replacing it ...`)
+        this.logger.error(
+          { err: ensureLoggableError(e) },
+          `Failed to initialize the ${errorLabel}. Attempting to initialize a new worker ...`
+        )
       }
 
       this.#workers.delete(workerId)
-      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled)
+      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled, attempt + 1)
     }
 
     if (applicationConfig.entrypoint) {
