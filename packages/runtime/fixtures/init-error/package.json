@@ -1,0 +1,14 @@
+{
+  "name": "init-error",
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "wattpm": "^3.37.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

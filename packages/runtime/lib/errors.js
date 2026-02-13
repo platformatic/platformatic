@@ -1,5 +1,14 @@
 import createError from '@fastify/error'
 
+// Keep in sync with packages/basic/lib/errors.js
+export const exitCodes = {
+  MANAGER_MESSAGE_HANDLING_FAILED: 11,
+  MANAGER_SOCKET_ERROR: 11,
+  PROCESS_UNHANDLED_ERROR: 20,
+  PROCESS_MESSAGE_HANDLING_FAILED: 21,
+  PROCESS_SOCKET_ERROR: 22
+}
+
 export const ERROR_PREFIX = 'PLT_RUNTIME'
 
 export const AddressInUseError = createError(

@@ -52,7 +52,8 @@ export async function devCommand (logger, args) {
       )
     }
 
-    throw err
+    logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
+    return
   }
 
   // Handle reloading via either file changes or stdin "rs" command
@@ -124,7 +125,7 @@ export async function startCommand (logger, args) {
       )
     }
 
-    throw err
+    logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
   }
 }
 

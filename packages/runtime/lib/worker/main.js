@@ -2,6 +2,7 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
+  ensureLoggableError,
   getPrivateSymbol
 } from '@platformatic/foundation'
 import { subscribe } from 'node:diagnostics_channel'
@@ -14,12 +15,22 @@ import { pathToFileURL } from 'node:url'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
+import { exitCodes } from '../errors.js'
 import { Controller } from './controller.js'
+import { initHealthSignalsApi } from './health-signals.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
 import { kId, kITC, kStderrMarker } from './symbols.js'
-import { initHealthSignalsApi } from './health-signals.js'
+
+function handlePreInitializationUnhandled (type, err) {
+  const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
+  globalThis.platformatic.logger.error(
+    { err: ensureLoggableError(err) },
+    `The ${label} threw an ${type} before initialization.`
+  )
+  process.exit(exitCodes.PROCESS_UNHANDLED_ERROR)
+}
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -47,6 +58,18 @@ function patchLogging () {
     }
 
     return string
+  }
+}
+
+function setupHandlers () {
+  const unhandledExceptionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught exception')
+  const unhandledRejectionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught rejection')
+  process.on('uncaughtException', unhandledExceptionHandler)
+  process.on('unhandledRejection', unhandledRejectionHandler)
+
+  return () => {
+    process.removeListener('uncaughtException', unhandledExceptionHandler)
+    process.removeListener('unhandledRejection', unhandledRejectionHandler)
   }
 }
 
@@ -137,6 +160,8 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
 }
 
 async function main () {
+  const cleanup = setupHandlers()
+
   installUndiciGlobals(globalThis)
   globalThis[kId] = threadId
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
@@ -224,7 +249,7 @@ async function main () {
     metricsConfig
   )
 
-  await controller.init()
+  await controller.init(cleanup)
 
   if (applicationConfig.entrypoint && runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
