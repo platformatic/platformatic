@@ -133,7 +133,10 @@ export class Controller extends EventEmitter {
 
       this.#updateDispatcher()
 
-      cleanupHandlers()
+      if (cleanupHandlers) {
+        cleanupHandlers()
+      }
+
       if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
         this.#setupHandlers()
       }
