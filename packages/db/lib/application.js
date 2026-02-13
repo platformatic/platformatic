@@ -6,7 +6,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { execute as applyMigrations } from './migrator.js'
 import { root } from './root.js'
 import { execute as generateTypes } from './types.js'
-import { locateSchemaLock, updateSchemaLock } from './utils.js'
+import { locateSchemaLock, updateSchemaLock, validateSchemaLockFormat } from './utils.js'
 
 async function healthCheck (app) {
   const { db, sql } = app.platformatic
@@ -27,6 +27,8 @@ export async function platformaticDatabase (app, capability) {
 
   async function loadSchemaLock () {
     if (config.db.schemalock) {
+      validateSchemaLockFormat(config.db.schemalock)
+
       // ignore errors, this is an optimization
       try {
         const path = locateSchemaLock(config)
