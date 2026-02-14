@@ -116,10 +116,12 @@ test('should post updated workers when something crashed', async t => {
 
   const url = await app.start()
 
+  // Worker 0 will crash, but restarted worker gets a new unique index (1)
+  // since there's 1 worker initially (0), nextWorkerIndex starts at 1
   const waitPromise = waitForEvents(
     app,
     { event: 'application:worker:error', application: 'first', worker: 0 },
-    { event: 'application:worker:started', application: 'first', worker: 0 }
+    { event: 'application:worker:started', application: 'first', worker: 1 }
   )
 
   // Fetch the entrypoint to induce the crash
@@ -135,10 +137,11 @@ test('should post updated workers when something crashed', async t => {
   const { events, threads } = await eventsPromise
 
   // Verify that the broadcast happened in the right order
+  // The restarted worker gets a new unique ID (first:1) instead of reusing first:0
   deepStrictEqual(events, [
     new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][0], worker: 0 }]]]),
     new Map(),
-    new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][1], worker: 0 }]]]),
+    new Map([['first', [{ id: 'first:1', application: 'first', thread: threads['first:1'][0], worker: 1 }]]]),
     new Map()
   ])
 })
@@ -155,6 +158,7 @@ test('should post updated workers when the application is updated', async t => {
 
   await app.start()
 
+  // The reloaded event is emitted by the watcher (always worker 0), so it uses the original index
   const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'first', worker: 0 })
 
   await updateFile(resolve(root, './first/index.mjs'), contents => {
@@ -169,6 +173,7 @@ test('should post updated workers when the application is updated', async t => {
   const { events, threads } = await eventsPromise
 
   // Verify that the broadcast happened in the right order
+  // When watching triggers reload, the app is stopped/started fresh with new workers 0 to N-1
   deepStrictEqual(events, [
     new Map([['first', [{ id: 'first:0', application: 'first', thread: threads['first:0'][0], worker: 0 }]]]),
     new Map(),
@@ -424,6 +429,7 @@ test('should reuse channels when the worker are restarted', async t => {
   deepStrictEqual(createdChannels, 3)
 
   // Get all the logs so far
+  // The reloaded event is emitted by the watcher (always worker 0)
   const waitPromise = waitForEvents(app, { event: 'application:worker:reloaded', application: 'third', worker: 0 })
 
   // Now restart the third application, it should result in workers configuration being broadcasted
