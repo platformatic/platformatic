@@ -39,7 +39,7 @@
     "fastify": "^5.7.0",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "nitro": "3.0.1-alpha.1",
+    "nitro": "3.0.1-alpha.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.5.4",
