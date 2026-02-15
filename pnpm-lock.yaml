@@ -1420,7 +1420,7 @@ importers:
         version: 4.2.1
       systeminformation:
         specifier: ^5.27.11
-        version: 5.30.7
+        version: 5.30.8
       undici:
         specifier: ^7.0.0
         version: 7.18.2
@@ -10038,8 +10038,8 @@ packages:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
     engines: {node: '>=0.10'}
 
-  systeminformation@5.30.7:
-    resolution: {integrity: sha512-33B/cftpaWdpvH+Ho9U1b08ss8GQuLxrWHelbJT1yw4M48Taj8W3ezcPuaLoIHZz5V6tVHuQPr5BprEfnBLBMw==}
+  systeminformation@5.30.8:
+    resolution: {integrity: sha512-imB8LwJCc2DkufKlSRHfzbjhheGzpg1P31A4c55IKTq/ll6Agn1rhBOY+WmS/hyg5inGFp7AyZIK0gvq5rFO2Q==}
     engines: {node: '>=8.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -20435,7 +20435,7 @@ snapshots:
 
   symbol-observable@4.0.0: {}
 
-  systeminformation@5.30.7: {}
+  systeminformation@5.30.8: {}
 
   table@6.9.0:
     dependencies:
