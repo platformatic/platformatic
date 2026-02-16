@@ -6,8 +6,8 @@ import {
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeOpenapi
-} from '../lib/errors.js'
-import { Metric, ReadableBody, Runtime, RuntimeApiClient, RuntimeApplications } from '../lib/index.js'
+} from '../../lib/errors.js'
+import { Metric, ReadableBody, Runtime, RuntimeApiClient, RuntimeApplications } from '../../lib/index.js'
 
 // RuntimeApiClient
 let runtime = {} as Runtime

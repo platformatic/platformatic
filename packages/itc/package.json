@@ -6,8 +6,8 @@
   "type": "module",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "posttest": "tsd -t index.test-d.ts test",
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:types": "tsd",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -31,6 +31,9 @@
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@watchable/unpromise": "^1.0.2"
+  },
+  "tsd": {
+    "directory": "test/types"
   },
   "engines": {
     "node": ">=22.19.0"
