@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { ConfigField, ConfigFieldDefinition } from './index.js'
+import { ConfigField, ConfigFieldDefinition } from '../../index.js'
 
 expectAssignable<ConfigFieldDefinition>({
   label: 'PLT_TESTING',

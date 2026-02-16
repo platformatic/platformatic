@@ -17,8 +17,8 @@
   "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
   "scripts": {
     "lint": "eslint",
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "posttest": "tsd"
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test:types": "tsd"
   },
   "keywords": [],
   "dependencies": {
@@ -38,6 +38,9 @@
     "neostandard": "^0.12.0",
     "tsd": "^0.33.0",
     "typescript": "^5.5.4"
+  },
+  "tsd": {
+    "directory": "test/types"
   },
   "engines": {
     "node": ">=22.19.0"

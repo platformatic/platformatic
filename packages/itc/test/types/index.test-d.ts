@@ -1,6 +1,6 @@
 import { MessagePort } from 'node:worker_threads'
 import { expectError, expectType } from 'tsd'
-import { ITC, ITCConstructorOptions } from '../lib/index'
+import { ITC, ITCConstructorOptions } from '../../lib/index.js'
 
 const mockPort = {} as MessagePort
 
