@@ -1,13 +1,13 @@
-import {execa} from 'execa'
-import {fastify} from 'fastify'
-import {deepStrictEqual, ok} from 'node:assert'
-import {join, resolve} from 'node:path'
-import {afterEach, test} from 'node:test'
-import {Agent, getGlobalDispatcher, request, setGlobalDispatcher} from 'undici'
-import {transform} from '../index.js'
-import {startPath} from './cli/helper.js'
-import {createRuntime, isWindows, updateFile} from './helpers.js'
-import {prepareRuntime} from './multiple-workers/helper.js'
+import { execa } from 'execa'
+import { fastify } from 'fastify'
+import { deepStrictEqual, ok } from 'node:assert'
+import { join, resolve } from 'node:path'
+import { afterEach, test } from 'node:test'
+import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
+import { transform } from '../index.js'
+import { startPath } from './cli/helper.js'
+import { createRuntime, isWindows, updateFile } from './helpers.js'
+import { prepareRuntime } from './multiple-workers/helper.js'
 
 function stdioOutputToLogs (data) {
   const logs = data
