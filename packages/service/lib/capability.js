@@ -1,6 +1,6 @@
 import { BaseCapability, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
 import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
-import { telemetry } from '@platformatic/telemetry'
+import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
@@ -280,6 +280,10 @@ export class ServiceCapability extends BaseCapability {
     }
     if (this.loggerConfig?.timestamp) {
       pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
+    }
+
+    if (this.loggerConfig.telemetryExporter && this.telemetryConfig?.enabled !== false) {
+      addPinoInstrumentation(pinoOptions)
     }
 
     const logger = pino(pinoOptions)

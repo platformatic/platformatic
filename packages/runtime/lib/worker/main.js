@@ -5,6 +5,7 @@ import {
   ensureLoggableError,
   getPrivateSymbol
 } from '@platformatic/foundation'
+import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
 import { ServerResponse } from 'node:http'
@@ -91,6 +92,10 @@ function createLogger () {
   }
   if (pinoOptions.timestamp) {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
+  }
+
+  if (workerData.config.logger?.telemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
+    addPinoInstrumentation(pinoOptions)
   }
 
   return pino(pinoOptions)

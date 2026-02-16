@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.58.0.json",
+  "logger": {
+    "level": "trace"
+  }
+}

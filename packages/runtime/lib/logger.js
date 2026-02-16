@@ -178,6 +178,31 @@ export async function createLogger (config) {
 
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
+  if (config.telemetry && config.logger.telemetryExporter) {
+    multiStream.add(
+      pino.transport({
+        target: 'pino-opentelemetry-transport',
+        options: {
+          resourceAttributes: {
+            'service.name': config.telemetry.applicationName,
+            'service.version': config.telemetry.version
+          },
+          logRecordProcessorOptions: [
+            {
+              recordProcessorType: 'simple',
+              exporterOptions: {
+                protocol: config.logger.telemetryExporter.protocol,
+                httpExporterOptions: {
+                  url: config.logger.telemetryExporter.url
+                }
+              }
+            }
+          ]
+        }
+      })
+    )
+  }
+
   const logsFileMb = 5
   const logsLimitMb = config.managementApi?.logs?.maxSize || 200
 

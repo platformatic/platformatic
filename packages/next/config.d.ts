@@ -55,6 +55,10 @@ export interface PlatformaticNextJsConfig {
     customLevels?: {
       [k: string]: unknown;
     };
+    telemetryExporter?: {
+      protocol: "grpc" | "http";
+      url: string;
+    };
     [k: string]: unknown;
   };
   server?: {
@@ -185,6 +189,10 @@ export interface PlatformaticNextJsConfig {
       messageKey?: string;
       customLevels?: {
         [k: string]: unknown;
+      };
+      telemetryExporter?: {
+        protocol: "grpc" | "http";
+        url: string;
       };
       [k: string]: unknown;
     };

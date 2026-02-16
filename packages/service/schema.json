@@ -237,6 +237,26 @@
                 "customLevels": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "telemetryExporter": {
+                  "type": "object",
+                  "properties": {
+                    "protocol": {
+                      "type": "string",
+                      "enum": [
+                        "grpc",
+                        "http"
+                      ]
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "protocol",
+                    "url"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "default": {},
@@ -1559,6 +1579,26 @@
             "customLevels": {
               "type": "object",
               "additionalProperties": true
+            },
+            "telemetryExporter": {
+              "type": "object",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "enum": [
+                    "grpc",
+                    "http"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "protocol",
+                "url"
+              ],
+              "additionalProperties": false
             }
           },
           "default": {},
