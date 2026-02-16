@@ -38,7 +38,6 @@
     "self-cert": "^2.0.0",
     "single-user-cache": "^1.0.1",
     "split2": "^4.2.0",
-    "tsd": "^0.32.0",
     "typescript": "^5.5.4",
     "why-is-node-running": "2",
     "ws": "^8.16.0"
