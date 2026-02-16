@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/basic",
-  "version": "3.38.0",
+  "version": "3.38.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-		"test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tsd",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
