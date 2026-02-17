@@ -319,6 +319,10 @@ export interface PlatformaticNextJsConfig {
           logs?: {
             maxSize?: number;
           };
+          /**
+           * Custom path for the control socket. If not specified, uses the default platform-specific location.
+           */
+          socket?: string;
         };
     metrics?:
       | boolean
@@ -523,6 +527,7 @@ export interface PlatformaticNextJsConfig {
       [k: string]: unknown;
     };
     applicationTimeout?: number | string;
+    startupConcurrency?: number | string;
     messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
@@ -678,10 +683,12 @@ export interface PlatformaticNextJsConfig {
     useExperimentalAdapter?: boolean;
   };
   cache?: {
+    enabled?: boolean | string;
     adapter: "redis" | "valkey";
     url: string;
     prefix?: string;
     cacheComponents?: boolean;
     maxTTL?: number | string;
+    ignoreNextConfig?: boolean | string;
   };
 }

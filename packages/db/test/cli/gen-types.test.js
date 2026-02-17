@@ -1,24 +1,18 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
-import { existsSync } from 'node:fs'
 import { cp, readFile, symlink } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
 import split from 'split2'
+import tstyche from 'tstyche/tag'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { generateTypes } from '../../lib/commands/types.js'
 import { safeKill, startPath } from './helper.js'
 import { createCapturingLogger, createTestContext, withWorkingDirectory } from './test-utilities.js'
 
 let counter = 0
-
-let pathToTSD = resolve(import.meta.dirname, '../../node_modules/.bin/tsd')
-
-if (!existsSync(pathToTSD)) {
-  pathToTSD = resolve(import.meta.dirname, '../../../../node_modules/.bin/tsd')
-}
 
 async function prepareTemporaryDirectory (t, testDir) {
   const cwd = resolve(import.meta.dirname, '..', 'tmp', `gen-types-clone-${counter++}`)
@@ -53,7 +47,7 @@ test('generate ts types', async t => {
     await generateTypes(logger, configFile, [], context)
   })()
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('generate ts types without changing the cwd', async t => {
@@ -67,7 +61,7 @@ test('generate ts types without changing the cwd', async t => {
   await applyMigrations(logger, configFile, [], context)
   await generateTypes(logger, configFile, [], context)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('generate ts types twice', async t => {
@@ -84,7 +78,7 @@ test('generate ts types twice', async t => {
     await generateTypes(logger, configFile, [], context)
   })()
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('should show warning if there is no entities', async t => {
@@ -134,7 +128,7 @@ test('run migrate command with type generation', async t => {
     ['id', 'boxOffice', 'title', 'year']
   )
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('run migrate command with type generation without plugin in config', async t => {
@@ -152,7 +146,7 @@ test('run migrate command with type generation without plugin in config', async 
   const output = logger.getCaptured()
   assert.equal(output.includes('Generated type for Graph entity.'), true)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('generate types on start', async t => {
@@ -178,7 +172,7 @@ test('generate types on start', async t => {
 
   await setTimeout(100)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('generate types on start in a different cwd', async t => {
@@ -206,7 +200,7 @@ test('generate types on start in a different cwd', async t => {
 
   await setTimeout(100)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('correctly format entity type names', async t => {
@@ -223,6 +217,8 @@ test('correctly format entity type names', async t => {
 
   const output = logger.getCaptured()
   assert.equal(output.includes('Generated type for PltDb entity.'), true)
+
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('use types directory from config as target folder', async t => {
@@ -240,7 +236,7 @@ test('use types directory from config as target folder', async t => {
   const output = logger.getCaptured()
   assert.equal(output.includes('Generated type for Graph entity.'), true)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })
 
 test('generate types on start while considering types directory', async t => {
@@ -267,5 +263,5 @@ test('generate types on start while considering types directory', async t => {
 
   await setTimeout(100)
 
-  await execa(pathToTSD, { cwd })
+  await tstyche`--quiet --root ${cwd}`
 })

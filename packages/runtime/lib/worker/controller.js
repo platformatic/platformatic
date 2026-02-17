@@ -100,7 +100,7 @@ export class Controller extends EventEmitter {
   }
 
   // Note: capability's init() is executed within start
-  async init () {
+  async init (cleanupHandlers) {
     try {
       const appConfig = this.applicationConfig
 
@@ -132,6 +132,10 @@ export class Controller extends EventEmitter {
       }
 
       this.#updateDispatcher()
+
+      if (cleanupHandlers) {
+        cleanupHandlers()
+      }
 
       if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
         this.#setupHandlers()

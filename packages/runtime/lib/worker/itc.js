@@ -2,8 +2,8 @@ import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } 
 import { ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
-import { Duplex } from 'node:stream'
 import { createRequire } from 'node:module'
+import { Duplex } from 'node:stream'
 import { parentPort, workerData } from 'node:worker_threads'
 import {
   ApplicationExitedError,
@@ -14,7 +14,8 @@ import {
   FailedToRetrieveMetaError,
   FailedToRetrieveMetricsError,
   FailedToRetrieveOpenAPISchemaError,
-  WorkerExitedError
+  WorkerExitedError,
+  exitCodes
 } from '../errors.js'
 import { updateUndiciInterceptors } from './interceptors.js'
 import { MessagingITC } from './messaging.js'
@@ -49,7 +50,7 @@ function startSubprocessRepl (port, childManager, clientWs, controller) {
   childManager.on('repl:exit', handleReplExit)
 
   // Forward input from MessagePort to child process
-  port.on('message', (message) => {
+  port.on('message', message => {
     if (message.type === 'input') {
       childManager.send(clientWs, 'replInput', { data: message.data }).catch(() => {
         // Ignore errors if the child process has exited
@@ -86,7 +87,7 @@ async function safeHandleInITC (worker, fn) {
     ])
 
     if (typeof exitCode === 'number') {
-      if (typeof worker[kWorkerId] !== 'undefined') {
+      if (typeof worker[kWorkerId] !== 'undefined' && exitCode !== exitCodes.PROCESS_UNHANDLED_ERROR) {
         throw new WorkerExitedError(worker[kWorkerId], worker[kApplicationId], exitCode)
       } else {
         throw new ApplicationExitedError(worker[kId], exitCode)
@@ -210,6 +211,10 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         once(itc, 'application:worker:stop:processed').then(() => {
           closeITC(dispatcher, itc, messaging).catch(() => {})
         })
+      },
+
+      async getDependencies () {
+        return controller.capability.getDependencies?.() ?? []
       },
 
       async build () {
@@ -357,13 +362,13 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         // Create a duplex stream that wraps the MessagePort
         const replStream = new Duplex({
           read () {},
-          write (chunk, encoding, callback) {
+          write (chunk, _, callback) {
             port.postMessage({ type: 'output', data: chunk.toString() })
             callback()
           }
         })
 
-        port.on('message', (message) => {
+        port.on('message', message => {
           if (message.type === 'input') {
             replStream.push(message.data)
           } else if (message.type === 'close') {

@@ -457,7 +457,7 @@ const Environment = {
 
 This is the simplest approach if you're on Node.js 22+ and don't use advanced TypeScript features beyond type annotations.
 
-## Using swc-node as an lternative
+## Using swc-node as an Alternative
 
 While ts-node is the most popular choice for running TypeScript directly, there are faster alternatives that you might want to consider.
 
@@ -484,3 +484,227 @@ npm install -D @swc-node/register @swc/core
   }
 }
 ```
+
+## Using tsx as an Alternative
+
+[tsx](https://tsx.is) (TypeScript Execute) is a Node.js enhancement powered by [esbuild](https://esbuild.github.io/) that runs TypeScript files directly. It offers fast startup times and seamless interoperability between CommonJS and ESM modules. Unlike ts-node, tsx handles both module systems without separate configuration flags.
+
+**Important:** tsx must be used with the `commands` configuration approach in Watt, not with `execArgv`. This is because tsx hooks into Node.js module resolution in a way that interferes with Watt's internal module loading when registered via `execArgv`. The `commands` approach runs tsx in a separate child process, avoiding this conflict.
+
+### Installation
+
+```bash
+npm install -D tsx
+```
+
+Ensure you are using **tsx v4.20.4 or later** for compatibility with Node.js 22.18+ and 24+, which have native type stripping enabled by default.
+
+### ESM Configuration
+
+Use this configuration when your project uses `"type": "module"` in package.json (true ECMAScript Modules).
+
+**package.json:**
+
+```json
+{
+  "name": "my-app",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/node": "^3.25.0",
+    "wattpm": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+**tsconfig.json:**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+```
+
+**watt.json:**
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
+  "application": {
+    "commands": {
+      "development": "node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts",
+      "build": "tsc -p .",
+      "production": "node dist/index.js"
+    }
+  },
+  "watch": {
+    "enabled": true
+  },
+  "runtime": {
+    "server": {
+      "port": 3000
+    }
+  }
+}
+```
+
+Key configuration details:
+
+- `commands.development` runs tsx directly with Node.js flags to disable native type handling
+- `--no-experimental-strip-types` and `--no-experimental-transform-types` disable Node.js 22+/24+ built-in TypeScript processing, ensuring tsx handles all TypeScript compilation. This avoids conflicts between Node's native type stripping and tsx's own TypeScript handling
+- `--import tsx` registers tsx's ESM and CJS loaders
+- `commands.build` compiles TypeScript for production using `tsc`
+- `commands.production` runs the compiled JavaScript output
+
+### CommonJS Configuration
+
+Use this configuration when your project does **not** have `"type": "module"` in package.json (the default CommonJS mode).
+
+**package.json:**
+
+```json
+{
+  "name": "my-app",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/node": "^3.25.0",
+    "wattpm": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+Notice: No `"type": "module"` field — this keeps the project in CommonJS mode.
+
+**tsconfig.json:**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+```
+
+**watt.json:**
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
+  "application": {
+    "commands": {
+      "development": "node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts",
+      "build": "tsc -p .",
+      "production": "node dist/index.js"
+    }
+  },
+  "watch": {
+    "enabled": true
+  },
+  "runtime": {
+    "server": {
+      "port": 3000
+    }
+  }
+}
+```
+
+The `--import tsx` flag works for both ESM and CommonJS projects — tsx automatically detects the module system based on your package.json and tsconfig.json settings.
+
+### Why Not `execArgv`?
+
+Unlike ts-node and swc-node, tsx **cannot** be used with the `execArgv` configuration in Watt:
+
+```json
+{
+  "runtime": {
+    "application": {
+      "execArgv": ["--import", "tsx"]
+    }
+  }
+}
+```
+
+The above configuration will **not** work and will produce `MODULE_NOT_FOUND` errors.
+
+When tsx is registered via `execArgv`, it runs inside Watt's worker thread and intercepts all module resolution — including Watt's own internal modules. This causes `MODULE_NOT_FOUND` errors for packages like `@platformatic/node` because tsx's `resolveTsPaths` hook interferes with Watt's internal `require()` calls.
+
+The `commands` approach avoids this by running tsx in a separate child process where it only affects your application code.
+
+### Troubleshooting
+
+#### ERR_PACKAGE_PATH_NOT_EXPORTED
+
+If you encounter `ERR_PACKAGE_PATH_NOT_EXPORTED` errors when using tsx, this happens because tsx internally converts some imports to `require()` calls, which causes the `import` condition in package exports to be lost. Packages with conditional exports (like `execa`, `unicorn-magic`, or packages using `"exports"` with separate `"import"` and `"require"` paths) may fail to resolve correctly.
+
+**Fix:** Add `--conditions import` to the Node.js command in your development command:
+
+```json
+{
+  "application": {
+    "commands": {
+      "development": "node --no-experimental-strip-types --no-experimental-transform-types --import tsx --conditions import src/index.ts"
+    }
+  }
+}
+```
+
+The `--conditions import` flag tells Node.js to apply the `import` condition during module resolution, ensuring packages with conditional exports resolve correctly even when tsx uses `require()` internally.
+
+#### Worker Threads Inside Your Application
+
+If your application creates its own Worker threads (not the workers managed by Watt), tsx won't automatically propagate to those child workers. You need to register tsx programmatically inside the worker:
+
+```typescript
+// In your worker file
+import { register } from 'tsx/esm/api'
+register()
+
+// Now you can import TypeScript files
+import { myFunction } from './my-module.ts'
+```
+
+Alternatively, use the eval pattern when creating the worker:
+
+```typescript
+import { Worker } from 'node:worker_threads'
+
+const workerPath = new URL('./my-worker.ts', import.meta.url).href
+const worker = new Worker(
+  `import('tsx/esm/api').then(({ register }) => { register(); import('${workerPath}') })`,
+  { eval: true }
+)
+```
+
+This is not a Watt-specific issue — it's a general limitation of tsx with Node.js worker threads.

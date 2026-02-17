@@ -20,6 +20,43 @@ export function getAdapterPath () {
   return resolvePath(import.meta.dirname, 'lib', 'adapter.js')
 }
 
+function enhanceNextCacheConfig (nextConfig, modifications) {
+  const { config, nextVersion, logger } = globalThis.platformatic
+
+  if (!config.cache?.adapter || config.cache?.enabled === false) return
+
+  const existingCacheHandlers = typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers?.default !== 'undefined'
+  if (existingCacheHandlers) {
+    if (!config.cache.ignoreNextConfig) {
+      return logger.warn('Next.js cache handlers are already defined in next.config.js. Skipping cache configuration.')
+    }
+  }
+
+  const cacheComponentsConflict = typeof config.cache?.cacheComponents !== 'undefined' && typeof nextConfig.cacheComponents !== 'undefined' && config.cache?.cacheComponents !== nextConfig.cacheComponents
+  if (cacheComponentsConflict) {
+    if (!config.cache.ignoreNextConfig) {
+      return logger.warn('Platformatic and Next.js Cache Components configs are conflicting. Skipping cache configuration.')
+    }
+    nextConfig.cacheComponents = config.cache?.cacheComponents
+  }
+
+  if (config.cache?.cacheComponents || nextConfig.cacheComponents) {
+    if (nextVersion.major <= 15) {
+      return logger.warn('Next.js Cache Components are only supported in Next.js 16 and above. Skipping cache configuration.')
+    }
+    nextConfig.cacheComponents = true
+    nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
+    nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
+    nextConfig.cacheMaxMemorySize = 0
+    modifications.push(['componentsCache', config.cache.adapter])
+  } else {
+    delete nextConfig.cacheHandlers
+    nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
+    nextConfig.cacheMaxMemorySize = 0
+    modifications.push(['isrCache', config.cache.adapter])
+  }
+}
+
 export async function enhanceNextConfig (nextConfig, ...args) {
   // This is to avoid https://github.com/vercel/next.js/issues/76981
   Headers.prototype[Symbol.for('nodejs.util.inspect.custom')] = undefined
@@ -28,7 +65,7 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig = await nextConfig(...args)
   }
 
-  const { basePath, config, nextVersion } = globalThis.platformatic
+  const { basePath, config } = globalThis.platformatic
 
   if (typeof nextConfig.basePath === 'undefined') {
     nextConfig.basePath = basePath
@@ -36,19 +73,7 @@ export async function enhanceNextConfig (nextConfig, ...args) {
 
   const modifications = []
 
-  if (config.cache?.adapter) {
-    if (nextVersion.major > 15 && config.cache?.cacheComponents && typeof nextConfig.cacheComponents === 'undefined') {
-      nextConfig.cacheComponents = true
-      nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
-      nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
-      nextConfig.cacheMaxMemorySize = 0
-      modifications.push(['componentsCache', config.cache.adapter])
-    } else if (typeof nextConfig.cacheHandler === 'undefined') {
-      nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
-      nextConfig.cacheMaxMemorySize = 0
-      modifications.push(['isrCache', config.cache.adapter])
-    }
-  }
+  enhanceNextCacheConfig(nextConfig, modifications)
 
   if (config.next?.trailingSlash && typeof nextConfig.trailingSlash === 'undefined') {
     nextConfig.trailingSlash = true

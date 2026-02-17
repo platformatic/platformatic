@@ -1,5 +1,14 @@
 import createError from '@fastify/error'
 
+// Keep in sync with packages/basic/lib/errors.js
+export const exitCodes = {
+  MANAGER_MESSAGE_HANDLING_FAILED: 11,
+  MANAGER_SOCKET_ERROR: 11,
+  PROCESS_UNHANDLED_ERROR: 20,
+  PROCESS_MESSAGE_HANDLING_FAILED: 21,
+  PROCESS_SOCKET_ERROR: 22
+}
+
 export const ERROR_PREFIX = 'PLT_RUNTIME'
 
 export const AddressInUseError = createError(
@@ -39,6 +48,10 @@ export const ApplicationNotStartedError = createError(
 export const ApplicationStartTimeoutError = createError(
   `${ERROR_PREFIX}_APPLICATION_START_TIMEOUT`,
   "Application with id '%s' failed to start in %dms."
+)
+export const ApplicationsDependenciesCycleError = createError(
+  `${ERROR_PREFIX}_APPLICATIONS_DEPENDENCIES_CYCLE`,
+  'Detected a cycle in the applications dependencies: %s'
 )
 export const FailedToRetrieveOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`,

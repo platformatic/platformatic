@@ -2,6 +2,7 @@ import createError from '@fastify/error'
 
 export const ERROR_PREFIX = 'PLT_BASIC'
 
+// Keep in sync with packages/runtime/lib/errors.js
 export const exitCodes = {
   MANAGER_MESSAGE_HANDLING_FAILED: 11,
   MANAGER_SOCKET_ERROR: 11,

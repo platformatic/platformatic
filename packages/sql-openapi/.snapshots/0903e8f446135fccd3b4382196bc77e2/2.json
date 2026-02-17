@@ -16,16 +16,16 @@
             "type": "integer",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "counter": {
+            "type": "integer",
             "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "counter": {
-            "type": "integer",
+          "title": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -39,14 +39,14 @@
           "id": {
             "type": "integer"
           },
-          "title": {
-            "type": "string"
+          "counter": {
+            "type": "integer"
           },
           "longText": {
             "type": "string"
           },
-          "counter": {
-            "type": "integer"
+          "title": {
+            "type": "string"
           }
         },
         "additionalProperties": false,
@@ -641,6 +641,7 @@
         ],
         "description": "Add new post to the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -690,6 +691,7 @@
         ],
         "description": "Update one or more posts in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1219,6 +1221,7 @@
         ],
         "description": "Update post in the database.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {

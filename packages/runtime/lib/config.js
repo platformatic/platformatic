@@ -230,37 +230,44 @@ export async function prepareApplication (config, application, defaultWorkers) {
     application.config = resolvePath(application.path, application.config)
   }
 
-  try {
-    let pkg
-
-    if (application.config) {
-      const config = await loadConfiguration(application.config)
-      pkg = await loadConfigurationModule(application.path, config)
-
-      application.type = extractModuleFromSchemaUrl(config, true).module
-      application.skipTelemetryHooks = pkg.skipTelemetryHooks
-    } else {
-      const { moduleName, capability } = await importCapabilityAndConfig(application.path)
-      pkg = capability
-
-      application.type = moduleName
-    }
-
-    application.skipTelemetryHooks = pkg.skipTelemetryHooks
-
-    // This is needed to work around Rust bug on dylibs:
-    // https://github.com/rust-lang/rust/issues/91979
-    // https://github.com/rollup/rollup/issues/5761
-    const _require = createRequire(application.path)
-    for (const m of pkg.modulesToLoad ?? []) {
-      const toLoad = _require.resolve(m)
-      loadModule(_require, toLoad).catch(() => {})
-    }
-  } catch (err) {
-    // This should not happen, it happens on running some unit tests if we prepare the runtime
-    // when not all the applications configs are available. Given that we are running this only
-    // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
+  // Skip capability detection for external services (url without path)
+  // These services will have their path resolved later in runtime.js #setupApplication
+  // Attempting to detect capability here would cause slow glob operations on the cwd
+  if (application.url && !application.path) {
     application.type = 'unknown'
+  } else {
+    try {
+      let pkg
+
+      if (application.config) {
+        const config = await loadConfiguration(application.config)
+        pkg = await loadConfigurationModule(application.path, config)
+
+        application.type = extractModuleFromSchemaUrl(config, true).module
+        application.skipTelemetryHooks = pkg.skipTelemetryHooks
+      } else {
+        const { moduleName, capability } = await importCapabilityAndConfig(application.path)
+        pkg = capability
+
+        application.type = moduleName
+      }
+
+      application.skipTelemetryHooks = pkg.skipTelemetryHooks
+
+      // This is needed to work around Rust bug on dylibs:
+      // https://github.com/rust-lang/rust/issues/91979
+      // https://github.com/rollup/rollup/issues/5761
+      const _require = createRequire(application.path)
+      for (const m of pkg.modulesToLoad ?? []) {
+        const toLoad = _require.resolve(m)
+        loadModule(_require, toLoad).catch(() => {})
+      }
+    } catch (err) {
+      // This should not happen, it happens on running some unit tests if we prepare the runtime
+      // when not all the applications configs are available. Given that we are running this only
+      // to ddetermine the type of the application, it's safe to ignore this error and default to unknown
+      application.type = 'unknown'
+    }
   }
 
   // Validate and coerce per-service workers

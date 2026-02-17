@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.34.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.38.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Gateway Config",
   "type": "object",
@@ -2322,6 +2322,10 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "socket": {
+                  "type": "string",
+                  "description": "Custom path for the control socket. If not specified, uses the default platform-specific location."
                 }
               },
               "additionalProperties": false
@@ -2803,6 +2807,17 @@
             }
           ],
           "default": 300000
+        },
+        "startupConcurrency": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "messagingTimeout": {
           "anyOf": [

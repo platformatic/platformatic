@@ -1,6 +1,6 @@
 {
   "name": "wattpm-utils",
-  "version": "3.34.1",
+  "version": "3.38.1",
   "description": "The Node.js Application Server Utilities Commands",
   "main": "index.js",
   "type": "module",
@@ -36,7 +36,8 @@
     "create-wattpm": "workspace:*",
     "dotenv": "^16.4.5",
     "execa": "^9.4.0",
-    "semver": "^7.7.0"
+    "semver": "^7.7.0",
+    "tar": "^7.5.7"
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",

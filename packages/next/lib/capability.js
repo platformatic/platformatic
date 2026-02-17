@@ -159,9 +159,8 @@ export class NextCapability extends BaseCapability {
 
     let command = config.application.commands.build
 
-    if (!command || !config.next?.standalone) {
-      await this.init(true)
-    }
+    // Always init to ensure #nextVersion is set (needed by #getChildManagerScripts)
+    await this.init(true)
 
     if (!command) {
       command = ['node', resolvePath(this.#next, './dist/bin/next'), 'build', this.root]

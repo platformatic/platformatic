@@ -639,8 +639,8 @@ Let's open up `web/media-application/platformatic.json` and replace the `service
 
 Let's take a look at the settings we've added here:
 
-- `gateway.services[].id` — The `id` values are the identifiers for our Books and Movies applications. These are derived from the applications' directory names.
-- `gateway.services[].openapi.url` — This is the URL that Gateway will automatically call to retrieve the application's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media application's composed API.
+- `gateway.applications[].id` — The `id` values are the identifiers for our Books and Movies applications. These are derived from the applications' directory names.
+- `gateway.applications[].openapi.url` — This is the URL that Gateway will automatically call to retrieve the application's OpenAPI schema. It will use the OpenAPI schema to build the routes in our Media application's composed API.
 - `gateway.refreshTimeout` — This configures Gateway to retrieve the OpenAPI schema for each application every 1 second (1000 milliseconds = 1 second). This is a good value during development, but should be longer in production. If Gateway detects that the OpenAPI schema for an application has changed, it will rebuild the composed API.
 
 ### Test the composed Media application API
@@ -810,7 +810,7 @@ Now let's open up `web/media-application/platformatic.json` and configure the Me
   {
     ...,
     "gateway": {
-      "services": [
+      "applications": [
         {
           "id": "books-application",
           "openapi": {
@@ -887,7 +887,7 @@ module.exports = async function peopleDataPlugin (app) {
 }
 ```
 
-The code we've just added is the skeleton structure for our plugin. A `massimo` is instantiated out of the OpenAPI specification.
+The code we've just added is the skeleton structure for our plugin. A [Massimo](https://massimohttp.dev) client is instantiated from the OpenAPI specification.
 
 To be able to modify the responses that are sent from one of our Media application's composed API routes, we need to add a Gateway `onRoute` hook for the route, and then set an `onGatewayResponse` callback function inside it, for example:
 
@@ -1058,13 +1058,13 @@ curl localhost:3042/movies/3 | grep 'Name'
 
 Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`applications[].proxy`](https://docs.platformatic.dev/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
 
-Let's try this out by adding another service to the `services` in `platformatic.json`:
+Let's try this out by adding another application to the `applications` in `platformatic.json`:
 
 ```diff
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
     ...,
     "gateway": {
       "applications": [
@@ -1117,10 +1117,10 @@ Although the Gateway service proxy is a helpful feature, we don't want to use th
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
     ...,
     "gateway": {
-      "services": [
+      "applications": [
         ...,
         {
           "id": "movies-application",
@@ -1150,7 +1150,7 @@ Although the Gateway service proxy is a helpful feature, we don't want to use th
 If you have existing services that aren't built with Platformatic or Fastify, there are two ways you can integrate them with the applications in a Platformatic Runtime application:
 
 1. If the existing service provides an OpenAPI schema (via a URL or a file), you can create a Platformatic Gateway application inside the Runtime application and configure it to add the API for the existing service into a composed API.
-2. If the existing service provides an OpenAPI or GraphQL schema, you can generate a Platformatic Client for the existing service. The generated client can then be integrated with one of the Runtime applications.
+2. If the existing service provides an OpenAPI or GraphQL schema, you can use [Massimo](https://massimohttp.dev) to generate a client for the existing service. The generated client can then be integrated with one of the Runtime applications.
 
 ### Building Platformatic Runtime applications in a monorepo
 

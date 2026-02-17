@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "3.34.1",
+  "version": "3.38.1",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "posttest": "tsd",
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test:types": "tsd",
     "lint": "eslint"
   },
   "types": "index.d.ts",

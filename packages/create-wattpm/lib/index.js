@@ -118,7 +118,7 @@ async function importOrLocal ({ pkgManager, projectDir, pkg }) {
       args.push('-w')
     }
 
-    await execa(pkgManager, ['install', ...args, pkg + version], { cwd: projectDir })
+    await execa(pkgManager, [pkgManager === 'npm' ? 'install' : 'add', ...args, pkg + version], { cwd: projectDir })
     spinner.succeed()
 
     const fileToImport = resolveModule.sync(pkg, { basedir: projectDir })

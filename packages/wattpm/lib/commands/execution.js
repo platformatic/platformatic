@@ -11,6 +11,7 @@ import { create } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
+import { getSocket } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -51,7 +52,8 @@ export async function devCommand (logger, args) {
       )
     }
 
-    throw err
+    logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
+    return
   }
 
   // Handle reloading via either file changes or stdin "rs" command
@@ -123,14 +125,14 @@ export async function startCommand (logger, args) {
       )
     }
 
-    throw err
+    logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
   }
 }
 
 export async function stopCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 
@@ -152,7 +154,7 @@ export async function stopCommand (logger, args) {
 export async function restartCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
@@ -178,7 +180,7 @@ export async function restartCommand (logger, args) {
 export async function reloadCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 

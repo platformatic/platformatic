@@ -113,6 +113,10 @@ export class RuntimeGenerator extends BaseGenerator {
       template.workspaces = [this.applicationsFolder + '/*']
     }
 
+    if (this.packageManager === 'yarn') {
+      template.private = true
+    }
+
     return template
   }
 

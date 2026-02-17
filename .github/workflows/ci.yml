@@ -131,23 +131,23 @@ jobs:
       - name: Linting & Typescript for test suite sql-mapper
         run: |
           pnpm --filter="@platformatic/sql-mapper" run lint
-          pnpm --filter="@platformatic/sql-mapper" run test:typescript
+          pnpm --filter="@platformatic/sql-mapper" run test:types
       - name: Linting & Typescript for test suite sql-json-schema-mapper
         run: |
           pnpm --filter="@platformatic/sql-json-schema-mapper" run lint
-          pnpm --filter="@platformatic/sql-json-schema-mapper" run test:typescript
+          pnpm --filter="@platformatic/sql-json-schema-mapper" run test:types
       - name: Linting & Typescript for test suite sql-openapi
         run: |
           pnpm --filter="@platformatic/sql-openapi" run lint
-          pnpm --filter="@platformatic/sql-openapi" run test:typescript
+          pnpm --filter="@platformatic/sql-openapi" run test:types
       - name: Linting & Typescript for test suite sql-graphql
         run: |
           pnpm --filter="@platformatic/sql-graphql" run lint
-          pnpm --filter="@platformatic/sql-graphql" run test:typescript
+          pnpm --filter="@platformatic/sql-graphql" run test:types
       - name: Linting & Typescript for test suite sql-events
         run: |
           pnpm --filter="@platformatic/sql-events" run lint
-          pnpm --filter="@platformatic/sql-events" run test:typescript
+          pnpm --filter="@platformatic/sql-events" run test:types
 
   cli:
     name: 'cli - ${{ matrix.os }} - ${{ matrix.node }}'

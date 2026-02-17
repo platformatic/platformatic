@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.37.0.json",
+  "watch": true,
+  "applications": [
+    {
+      "id": "main",
+      "path": "web/main",
+      "preload": "./preload.js"
+    }
+  ],
+  "logger": {
+    "level": "debug"
+  }
+}

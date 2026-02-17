@@ -94,6 +94,7 @@ export class Generator extends BaseGenerator {
       contents: JSON.stringify(
         {
           name: `${this.config.applicationName}`,
+          version: '0.1.0',
           main,
           type: 'module',
           dependencies,

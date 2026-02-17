@@ -1,9 +1,10 @@
 import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
+import { getSocket } from '../utils.js'
 
 export async function metricsCommand (logger, args) {
-  const client = new RuntimeApiClient()
+  const client = new RuntimeApiClient({ logger, socket: getSocket() })
   try {
     const { values, positionals } = parseArgs(args, { format: { type: 'string', short: 'f', default: 'json' } }, false)
 

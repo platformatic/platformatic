@@ -1,11 +1,12 @@
 {
   "name": "platformatic",
   "type": "module",
-  "version": "3.34.1",
+  "version": "3.38.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
     "test:cleanup": "rm -vrf tmp packages/**/tmp",
+    "test:types": "pnpm -r --workspace-concurrency=1 --if-present test:types",
     "gen-schema": "pnpm -r --workspace-concurrency=1 run --if-present gen-schema",
     "gen-types": "pnpm -r --workspace-concurrency=1 run --if-present gen-types",
     "build": "pnpm -r --workspace-concurrency=1 run --if-present build",

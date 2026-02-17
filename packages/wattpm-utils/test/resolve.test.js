@@ -5,6 +5,7 @@ import {
   saveConfigurationFile
 } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
@@ -242,4 +243,25 @@ test('resolve - branch flag should take precedence over URL fragment', async t =
 
   // Verify it cloned 'another' branch (from -b flag), not 'main' (from fragment)
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'another')
+})
+
+test('resolve - should clone a NPM package', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', 'npm:@platformatic/foundation@3.37.0')
+
+  const resolveProcess = await wattpmUtils('resolve', rootDir)
+
+  ok(
+    resolveProcess.stdout.includes(
+      `Downloading npm package @platformatic/foundation@3.37.0 into ${relative(rootDir, 'external/resolved')}`
+    )
+  )
+  ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
+
+  ok(existsSync(resolve(rootDir, 'external/resolved/package.json')))
+  ok(existsSync(resolve(rootDir, 'external/resolved/index.js')))
+  ok(existsSync(resolve(rootDir, 'external/resolved/lib/module.js')))
 })
