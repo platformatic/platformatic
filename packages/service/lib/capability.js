@@ -282,7 +282,7 @@ export class ServiceCapability extends BaseCapability {
       pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
     }
 
-    if (this.loggerConfig.telemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (this.loggerConfig.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 

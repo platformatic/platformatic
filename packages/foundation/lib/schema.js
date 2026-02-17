@@ -334,7 +334,7 @@ export const logger = {
       type: 'object',
       additionalProperties: true
     },
-    telemetryExporter: {
+    openTelemetryExporter: {
       type: 'object',
       properties: {
         protocol: {
@@ -625,7 +625,7 @@ export const health = {
 
 export const healthWithoutDefaults = removeDefaults(health)
 
-export const telemetryExporter = {
+export const openTelemetryExporter = {
   type: 'object',
   properties: {
     type: {
@@ -699,9 +699,9 @@ export const telemetry = {
       anyOf: [
         {
           type: 'array',
-          items: telemetryExporter
+          items: openTelemetryExporter
         },
-        telemetryExporter
+        openTelemetryExporter
       ]
     }
   },
@@ -1489,7 +1489,7 @@ export const schemaComponents = {
   undiciInterceptor,
   health,
   healthWithoutDefaults,
-  telemetryExporter,
+  openTelemetryExporter,
   telemetry,
   policies,
   compileCache,

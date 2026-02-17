@@ -250,7 +250,7 @@ export declare const fastifyServer: JSONSchemaType<object>
 export declare const undiciInterceptor: JSONSchemaType<object>
 export declare const health: JSONSchemaType<object>
 export declare const healthWithoutDefaults: JSONSchemaType<object>
-export declare const telemetryExporter: JSONSchemaType<object>
+export declare const openTelemetryExporter: JSONSchemaType<object>
 export declare const telemetry: JSONSchemaType<object>
 export declare const applications: JSONSchemaType<object[]>
 export declare const runtimeUnwrappablePropertiesList: string[]

@@ -124,7 +124,7 @@ This logs all messages to console with pretty formatting, and errors to a file.
 ```json
 {
   "logger": {
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://localhost:4318/v1/logs"
     }
@@ -132,7 +132,13 @@ This logs all messages to console with pretty formatting, and errors to a file.
   "telemetry": {
     "enabled": true,
     "applicationName": "my-app",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "url": "http://otel-collector:4318/v1/traces"
+      }
+    }
   }
 }
 ```

@@ -178,7 +178,7 @@ export async function createLogger (config) {
 
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
-  if (config.telemetry && config.logger.telemetryExporter) {
+  if (config.telemetry && config.logger.openTelemetryExporter) {
     multiStream.add(
       pino.transport({
         target: 'pino-opentelemetry-transport',
@@ -191,9 +191,9 @@ export async function createLogger (config) {
             {
               recordProcessorType: 'simple',
               exporterOptions: {
-                protocol: config.logger.telemetryExporter.protocol,
+                protocol: config.logger.openTelemetryExporter.protocol,
                 httpExporterOptions: {
-                  url: config.logger.telemetryExporter.url
+                  url: config.logger.openTelemetryExporter.url
                 }
               }
             }

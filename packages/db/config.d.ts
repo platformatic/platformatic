@@ -96,7 +96,7 @@ export interface PlatformaticDatabaseConfig {
           customLevels?: {
             [k: string]: unknown;
           };
-          telemetryExporter?: {
+          openTelemetryExporter?: {
             protocol: "grpc" | "http";
             url: string;
           };
@@ -552,7 +552,7 @@ export interface PlatformaticDatabaseConfig {
       customLevels?: {
         [k: string]: unknown;
       };
-      telemetryExporter?: {
+      openTelemetryExporter?: {
         protocol: "grpc" | "http";
         url: string;
       };

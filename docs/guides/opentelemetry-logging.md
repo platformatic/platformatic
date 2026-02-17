@@ -20,7 +20,7 @@ Add OpenTelemetry log export to your `watt.json`:
   "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
   "logger": {
     "level": "info",
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://localhost:4318/v1/logs"
     }
@@ -42,14 +42,14 @@ This configuration:
 
 ### Protocol Options
 
-The `telemetryExporter` supports two protocols:
+The `openTelemetryExporter` supports two protocols:
 
 #### HTTP Protocol (Recommended)
 
 ```json
 {
   "logger": {
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://collector:4318/v1/logs"
     }
@@ -62,7 +62,7 @@ The `telemetryExporter` supports two protocols:
 ```json
 {
   "logger": {
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "grpc",
       "url": "http://collector:4317"
     }
@@ -114,7 +114,7 @@ This enables powerful correlation in observability platforms:
 
 ### Logger Configuration
 
-The `logger.telemetryExporter` object configures OpenTelemetry export:
+The `logger.openTelemetryExporter` object configures OpenTelemetry export:
 
 | Property   | Type               | Required | Description             |
 | ---------- | ------------------ | -------- | ----------------------- |
@@ -139,7 +139,7 @@ The `telemetry` object provides service identity:
 {
   "logger": {
     "level": "info",
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://otel-collector:4318/v1/logs"
     }
@@ -202,7 +202,7 @@ service:
 ```json
 {
   "logger": {
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://jaeger:4318/v1/logs"
     }
@@ -233,7 +233,7 @@ When using multiple applications in a Watt runtime, each inherits the logger con
   },
   "logger": {
     "level": "info",
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "{OTLP_ENDPOINT}/v1/logs"
     }
@@ -278,7 +278,7 @@ OpenTelemetry export works alongside existing logger transports:
         }
       ]
     },
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://collector:4318/v1/logs"
     }

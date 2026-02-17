@@ -153,7 +153,7 @@
           "type": "object",
           "additionalProperties": true
         },
-        "telemetryExporter": {
+        "openTelemetryExporter": {
           "type": "object",
           "properties": {
             "protocol": {
@@ -956,7 +956,7 @@
               "type": "object",
               "additionalProperties": true
             },
-            "telemetryExporter": {
+            "openTelemetryExporter": {
               "type": "object",
               "properties": {
                 "protocol": {

@@ -1,9 +1,9 @@
 import {
-  buildPinoFormatters,
-  buildPinoTimestamp,
-  disablePinoDirectWrite,
-  ensureLoggableError,
-  getPrivateSymbol
+    buildPinoFormatters,
+    buildPinoTimestamp,
+    disablePinoDirectWrite,
+    ensureLoggableError,
+    getPrivateSymbol
 } from '@platformatic/foundation'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { subscribe } from 'node:diagnostics_channel'
@@ -94,7 +94,7 @@ function createLogger () {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
-  if (workerData.config.logger?.telemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
+  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)
   }
 

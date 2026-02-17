@@ -12,7 +12,7 @@
   "logger": {
     "level": "debug",
     "base": null,
-    "telemetryExporter": {
+    "openTelemetryExporter": {
       "protocol": "http",
       "url": "http://localhost:4318/v1/logs"
     }

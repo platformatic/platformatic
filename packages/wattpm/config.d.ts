@@ -167,7 +167,7 @@ export type PlatformaticRuntimeConfig = {
     customLevels?: {
       [k: string]: unknown;
     };
-    telemetryExporter?: {
+    openTelemetryExporter?: {
       protocol: "grpc" | "http";
       url: string;
     };

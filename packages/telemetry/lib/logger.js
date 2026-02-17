@@ -6,7 +6,32 @@ const defaultLogKeys = {
   traceFlags: 'trace_flags'
 }
 
-function pinoInstrumentationMixin (logKeys) {
+function addAttributes (logKeys, base) {
+  const spanContext = trace.getSpan(context.active())?.spanContext()
+
+  if (!spanContext || !isSpanContextValid(spanContext)) {
+    return
+  }
+
+  base[logKeys.traceId] = spanContext.traceId
+  base[logKeys.spanId] = spanContext.spanId
+  base[logKeys.traceFlags] = `0${spanContext.traceFlags.toString(16)}`
+}
+
+function pinoInstrumentationCombinedMixin (logKeys, original, ...args) {
+  const result = original(...args)
+  const spanContext = trace.getSpan(context.active())?.spanContext()
+
+  if (spanContext && isSpanContextValid(spanContext)) {
+    result[logKeys.traceId] = spanContext.traceId
+    result[logKeys.spanId] = spanContext.spanId
+    result[logKeys.traceFlags] = `0${spanContext.traceFlags.toString(16)}`
+  }
+
+  return result
+}
+
+function pinoInstrumentationStandaloneMixin (logKeys) {
   const spanContext = trace.getSpan(context.active())?.spanContext()
 
   if (!spanContext || !isSpanContextValid(spanContext)) {
@@ -21,15 +46,9 @@ function pinoInstrumentationMixin (logKeys) {
 }
 
 export function addPinoInstrumentation (options, overrides = {}) {
-  const mixin = pinoInstrumentationMixin.bind(null, Object.assign(defaultLogKeys, overrides))
+  const logKeys = Object.assign({}, defaultLogKeys, overrides)
 
-  if (options.mixin) {
-    const originalMixin = options.mixin
-
-    options.mixin = function combinedMixin (...args) {
-      return Object.assign({}, originalMixin(...args), mixin(...args))
-    }
-  } else {
-    options.mixin = mixin
-  }
+  options.mixin = options.mixin
+    ? pinoInstrumentationCombinedMixin.bind(null, logKeys, options.mixin)
+    : pinoInstrumentationStandaloneMixin.bind(null, logKeys)
 }

@@ -341,7 +341,7 @@ An object with the following settings:
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
-- **`telemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
+- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 

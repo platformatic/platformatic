@@ -674,9 +674,9 @@ test('should export logs to OpenTelemetry', async t => {
     async transform (config, ...args) {
       config = await transform(config, ...args)
 
-      const url = new URL(config.logger.telemetryExporter.url)
+      const url = new URL(config.logger.openTelemetryExporter.url)
       url.port = server.server.address().port
-      config.logger.telemetryExporter.url = url.toString()
+      config.logger.openTelemetryExporter.url = url.toString()
 
       return config
     }

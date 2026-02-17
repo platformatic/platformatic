@@ -55,7 +55,7 @@ export interface PlatformaticNodeJsConfig {
     customLevels?: {
       [k: string]: unknown;
     };
-    telemetryExporter?: {
+    openTelemetryExporter?: {
       protocol: "grpc" | "http";
       url: string;
     };
@@ -190,7 +190,7 @@ export interface PlatformaticNodeJsConfig {
       customLevels?: {
         [k: string]: unknown;
       };
-      telemetryExporter?: {
+      openTelemetryExporter?: {
         protocol: "grpc" | "http";
         url: string;
       };
