@@ -721,6 +721,58 @@ export const policies = {
   additionalProperties: false
 }
 
+export const loadShedding = {
+  type: 'object',
+  properties: {
+    enabled: {
+      type: 'boolean',
+      default: false,
+      description: 'Enable load shedding to reject requests when workers are overloaded'
+    },
+    maxELU: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1,
+      default: 0.9,
+      description: 'Maximum Event Loop Utilization threshold before worker rejects requests'
+    },
+    maxHeapUsedRatio: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1,
+      default: 0.95,
+      description: 'Maximum heap used ratio (heapUsed/heapTotal) before worker rejects requests'
+    },
+    applications: {
+      type: 'object',
+      description: 'Per-application load shedding configuration overrides',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            description: 'Override load shedding enabled state for this application'
+          },
+          maxELU: {
+            type: 'number',
+            minimum: 0,
+            maximum: 1,
+            description: 'Override maxELU threshold for this application'
+          },
+          maxHeapUsedRatio: {
+            type: 'number',
+            minimum: 0,
+            maximum: 1,
+            description: 'Override maxHeapUsedRatio threshold for this application'
+          }
+        },
+        additionalProperties: false
+      }
+    }
+  },
+  additionalProperties: false
+}
+
 export const compileCache = {
   anyOf: [
     { type: 'boolean' },
@@ -1420,6 +1472,7 @@ export const runtimeProperties = {
     }
   },
   policies,
+  loadShedding,
   compileCache
 }
 
@@ -1477,6 +1530,7 @@ export const schemaComponents = {
   telemetryExporter,
   telemetry,
   policies,
+  loadShedding,
   compileCache,
   applications,
   runtimeProperties,

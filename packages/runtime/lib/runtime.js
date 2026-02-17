@@ -73,6 +73,7 @@ const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
+const kWorkerMeta = Symbol('plt.runtime.worker.meta')
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -140,6 +141,9 @@ export class Runtime extends EventEmitter {
 
   #channelCreationHook
 
+  #loadSheddingConfig
+  #workerLoadMap
+
   #processMetricsRegistry
 
   constructor (config, context) {
@@ -156,6 +160,8 @@ export class Runtime extends EventEmitter {
     this.#workers = new RoundRobinMap()
     this.#url = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
+    this.#loadSheddingConfig = config.loadShedding
+    this.#workerLoadMap = new Map()
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
       timeout: this.#config.applicationTimeout,
@@ -1848,7 +1854,13 @@ export class Runtime extends EventEmitter {
     // Setup the interceptor
     // kInterceptorReadyPromise resolves when the worker
     // is ready to receive requests: after calling the replaceServer method
-    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
+    const workerMeta = {
+      workerId: worker[kId],
+      applicationId,
+      workerIndex: index
+    }
+    worker[kWorkerMeta] = workerMeta
+    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker, workerMeta)
 
     // Wait for initialization
     try {
@@ -1883,9 +1895,14 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollectionIfNeeded () {
-    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
-    // or if any worker has health checks enabled
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling),
+    // if load shedding is enabled, or if any worker has health checks enabled
     let needsHealthMetrics = !!this.#dynamicWorkersScaler
+
+    // Also need health metrics for load shedding
+    if (!needsHealthMetrics && this.#loadSheddingConfig?.enabled) {
+      needsHealthMetrics = true
+    }
 
     if (!needsHealthMetrics) {
       // Check if any worker has health checks enabled
@@ -1928,6 +1945,11 @@ export class Runtime extends EventEmitter {
           this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
         } finally {
           worker[kLastHealthCheckELU] = health?.currentELU ?? null
+        }
+
+        // Update load shedding map with current worker health
+        if (health) {
+          await this.#updateWorkerLoadMap(worker, health)
         }
 
         const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
@@ -3008,6 +3030,58 @@ export class Runtime extends EventEmitter {
 
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
+  }
+
+  #getLoadSheddingConfigForApp (applicationId) {
+    return this.#loadSheddingConfig?.applications?.[applicationId]
+  }
+
+  async #updateWorkerLoadMap (worker, health) {
+    if (!this.#loadSheddingConfig?.enabled) {
+      return
+    }
+
+    const applicationId = worker[kApplicationId]
+    const appConfig = this.#getLoadSheddingConfigForApp(applicationId)
+
+    // Check if load shedding is explicitly disabled for this app
+    if (appConfig?.enabled === false) {
+      return
+    }
+
+    const maxELU = appConfig?.maxELU ?? this.#loadSheddingConfig.maxELU ?? 0.9
+    const maxHeapRatio = appConfig?.maxHeapUsedRatio ?? this.#loadSheddingConfig.maxHeapUsedRatio ?? 0.95
+
+    const heapRatio = health.heapTotal > 0 ? health.heapUsed / health.heapTotal : 0
+    const accepting = health.elu < maxELU && heapRatio < maxHeapRatio
+
+    const workerId = worker[kId]
+    const previousState = this.#workerLoadMap.get(workerId)
+    const wasAccepting = previousState?.accepting ?? true
+
+    this.#workerLoadMap.set(workerId, {
+      elu: health.elu,
+      heapRatio,
+      accepting,
+      timestamp: Date.now()
+    })
+
+    // Pause or resume worker based on state change
+    if (wasAccepting && !accepting) {
+      this.logger.warn(`Worker ${workerId} exceeded load thresholds (ELU: ${health.elu.toFixed(3)}, heap: ${(heapRatio * 100).toFixed(1)}%), pausing`)
+      try {
+        await this.#meshInterceptor.pauseWorker(worker)
+      } catch (err) {
+        this.logger.error({ err }, `Failed to pause worker ${workerId}`)
+      }
+    } else if (!wasAccepting && accepting) {
+      this.logger.info(`Worker ${workerId} recovered (ELU: ${health.elu.toFixed(3)}, heap: ${(heapRatio * 100).toFixed(1)}%), resuming`)
+      try {
+        await this.#meshInterceptor.resumeWorker(worker)
+      } catch (err) {
+        this.logger.error({ err }, `Failed to resume worker ${workerId}`)
+      }
+    }
   }
 
   #updateLoggingPrefixes () {
