@@ -1,18 +1,18 @@
 import {
-    buildPinoOptions,
-    deepmerge,
-    executeWithTimeout,
-    features,
-    kHandledError,
-    kMetadata,
-    kTimeout
+  buildPinoOptions,
+  deepmerge,
+  executeWithTimeout,
+  features,
+  kHandledError,
+  kMetadata,
+  kTimeout
 } from '@platformatic/foundation'
 import {
-    clearRegistry,
-    client,
-    collectThreadMetrics,
-    ensureMetricsGroup,
-    setupOtlpExporter
+  clearRegistry,
+  client,
+  collectThreadMetrics,
+  ensureMetricsGroup,
+  setupOtlpExporter
 } from '@platformatic/metrics'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { parseCommandString } from 'execa'

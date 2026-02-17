@@ -1,9 +1,9 @@
 import {
-    buildPinoFormatters,
-    buildPinoTimestamp,
-    disablePinoDirectWrite,
-    ensureLoggableError,
-    getPrivateSymbol
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  disablePinoDirectWrite,
+  ensureLoggableError,
+  getPrivateSymbol
 } from '@platformatic/foundation'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { subscribe } from 'node:diagnostics_channel'
