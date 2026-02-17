@@ -6,18 +6,6 @@ const defaultLogKeys = {
   traceFlags: 'trace_flags'
 }
 
-function addAttributes (logKeys, base) {
-  const spanContext = trace.getSpan(context.active())?.spanContext()
-
-  if (!spanContext || !isSpanContextValid(spanContext)) {
-    return
-  }
-
-  base[logKeys.traceId] = spanContext.traceId
-  base[logKeys.spanId] = spanContext.spanId
-  base[logKeys.traceFlags] = `0${spanContext.traceFlags.toString(16)}`
-}
-
 function pinoInstrumentationCombinedMixin (logKeys, original, ...args) {
   const result = original(...args)
   const spanContext = trace.getSpan(context.active())?.spanContext()
