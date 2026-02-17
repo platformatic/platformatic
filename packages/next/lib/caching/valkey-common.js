@@ -1,11 +1,16 @@
 import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
-import { Redis } from 'iovalkey'
-import { pack, unpack } from 'msgpackr'
+import { createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
 import { hostname } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pino } from 'pino'
+
+// commonjs require is superior because it allows lazy loading
+const require = createRequire(import.meta.url)
+
+let Redis
+let msgpackr
 
 globalThis.platformatic ??= {}
 globalThis.platformatic.valkeyClients = new Map()
@@ -34,6 +39,10 @@ export function getConnection (url) {
   let client = globalThis.platformatic.valkeyClients.get(url)
 
   if (!client) {
+    if (!Redis) {
+      Redis = require('iovalkey').Redis
+      msgpackr = require('msgpackr')
+    }
     client = new Redis(url, { enableAutoPipelining: true })
     globalThis.platformatic.valkeyClients.set(url, client)
 
@@ -93,9 +102,9 @@ export function getPlatformaticMeta () {
 }
 
 export function serialize (data) {
-  return pack(data).toString('base64url')
+  return msgpackr.pack(data).toString('base64url')
 }
 
 export function deserialize (data) {
-  return unpack(Buffer.from(data, 'base64url'))
+  return msgpackr.unpack(Buffer.from(data, 'base64url'))
 }
