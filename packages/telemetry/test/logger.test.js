@@ -1,12 +1,44 @@
 import { trace } from '@opentelemetry/api'
-import { deepEqual, equal } from 'node:assert'
+import { equal, ok } from 'node:assert'
+import { Writable } from 'node:stream'
 import { test } from 'node:test'
+import pino from 'pino'
 import { addPinoInstrumentation } from '../lib/logger.js'
 
 const spanContext = {
   traceId: '5e994e8fb53b27c91dcd2fec22771d15',
   spanId: '166f3ab30f21800b',
   traceFlags: 1
+}
+
+class MemoryStream extends Writable {
+  constructor () {
+    super()
+    this.lines = []
+  }
+
+  _write (chunk, _, callback) {
+    this.lines.push(chunk.toString())
+    callback()
+  }
+}
+
+function createLogger (options) {
+  const stream = new MemoryStream()
+  const logger = pino(
+    {
+      base: null,
+      timestamp: false,
+      ...options
+    },
+    stream
+  )
+
+  return { logger, stream }
+}
+
+function getLastLog (stream) {
+  return JSON.parse(stream.lines[stream.lines.length - 1])
 }
 
 function withMockedActiveSpan (fn) {
@@ -23,79 +55,79 @@ function withMockedActiveSpan (fn) {
   }
 }
 
-test('addPinoInstrumentation adds a standalone mixin with default keys', () => {
+test('addPinoInstrumentation works with pino standalone mixin', () => {
   const options = {}
-
   addPinoInstrumentation(options)
 
-  const result = withMockedActiveSpan(() => options.mixin())
+  const { logger, stream } = createLogger(options)
 
-  deepEqual(result, {
-    trace_id: spanContext.traceId,
-    span_id: spanContext.spanId,
-    trace_flags: '01'
+  withMockedActiveSpan(() => {
+    logger.info({ foo: 'bar' }, 'hello')
   })
+
+  const log = getLastLog(stream)
+  equal(log.foo, 'bar')
+  equal(log.trace_id, spanContext.traceId)
+  equal(log.span_id, spanContext.spanId)
+  equal(log.trace_flags, '01')
 })
 
-test('standalone mixin returns an empty object if there is no active span context', () => {
-  const options = {}
-
-  addPinoInstrumentation(options)
-
-  deepEqual(options.mixin(), {})
-})
-
-test('addPinoInstrumentation combines with existing mixin and preserves arguments', () => {
+test('addPinoInstrumentation works with pino combined mixin', () => {
+  let mixinCalled = 0
   const options = {
-    mixin (...args) {
-      return {
-        foo: 'bar',
-        args
-      }
+    mixin () {
+      mixinCalled++
+      return { fromMixin: true }
     }
   }
 
   addPinoInstrumentation(options)
 
-  const result = withMockedActiveSpan(() => options.mixin('a', 1, true))
+  const { logger, stream } = createLogger(options)
 
-  deepEqual(result, {
-    foo: 'bar',
-    args: ['a', 1, true],
-    trace_id: spanContext.traceId,
-    span_id: spanContext.spanId,
-    trace_flags: '01'
+  withMockedActiveSpan(() => {
+    logger.info({ foo: 'bar' }, 'hello')
   })
+
+  const log = getLastLog(stream)
+  equal(mixinCalled, 1)
+  equal(log.foo, 'bar')
+  equal(log.fromMixin, true)
+  equal(log.trace_id, spanContext.traceId)
+  equal(log.span_id, spanContext.spanId)
+  equal(log.trace_flags, '01')
 })
 
-test('addPinoInstrumentation supports overriding log keys', () => {
+test('addPinoInstrumentation works with pino and custom keys', () => {
   const options = {}
-
   addPinoInstrumentation(options, {
     traceId: 'traceId',
     spanId: 'spanId',
     traceFlags: 'traceFlags'
   })
 
-  const result = withMockedActiveSpan(() => options.mixin())
+  const { logger, stream } = createLogger(options)
 
-  deepEqual(result, {
-    traceId: spanContext.traceId,
-    spanId: spanContext.spanId,
-    traceFlags: '01'
+  withMockedActiveSpan(() => {
+    logger.info('hello')
   })
+
+  const log = getLastLog(stream)
+  equal(log.traceId, spanContext.traceId)
+  equal(log.spanId, spanContext.spanId)
+  equal(log.traceFlags, '01')
 })
 
-test('custom log key overrides do not affect subsequent calls', () => {
-  const optionsWithOverrides = {}
-  addPinoInstrumentation(optionsWithOverrides, {
-    traceId: 'traceId'
-  })
+test('standalone mixin does not add fields if no active span context', () => {
+  const options = {}
+  addPinoInstrumentation(options)
 
-  const defaultOptions = {}
-  addPinoInstrumentation(defaultOptions)
+  const { logger, stream } = createLogger(options)
 
-  const result = withMockedActiveSpan(() => defaultOptions.mixin())
+  logger.info('hello')
 
-  equal(result.trace_id, spanContext.traceId)
+  const log = getLastLog(stream)
+  ok(log.trace_id === undefined)
+  ok(log.span_id === undefined)
+  ok(log.trace_flags === undefined)
 })

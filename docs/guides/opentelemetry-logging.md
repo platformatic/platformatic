@@ -28,7 +28,13 @@ Add OpenTelemetry log export to your `watt.json`:
   "telemetry": {
     "enabled": true,
     "applicationName": "my-service",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "url": "http://localhost:4318/v1/traces"
+      }
+    }
   }
 }
 ```
@@ -131,9 +137,9 @@ The `telemetry` object provides service identity:
 | `applicationName` | `string`  | Yes      | Service name in telemetry                |
 | `version`         | `string`  | No       | Service version                          |
 
-## Integration Examples
+## Integration Example (Grafana + Loki + Tempo)
 
-### With Grafana Stack (Loki + Tempo)
+### Watt configuration file (`watt.json`)
 
 ```json
 {
@@ -151,6 +157,7 @@ The `telemetry` object provides service identity:
     "exporter": {
       "type": "otlp",
       "options": {
+        "protocol": "http",
         "url": "http://otel-collector:4318/v1/traces"
       }
     }
@@ -158,7 +165,50 @@ The `telemetry` object provides service identity:
 }
 ```
 
-The OTLP collector configuration:
+### Docker compose file (`docker-compose.yml`)
+
+```yaml
+services:
+  loki:
+    image: grafana/loki:3.4.1
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3100:3100'
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+
+  tempo:
+    image: grafana/tempo:2.8.0
+    command: ['-config.file=/etc/tempo.yaml']
+    ports:
+      - '3200:3200'
+      - '4317:4317'
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo.yaml:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.145.0
+    command: ['--config=/etc/otelcol/config.yaml']
+    ports:
+      - '4318:4318'
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      - loki
+      - tempo
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+      - tempo
+```
+
+### OTLP collector configuration (`otel-collector-config.yaml`)
 
 ```yaml
 receivers:
@@ -166,58 +216,116 @@ receivers:
     protocols:
       http:
         endpoint: 0.0.0.0:4318
-      grpc:
-        endpoint: 0.0.0.0:4317
 
 exporters:
-  loki:
-    endpoint: http://loki:3100/loki/api/v1/push
-  tempo:
+  otlp_http/loki:
+    endpoint: http://loki:3100/otlp
+  otlp_grpc/tempo:
     endpoint: tempo:4317
     tls:
       insecure: true
 
 processors:
   batch:
-  resource:
-    attributes:
-      - action: insert
-        key: loki.resource.labels
-        value: service.name, service.version
 
 service:
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [batch, resource]
-      exporters: [loki]
+      processors: [batch]
+      exporters: [otlp_http/loki]
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [tempo]
+      exporters: [otlp_grpc/tempo]
 ```
 
-### With Jaeger (Traces + Logs)
+### Loki configuration file (`loki-config.yaml`)
 
-```json
-{
-  "logger": {
-    "openTelemetryExporter": {
-      "protocol": "http",
-      "url": "http://jaeger:4318/v1/logs"
-    }
-  },
-  "telemetry": {
-    "enabled": true,
-    "applicationName": "my-service",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://jaeger:4318/v1/traces"
-      }
-    }
-  }
-}
+```yaml
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /tmp/loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  filesystem:
+    directory: /tmp/loki/chunks
+
+limits_config:
+  allow_structured_metadata: true
+```
+
+### Tempo configuration file (`tempo-config.yaml`)
+
+```yaml
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 24h
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+```
+
+### Grafana datasources file (`grafana/provisioning/datasources/datasources.yaml`)
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      nodeGraph:
+        enabled: true
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags: ['service.name']
 ```
 
 ## Multi-Application Setup
