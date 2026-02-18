@@ -69,7 +69,8 @@ const sidebars = {
             'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/k8s-readiness-liveness',
             'guides/deployment/compiling-typescript',
-            'guides/deployment/nextjs-in-k8s'
+            'guides/deployment/nextjs-in-k8s',
+            'guides/deployment/load-shedding'
           ]
         },
         {

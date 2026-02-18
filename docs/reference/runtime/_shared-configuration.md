@@ -549,6 +549,29 @@ Configuration options:
 - The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
 - By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
 
+### `loadShedding`
+
+The `loadShedding` configuration enables automatic load shedding to protect workers from being overwhelmed. When enabled, the runtime monitors each worker's Event Loop Utilization and heap memory usage, and temporarily pauses routing to workers that exceed configured thresholds. See the [Load Shedding guide](../../guides/deployment/load-shedding.md) for details on how it works.
+
+- **`enabled`** (`boolean`). Enable load shedding. Default: `false`.
+- **`maxELU`** (`number`). Maximum Event Loop Utilization (0-1) before a worker is paused. Default: `0.9`.
+- **`maxHeapUsedRatio`** (`number`). Maximum heap used ratio (heapUsed/heapTotal, 0-1) before a worker is paused. Default: `0.95`.
+- **`applications`** (`object`). Per-application overrides keyed by application ID. Each value is an object with optional `enabled`, `maxELU`, and `maxHeapUsedRatio` properties that override the global values.
+
+```json title="Example configuration"
+{
+  "loadShedding": {
+    "enabled": true,
+    "maxELU": 0.9,
+    "maxHeapUsedRatio": 0.95,
+    "applications": {
+      "api": { "maxELU": 0.85 },
+      "static": { "enabled": false }
+    }
+  }
+}
+```
+
 ### policies
 
 The `policies` configuration is used to define security policies that control communication between applications in the runtime. The security model follows an "allow by default" approach, meaning all inter-application communication is permitted unless explicitly restricted.
