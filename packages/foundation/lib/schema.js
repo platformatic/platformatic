@@ -333,9 +333,22 @@ export const logger = {
     customLevels: {
       type: 'object',
       additionalProperties: true
+    },
+    openTelemetryExporter: {
+      type: 'object',
+      properties: {
+        protocol: {
+          type: 'string',
+          enum: ['grpc', 'http']
+        },
+        url: {
+          type: 'string'
+        }
+      },
+      required: ['protocol', 'url'],
+      additionalProperties: false
     }
   },
-
   default: {},
   additionalProperties: true
 }
@@ -612,7 +625,7 @@ export const health = {
 
 export const healthWithoutDefaults = removeDefaults(health)
 
-export const telemetryExporter = {
+export const openTelemetryExporter = {
   type: 'object',
   properties: {
     type: {
@@ -686,9 +699,9 @@ export const telemetry = {
       anyOf: [
         {
           type: 'array',
-          items: telemetryExporter
+          items: openTelemetryExporter
         },
-        telemetryExporter
+        openTelemetryExporter
       ]
     }
   },
@@ -1077,7 +1090,8 @@ export const runtimeProperties = {
             items: {
               type: 'string'
             },
-            description: 'Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\\\/\\\\/.*\\\\.example\\\\.com/").'
+            description:
+              'Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\\\/\\\\/.*\\\\.example\\\\.com/").'
           },
           cacheByDefault: {
             type: 'integer',
@@ -1123,7 +1137,8 @@ export const runtimeProperties = {
           },
           socket: {
             type: 'string',
-            description: 'Custom path for the control socket. If not specified, uses the default platform-specific location.'
+            description:
+              'Custom path for the control socket. If not specified, uses the default platform-specific location.'
           }
         },
         additionalProperties: false
@@ -1474,7 +1489,7 @@ export const schemaComponents = {
   undiciInterceptor,
   health,
   healthWithoutDefaults,
-  telemetryExporter,
+  openTelemetryExporter,
   telemetry,
   policies,
   compileCache,

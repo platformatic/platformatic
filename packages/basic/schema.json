@@ -577,6 +577,26 @@
             "customLevels": {
               "type": "object",
               "additionalProperties": true
+            },
+            "openTelemetryExporter": {
+              "type": "object",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "enum": [
+                    "grpc",
+                    "http"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "protocol",
+                "url"
+              ],
+              "additionalProperties": false
             }
           },
           "default": {},

@@ -1,10 +1,12 @@
 import { execa } from 'execa'
-import { ok } from 'node:assert'
+import { fastify } from 'fastify'
+import { deepStrictEqual, ok } from 'node:assert'
 import { join, resolve } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
+import { transform } from '../index.js'
 import { startPath } from './cli/helper.js'
-import { isWindows, updateFile } from './helpers.js'
+import { createRuntime, isWindows, updateFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 function stdioOutputToLogs (data) {
@@ -638,4 +640,69 @@ test('should inherit logger level from runtime when node app does not specify lo
     levelResponse.level === 'debug',
     `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`
   )
+})
+
+// Same test but for @platformatic/node applications
+test('should export logs to OpenTelemetry', async t => {
+  function findAttribute (log, name) {
+    return log.resourceLogs[0].resource.attributes.find(attr => attr.key === name)
+  }
+
+  const configFile = join(import.meta.dirname, '..', 'fixtures', 'logger-opentelemetry', 'platformatic.json')
+  const { promise, resolve } = Promise.withResolvers()
+
+  // Create a sample OpenTelemetry collector that listens for logs on a specific port and stores them in memory for assertions
+  const server = fastify()
+  t.after(() => server.close())
+
+  await server.post('/v1/logs', async request => {
+    for (const resourceLog of request.body.resourceLogs) {
+      for (const scopeLog of resourceLog.scopeLogs) {
+        for (const logRecord of scopeLog.logRecords) {
+          if (logRecord.body && logRecord.body.stringValue === 'Serving request') {
+            resolve(request.body)
+          }
+        }
+      }
+    }
+
+    return {}
+  })
+  await server.listen({ port: 0 })
+
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      const url = new URL(config.logger.openTelemetryExporter.url)
+      url.port = server.server.address().port
+      config.logger.openTelemetryExporter.url = url.toString()
+
+      return config
+    }
+  })
+  t.after(() => app.close())
+
+  const entryUrl = await app.start()
+
+  {
+    const { statusCode, body } = await request(entryUrl, { path: '/' })
+    deepStrictEqual(await statusCode, 200)
+    deepStrictEqual(await body.text(), 'ok')
+  }
+
+  const log = await promise
+
+  // Check that some attributes are present
+  deepStrictEqual(findAttribute(log, 'service.name').value.stringValue, 'logger-opentelemetry')
+  deepStrictEqual(findAttribute(log, 'service.version').value.stringValue, '1.0.0')
+  deepStrictEqual(findAttribute(log, 'process.runtime.name').value.stringValue, 'nodejs')
+  deepStrictEqual(findAttribute(log, 'process.runtime.description').value.stringValue, 'Node.js')
+
+  // Check that OpenTelemetry trace and spans are present
+  const scope = log.resourceLogs[0].scopeLogs[0].logRecords[0]
+  deepStrictEqual(scope.body.stringValue, 'Serving request')
+  ok(scope.traceId.match(/^[0-9a-f]+$/))
+  ok(scope.spanId.match(/^[0-9a-f]+$/))
+  deepStrictEqual(scope.flags, '01')
 })

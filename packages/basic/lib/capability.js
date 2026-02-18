@@ -14,6 +14,7 @@ import {
   ensureMetricsGroup,
   setupOtlpExporter
 } from '@platformatic/metrics'
+import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -708,6 +709,10 @@ export class BaseCapability extends EventEmitter {
       this.context,
       this.root
     )
+
+    if (loggerOptions.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+      addPinoInstrumentation(pinoOptions)
+    }
 
     return pino(pinoOptions, this.standardStreams?.stdout)
   }

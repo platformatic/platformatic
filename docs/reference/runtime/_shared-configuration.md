@@ -341,6 +341,11 @@ An object with the following settings:
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
+  - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
+  - **`url`** (**required**) — The OTLP collector endpoint URL.
+
+  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `globalThis.platformatic.logger`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 
@@ -385,6 +390,7 @@ The maximum number of concurrent operations during runtime startup, including ap
 Default: `os.availableParallelism() * 2` (typically twice the number of CPU cores). Minimum: `1`.
 
 Setting a lower value can be useful when:
+
 - Applications have heavy initialization that competes for resources
 - You want more predictable startup ordering
 - Memory is constrained during startup
@@ -435,9 +441,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 {
   "metrics": {
     "enabled": true,
-    "httpCustomLabels": [
-      { "name": "callerTelemetryId", "header": "x-plt-telemetry-id", "default": "" }
-    ]
+    "httpCustomLabels": [{ "name": "callerTelemetryId", "header": "x-plt-telemetry-id", "default": "" }]
   }
 }
 ```

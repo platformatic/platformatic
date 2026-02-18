@@ -55,6 +55,10 @@ export interface PlatformaticTanStackConfig {
     customLevels?: {
       [k: string]: unknown;
     };
+    openTelemetryExporter?: {
+      protocol: "grpc" | "http";
+      url: string;
+    };
     [k: string]: unknown;
   };
   server?: {
@@ -185,6 +189,10 @@ export interface PlatformaticTanStackConfig {
       messageKey?: string;
       customLevels?: {
         [k: string]: unknown;
+      };
+      openTelemetryExporter?: {
+        protocol: "grpc" | "http";
+        url: string;
       };
       [k: string]: unknown;
     };

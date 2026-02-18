@@ -167,6 +167,10 @@ export type PlatformaticRuntimeConfig = {
     customLevels?: {
       [k: string]: unknown;
     };
+    openTelemetryExporter?: {
+      protocol: "grpc" | "http";
+      url: string;
+    };
     captureStdio?: boolean;
     [k: string]: unknown;
   };

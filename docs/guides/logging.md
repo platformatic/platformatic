@@ -17,10 +17,11 @@ The default configuration uses `level: info` with pretty-printed output in devel
 
 ## Quick Solutions by Use Case
 
-**Need to change log level?** → [Set Log Level](#set-log-level)  
-**Need to log to files?** → [File Logging](#file-logging)  
-**Need to hide sensitive data?** → [Redact Sensitive Information](#redact-sensitive-information)  
+**Need to change log level?** → [Set Log Level](#set-log-level)
+**Need to log to files?** → [File Logging](#file-logging)
+**Need to hide sensitive data?** → [Redact Sensitive Information](#redact-sensitive-information)
 **Need structured production logs?** → [Production Logging](#production-logging)
+**Need OpenTelemetry integration?** → [External System Integration](#external-system-integration) or [OpenTelemetry Logging Guide](./opentelemetry-logging.md)
 
 ## Set Log Level
 
@@ -114,9 +115,41 @@ This logs all messages to console with pretty formatting, and errors to a file.
 
 ## External System Integration
 
-**Problem:** You need to send logs to Elasticsearch, Splunk, or other logging systems.
+**Problem:** You need to send logs to Elasticsearch, Splunk, OpenTelemetry collectors, or other logging systems.
 
 **Solution:** Use specialized transport targets:
+
+**OpenTelemetry (Recommended for Observability):**
+
+```json
+{
+  "logger": {
+    "openTelemetryExporter": {
+      "protocol": "http",
+      "url": "http://localhost:4318/v1/logs"
+    }
+  },
+  "telemetry": {
+    "enabled": true,
+    "applicationName": "my-app",
+    "version": "1.0.0",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "url": "http://otel-collector:4318/v1/traces"
+      }
+    }
+  }
+}
+```
+
+This automatically:
+
+- Exports logs to any OTLP-compatible backend
+- Includes trace context (trace ID, span ID, flags)
+- Adds service metadata for filtering
+
+See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed configuration.
 
 **Elasticsearch:**
 

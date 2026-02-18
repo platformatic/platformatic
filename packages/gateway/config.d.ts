@@ -79,6 +79,10 @@ export interface PlatformaticGatewayConfig {
           customLevels?: {
             [k: string]: unknown;
           };
+          openTelemetryExporter?: {
+            protocol: "grpc" | "http";
+            url: string;
+          };
           [k: string]: unknown;
         };
     loggerInstance?: {
@@ -455,6 +459,10 @@ export interface PlatformaticGatewayConfig {
       messageKey?: string;
       customLevels?: {
         [k: string]: unknown;
+      };
+      openTelemetryExporter?: {
+        protocol: "grpc" | "http";
+        url: string;
       };
       [k: string]: unknown;
     };
