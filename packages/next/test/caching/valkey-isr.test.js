@@ -858,7 +858,8 @@ test('can be used without the runtime - per-method flag', async t => {
       if (msg === 'cache remove') {
         logsPromise.resolve()
       }
-    }
+    },
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
   }
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -935,7 +936,8 @@ test('can be used without the runtime - standalone mode', async t => {
       if (msg === 'cache remove') {
         logsPromise.resolve()
       }
-    }
+    },
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
   }
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
