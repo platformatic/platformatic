@@ -2437,6 +2437,120 @@
             }
           },
           "additionalProperties": false
+        },
+        "imageOptimizer": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "fallback": {
+              "type": "string"
+            },
+            "storage": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "const": "memory"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "const": "filesystem"
+                    },
+                    "path": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "redis",
+                        "valkey"
+                      ]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "prefix": {
+                      "type": "string"
+                    },
+                    "db": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^[0-9]+$"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "default": {
+                "type": "memory"
+              }
+            },
+            "timeout": {
+              "default": 30000,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ]
+            },
+            "maxAttempts": {
+              "default": 3,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "fallback"
+          ],
+          "additionalProperties": false
         }
       },
       "default": {},

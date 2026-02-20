@@ -58,7 +58,8 @@ const sidebars = {
             'guides/use-watt-multiple-repository',
             'guides/use-watt-with-ts-node',
             'guides/scheduler',
-            'guides/dynamic-workers'
+            'guides/dynamic-workers',
+            'guides/next-image-optimizer'
           ]
         },
         {
@@ -203,6 +204,7 @@ const sidebars = {
               items: [
                 'reference/next/overview',
                 'reference/next/configuration',
+                'reference/next/image-optimizer',
                 'reference/next/experimental-adapter-path'
               ]
             },

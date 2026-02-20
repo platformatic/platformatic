@@ -19,6 +19,7 @@ export async function setDispatcher (runtimeConfig) {
   }
 
   let userInterceptors = []
+
   if (Array.isArray(runtimeConfig.undici?.interceptors)) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
     userInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
@@ -104,7 +105,7 @@ async function loadInterceptor (_require, interceptorConfig, key) {
 
   const url = pathToFileURL(_require.resolve(module))
   const createInterceptor = (await import(url)).default
-  const interceptor = createInterceptor(options)
+  const interceptor = await createInterceptor(options)
 
   const { updatableInterceptor, updateInterceptor } = createUpdatableInterceptor(interceptor)
 
