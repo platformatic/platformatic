@@ -2,6 +2,8 @@ import { ensureLoggableError } from '@platformatic/foundation'
 import {
   createPlatformaticLogger,
   deserialize,
+  ensureMsgpackr,
+  ensureRedis,
   getConnection,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
@@ -32,6 +34,9 @@ export class CacheHandler {
 
   constructor (options) {
     options ??= {}
+
+    ensureRedis()
+    ensureMsgpackr()
 
     this.#standalone = options.standalone
     this.#config = options.config

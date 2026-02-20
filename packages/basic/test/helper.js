@@ -68,9 +68,13 @@ export const internalApplicationsFiles = [
   'services/backend/routes/root.ts'
 ]
 
-export async function createTemporaryDirectory (t, prefix = 'plt-basic') {
-  const directory = resolve(temporaryFolder, `${prefix}-${process.pid}-${temporaryDirectoryCount++}`)
-  t.after(() => safeRemove(directory))
+export async function createTemporaryDirectory (t, prefix = 'plt-basic', root = temporaryFolder) {
+  const directory = resolve(root, `${prefix}-${process.pid}-${temporaryDirectoryCount++}`)
+  t.after(() => {
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
+      safeRemove(directory)
+    }
+  })
   return directory
 }
 

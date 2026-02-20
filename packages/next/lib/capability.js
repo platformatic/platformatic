@@ -20,7 +20,7 @@ import { parse, satisfies } from 'semver'
 import * as errors from './errors.js'
 import { version } from './schema.js'
 
-const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
+export const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
 export function getCacheHandlerPath (name) {
   return fileURLToPath(new URL(`./caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
