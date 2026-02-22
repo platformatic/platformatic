@@ -12,6 +12,13 @@ const require = createRequire(import.meta.url)
 let Redis
 let msgpackr
 
+function loadMsgpackr () {
+  if (!msgpackr) {
+    msgpackr = require('msgpackr')
+  }
+  return msgpackr
+}
+
 globalThis.platformatic ??= {}
 globalThis.platformatic.valkeyClients = new Map()
 
@@ -41,7 +48,7 @@ export function getConnection (url) {
   if (!client) {
     if (!Redis) {
       Redis = require('iovalkey').Redis
-      msgpackr = require('msgpackr')
+      loadMsgpackr()
     }
     client = new Redis(url, { enableAutoPipelining: true })
     globalThis.platformatic.valkeyClients.set(url, client)
@@ -102,9 +109,9 @@ export function getPlatformaticMeta () {
 }
 
 export function serialize (data) {
-  return msgpackr.pack(data).toString('base64url')
+  return loadMsgpackr().pack(data).toString('base64url')
 }
 
 export function deserialize (data) {
-  return msgpackr.unpack(Buffer.from(data, 'base64url'))
+  return loadMsgpackr().unpack(Buffer.from(data, 'base64url'))
 }
