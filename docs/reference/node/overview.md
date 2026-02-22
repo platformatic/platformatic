@@ -207,12 +207,17 @@ export function create () {
     res.end('Hello')
   })
 
-  server[Symbol.asyncDispose] = async () => {
-    // Perform your cleanup operations
-    await server.close()
+  return {
+    listen (...args) {
+      return server.listen(...args)
+    },
+    async [Symbol.asyncDispose] () {
+      // Perform your cleanup operations
+      await new Promise((resolve, reject) => {
+        server.close(err => err ? reject(err) : resolve())
+      })
+    }
   }
-
-  return server
 }
 ```
 
