@@ -520,3 +520,64 @@ test('should allow to get handlers', async t => {
   deepStrictEqual(response, testResponse)
   deepStrictEqual(requests, [testRequest])
 })
+
+test('should sanitize errors with function properties (e.g. avvio plugin timeout)', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  const requestName = 'test-command'
+
+  itc2.handle(requestName, async () => {
+    const error = new Error('Plugin did not start in time')
+    error.code = 'AVV_ERR_PLUGIN_EXEC_TIMEOUT'
+    // Avvio attaches the plugin function to the error
+    error.fn = async function myPlugin () {}
+    throw error
+  })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  try {
+    await itc1.send(requestName)
+    fail('should have thrown')
+  } catch (error) {
+    deepStrictEqual(error.code, 'PLT_ITC_HANDLER_FAILED')
+    deepStrictEqual(error.handlerErrorCode, 'AVV_ERR_PLUGIN_EXEC_TIMEOUT')
+  }
+})
+
+test('should sanitize errors with nested non-cloneable properties', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  const requestName = 'test-command'
+
+  itc2.handle(requestName, async () => {
+    const error = new Error('test error')
+    error.code = 'TEST_ERROR'
+    error.details = { callback: () => {}, info: 'some info' }
+    throw error
+  })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  try {
+    await itc1.send(requestName)
+    fail('should have thrown')
+  } catch (error) {
+    deepStrictEqual(error.code, 'PLT_ITC_HANDLER_FAILED')
+    deepStrictEqual(error.handlerErrorCode, 'TEST_ERROR')
+  }
+})

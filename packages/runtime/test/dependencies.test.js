@@ -51,23 +51,27 @@ test('starts applications according to their implicit or explicit dependencies, 
 
   const startLogs = logs.filter(m => m.msg.startsWith('Start')).map(m => m.msg)
 
-  // The defined order in the runtime file is 'composer', 'service-2', 'service-1'
+  // Applications start in dependency level order: each level starts only after
+  // the previous level is fully done. Levels are:
+  //   level 0: service-1 (no deps)
+  //   level 1: service-2 (depends on service-1)
+  //   level 2: composer (depends on service-1, service-2)
   deepStrictEqual(startLogs, [
     'Starting the worker 0 of the application "service-1"...',
-    'Starting the worker 0 of the application "service-2"...',
-    'Starting the worker 0 of the application "composer"...',
     'Started the worker 0 of the application "service-1"...',
+    'Starting the worker 0 of the application "service-2"...',
     'Started the worker 0 of the application "service-2"...',
+    'Starting the worker 0 of the application "composer"...',
     'Started the worker 0 of the application "composer"...'
   ])
 })
 
 /*
   The application service-3 will fail after 1.5s.
-  This will cause the runtime to stop all the other applications.
-  Therefore composer and service-2 will report a failure in the logs.
+  With dependency-level startup, service-3 and service-1 are in the same level (no deps).
+  When service-3 fails, the level fails and subsequent levels (service-2, composer) never start.
 */
-test('can abort waiting for dependencies if the runtime is stopped', async t => {
+test('stops startup when a dependency level fails', async t => {
   const context = {}
   const configFile = join(fixturesDir, 'parallel-management', 'platformatic.with-failure.runtime.json')
   const runtime = await createRuntime(configFile, null, context)
@@ -81,24 +85,7 @@ test('can abort waiting for dependencies if the runtime is stopped', async t => 
   const logs = await readLogs(context.logsPath, 0)
   const startLogs = logs.filter(m => m.level === 30 || m.level === 50).map(extractLogs)
 
-  ok(hasLog(startLogs, 'composer', 'Waiting for dependencies to start.', ['service-2', 'service-3', 'service-1']))
-  ok(hasLog(startLogs, 'service-2', 'Waiting for dependencies to start.', ['service-1']))
   ok(hasLog(startLogs, 'runtime', 'Failed to start worker 0 of the application "service-3": Service 3 failed to start'))
-  ok(
-    hasLog(
-      startLogs,
-      'runtime',
-      'Failed to start worker 0 of the application "composer": One of the service dependencies was unable to start.'
-    )
-  )
-
-  ok(
-    hasLog(
-      startLogs,
-      'runtime',
-      'Failed to start worker 0 of the application "service-2": One of the service dependencies was unable to start.'
-    )
-  )
 })
 
 /*
