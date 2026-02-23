@@ -54,6 +54,40 @@ test('should invoke fastify onClose hooks', async t => {
   await checkWarningEmitted(root, false)
 })
 
+test('should invoke Symbol.asyncDispose on the app if defined', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-standalone-with-async-dispose')
+  const url = await startRuntime(t, runtime)
+  const eventsPromise = collectEvents(runtime)
+
+  const res = await fetch(url)
+  deepStrictEqual(res.status, 200)
+  deepStrictEqual(await res.json(), { production: false })
+
+  await runtime.close()
+  const events = await eventsPromise
+
+  ok(events.find(m => m.event === 'application:worker:event:asyncDispose'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+  await checkWarningEmitted(root, false)
+})
+
+test('should invoke Symbol.asyncDispose for custom objects returned by create', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-standalone-with-custom-object-async-dispose')
+  const url = await startRuntime(t, runtime)
+  const eventsPromise = collectEvents(runtime)
+
+  const res = await fetch(url)
+  deepStrictEqual(res.status, 200)
+  deepStrictEqual(await res.json(), { production: false })
+
+  await runtime.close()
+  const events = await eventsPromise
+
+  ok(events.find(m => m.event === 'application:worker:event:custom:asyncDispose'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+  await checkWarningEmitted(root, false)
+})
+
 test('should invoke close function for apps without create', async t => {
   const { runtime } = await prepareRuntime(t, 'close-standalone-with-close')
   const url = await startRuntime(t, runtime)

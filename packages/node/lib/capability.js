@@ -259,7 +259,7 @@ export class NodeCapability extends BaseCapability {
     // Emit the close event so that an application can handle it
     const closeHandled = globalThis.platformatic.events.emit('close')
 
-    if (!this.#isFastify && !this.#appClose && !closeHandled) {
+    if (!this.#isFastify && !this.#appClose && !closeHandled && !this.#app?.[Symbol.asyncDispose]) {
       this.logger.warn(
         `Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
       )
@@ -290,6 +290,10 @@ export class NodeCapability extends BaseCapability {
 
     if (this.#isFastify && this.#app) {
       return this.#app.close()
+    }
+
+    if (this.#app?.[Symbol.asyncDispose]) {
+      return this.#app[Symbol.asyncDispose]()
     }
 
     /* c8 ignore next 3 */

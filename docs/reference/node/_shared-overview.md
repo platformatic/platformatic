@@ -11,6 +11,7 @@ During application execution some APIs are made available in the `globalThis.pla
 - **`globalThis.platformatic.basePath`**: The base path of the application in the gateway.
 - **`globalThis.platformatic.logLevel`**: The log level configured for the application.
 - **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+- **`Symbol.asyncDispose`**: If the object returned by the `create` or `build` factory has a `Symbol.asyncDispose` method, it will be automatically called during shutdown.
 - **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be used to set a custom healthcheck function for the application. The function should return a boolean value, or an object with the following properties:
   - `status`: a boolean indicating if the health check is successful
   - `statusCode`: an optional HTTP status code

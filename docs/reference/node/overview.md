@@ -195,6 +195,34 @@ globalThis.platformatic.events.on('close', () => {
 })
 ```
 
+### `Symbol.asyncDispose`
+
+If your `create` or `build` factory returns an object with a `Symbol.asyncDispose` method, Platformatic will automatically call it during shutdown:
+
+```js
+import { createServer } from 'node:http'
+
+export function create () {
+  const server = createServer((_, res) => {
+    res.end('Hello')
+  })
+
+  return {
+    listen (...args) {
+      return server.listen(...args)
+    },
+    async [Symbol.asyncDispose] () {
+      // Perform your cleanup operations
+      await new Promise((resolve, reject) => {
+        server.close(err => err ? reject(err) : resolve())
+      })
+    }
+  }
+}
+```
+
+This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called after the `close` event is emitted and before the server is closed.
+
 ### Fastify Applications
 
 Fastify applications are handled automatically by Platformatic, but custom cleanup logic can still be implemented using the other mechanisms above if needed.
@@ -211,7 +239,7 @@ However, **additional resources must be manually closed** using the mechanisms d
 In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
 
 :::warn
-If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function or handle the `close` event. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify. 
+If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function, handle the `close` event, or implement `Symbol.asyncDispose` on the object returned by your factory. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify.
 :::
 
 ### Typescript
