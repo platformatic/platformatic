@@ -92,9 +92,63 @@ export function generateUnhandledErrorResponse (error) {
   }
 }
 
+function sanitizeError (error, transferList) {
+  let needsSanitization = false
+
+  for (const value of Object.values(error)) {
+    const valueType = typeof value
+    if (valueType === 'function' || valueType === 'symbol') {
+      needsSanitization = true
+      break
+    }
+
+    if (value && typeof value === 'object') {
+      const sanitized = sanitize(value, transferList)
+      if (sanitized !== value) {
+        needsSanitization = true
+        break
+      }
+    }
+  }
+
+  if (!needsSanitization) {
+    return error
+  }
+
+  // Build a plain object with all safe error properties.
+  // We intentionally do NOT create a new Error() because @fastify/error instances
+  // (used by avvio and ITC errors) go through structured clone as plain objects,
+  // which preserves all enumerable own properties. A standard new Error() would
+  // instead be cloned as an Error, silently dropping custom properties like code.
+  const sanitized = {}
+  if (error.message) sanitized.message = error.message
+  if (error.name) sanitized.name = error.name
+  if (error.stack) sanitized.stack = error.stack
+  if (error.code) sanitized.code = error.code
+  if (error.statusCode) sanitized.statusCode = error.statusCode
+
+  for (const [key, value] of Object.entries(error)) {
+    if (key === 'message' || key === 'stack' || key === 'name' || key === 'code' || key === 'statusCode') continue
+    const valueType = typeof value
+    if (valueType === 'function' || valueType === 'symbol') continue
+
+    if (value && typeof value === 'object') {
+      sanitized[key] = sanitize(value, transferList)
+    } else {
+      sanitized[key] = value
+    }
+  }
+
+  return sanitized
+}
+
 export function sanitize (data, transferList) {
-  if (!data || typeof data !== 'object' || transferList?.includes(data) || data instanceof Error) {
+  if (!data || typeof data !== 'object' || transferList?.includes(data)) {
     return data
+  }
+
+  if (data instanceof Error) {
+    return sanitizeError(data, transferList)
   }
 
   if (Buffer.isBuffer(data) || data instanceof Uint8Array) {

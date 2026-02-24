@@ -46,7 +46,7 @@ import { createChannelCreationHook } from './policies.js'
 import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
-import { topologicalSort } from './utils.js'
+import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
 import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
@@ -560,12 +560,15 @@ export class Runtime extends EventEmitter {
     // If circular dependencies are detected, an error with proper error code is thrown.
     applications = topologicalSort(dependencies)
 
-    const startInvocations = []
-    for (const application of applications) {
-      startInvocations.push([application, silent])
-    }
+    // Group into dependency levels so that each level's dependencies are all
+    // in previous levels. Levels are started sequentially, but applications
+    // within the same level start in parallel.
+    const levels = topologicalLevels(applications, dependencies)
 
-    return executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+    for (const level of levels) {
+      const startInvocations = level.map(app => [app, silent])
+      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+    }
   }
 
   async stopApplications (applicationsToStop, silent = false, skipDependencies = false) {

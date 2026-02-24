@@ -550,7 +550,7 @@ test('should use colors when printing applications logs', async t => {
   ok(
     stdout.match(
       // eslint-disable-next-line no-control-regex, no-regex-spaces
-      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) composer:0 \|\u001b\[0m\u001b\[32m  INFO\u001b\[39m: \u001b\[36mWaiting for dependencies to start.\u001b\[39m/
+      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) \w+:\d+ \|\u001b\[0m\u001b\[32m  INFO\u001b\[39m: \u001b\[36m/
     )
   )
 })

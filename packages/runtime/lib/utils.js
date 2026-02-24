@@ -19,6 +19,35 @@ export function getRuntimeTmpDir (runtimeDir) {
   return join(platformaticTmpDir, runtimeDirHash)
 }
 
+// Given a topologically sorted list and the dependency graph,
+// group nodes into levels where each level's dependencies are all in previous levels.
+// This allows starting each level in parallel while respecting dependency order.
+export function topologicalLevels (sorted, graph) {
+  const levels = []
+  const levelOf = new Map()
+
+  for (const node of sorted) {
+    const deps = graph.get(node) ?? []
+    let level = 0
+
+    for (const dep of deps) {
+      if (levelOf.has(dep)) {
+        level = Math.max(level, levelOf.get(dep) + 1)
+      }
+    }
+
+    levelOf.set(node, level)
+
+    while (levels.length <= level) {
+      levels.push([])
+    }
+
+    levels[level].push(node)
+  }
+
+  return levels
+}
+
 // Graph: Map<string, string[]>
 export function topologicalSort (graph) {
   const result = []

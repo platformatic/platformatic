@@ -2,7 +2,7 @@ import { deepStrictEqual, throws } from 'node:assert'
 import { deepEqual, equal, ok } from 'node:assert/strict'
 import { test } from 'node:test'
 import { getMemoryInfo } from '../lib/metrics.js'
-import { getArrayDifference, topologicalSort } from '../lib/utils.js'
+import { getArrayDifference, topologicalLevels, topologicalSort } from '../lib/utils.js'
 
 test('getArrayDifference', async () => {
   const a = [1, 2, 3]
@@ -186,4 +186,85 @@ test('topologicalSort - should properly sort shared dependency', () => {
   ])
 
   deepStrictEqual(topologicalSort(graph), ['E', 'D', 'A', 'B', 'C'])
+})
+
+test('topologicalLevels - should group independent nodes in the same level', () => {
+  const graph = new Map([
+    ['db', []],
+    ['app', []],
+    ['gateway', ['db', 'app']]
+  ])
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels.length, 2)
+  deepStrictEqual(levels[0].sort(), ['app', 'db'])
+  deepStrictEqual(levels[1], ['gateway'])
+})
+
+test('topologicalLevels - should handle a linear dependency chain', () => {
+  const graph = new Map([
+    ['A', ['B']],
+    ['B', ['C']],
+    ['C', []]
+  ])
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels.length, 3)
+  deepStrictEqual(levels[0], ['C'])
+  deepStrictEqual(levels[1], ['B'])
+  deepStrictEqual(levels[2], ['A'])
+})
+
+test('topologicalLevels - should handle all independent nodes', () => {
+  const graph = new Map([
+    ['A', []],
+    ['B', []],
+    ['C', []]
+  ])
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels.length, 1)
+  deepStrictEqual(levels[0].sort(), ['A', 'B', 'C'])
+})
+
+test('topologicalLevels - should handle diamond dependencies', () => {
+  const graph = new Map([
+    ['A', ['B', 'C']],
+    ['B', ['D']],
+    ['C', ['D']],
+    ['D', []]
+  ])
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels.length, 3)
+  deepStrictEqual(levels[0], ['D'])
+  deepStrictEqual(levels[1].sort(), ['B', 'C'])
+  deepStrictEqual(levels[2], ['A'])
+})
+
+test('topologicalLevels - should handle empty graph', () => {
+  const graph = new Map()
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels, [])
+})
+
+test('topologicalLevels - should handle single node', () => {
+  const graph = new Map([['A', []]])
+
+  const sorted = topologicalSort(graph)
+  const levels = topologicalLevels(sorted, graph)
+
+  deepStrictEqual(levels.length, 1)
+  deepStrictEqual(levels[0], ['A'])
 })
