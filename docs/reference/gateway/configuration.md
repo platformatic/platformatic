@@ -43,7 +43,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       `HEAD` is not part of the configurable list. It is implicitly handled when a matching `GET` route exists.
       :::
 
-    - **`routes`** (`array of string`, default: `['/', '/*']`) - Route patterns handled by this proxy application. Useful when multiple applications share the same `prefix` and need path-based routing.
+    - **`routes`** (`array of string`, default: `['/', '/*']`) - Route patterns handled by this proxy application. Useful when multiple applications share the same `prefix` and need path-based routing. Route patterns follow Fastify route syntax for parameters and wildcards (for example, `/users/:id` and `/public/*`). See the [Fastify route URL syntax documentation](https://fastify.dev/docs/latest/Reference/Routes/#url-building) for details.
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
