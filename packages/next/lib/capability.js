@@ -256,7 +256,7 @@ export class NextCapability extends BaseCapability {
       // as the worst thing is that the user will lose our formatted output.
       //
       // This should be fixable once https://github.com/nodejs/node/pull/61836 lands and it is broadly available.
-      if (this.#child.stdout?.pipe === 'function' && this.#child.stderr?.pipe === 'function') {
+      if (typeof this.#child.stdout?.pipe === 'function' && typeof this.#child.stderr?.pipe === 'function') {
         this.#child.stdout.setEncoding('utf8')
         this.#child.stderr.setEncoding('utf8')
 
