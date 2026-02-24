@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.0.0.json",
+  "next": {
+    "https": {
+      "enabled": true,
+      "key": "./certs/server.key",
+      "cert": "./certs/server.crt"
+    }
+  }
+}

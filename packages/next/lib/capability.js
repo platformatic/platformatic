@@ -239,12 +239,51 @@ export class NextCapability extends BaseCapability {
       this.#ensurePipeableStreamsInFork()
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
-        await nextDev({
+        const devOptions = {
           '--hostname': serverOptions.host,
           '--port': serverOptions.port,
           _: [this.root]
-        })
+        }
+
+        const httpsOptions = this.config.next?.https ?? {}
+
+        if (httpsOptions.enabled) {
+          devOptions['--experimental-https-key'] = true
+
+          if (httpsOptions.key) {
+            devOptions['--experimental-https-key'] = resolvePath(this.root, httpsOptions.key)
+          }
+
+          if (httpsOptions.cert) {
+            devOptions['--experimental-https-cert'] = resolvePath(this.root, httpsOptions.cert)
+          }
+
+          if (httpsOptions.ca) {
+            devOptions['--experimental-https-ca'] = resolvePath(this.root, httpsOptions.ca)
+          }
+        }
+
+        await nextDev(devOptions)
       } else {
+        const nextConfig = this.config.next ?? {}
+        const httpsOptions = nextConfig.https ?? {}
+
+        if (httpsOptions.enabled) {
+          serverOptions.experimentalHttps = true
+
+          if (httpsOptions.key) {
+            serverOptions.experimentalHttpsKey = resolvePath(this.root, httpsOptions.key)
+          }
+
+          if (httpsOptions.cert) {
+            serverOptions.experimentalHttpsCert = resolvePath(this.root, httpsOptions.cert)
+          }
+
+          if (httpsOptions.ca) {
+            serverOptions.experimentalHttpsCa = resolvePath(this.root, httpsOptions.ca)
+          }
+        }
+
         await nextDev(serverOptions, 'default', this.root)
       }
 

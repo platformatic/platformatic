@@ -64,6 +64,11 @@ Configures Next.js. Supported object properties:
   ```
 
 - **`standalone`**: Set this to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output).
+- **`https`**: Enables HTTPS in development mode when Platformatic starts Next.js with the default development command.
+  - **`enabled`** (`boolean` or `string`): Enables Next.js experimental HTTPS.
+  - **`key`**: Path (relative to the application root) to the HTTPS private key file.
+  - **`cert`**: Path (relative to the application root) to the HTTPS certificate file.
+  - **`ca`**: Path (relative to the application root) to the HTTPS certificate authority file.
 
 <RuntimeInCapabilities />
 

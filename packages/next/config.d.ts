@@ -656,6 +656,12 @@ export interface PlatformaticNextJsConfig {
     standalone?: boolean;
     trailingSlash?: boolean;
     useExperimentalAdapter?: boolean;
+    https?: {
+      enabled?: boolean | string;
+      key?: string;
+      cert?: string;
+      ca?: string;
+    };
   };
   cache?: {
     enabled?: boolean | string;

@@ -2412,6 +2412,31 @@
         "useExperimentalAdapter": {
           "type": "boolean",
           "default": false
+        },
+        "https": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "key": {
+              "type": "string"
+            },
+            "cert": {
+              "type": "string"
+            },
+            "ca": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "default": {},

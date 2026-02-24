@@ -12,7 +12,7 @@ const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 export async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
 
-  if (process.env.PLT_TESTS_PRINT_TMP === 'true') {
+  if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
     process._rawDebug(`Runtime root: ${root}`)
   }
 
@@ -85,18 +85,23 @@ export async function testRoundRobin (baseUrl, services) {
 
     // Verify pattern repeats every workerCount requests
     for (let i = workerCount; i < workers.length; i++) {
-      deepStrictEqual(workers[i], workers[i - workerCount],
-        `${name}: worker at position ${i} should match position ${i - workerCount}`)
+      deepStrictEqual(
+        workers[i],
+        workers[i - workerCount],
+        `${name}: worker at position ${i} should match position ${i - workerCount}`
+      )
     }
 
     // Verify all workers are used (complete coverage)
     const uniqueWorkers = new Set(workers.slice(0, workerCount))
-    deepStrictEqual(uniqueWorkers.size, workerCount,
-      `${name}: all ${workerCount} workers should be used`)
+    deepStrictEqual(uniqueWorkers.size, workerCount, `${name}: all ${workerCount} workers should be used`)
 
     // Verify we tested at least 2 complete cycles
-    deepStrictEqual(workers.length >= workerCount * 2, true,
-      `${name}: should have at least ${workerCount * 2} requests to verify 2 complete cycles`)
+    deepStrictEqual(
+      workers.length >= workerCount * 2,
+      true,
+      `${name}: should have at least ${workerCount * 2} requests to verify 2 complete cycles`
+    )
   }
 }
 

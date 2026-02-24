@@ -63,7 +63,7 @@ const next = {
   type: 'object',
   properties: {
     standalone: {
-      type: 'boolean',
+      type: 'boolean'
     },
     trailingSlash: {
       type: 'boolean',
@@ -72,6 +72,31 @@ const next = {
     useExperimentalAdapter: {
       type: 'boolean',
       default: false
+    },
+    https: {
+      type: 'object',
+      properties: {
+        enabled: {
+          anyOf: [
+            {
+              type: 'boolean'
+            },
+            {
+              type: 'string'
+            }
+          ]
+        },
+        key: {
+          type: 'string'
+        },
+        cert: {
+          type: 'string'
+        },
+        ca: {
+          type: 'string'
+        }
+      },
+      additionalProperties: false
     }
   },
   default: {},
