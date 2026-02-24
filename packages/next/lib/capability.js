@@ -249,11 +249,22 @@ export class NextCapability extends BaseCapability {
       }
 
       this.#child = await childPromise
-      this.#child.stdout.setEncoding('utf8')
-      this.#child.stderr.setEncoding('utf8')
 
-      this.#child.stdout.pipe(process.stdout, { end: false })
-      this.#child.stderr.pipe(process.stderr, { end: false })
+      // Paolo: I couldn't really reproduce this, but in some environments our child_process patch
+      // might not work and thus the stdio streams are not pipeable.
+      // Rathen than throwing an error in that case, we log a warning and continue without redirecting the output,
+      // as the worst thing is that the user will lose our formatted output.
+      //
+      // This should be fixable once https://github.com/nodejs/node/pull/61836 lands and it is broadly available.
+      if (this.#child.stdout?.pipe === 'function' && this.#child.stderr?.pipe === 'function') {
+        this.#child.stdout.setEncoding('utf8')
+        this.#child.stderr.setEncoding('utf8')
+
+        this.#child.stdout.pipe(process.stdout, { end: false })
+        this.#child.stderr.pipe(process.stderr, { end: false })
+      } else {
+        this.logger.warn('Unable to redirect Next.js development server output to the main process')
+      }
     } finally {
       await this.childManager.eject()
     }
@@ -493,7 +504,8 @@ export class NextCapability extends BaseCapability {
 
     try {
       serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
-    } catch (e) { // Fallback to bundled capability
+    } catch (e) {
+      // Fallback to bundled capability
       serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
     }
 
