@@ -300,7 +300,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   const originalCwd = process.cwd()
   const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
 
-  if (process.env.PLT_TESTS_PRINT_TMP === 'true') {
+  if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
     process._rawDebug(`Runtime root: ${root}`)
   }
 

@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { cp, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { request } from 'undici'
+import { Agent, request } from 'undici'
 import {
   commonFixturesRoot,
   getLogsFromFile,
@@ -85,7 +85,7 @@ test('should not show start in handle mode in production', async t => {
 test('should support standalone mode with custom build command', async t => {
   // This test verifies issue #4604: build fails when using both
   // a custom build command AND standalone: true
-  const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
+  const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
@@ -127,7 +127,7 @@ test('should support standalone mode with custom build command', async t => {
 })
 
 test('should support Next.js in standalone mode', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async (root) => {
+  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
@@ -159,8 +159,13 @@ test('should support Next.js in standalone mode', async t => {
   await runtime.buildApplication('frontend')
 
   // From the dist folder, remove everything and and only leave the standalone files and platformatic file
-  await cp(resolve(root, 'services/frontend/.next/standalone'), resolve(root, 'services/frontend-temp'), { recursive: true })
-  await cp(resolve(root, 'services/frontend/platformatic.application.json'), resolve(root, 'services/frontend-temp/platformatic.application.json'))
+  await cp(resolve(root, 'services/frontend/.next/standalone'), resolve(root, 'services/frontend-temp'), {
+    recursive: true
+  })
+  await cp(
+    resolve(root, 'services/frontend/platformatic.application.json'),
+    resolve(root, 'services/frontend-temp/platformatic.application.json')
+  )
   await safeRemove(resolve(root, 'services/frontend'))
   await rename(resolve(root, 'services/frontend-temp'), resolve(root, 'services/frontend'))
 
@@ -169,4 +174,16 @@ test('should support Next.js in standalone mode', async t => {
   const data = await response.text()
   const mo = data.match(/<div>Hello from v<!-- -->(.+)<\/div>/)
   ok(mo)
+})
+
+test('can start next with a HTTPS server in development mode', async t => {
+  const { runtime } = await prepareRuntime(t, 'https', false)
+
+  const url = await startRuntime(t, runtime)
+  const agent = new Agent({ connect: { rejectUnauthorized: false } })
+
+  {
+    const { statusCode } = await request(url.replace('http:', 'https:'), { dispatcher: agent })
+    deepStrictEqual(statusCode, 200)
+  }
 })
