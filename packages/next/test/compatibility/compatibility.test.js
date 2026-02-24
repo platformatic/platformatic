@@ -55,6 +55,7 @@ const NEXT_VERSION_15_3 = '15.3.5'
 const NEXT_VERSION_15_4 = '15.4.7'
 const NEXT_VERSION_15_5 = '15.5.6'
 const NEXT_VERSION_16_0 = '16.0.0'
+const NEXT_VERSION_16_1 = '16.1.6'
 
 const REACT_VERSION_18 = '18.3.0'
 const REACT_VERSION_19 = '19.2.0'
@@ -69,7 +70,8 @@ const reactVersions = {
   [NEXT_VERSION_15_3]: [REACT_VERSION_18, REACT_VERSION_19],
   [NEXT_VERSION_15_4]: [REACT_VERSION_18, REACT_VERSION_19],
   [NEXT_VERSION_15_5]: [REACT_VERSION_18, REACT_VERSION_19],
-  [NEXT_VERSION_16_0]: [REACT_VERSION_18, REACT_VERSION_19]
+  [NEXT_VERSION_16_0]: [REACT_VERSION_18, REACT_VERSION_19],
+  [NEXT_VERSION_16_1]: [REACT_VERSION_18, REACT_VERSION_19]
 }
 
 const compatibilityVersions = [
@@ -82,7 +84,8 @@ const compatibilityVersions = [
   NEXT_VERSION_15_3,
   NEXT_VERSION_15_4,
   NEXT_VERSION_15_5,
-  NEXT_VERSION_16_0
+  NEXT_VERSION_16_0,
+  NEXT_VERSION_16_1
 ]
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
