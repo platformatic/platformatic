@@ -799,6 +799,38 @@
                   {
                     "type": "object",
                     "properties": {
+                      "methods": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE",
+                            "PATCH",
+                            "OPTIONS"
+                          ]
+                        },
+                        "default": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "DELETE",
+                          "PATCH",
+                          "OPTIONS"
+                        ]
+                      },
+                      "routes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "default": [
+                          "/",
+                          "/*"
+                        ]
+                      },
                       "upstream": {
                         "type": "string"
                       },

@@ -479,7 +479,7 @@ export async function createGatewayInRuntime (
       ]),
       autoload: autoload ? { path: autoload } : undefined,
       logger: {
-        level: 'fatal'
+        level: process.env.PLT_TESTS_DEBUG === 'true' ? 'debug' : 'fatal'
       },
       gracefulShutdown: {
         runtime: 1000,
@@ -520,12 +520,18 @@ export async function createGatewayInRuntime (
 
   await additionalSetup?.(runtimeConfigPath, gatewayConfigPath)
 
+  if (process.env.PLT_TESTS_PRINT_TMP === 'true') {
+    process._rawDebug(`Runtime root: ${tmpDir}`)
+  }
+
   const runtime = await createRuntime(runtimeConfigPath, null, { isProduction: production })
   await runtime.init()
 
   t.after(async () => {
-    await runtime.close()
-    await safeRemove(tmpDir)
+    if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
+      await runtime.close()
+      await safeRemove(tmpDir)
+    }
   })
 
   return runtime

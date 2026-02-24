@@ -136,6 +136,17 @@ export const gateway = {
               {
                 type: 'object',
                 properties: {
+                  methods: {
+                    type: 'array',
+                    // Note: HEAD is purposely not included as it makes sense only if there is a GET route
+                    items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] },
+                    default: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+                  },
+                  routes: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    default: ['/', '/*']
+                  },
                   upstream: { type: 'string' },
                   prefix: { type: 'string' },
                   hostname: { type: 'string' },
