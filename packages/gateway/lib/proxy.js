@@ -59,6 +59,8 @@ async function resolveApplicationProxyParameters (application) {
 
   return {
     origin: application.origin,
+    methods: application.proxy?.methods,
+    routes: application.proxy?.routes,
     url: meta.url,
     prefix,
     rewritePrefix,
@@ -90,6 +92,8 @@ async function proxyPlugin (app, opts) {
       prefix,
       origin,
       url,
+      routes,
+      methods,
       rewritePrefix,
       internalRewriteLocationHeader,
       needsRootTrailingSlash,
@@ -204,6 +208,8 @@ async function proxyPlugin (app, opts) {
         [kProxyRoute]: true
       },
 
+      httpMethods: methods,
+      routes,
       internalRewriteLocationHeader: false,
       replyOptions: {
         rewriteHeaders: headers => {

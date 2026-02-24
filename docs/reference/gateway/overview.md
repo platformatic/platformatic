@@ -15,6 +15,7 @@ For a high level overview of how Watt and its applications work, please referenc
 - **GraphQL Federation**: Aggregate GraphQL schemas from multiple applications with Apollo Federation support
 - **Conflict Resolution**: Intelligent handling of endpoint conflicts and path overlaps between applications
 - **Route Prefixing**: Organize APIs with automatic or custom path prefixing for each application
+- **Flexible Proxy Routing**: Route requests by prefix, method, and path patterns when multiple applications share the same prefix. See [Gateway configuration](./configuration.md#gateway).
 - **Dynamic Updates**: Real-time schema updates when underlying applications change (in development mode)
 - **Custom Logic**: Extend with Fastify plugins for authentication, rate limiting, or request transformation
 

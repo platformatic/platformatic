@@ -621,12 +621,14 @@ test('should rewrite Location headers that include full url of the running appli
 })
 
 test('should properly configure the frontends on their paths if no gateway configuration is present', async t => {
+  const echoModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/echo/node_modules')
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
   const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
   const nextModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/next/node_modules')
   const remixModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [
+    echoModulesRoot,
     nodeModulesRoot,
     astroModulesRoot,
     nextModulesRoot,
@@ -634,6 +636,11 @@ test('should properly configure the frontends on their paths if no gateway confi
     resolve(import.meta.dirname, './proxy/fixtures/astro/.astro'),
     resolve(import.meta.dirname, './proxy/fixtures/next/.next')
   ])
+
+  // Make sure there is @platformatic/node available in the echo application.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(echoModulesRoot, '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(echoModulesRoot, '@platformatic/node'), 'dir')
 
   // Make sure there is @platformatic/node available in the node application.
   // We can't simply specify it in the package.json due to circular dependencies.
@@ -1694,7 +1701,10 @@ test('should proxy to a remote service with external origin', async t => {
   const openApiSchema = await body.json()
   // OpenAPI composition uses the application's paths prefixed appropriately
   const paths = Object.keys(openApiSchema.paths)
-  assert.ok(paths.some(p => p.includes('users')), `Expected a users path, got: ${paths.join(', ')}`)
+  assert.ok(
+    paths.some(p => p.includes('users')),
+    `Expected a users path, got: ${paths.join(', ')}`
+  )
 })
 
 test('should proxy to a remote service from gateway in runtime', async t => {
@@ -1793,4 +1803,96 @@ test('should proxy both local and remote services in same runtime', async t => {
 
   // Test remote service works (skips ITC)
   await testEntityRoutes(address, ['/remote/products'])
+})
+
+test('should handle methods and routes options', async t => {
+  const echoModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/echo/node_modules')
+
+  await ensureCleanup(t, [echoModulesRoot])
+
+  // Make sure there is @platformatic/node available in the echo application.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(echoModulesRoot, '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(echoModulesRoot, '@platformatic/node'), 'dir')
+
+  const runtime = await createGatewayInRuntime(
+    t,
+    'gateway-methods-routes',
+    {
+      gateway: {
+        applications: [
+          {
+            // First receives all POST on prefix /first
+            id: 'first',
+            proxy: {
+              prefix: '/',
+              routes: ['/first/*'],
+              methods: ['POST']
+            }
+          },
+          {
+            // Second receives all GETs
+            id: 'second',
+            proxy: {
+              prefix: '/',
+              methods: ['GET']
+            }
+          },
+          {
+            // Third receives everything else
+            id: 'third',
+            proxy: {
+              prefix: '/',
+              methods: ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        id: 'first',
+        path: resolve(import.meta.dirname, './proxy/fixtures/echo')
+      },
+      {
+        id: 'second',
+        path: resolve(import.meta.dirname, './proxy/fixtures/echo')
+      },
+      {
+        id: 'third',
+        path: resolve(import.meta.dirname, './proxy/fixtures/echo')
+      }
+    ]
+  )
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, { method: 'POST', path: '/first/abc/cde' })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { service: 'first' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, { method: 'POST', path: '/whatever' })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { service: 'third' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, { method: 'GET', path: '/first/abc/cde' })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { service: 'second' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, { method: 'DELETE', path: '/first/abc/cde' })
+    assert.equal(statusCode, 200)
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { service: 'third' })
+  }
 })

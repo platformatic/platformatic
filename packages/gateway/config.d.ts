@@ -248,6 +248,8 @@ export interface PlatformaticGatewayConfig {
       proxy?:
         | false
         | {
+            methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS")[];
+            routes?: string[];
             upstream?: string;
             prefix?: string;
             hostname?: string;

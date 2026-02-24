@@ -37,6 +37,13 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
+    - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
+
+      :::note
+      `HEAD` is not part of the configurable list. It is implicitly handled when a matching `GET` route exists.
+      :::
+
+    - **`routes`** (`array of string`, default: `['/', '/*']`) - Route patterns handled by this proxy application. Useful when multiple applications share the same `prefix` and need path-based routing.
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
@@ -78,6 +85,18 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       "proxy": {
         "prefix": "/api",
         "upstream": "https://api.example.com"
+      }
+    }
+    ```
+
+    **Example: Method/Route-based Proxy Selection**
+    ```json
+    {
+      "id": "public-read-api",
+      "proxy": {
+        "prefix": "/",
+        "methods": ["GET"],
+        "routes": ["/public/*"]
       }
     }
     ```
