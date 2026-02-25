@@ -41,7 +41,7 @@ Enable Image Optimizer mode in `watt.json` (or `platformatic.json`):
   "next": {
     "imageOptimizer": {
       "enabled": true,
-      "fallback": "backend",
+      "fallback": "fallback",
       "timeout": 30000,
       "maxAttempts": 3
     }
@@ -52,18 +52,50 @@ Enable Image Optimizer mode in `watt.json` (or `platformatic.json`):
 In this example:
 
 - `enabled: true` turns on Image Optimizer mode, so this service only serves the image endpoint.
-- `fallback: "backend"` means relative `url` values (for example `/images/photo.jpg`) are fetched from `http://backend.plt.local/images/photo.jpg` through Platformatic service discovery.
+- `fallback: "fallback"` means relative `url` values (for example `/images/photo.jpg`) are fetched from `http://fallback.plt.local/images/photo.jpg` through Platformatic service discovery.
 - `timeout: 30000` sets a 30 second timeout for fetch/optimization jobs.
 - `maxAttempts: 3` retries failed optimization jobs up to 3 times before returning an error.
 
 If you do not set `storage`, Platformatic uses in-memory queue storage by default.
+
+### Exposing Image Optimizer through Gateway (`proxy.routes`)
+
+A common production setup is to keep Gateway as runtime entrypoint and route only `/_next/image` traffic to the optimizer service.
+
+`services/gateway/platformatic.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "optimizer",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/_next/image"],
+          "methods": ["GET"]
+        }
+      },
+      {
+        "id": "fallback",
+        "proxy": {
+          "prefix": "/"
+        }
+      }
+    ]
+  }
+}
+```
+
+This routes image optimization requests to `optimizer`, while all other requests are handled by `fallback`.
 
 ### Configuration options
 
 - **`enabled`**: Boolean flag to enable Image Optimizer mode. Default: `false`.
 - **`fallback`**: Source used to fetch original images when the request URL is relative:
   - A full URL (for example, `https://cdn.example.com`)
-  - A local service name (for example, `backend`), resolved as `http://backend.plt.local`
+  - A local service name (for example, `fallback`), resolved as `http://fallback.plt.local`
 - **`storage`**: Queue storage backend:
   - `{ "type": "memory" }` (default)
   - `{ "type": "filesystem", "path": "./.next/cache/image-optimizer" }`

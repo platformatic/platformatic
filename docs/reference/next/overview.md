@@ -3,7 +3,7 @@ title: Overview
 label: Next.js
 ---
 
-import SharedOverview from '../node/_shared-overview.md';
+import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Next
 
@@ -34,26 +34,51 @@ Create a `watt.json` in the root folder of your application with the following c
 }
 ```
 
-### Example with Image Optimizer mode
+### Example with Image Optimizer mode (behind Gateway route matching)
 
-Use this mode when you only need the `/_next/image` endpoint and do not want to run a full Next.js application for that service.
+Use this mode when you only need the `/_next/image` endpoint and want to expose it through a Gateway entrypoint.
 
-In this example:
+In this setup:
 
-- requests are served under `/frontend/_next/image` because `application.basePath` is set
-- relative image URLs (for example `/hero.png`) are fetched from the local `backend` service
-- absolute image URLs are fetched directly
+- Gateway forwards only `GET /_next/image` to the optimizer service using `proxy.routes`
+- all other routes can be forwarded to a regular frontend service
+- relative image URLs (for example `/hero.png`) are fetched from the local fallback service via service discovery
+
+`services/gateway/platformatic.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "optimizer",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/_next/image"],
+          "methods": ["GET"]
+        }
+      },
+      {
+        "id": "fallback",
+        "proxy": {
+          "prefix": "/"
+        }
+      }
+    ]
+  }
+}
+```
+
+`services/optimizer/platformatic.json`:
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "application": {
-    "basePath": "/frontend"
-  },
   "next": {
     "imageOptimizer": {
       "enabled": true,
-      "fallback": "backend"
+      "fallback": "fallback"
     }
   }
 }

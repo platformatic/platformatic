@@ -2,14 +2,19 @@
 
 In this guide, you will configure Platformatic Next to run in **Image Optimizer mode** as a standalone service.
 
-Instead of running a full Next.js application in that service, you expose only the `/_next/image` endpoint and delegate image optimization to a dedicated component.
+Instead of running a full Next.js application in the same process, you expose only the `/_next/image` endpoint and delegate image optimization to a dedicated component.
 
-This architecture is useful when you want to:
+## Why this architecture
 
-- offload CPU-intensive image transformations from frontend services
-- centralize optimization behavior (sizes, quality validation, retries, timeouts)
-- centralize queue and storage configuration for image processing jobs
-- fetch relative image paths from another local Platformatic service through service discovery
+Using a dedicated optimizer service behind Gateway has practical advantages:
+
+- **Scalability**: image transformations are CPU-intensive and can be scaled independently from frontend rendering.
+- **Operational isolation**: spikes on image traffic do not starve your frontend workers.
+- **Centralized behavior**: width/quality validation, retry policy, timeout, and cache/storage settings are configured once.
+- **Flexible storage backends**: in-memory for local dev, filesystem for simple deployments, Redis/Valkey for multi-instance environments.
+- **Runtime-native service discovery**: relative image paths are fetched from a sibling application (for example `http://fallback.plt.local`) without hardcoding external URLs.
+
+---
 
 ## Prerequisites
 
@@ -20,15 +25,18 @@ Before starting, make sure you have:
 
 ## What you will build
 
-You will create a small runtime composed of two services:
+You will create a runtime with three applications:
 
-1. **optimizer** (entrypoint)
+1. **gateway** (entrypoint)
+   - runs `@platformatic/gateway`
+   - routes only `GET /_next/image` to `optimizer` using `proxy.routes`
+2. **optimizer**
    - runs `@platformatic/next` in Image Optimizer mode
    - exposes only `/_next/image`
-2. **fallback**
+3. **fallback**
    - runs a regular Next.js app
    - serves static files (for example `public/platformatic.png`)
-   - acts as source for relative image URLs
+   - provides original assets for relative image URLs
 
 At the end, you will test:
 
@@ -37,46 +45,58 @@ At the end, you will test:
 
 ---
 
-## 1) Create a runtime with two services
+## 1) Create a runtime with three applications
 
 Create this structure:
 
 ```text
 my-runtime/
-  platformatic.runtime.json
-  services/
+  watt.json
+  web/
+    gateway/
+      watt.json
+      package.json
     optimizer/
-      platformatic.json
+      watt.json
+      package.json
       next.config.js
     fallback/
-      platformatic.json
+      watt.json
+      package.json
       next.config.js
+      public/
+        platformatic.png
       src/
-        app
-        ...
+        app/
+          page.jsx
 ```
 
 In this setup:
 
-- `optimizer` is your external-facing image endpoint
+- `gateway` is the external-facing entrypoint
+- `optimizer` handles only `/_next/image`
 - `fallback` is where relative assets are fetched from
 
 ## 2) Configure the runtime
 
-Create `my-runtime/platformatic.runtime.json`:
+Create `my-runtime/watt.json`:
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "optimizer",
-  "services": [
+  "entrypoint": "gateway",
+  "applications": [
+    {
+      "id": "gateway",
+      "path": "./web/gateway"
+    },
     {
       "id": "optimizer",
-      "path": "./services/optimizer"
+      "path": "./web/optimizer"
     },
     {
       "id": "fallback",
-      "path": "./services/fallback"
+      "path": "./web/fallback"
     }
   ]
 }
@@ -84,13 +104,49 @@ Create `my-runtime/platformatic.runtime.json`:
 
 ### Why this configuration?
 
-- `entrypoint: "optimizer"` means incoming runtime traffic goes first to the optimizer service.
-- Both services are in the same runtime, so service discovery works automatically.
-- The service id `fallback` becomes reachable as `http://fallback.plt.local` from sibling services.
+- `entrypoint: "gateway"` means incoming runtime traffic goes first to Gateway.
+- Gateway routes by method + path (via `proxy.methods` and `proxy.routes`).
+- `optimizer` and `fallback` are in the same runtime, so service discovery works automatically.
+- `fallback` is reachable from `optimizer` as `http://fallback.plt.local`.
 
-## 3) Configure the optimizer service
+## 3) Configure Gateway with route-based proxying
 
-Create `my-runtime/services/optimizer/platformatic.json`:
+Create `my-runtime/web/gateway/watt.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "optimizer",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/_next/image"],
+          "methods": ["GET"]
+        }
+      },
+      {
+        "id": "fallback",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/*"]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Why use `proxy.routes`?
+
+- `/_next/image` requests are routed to `optimizer` only.
+- all other requests are routed to `fallback`.
+- this keeps image optimization isolated while the fallback app serves regular pages/assets.
+
+## 4) Configure the optimizer application
+
+Create `my-runtime/web/optimizer/watt.json`:
 
 ```json
 {
@@ -109,13 +165,13 @@ Create `my-runtime/services/optimizer/platformatic.json`:
 ### What these options mean
 
 - `enabled: true` enables dedicated Image Optimizer mode.
-- `fallback: "fallback"` means relative URLs are resolved against the local service `fallback`, i.e. `http://fallback.plt.local`.
+- `fallback: "fallback"` resolves relative URLs against `http://fallback.plt.local`.
 - `timeout: 30000` sets a 30-second timeout budget for fetch/optimization jobs.
 - `maxAttempts: 3` retries failed jobs up to 3 times.
 
-## 4) Configure the fallback service
+## 5) Configure the fallback application
 
-Create `my-runtime/services/fallback/platformatic.json`:
+Create `my-runtime/web/fallback/watt.json`:
 
 ```json
 {
@@ -125,17 +181,31 @@ Create `my-runtime/services/fallback/platformatic.json`:
 
 Then place a test image here:
 
-- `my-runtime/services/fallback/public/platformatic.png`
+- `my-runtime/web/fallback/public/platformatic.png`
 
-This makes `/platformatic.png` available from the fallback service.
+This makes `/platformatic.png` available from the fallback application.
 
-## 5) Install dependencies
+## 6) Install dependencies
 
-For this setup, define framework/capability dependencies in each application folder (service), not as a single root dependency bundle.
+Define dependencies in each application folder.
 
-### 5.1) Optimizer service `package.json`
+### 6.1) Gateway `package.json`
 
-Create or update `my-runtime/services/optimizer/package.json`:
+Create or update `my-runtime/web/gateway/package.json`:
+
+```json
+{
+  "name": "gateway",
+  "private": true,
+  "dependencies": {
+    "@platformatic/gateway": "^3.0.0"
+  }
+}
+```
+
+### 6.2) Optimizer `package.json`
+
+Create or update `my-runtime/web/optimizer/package.json`:
 
 ```json
 {
@@ -150,9 +220,9 @@ Create or update `my-runtime/services/optimizer/package.json`:
 }
 ```
 
-### 5.2) Fallback service `package.json`
+### 6.3) Fallback `package.json`
 
-Create or update `my-runtime/services/fallback/package.json`:
+Create or update `my-runtime/web/fallback/package.json`:
 
 ```json
 {
@@ -167,7 +237,7 @@ Create or update `my-runtime/services/fallback/package.json`:
 }
 ```
 
-### 5.3) Install workspace/runtime dependencies in one pass (optional but recommended)
+### 6.4) Install in one pass (recommended)
 
 From `my-runtime/`, run:
 
@@ -175,19 +245,17 @@ From `my-runtime/`, run:
 npx wattpm-utils install
 ```
 
-This command installs dependencies for the runtime and all configured applications/services according to their own `package.json` files.
+## 7) Start the runtime
 
-## 6) Start the runtime
-
-From `my-runtime/` run:
+From `my-runtime/`, run:
 
 ```bash
 npx wattpm start
 ```
 
-By default, the runtime listens on `http://127.0.0.1:3042` unless you configure a different host/port.
+By default, Runtime listens on `http://127.0.0.1:3042` unless you configure a different host/port.
 
-## 7) Test the optimizer endpoint
+## 8) Test the optimizer endpoint
 
 ### Test A: optimize an internal image (relative URL)
 
@@ -195,13 +263,14 @@ By default, the runtime listens on `http://127.0.0.1:3042` unless you configure 
 curl -i "http://127.0.0.1:3042/_next/image?url=/platformatic.png&w=1024&q=75"
 ```
 
-This request flow is:
+Request flow:
 
-1. optimizer receives the request
-2. sees `url=/platformatic.png` is relative
-3. resolves source to `http://fallback.plt.local/platformatic.png`
-4. fetches and optimizes the image
-5. returns optimized bytes
+1. Gateway receives the request.
+2. `proxy.routes` matches `/_next/image` and forwards to `optimizer`.
+3. `optimizer` detects `url=/platformatic.png` is relative.
+4. Source is resolved to `http://fallback.plt.local/platformatic.png`.
+5. The image is fetched and optimized.
+6. Gateway returns the optimized bytes.
 
 ### Test B: optimize an external image (absolute URL)
 
@@ -209,7 +278,7 @@ This request flow is:
 curl -i "http://127.0.0.1:3042/_next/image?url=https%3A%2F%2Fexample.com%2Fimage.png&w=1024&q=75"
 ```
 
-This request is fetched directly from the absolute URL.
+This request is forwarded by Gateway to `optimizer`, then fetched directly from the absolute URL.
 
 ### Expected result
 
@@ -217,6 +286,64 @@ For valid requests, you should receive:
 
 - `HTTP/1.1 200 OK`
 - an image `content-type` (for example `image/png`)
+
+---
+
+## 9) Production topology: Gateway in front of your main Next.js app + optimizer
+
+A common production setup is:
+
+- one **frontend** Next.js application for pages and APIs
+- one dedicated **optimizer** application
+- one **gateway** entrypoint routing traffic between them
+
+Example Gateway routing:
+
+- `GET /_next/image` -> `optimizer`
+- `/*` -> `frontend`
+
+`web/gateway/watt.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "optimizer",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/_next/image"],
+          "methods": ["GET"]
+        }
+      },
+      {
+        "id": "frontend",
+        "proxy": {
+          "prefix": "/",
+          "routes": ["/*"]
+        }
+      }
+    ]
+  }
+}
+```
+
+`web/optimizer/watt.json`:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
+  "next": {
+    "imageOptimizer": {
+      "enabled": true,
+      "fallback": "frontend"
+    }
+  }
+}
+```
+
+In this model, relative image URLs are fetched from `frontend.plt.local`, while optimization workloads are isolated in the dedicated optimizer application.
 
 ---
 
@@ -244,12 +371,6 @@ Best for local development or simple deployments where persistence across restar
 }
 ```
 
-**Characteristics:**
-
-- fastest to set up
-- no external dependency
-- data is lost on restart
-
 ### 2) Filesystem storage
 
 Useful when you want persistence on local disk (single node/container with writable volume).
@@ -268,12 +389,6 @@ Useful when you want persistence on local disk (single node/container with writa
   }
 }
 ```
-
-**Characteristics:**
-
-- persists across process restarts (if disk/volume is persistent)
-- no Redis/Valkey dependency
-- should be used with shared/persistent volumes in containerized environments
 
 ### 3) Redis/Valkey storage
 
@@ -298,22 +413,10 @@ Recommended for distributed/multi-instance deployments.
 
 You can also use `"type": "redis"`.
 
-#### Redis/Valkey fields
-
-- `url`: connection string for your Redis/Valkey instance
-- `prefix`: key namespace prefix (helps isolate environments/apps)
-- `db`: logical database index (`0`, `1`, `2`, ...)
-
-#### Practical advice
-
-- Use a unique `prefix` per app/environment (example: `myapp:prod:img:`)
-- Use `db` only if your Redis/Valkey policy allows multiple logical DBs
-- Prefer dedicated instances and access controls for production workloads
-
 ## Next steps
 
-- Add this optimizer service in front of one or more frontend services.
+- Put this optimizer pattern in front of one or more frontend applications.
 - Configure Redis/Valkey storage for production.
 - Tune `timeout` and `maxAttempts` based on traffic profile and upstream reliability.
 
-For full option details and behavior, see the [Next.js Image Optimizer reference](../reference/next/image-optimizer.md).
+For full option details, see the [Next.js Image Optimizer reference](../reference/next/image-optimizer.md).
