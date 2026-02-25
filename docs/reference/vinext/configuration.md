@@ -5,6 +5,8 @@ import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 Platformatic Vinext is configured with a configuration file. It supports environment-variable placeholders like other Platformatic capabilities.
 
+> ⚠️ **Experimental**: The Vinext capability is experimental and its configuration surface may evolve.
+
 ## `application`
 
 Supported object properties:

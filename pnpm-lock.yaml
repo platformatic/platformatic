@@ -2123,6 +2123,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      semver:
+        specifier: ^7.6.3
+        version: 7.7.4
     devDependencies:
       '@platformatic/gateway':
         specifier: workspace:*

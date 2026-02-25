@@ -1,11 +1,13 @@
 ---
 title: Overview
-label: Vinext
+label: Vinext (Experimental)
 ---
 
 import SharedOverview from '../node/_shared-overview.md';
 
-# Platformatic Vinext
+# Platformatic Vinext (Experimental)
+
+> ⚠️ **Experimental**: The Platformatic Vinext capability is experimental and may change in future releases.
 
 The Platformatic Vinext capability allows running a [Vinext](https://github.com/cloudflare/vinext) application under Watt.
 
