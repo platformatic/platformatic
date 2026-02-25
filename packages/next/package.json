@@ -36,6 +36,7 @@
     "@platformatic/image-optimizer": "^0.2.0",
     "amaro": "^0.3.0",
     "iovalkey": "^0.3.0",
+    "light-my-request": "^6.0.0",
     "msgpackr": "^1.11.2",
     "semver": "^7.6.3"
   },
