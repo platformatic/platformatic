@@ -10,6 +10,7 @@ import { cleanBasePath } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation/lib/errors.js'
 import { createQueue } from '@platformatic/image-optimizer'
 import { FileStorage, MemoryStorage, RedisStorage } from '@platformatic/job-queue'
+import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { dirname, resolve as resolvePath } from 'node:path'
@@ -25,6 +26,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
   #validateParams
   #app
   #server
+  #dispatcher
   #queue
   #fetchTimeout
 
@@ -112,6 +114,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
     }
 
     this.#app = createServer(this.#handleRequest.bind(this))
+    this.#dispatcher = this.#app.listeners('request')[0]
     await this.#queue.start()
   }
 
@@ -156,10 +159,26 @@ export class NextImageOptimizerCapability extends BaseCapability {
     return { gateway }
   }
 
+  async inject (injectParams, onInject) {
+    this.logger.trace({ injectParams }, 'injecting via light-my-request')
+    const res = inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+
+    /* c8 ignore next 3 */
+    if (onInject) {
+      return
+    }
+
+    // Since inject might be called from the main thread directly via ITC, let's clean it up
+    const { statusCode, headers, body, payload, rawPayload } = res
+
+    return { statusCode, headers, body, payload, rawPayload }
+  }
+
   async #createQueue (imageOptimizerConfig) {
     const queueOptions = {
       visibilityTimeout: imageOptimizerConfig.timeout,
-      maxRetries: imageOptimizerConfig.maxAttempts
+      maxRetries: imageOptimizerConfig.maxAttempts,
+      logger: this.logger
     }
 
     if (imageOptimizerConfig.storage.type === 'memory') {

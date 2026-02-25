@@ -1075,6 +1075,9 @@ importers:
       iovalkey:
         specifier: ^0.3.0
         version: 0.3.3
+      light-my-request:
+        specifier: ^6.0.0
+        version: 6.6.0
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.8
