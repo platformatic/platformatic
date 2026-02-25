@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/vinext/2.0.0.json",
+  "vinext": {
+    "configFile": "custom.vite.config.js"
+  }
+}

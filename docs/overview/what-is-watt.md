@@ -340,6 +340,7 @@ Watt is the **application server** that orchestrates different types of applicat
 - **Astro** (`@platformatic/astro`) - Multi-framework static sites
 - **Remix** (`@platformatic/remix`) - Full-stack React framework
 - **Vite** (`@platformatic/vite`) - Modern build tool integration
+- **Vinext** (`@platformatic/vinext`) - Next.js-compatible applications on Vite
 - **NestJS** (`@platformatic/nestjs`) - Progressive Node.js framework for scalable server-side applications
 
 #### API-First Development

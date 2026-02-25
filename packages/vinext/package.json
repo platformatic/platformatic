@@ -1,0 +1,47 @@
+{
+  "name": "@platformatic/vinext",
+  "version": "3.39.0",
+  "description": "Platformatic Vinext Capability",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@platformatic/basic": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@platformatic/gateway": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "cleaner-spec-reporter": "^0.5.0",
+    "eslint": "9",
+    "json-schema-to-typescript": "^15.0.1",
+    "neostandard": "^0.12.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.5.4",
+    "vinext": "^0.0.5",
+    "vite": "^7.3.1",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
