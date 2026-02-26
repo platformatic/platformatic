@@ -4,6 +4,8 @@ In this guide, you will configure Platformatic Next to run in **Image Optimizer 
 
 Instead of running a full Next.js application in the same process, you expose only the `/_next/image` endpoint and delegate image optimization to a dedicated component.
 
+![Architecture diagram](./next-image-optimizer/architecture-diagram.png)
+
 ## Why this architecture
 
 Using a dedicated optimizer service behind Gateway has practical advantages:
@@ -34,7 +36,7 @@ You will create a runtime with three applications:
    - runs `@platformatic/next` in Image Optimizer mode
    - exposes only `/_next/image`
 3. **fallback**
-   - runs a regular Next.js app
+   - runs your regular Next.js app (pages, APIs, and static assets)
    - serves static files (for example `public/platformatic.png`)
    - provides original assets for relative image URLs
 
@@ -184,6 +186,27 @@ Then place a test image here:
 - `my-runtime/web/fallback/public/platformatic.png`
 
 This makes `/platformatic.png` available from the fallback application.
+
+### Keep fallback as a standard Next.js app
+
+`fallback` should be your full frontend application, not a stripped-down placeholder. Keep the same pages, route handlers, API routes, middleware, and static assets you would normally ship.
+
+Minimal example (`my-runtime/web/fallback/src/app/page.jsx`):
+
+```jsx
+import Image from 'next/image'
+
+export default function Page () {
+  return (
+    <main>
+      <h1>Frontend app served by fallback</h1>
+      <Image src="/platformatic.png" alt="Platformatic logo" width={512} height={512} />
+    </main>
+  )
+}
+```
+
+The optimizer service remains dedicated to `/_next/image`; all other application behavior continues to live in `fallback`.
 
 ## 6) Install dependencies
 
