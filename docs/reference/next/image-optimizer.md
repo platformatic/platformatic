@@ -31,6 +31,25 @@ When `next.imageOptimizer.enabled` is `true`, Platformatic Next:
 
 The queue storage backend can be in-memory, filesystem-based, or Valkey/Redis-based.
 
+## Queueing model
+
+Every image request is processed through a queue-driven pipeline:
+
+1. a `GET /_next/image` request is validated by Next.js parameter rules
+2. the optimizer creates queue work for fetch + transform
+3. a worker executes optimization with a timeout budget (`timeout`)
+4. failures are retried up to `maxAttempts`
+5. the result is returned to the client or a `502` is returned when retries are exhausted
+
+Why this matters:
+
+- it avoids tying optimization throughput directly to frontend request spikes
+- it gives you explicit retry/timeout controls for unstable upstream sources
+- it lets you choose storage based on runtime topology:
+  - `memory` for local/dev or single-instance setups
+  - `filesystem` for single-node persistence on disk
+  - `redis`/`valkey` for multi-instance and shared queue state
+
 ## Configuration
 
 Enable Image Optimizer mode in `watt.json` (or `platformatic.json`):
