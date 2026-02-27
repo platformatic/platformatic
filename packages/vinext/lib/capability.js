@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  ChildManager,
   cleanBasePath,
   createServerListener,
   errors,
@@ -10,22 +11,31 @@ import {
 import { ensureLoggableError } from '@platformatic/foundation'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
 const supportedVinextVersions = ['^0.0.5']
 const supportedViteVersions = ['^7.0.0', '^8.0.0']
 
+export function getCacheHandlerPath (name) {
+  return fileURLToPath(new URL(`./caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
+}
+
 export class VinextCapability extends BaseCapability {
   #basePath
+  #loaderUrl
   #vinext
   #vite
+  #nextConfig
   #app
   #server
 
   constructor (root, config, context) {
     super('vinext', version, root, config, context)
+
+    this.#loaderUrl = new URL('./loader.js', import.meta.url)
   }
 
   async init () {
@@ -34,18 +44,16 @@ export class VinextCapability extends BaseCapability {
     const config = this.config
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : undefined
 
-    this.registerGlobals({ basePath: this.#basePath })
+    this.registerGlobals({ basePath: this.#basePath, config: this.config })
     this.subprocessTerminationSignal = 'SIGKILL'
 
-    this.#vinext = dirname(await resolvePackageViaESM(this.root, 'vinext'))
-    this.#vite = dirname(await resolvePackageViaESM(this.root, 'vite'))
+    // This is needed here since apparently resolving the package executes some Vinext code
+    // and thus our cache patch would be skipped.
+    this.childManager = this.#createChildManager(this.#loaderUrl, await this.getChildManagerContext(this.#basePath))
+    this.childManager.register()
 
-    // In Vite 6, module resolving changed, adjust it
-    if (!existsSync(resolve(this.#vite, 'dist/node/index.js'))) {
-      this.#vite = resolve(this.#vite, '../..')
-    }
-
-    this.#vinext = resolve(this.#vinext, '..')
+    this.#vinext = resolve(dirname(await resolvePackageViaESM(this.root, 'vinext')), '..')
+    this.#vite = resolve(dirname(await resolvePackageViaESM(this.root, 'vite')), '../..')
 
     if (this.isProduction) {
       return
@@ -74,7 +82,8 @@ export class VinextCapability extends BaseCapability {
     const command = this.config.application.commands[this.isProduction ? 'production' : 'development']
 
     if (command) {
-      return this.startWithCommand(command)
+      this.#basePath = await this.#getBasePathFromBuildInfo()
+      return this.startWithCommand(command, this.#loaderUrl)
     }
 
     if (this.isProduction) {
@@ -89,7 +98,10 @@ export class VinextCapability extends BaseCapability {
   async stop () {
     await super.stop()
 
-    if (this.childManager) {
+    globalThis.platformatic.events.emit('plt:vinext:close')
+
+    const command = this.config.application.commands[this.isProduction ? 'production' : 'development']
+    if (command && this.childManager) {
       return this.stopCommand()
     }
 
@@ -109,9 +121,11 @@ export class VinextCapability extends BaseCapability {
     super.setClosing()
 
     const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
-    if (!closeConnections) return
+    if (!closeConnections) {
+      return
+    }
 
-    // In production mode with Fastify, close HTTP/2 sessions
+    // In production mode, close HTTP/2 sessions if available on the server
     if (this.isProduction && this.#server?.closeHttp2Sessions) {
       this.#server.closeHttp2Sessions()
     }
@@ -123,13 +137,30 @@ export class VinextCapability extends BaseCapability {
   }
 
   async build () {
+    await this.init()
+
     const command = this.config.application.commands.build
 
     if (command) {
-      return this.buildWithCommand(command, this.#basePath)
-    }
+      let config
+      this.once('application:worker:event:vite:config', _config => {
+        config = _config
+      })
 
-    await this.init()
+      await this.buildWithCommand(command, this.#basePath, {
+        loader: new URL('./loader.js', import.meta.url),
+        context: await this.getChildManagerContext(this.#basePath)
+      })
+
+      if (config) {
+        const basePath = cleanBasePath(config.base)
+        const outDir = resolve(this.root, config.build.outDir)
+
+        await writeFile(resolve(outDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')
+      }
+
+      return
+    }
 
     const { vite, vinext, clientOutputConfig, clientTreeshakeConfig } = await this.#importPackages()
     const config = this.#getViteConfig({}, vinext)
@@ -208,6 +239,19 @@ export class VinextCapability extends BaseCapability {
     }
 
     return { gateway }
+  }
+
+  async getChildManagerContext (basePath) {
+    const context = await super.getChildManagerContext(basePath)
+
+    context.wantsAbsoluteUrls = true
+
+    return context
+  }
+
+  notifyConfig (config) {
+    super.notifyConfig(config)
+    this.#nextConfig = config
   }
 
   _getApp () {
@@ -299,6 +343,12 @@ export class VinextCapability extends BaseCapability {
       }
     }
 
+    // RSC in Vinext needs to point to src, if available
+    let appDir = this.root
+    if (existsSync(resolve(this.root, 'src'))) {
+      appDir = resolve(this.root, 'src')
+    }
+
     return {
       root: this.root,
       base: this.#basePath,
@@ -306,12 +356,23 @@ export class VinextCapability extends BaseCapability {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
-      plugins: vinextPlugin ? [vinextPlugin({ appDir: this.root })] : [],
+      plugins: [vinextPlugin ? vinextPlugin({ appDir }) : null, this.#vinextPatcher()],
       resolve: {
         dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime']
       },
       ...overrides
     }
+  }
+
+  #createChildManager (loader, context, scripts) {
+    const childManager = new ChildManager({
+      loader,
+      context,
+      scripts
+    })
+
+    this.setupChildManagerEventsForwarding(childManager)
+    return childManager
   }
 
   async #importPackages () {
@@ -340,5 +401,68 @@ export class VinextCapability extends BaseCapability {
     }
 
     return this.#basePath
+  }
+
+  #vinextPatcher () {
+    function createSnippet (path) {
+      return `
+        const {setCacheHandler} = await import("next/cache");
+        const {CacheHandler} = await import("${path}");
+        const pltCacheHandler = new CacheHandler()
+                
+        globalThis.platformatic.events.on('plt:vinext:close', () => {
+          pltCacheHandler.close()
+        });
+        
+        setCacheHandler(pltCacheHandler);
+      `
+    }
+
+    const resolveCacheHandlerPath = () => {
+      let adapter = null
+
+      if (this.#nextConfig?.cacheHandler) {
+        adapter = 'isr'
+      } else if (this.#nextConfig?.cacheComponents) {
+        adapter = 'components'
+      }
+
+      return adapter ? getCacheHandlerPath(`${this.config.cache.adapter}-${adapter}`) : null
+    }
+
+    function needsPatching (id) {
+      const cleanId = id.startsWith('\0') ? id.slice(1) : id
+
+      // Inject into vinext-generated entries that run server-side
+      return (
+        cleanId === 'virtual:vinext-rsc-entry' ||
+        cleanId === 'virtual:vinext-app-ssr-entry' ||
+        cleanId === 'virtual:vinext-server-entry'
+      )
+    }
+
+    return {
+      name: 'plt-vinext-patcher',
+      enforce: 'post',
+      transform (code, id) {
+        if (!needsPatching(id)) {
+          return null
+        }
+
+        const adapter = resolveCacheHandlerPath()
+
+        if (!adapter) {
+          return null
+        }
+
+        const snippet = createSnippet(adapter)
+
+        if (code.includes(snippet)) {
+          return null
+        }
+
+        return { code: snippet + '\n' + code, map: null }
+      }
+    }
   }
 }

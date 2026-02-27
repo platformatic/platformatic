@@ -489,6 +489,10 @@ export class BaseCapability extends EventEmitter {
         context: { ...baseContext, isBuilding: true, ...context }
       })
 
+    if (this.childManager) {
+      this.setupChildManagerEventsForwarding(this.childManager)
+    }
+
     try {
       await this.childManager?.inject()
 
@@ -644,7 +648,7 @@ export class BaseCapability extends EventEmitter {
 
     childManager.on('event', event => {
       globalThis[kITC]?.notify('event', event)
-      this.emit('application:worker:event:' + event.event, event.payload)
+      this.emit('application:worker:event:' + event.event, ...event.payload)
     })
 
     // Forward health signals from child process to runtime

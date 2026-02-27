@@ -25,24 +25,32 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
 
   if (!config.cache?.adapter || config.cache?.enabled === false) return
 
-  const existingCacheHandlers = typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers?.default !== 'undefined'
+  const existingCacheHandlers =
+    typeof nextConfig.cacheHandler !== 'undefined' || typeof nextConfig.cacheHandlers?.default !== 'undefined'
   if (existingCacheHandlers) {
     if (!config.cache.ignoreNextConfig) {
       return logger.warn('Next.js cache handlers are already defined in next.config.js. Skipping cache configuration.')
     }
   }
 
-  const cacheComponentsConflict = typeof config.cache?.cacheComponents !== 'undefined' && typeof nextConfig.cacheComponents !== 'undefined' && config.cache?.cacheComponents !== nextConfig.cacheComponents
+  const cacheComponentsConflict =
+    typeof config.cache?.cacheComponents !== 'undefined' &&
+    typeof nextConfig.cacheComponents !== 'undefined' &&
+    config.cache?.cacheComponents !== nextConfig.cacheComponents
   if (cacheComponentsConflict) {
     if (!config.cache.ignoreNextConfig) {
-      return logger.warn('Platformatic and Next.js Cache Components configs are conflicting. Skipping cache configuration.')
+      return logger.warn(
+        'Platformatic and Next.js Cache Components configs are conflicting. Skipping cache configuration.'
+      )
     }
     nextConfig.cacheComponents = config.cache?.cacheComponents
   }
 
   if (config.cache?.cacheComponents || nextConfig.cacheComponents) {
     if (nextVersion.major <= 15) {
-      return logger.warn('Next.js Cache Components are only supported in Next.js 16 and above. Skipping cache configuration.')
+      return logger.warn(
+        'Next.js Cache Components are only supported in Next.js 16 and above. Skipping cache configuration.'
+      )
     }
     nextConfig.cacheComponents = true
     nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
@@ -106,6 +114,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new NextCapability(config[kMetadata].root, config, context)
 }
 
+export * as cachingValkeyCommon from './lib/caching/valkey-common.js'
 export * from './lib/capability.js'
 export * as errors from './lib/errors.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

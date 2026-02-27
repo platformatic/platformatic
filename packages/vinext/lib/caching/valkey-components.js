@@ -1,6 +1,7 @@
 import { ensureLoggableError } from '@platformatic/foundation'
-import { ReadableStream } from 'node:stream/web'
-import {
+import { cachingValkeyCommon } from '@platformatic/next'
+
+const {
   createPlatformaticLogger,
   deserialize,
   getConnection,
@@ -8,15 +9,15 @@ import {
   getPlatformaticSubprefix,
   keyFor,
   serialize
-} from './valkey-common.js'
+} = cachingValkeyCommon
 
 export const CACHE_HIT_METRIC = {
-  name: 'next_components_cache_valkey_hit_count',
-  help: 'Next.js Components Cache (Valkey) Hit Count'
+  name: 'vinext_components_cache_valkey_hit_count',
+  help: 'Vinext Components Cache (Valkey) Hit Count'
 }
 export const CACHE_MISS_METRIC = {
-  name: 'next_components_cache_valkey_miss_count',
-  help: 'Next.js Components Cache (Valkey) Miss Count'
+  name: 'vinext_components_cache_valkey_miss_count',
+  help: 'Vinext Components Cache (Valkey) Miss Count'
 }
 export const MAX_BATCH_SIZE = 100
 
@@ -70,11 +71,9 @@ export class CacheHandler {
     this.#logger.trace({ key: cacheKey }, 'cache get')
 
     const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
-
     let rawValue
     try {
       rawValue = await this.#store.get(key)
-
       if (!rawValue) {
         this.#cacheMissMetric?.inc()
         return
@@ -101,51 +100,36 @@ export class CacheHandler {
       return
     }
 
-    const { maxTTL: _maxTTL, meta: _meta, ...value } = raw
-
     if (this.#maxTTL < raw.revalidate) {
       try {
-        await this.#refreshKey(key, value)
+        await this.#refreshKey(key, raw)
       } catch (e) {
         this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot refresh cache key expiration in Valkey')
       }
     }
 
-    // Convert the value back to a web ReadableStream. Sob.
-    const buffer = value.value
-    value.value = new ReadableStream({
-      start (controller) {
-        controller.enqueue(buffer)
-        controller.close()
-      }
-    })
-
     this.#cacheHitMetric?.inc()
-    return value
+    return { value: raw.value, lastModified: raw.timestamp }
   }
 
-  async set (cacheKey, dataPromise, isRedisKey) {
-    const { value, ...data } = await dataPromise
-    const { expire: expireSec, tags, revalidate } = data
-
-    this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
-
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
-
+  async set (cacheKey, raw, _, isRedisKey) {
     try {
-      // Gather the value
-      const chunks = []
-      for await (const chunk of value) {
-        chunks.push(chunk)
-      }
+      const { tags, revalidate } = raw
+      const expireSec = revalidate
+
+      this.#logger.trace({ key: cacheKey, value: raw.data, tags, revalidate }, 'cache set')
+      const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
       // Compute the parameters to save
       const toSerialize = serialize({
         maxTTL: this.#maxTTL,
         meta: this.#meta,
-        value: Buffer.concat(chunks),
-        ...data
+        value: raw,
+        timestamp: Date.now(),
+        revalidate,
+        tags
       })
+
       const expire = Math.min(revalidate, expireSec, this.#maxTTL)
 
       if (expire < 1) {
@@ -181,6 +165,10 @@ export class CacheHandler {
     return Number.POSITIVE_INFINITY
   }
 
+  revalidateTag (tags) {
+    return this.updateTags(tags)
+  }
+
   async updateTags (tags) {
     if (typeof tags === 'string') {
       tags = [tags]
@@ -214,6 +202,26 @@ export class CacheHandler {
     }
   }
 
+  #registerMetrics () {
+    const { client, registry } = globalThis.platformatic.prometheus
+
+    this.#cacheHitMetric =
+      registry.getSingleMetric(CACHE_HIT_METRIC.name) ??
+      new client.Counter({
+        name: CACHE_HIT_METRIC.name,
+        help: CACHE_HIT_METRIC.help,
+        registers: [registry]
+      })
+
+    this.#cacheMissMetric =
+      registry.getSingleMetric(CACHE_MISS_METRIC.name) ??
+      new client.Counter({
+        name: CACHE_MISS_METRIC.name,
+        help: CACHE_MISS_METRIC.help,
+        registers: [registry]
+      })
+  }
+
   async #refreshKey (key, value) {
     const life = Math.round((Date.now() - value.timestamp) / 1000)
     const expire = Math.min(value.revalidate - life, this.#maxTTL)
@@ -236,27 +244,7 @@ export class CacheHandler {
   }
 
   #keyFor (key, section) {
-    return keyFor(this.#prefix, this.#subprefix, section, key)
-  }
-
-  #registerMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
-
-    this.#cacheHitMetric =
-      registry.getSingleMetric(CACHE_HIT_METRIC.name) ??
-      new client.Counter({
-        name: CACHE_HIT_METRIC.name,
-        help: CACHE_HIT_METRIC.help,
-        registers: [registry]
-      })
-
-    this.#cacheMissMetric =
-      registry.getSingleMetric(CACHE_MISS_METRIC.name) ??
-      new client.Counter({
-        name: CACHE_MISS_METRIC.name,
-        help: CACHE_MISS_METRIC.help,
-        registers: [registry]
-      })
+    return keyFor(this.#prefix, '', section, key)
   }
 }
 

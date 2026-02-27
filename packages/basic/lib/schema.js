@@ -1,7 +1,6 @@
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
-import { readFileSync } from 'node:fs'
+import { parsePackageJSON, schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = parsePackageJSON(import.meta.dirname)
 export const version = packageJson.version
 
 // This is used by applications to have common properties.

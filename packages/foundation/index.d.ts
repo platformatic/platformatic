@@ -210,6 +210,7 @@ export declare function getLatestNpmVersion (pkg: string): Promise<string | null
 export declare function getPkgManager (): string
 export declare function getPackageManager (root: string, defaultManager?: string, search?: boolean): Promise<string>
 export declare function getPlatformaticVersion (): Promise<string>
+export declare function parsePackageJSON (root: string, relativePath?: string): object
 export declare function hasDependency (packageJson: any, dependency: string): any
 export declare function splitModuleFromVersion (module: string): { module?: string; version?: string }
 export declare function detectApplicationType (

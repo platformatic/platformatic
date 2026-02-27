@@ -1,9 +1,7 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { parsePackageJSON, schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 
-export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const packageJson = parsePackageJSON(import.meta.dirname)
 export const version = packageJson.version
 
 const nest = {

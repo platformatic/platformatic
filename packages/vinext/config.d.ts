@@ -659,4 +659,13 @@ export interface PlatformaticVinextConfig {
     };
     noCompression?: boolean;
   };
+  cache?: {
+    enabled?: boolean | string;
+    adapter: "redis" | "valkey";
+    url: string;
+    prefix?: string;
+    cacheComponents?: boolean;
+    maxTTL?: number | string;
+    ignoreNextConfig?: boolean | string;
+  };
 }

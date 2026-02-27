@@ -2,15 +2,14 @@
 
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
+  parsePackageJSON,
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
 } from '@platformatic/foundation'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const packageJson = parsePackageJSON(import.meta.dirname)
 export const version = packageJson.version
 
 export const $defs = {

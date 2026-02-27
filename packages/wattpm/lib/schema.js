@@ -1,13 +1,13 @@
+import { parsePackageJSON } from '@platformatic/foundation'
 import { schema as runtimeSchema } from '@platformatic/runtime'
-import { readFile } from 'node:fs/promises'
 
-const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf-8'))
+const packageJson = parsePackageJSON(import.meta.dirname)
 
-export const version = pkg.version
+export const version = packageJson.version
 
 export const schema = {
   ...runtimeSchema,
-  $id: `https://schemas.platformatic.dev/wattpm/${pkg.version}.json`
+  $id: `https://schemas.platformatic.dev/wattpm/${packageJson.version}.json`
 }
 
 /* c8 ignore next 3 */

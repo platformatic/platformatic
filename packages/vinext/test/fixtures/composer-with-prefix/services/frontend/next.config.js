@@ -1,3 +1,1 @@
-export default {
-  basePath: globalThis.platformatic.basePath
-}
+export default {}

@@ -2123,6 +2123,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/next':
+        specifier: workspace:*
+        version: link:../next
       semver:
         specifier: ^7.6.3
         version: 7.7.4

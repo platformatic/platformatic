@@ -25,6 +25,7 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/next": "workspace:*",
     "semver": "^7.6.3"
   },
   "devDependencies": {

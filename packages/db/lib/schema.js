@@ -8,10 +8,8 @@ import {
   wrappedRuntime
 } from '@platformatic/foundation'
 import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const packageJson = parsePackageJSON(import.meta.dirname)
 export const version = packageJson.version
 
 const { plugins, openApiBase, $defs } = serviceSchemaComponents

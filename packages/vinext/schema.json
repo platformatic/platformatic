@@ -2430,6 +2430,64 @@
       },
       "default": {},
       "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "adapter": {
+          "type": "string",
+          "enum": [
+            "redis",
+            "valkey"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "cacheComponents": {
+          "type": "boolean"
+        },
+        "maxTTL": {
+          "default": 604800,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ignoreNextConfig": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "adapter",
+        "url"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

@@ -16,7 +16,7 @@ export default defineConfig({
           config.vite.server.hmr.path = basePath
         },
         'astro:config:done': ({ config }) => {
-          globalThis[Symbol.for('plt.children.itc')]?.notify('config', config, process.pid)
+          globalThis.platformatic.events.emitAndNotify('vite:config', config, process.pid)
         }
       }
     }
