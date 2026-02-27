@@ -1014,6 +1014,9 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24]
+    env:
+      VALKEY_HOST: localhost
+      VALKEY_PORT: 6379
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -1028,5 +1031,7 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Start docker containers for testing
+        run: docker compose up -d valkey
       - name: Run vinext package test suite
         run: cd packages/vinext && pnpm test && pnpm run lint
