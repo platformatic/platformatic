@@ -3,7 +3,7 @@ title: Overview
 label: Vinext (Experimental)
 ---
 
-import SharedOverview from '../node/_shared-overview.md';
+import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Vinext (Experimental)
 
@@ -44,6 +44,14 @@ Create a `watt.json` (or `platformatic.application.json`) in your frontend folde
 ## Notes on base paths
 
 When using a non-root base path, keep Vite/Vinext base settings aligned with your routing setup (for example `base: '/frontend/'` and `basePath: '/frontend'`).
+
+## Caching layer
+
+Platformatic Vinext includes a cache integration layer for Vinext/Next-compatible caching APIs.
+
+- Configure cache backends from Watt configuration through the `cache` section.
+- Supports Valkey/Redis adapters.
+- Works with `next/cache` APIs such as `revalidateTag`, `revalidatePath`, `cacheLife`, `cacheTag`, and `"use cache"`.
 
 ## Architecture
 

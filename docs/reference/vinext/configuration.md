@@ -30,6 +30,34 @@ Vinext-specific options:
 
 App Router detection is automatic (via `app/` or `src/app/`).
 
+## `cache`
+
+Configures the Vinext caching layer used by `next/cache` APIs (`revalidateTag`, `revalidatePath`, `cacheLife`, `cacheTag`, `"use cache"`) and fetch caching semantics.
+
+Supported object properties:
+
+- **`enabled`** (`boolean` or `string`): If `false`, disables the configured cache adapter. Default: `true`.
+- **`adapter`**: Cache adapter to use. Supported values are `valkey` and `redis` (`redis` is treated as a synonym of `valkey`).
+- **`url`**: The Valkey/Redis connection URL.
+- **`prefix`**: Prefix used for cache keys.
+- **`cacheComponents`**: Enables Cache Components mode. Alternative to enabling `cacheComponents` in `next.config.*`.
+- **`maxTTL`**: Maximum key lifetime, in seconds. Default is `604800` (one week).
+- **`ignoreNextConfig`**: If `true`, Platformatic cache settings take precedence over cache settings already defined in `next.config.*`.
+
+Example:
+
+```json
+{
+  "cache": {
+    "adapter": "valkey",
+    "url": "redis://127.0.0.1:6379",
+    "prefix": "plt:vinext:",
+    "maxTTL": 604800,
+    "cacheComponents": true
+  }
+}
+```
+
 ## `logger`
 
 Configures application logging. See [runtime logger options](../runtime/configuration.md#logger).
