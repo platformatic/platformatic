@@ -1,6 +1,6 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { request } from 'undici'
 import { hasJavascriptFiles } from './file-system.js'
@@ -55,6 +55,15 @@ export function getPkgManager () {
   const separatorPos = pmSpec.lastIndexOf('/')
   const name = pmSpec.substring(0, separatorPos)
   return name || 'npm'
+}
+
+// This should never fail, except if the package.json is bundled in systems like Vite RSC
+export function parsePackageJSON (root, relativePath = '..') {
+  try {
+    return JSON.parse(readFileSync(resolve(root, `${relativePath}/package.json`), 'utf8'))
+  } catch (err) {
+    return { name: dirname(root), version: '0.0.0' }
+  }
 }
 
 /**

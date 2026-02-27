@@ -20,7 +20,7 @@ export default defineConfig({
     {
       name: 'platformatic',
       configResolved: config => {
-        globalThis[Symbol.for('plt.children.itc')]?.notify('config', config)
+        globalThis.platformatic.events.emitAndNotify('vite:config', config)
       }
     }
   ],

@@ -1,7 +1,6 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { parsePackageJSON } from '@platformatic/foundation'
 
-const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf-8'))
+const packageJson = parsePackageJSON(import.meta.dirname)
 
 export const name = packageJson.name
 export const version = packageJson.version

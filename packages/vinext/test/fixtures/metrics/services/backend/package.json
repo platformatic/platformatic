@@ -1,0 +1,7 @@
+{
+  "name": "service",
+  "type": "commonjs",
+  "dependencies": {
+    "@platformatic/service": "^2.3.1"
+  }
+}

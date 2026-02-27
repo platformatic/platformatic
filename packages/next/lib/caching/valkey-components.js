@@ -62,6 +62,10 @@ export class CacheHandler {
     }
   }
 
+  close () {
+    this.#store.quit()
+  }
+
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
 

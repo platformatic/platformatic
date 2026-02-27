@@ -229,6 +229,12 @@ const sidebars = {
               label: 'Vite',
               collapsed: true,
               items: ['reference/vite/overview', 'reference/vite/configuration']
+            },
+            {
+              type: 'category',
+              label: 'Vinext',
+              collapsed: true,
+              items: ['reference/vinext/overview', 'reference/vinext/configuration']
             }
           ]
         },

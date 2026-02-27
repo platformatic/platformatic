@@ -1,6 +1,6 @@
 import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
-import { createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { hostname } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'

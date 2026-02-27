@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "backend",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/backend"
+        }
+      },
+      {
+        "id": "frontend"
+      }
+    ]
+  },
+  "watch": false,
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      "./routes"
+    ]
+  }
+}

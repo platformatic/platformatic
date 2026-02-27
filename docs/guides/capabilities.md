@@ -90,6 +90,12 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Modern frontend applications with fast development server
 - **Features**: Hot module replacement, build optimization, plugin ecosystem
 
+##### [`@platformatic/vinext` (Experimental)](../reference/vinext/overview.md)
+
+- **Description**: Experimental Vinext integration for running Next.js-compatible apps on Vite
+- **Use Case**: Vinext applications using App Router or Pages Router under Watt
+- **Features**: App/Pages router support, Vite-based dev/build lifecycle, gateway integration
+
 ##### [`@platformatic/astro`](../reference/astro/overview.md)
 
 - **Description**: Astro framework integration
