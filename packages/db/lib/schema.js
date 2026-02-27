@@ -2,6 +2,7 @@
 
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
+  parsePackageJSON,
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
