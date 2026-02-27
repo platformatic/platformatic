@@ -370,6 +370,51 @@ In this model, relative image URLs are fetched from `frontend.plt.local`, while 
 
 ---
 
+## 10) Kubernetes ingress example (NGINX Ingress Controller)
+
+If you expose `frontend` and `optimizer` as separate Kubernetes Services, you can route image requests at the ingress layer:
+
+- `/_next/image` -> `optimizer` Service
+- all other paths -> `frontend` Service
+
+Example `Ingress` resource:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: next-image-optimizer
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /_next/image
+            pathType: Exact
+            backend:
+              service:
+                name: optimizer
+                port:
+                  number: 3044
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3043
+```
+
+Notes:
+
+- `pathType: Exact` on `/_next/image` prevents broad prefix matching from capturing the route.
+- Service names/ports must match your Kubernetes `Service` definitions.
+- If you expose only the Platformatic Runtime `gateway` service externally, keep ingress pointing to `gateway` and let `proxy.routes` handle `/_next/image` internally.
+
+---
+
 ## Storage options
 
 Image optimization jobs run through a queue. You can control queue persistence with `next.imageOptimizer.storage`.
