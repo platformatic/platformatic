@@ -90,6 +90,12 @@ export type PlatformaticRuntimeConfig = {
                */
               directory?: string;
             };
+        management?:
+          | boolean
+          | {
+              enabled?: boolean;
+              operations?: string[];
+            };
       };
     };
   };
