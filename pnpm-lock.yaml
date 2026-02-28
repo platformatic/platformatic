@@ -19,7 +19,7 @@ importers:
     dependencies:
       '@fastify/middie':
         specifier: ^9.0.0
-        version: 9.1.0
+        version: 9.2.0
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.3.0
@@ -3311,8 +3311,8 @@ packages:
   '@fastify/merge-json-schemas@0.2.1':
     resolution: {integrity: sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A==}
 
-  '@fastify/middie@9.1.0':
-    resolution: {integrity: sha512-cObruXSFB5CCqn2m9sF5ktf6pNQX+QQth2N39FGXXV+8M4O+dWzkvqjqzwpIWvwvIffP9+O7KaLN+5xVgFFdWw==}
+  '@fastify/middie@9.2.0':
+    resolution: {integrity: sha512-ZPH8sM83f+bBmIHNT0KixdVQ/02Ijgs3TSpDIC5I7XMQLJ4eVTGRRTigT1Bchfgtea+yZ/O2xDdGhkDBRouUuQ==}
 
   '@fastify/multipart@9.4.0':
     resolution: {integrity: sha512-Z404bzZeLSXTBmp/trCBuoVFX28pM7rhv849Q5TsbTFZHuk1lc4QjQITTPK92DKVpXmNtJXeHSSc7GYvqFpxAQ==}
@@ -12058,7 +12058,7 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  '@fastify/middie@9.1.0':
+  '@fastify/middie@9.2.0':
     dependencies:
       '@fastify/error': 4.2.0
       fastify-plugin: 5.1.0
