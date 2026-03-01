@@ -22,6 +22,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 
 - **[Capabilities](./guides/capabilities.md)** - Understand and use Platformatic's framework integration capabilities
 - **[Frameworks](./guides/frameworks.md)** - Integrate with popular frontend and backend frameworks
+- **[Run Next.js Image Optimizer as a Dedicated Service](./guides/next-image-optimizer.md)** - Set up a standalone `/_next/image` service with local fallback resolution
 
 ## Deployment & Operations
 

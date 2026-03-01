@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "optimizer",
+  "services": [
+    {
+      "id": "optimizer",
+      "path": "./services/optimizer"
+    },
+    {
+      "id": "fallback",
+      "path": "./services/fallback"
+    }
+  ],
+  "logger": {
+    "level": "fatal"
+  },
+  "undici": {
+    "interceptors": [
+      {
+        "module": "./mock-external-image.mjs",
+        "options": {}
+      }
+    ]
+  }
+}

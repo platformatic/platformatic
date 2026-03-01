@@ -2,6 +2,7 @@ import { transform as basicTransform, resolve, validationOptions } from '@platfo
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
+import { NextImageOptimizerCapability } from './lib/image-optimizer.js'
 import { schema } from './lib/schema.js'
 
 /* c8 ignore next 9 */
@@ -103,9 +104,12 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
 export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
-  return new NextCapability(config[kMetadata].root, config, context)
+
+  const Capability = config.next?.imageOptimizer?.enabled ? NextImageOptimizerCapability : NextCapability
+  return new Capability(config[kMetadata].root, config, context)
 }
 
 export * from './lib/capability.js'
 export * as errors from './lib/errors.js'
+export * from './lib/image-optimizer.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

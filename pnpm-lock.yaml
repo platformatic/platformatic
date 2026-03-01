@@ -1066,12 +1066,18 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/image-optimizer':
+        specifier: ^0.2.0
+        version: 0.2.0
       amaro:
         specifier: ^0.3.0
         version: 0.3.2
       iovalkey:
         specifier: ^0.3.0
         version: 0.3.3
+      light-my-request:
+        specifier: ^6.0.0
+        version: 6.6.0
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.8
@@ -1107,7 +1113,7 @@ importers:
         specifier: ^9.5.1
         version: 9.6.1
       fastify:
-        specifier: ^5.7.0
+        specifier: ^5.7.3
         version: 5.7.4
       json-schema-to-typescript:
         specifier: ^15.0.1
@@ -4512,6 +4518,14 @@ packages:
   '@platformatic/http-metrics@0.3.0':
     resolution: {integrity: sha512-e+wQJDCd9v7yKeV4u30ibAe5uGB14k+jDw1w9FqsM3tDgFY0UEHb24hJR9j2bVa6091e+ppGy3L4LhyUR92M0w==}
 
+  '@platformatic/image-optimizer@0.2.0':
+    resolution: {integrity: sha512-js1G8IAEcEly9mLXwDyrVoE1dHy/Vx/sK9i75VYK3K7ZKp4uGILuDhkd0HgU8ZCKqLUjXnvPyRCNl+V8hNvkig==}
+    engines: {node: '>= 22.19.0'}
+
+  '@platformatic/job-queue@0.3.0':
+    resolution: {integrity: sha512-3VMkAZSbCkNRwJpp6FL6atPegKVKbfpbPdfU91C4433B0YBLT4uOc6hy/x9Q+PgPeVsa/jTpzH4IjTuUqJqQ5g==}
+    engines: {node: '>=22.19.0'}
+
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
 
@@ -6827,6 +6841,10 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
+  fast-write-atomic@0.4.0:
+    resolution: {integrity: sha512-O0AGqOsuOgsVXFiF/vIm7c+NHRZB6c6IDMBVPWc8rLGWVW7FYaBBfzhqxKlKyGKVF5tPR4drUOxE02lDiWjbSg==}
+    engines: {node: '>=20'}
+
   fastest-levenshtein@1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
     engines: {node: '>= 4.9.1'}
@@ -7321,6 +7339,10 @@ packages:
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
 
+  http-errors-enhanced@4.0.2:
+    resolution: {integrity: sha512-5EXN1gmhJVvuWpNfz+RclWvLnnENEXNMPfww3gm30H9mQzPF4QSBj/MD5FRkVDxGIUhO/cR2GSLCd/6C6xpBcw==}
+    engines: {node: '>= 22.21.0'}
+
   http-errors@1.8.1:
     resolution: {integrity: sha512-Kpk9Sm7NmI+RHhnj6OIWDI1d6fIoFAtFt9RLaTMRlg/8w49juAStsrBgp0Dp4OdxdVbRIeKhtCUvoi/RuAhO4g==}
     engines: {node: '>= 0.6'}
@@ -7440,6 +7462,10 @@ packages:
     resolution: {integrity: sha512-VI5tMCdeoxZWU5vjHWsiE/Su76JGhBvWF1MJnV9ZtGltHk9BmD48oDq8Tj8haZ85aceXZMxLNDQZRVo5QKNgXA==}
     engines: {node: '>=12.22.0'}
 
+  iovalkey@0.2.2:
+    resolution: {integrity: sha512-7eVmLOYV2UamZ/YPXuUwTu/4zBDxXcfjj/wmOwlKBBhU2qjg60Th0Y/cqfED3OxNAhc6hUV2Ft4eQMCKi2EMpQ==}
+    engines: {node: '>=18.12.0'}
+
   iovalkey@0.3.3:
     resolution: {integrity: sha512-4rTJX6Q5wTYEvxboXi8DsEiUo+OvqJGtLYOSGm37KpdRXsG5XJjbVtYKGJpPSWP+QT7rWscA4vsrdmzbEbenpw==}
     engines: {node: '>=18.12.0'}
@@ -7464,6 +7490,9 @@ packages:
 
   is-alphanumerical@2.0.1:
     resolution: {integrity: sha512-hmbYhX/9MUMF5uh7tOXyK/n0ZvWpad5caBA17GsC6vyuCqaWliRG5K1qS9inmUhEMaOBIW7/whAnSwveW/LtZw==}
+
+  is-animated@2.0.2:
+    resolution: {integrity: sha512-+Hi3UdXHV/3ZgxdO9Ik45ciNhDlYrDOIdGz7Cj7ybddWnYBi4kwBuGMn79Xa2Js4VldgX5e3943Djsr/KYSPbA==}
 
   is-arguments@1.2.0:
     resolution: {integrity: sha512-7bVbi0huj/wrIAOzb8U1aszg9kdi3KN/CyU19CTI7tAoZYEZoL9yCDXpbXN+uPsuWnP02cyug1gleqq+TU+YCA==}
@@ -12197,8 +12226,7 @@ snapshots:
 
   '@iarna/toml@2.2.5': {}
 
-  '@img/colour@1.0.0':
-    optional: true
+  '@img/colour@1.0.0': {}
 
   '@img/sharp-darwin-arm64@0.34.5':
     optionalDependencies:
@@ -13450,6 +13478,28 @@ snapshots:
   '@platformatic/http-metrics@0.3.0':
     dependencies:
       '@platformatic/prom-client': 1.0.0
+
+  '@platformatic/image-optimizer@0.2.0':
+    dependencies:
+      http-errors-enhanced: 4.0.2
+      is-animated: 2.0.2
+      sharp: 0.34.5
+      undici: 7.22.0
+    optionalDependencies:
+      '@platformatic/job-queue': 0.3.0
+      iovalkey: 0.3.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@platformatic/job-queue@0.3.0':
+    dependencies:
+      pino: 10.3.1
+    optionalDependencies:
+      fast-write-atomic: 0.4.0
+      iovalkey: 0.2.2
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
 
   '@platformatic/openapi-schema-validator@3.0.0':
     dependencies:
@@ -16548,6 +16598,9 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
+  fast-write-atomic@0.4.0:
+    optional: true
+
   fastest-levenshtein@1.0.16: {}
 
   fastfall@1.5.1:
@@ -17190,6 +17243,8 @@ snapshots:
 
   http-cache-semantics@4.2.0: {}
 
+  http-errors-enhanced@4.0.2: {}
+
   http-errors@1.8.1:
     dependencies:
       depd: 1.1.2
@@ -17325,6 +17380,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  iovalkey@0.2.2:
+    dependencies:
+      '@ioredis/commands': 1.5.0
+      cluster-key-slot: 1.1.2
+      debug: 4.4.3
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
   iovalkey@0.3.3:
     dependencies:
       '@iovalkey/commands': 0.1.0
@@ -17353,6 +17423,8 @@ snapshots:
     dependencies:
       is-alphabetical: 2.0.1
       is-decimal: 2.0.1
+
+  is-animated@2.0.2: {}
 
   is-arguments@1.2.0:
     dependencies:
@@ -20448,7 +20520,6 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.5
       '@img/sharp-win32-ia32': 0.34.5
       '@img/sharp-win32-x64': 0.34.5
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:

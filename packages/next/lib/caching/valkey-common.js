@@ -1,6 +1,6 @@
 import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
-import { createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { hostname } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,13 +11,6 @@ const require = createRequire(import.meta.url)
 
 let Redis
 let msgpackr
-
-function loadMsgpackr () {
-  if (!msgpackr) {
-    msgpackr = require('msgpackr')
-  }
-  return msgpackr
-}
 
 globalThis.platformatic ??= {}
 globalThis.platformatic.valkeyClients = new Map()
@@ -42,14 +35,22 @@ export function keyFor (prefix, subprefix, section, key) {
   return result
 }
 
+export function ensureRedis () {
+  if (!Redis) {
+    Redis = require('iovalkey').Redis
+  }
+}
+
+export function ensureMsgpackr () {
+  if (!msgpackr) {
+    msgpackr = require('msgpackr')
+  }
+}
+
 export function getConnection (url) {
   let client = globalThis.platformatic.valkeyClients.get(url)
 
   if (!client) {
-    if (!Redis) {
-      Redis = require('iovalkey').Redis
-      loadMsgpackr()
-    }
     client = new Redis(url, { enableAutoPipelining: true })
     globalThis.platformatic.valkeyClients.set(url, client)
 
@@ -109,9 +110,9 @@ export function getPlatformaticMeta () {
 }
 
 export function serialize (data) {
-  return loadMsgpackr().pack(data).toString('base64url')
+  return msgpackr.pack(data).toString('base64url')
 }
 
 export function deserialize (data) {
-  return loadMsgpackr().unpack(Buffer.from(data, 'base64url'))
+  return msgpackr.unpack(Buffer.from(data, 'base64url'))
 }
