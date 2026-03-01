@@ -275,6 +275,21 @@ async function main () {
   globalThis[kITC] = itc
   globalThis.platformatic.itc = itc
 
+  // Setup management client for privileged applications
+  if (applicationConfig.management) {
+    const mgmtEnabled = typeof applicationConfig.management === 'boolean'
+      ? applicationConfig.management
+      : applicationConfig.management.enabled !== false
+
+    if (mgmtEnabled) {
+      const { ManagementClient } = await import('./management.js')
+      const ops = typeof applicationConfig.management === 'object'
+        ? applicationConfig.management.operations
+        : undefined
+      globalThis.platformatic.management = new ManagementClient(ops)
+    }
+  }
+
   initHealthSignalsApi({
     workerId: workerData.worker.id,
     applicationId: applicationConfig.id

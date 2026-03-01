@@ -79,6 +79,10 @@ export interface PlatformaticComposerConfig {
           customLevels?: {
             [k: string]: unknown;
           };
+          openTelemetryExporter?: {
+            protocol: "grpc" | "http";
+            url: string;
+          };
           [k: string]: unknown;
         };
     loggerInstance?: {
@@ -242,6 +246,10 @@ export interface PlatformaticComposerConfig {
       messageKey?: string;
       customLevels?: {
         [k: string]: unknown;
+      };
+      openTelemetryExporter?: {
+        protocol: "grpc" | "http";
+        url: string;
       };
       [k: string]: unknown;
     };
@@ -873,6 +881,8 @@ export interface PlatformaticComposerConfig {
       proxy?:
         | false
         | {
+            methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS")[];
+            routes?: string[];
             upstream?: string;
             prefix?: string;
             hostname?: string;
