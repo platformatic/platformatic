@@ -377,6 +377,8 @@ If you expose `frontend` and `optimizer` as separate Kubernetes Services, you ca
 - `/_next/image` -> `optimizer` Service
 - all other paths -> `frontend` Service
 
+![Architecture diagram](./next-image-optimizer/kubernetes.png)
+
 Example `Ingress` resource:
 
 ```yaml
