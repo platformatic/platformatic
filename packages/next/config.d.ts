@@ -662,6 +662,26 @@ export interface PlatformaticNextJsConfig {
       cert?: string;
       ca?: string;
     };
+    imageOptimizer?: {
+      enabled: boolean;
+      fallback: string;
+      storage?:
+        | {
+            type: "memory";
+          }
+        | {
+            type: "filesystem";
+            path?: string;
+          }
+        | {
+            type: "redis" | "valkey";
+            url: string;
+            prefix?: string;
+            db?: number | string;
+          };
+      timeout?: number | string;
+      maxAttempts?: number | string;
+    };
   };
   cache?: {
     enabled?: boolean | string;

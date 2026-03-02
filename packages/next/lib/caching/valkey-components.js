@@ -3,6 +3,8 @@ import { ReadableStream } from 'node:stream/web'
 import {
   createPlatformaticLogger,
   deserialize,
+  ensureMsgpackr,
+  ensureRedis,
   getConnection,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
@@ -37,6 +39,9 @@ export class CacheHandler {
   #cacheMissMetric
 
   constructor () {
+    ensureRedis()
+    ensureMsgpackr()
+
     this.#config ??= globalThis.platformatic.config.cache
     this.#logger ??= createPlatformaticLogger()
     this.#store ??= getConnection(this.#config.url)

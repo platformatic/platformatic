@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.37.0.json",
+  "logger": {
+    "level": "fatal"
+  },
+  "next": {
+    "imageOptimizer": {
+      "enabled": true,
+      "fallback": "fallback"
+    }
+  }
+}
