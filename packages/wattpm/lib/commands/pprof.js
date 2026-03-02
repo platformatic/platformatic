@@ -3,10 +3,9 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { getSocket } from '../utils.js'
 
-export async function pprofStartCommand (logger, args) {
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+export async function pprofStartCommand (context, logger, args) {
+  const client = new RuntimeApiClient({ logger, socket: context.socket })
 
   try {
     const { positionals, values } = parseArgs(
@@ -76,8 +75,8 @@ export async function pprofStartCommand (logger, args) {
   }
 }
 
-export async function pprofStopCommand (logger, args) {
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+export async function pprofStopCommand (context, logger, args) {
+  const client = new RuntimeApiClient({ logger, socket: context.socket })
 
   try {
     const { positionals, values } = parseArgs(
@@ -155,9 +154,9 @@ export async function pprofCommand (logger, args) {
 
   switch (subcommand) {
     case 'start':
-      return pprofStartCommand(logger, restArgs)
+      return pprofStartCommand(this, logger, restArgs)
     case 'stop':
-      return pprofStopCommand(logger, restArgs)
+      return pprofStopCommand(this, logger, restArgs)
     default:
       return logFatalError(logger, `Please provide a pprof subcommand between ${bold('start')} and ${bold('stop')}.`)
   }

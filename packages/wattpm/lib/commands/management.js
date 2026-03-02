@@ -3,7 +3,6 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold, reset } from 'colorette'
 import { sep } from 'node:path'
 import { getBorderCharacters, table } from 'table'
-import { getSocket } from '../utils.js'
 
 const ONE_DAY = 3600 * 24
 const ONE_HOUR = 3600
@@ -62,7 +61,7 @@ function formatDuration (duration) {
 }
 
 export async function psCommand (logger) {
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const runtimes = await client.getRuntimes()
 
@@ -93,7 +92,7 @@ export async function psCommand (logger) {
 
 export async function applicationsCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
 
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
@@ -131,7 +130,7 @@ export async function envCommand (logger, args) {
   const { values, positionals: allPositionals } = parseArgs(args, { table: { type: 'boolean', short: 't' } }, false)
 
   let application
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]
@@ -177,7 +176,7 @@ export async function configCommand (logger, args) {
   const { positionals: allPositionals } = parseArgs(args, {}, false)
 
   let application
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]

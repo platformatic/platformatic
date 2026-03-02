@@ -207,7 +207,15 @@ export async function installCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config,
+    true,
+    true,
+    true,
+    this.executableName
+  )
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -241,7 +249,15 @@ export async function updateCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config,
+    true,
+    true,
+    true,
+    this.executableName
+  )
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {

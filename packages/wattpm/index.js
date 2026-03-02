@@ -1,4 +1,4 @@
-import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
+import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
 import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
@@ -15,12 +15,11 @@ import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
 import { version } from './lib/schema.js'
-import { setSocket } from './lib/utils.js'
 
 export * from './lib/schema.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: getExecutableId() }
+  globalThis.platformatic = { executable: this.executableId }
 
   const options = {
     'no-pretty': {
@@ -48,6 +47,7 @@ export async function main () {
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
 
   const logger = createCliLogger('info', values['no-pretty'])
+  this.logger = logger
 
   if (values.version || unparsed[0] === 'version') {
     console.log(version)
@@ -55,19 +55,19 @@ export async function main () {
   }
 
   if (values.help) {
-    helpCommand(logger, [])
+    helpCommand.call(this, logger, [])
     return
   } else if (unparsed.includes('-h') || unparsed.includes('--help')) {
-    helpCommand(logger, unparsed)
+    helpCommand.call(this, logger, unparsed)
     return
   }
 
   if (values.verbose) {
-    setVerbose(true)
+    this.verbose = true
   }
 
   if (values.socket) {
-    setSocket(values.socket)
+    this.socket = values.socket
   }
 
   let command
@@ -139,7 +139,8 @@ export async function main () {
       break
     default:
       if (requestedCommand) {
-        const applicationsCommands = await loadApplicationsCommands()
+        const applicationsCommands = await loadApplicationsCommands(this.executableName)
+        console.log(applicationsCommands)
         const applicationCommand = applicationsCommands.commands[requestedCommand]
 
         if (applicationCommand) {
@@ -154,7 +155,7 @@ export async function main () {
   if (!command) {
     logFatalError(
       logger,
-      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${this.executableId} help"`)} to see available commands.`
     )
 
     return
@@ -162,8 +163,12 @@ export async function main () {
 
   if (applicationCommandContext) {
     process.chdir(applicationCommandContext.path)
-    return command(logger, applicationCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
+    return command.call(this, logger, applicationCommandContext.config, unparsed.slice(1), {
+      colorette,
+      parseArgs,
+      logFatalError
+    })
   } else {
-    await command(logger, unparsed.slice(1))
+    await command.call(this, logger, unparsed.slice(1))
   }
 }

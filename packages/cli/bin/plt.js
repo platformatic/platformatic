@@ -14,10 +14,8 @@ try {
 }
 
 // Load via dynamic import so all modules benefit from compile cache
-const { checkNodeVersionForApplications, setExecutableId, setExecutableName } = await import('@platformatic/foundation')
+const { checkNodeVersionForApplications, createCLIContext } = await import('@platformatic/foundation')
 const { main } = await import('wattpm')
 
-setExecutableId('plt')
-setExecutableName('Platformatic')
 checkNodeVersionForApplications()
-await main()
+await main.call(createCLIContext('plt', 'Platformatic'))

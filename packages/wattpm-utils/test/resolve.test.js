@@ -184,7 +184,7 @@ test('resolve - should install dependencies using a different package manager', 
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'main')
 })
 
-test('install - should respect the application package manager, if any', async t => {
+test('resolve - should respect the application package manager, if any', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))

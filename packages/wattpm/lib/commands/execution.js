@@ -11,7 +11,6 @@ import { create } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
-import { getSocket } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -33,7 +32,7 @@ export async function devCommand (logger, args) {
   )
   const root = getRoot(positionals)
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -108,7 +107,7 @@ export async function startCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -132,7 +131,7 @@ export async function startCommand (logger, args) {
 export async function stopCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 
@@ -154,7 +153,7 @@ export async function stopCommand (logger, args) {
 export async function restartCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, positionals)
 
@@ -180,7 +179,7 @@ export async function restartCommand (logger, args) {
 export async function reloadCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime] = await getMatchingRuntime(client, positionals)
 

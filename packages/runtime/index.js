@@ -82,14 +82,22 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 }
 
-export async function loadApplicationsCommands () {
+export async function loadApplicationsCommands (executableName = '') {
   const applications = {}
   const commands = {}
   const help = {}
 
   let config
   try {
-    const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
+    const file = await findRuntimeConfigurationFile(
+      abstractLogger,
+      process.cwd(),
+      null,
+      false,
+      false,
+      true,
+      executableName
+    )
 
     /* c8 ignore next 3 - Hard to test */
     if (!file) {

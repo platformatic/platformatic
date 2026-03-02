@@ -69,7 +69,9 @@ export async function patchConfig (logger, configurationFile, patchPath) {
       applications: {}
     }
 
-    const applications = Object.fromEntries(loaded.runtime.applications.map(application => [application.id, application]))
+    const applications = Object.fromEntries(
+      loaded.runtime.applications.map(application => [application.id, application])
+    )
 
     // Load configuration for all applications
     for (const application of loaded.runtime.applications) {
@@ -165,7 +167,15 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config,
+    true,
+    true,
+    true,
+    this.executableName
+  )
 
   /* c8 ignore next 3 */
   if (!configurationFile) {
