@@ -281,6 +281,10 @@ export async function prepareApplication (config, application, defaultWorkers) {
     application.watch = config.watch
   }
 
+  if (typeof application.management === 'undefined' && config.management) {
+    application.management = config.management
+  }
+
   return application
 }
 

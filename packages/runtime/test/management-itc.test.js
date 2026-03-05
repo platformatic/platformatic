@@ -6,6 +6,95 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+// --- Runtime-level management tests ---
+
+test('management ITC - runtime-level management enables management for all apps', async t => {
+  const configFile = join(fixturesDir, 'management-itc-runtime')
+  const runtime = await createRuntime(configFile, null)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const url = await runtime.start()
+
+  // app1 (entrypoint) has management
+  {
+    const res = await request(url + '/has-management')
+    deepStrictEqual(res.statusCode, 200)
+    const body = await res.body.json()
+    strictEqual(body.has, true)
+  }
+
+  // app2 also has management (inherited from runtime)
+  {
+    const res = await runtime.inject('app2', { method: 'GET', url: '/has-management' })
+    const body = JSON.parse(res.body)
+    strictEqual(body.has, true)
+  }
+})
+
+test('management ITC - runtime-level management allows operations on all apps', async t => {
+  const configFile = join(fixturesDir, 'management-itc-runtime')
+  const runtime = await createRuntime(configFile, null)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const url = await runtime.start()
+
+  // app1 can call getRuntimeStatus
+  {
+    const res = await request(url + '/status')
+    deepStrictEqual(res.statusCode, 200)
+    const body = await res.body.json()
+    strictEqual(body.status, 'started')
+  }
+
+  // app2 can also call getRuntimeStatus
+  {
+    const res = await runtime.inject('app2', { method: 'GET', url: '/status' })
+    const body = JSON.parse(res.body)
+    strictEqual(body.status, 'started')
+  }
+
+  // app1 can get applications ids
+  {
+    const res = await request(url + '/applications-ids')
+    deepStrictEqual(res.statusCode, 200)
+    const body = await res.body.json()
+    ok(body.ids.includes('app1'))
+    ok(body.ids.includes('app2'))
+  }
+})
+
+test('management ITC - per-app management: false overrides runtime-level management: true', async t => {
+  const configFile = join(fixturesDir, 'management-itc-runtime-override')
+  const runtime = await createRuntime(configFile, null)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const url = await runtime.start()
+
+  // app1 has management (inherited from runtime)
+  {
+    const res = await request(url + '/has-management')
+    deepStrictEqual(res.statusCode, 200)
+    const body = await res.body.json()
+    strictEqual(body.has, true)
+  }
+
+  // app2 explicitly set management: false, so no management
+  {
+    const res = await runtime.inject('app2', { method: 'GET', url: '/has-management' })
+    const body = JSON.parse(res.body)
+    strictEqual(body.has, false)
+  }
+})
+
 test('management ITC - privileged app has management client', async t => {
   const configFile = join(fixturesDir, 'management-itc')
   const runtime = await createRuntime(configFile, null)

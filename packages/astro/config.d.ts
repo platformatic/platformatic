@@ -332,6 +332,12 @@ export interface PlatformaticAstroConfig {
            */
           socket?: string;
         };
+    management?:
+      | boolean
+      | {
+          enabled?: boolean;
+          operations?: string[];
+        };
     metrics?:
       | boolean
       | {

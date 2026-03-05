@@ -332,6 +332,12 @@ export interface PlatformaticReactRouterConfig {
            */
           socket?: string;
         };
+    management?:
+      | boolean
+      | {
+          enabled?: boolean;
+          operations?: string[];
+        };
     metrics?:
       | boolean
       | {

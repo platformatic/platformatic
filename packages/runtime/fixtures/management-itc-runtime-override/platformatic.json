@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.39.0.json",
+  "watch": false,
+  "managementApi": false,
+  "metrics": false,
+  "management": true,
+  "entrypoint": "app1",
+  "services": [
+    {
+      "id": "app1",
+      "path": "app1"
+    },
+    {
+      "id": "app2",
+      "path": "app2",
+      "management": false
+    }
+  ],
+  "logger": {
+    "level": "warn"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
+}

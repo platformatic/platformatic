@@ -220,6 +220,12 @@ export interface PlatformaticBasicConfig {
            */
           socket?: string;
         };
+    management?:
+      | boolean
+      | {
+          enabled?: boolean;
+          operations?: string[];
+        };
     metrics?:
       | boolean
       | {
