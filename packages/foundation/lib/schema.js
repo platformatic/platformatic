@@ -900,7 +900,23 @@ export const application = {
         }
       }
     },
-    compileCache
+    compileCache,
+    management: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean', default: true },
+            operations: {
+              type: 'array',
+              items: { type: 'string' }
+            }
+          },
+          additionalProperties: false
+        }
+      ]
+    }
   }
 }
 
@@ -1456,7 +1472,8 @@ export const applicationsUnwrappablePropertiesList = [
   'url',
   'gitBranch',
   'dependencies',
-  'useHttp'
+  'useHttp',
+  'management'
 ]
 
 export const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)

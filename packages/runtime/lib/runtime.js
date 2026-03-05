@@ -42,6 +42,7 @@ import {
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
+import { createManagementHandlers } from './management-handlers.js'
 import { createChannelCreationHook } from './policies.js'
 import { startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
@@ -1795,6 +1796,25 @@ export class Runtime extends EventEmitter {
       port: worker,
       handlers: this.#workerITCHandlers
     })
+
+    // Register management ITC handlers for privileged applications
+    if (applicationConfig.management) {
+      const mgmtEnabled = typeof applicationConfig.management === 'boolean'
+        ? applicationConfig.management
+        : applicationConfig.management.enabled !== false
+
+      if (mgmtEnabled) {
+        const allowedOps = typeof applicationConfig.management === 'object'
+          ? applicationConfig.management.operations
+          : undefined
+
+        const handlers = createManagementHandlers(this, allowedOps)
+        for (const [name, handler] of handlers) {
+          worker[kITC].handle(name, handler)
+        }
+      }
+    }
+
     worker[kITC].listen()
 
     // Forward events from the worker

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.69.0.json",
+  "watch": false,
+  "managementApi": false,
+  "metrics": false,
+  "entrypoint": "privileged",
+  "services": [
+    {
+      "id": "privileged",
+      "path": "privileged",
+      "management": true
+    },
+    {
+      "id": "restricted",
+      "path": "restricted",
+      "management": {
+        "operations": ["getRuntimeStatus", "getApplicationsIds", "getApplicationDetails"]
+      }
+    },
+    {
+      "id": "unprivileged",
+      "path": "unprivileged"
+    }
+  ],
+  "logger": {
+    "level": "warn"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
+}

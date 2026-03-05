@@ -84,6 +84,7 @@ runtime. Each application object supports the following settings:
   See the [Node.js Permission Model Constraints](https://nodejs.org/dist/latest/docs/api/permissions.html#permission-model-constraints) for complete details.
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
+- **`management`** (`boolean` or `object`): Grants the application access to runtime management operations via the ITC (Inter-Thread Communication) channel. See the [management](#management) section for details.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
   intrumentations per application, e.g.:
 
@@ -617,6 +618,98 @@ This configuration can also be set at the application level to override the runt
       }
     }
   ]
+}
+```
+
+### management
+
+The `management` per-application configuration grants an application access to runtime management operations directly through the ITC (Inter-Thread Communication) channel. This allows orchestrator-style applications to list services, restart applications, inspect configuration, proxy requests, and more — without requiring the HTTP-based `managementApi` to be enabled.
+
+When enabled, a `ManagementClient` instance is available at `globalThis.platformatic.management` inside the application worker. Applications without `management` enabled have no access to these operations.
+
+The configuration can be a boolean or an object:
+
+```json title="Grant full management access"
+{
+  "applications": [
+    {
+      "id": "orchestrator",
+      "path": "./services/orchestrator",
+      "management": true
+    }
+  ]
+}
+```
+
+```json title="Restrict to specific operations"
+{
+  "applications": [
+    {
+      "id": "dashboard",
+      "path": "./services/dashboard",
+      "management": {
+        "operations": ["getRuntimeStatus", "getApplicationsIds", "getApplicationDetails"]
+      }
+    }
+  ]
+}
+```
+
+Configuration options (object form):
+
+- **`enabled`** (`boolean`). Enable or disable management access. Default: `true` when the object form is used.
+- **`operations`** (`array` of `string`s). An optional whitelist of allowed operations. If omitted, all operations are available.
+
+**Available operations:**
+
+| Operation | Description |
+|---|---|
+| `getRuntimeStatus` | Get the current runtime status |
+| `getRuntimeMetadata` | Get runtime metadata (pid, versions, uptime) |
+| `getRuntimeConfig` | Get the runtime configuration |
+| `getRuntimeEnv` | Get the runtime environment variables |
+| `getApplicationsIds` | List all application IDs |
+| `getApplications` | Get details for all applications |
+| `getWorkers` | Get worker thread information |
+| `getApplicationDetails(id)` | Get details for a specific application |
+| `getApplicationConfig(id)` | Get an application's configuration |
+| `getApplicationEnv(id)` | Get an application's environment variables |
+| `getApplicationOpenapiSchema(id)` | Get an application's OpenAPI schema |
+| `getApplicationGraphqlSchema(id)` | Get an application's GraphQL schema |
+| `getMetrics(format)` | Get runtime metrics |
+| `startApplication(id)` | Start an application |
+| `stopApplication(id)` | Stop an application |
+| `restartApplication(id)` | Restart an application |
+| `restart(applications)` | Restart selected applications |
+| `addApplications(applications, start)` | Dynamically add applications |
+| `removeApplications(ids)` | Remove applications |
+| `inject(id, injectParams)` | Proxy an HTTP request to another application |
+
+**Usage example inside a privileged application:**
+
+```javascript
+export function create () {
+  const app = fastify()
+
+  app.get('/services', async () => {
+    const { applications } = await globalThis.platformatic.management.getApplications()
+    return applications
+  })
+
+  app.post('/services/:id/restart', async (req) => {
+    await globalThis.platformatic.management.restartApplication(req.params.id)
+    return { ok: true }
+  })
+
+  app.get('/proxy/:id/*', async (req) => {
+    const { id, '*': url } = req.params
+    return globalThis.platformatic.management.inject(id, {
+      method: 'GET',
+      url: '/' + url
+    })
+  })
+
+  return app
 }
 ```
 
