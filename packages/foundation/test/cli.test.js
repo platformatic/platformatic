@@ -90,9 +90,7 @@ test('setExecutableName - should set executable name', () => {
 })
 
 test('logo - should return logo without color when color is false', () => {
-  setExecutableName('TestApp')
-
-  const logoText = logo(false)
+  const logoText = logo(false, 'TestApp')
   ok(logoText.includes('Welcome to TestApp!'))
   ok(logoText.includes('&'))
   ok(logoText.includes('/'))

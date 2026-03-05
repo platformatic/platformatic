@@ -13,40 +13,64 @@ let prettyPrint = true
 let executableId = ''
 let executableName = ''
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function isVerbose () {
   return verbose
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function usePrettyPrint () {
   return prettyPrint
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function getExecutableId () {
   return executableId
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function getExecutableName () {
   return executableName
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function setVerbose (value) {
   verbose = value
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function setPrettyPrint (value) {
   prettyPrint = value
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function setExecutableId (id) {
   executableId = id
 }
 
+// TODO: Deprecated and currently unused. Remove in v4.
 export function setExecutableName (name) {
   executableName = name
 }
 
+export function createCLIContext (
+  executableId = '',
+  executableName = '',
+  verbose = false,
+  prettyPrint = true,
+  options = {}
+) {
+  return {
+    executableId,
+    executableName,
+    verbose,
+    prettyPrint,
+    ...options
+  }
+}
+
 export function logo (color = true, name = undefined) {
-  name ??= getExecutableName()
+  name ??= this ? this.executableName : 'Watt'
 
   /* c8 ignore next - else */
   const executableName = color && isColorSupported ? bold(name) : name
@@ -92,7 +116,7 @@ export function createCliLogger (level, noPretty) {
 
   /* c8 ignore next 3 - Covered elsewhere */
   if (noPretty) {
-    setPrettyPrint(false)
+    process.env.PLT_PRETTY_PRINT = 'false'
   } else {
     pretty = pinoPretty({
       colorize: process.env.NO_COLOR !== 'true',
@@ -182,7 +206,8 @@ export async function findRuntimeConfigurationFile (
   configurationFile,
   fallback = true,
   throwOnError = true,
-  verifyPackages = true
+  verifyPackages = true,
+  executableName = ''
 ) {
   let configFile = await findConfigurationFileRecursive(root, configurationFile, '@platformatic/runtime')
 
@@ -205,7 +230,7 @@ export async function findRuntimeConfigurationFile (
     if (throwOnError) {
       return logFatalError(
         logger,
-        `Cannot find a supported ${getExecutableName()} configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
+        `Cannot find a supported ${executableName} configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
           'platformatic.json'
         )}) in ${bold(resolve(root))}.`
       )

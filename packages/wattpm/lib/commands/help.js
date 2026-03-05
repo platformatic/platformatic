@@ -1,9 +1,9 @@
-import { getExecutableId, getExecutableName, logFatalError, logo } from '@platformatic/foundation'
+import { logFatalError, logo } from '@platformatic/foundation'
 import { loadApplicationsCommands } from '@platformatic/runtime'
 import { bold } from 'colorette'
 
-function sanitizeHelp (raw) {
-  return (typeof raw === 'function' ? raw() : raw).trim()
+function sanitizeHelp (context, raw) {
+  return (typeof raw === 'function' ? raw.call(context) : raw).trim()
 }
 
 async function loadCommands () {
@@ -31,14 +31,14 @@ async function loadCommands () {
   return commands
 }
 
-export async function showGeneralHelp (logger) {
+export async function showGeneralHelp (context, logger) {
   if (typeof logger !== 'function') {
     logger = console.log
   }
 
-  const executableId = getExecutableId()
+  const executableId = context.executableId
   const commands = Object.values(await loadCommands())
-  const applicationsCommands = Object.values((await loadApplicationsCommands()).help)
+  const applicationsCommands = Object.values((await loadApplicationsCommands(context.executableName)).help)
 
   const options = [
     { usage: '-V, --version', description: `Show ${executableId} version` },
@@ -50,7 +50,7 @@ export async function showGeneralHelp (logger) {
     { usage: '--help', description: 'Show this help' }
   ]
 
-  logger(logo())
+  logger(logo.call(context))
   logger(`\nUsage: ${executableId} [options] [command]\n`)
 
   // Compute the maximum length of options or commands
@@ -64,32 +64,34 @@ export async function showGeneralHelp (logger) {
   // Print all options
   logger('Options:\n')
   for (const { usage, description } of options) {
-    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
+    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(context, description)}`)
   }
   logger('')
 
   // Print all commands
   logger('Commands:\n')
   for (const { usage, description } of commands) {
-    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
+    logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(context, description)}`)
   }
   logger('')
 
   if (applicationsCommands.length) {
     logger('Applications Commands:\n')
     for (const { usage, description } of applicationsCommands) {
-      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)})`)
+      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(context, description)})`)
     }
     logger('')
   }
 }
 
-export function showHelp (command, logger) {
+export function showHelp (context, command, logger) {
   if (typeof logger !== 'function') {
     logger = console.log
   }
 
-  logger(`\nUsage: ${getExecutableId()} ${sanitizeHelp(command.usage)}\n\n${sanitizeHelp(command.description)}.\n`)
+  logger(
+    `\nUsage: ${context.executableId} ${sanitizeHelp(context, command.usage)}\n\n${sanitizeHelp(context, command.description)}.\n`
+  )
 
   let { options, args } = command
   options ??= []
@@ -102,7 +104,7 @@ export function showHelp (command, logger) {
   if (options.length) {
     logger('Options:\n')
     for (const { usage, description } of options) {
-      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
+      logger(`  ${usage.padEnd(maximumLength, ' ')} ${sanitizeHelp(context, description)}`)
     }
     logger('')
   }
@@ -111,13 +113,13 @@ export function showHelp (command, logger) {
   if (args.length) {
     logger('Arguments:\n')
     for (const { name, description } of args) {
-      logger(`  ${name.padEnd(maximumLength, ' ')} ${sanitizeHelp(description)}`)
+      logger(`  ${name.padEnd(maximumLength, ' ')} ${sanitizeHelp(context, description)}`)
     }
     logger('')
   }
 
   if (command.footer) {
-    logger(sanitizeHelp(command.footer) + '\n')
+    logger(sanitizeHelp(context, command.footer) + '\n')
   }
 }
 
@@ -125,38 +127,38 @@ export async function helpCommand (logger, args) {
   const command = args?.[0]
 
   if (!command) {
-    return showGeneralHelp()
+    return showGeneralHelp(this)
   }
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    const applicationsCommands = (await loadApplicationsCommands()).help
+    const applicationsCommands = (await loadApplicationsCommands(this.executableName)).help
 
     if (applicationsCommands[command]) {
       // If the command is an application command, we show the help for that command
-      return showHelp(applicationsCommands[command])
+      return showHelp(this, applicationsCommands[command])
     }
 
     return logFatalError(
       logger,
-      `Unknown command ${bold(command)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+      `Unknown command ${bold(command)}. Please run ${bold(`"${this.executableId} help"`)} to see available commands.`
     )
   }
 
-  showHelp(commands[command])
+  showHelp(this, commands[command])
 }
 
 export const help = {
   help: {
     usage: 'help [command]',
     description () {
-      return `Show help about ${getExecutableName()} or one of its commands`
+      return `Show help about ${this.executableName} or one of its commands`
     }
   },
   version: {
     usage: 'version',
     description () {
-      return `Show current ${getExecutableName()} version`
+      return `Show current ${this.executableName} version`
     }
   }
 }

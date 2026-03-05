@@ -142,7 +142,7 @@ export class RuntimeApiClient {
 
       if (metadataRequest.status === 'rejected') {
         // If it is just a non running runtime, we can remove its tmp dir, otherwise we log the error
-        if (metadataRequest.reason.code !== 'ECONNREFUSED') {
+        if (metadataRequest.reason.code !== 'ECONNREFUSED' && metadataRequest.reason.code !== 'ENOENT') {
           this.#logger?.warn(
             { error: ensureLoggableError(metadataRequest.reason) },
             `Failed to retrieve metadata for runtime with PID ${runtimePID}.`

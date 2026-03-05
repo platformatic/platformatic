@@ -1,4 +1,4 @@
-import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
+import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { createCommand } from './lib/commands/create.js'
 import { installCommand, updateCommand } from './lib/commands/dependencies.js'
@@ -8,7 +8,7 @@ import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/version.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: getExecutableId() }
+  globalThis.platformatic = { executable: this.executableId }
 
   const options = {
     'no-pretty': {
@@ -31,6 +31,7 @@ export async function main () {
 
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
   const logger = createCliLogger('info', values['no-pretty'])
+  this.logger = logger
 
   if (values.version || unparsed[0] === 'version') {
     console.log(version)
@@ -38,16 +39,16 @@ export async function main () {
   }
 
   if (values.help) {
-    helpCommand(logger, [])
+    helpCommand.call(this, logger, [])
     return
   } else if (unparsed.includes('-h') || unparsed.includes('--help')) {
-    helpCommand(logger, unparsed)
+    helpCommand.call(this, logger, unparsed)
     return
   }
 
   /* c8 ignore next 3 */
   if (values.verbose) {
-    setVerbose(true)
+    this.verbose = true
   }
 
   let command
@@ -82,11 +83,11 @@ export async function main () {
   if (!command) {
     logFatalError(
       logger,
-      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${this.executableId} help"`)} to see available commands.`
     )
 
     return
   }
 
-  await command(logger, unparsed.slice(1))
+  await command.call(this, logger, unparsed.slice(1))
 }

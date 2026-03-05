@@ -1,4 +1,4 @@
-import { buildPinoFormatters, buildPinoTimestamp, usePrettyPrint } from '@platformatic/foundation'
+import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
 import { isatty } from 'node:tty'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -158,7 +158,7 @@ export async function createLogger (config) {
 
   if (config.logger.transport) {
     cliStream = pino.transport(config.logger.transport)
-  } else if ((process.env.FORCE_TTY || isatty(1)) && usePrettyPrint()) {
+  } else if ((process.env.FORCE_TTY || isatty(1)) && process.env.PLT_PRETTY_PRINT !== 'false') {
     cliStream = createPrettifier(context)
   } else {
     cliStream = pino.destination(1)

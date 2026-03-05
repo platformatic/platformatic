@@ -1,4 +1,4 @@
-import { getExecutableName, getPackageManager, parseArgs } from '@platformatic/foundation'
+import { getPackageManager, parseArgs } from '@platformatic/foundation'
 import { createApplication, getUsername, getVersion, say } from 'create-wattpm'
 import { resolve } from 'node:path'
 import { installDependencies } from './dependencies.js'
@@ -41,7 +41,7 @@ export async function createCommand (logger, args) {
   const version = await getVersion()
 
   /* c8 ignore next 3 - Ignoring else branches */
-  const executableName = getExecutableName()
+  const executableName = this.executableName
   const greeting = username ? `Hello ${username},` : 'Hello,'
   await say(`${greeting} welcome to ${version ? `${executableName} ${version}!` : `${executableName}!`}`)
 
@@ -68,7 +68,7 @@ export async function createCommand (logger, args) {
 
 const createHelp = {
   description () {
-    return `Creates a new ${getExecutableName()} project`
+    return `Creates a new ${this.executableName} project`
   },
   options: [
     {

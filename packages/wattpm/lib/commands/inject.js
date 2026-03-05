@@ -1,14 +1,13 @@
 import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError, isVerbose, logFatalError, parseArgs } from '@platformatic/foundation'
+import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { createWriteStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { getSocket } from '../utils.js'
 
-function appendOutput (logger, stream, fullOutput, line) {
-  if (isVerbose()) {
+function appendOutput (verbose, logger, stream, fullOutput, line) {
+  if (verbose) {
     logger.info(line)
   }
 
@@ -18,7 +17,8 @@ function appendOutput (logger, stream, fullOutput, line) {
 }
 
 export async function injectCommand (logger, args) {
-  const verbose = isVerbose()
+  const verbose = this.verbose
+
   const {
     values: { method, path: url, header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
     positionals: allPositionals
@@ -71,7 +71,7 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]
@@ -89,25 +89,25 @@ export async function injectCommand (logger, args) {
     }
 
     // Track request
-    appendOutput(logger, outputStream, fullOutput, `> ${method} ${url} HTTP/1.1`)
+    appendOutput(verbose, logger, outputStream, fullOutput, `> ${method} ${url} HTTP/1.1`)
 
     for (const [name, value] of Object.entries(headers)) {
-      appendOutput(logger, outputStream, fullOutput, `> ${name}: ${value}`)
+      appendOutput(verbose, logger, outputStream, fullOutput, `> ${name}: ${value}`)
     }
 
-    appendOutput(logger, outputStream, fullOutput, '>')
+    appendOutput(verbose, logger, outputStream, fullOutput, '>')
 
     // Perform the request
     const response = await client.injectRuntime(runtime.pid, application, { url, method, headers, body })
 
     // Track response
-    appendOutput(logger, outputStream, fullOutput, `< HTTP/1.1 ${response.statusCode}`)
+    appendOutput(verbose, logger, outputStream, fullOutput, `< HTTP/1.1 ${response.statusCode}`)
 
     for (const [name, value] of Object.entries(response.headers)) {
-      appendOutput(logger, outputStream, fullOutput, `< ${name}: ${value}`)
+      appendOutput(verbose, logger, outputStream, fullOutput, `< ${name}: ${value}`)
     }
 
-    appendOutput(logger, outputStream, fullOutput, '<')
+    appendOutput(verbose, logger, outputStream, fullOutput, '<')
 
     // Show the response
     const responseBody = await response.body.text()

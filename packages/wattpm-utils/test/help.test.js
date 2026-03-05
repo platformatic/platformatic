@@ -1,4 +1,3 @@
-import { setExecutableId, setExecutableName } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { test } from 'node:test'
 import { showGeneralHelp } from '../lib/commands/help.js'
@@ -30,25 +29,19 @@ test('help - should support embedding via API', async t => {
     logs.push(message)
   }
 
-  setExecutableId('wattpm')
-  setExecutableName('Watt')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'wattpm', executableName: 'Watt' }, logger)
   const originalLogs = logs.splice(0, logs.length).join('\n')
 
   originalLogs.includes('Usage: wattpm [options] [command]')
   originalLogs.includes('Watt')
 
-  setExecutableId('test-cli')
-  setExecutableName('Test CLI')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'test-cli', executableName: 'Test CLI' }, logger)
   const embeddedLogs = logs.splice(0, logs.length).join('\n')
 
   embeddedLogs.includes('Usage: test-cli [options] [command]')
   embeddedLogs.includes('Test CLI')
 
-  setExecutableId('wattpm')
-  setExecutableName('Watt')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'wattpm', executableName: 'Watt' }, logger)
   const restoredLogs = logs.splice(0, logs.length).join('\n')
 
   deepStrictEqual(originalLogs, restoredLogs)

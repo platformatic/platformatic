@@ -5,7 +5,6 @@ import {
   ensureLoggableError,
   findConfigurationFile,
   findRuntimeConfigurationFile,
-  getExecutableId,
   getRoot,
   loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
@@ -94,8 +93,16 @@ export async function appendEnvVariable (envFile, key, value) {
   return writeFile(envFile, contents, 'utf-8')
 }
 
-async function fixConfiguration (logger, root, configOption, skipDependencies, packageManager) {
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, configOption, true, true, false)
+async function fixConfiguration (context, logger, root, configOption, skipDependencies, packageManager) {
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    configOption,
+    true,
+    true,
+    false,
+    context.executableName
+  )
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -533,7 +540,7 @@ export async function importCommand (logger, args) {
     Two arguments = root and URL
   */
   if (positionals.length === 0) {
-    return fixConfiguration(logger, '', config, skipDependencies, packageManager)
+    return fixConfiguration(this, logger, '', config, skipDependencies, packageManager)
   } else if (positionals.length === 1) {
     root = getRoot()
     rawUrl = positionals[0]
@@ -542,7 +549,15 @@ export async function importCommand (logger, args) {
     rawUrl = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config,
+    true,
+    true,
+    true,
+    this.executableName
+  )
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -597,7 +612,15 @@ export async function resolveCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(
+    logger,
+    root,
+    config,
+    true,
+    true,
+    true,
+    this.executableName
+  )
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -693,7 +716,7 @@ export const help = {
     ],
     footer () {
       return `
-${getExecutableId()} resolve command resolves runtime applications that have the \`url\` in their configuration.
+${this.executableId} resolve command resolves runtime applications that have the \`url\` in their configuration.
 To change the directory where an application is cloned, you can set the \`path\` property in the application configuration.
 
 After cloning the application, the resolve command will set the relative path to the application in the Platformatic configuration file.
