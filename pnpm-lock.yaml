@@ -31,7 +31,7 @@ importers:
         version: link:../foundation
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       semver:
         specifier: ^7.6.3
         version: 7.7.4
@@ -129,7 +129,7 @@ importers:
         version: 4.22.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -347,7 +347,7 @@ importers:
         version: 2.7.3
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.8.3)
@@ -437,10 +437,10 @@ importers:
         version: 9.6.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       fastify-metrics:
         specifier: ^12.0.0
-        version: 12.1.0(fastify@5.7.4)
+        version: 12.1.0(fastify@5.8.1)
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.1.0
@@ -583,7 +583,7 @@ importers:
         version: 5.0.6
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       get-jwks:
         specifier: ^11.0.0
         version: 11.0.3
@@ -629,7 +629,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -702,7 +702,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -771,7 +771,7 @@ importers:
         version: 3.1.3
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.1.0
@@ -883,7 +883,7 @@ importers:
         version: 9.6.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       pino:
         specifier: ^9.9.0
         version: 9.14.0
@@ -1114,7 +1114,7 @@ importers:
         version: 9.6.1
       fastify:
         specifier: ^5.7.3
-        version: 5.7.4
+        version: 5.8.1
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.4
@@ -1169,7 +1169,7 @@ importers:
         version: 4.22.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.4
@@ -1202,7 +1202,7 @@ importers:
         version: link:../vite
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       semver:
         specifier: ^7.6.3
         version: 7.7.4
@@ -1278,7 +1278,7 @@ importers:
         version: link:../vite
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       semver:
         specifier: ^7.6.3
         version: 7.7.4
@@ -1399,7 +1399,7 @@ importers:
         version: 1.0.16
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       graphql:
         specifier: ^16.8.1
         version: 16.13.0
@@ -1610,7 +1610,7 @@ importers:
         version: 3.1.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1723,7 +1723,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       ioredis:
         specifier: ^5.3.2
         version: 5.10.0
@@ -1793,7 +1793,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       fastify-tsconfig:
         specifier: ^3.0.0
         version: 3.0.0
@@ -1836,7 +1836,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -1897,7 +1897,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -1955,7 +1955,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -2013,7 +2013,7 @@ importers:
         version: 9.39.3(jiti@2.6.1)
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.4
@@ -2110,7 +2110,7 @@ importers:
         version: 5.2.1
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       neostandard:
         specifier: ^0.12.2
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -2137,7 +2137,7 @@ importers:
         version: link:../node
       fastify:
         specifier: ^5.7.0
-        version: 5.7.4
+        version: 5.8.1
       semver:
         specifier: ^7.6.3
         version: 7.7.4
@@ -2216,8 +2216,8 @@ importers:
         specifier: ^9.4.0
         version: 9.6.1
       fastify:
-        specifier: 5.7.4
-        version: 5.7.4
+        specifier: 5.8.1
+        version: 5.8.1
       inspector-client:
         specifier: ^0.2.0
         version: 0.2.0
@@ -6874,6 +6874,9 @@ packages:
 
   fastify@5.7.4:
     resolution: {integrity: sha512-e6l5NsRdaEP8rdD8VR0ErJASeyaRbzXYpmkrpr2SuvuMq6Si3lvsaVy5C+7gLanEkvjpMDzBXWE5HPeb/hgTxA==}
+
+  fastify@5.8.1:
+    resolution: {integrity: sha512-y0kicFvvn7CYWoPOVLOcvn4YyKQz03DIY7UxmyOy21/J8eXm09R+tmb+tVDBW5h+pja30cHI5dqUcSlvY86V2A==}
 
   fastparallel@2.4.1:
     resolution: {integrity: sha512-qUmhxPgNHmvRjZKBFUNI0oZuuH9OlSIOXmJ98lhKPxMZZ7zS/Fi0wRHOihDSz0R1YiIOjxzOY4bq65YTcdBi2Q==}
@@ -13353,7 +13356,7 @@ snapshots:
   '@platformatic/graphql-composer@0.10.1':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 5.7.4
+      fastify: 5.8.1
       graphql: 16.13.0
       mercurius: 16.7.0(graphql@16.13.0)
       metaline: 1.1.0
@@ -16491,9 +16494,9 @@ snapshots:
     dependencies:
       reusify: 1.1.0
 
-  fastify-metrics@12.1.0(fastify@5.7.4):
+  fastify-metrics@12.1.0(fastify@5.8.1):
     dependencies:
-      fastify: 5.7.4
+      fastify: 5.8.1
       fastify-plugin: 5.1.0
       prom-client: 15.1.3
 
@@ -16514,11 +16517,29 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       '@fastify/jwt': 9.1.0
-      fastify: 5.7.4
+      fastify: 5.8.1
       fastify-plugin: 5.1.0
       get-jwks: 11.0.3
 
   fastify@5.7.4:
+    dependencies:
+      '@fastify/ajv-compiler': 4.0.5
+      '@fastify/error': 4.2.0
+      '@fastify/fast-json-stringify-compiler': 5.0.3
+      '@fastify/proxy-addr': 5.1.0
+      abstract-logging: 2.0.1
+      avvio: 9.2.0
+      fast-json-stringify: 6.3.0
+      find-my-way: 9.4.0
+      light-my-request: 6.6.0
+      pino: 10.3.1
+      process-warning: 5.0.0
+      rfdc: 1.4.1
+      secure-json-parse: 4.1.0
+      semver: 7.7.4
+      toad-cache: 3.7.0
+
+  fastify@5.8.1:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
       '@fastify/error': 4.2.0
