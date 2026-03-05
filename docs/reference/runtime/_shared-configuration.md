@@ -488,6 +488,61 @@ inside the OS temporary folder.
   - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 - **`socket`** (`string`). Optional custom path for the control socket. If not specified, the default platform-specific location is used (`platformatic/runtimes/<PID>/socket` on Unix, `\\.\pipe\platformatic-<PID>` on Windows).
 
+### `management`
+
+The runtime-level `management` configuration enables the ITC (Inter-Thread Communication) management client for **all** applications in the runtime. This is particularly useful for single-app deployments where you want every worker to have access to management operations without specifying `management` on each individual application.
+
+The value is inherited by all applications that do not explicitly set their own `management` configuration. Individual applications can override or disable the runtime-level setting.
+
+```json title="Enable management for all applications"
+{
+  "management": true,
+  "applications": [
+    {
+      "id": "app1",
+      "path": "./services/app1"
+    },
+    {
+      "id": "app2",
+      "path": "./services/app2"
+    }
+  ]
+}
+```
+
+```json title="Enable management globally, disable for a specific application"
+{
+  "management": true,
+  "applications": [
+    {
+      "id": "orchestrator",
+      "path": "./services/orchestrator"
+    },
+    {
+      "id": "worker",
+      "path": "./services/worker",
+      "management": false
+    }
+  ]
+}
+```
+
+```json title="Restrict operations globally"
+{
+  "management": {
+    "operations": ["getRuntimeStatus", "getApplicationsIds"]
+  },
+  "applications": [
+    {
+      "id": "app1",
+      "path": "./services/app1"
+    }
+  ]
+}
+```
+
+The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
+
 ### `scheduler`
 
 An optional array of objects to configure HTTP call triggered by cron jobs.
@@ -626,6 +681,8 @@ This configuration can also be set at the application level to override the runt
 The `management` per-application configuration grants an application access to runtime management operations directly through the ITC (Inter-Thread Communication) channel. This allows orchestrator-style applications to list services, restart applications, inspect configuration, proxy requests, and more — without requiring the HTTP-based `managementApi` to be enabled.
 
 When enabled, a `ManagementClient` instance is available at `globalThis.platformatic.management` inside the application worker. Applications without `management` enabled have no access to these operations.
+
+This setting can also be configured at the [runtime level](#management) to apply to all applications at once.
 
 The configuration can be a boolean or an object:
 

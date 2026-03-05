@@ -1162,6 +1162,22 @@ export const runtimeProperties = {
     ],
     default: true
   },
+  management: {
+    anyOf: [
+      { type: 'boolean' },
+      {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean', default: true },
+          operations: {
+            type: 'array',
+            items: { type: 'string' }
+          }
+        },
+        additionalProperties: false
+      }
+    ]
+  },
   metrics: {
     anyOf: [
       { type: 'boolean' },
