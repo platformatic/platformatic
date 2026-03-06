@@ -1,5 +1,6 @@
 import { mapSQLTypeToOpenAPIType } from '@platformatic/sql-json-schema-mapper'
 import { buildCursorUtils } from './cursor.js'
+import * as errors from './errors.js'
 
 export function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
@@ -149,6 +150,9 @@ export function rootEntityRoutes (
               .map(v => v.split('='))
               .reduce((acc, [k, v]) => {
                 const [field, modifier] = k.split('.')
+                if (!entity.camelCasedFields[field]) {
+                  throw new errors.UnknownFieldError(field)
+                }
                 if (modifier === 'in' || modifier === 'nin') {
                   // TODO handle escaping of ,
                   v = v.split(',')

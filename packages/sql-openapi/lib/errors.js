@@ -25,3 +25,8 @@ export const PrimaryKeyNotIncludedInOrderByInCursorPaginationError = createError
   'At least one primary key must be included in orderBy clause in case of cursor pagination',
   400
 )
+export const UnknownFieldError = createError(
+  `${ERROR_PREFIX}_UNKNOWN_FIELD`,
+  'Unknown field "%s" in where.or',
+  400
+)
