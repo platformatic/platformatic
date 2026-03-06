@@ -510,7 +510,7 @@ importers:
         version: 15.0.4
       mercurius:
         specifier: ^16.0.0
-        version: 16.7.0(graphql@16.13.0)
+        version: 16.8.0(graphql@16.13.0)
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
@@ -786,7 +786,7 @@ importers:
         version: 1.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.7.0(graphql@16.13.0)
+        version: 16.8.0(graphql@16.13.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1622,7 +1622,7 @@ importers:
         version: 5.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.7.0(graphql@16.13.0)
+        version: 16.8.0(graphql@16.13.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1768,7 +1768,7 @@ importers:
         version: 2.1.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.7.0(graphql@16.13.0)
+        version: 16.8.0(graphql@16.13.0)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^0.3.0
@@ -8174,8 +8174,8 @@ packages:
     resolution: {integrity: sha512-+obSblOQmRhcyBt62furQqRAQpNyWXo8BuQ5bN7dG8wmwQ+vwHKp/rCFD4CrTP8CsDQD1sjoZ94K417XEUk8IQ==}
     engines: {node: '>=10'}
 
-  mercurius@16.7.0:
-    resolution: {integrity: sha512-xCu0qfOIvCm52jKKXFzl9VfPp+9DQrP/5cS0qt8OAA1xZomjTniK4ZlodOP1Q6dsgdfp1RtLx/KQcP7283febw==}
+  mercurius@16.8.0:
+    resolution: {integrity: sha512-b0ZxtmqgqH8GBvXxs5wITLNZdTOVd7FzkuvUkUgg0waEM1UD8buDcl0RVrqH745WOpGRqID2ltWRVfNeLIXh5w==}
     engines: {node: ^20.9.0 || >=22.0.0}
     peerDependencies:
       graphql: ^16.0.0
@@ -12569,7 +12569,7 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       graphql: 16.13.0
-      mercurius: 16.7.0(graphql@16.13.0)
+      mercurius: 16.8.0(graphql@16.13.0)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -12581,7 +12581,7 @@ snapshots:
       fastify-plugin: 5.1.0
       graphql: 16.13.0
       graphql-ws: 6.0.7(@fastify/websocket@11.2.0)(crossws@0.3.5)(graphql@16.13.0)(ws@8.19.0)
-      mercurius: 16.7.0(graphql@16.13.0)
+      mercurius: 16.8.0(graphql@16.13.0)
       p-map: 7.0.4
       single-user-cache: 2.1.0
       tiny-lru: 11.4.7
@@ -13358,7 +13358,7 @@ snapshots:
       abstract-logger: 0.2.5
       fastify: 5.8.1
       graphql: 16.13.0
-      mercurius: 16.7.0(graphql@16.13.0)
+      mercurius: 16.8.0(graphql@16.13.0)
       metaline: 1.1.0
       pino: 9.14.0
       undici: 7.18.2
@@ -18157,7 +18157,7 @@ snapshots:
       type-fest: 0.18.1
       yargs-parser: 20.2.9
 
-  mercurius@16.7.0(graphql@16.13.0):
+  mercurius@16.8.0(graphql@16.13.0):
     dependencies:
       '@fastify/error': 4.2.0
       '@fastify/static': 9.0.0
