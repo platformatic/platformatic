@@ -236,4 +236,22 @@ test('list', async t => {
       'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText response'
     )
   }
+
+  // Invalid field name in where.or should return 400, not 500
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(NONEXISTENT.eq=test)'
+    })
+    equal(res.statusCode, 400, 'GET /posts?where.or with invalid field returns 400')
+  }
+
+  // Invalid field name with in modifier should return 400, not 500
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(INVALID.in=a,b,c)'
+    })
+    equal(res.statusCode, 400, 'GET /posts?where.or with invalid field and in modifier returns 400')
+  }
 })
