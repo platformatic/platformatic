@@ -514,14 +514,14 @@ export default plugin
 /**
  * An object that contains utility functions.
  */
-export module utils {
+export namespace utils {
   export function toSingular (str: string): string
 }
 
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const CannotFindEntityError: (entityName: string) => FastifyError
   export const SpecifyProtocolError: () => FastifyError
   export const ConnectionStringRequiredError: () => FastifyError

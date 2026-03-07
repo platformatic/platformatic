@@ -24,7 +24,7 @@ export default plugin
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const UnableToCreateTheRouteForTheReverseRelationshipError: () => FastifyError
   export const UnableToCreateTheRouteForThePKColRelationshipError: () => FastifyError
   export const UnableToParseCursorStrError: () => FastifyError

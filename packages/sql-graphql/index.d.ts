@@ -42,7 +42,7 @@ export default plugin
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const UnableToGenerateGraphQLEnumTypeError: () => FastifyError
   export const UnsupportedKindError: (kind: string) => FastifyError
   export const ErrorPrintingGraphQLSchema: () => FastifyError

@@ -75,7 +75,7 @@ export default auth
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const Unauthorized: () => FastifyError
   export const UnauthorizedField: (field: string) => FastifyError
   export const MissingNotNullableError: (field: string, entity: string) => FastifyError
