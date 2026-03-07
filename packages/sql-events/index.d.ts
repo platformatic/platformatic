@@ -25,7 +25,7 @@ export function setupEmitter<T extends Entities> (options: SQLEventsPluginOption
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const ObjectRequiredUnderTheDataProperty: () => FastifyError
   export const PrimaryKeyIsNecessaryInsideData: () => FastifyError
   export const NoSuchActionError: (actions: string) => FastifyError

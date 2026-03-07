@@ -27,7 +27,7 @@ export interface ApplicationsCommands {
   help: Record<string, string | (() => string)>
 }
 
-export module errors {
+export namespace errors {
   export const RuntimeExitedError: () => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
   export const ApplicationNotFoundError: (id: string) => FastifyError
@@ -47,7 +47,7 @@ export module errors {
   export const NodeInspectorFlagsNotSupportedError: () => FastifyError
 }
 
-export module symbols {
+export namespace symbols {
   export declare const kConfig: unique symbol
   export declare const kId: unique symbol
   export declare const kFullId: unique symbol
