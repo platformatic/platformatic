@@ -60,7 +60,7 @@ export async function devCommand (logger, args) {
 
   async function reloadApplication () {
     await runtime.close()
-    runtime = await create(root, configurationFile, { start: true, reloaded: true })
+    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env })
   }
 
   const watcher = new FileWatcher({ path: configurationFile })

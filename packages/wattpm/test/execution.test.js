@@ -291,6 +291,45 @@ test('dev - should restart an application if "rs" is typed', async t => {
   }
 })
 
+test('dev - should load custom env file after runtime configuration file change triggers a restart', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const customEnvFile = resolve(rootDir, 'custom.env')
+  await writeFile(customEnvFile, 'PLT_CUSTOM_LOGGER_LEVEL=trace', 'utf8')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', rootDir, '--env', customEnvFile)
+  await waitForStart(startProcess)
+
+  const configFile = resolve(rootDir, 'watt.json')
+  const originalContents = await readFile(configFile, 'utf-8')
+
+  const config = JSON.parse(originalContents)
+  config.logger.level = '{PLT_CUSTOM_LOGGER_LEVEL}'
+  await writeFile(configFile, JSON.stringify(config), 'utf-8')
+
+  let url
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    if (mo) {
+      url = mo[1]
+      break
+    }
+  }
+
+  ok(url)
+
+  {
+    const { statusCode } = await request(url)
+    deepStrictEqual(statusCode, 200)
+  }
+})
+
 test('start - should start in production mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
