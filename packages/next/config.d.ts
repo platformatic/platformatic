@@ -686,6 +686,7 @@ export interface PlatformaticNextJsConfig {
             db?: number | string;
           };
       timeout?: number | string;
+      ttl?: number | string;
       maxAttempts?: number | string;
     };
   };
