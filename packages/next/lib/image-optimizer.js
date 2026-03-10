@@ -177,6 +177,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
   async #createQueue (imageOptimizerConfig) {
     const queueOptions = {
       visibilityTimeout: imageOptimizerConfig.timeout,
+      resultTTL: imageOptimizerConfig.ttl ?? 3600000, // 1 hour
       maxRetries: imageOptimizerConfig.maxAttempts,
       logger: this.logger
     }

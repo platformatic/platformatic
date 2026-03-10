@@ -182,6 +182,19 @@ const next = {
             }
           ]
         },
+        ttl: {
+          default: 3600000, // 1 hour
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 0
+            },
+            {
+              type: 'string',
+              pattern: '^[0-9]+$'
+            }
+          ]
+        },
         maxAttempts: {
           default: 3,
           anyOf: [

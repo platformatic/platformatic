@@ -62,6 +62,7 @@ Enable Image Optimizer mode in `watt.json` (or `platformatic.json`):
       "enabled": true,
       "fallback": "frontend",
       "timeout": 30000,
+      "ttl": 3600000,
       "maxAttempts": 3
     }
   }
@@ -73,6 +74,7 @@ In this example:
 - `enabled: true` turns on Image Optimizer mode, so this service only serves the image endpoint.
 - `fallback: "frontend"` means relative `url` values (for example `/images/photo.jpg`) are fetched from `http://frontend.plt.local/images/photo.jpg` through Platformatic service discovery.
 - `timeout: 30000` sets a 30 second timeout for fetch/optimization jobs.
+- `ttl: 3600000` sets a 1 hour TTL for jobs results.
 - `maxAttempts: 3` retries failed optimization jobs up to 3 times before returning an error.
 
 If you do not set `storage`, Platformatic uses in-memory queue storage by default.
@@ -122,6 +124,7 @@ This routes image optimization requests to `optimizer`, while all other requests
     - `prefix` maps to the Redis/Valkey key prefix used by the queue storage.
     - `db` selects the Redis/Valkey logical database index.
 - **`timeout`** (`number` or `string`): Request/job timeout in milliseconds. Default: `30000`.
+- **`ttl`**: (`number` or `string`): Job result TTL in milliseconds. Default: `3600000` (1 hour)
 - **`maxAttempts`** (`number` or `string`): Maximum retry attempts for optimization jobs. Default: `3`.
 
 ## Endpoint
