@@ -16,6 +16,10 @@ export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
       [fieldName: string]: boolean
     } | boolean
   },
+  /**
+   * Set true to disable all reverse relationship and FK-navigation routes.
+   */
+  ignoreAllReverseRoutes?: boolean,
 }
 
 declare const plugin: FastifyPluginAsync<SQLOpenApiPluginOptions>

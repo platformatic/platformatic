@@ -46,4 +46,16 @@ app.register(require('@platformatic/sql-openapi'), {
 })
 ```
 
-Here the routes for `categories` and `posts` will be ignored and not available in the API. 
+Here the routes for `categories` and `posts` will be ignored and not available in the API.
+
+## Ignoring All Reverse Relationship Routes
+
+If you want to disable all relationship-navigation routes at once (both reverse relationships like `GET /owners/{id}/posts` and FK-navigation routes like `GET /posts/{id}/owner`), use `ignoreAllReverseRoutes`:
+
+```js
+app.register(require('@platformatic/sql-openapi'), {
+  ignoreAllReverseRoutes: true
+})
+```
+
+This is equivalent to manually adding every relationship route to `ignoreRoutes`. Regular CRUD routes (GET, POST, PUT, DELETE on base entities) are not affected.

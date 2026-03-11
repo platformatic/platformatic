@@ -264,6 +264,7 @@ export interface PlatformaticDatabaseConfig {
            * Base URL for generated Platformatic DB routes
            */
           prefix?: string;
+          ignoreAllReverseRoutes?: boolean;
         };
     include?: {
       [k: string]: boolean;

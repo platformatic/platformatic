@@ -247,6 +247,19 @@ postgres://user:password@my-database:5432/db-name
   }
   ```
 
+  You can disable all reverse relationship and FK-navigation routes (e.g. `GET /owners/{id}/posts`, `GET /posts/{id}/owner`) with a single option:
+
+  ```json title="Example Object"
+  {
+    "db": {
+      ...
+      "openapi": {
+        "ignoreAllReverseRoutes": true
+      }
+    }
+  }
+  ```
+
   You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
   ```json title="Example Object"
