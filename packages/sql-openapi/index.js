@@ -38,6 +38,7 @@ async function setupOpenAPI (app, opts) {
   const ignore = opts.ignore || []
   const include = opts.include || []
   const ignoreRoutes = opts.ignoreRoutes || []
+  const ignoreAllReverseRoutes = opts.ignoreAllReverseRoutes || false
   const paths = opts.paths || {}
 
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
@@ -140,7 +141,8 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore: ignore[entity.singularName] || {},
-        ignoreRoutes
+        ignoreRoutes,
+        ignoreAllReverseRoutes
       })
     } else {
       // TODO support ignore
@@ -148,7 +150,8 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore,
-        ignoreRoutes
+        ignoreRoutes,
+        ignoreAllReverseRoutes
       })
     }
   }

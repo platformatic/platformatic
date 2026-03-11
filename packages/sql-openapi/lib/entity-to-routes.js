@@ -46,6 +46,7 @@ export async function entityPlugin (app, opts) {
   const entity = opts.entity
   const ignore = opts.ignore
   const ignoreRoutes = opts.ignoreRoutes
+  const ignoreAllReverseRoutes = opts.ignoreAllReverseRoutes || false
 
   const entitySchema = {
     $ref: entity.name + '#'
@@ -173,7 +174,7 @@ export async function entityPlugin (app, opts) {
       return ignoreRoute.path === reverseOpenapiPath && ignoreRoute.method === 'GET'
     })
 
-    if (!ignoredReversedGETRoute) {
+    if (!ignoredReversedGETRoute && !ignoreAllReverseRoutes) {
       try {
         app.get(
           `/:${camelcase(primaryKey)}/${routePathName}`,
@@ -300,7 +301,7 @@ export async function entityPlugin (app, opts) {
       return ignoreRoute.path === targetOpenapiPath && ignoreRoute.method === 'GET'
     })
 
-    if (!ignoredReversedGETRoute) {
+    if (!ignoredReversedGETRoute && !ignoreAllReverseRoutes) {
       try {
         app.get(
           `/:${camelcase(primaryKey)}/${targetRelation}`,

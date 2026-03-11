@@ -187,6 +187,10 @@ export const db = {
             prefix: {
               type: 'string',
               description: 'Base URL for generated Platformatic DB routes'
+            },
+            ignoreAllReverseRoutes: {
+              type: 'boolean',
+              default: false
             }
           },
           additionalProperties: false
