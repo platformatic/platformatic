@@ -55,7 +55,7 @@ export interface PlatformaticGlobalInterface {
     client: typeof Client
     registry: Client.Registry
   }
-  clientSpansAls: typeof AsyncLocalStorage
+  clientSpansAls: InstanceType<typeof AsyncLocalStorage>
 
   // Caching
   onHttpCacheHit (key: string): void
