@@ -128,6 +128,12 @@ test('can restart only crashed workers when they crash', async t => {
     errors.push(payload)
   })
 
+  // Track started workers to verify restarted workers get new indices
+  const startedWorkers = []
+  app.on('application:worker:started', payload => {
+    startedWorkers.push(payload)
+  })
+
   const eventsPromise = waitForEvents(
     app,
     { event: 'application:worker:error', application: 'node', worker: 0 },
@@ -143,18 +149,25 @@ test('can restart only crashed workers when they crash', async t => {
 
   update.revert()
 
+  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
+  // Note: there are 5 initial workers (0-4), so next index starts at 5
   await waitForEvents(
     app,
-    { event: 'application:worker:started', application: 'node', worker: 0 },
-    { event: 'application:worker:started', application: 'node', worker: 2 },
-    { event: 'application:worker:started', application: 'node', worker: 4 }
+    { event: 'application:worker:started', application: 'node', worker: 5 },
+    { event: 'application:worker:started', application: 'node', worker: 6 },
+    { event: 'application:worker:started', application: 'node', worker: 7 }
   )
 
+  // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
   ok(errors.find(e => e.application === 'node' && e.worker === 2))
   ok(errors.find(e => e.application === 'node' && e.worker === 4))
   ok(!errors.find(e => e.application === 'node' && e.worker === 1))
   ok(!errors.find(e => e.application === 'node' && e.worker === 3))
+
+  // Verify that restarted workers got new unique indices >= 5
+  const restartedWorkers = startedWorkers.filter(w => w.application === 'node' && w.worker >= 5)
+  deepStrictEqual(restartedWorkers.length, 3, 'Should have 3 restarted workers with new indices')
 })
 
 test('can restart only crashed workers when they exit', async t => {
@@ -191,6 +204,12 @@ test('can restart only crashed workers when they exit', async t => {
     errors.push(payload)
   })
 
+  // Track started workers to verify restarted workers get new indices
+  const startedWorkers = []
+  app.on('application:worker:started', payload => {
+    startedWorkers.push(payload)
+  })
+
   const eventsPromise = waitForEvents(
     app,
     { event: 'application:worker:error', application: 'node', worker: 0 },
@@ -206,16 +225,23 @@ test('can restart only crashed workers when they exit', async t => {
 
   update.revert()
 
+  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
+  // Note: there are 5 initial workers (0-4), so next index starts at 5
   await waitForEvents(
     app,
-    { event: 'application:worker:started', application: 'node', worker: 0 },
-    { event: 'application:worker:started', application: 'node', worker: 2 },
-    { event: 'application:worker:started', application: 'node', worker: 4 }
+    { event: 'application:worker:started', application: 'node', worker: 5 },
+    { event: 'application:worker:started', application: 'node', worker: 6 },
+    { event: 'application:worker:started', application: 'node', worker: 7 }
   )
 
+  // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
   ok(errors.find(e => e.application === 'node' && e.worker === 2))
   ok(errors.find(e => e.application === 'node' && e.worker === 4))
   ok(!errors.find(e => e.application === 'node' && e.worker === 1))
   ok(!errors.find(e => e.application === 'node' && e.worker === 3))
+
+  // Verify that restarted workers got new unique indices >= 5
+  const restartedWorkers = startedWorkers.filter(w => w.application === 'node' && w.worker >= 5)
+  deepStrictEqual(restartedWorkers.length, 3, 'Should have 3 restarted workers with new indices')
 })
