@@ -52,10 +52,10 @@ export interface PlatformaticGlobalInterface {
 
   // Metrics
   prometheus: {
-    client: Client
+    client: typeof Client
     registry: Client.Registry
   }
-  clientSpansAls: AsyncLocalStorage
+  clientSpansAls: typeof AsyncLocalStorage
 
   // Caching
   onHttpCacheHit (key: string): void
