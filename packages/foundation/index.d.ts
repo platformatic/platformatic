@@ -1,7 +1,8 @@
 import { FastifyError } from '@fastify/error'
 import { JSONSchemaType } from 'ajv'
 import { EventEmitter } from 'node:events'
-import { Logger } from 'pino'
+import { ParseArgsOptionsConfig } from 'node:util'
+import { LevelWithSilentOrString, Logger } from 'pino'
 
 // Symbols
 export declare const kCanceled: unique symbol
@@ -9,6 +10,58 @@ export declare const kFailedImport: unique symbol
 export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
 export declare const kTimeout: unique symbol
+
+// Cli types
+export function createCLIContext<T = {}>(
+  executableId?: string,
+  executableName?: string,
+  verbose?: boolean,
+  prettyPrint?: boolean,
+  options?: T
+): {
+  executableId: string
+  executableName: string
+  verbose: boolean
+  prettyPrint: boolean
+} & T
+
+export function logo(color?: boolean, name?: string): string
+
+export function createCliLogger(level: LevelWithSilentOrString, noPretty: boolean): Logger
+
+export function logFatalError(logger: Logger, ...args: any[]): false
+
+export function parseArgs(
+  args: string[],
+  options: ParseArgsOptionsConfig,
+  stopAtFirstPositional?: boolean,
+  strict?: boolean
+): {
+  values: Record<string, any>
+  positionals: string[]
+  unparsed: string[]
+  tokens: any[]
+}
+
+export function getRoot(positionals?: string[]): string
+
+export function applicationToEnvVariable(application: string): string
+
+export function findRuntimeConfigurationFile(
+  logger: Logger,
+  root: string,
+  configurationFile?: string,
+  fallback?: boolean,
+  throwOnError?: boolean,
+  verifyPackages?: boolean,
+  executableName?: string
+): Promise<string | false | undefined>
+
+export function fallbackToTemporaryConfigFile(
+  logger: Logger,
+  root: string,
+  verifyPackages: boolean
+): Promise<string | false | undefined>
 
 // Configuration types
 export declare const envVariablePattern: RegExp

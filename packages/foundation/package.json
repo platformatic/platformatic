@@ -6,7 +6,8 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test:types": "tstyche",
     "lint": "eslint"
   },
   "repository": {
@@ -45,6 +46,7 @@
     "neostandard": "^0.12.0",
     "pino": "^9.9.0",
     "pino-test": "^1.0.1",
+    "tstyche": "^6.2.0",
     "typescript": "^5.5.4"
   },
   "engines": {
