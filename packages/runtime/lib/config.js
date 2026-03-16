@@ -38,7 +38,7 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
-function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
+function parseWorkers (config, prefix, globalWorkers, defaultWorkers = { static: 1, dynamic: false }) {
   if (typeof config.workers !== 'undefined') {
     // Number
     if (typeof config.workers !== 'object') {
@@ -75,6 +75,7 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
   // What this entry asked for, before the defaults are folded in.
   const declaredMinimum = config.workers.minimum
   const declaredStatic = config.workers.static
+  config.workers.version ??= 'v1'
 
   // Fill missing values from defaults
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
@@ -90,17 +91,10 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers.maximum = t
   }
 
-  /*
-    `static` is how many workers the application starts with, and an entry that declared its own
-    `minimum` has already said. The runtime-wide default -- which is 1 unless the project set one --
-    must not override it: `{ dynamic: true, minimum: 2 }` otherwise starts a single worker and
-    leaves the autoscaler to climb to the floor the entry asked for.
-  */
-  if (typeof declaredStatic === 'undefined' && typeof declaredMinimum !== 'undefined') {
-    config.workers.static = declaredMinimum
-  }
-
-  if (typeof config.workers.static === 'undefined') {
+  if (globalWorkers?.version === 'v2' && config.workers.dynamic) {
+    config.workers.minimum ??= 1
+    config.workers.static = config.workers.minimum
+  } else if (typeof config.workers.static === 'undefined') {
     config.workers.static = config.workers.minimum
   }
 }
@@ -310,7 +304,7 @@ function verifyApplicationsPorts (applications) {
 // loader's envelope before any worker exists rather than by loading the application's config file.
 export function finalizeApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
-  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
+  parseWorkers(application, `Service "${application.id}"`, config.workers, defaultWorkers)
 
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
@@ -390,7 +384,7 @@ export async function finalizeConfiguration (config, applications, context, prod
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   // Root-level workers
-  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
+  parseWorkers(config, 'Runtime', config.workers)
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
