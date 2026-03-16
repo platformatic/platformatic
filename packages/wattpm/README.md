@@ -19,18 +19,19 @@ Watt supports the stacks you love most, including [Next.js](https://nextjs.org/)
 
 ```bash
 # Create a new application
-npx wattpm@latest init
+npx wattpm@latest create
 
 # Or install manually:
 npm install wattpm
 ```
 
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
-guide to get up and running with Platformatic.
+to get up and running with Watt.
 
 ## Documentation
 
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start)
+- [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start)
+- [Running Your Project in Watt](https://docs.platformatic.dev/docs/getting-started/port-your-app)
 - [Reference](https://docs.platformatic.dev/docs/reference/wattpm/overview)
 - [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
