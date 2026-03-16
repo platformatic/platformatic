@@ -48,18 +48,57 @@ export const workers = {
     { type: 'string' },
     {
       type: 'object',
-      properties: {
-        static: { type: 'number', minimum: 1 },
-        dynamic: { type: 'boolean', default: false },
-        minimum: { type: 'number', minimum: 1 },
-        maximum: { type: 'number', minimum: 0 },
-        total: { type: 'number', minimum: 1 },
-        maxMemory: { type: 'number', minimum: 0 },
-        cooldown: { type: 'number', minimum: 0 },
-        gracePeriod: { type: 'number', minimum: 0 },
-        scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-        scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
-      }
+      oneOf: [
+        {
+          properties: {
+            version: { type: 'string', enum: ['v1'] },
+            dynamic: { type: 'boolean' },
+            minimum: { type: 'number', minimum: 1 },
+            maximum: { type: 'number', minimum: 0 },
+            static: { type: 'number', minimum: 1 },
+            total: { type: 'number', minimum: 1 },
+            maxMemory: { type: 'number', minimum: 0 },
+            cooldown: { type: 'number', minimum: 0 },
+            gracePeriod: { type: 'number', minimum: 0 },
+            scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
+            scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
+          },
+          additionalProperties: false
+        },
+        {
+          required: ['version'],
+          properties: {
+            version: { const: 'v2' },
+            dynamic: { type: 'boolean' },
+            minimum: { type: 'number', minimum: 1 },
+            maximum: { type: 'number', minimum: 0 },
+            static: { type: 'number', minimum: 1 },
+            total: { type: 'number', minimum: 1 },
+            maxMemory: { type: 'number', minimum: 0 },
+            eluThreshold: { type: 'number', minimum: 0, maximum: 1 },
+            heapThresholdMb: { type: 'number', minimum: 0 },
+            processIntervalMs: { type: 'number', minimum: 0 },
+            scaleUpMargin: { type: 'number', minimum: 0 },
+            scaleDownMargin: { type: 'number', minimum: 0 },
+            redistributionMs: { type: 'number', minimum: 0 },
+            alphaUp: { type: 'number', minimum: 0, maximum: 1 },
+            alphaDown: { type: 'number', minimum: 0, maximum: 1 },
+            betaUp: { type: 'number', minimum: 0, maximum: 1 },
+            betaDown: { type: 'number', minimum: 0, maximum: 1 },
+            cooldowns: {
+              type: 'object',
+              properties: {
+                scaleUpAfterScaleUpMs: { type: 'number', minimum: 0 },
+                scaleUpAfterScaleDownMs: { type: 'number', minimum: 0 },
+                scaleDownAfterScaleUpMs: { type: 'number', minimum: 0 },
+                scaleDownAfterScaleDownMs: { type: 'number', minimum: 0 }
+              },
+              additionalProperties: false
+            }
+          },
+          additionalProperties: false
+        }
+      ]
     }
   ]
 }
@@ -800,7 +839,26 @@ export const application = {
             minimum: { type: 'number', minimum: 1 },
             maximum: { type: 'number', minimum: 0 },
             scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-            scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
+            scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
+            eluThreshold: { type: 'number', minimum: 0, maximum: 1 },
+            heapThresholdMb: { type: 'number', minimum: 0 },
+            scaleUpMargin: { type: 'number', minimum: 0 },
+            scaleDownMargin: { type: 'number', minimum: 0 },
+            redistributionMs: { type: 'number', minimum: 0 },
+            alphaUp: { type: 'number', minimum: 0, maximum: 1 },
+            alphaDown: { type: 'number', minimum: 0, maximum: 1 },
+            betaUp: { type: 'number', minimum: 0, maximum: 1 },
+            betaDown: { type: 'number', minimum: 0, maximum: 1 },
+            cooldowns: {
+              type: 'object',
+              properties: {
+                scaleUpAfterScaleUpMs: { type: 'number', minimum: 0 },
+                scaleUpAfterScaleDownMs: { type: 'number', minimum: 0 },
+                scaleDownAfterScaleUpMs: { type: 'number', minimum: 0 },
+                scaleDownAfterScaleDownMs: { type: 'number', minimum: 0 }
+              },
+              additionalProperties: false
+            }
           }
         }
       ]

@@ -80,6 +80,8 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers = {}
   }
 
+  config.workers.version ??= 'v1'
+
   // Fill missing values from defaults
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
     if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
