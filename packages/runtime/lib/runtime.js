@@ -70,7 +70,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
-import { DynamicWorkersScaler } from './worker-scaler.js'
+import { PredictiveWorkersScaler } from './predictive-worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -411,13 +411,7 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     if (this.#config.workers.dynamic) {
-      if (this.#config.workers.dynamic === false) {
-        this.logger.warn(
-          `Worker scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
-        )
-      } else {
-        this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
-      }
+      this.#dynamicWorkersScaler = new PredictiveWorkersScaler(this, this.#config.workers)
     }
 
     // Load extensions before creating any worker so that custom ITC handlers
@@ -783,7 +777,6 @@ export class Runtime extends EventEmitter {
     await this.stopApplications(applications, silent, true)
 
     for (const application of applications) {
-      this.#dynamicWorkersScaler?.remove(application)
       await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
@@ -947,13 +940,14 @@ export class Runtime extends EventEmitter {
     await this.#collectServingState(id)
 
     this.emitAndNotify('application:started', id)
-    await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {
     if (!this.#applications.has(id)) {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
+
+    this.#dynamicWorkersScaler?.remove(id)
 
     // Removing the replicas cancels the work in progress for them, i.e. refills of crashed workers and replacements
     const replicas = this.#replicas.get(id) ?? []
@@ -1665,7 +1659,7 @@ export class Runtime extends EventEmitter {
       const { applicationId, config: applicationConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        const r = await this.#updateApplicationWorkersAndHealth(
+        const resourceReport = await this.#updateApplicationWorkersAndHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1676,11 +1670,11 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers,
-          health: r.health
+          workers: resourceReport.workers,
+          health: resourceReport.health
         })
       } else if (health) {
-        const r = await this.#updateApplicationHealth(
+        const healthReport = await this.#updateApplicationHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1690,10 +1684,10 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          health: r.health
+          health: healthReport
         })
       } else if (workers) {
-        const r = await this.#updateApplicationWorkers(
+        const workersReport = await this.#updateApplicationWorkers(
           applicationId,
           config,
           applicationConfig,
@@ -1702,7 +1696,7 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers
+          workers: workersReport
         })
       }
     }
@@ -2459,10 +2453,6 @@ export class Runtime extends EventEmitter {
     }
 
     return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
-  }
-
-  getDynamicWorkersScaler () {
-    return this.#dynamicWorkersScaler
   }
 
   #getHttpCacheValue ({ request }) {
