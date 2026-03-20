@@ -79,10 +79,9 @@ Supports PostgreSQL, MySQL, MariaDB, and SQLite. The codebase is database-agnost
 
 ## Git Commit Guidelines
 
-All commits must include a DCO (Developer Certificate of Origin) sign-off. Always use `git commit -s` to automatically add the human's sign-off, and manually include Claude's sign-off.
+All commits must include a DCO (Developer Certificate of Origin) sign-off. Always use `git commit -s` to automatically add the human's sign-off.
 
-When creating commits, the commit message should include:
-- `Co-Authored-By: Claude <noreply@anthropic.com>`
-- `Signed-off-by: Claude <noreply@anthropic.com>`
+When creating commits, the commit message should never include a `Co-Authored-By` an AI assistant. Instead, add:
+`Assisted-by: AGENT_NAME:MODEL_VERSION`.
 
 The `-s` flag will automatically add the human's `Signed-off-by` line, ensuring both contributors are properly signed off for DCO compliance.
