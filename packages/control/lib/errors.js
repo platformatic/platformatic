@@ -98,6 +98,11 @@ export const FailedToStopProfiling = createError(
   'Failed to stop profiling for service "%s": %s'
 )
 
+export const FailedToTakeHeapSnapshot = createError(
+  `${ERROR_PREFIX}_FAILED_TO_TAKE_HEAP_SNAPSHOT`,
+  'Failed to take heap snapshot for service "%s": %s'
+)
+
 export const FailedToAddApplications = createError(
   `${ERROR_PREFIX}_FAILED_TO_ADD_APPLICATIONS`,
   'Failed to add applications: %s'

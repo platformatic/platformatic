@@ -19,6 +19,7 @@ import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
+import { Readable } from 'node:stream'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
@@ -734,6 +735,30 @@ export class Runtime extends EventEmitter {
     this.#validatePprofCapturePreload()
 
     return sendViaITC(service, 'stopProfiling', options)
+  }
+
+  async takeApplicationHeapSnapshot (id, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+
+    const { port1, port2 } = new MessageChannel()
+
+    const readable = new Readable({ read () {} })
+
+    port2.on('message', (message) => {
+      if (message.type === 'chunk') {
+        readable.push(message.chunk)
+      } else if (message.type === 'error') {
+        readable.destroy(new Error(message.message))
+        port2.close()
+      } else if (message.type === 'end') {
+        readable.push(null)
+        port2.close()
+      }
+    })
+
+    await sendViaITC(service, 'takeHeapSnapshot', port1, [port1])
+
+    return readable
   }
 
   async startApplicationRepl (id, ensureStarted = true) {

@@ -342,6 +342,28 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         messaging.addSource(channel)
       },
 
+      takeHeapSnapshot (port) {
+        const { Session } = createRequire(import.meta.url)('node:inspector')
+        const session = new Session()
+        session.connect()
+
+        session.on('HeapProfiler.addHeapSnapshotChunk', (m) => {
+          port.postMessage({ type: 'chunk', chunk: m.params.chunk })
+        })
+
+        session.post('HeapProfiler.takeHeapSnapshot', null, (err) => {
+          session.disconnect()
+          if (err) {
+            port.postMessage({ type: 'error', message: err.message })
+          } else {
+            port.postMessage({ type: 'end' })
+          }
+          port.close()
+        })
+
+        return { started: true }
+      },
+
       startRepl (port) {
         // Check if running in subprocess mode - forward through ChildManager
         const childManager = controller.capability?.getChildManager?.()

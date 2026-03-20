@@ -214,6 +214,15 @@ export async function managementApiPlugin (app, opts) {
     reply.type('application/octet-stream').code(200).send(profileData)
   })
 
+  app.post('/applications/:id/heap-snapshot', async (request, reply) => {
+    const { id } = request.params
+    app.log.debug('take heap snapshot', { id })
+
+    const stream = await runtime.takeApplicationHeapSnapshot(id)
+    reply.type('application/octet-stream').send(stream)
+    return reply
+  })
+
   app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
     const config = await runtime.getRuntimeConfig()
 
