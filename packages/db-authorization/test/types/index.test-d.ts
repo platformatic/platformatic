@@ -37,6 +37,34 @@ app.register(async (instance) => {
     },
   }])
 
+  instance.platformatic.addRulesForRoles<User>([{
+    role: 'role',
+    entity: 'entity',
+    updateMany: true,
+  }])
+
+  instance.platformatic.addRulesForRoles<User>([{
+    role: 'role',
+    entity: 'entity',
+    updateMany: {
+      checks: { userId: 'X-PLATFORMATIC-USER-ID' },
+    },
+  }])
+
+  instance.platformatic.addRulesForRoles<User>([{
+    role: 'role',
+    entity: 'entity',
+    insert: true,
+  }])
+
+  instance.platformatic.addRulesForRoles<User>([{
+    role: 'role',
+    entity: 'entity',
+    insert: {
+      checks: { userId: 'X-PLATFORMATIC-USER-ID' },
+    },
+  }])
+
   instance.get('/test', (request) => {
     expectType<SetupDBAuthorizationUserDecorator>(request.setupDBAuthorizationUser)
   })

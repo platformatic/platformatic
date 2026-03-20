@@ -35,6 +35,8 @@ interface AuthorizationRuleBase<T> {
   find?: Operation<T>
   save?: Operation<T>
   delete?: Operation<T>
+  insert?: Operation<T>
+  updateMany?: Operation<T>
 }
 export interface AuthorizationRuleEntity<T> extends AuthorizationRuleBase<T> {
   entity: string
