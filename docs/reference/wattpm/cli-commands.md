@@ -599,6 +599,38 @@ wattpm pprof stop my-app api-application   # Stop profiling specific application
 wattpm pprof stop 12345 api-application    # Stop profiling specific application using PID
 ```
 
+### `wattpm heap-snapshot`
+
+Takes a V8 heap snapshot of a running application and saves it as a `.heapsnapshot` file. The resulting file can be loaded in Chrome DevTools (Memory tab) for analysis.
+
+Heap snapshot data is streamed directly to disk without buffering the entire snapshot in memory.
+
+```bash
+wattpm heap-snapshot [id] [application]
+```
+
+**Arguments:**
+
+- `id` - Process ID or application name (optional if only one app is running)
+- `application` - Application name (optional, snapshots all applications if omitted)
+
+**Options:**
+
+- `-d, --dir <path>` - Directory to save the heap snapshot to (default: current working directory)
+
+**Example:**
+
+```bash
+wattpm heap-snapshot                                  # Snapshot all applications (auto-detect runtime)
+wattpm heap-snapshot api-application                  # Snapshot specific application (auto-detect runtime)
+wattpm heap-snapshot my-app                           # Snapshot all applications in specific app
+wattpm heap-snapshot my-app api-application           # Snapshot specific application in specific app
+wattpm heap-snapshot 12345 api-application            # Snapshot specific application using PID
+wattpm heap-snapshot --dir /tmp/snapshots my-app      # Save to specific directory
+```
+
+Output files are saved with the naming pattern `heap-{application}-{timestamp}.heapsnapshot`.
+
 ## Advanced Commands
 
 ### `wattpm patch-config`

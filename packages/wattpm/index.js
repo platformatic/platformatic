@@ -14,6 +14,7 @@ import { applicationsCommand, configCommand, envCommand, psCommand } from './lib
 import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
+import { heapSnapshotCommand } from './lib/commands/snapshot.js'
 import { version } from './lib/schema.js'
 
 export * from './lib/schema.js'
@@ -115,6 +116,9 @@ export async function main () {
       break
     case 'pprof':
       command = pprofCommand
+      break
+    case 'heap-snapshot':
+      command = heapSnapshotCommand
       break
     case 'repl':
       command = replCommand
