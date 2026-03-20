@@ -82,7 +82,7 @@
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",
     "minimist": "^1.2.8",
-    "pino": "^9.9.0",
+    "pino": "^10.1.0",
     "pino-opentelemetry-transport": "^2.0.0",
     "pino-pretty": "^13.0.0",
     "semgrator": "^0.3.0",
