@@ -83,6 +83,7 @@ const sidebars = {
             'guides/logging-to-elasticsearch',
             'guides/opentelemetry-logging',
             'guides/profiling-with-watt',
+            'guides/heap-snapshots',
             'guides/debugging-with-repl'
           ]
         }

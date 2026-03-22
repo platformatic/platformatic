@@ -36,6 +36,7 @@
     "dist/**",
     "**/node_modules",
     "**/tmp",
-    "**/dist"
+    "**/dist",
+    "**/test"
   ]
 }

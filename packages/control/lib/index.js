@@ -26,6 +26,7 @@ import {
   FailedToStopProfiling,
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
+  FailedToTakeHeapSnapshot,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -380,6 +381,36 @@ export class RuntimeApiClient {
 
     // Return the binary profile data as ArrayBuffer
     return await body.arrayBuffer()
+  }
+
+  async takeApplicationHeapSnapshot (pid, applicationId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/applications/${applicationId}/heap-snapshot`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      const message = jsonError?.message || error
+      const code = jsonError?.code
+
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+        throw new ApplicationNotFound(message)
+      }
+
+      throw new FailedToTakeHeapSnapshot(applicationId, message)
+    }
+
+    return body
   }
 
   async reloadRuntime (pid, options = {}) {
