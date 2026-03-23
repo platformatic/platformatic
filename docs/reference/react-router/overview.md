@@ -43,7 +43,7 @@ import type { Config } from '@react-router/dev/config'
 import { getGlobal } from '@platformatic/globals'
 
 export default {
-  basename: getGlobal().basePath ?? '/'
+  basename: getGlobal()?.basePath ?? '/'
   ssr: true
 } satisfies Config
 ```
@@ -57,7 +57,7 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  base: getGlobal().basePath ?? '/',
+  base: getGlobal()?.basePath ?? '/',
   plugins: [reactRouter(), tsconfigPaths()]
 })
 ```
