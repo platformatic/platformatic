@@ -21,6 +21,7 @@ import { tracingChannel } from 'node:diagnostics_channel'
 import EventEmitter, { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
+import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -680,6 +681,16 @@ export class BaseCapability extends EventEmitter {
     // This ensures subprocess uses the same Node.js version as the parent
     if (executable === 'node') {
       executable = process.execPath
+      // Search for the command in node_modules if needed
+    } else if (!isAbsolute(executable) && this.config.application?.preferLocalCommands) {
+      const applicationExecutable = resolve(this.root, 'node_modules', '.bin', executable)
+      const projectExecutable = resolve(process.cwd(), 'node_modules', '.bin', executable)
+
+      if (existsSync(applicationExecutable)) {
+        executable = applicationExecutable
+      } else if (existsSync(projectExecutable)) {
+        executable = projectExecutable
+      }
     }
 
     /* c8 ignore next 3 */

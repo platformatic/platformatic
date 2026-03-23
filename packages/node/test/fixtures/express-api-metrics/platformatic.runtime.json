@@ -4,6 +4,9 @@
   "logger": {
     "level": "error"
   },
+  "server": {
+    "port": 0
+  },
   "services": [
     {
       "id": "api",

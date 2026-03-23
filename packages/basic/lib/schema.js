@@ -57,6 +57,14 @@ const buildableApplication = {
       },
       default: {},
       additionalProperties: false
+    },
+    changeDirectoryBeforeExecution: {
+      type: 'boolean',
+      default: false
+    },
+    preferLocalCommands: {
+      type: 'boolean',
+      default: true
     }
   },
   additionalProperties: false,

@@ -1,12 +1,14 @@
 /* globals platformatic */
 
 import { kMetadata } from '@platformatic/foundation'
+import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { platform } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { create, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
+import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
   levels: {
@@ -522,6 +524,59 @@ test(
     )
   }
 )
+
+test('BaseCapability - buildWithCommand - should prefer local commands from the application root', { skip: isWindows }, async t => {
+  const applicationRoot = await createTemporaryDirectory(t, 'plt-basic-app-root')
+  const projectRoot = await createTemporaryDirectory(t, 'plt-basic-project-root')
+  const applicationBin = join(applicationRoot, 'node_modules', '.bin')
+  const projectBin = join(projectRoot, 'node_modules', '.bin')
+
+  await mkdir(applicationBin, { recursive: true })
+  await mkdir(projectBin, { recursive: true })
+
+  const commandName = 'plt-local-command'
+  const applicationCommand = join(applicationBin, commandName)
+  const projectCommand = join(projectBin, commandName)
+
+  await writeFile(applicationCommand, '#!/usr/bin/env node\nprocess.stdout.write("application-root\\n")\n')
+  await writeFile(projectCommand, '#!/usr/bin/env node\nprocess.stdout.write("project-root\\n")\n')
+  await chmod(applicationCommand, 0o755)
+  await chmod(projectCommand, 0o755)
+
+  const originalCwd = process.cwd()
+  process.chdir(projectRoot)
+  t.after(() => process.chdir(originalCwd))
+
+  const capability = await create(t, {}, { application: { preferLocalCommands: true } }, 'base', '1.0.0', applicationRoot)
+
+  await capability.buildWithCommand(commandName)
+
+  deepStrictEqual(capability.stdout.messages.slice(1), ['application-root'])
+})
+
+test('BaseCapability - buildWithCommand - should resolve local commands from the current working directory', { skip: isWindows }, async t => {
+  const applicationRoot = await createTemporaryDirectory(t, 'plt-basic-app-root')
+  const projectRoot = await createTemporaryDirectory(t, 'plt-basic-project-root')
+  const projectBin = join(projectRoot, 'node_modules', '.bin')
+
+  await mkdir(projectBin, { recursive: true })
+
+  const commandName = 'plt-local-command'
+  const projectCommand = join(projectBin, commandName)
+
+  await writeFile(projectCommand, '#!/usr/bin/env node\nprocess.stdout.write("project-root\\n")\n')
+  await chmod(projectCommand, 0o755)
+
+  const originalCwd = process.cwd()
+  process.chdir(projectRoot)
+  t.after(() => process.chdir(originalCwd))
+
+  const capability = await create(t, {}, { application: { preferLocalCommands: true } }, 'base', '1.0.0', applicationRoot)
+
+  await capability.buildWithCommand(commandName)
+
+  deepStrictEqual(capability.stdout.messages.slice(1), ['project-root'])
+})
 
 test('BaseCapability - startCommand - should kill the process on non-zero exit code', async t => {
   const capability = await create(t)

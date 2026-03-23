@@ -254,7 +254,7 @@ test('env - should complain when an application is not found', async t => {
   ok(envProcess.stdout.includes('Cannot find a matching application.'))
 })
 
-test('config - should list configuration for an application', async t => {
+test('config - should list configuration for the runtime', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const alternativeApplicationDir = resolve(rootDir, 'web/alternative')
   const mainApplicationDir = resolve(rootDir, 'web/main')
@@ -374,7 +374,9 @@ test('config - should list configuration for an application', async t => {
       include: ['dist'],
       commands: {
         install: 'npm ci --omit-dev'
-      }
+      },
+      changeDirectoryBeforeExecution: false,
+      preferLocalCommands: true
     },
     node: {
       absoluteUrl: false,

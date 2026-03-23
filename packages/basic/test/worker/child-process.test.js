@@ -1,13 +1,16 @@
+import { execa } from 'execa'
 import { deepStrictEqual, equal, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
+import { mkdir } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { create, getExecutedCommandLogMessage } from '../helper.js'
+import { ChildManager } from '../../lib/worker/child-manager.js'
+import { create, createTemporaryDirectory, getExecutedCommandLogMessage } from '../helper.js'
 
 function serverHandler (_, res) {
   res.writeHead(200, {
@@ -171,6 +174,44 @@ test('ChildProcess - should intercept fetch calls', async t => {
       '502 No target found for service2.plt.local in thread 0.'
     ]
   )
+})
+
+test('ChildProcess - should change directory before command execution when requested', async t => {
+  const capability = await create(t)
+  const root = await createTemporaryDirectory(t, 'plt-basic-child-root')
+  await mkdir(root, { recursive: true })
+  const manager = new ChildManager({
+    logger: capability.logger,
+    context: {
+      applicationId: 'application',
+      config: {
+        application: {
+          changeDirectoryBeforeExecution: true
+        }
+      },
+      exitOnUnhandledErrors: false,
+      host: true,
+      isEntrypoint: false,
+      logLevel: capability.logger.level,
+      port: true,
+      reuseTcpPorts: false,
+      root: pathToFileURL(root).toString(),
+      telemetryConfig: { enabled: false },
+      workerId: 0
+    }
+  })
+
+  await manager.inject()
+
+  try {
+    const executablePath = fileURLToPath(new URL('../fixtures/print-cwd.js', import.meta.url))
+    const { stderr } = await execa(process.execPath, [executablePath], { cwd: import.meta.dirname })
+
+    equal(stderr, root)
+  } finally {
+    await manager.eject()
+    await manager.close()
+  }
 })
 
 test('ChildProcess - should properly setup globals', async t => {
