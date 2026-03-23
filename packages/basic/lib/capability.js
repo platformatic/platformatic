@@ -544,7 +544,8 @@ export class BaseCapability extends EventEmitter {
     })
 
     const [url, clientWs] = await once(this.childManager, 'url')
-    this.url = this.config.application?.entrypointPort ?? url
+
+    this.url = this._getEntrypointUrl(url)
     this.clientWs = clientWs
 
     await this._collectMetrics()
@@ -657,7 +658,7 @@ export class BaseCapability extends EventEmitter {
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     childManager.on('url', (url, clientWs) => {
-      this.url = this.config.application?.entrypointPort ?? url
+      this.url = this._getEntrypointUrl(url)
       this.clientWs = clientWs
     })
   }
@@ -790,6 +791,23 @@ export class BaseCapability extends EventEmitter {
     })
 
     return promise
+  }
+
+  _getEntrypointUrl (raw) {
+    const port = this.config.application?.entrypointPort
+
+    if (typeof port !== 'number') {
+      return raw
+    }
+
+    const url = new URL(raw)
+
+    if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
+      url.hostname = 'localhost'
+    }
+
+    url.port = this.config.application.entrypointPort
+    return url.toString()
   }
 
   async #collectMetrics () {

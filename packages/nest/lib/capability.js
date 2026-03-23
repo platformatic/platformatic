@@ -77,7 +77,7 @@ export class NestCapability extends BaseCapability {
 
       // We use url changing as a way to notify restarts
       this.childManager.on('url', () => {
-        globalThis.platformatic.events.emitAndNotify('url', config.application.entrypointPort ?? this.url)
+        globalThis.platformatic.events.emitAndNotify('url', this.url)
       })
     } else {
       return this.#startProduction(listen)
