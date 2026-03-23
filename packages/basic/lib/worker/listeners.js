@@ -10,13 +10,20 @@ export function createServerListener (overridePort = true, overrideHost = false,
         return
       }
 
-      if (overridePort !== false) {
-        const hasFixedPort = typeof overridePort === 'number'
-        options.port = hasFixedPort ? overridePort : 0
+      if (typeof overridePort !== 'number' && overridePort !== false) {
+        overridePort = 0
       }
 
       if (typeof overrideHost === 'string') {
         options.host = overrideHost
+      }
+
+      // Check if we need to override the port only if a static port is being requested
+      if (overridePort !== false && overridePort !== 0) {
+        // The user application has requested a specific port, which is not the entrypoint one. Override it.
+        if (options.port !== overridePort && globalThis.platformatic.isEntrypoint) {
+          options.port = overridePort
+        }
       }
 
       Object.assign(options, additionalOptions)

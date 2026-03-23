@@ -8,4 +8,4 @@ app.get('/test', (_req, res) => {
   res.send({ foo: 'bar' })
 })
 
-app.listen(1)
+app.listen(0)

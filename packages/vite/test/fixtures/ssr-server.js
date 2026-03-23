@@ -91,7 +91,7 @@ export async function build () {
 // This is to use with custom commands
 if (import.meta.main) {
   const server = await build()
-  server.listen({ port: 1 })
+  server.listen({ port: 0 })
   setTimeout(() => {
     process._rawDebug('listening on port', server.address().port)
   }, 3000)

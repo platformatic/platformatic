@@ -28,26 +28,55 @@ test('createServerListener - should return the first listening server', async t 
   deepStrictEqual(server, listened)
 })
 
-test('createServerListener - should override the host and the port', async t => {
+test('createServerListener - should override the host only when the port is dynamic', async t => {
+  const port = await getPort()
   const server = createHttpServer(t)
 
   const listener = createServerListener(0, '0.0.0.0')
-  await listen(server, { host: '127.0.0.1', port: 100 })
+  await listen(server, { host: '127.0.0.1', port })
 
   await listener
   ok(server.address().host !== '127.0.0.1')
-  ok(server.address().port !== 100)
+  deepStrictEqual(server.address().port, port)
 })
 
 test('createServerListener - should override the port with fixed value', async t => {
   const port = await getPort()
   const server = createHttpServer(t)
 
+  globalThis.platformatic = {
+    isEntrypoint: true,
+    events: { emitAndNotify () {} }
+  }
+  t.after(() => {
+    delete globalThis.platformatic
+  })
+
   const listener = createServerListener(port)
   await listen(server, { host: '127.0.0.1', port: 100 })
 
   await listener
   deepStrictEqual(server.address().port, port)
+})
+
+test('createServerListener - should not override a fixed port for non-entrypoints', async t => {
+  const port = await getPort()
+  const originalPort = await getPort()
+  const server = createHttpServer(t)
+
+  globalThis.platformatic = {
+    isEntrypoint: false,
+    events: { emitAndNotify () {} }
+  }
+  t.after(() => {
+    delete globalThis.platformatic
+  })
+
+  const listener = createServerListener(port)
+  await listen(server, { host: '127.0.0.1', port: originalPort })
+
+  await listener
+  deepStrictEqual(server.address().port, originalPort)
 })
 
 test('createServerListener - should not override the port', async t => {

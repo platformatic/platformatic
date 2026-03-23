@@ -35,5 +35,4 @@ const server = createServer((req, res) => {
   }
 })
 
-// This would likely fail if our code doesn't work
-server.listen(1)
+server.listen(0)

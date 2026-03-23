@@ -225,7 +225,7 @@ export class NextCapability extends BaseCapability {
     await this.#startDevelopmentNext(serverOptions)
 
     const [url, clientWs] = await promise
-    this.url = url
+    this.url = this.config.application.entrypointRoot ?? url
     this.clientWs = clientWs
   }
 

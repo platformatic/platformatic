@@ -9,4 +9,4 @@ app.get('/', async () => {
   return { production: process.env.NODE_ENV === 'production' }
 })
 
-app.listen({ port: 1 })
+app.listen({ port: 0 })

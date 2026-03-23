@@ -17,7 +17,7 @@ const main = async () => {
   // ...and of the DB connection
   globalThis.platformatic.setConnectionString(connectionString)
 
-  app.listen(1)
+  app.listen(0)
 }
 
 main()

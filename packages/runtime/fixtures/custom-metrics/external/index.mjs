@@ -28,7 +28,7 @@ app.get('/hello', async (request, reply) => {
   return { from: 'node' }
 })
 
-app.listen({ port: 1 }).then(() => {
+app.listen({ port: 0 }).then(() => {
   const metric2 = new client.Gauge({
     name: 'custom_external_2',
     help: 'Custom External 2',

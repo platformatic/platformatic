@@ -2,5 +2,8 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/astro/2.0.0.json",
   "application": {
     "basePath": "astro"
+  },
+  "server": {
+    "port": 5174
   }
 }

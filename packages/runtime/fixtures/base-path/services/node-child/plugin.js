@@ -16,4 +16,4 @@ const server = createServer((req, res) => {
   throw new Error(`Unexpected request: ${req.url}`)
 })
 
-server.listen(1)
+server.listen(0)

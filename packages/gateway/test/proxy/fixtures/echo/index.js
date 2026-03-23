@@ -8,5 +8,4 @@ const server = createServer((req, res) => {
   res.end(JSON.stringify({ service: globalThis.platformatic.applicationId }))
 })
 
-// This would likely fail if our code doesn't work
-server.listen(1)
+server.listen(0)
