@@ -592,6 +592,19 @@ export class BaseCapability extends EventEmitter {
       this.reuseTcpPorts = false
     }
 
+    // By the default we override the port for non entrypoints
+    let port = true
+
+    // For the entrypoint only, if no port was requested we don't override.
+    // This way the existing user applications are unaffected.
+    if (this.isEntrypoint) {
+      if (this.serverConfig && typeof this.serverConfig.port !== 'undefined') {
+        port = this.serverConfig.port
+      } else {
+        port = false
+      }
+    }
+
     return {
       id: this.id,
       config: this.config,
@@ -606,9 +619,8 @@ export class BaseCapability extends EventEmitter {
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      /* c8 ignore next 2 - else */
-      port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      port,
       additionalServerOptions:
         typeof this.serverConfig?.backlog === 'number'
           ? {
