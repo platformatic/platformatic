@@ -287,6 +287,143 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
   await capability.stopCommand()
 })
 
+test('BaseCapability - startCommand - should override the port set for the entrypoint', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  ok(!capability.url.startsWith('http://127.0.0.1:10000'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(capability.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
+      applicationId: 'application',
+      workerId: 0,
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      additionalServerOptions: {},
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
+      logger: expectedLogger
+    })
+  }
+
+  await capability.stopCommand()
+})
+
+test('BaseCapability - startCommand - should not override the port when unset for the entrypoint', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1'
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  ok(capability.url.startsWith('http://127.0.0.1:10000'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(capability.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
+      applicationId: 'application',
+      workerId: 0,
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: false,
+      additionalServerOptions: {},
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
+      logger: expectedLogger
+    })
+  }
+
+  await capability.stopCommand()
+})
+
 test('BaseCapability - should import and setup open telemetry HTTP instrumentation', async t => {
   const capability = await create(
     t,
