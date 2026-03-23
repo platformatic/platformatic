@@ -145,7 +145,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
     throw new NodeInspectorFlagsNotSupportedError()
   }
 
-  let runtime = new Runtime(config, context)
+  const runtime = new Runtime(config, context)
   if (setupSignals) {
     handleSignal(runtime, config)
   }
