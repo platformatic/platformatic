@@ -114,6 +114,8 @@ export class PredictiveWorkersScaler {
       elu: {
         threshold: config.eluThreshold,
         redistributionMs: config.redistributionMs,
+        maxValue: 1,
+        saturationZone: 0.02,
         ...holtConfig
       }
     }

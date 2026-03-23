@@ -7,8 +7,9 @@ export const PENDING_SCALE_UP_EXPIRY_MS = 30000
 export const SAMPLE_INTERVAL_MS = 1000
 export const WINDOW_MS = 60000
 export const REDISTRIBUTION_K = 0.5
-export const HORIZONTAL_TREND_THRESHOLD = 0.2
+export const HORIZONTAL_TREND_THRESHOLD = 10
 export const HORIZON_MULTIPLIER = 1.2
+export const RECONNECT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_CONFIG = {
   stepRate: 0.1,
@@ -35,6 +36,9 @@ export class PredictiveScalingAlgorithm {
   /** @type {WorkerIdMapper} */
   #workerIdMapper
 
+  /** @type {Map<string, NodeJS.Timeout>} workerId -> reconnect timer */
+  #reconnectTimers
+
   /** @type {Map<string, { startTime: number, [metricName]: MetricStore }>} instanceId -> instance */
   #instances
 
@@ -47,7 +51,15 @@ export class PredictiveScalingAlgorithm {
    *   history: SlidingWindow,
    *   config: { sampleIntervalMs: number, windowMs: number, threshold: number,
    *     redistributionConfig: { redistributionMs: number, k: number },
-   *     holtConfig: { alphaUp: number, alphaDown: number, betaUp: number, betaDown: number } }
+   *     holtConfig: {
+   *       alphaUp: number,
+   *       alphaDown: number,
+   *       betaUp: number,
+   *       betaDown: number
+   *       maxValue: number,
+   *       saturationZone: number
+   *     }
+   *   }
    * }>}
    */
   #metrics
@@ -101,6 +113,7 @@ export class PredictiveScalingAlgorithm {
     this.#horizonMs = HORIZON_MULTIPLIER * this.#initTimeoutMs
 
     this.#workerIdMapper = new WorkerIdMapper()
+    this.#reconnectTimers = new Map()
     this.#instances = new Map()
 
     this.#metrics = new Map()
@@ -123,7 +136,9 @@ export class PredictiveScalingAlgorithm {
             alphaUp: mc.alphaUp,
             alphaDown: mc.alphaDown,
             betaUp: mc.betaUp,
-            betaDown: mc.betaDown
+            betaDown: mc.betaDown,
+            maxValue: mc.maxValue,
+            saturationZone: mc.saturationZone
           }
         }
       })
@@ -131,6 +146,12 @@ export class PredictiveScalingAlgorithm {
   }
 
   addWorker (workerId, startTime) {
+    const timer = this.#reconnectTimers.get(workerId)
+    if (timer) {
+      clearTimeout(timer)
+      this.#reconnectTimers.delete(workerId)
+    }
+
     const instanceId = this.#workerIdMapper.add(workerId)
     this.#instances.set(instanceId, { startTime })
     this.#lastWorkerStartTime = startTime
@@ -138,7 +159,11 @@ export class PredictiveScalingAlgorithm {
   }
 
   removeWorker (workerId) {
-    this.#workerIdMapper.remove(workerId)
+    const timer = setTimeout(() => {
+      this.#workerIdMapper.remove(workerId)
+      this.#reconnectTimers.delete(workerId)
+    }, RECONNECT_TIMEOUT_MS).unref()
+    this.#reconnectTimers.set(workerId, timer)
   }
 
   addSample (metricName, workerId, timestamp, value) {
@@ -313,7 +338,10 @@ export class PredictiveScalingAlgorithm {
     const { count } = lastEntry.redistribution
     metric.lastProcessedTick = lastEntry.timestamp
 
-    // Adjust level forward to now (matches k8s getTargetPodsCount)
+    // Convert trend from per-tick to per-second
+    trend *= 1000 / config.sampleIntervalMs
+
+    // Adjust level forward to now
     level += trend * (now - lastEntry.timestamp) / 1000
 
     // Append to history
@@ -588,7 +616,7 @@ export function getStabilizationWeight (age, redistributionMs, k) {
  * @returns {number | null} updated prevSum
  */
 export function redistributeValues (state, workers, config, prevSum) {
-  const { redistributionMs, k = 0.5 } = config
+  const { redistributionMs, k = 1 } = config
 
   for (let i = 0; i < state.length; i++) {
     const entry = state[i]
@@ -644,7 +672,8 @@ export function redistributeValues (state, workers, config, prevSum) {
     }
 
     prevSum = sum
-    entry.redistribution = { sum, count }
+    const workerCount = Object.keys(workerValues).length
+    entry.redistribution = { sum, count, rawSum: total, workerCount }
   }
 
   return prevSum
@@ -667,7 +696,7 @@ export function redistributeValues (state, workers, config, prevSum) {
  * @returns {{ level: number, trend: number }}
  */
 export function holt (state, config, prev) {
-  const { alphaUp, alphaDown, betaUp, betaDown } = config
+  const { alphaUp, alphaDown, betaUp, betaDown, maxValue, saturationZone } = config
 
   let level = prev?.level ?? null
   let trend = prev?.trend ?? 0
@@ -690,10 +719,25 @@ export function holt (state, config, prev) {
     const beta = isAboveForecast ? betaUp : betaDown
 
     const prevLevel = level
+    const prevTrend = trend
+
     level = alpha * input + (1 - alpha) * forecast
 
     const levelDiff = level - prevLevel
     trend = beta * levelDiff + (1 - beta) * trend
+
+    // Check if metric is saturated — only allow trend to increase, not decrease
+    if (maxValue !== undefined) {
+      const rawSum = entry.redistribution.rawSum
+      const rawCount = entry.redistribution.workerCount
+      const threshold = rawCount * maxValue * (1 - saturationZone)
+
+      if (rawSum >= threshold) {
+        trend = Math.max(trend, prevTrend)
+        entry.holt = { level, trend }
+        continue
+      }
+    }
 
     // Dampen trend when smoothed is above real value to prevent undershoot
     if (level > input) {

@@ -16,7 +16,7 @@ import {
 
 const REDIST_MS = 5000
 
-function weight (age, redistributionMs, k = 0.5) {
+function weight (age, redistributionMs, k = 1) {
   const t = age / redistributionMs
   return (Math.exp(k * t) - 1) / (Math.exp(k) - 1)
 }
@@ -421,7 +421,7 @@ test('redistributeValues', async (t) => {
     // Without explicit k
     redistributeValues(state, workers, { redistributionMs: REDIST_MS }, null)
 
-    const w2Weight = weight(2000, REDIST_MS, 0.5) // default k=0.5
+    const w2Weight = weight(2000, REDIST_MS, 1) // default k=1
     const expectedSum = 100 + 50 * w2Weight
     assertClose(state[0].redistribution.sum, expectedSum)
   })
