@@ -12,4 +12,4 @@ app.get(ensureTrailingSlash(cleanBasePath(prefix)), async () => {
 })
 
 // This would likely fail if our code doesn't work
-app.listen({ port: 1 })
+app.listen({ port: 0 })

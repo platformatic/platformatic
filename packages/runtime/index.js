@@ -145,50 +145,23 @@ export async function create (configOrRoot, sourceOrConfig, context) {
     throw new NodeInspectorFlagsNotSupportedError()
   }
 
-  let runtime = new Runtime(config, context)
+  const runtime = new Runtime(config, context)
   if (setupSignals) {
     handleSignal(runtime, config)
   }
 
-  // Handle port handling
+  // Handle startup
   if (context?.start) {
-    let port = config.server?.port
-
     try {
       await runtime.init()
+      if (context.reloaded) {
+        runtime.logger.info('The application has been successfully reloaded.')
+      }
+
+      await runtime.start()
     } catch (err) {
       await runtime.close()
       throw err
-    }
-
-    if (context.reloaded) {
-      runtime.logger.info('The application has been successfully reloaded.')
-    }
-
-    while (true) {
-      try {
-        await runtime.start()
-        break
-      } catch (err) {
-        if ((err.code !== 'EADDRINUSE' && err.code !== 'EACCES') || context?.skipPortInUseHandling) {
-          throw err
-        }
-
-        await runtime.close()
-
-        // Get the actual port from the error message if original port was 0
-        if (!port) {
-          const mo = err.message.match(/ address already in use (.+)/)
-          const url = new URL(`http://${mo[1]}`)
-          port = Number(url.port)
-        }
-
-        config.server.port = ++port
-        runtime = new Runtime(config, context)
-        if (setupSignals) {
-          handleSignal(runtime, config)
-        }
-      }
     }
   }
 

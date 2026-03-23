@@ -11,6 +11,6 @@ function handler (_, res) {
   res.end(JSON.stringify(platformatic))
 }
 
-createServer(handler).listen({ host: '127.0.0.1', port: 10000 })
+createServer(handler).listen({ host: '127.0.0.1', port: 0 })
 
 globalThis[Symbol.for('plt.children.itc')].notify('config', { production: process.env.NODE_ENV === 'production' })

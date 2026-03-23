@@ -84,7 +84,7 @@ const server = createServer((_req, res) => {
   res.end(JSON.stringify({ ok: true }))
 })
 
-server.listen(1)
+server.listen(0)
 ```
 
 ## Architecture
@@ -214,7 +214,7 @@ export function create () {
     async [Symbol.asyncDispose] () {
       // Perform your cleanup operations
       await new Promise((resolve, reject) => {
-        server.close(err => err ? reject(err) : resolve())
+        server.close(err => (err ? reject(err) : resolve()))
       })
     }
   }

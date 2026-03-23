@@ -13,4 +13,4 @@ app.use(async ctx => {
 })
 
 // This would likely fail if our code doesn't work
-app.listen(1)
+app.listen(0)

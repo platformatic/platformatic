@@ -12,4 +12,4 @@ app.get('/redirect', (req, res) => {
   res.redirect('/hello')
 })
 
-app.listen(1)
+app.listen(0)

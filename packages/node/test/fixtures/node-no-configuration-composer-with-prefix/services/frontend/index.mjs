@@ -52,5 +52,4 @@ globalThis[Symbol.for('plt.runtime.itc')].handle('closeServer', () => {
   })
 })
 
-// This would likely fail if our code doesn't work
-server.listen(1)
+server.listen(0)

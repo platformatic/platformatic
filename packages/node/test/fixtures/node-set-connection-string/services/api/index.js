@@ -9,4 +9,4 @@ const server = createServer((_req, res) => {
   res.end(JSON.stringify({ ok: true }))
 })
 
-server.listen(1)
+server.listen(0)

@@ -21,7 +21,7 @@ app.post('/', async request => {
 })
 app.log.trace('This is a trace')
 
-app.listen({ port: 1 }).then(() => {
+app.listen({ port: 0 }).then(() => {
   app.log.info('Service listening')
 })
 

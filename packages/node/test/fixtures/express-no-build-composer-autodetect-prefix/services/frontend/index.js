@@ -25,4 +25,4 @@ app.get('/nested/base/dir/time', (req, res) => {
 })
 
 // This would likely fail if our code doesn't work
-app.listen(1)
+app.listen(0)

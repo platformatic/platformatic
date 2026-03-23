@@ -102,7 +102,7 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
-    this.reuseTcpPorts = this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts
+    this.reuseTcpPorts = (this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts) && features.node.reusePort
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 
@@ -133,7 +133,9 @@ export class BaseCapability extends EventEmitter {
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
-      logger: this.logger
+      logger: this.logger,
+      isEntrypoint: this.isEntrypoint,
+      reuseTcpPorts: this.reuseTcpPorts
     })
 
     if (globalThis.platformatic.prometheus) {
@@ -542,7 +544,8 @@ export class BaseCapability extends EventEmitter {
     })
 
     const [url, clientWs] = await once(this.childManager, 'url')
-    this.url = url
+
+    this.url = this._getEntrypointUrl(url)
     this.clientWs = clientWs
 
     await this._collectMetrics()
@@ -593,19 +596,6 @@ export class BaseCapability extends EventEmitter {
       this.reuseTcpPorts = false
     }
 
-    // By the default we override the port for non entrypoints
-    let port = true
-
-    // For the entrypoint only, if no port was requested we don't override.
-    // This way the existing user applications are unaffected.
-    if (this.isEntrypoint) {
-      if (this.serverConfig && typeof this.serverConfig.port !== 'undefined') {
-        port = this.serverConfig.port
-      } else {
-        port = false
-      }
-    }
-
     return {
       id: this.id,
       config: this.config,
@@ -621,7 +611,7 @@ export class BaseCapability extends EventEmitter {
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      port,
+      port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions:
         typeof this.serverConfig?.backlog === 'number'
           ? {
@@ -668,7 +658,7 @@ export class BaseCapability extends EventEmitter {
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     childManager.on('url', (url, clientWs) => {
-      this.url = url
+      this.url = this._getEntrypointUrl(url)
       this.clientWs = clientWs
     })
   }
@@ -801,6 +791,23 @@ export class BaseCapability extends EventEmitter {
     })
 
     return promise
+  }
+
+  _getEntrypointUrl (raw) {
+    const port = this.config.application?.entrypointPort
+
+    if (typeof port !== 'number') {
+      return raw
+    }
+
+    const url = new URL(raw)
+
+    if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
+      url.hostname = 'localhost'
+    }
+
+    url.port = this.config.application.entrypointPort
+    return url.toString()
   }
 
   async #collectMetrics () {

@@ -514,13 +514,21 @@ export class ChildProcess extends ITC {
           return
         }
 
-        const port = globalThis.platformatic.port
+        let port = globalThis.platformatic.port
         const host = globalThis.platformatic.host
+        const isEntrypoint = globalThis.platformatic.isEntrypoint
         const additionalOptions = globalThis.platformatic.additionalServerOptions ?? {}
 
-        if (port !== false) {
-          const hasFixedPort = typeof port === 'number'
-          options.port = hasFixedPort ? port : 0
+        if (typeof port !== 'number' && port !== false) {
+          port = 0
+        }
+
+        // Check if we need to override the port only if a static port is being requested
+        if (port !== false && port !== 0) {
+          // The user application has requested a specific port, which is not the entrypoint one. Override it.
+          if (options.port !== port && isEntrypoint) {
+            options.port = port
+          }
         }
 
         if (typeof host === 'string') {
