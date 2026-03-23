@@ -17,6 +17,8 @@ Supported object properties:
   - **`build`**: Command to build the application.
   - **`development`**: Command to start the application in development mode.
   - **`production`**: Command to start the application in production mode.
+- **`changeDirectoryBeforeExecution`**: If `true`, change the current working directory to the application root before running any of the commands above. Default: `false`.
+- **`preferLocalCommands`**: If `true`, resolve non-absolute commands from the application's `node_modules/.bin` before checking the current working directory. Default: `true`.
 
 ## `logger`
 
