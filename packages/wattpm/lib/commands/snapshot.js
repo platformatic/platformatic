@@ -73,7 +73,7 @@ export const help = {
     description: 'Take a heap snapshot of a running application',
     options: [
       {
-        name: '--dir, -d',
+        usage: '--dir, -d',
         description: 'Directory to save the heap snapshot to (default: current working directory)'
       }
     ],

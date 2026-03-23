@@ -24,6 +24,16 @@ test('help - should show proper messages', async t => {
   ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
 })
 
+test('help - should print help for commands with options', async t => {
+  const heapSnapshotHelp = await wattpm('help', 'heap-snapshot')
+  ok(heapSnapshotHelp.stdout.startsWith('\nUsage: wattpm heap-snapshot'))
+  ok(heapSnapshotHelp.stdout.includes('--dir, -d'))
+
+  const pprofHelp = await wattpm('help', 'pprof')
+  ok(pprofHelp.stdout.startsWith('\nUsage: wattpm pprof'))
+  ok(pprofHelp.stdout.includes('--type, -t'))
+})
+
 test('help - should support embedding via API', async t => {
   const logs = []
   function logger (message) {
