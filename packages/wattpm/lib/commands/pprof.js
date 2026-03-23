@@ -168,20 +168,20 @@ export const help = {
     description: 'Profile CPU or heap usage of running application',
     options: [
       {
-        name: '--type, -t',
+        usage: '--type, -t',
         description: 'Profile type: "cpu" for CPU wall time (default) or "heap" for heap memory'
       },
       {
-        name: '--source-maps, -s',
+        usage: '--source-maps, -s',
         description: 'Enable source map support to resolve TypeScript and other transpiled code locations in profiles'
       },
       {
-        name: '--node-modules-source-maps, -n',
+        usage: '--node-modules-source-maps, -n',
         description:
           'Comma-separated list of node_modules packages to load source maps from (e.g., "next,@next/next-server")'
       },
       {
-        name: '--dir, -d',
+        usage: '--dir, -d',
         description:
           'Directory to save the profile data to (default: current working directory). Only used with "stop" subcommand.'
       }
