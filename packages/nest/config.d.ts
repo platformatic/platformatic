@@ -118,6 +118,8 @@ export interface PlatformaticNestJSConfig {
       development?: string;
       production?: string;
     };
+    changeDirectoryBeforeExecution?: boolean;
+    preferLocalCommands?: boolean;
   };
   runtime?: {
     preload?: string | string[];

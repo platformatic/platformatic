@@ -15,6 +15,7 @@ import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
 import { fileURLToPath } from 'node:url'
+import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -369,7 +370,7 @@ export class ChildProcess extends ITC {
     // Create a duplex stream that sends output via notify
     const replStream = new Duplex({
       read () {},
-      write: (chunk, encoding, callback) => {
+      write: (chunk, _encoding, callback) => {
         this.notify('repl:output', { data: chunk.toString() })
         callback()
       }
@@ -434,7 +435,7 @@ export class ChildProcess extends ITC {
     let promise = null
     const timeout = 1000
 
-    const sendHealthSignal = async (signal) => {
+    const sendHealthSignal = async signal => {
       if (typeof signal !== 'object') {
         throw new Error('Health signal must be an object')
       }
@@ -709,6 +710,10 @@ async function main () {
 
   for (const script of scripts) {
     await importFile(script)
+  }
+
+  if (data.config.application?.changeDirectoryBeforeExecution && data.root && isMainThread) {
+    process.chdir(fileURLToPath(data.root))
   }
 
   const childProcess = new ChildProcess(executable)
