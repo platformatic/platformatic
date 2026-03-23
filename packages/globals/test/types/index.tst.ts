@@ -12,33 +12,33 @@ test("getGlobal", () => {
   expect(getGlobal).type.not.toBeCallableWith({})
 })
 
-test("PlatformaticGlobalInterface", () => {
-  const global = getGlobal()
-  expect(global).type.toBe<PlatformaticGlobal | undefined>()
+test("PlatformaticGlobal", () => {
+  const platformatic = getGlobal()
+  expect(platformatic).type.toBe<PlatformaticGlobal | undefined>()
 
   // Runtime
-  expect(global!.isBuilding).type.toBe<boolean>()
-  expect(global!.executable).type.toBe<string>()
+  expect(platformatic!.isBuilding).type.toBe<boolean>()
+  expect(platformatic!.executable).type.toBe<string>()
 
   // Service configuration
-  expect(global!.host).type.toBe<string>()
-  expect(global!.port).type.toBe<number>()
-  expect(global!.config).type.toBe<object>()
-  expect(global!.applicationId).type.toBe<string>()
-  expect(global!.workerId).type.toBe<number | string>()
-  expect(global!.root).type.toBe<string>()
-  expect(global!.isEntrypoint).type.toBe<boolean>()
-  expect(global!.basePath).type.toBe<string>()
-  expect(global!.runtimeBasePath).type.toBe<string>()
-  expect(global!.wantsAbsoluteUrls).type.toBe<boolean>()
+  expect(platformatic!.host).type.toBe<string>()
+  expect(platformatic!.port).type.toBe<number>()
+  expect(platformatic!.config).type.toBe<object>()
+  expect(platformatic!.applicationId).type.toBe<string>()
+  expect(platformatic!.workerId).type.toBe<number | string>()
+  expect(platformatic!.root).type.toBe<string>()
+  expect(platformatic!.isEntrypoint).type.toBe<boolean>()
+  expect(platformatic!.basePath).type.toBe<string>()
+  expect(platformatic!.runtimeBasePath).type.toBe<string>()
+  expect(platformatic!.wantsAbsoluteUrls).type.toBe<boolean>()
   
   // Logging
-  expect(global!.logger).type.toBe<Pino.Logger>()
-  expect(global!.logLevel).type.toBe<Pino.Level>()
-  expect(global!.interceptLogging).type.toBe<boolean>()
+  expect(platformatic!.logger).type.toBe<Pino.Logger>()
+  expect(platformatic!.logLevel).type.toBe<Pino.Level>()
+  expect(platformatic!.interceptLogging).type.toBe<boolean>()
 
   // Metrics
-  expect(global!.prometheus.client).type.toBe(Client)
-  expect(global!.prometheus.registry).type.toBe<Client.Registry>()
-  expect(global!.clientSpansAls).type.toBe<AsyncLocalStorage<unknown>>();
+  expect(platformatic!.prometheus.client).type.toBe(Client)
+  expect(platformatic!.prometheus.registry).type.toBe<Client.Registry>()
+  expect(platformatic!.clientSpansAls).type.toBe<AsyncLocalStorage<unknown>>();
 });
