@@ -3,8 +3,6 @@ import { type EventEmitter } from 'node:events'
 import { type Level, type Logger } from 'pino'
 import * as Client from '@platformatic/prom-client'
 
-type Optional<T> = T | undefined
-
 export type Handler = ((data: any) => any) | ((data: any) => Promise<any>)
 
 export interface InvalidateHttpCacheOptions {
@@ -28,7 +26,7 @@ export interface MessagingApi {
   handle (message: string, handler: Handler): void
 }
 
-export interface PlatformaticGlobalInterface {
+export interface PlatformaticGlobal {
   // Runtime
   isBuilding: boolean
   executable: string
@@ -52,10 +50,10 @@ export interface PlatformaticGlobalInterface {
 
   // Metrics
   prometheus: {
-    client: Client
+    client: typeof Client
     registry: Client.Registry
   }
-  clientSpansAls: AsyncLocalStorage
+  clientSpansAls: InstanceType<typeof AsyncLocalStorage>
 
   // Caching
   onHttpCacheHit (key: string): void
@@ -87,6 +85,8 @@ export interface PlatformaticGlobalInterface {
   messaging: MessagingApi
 }
 
-export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
-export declare function getGlobal<T = {}> (): PlatformaticGlobal & T
+/** @deprecated Use `PlatformaticGlobal` instead. */
+export type PlatformaticGlobalInterface = PlatformaticGlobal
+
+export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
 export default getGlobal
