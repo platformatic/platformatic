@@ -2,6 +2,7 @@ import httpProxy from '@fastify/http-proxy'
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { initMetrics } from './metrics.js'
@@ -19,7 +20,7 @@ function isLocalApplication (application) {
   return application.origin.endsWith('.plt.local')
 }
 
-async function resolveApplicationProxyParameters (application) {
+async function resolveApplicationProxyParameters (application, root) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
   // Only fetch meta for local applications - remote applications won't be in the runtime
   let allMeta = {}
@@ -47,13 +48,15 @@ async function resolveApplicationProxyParameters (application) {
     internalRewriteLocationHeader = false
   }
 
+  const require = createRequire(import.meta.filename)
+
   if (application.proxy?.custom) {
-    const custom = await loadModule(createRequire(import.meta.filename), application.proxy.custom.path)
+    const custom = await loadModule(require, resolve(root, application.proxy.custom.path))
     application.proxy.custom = custom
   }
 
   if (application.proxy?.ws?.hooks) {
-    const hooks = await loadModule(createRequire(import.meta.filename), application.proxy.ws.hooks.path)
+    const hooks = await loadModule(require, resolve(root, application.proxy.ws.hooks.path))
     application.proxy.ws.hooks = hooks
   }
 
@@ -77,6 +80,7 @@ let metrics
 async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
   const hostnameLessProxies = []
+  const root = opts.capability?.root ?? import.meta.dirname
 
   for (const application of opts.applications) {
     if (!application.proxy) {
@@ -87,7 +91,7 @@ async function proxyPlugin (app, opts) {
       }
     }
 
-    const parameters = await resolveApplicationProxyParameters(application)
+    const parameters = await resolveApplicationProxyParameters(application, root)
     const {
       prefix,
       origin,
@@ -181,7 +185,7 @@ async function proxyPlugin (app, opts) {
       prefix,
       rewritePrefix,
       upstream,
-      preRewrite,
+      preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
 
       websocket: true,

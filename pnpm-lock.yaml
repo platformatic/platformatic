@@ -1073,8 +1073,8 @@ importers:
         specifier: workspace:*
         version: link:../foundation
       '@platformatic/image-optimizer':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.2.1
+        version: 0.2.1
       amaro:
         specifier: ^0.3.0
         version: 0.3.2
@@ -4524,12 +4524,12 @@ packages:
   '@platformatic/http-metrics@0.3.0':
     resolution: {integrity: sha512-e+wQJDCd9v7yKeV4u30ibAe5uGB14k+jDw1w9FqsM3tDgFY0UEHb24hJR9j2bVa6091e+ppGy3L4LhyUR92M0w==}
 
-  '@platformatic/image-optimizer@0.2.0':
-    resolution: {integrity: sha512-js1G8IAEcEly9mLXwDyrVoE1dHy/Vx/sK9i75VYK3K7ZKp4uGILuDhkd0HgU8ZCKqLUjXnvPyRCNl+V8hNvkig==}
+  '@platformatic/image-optimizer@0.2.1':
+    resolution: {integrity: sha512-jE+dWYDp32CITSOHvHi67h3hVmo34n2fzBBNxpP+74WUo1EyMPcvuVVwNR+4aKsY+vUYuKKVf/yYkvQ4bP/Dlw==}
     engines: {node: '>= 22.19.0'}
 
-  '@platformatic/job-queue@0.3.0':
-    resolution: {integrity: sha512-3VMkAZSbCkNRwJpp6FL6atPegKVKbfpbPdfU91C4433B0YBLT4uOc6hy/x9Q+PgPeVsa/jTpzH4IjTuUqJqQ5g==}
+  '@platformatic/job-queue@0.4.1':
+    resolution: {integrity: sha512-oFXAi7DDRVGHqPzfkpcs8i3TKx3ppz4YQ1KIkNEkJWYpzglJv6Xkc/aF4tgUZBaUptEGLorwE4SsEFVGspgh0A==}
     engines: {node: '>=22.19.0'}
 
   '@platformatic/openapi-schema-validator@3.0.0':
@@ -13373,19 +13373,19 @@ snapshots:
     dependencies:
       '@platformatic/prom-client': 1.0.0
 
-  '@platformatic/image-optimizer@0.2.0':
+  '@platformatic/image-optimizer@0.2.1':
     dependencies:
       http-errors-enhanced: 4.0.2
       is-animated: 2.0.2
       sharp: 0.34.5
       undici: 7.24.0
     optionalDependencies:
-      '@platformatic/job-queue': 0.3.0
+      '@platformatic/job-queue': 0.4.1
       iovalkey: 0.3.3
     transitivePeerDependencies:
       - supports-color
 
-  '@platformatic/job-queue@0.3.0':
+  '@platformatic/job-queue@0.4.1':
     dependencies:
       pino: 10.3.1
     optionalDependencies:

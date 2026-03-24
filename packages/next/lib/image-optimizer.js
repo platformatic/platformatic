@@ -217,7 +217,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
     const { pathname, searchParams } = new URL(request.url, 'http://localhost')
     const imagePath = `${this.#basePath}/_next/image`
 
-    if (request.method !== 'GET' || pathname !== imagePath) {
+    if (request.method !== 'GET' || cleanBasePath(pathname) !== cleanBasePath(imagePath)) {
       response.statusCode = 404
       response.end('Not Found')
       return

@@ -1657,6 +1657,56 @@ test('should dynamically proxy a using custom logic', async t => {
   }
 })
 
+test('should support custom preRewrite hooks', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/rewritten',
+      handler: async () => {
+        return { message: 'rewritten' }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/original',
+      handler: async () => {
+        return { message: 'original' }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'the-proxy',
+          origin,
+          proxy: {
+            prefix: '/api',
+            custom: { path: resolve(import.meta.dirname, './proxy/fixtures/custom-pre-rewrite.ts') }
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/original'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), { message: 'rewritten' })
+})
+
 test('should proxy to a remote service with external origin', async t => {
   // Create an external service (simulating a remote API)
   const remoteService = await createOpenApiApplication(t, ['users'])
