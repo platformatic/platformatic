@@ -1,4 +1,5 @@
 import { deepStrictEqual, equal } from 'node:assert'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
@@ -25,13 +26,17 @@ test('Creates a Platformatic DB application with no migrations', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await executeCreatePlatformatic(root, { userInputHandler })
+  await executeCreatePlatformatic(root, { userInputHandler, pkgManager: 'pnpm' })
 
   const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'pnpm-workspace.yaml')), true)
+
+  const pnpmWorkspace = await readFile(join(baseProjectDir, 'pnpm-workspace.yaml'), 'utf8')
+  equal(pnpmWorkspace.includes('onlyBuiltDependencies:\n- better-sqlite3'), true)
 
   // Here check the generated application
   const applications = await getApplications(join(baseProjectDir, 'web'))
