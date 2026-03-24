@@ -721,7 +721,13 @@ async function main () {
   }
 
   if (data.config.application?.changeDirectoryBeforeExecution && data.root && isMainThread) {
-    process.chdir(fileURLToPath(data.root))
+    let root = fileURLToPath(data.root)
+
+    if (typeof data.config.application?.changeDirectoryBeforeExecution === 'string') {
+      root = resolve(root, data.config.application.changeDirectoryBeforeExecution)
+    }
+
+    process.chdir(root)
   }
 
   const childProcess = new ChildProcess(executable)
