@@ -60,6 +60,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
     - **`custom`** (`object`) - Custom proxy logic configuration:
       - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
+        - **`preRewrite`**  (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
         - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
           - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
           - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
@@ -141,6 +142,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     Where `custom-proxy.js` exports:
     ```javascript
     export default {
+      preRewrite: (url) => {
+        return url.replace(/^\/admin/, '')
+      },
       preValidation: async (request, reply) => {
         // Validate request before proxying
         if (!request.headers['authorization']) {
