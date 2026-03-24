@@ -2751,6 +2751,9 @@
         "type": "string"
       }
     },
+    "envfile": {
+      "type": "string"
+    },
     "sourceMaps": {
       "type": "boolean",
       "default": false

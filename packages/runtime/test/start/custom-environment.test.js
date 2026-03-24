@@ -1,8 +1,11 @@
+import { createDirectory } from '@platformatic/foundation'
 import { deepStrictEqual, strictEqual } from 'node:assert'
+import { cp, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { createRuntime, createTemporaryDirectory, updateConfigFile } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -52,9 +55,6 @@ test('should pass global .env data to workers', async t => {
 })
 
 test('should load custom env file when envFile option is provided', async t => {
-  const { mkdtemp, writeFile, rm } = await import('node:fs/promises')
-  const { tmpdir } = await import('node:os')
-
   const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
   const customEnvFile = join(tmpDir, 'custom.env')
 
@@ -82,4 +82,68 @@ test('should load custom env file when envFile option is provided', async t => {
   strictEqual(data.FROM_MAIN_CONFIG_FILE, 'true')
   strictEqual(data.FROM_SERVICE_CONFIG_FILE, 'true')
   strictEqual(data.OVERRIDE_TEST, 'service-override')
+})
+
+test('should load custom env file when envfile is configured on the runtime configuration file', async t => {
+  const root = await createTemporaryDirectory(t, 'custom-env')
+  await cp(join(fixturesDir, 'env'), root, { recursive: true })
+  await createDirectory(join(root, 'node_modules/@platformatic'))
+  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
+
+  const envFile = join(root, 'custom.env')
+  await updateConfigFile(join(root, 'platformatic.json'), config => {
+    config.server.port = 0
+    config.envfile = envFile
+  })
+
+  await writeFile(envFile, 'FROM_ENV_FILE=custom', 'utf8')
+
+  const app = await createRuntime(root)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const { payload } = await app.inject('hello', {
+    method: 'GET',
+    url: '/'
+  })
+  const data = JSON.parse(payload)
+
+  strictEqual(data.FROM_ENV_FILE, 'custom')
+})
+
+test('should prefer the config envfile over the envFile option', async t => {
+  const root = await createTemporaryDirectory(t, 'custom-env')
+  await cp(join(fixturesDir, 'env'), root, { recursive: true })
+  await createDirectory(join(root, 'node_modules/@platformatic'))
+  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
+
+  const envFile = join(root, 'custom.env')
+  const overrideEnvFile = join(root, 'override.env')
+  await updateConfigFile(join(root, 'platformatic.json'), config => {
+    config.server.port = 0
+    config.envfile = envFile
+  })
+
+  await writeFile(envFile, 'FROM_ENV_FILE=custom', 'utf8')
+  await writeFile(overrideEnvFile, 'FROM_ENV_FILE=override', 'utf8')
+
+  const app = await createRuntime(root, null, { envFile: overrideEnvFile, ignoreProcessEnv: true })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const { payload } = await app.inject('hello', {
+    method: 'GET',
+    url: '/'
+  })
+  const data = JSON.parse(payload)
+
+  strictEqual(data.FROM_ENV_FILE, 'custom')
 })

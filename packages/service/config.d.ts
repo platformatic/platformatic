@@ -738,6 +738,7 @@ export interface PlatformaticServiceConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {

@@ -144,6 +144,10 @@ runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 application, with application-level environment variables taking precedence.
 
+### `envfile`
+
+The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
+
 ### `sourceMaps`
 
 If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.

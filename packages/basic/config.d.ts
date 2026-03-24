@@ -434,6 +434,7 @@ export interface PlatformaticBasicConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {
