@@ -6,7 +6,7 @@ export const SCALE_UP_K = 2
 export const PENDING_SCALE_UP_EXPIRY_MS = 30000
 export const SAMPLE_INTERVAL_MS = 1000
 export const WINDOW_MS = 60000
-export const REDISTRIBUTION_K = 0.5
+export const REDISTRIBUTION_K = 1
 export const HORIZONTAL_TREND_THRESHOLD = 10
 export const HORIZON_MULTIPLIER = 1.2
 export const RECONNECT_TIMEOUT_MS = 5000
@@ -301,10 +301,13 @@ export class PredictiveScalingAlgorithm {
       if (this.#initTimeoutWindow.length > INIT_TIMEOUT_CONFIG.windowSize) {
         this.#initTimeoutWindow.shift()
       }
-      this.#initTimeoutMs = calculateInitTimeout(
-        this.#initTimeoutWindow,
-        this.#initTimeoutMs,
-        INIT_TIMEOUT_CONFIG
+      this.#initTimeoutMs = Math.max(
+        calculateInitTimeout(
+          this.#initTimeoutWindow,
+          this.#initTimeoutMs,
+          INIT_TIMEOUT_CONFIG
+        ),
+        INIT_TIMEOUT_MS
       )
       this.#horizonMs = HORIZON_MULTIPLIER * this.#initTimeoutMs
     }
@@ -730,10 +733,12 @@ export function holt (state, config, prev) {
     if (maxValue !== undefined) {
       const rawSum = entry.redistribution.rawSum
       const rawCount = entry.redistribution.workerCount
-      const threshold = rawCount * maxValue * (1 - saturationZone)
+      const maxSum = rawCount * maxValue
+      const threshold = maxSum * (1 - saturationZone)
 
       if (rawSum >= threshold) {
         trend = Math.max(trend, prevTrend)
+        level = Math.min(level, maxSum)
         entry.holt = { level, trend }
         continue
       }
