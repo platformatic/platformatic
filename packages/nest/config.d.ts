@@ -118,6 +118,7 @@ export interface PlatformaticNestJSConfig {
       development?: string;
       production?: string;
     };
+    entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
   };
@@ -548,6 +549,7 @@ export interface PlatformaticNestJSConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {

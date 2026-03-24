@@ -539,6 +539,7 @@ export type PlatformaticRuntimeConfig = {
   env?: {
     [k: string]: string;
   };
+  envfile?: string;
   sourceMaps?: boolean;
   nodeModulesSourceMaps?: string[];
   scheduler?: {

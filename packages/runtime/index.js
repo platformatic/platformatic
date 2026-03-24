@@ -67,6 +67,11 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     root,
     envFile: context?.envFile
   })
+
+  if (config.envfile) {
+    context.envFile = config.envfile
+  }
+
   const mod = extractModuleFromSchemaUrl(config)
   if (mod?.module !== '@platformatic/runtime') {
     return wrapInRuntimeConfig(config, context)

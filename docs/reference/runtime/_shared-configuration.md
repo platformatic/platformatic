@@ -144,6 +144,10 @@ runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 application, with application-level environment variables taking precedence.
 
+### `envfile`
+
+The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
+
 ### `sourceMaps`
 
 If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.
@@ -719,28 +723,28 @@ Configuration options (object form):
 
 **Available operations:**
 
-| Operation | Description |
-|---|---|
-| `getRuntimeStatus` | Get the current runtime status |
-| `getRuntimeMetadata` | Get runtime metadata (pid, versions, uptime) |
-| `getRuntimeConfig` | Get the runtime configuration |
-| `getRuntimeEnv` | Get the runtime environment variables |
-| `getApplicationsIds` | List all application IDs |
-| `getApplications` | Get details for all applications |
-| `getWorkers` | Get worker thread information |
-| `getApplicationDetails(id)` | Get details for a specific application |
-| `getApplicationConfig(id)` | Get an application's configuration |
-| `getApplicationEnv(id)` | Get an application's environment variables |
-| `getApplicationOpenapiSchema(id)` | Get an application's OpenAPI schema |
-| `getApplicationGraphqlSchema(id)` | Get an application's GraphQL schema |
-| `getMetrics(format)` | Get runtime metrics |
-| `startApplication(id)` | Start an application |
-| `stopApplication(id)` | Stop an application |
-| `restartApplication(id)` | Restart an application |
-| `restart(applications)` | Restart selected applications |
-| `addApplications(applications, start)` | Dynamically add applications |
-| `removeApplications(ids)` | Remove applications |
-| `inject(id, injectParams)` | Proxy an HTTP request to another application |
+| Operation                              | Description                                  |
+| -------------------------------------- | -------------------------------------------- |
+| `getRuntimeStatus`                     | Get the current runtime status               |
+| `getRuntimeMetadata`                   | Get runtime metadata (pid, versions, uptime) |
+| `getRuntimeConfig`                     | Get the runtime configuration                |
+| `getRuntimeEnv`                        | Get the runtime environment variables        |
+| `getApplicationsIds`                   | List all application IDs                     |
+| `getApplications`                      | Get details for all applications             |
+| `getWorkers`                           | Get worker thread information                |
+| `getApplicationDetails(id)`            | Get details for a specific application       |
+| `getApplicationConfig(id)`             | Get an application's configuration           |
+| `getApplicationEnv(id)`                | Get an application's environment variables   |
+| `getApplicationOpenapiSchema(id)`      | Get an application's OpenAPI schema          |
+| `getApplicationGraphqlSchema(id)`      | Get an application's GraphQL schema          |
+| `getMetrics(format)`                   | Get runtime metrics                          |
+| `startApplication(id)`                 | Start an application                         |
+| `stopApplication(id)`                  | Stop an application                          |
+| `restartApplication(id)`               | Restart an application                       |
+| `restart(applications)`                | Restart selected applications                |
+| `addApplications(applications, start)` | Dynamically add applications                 |
+| `removeApplications(ids)`              | Remove applications                          |
+| `inject(id, injectParams)`             | Proxy an HTTP request to another application |
 
 **Usage example inside a privileged application:**
 
@@ -753,12 +757,12 @@ export function create () {
     return applications
   })
 
-  app.post('/services/:id/restart', async (req) => {
+  app.post('/services/:id/restart', async req => {
     await globalThis.platformatic.management.restartApplication(req.params.id)
     return { ok: true }
   })
 
-  app.get('/proxy/:id/*', async (req) => {
+  app.get('/proxy/:id/*', async req => {
     const { id, '*': url } = req.params
     return globalThis.platformatic.management.inject(id, {
       method: 'GET',

@@ -118,6 +118,7 @@ export interface PlatformaticTanStackConfig {
       development?: string;
       production?: string;
     };
+    entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
   };
@@ -548,6 +549,7 @@ export interface PlatformaticTanStackConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {

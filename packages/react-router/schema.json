@@ -380,6 +380,9 @@
           "default": {},
           "additionalProperties": false
         },
+        "entrypointPort": {
+          "type": "number"
+        },
         "changeDirectoryBeforeExecution": {
           "type": "boolean",
           "default": false
@@ -2032,6 +2035,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "envfile": {
+          "type": "string"
         },
         "sourceMaps": {
           "type": "boolean",

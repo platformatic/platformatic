@@ -1409,6 +1409,9 @@ export const runtimeProperties = {
     default: 'external'
   },
   env,
+  envfile: {
+    type: 'string'
+  },
   sourceMaps: {
     type: 'boolean',
     default: false
