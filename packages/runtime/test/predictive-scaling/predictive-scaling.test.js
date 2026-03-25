@@ -368,9 +368,10 @@ test('redistributeValues', async (t) => {
 
     redistributeValues(state, workers, { redistributionMs: REDIST_MS }, null)
 
-    // newVal = 0 -> sum = stableSum, count = stableCount + newCount
+    // newVal = 0 -> sum = stableSum, count = stableCount + sumOfWeights
     assert.strictEqual(state[0].redistribution.sum, 100)
-    assert.strictEqual(state[0].redistribution.count, 2)
+    const expectedWeight = getStabilizationWeight(2000, REDIST_MS, 1)
+    assertClose(state[0].redistribution.count, 1 + expectedWeight)
   })
 
   await t.test('state continuation with prevSum', () => {

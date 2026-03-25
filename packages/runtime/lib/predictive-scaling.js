@@ -657,20 +657,13 @@ export function redistributeValues (state, workers, config, prevSum) {
       count = stableCount
     } else {
       const newVal = total - stableSum
+      const baseShare = sumOfWeights / newCount
 
-      if (newVal === 0) {
-        sum = stableSum
-        count = stableCount + newCount
-      } else {
-        const baseShare = sumOfWeights / newCount
+      count = stableCount + sumOfWeights
+      sum = stableSum + newVal * baseShare
 
-        sum = stableSum + newVal * baseShare
-        if (prevSum !== null && prevSum > sum) {
-          sum = Math.min(total, prevSum)
-        }
-
-        const share = (sum - stableSum) / newVal
-        count = stableCount + newCount * share
+      if (prevSum !== null && prevSum > sum) {
+        sum = Math.min(total, prevSum)
       }
     }
 
