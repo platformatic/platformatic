@@ -9,6 +9,8 @@ export const WINDOW_MS = 60000
 export const REDISTRIBUTION_K = 1
 export const HORIZONTAL_TREND_THRESHOLD = 10
 export const HORIZON_MULTIPLIER = 1.2
+export const MIN_HORIZON_MS = 7000
+export const MAX_HORIZON_MS = 30000
 export const RECONNECT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_CONFIG = {
@@ -110,7 +112,7 @@ export class PredictiveScalingAlgorithm {
 
     this.#initTimeoutMs = INIT_TIMEOUT_MS
     this.#initTimeoutWindow = []
-    this.#horizonMs = HORIZON_MULTIPLIER * this.#initTimeoutMs
+    this.#horizonMs = this.#calculateHorizon()
 
     this.#workerIdMapper = new WorkerIdMapper()
     this.#reconnectTimers = new Map()
@@ -293,6 +295,10 @@ export class PredictiveScalingAlgorithm {
     }
   }
 
+  #calculateHorizon () {
+    return Math.min(Math.max(HORIZON_MULTIPLIER * this.#initTimeoutMs, MIN_HORIZON_MS), MAX_HORIZON_MS)
+  }
+
   #resolvePendingScaleUp (startTime) {
     const pending = this.#pendingScaleUps.shift()
     if (pending) {
@@ -301,15 +307,12 @@ export class PredictiveScalingAlgorithm {
       if (this.#initTimeoutWindow.length > INIT_TIMEOUT_CONFIG.windowSize) {
         this.#initTimeoutWindow.shift()
       }
-      this.#initTimeoutMs = Math.max(
-        calculateInitTimeout(
-          this.#initTimeoutWindow,
-          this.#initTimeoutMs,
-          INIT_TIMEOUT_CONFIG
-        ),
-        INIT_TIMEOUT_MS
+      this.#initTimeoutMs = calculateInitTimeout(
+        this.#initTimeoutWindow,
+        this.#initTimeoutMs,
+        INIT_TIMEOUT_CONFIG
       )
-      this.#horizonMs = HORIZON_MULTIPLIER * this.#initTimeoutMs
+      this.#horizonMs = this.#calculateHorizon()
     }
   }
 
@@ -855,13 +858,10 @@ function findScaleUpTarget ({
   scaleUpK,
   scaleUpMargin
 }) {
-  const capacity = targetCount * threshold
-  const utilization = level / capacity
-
   let predictedSumIncrease = predictedSum - level
-  if (utilization < 1) {
-    const cost = scaleUpK * utilization
-    const weight = cost / (cost + (1 - utilization))
+  if (level > 0 && predictedSumIncrease > 0) {
+    const growth = predictedSumIncrease / level
+    const weight = scaleUpK / (scaleUpK + growth)
     predictedSumIncrease = weight * predictedSumIncrease
   }
 

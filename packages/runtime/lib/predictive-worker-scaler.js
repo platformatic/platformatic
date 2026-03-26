@@ -14,7 +14,7 @@ const V2_DEFAULTS = {
   redistributionMs: 30000,
   alphaUp: 0.2,
   alphaDown: 0.1,
-  betaUp: 0.2,
+  betaUp: 0.1,
   betaDown: 0.1,
   cooldowns: {
     scaleUpAfterScaleUpMs: 5000,
