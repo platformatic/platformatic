@@ -1,8 +1,9 @@
-import { ok, strictEqual } from 'node:assert'
+import { match, ok, strictEqual } from 'node:assert'
 import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
+import pino from 'pino'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import {
   applicationToEnvVariable,
@@ -112,18 +113,41 @@ test('createCliLogger - should create logger with specified level', () => {
 test('createCliLogger - should create logger with debug level', () => {
   const logger = createCliLogger('debug')
   ok(logger)
+  ok(logger.level === 'debug')
   ok(typeof logger.debug === 'function')
 })
 
 test('createCliLogger - should create logger with error level', () => {
   const logger = createCliLogger('error')
   ok(logger)
+  ok(logger.level === 'error')
   ok(typeof logger.error === 'function')
 })
 
 test('createCliLogger - should have custom done level', () => {
-  const logger = createCliLogger('info')
+  const logger = createCliLogger('done')
+  ok(logger.level === 'done')
   ok(typeof logger.done === 'function')
+})
+
+test('createCliLogger - should use isoTime timestamp when configured', () => {
+  const logger = createCliLogger('info', true, { timestamp: 'isoTime' })
+  const timeOutput = logger[pino.symbols.timeSym]()
+  match(timeOutput, /"time":"[0-9]{4}-[0-9]{2}-[0-9]{2}T/)
+})
+
+test('createCliLogger - should combine configuration', () => {
+  const extensions = {
+    level: 'finished',
+    customLevels: {
+      finished: 36
+    }
+  }
+  const logger = createCliLogger('info', false, extensions)
+
+  ok(typeof logger.done === 'function')
+  ok(typeof logger.finished === 'function')
+  ok(logger.level === 'finished')
 })
 
 test('logFatalError - should set process exit code to 1 and return false', () => {

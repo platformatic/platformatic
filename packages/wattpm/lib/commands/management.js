@@ -185,7 +185,7 @@ export async function configCommand (logger, args) {
       ? await client.getRuntimeApplicationConfig(runtime.pid, application)
       : await client.getRuntimeConfig(runtime.pid)
 
-    console.log(JSON.stringify(config, null, 2))
+    logger.debug(JSON.stringify(config, null, 2))
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
