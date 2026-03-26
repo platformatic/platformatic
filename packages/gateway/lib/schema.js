@@ -149,6 +149,7 @@ export const gateway = {
                   },
                   upstream: { type: 'string' },
                   prefix: { type: 'string' },
+                  rewritePrefix: { type: 'string' },
                   hostname: { type: 'string' },
                   custom: {
                     type: 'object',

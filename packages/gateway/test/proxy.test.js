@@ -568,6 +568,73 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
+test('should honor proxy.rewritePrefix for requests and location headers', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/internal/hello',
+      handler: async () => {
+        return { ok: true }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/internal/redirect',
+      handler: async (_req, reply) => {
+        reply.redirect('/internal/hello')
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/whatever',
+            rewritePrefix: '/internal'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  {
+    const { statusCode, body } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/hello'
+    })
+    assert.equal(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), { ok: true })
+  }
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 302)
+    assert.equal(headers.location, '/whatever/hello')
+
+    rawBody.dump()
+  }
+})
+
 test('should rewrite Location headers that include full url of the running application', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 

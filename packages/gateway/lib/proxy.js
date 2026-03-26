@@ -31,7 +31,7 @@ async function resolveApplicationProxyParameters (application, root) {
 
   // If no prefix could be found, assume the application id
   let prefix = (application.proxy?.prefix ?? meta.prefix ?? application.id).replace(/(\/$)/g, '')
-  let rewritePrefix = ''
+  let rewritePrefix = application.proxy?.rewritePrefix ?? ''
   let internalRewriteLocationHeader = true
 
   if (meta.wantsAbsoluteUrls) {
@@ -44,8 +44,10 @@ async function resolveApplicationProxyParameters (application, root) {
 
     // The rewritePrefix purposely ignores application.proxy?.prefix to let
     // the application always being able to configure their value
-    rewritePrefix = meta.prefix ?? application.id
-    internalRewriteLocationHeader = false
+    if (!application.proxy?.rewritePrefix) {
+      rewritePrefix = meta.prefix ?? application.id
+      internalRewriteLocationHeader = false
+    }
   }
 
   const require = createRequire(import.meta.filename)

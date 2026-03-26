@@ -37,6 +37,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
+    - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note
@@ -60,11 +61,11 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
     - **`custom`** (`object`) - Custom proxy logic configuration:
       - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
-        - **`preRewrite`**  (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
+        - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
         - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
           - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
           - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
-          See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
+            See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
         - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
 
     :::note
@@ -80,6 +81,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     :::
 
     **Example: Basic HTTP Proxy**
+
     ```json
     {
       "id": "external-api",
@@ -91,6 +93,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: Method/Route-based Proxy Selection**
+
     ```json
     {
       "id": "public-read-api",
@@ -103,6 +106,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: WebSocket Proxy with Reconnection**
+
     ```json
     {
       "id": "ws-service",
@@ -126,6 +130,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: Custom Proxy Logic**
+
     ```json
     {
       "id": "dynamic-router",
@@ -140,9 +145,10 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     Where `custom-proxy.js` exports:
+
     ```javascript
     export default {
-      preRewrite: (url) => {
+      preRewrite: url => {
         return url.replace(/^\/admin/, '')
       },
       preValidation: async (request, reply) => {
@@ -164,6 +170,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: Hostname-based Routing**
+
     ```json
     {
       "id": "multi-tenant",
@@ -206,11 +213,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   ```json title="Example JSON object"
   {
     "gateway": {
-      "passthroughContentTypes": [
-        "multipart/form-data",
-        "application/octet-stream",
-        "application/custom-binary"
-      ]
+      "passthroughContentTypes": ["multipart/form-data", "application/octet-stream", "application/custom-binary"]
     }
   }
   ```
