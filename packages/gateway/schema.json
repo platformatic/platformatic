@@ -837,6 +837,9 @@
                       "prefix": {
                         "type": "string"
                       },
+                      "rewritePrefix": {
+                        "type": "string"
+                      },
                       "hostname": {
                         "type": "string"
                       },
