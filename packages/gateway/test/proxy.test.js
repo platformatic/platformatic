@@ -581,7 +581,7 @@ test('should honor proxy.rewritePrefix for requests without rewriting location h
       method: 'GET',
       path: '/internal/redirect',
       handler: async (_req, reply) => {
-        reply.redirect('/internal/hello')
+        reply.redirect('/hello')
       }
     }
   ])
@@ -629,7 +629,7 @@ test('should honor proxy.rewritePrefix for requests without rewriting location h
       path: '/whatever/redirect'
     })
     assert.equal(statusCode, 302)
-    assert.equal(headers.location, '/internal/hello')
+    assert.equal(headers.location, '/hello')
 
     rawBody.dump()
   }
