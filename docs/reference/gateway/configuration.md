@@ -38,6 +38,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
+    - **`rewriteLocationHeader`** (`boolean`) - Controls rewriting of relative `Location` response headers from the upstream. When enabled, the gateway rewrites redirects from `rewritePrefix` to `prefix`. Set to `false` to forward relative `Location` headers unchanged. The default is `true` unless overridden by the target capability.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note

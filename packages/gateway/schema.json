@@ -840,6 +840,9 @@
                       "rewritePrefix": {
                         "type": "string"
                       },
+                      "rewriteLocationHeader": {
+                        "type": "boolean"
+                      },
                       "hostname": {
                         "type": "string"
                       },

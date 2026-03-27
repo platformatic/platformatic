@@ -50,6 +50,10 @@ async function resolveApplicationProxyParameters (application, root) {
     }
   }
 
+  if (typeof application.proxy?.rewriteLocationHeader === 'boolean') {
+    internalRewriteLocationHeader = application.proxy.rewriteLocationHeader
+  }
+
   const require = createRequire(import.meta.filename)
 
   if (application.proxy?.custom) {
