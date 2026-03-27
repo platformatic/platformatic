@@ -1,10 +1,13 @@
 import { EventEmitter } from 'node:events'
 import { MessagePort } from 'node:worker_threads'
 
-export type Handler = ((data: any) => any) | ((data: any) => Promise<any>)
+export type Handler = (data: any) => any | Promise<any>
 
 export interface ITCConstructorOptions {
-  port: MessagePort
+  port: MessagePort,
+  name: string,
+  handlers?: Record<string, Handler>
+  throwOnMissingHandler?: boolean
 }
 
 export class ITC extends EventEmitter {
@@ -16,8 +19,4 @@ export class ITC extends EventEmitter {
   getHandler (message: string): Handler | undefined
   listen (): void
   close (): void
-}
-
-declare module '@platformatic/itc' {
-  export { ITC }
 }
