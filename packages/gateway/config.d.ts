@@ -253,6 +253,7 @@ export interface PlatformaticGatewayConfig {
             upstream?: string;
             prefix?: string;
             rewritePrefix?: string;
+            rewriteLocationHeader?: boolean;
             hostname?: string;
             custom?: {
               path: string;

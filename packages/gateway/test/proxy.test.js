@@ -568,7 +568,7 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
-test('should honor proxy.rewritePrefix for requests without rewriting location headers', async t => {
+test('should rewrite relative Location headers from rewritePrefix to prefix by default', async t => {
   const application = await createApplication(t, [
     {
       method: 'GET',
@@ -581,7 +581,7 @@ test('should honor proxy.rewritePrefix for requests without rewriting location h
       method: 'GET',
       path: '/internal/redirect',
       handler: async (_req, reply) => {
-        reply.redirect('/hello')
+        reply.redirect('/internal/hello')
       }
     }
   ])
@@ -629,7 +629,66 @@ test('should honor proxy.rewritePrefix for requests without rewriting location h
       path: '/whatever/redirect'
     })
     assert.equal(statusCode, 302)
-    assert.equal(headers.location, '/hello')
+    assert.equal(headers.location, '/whatever/hello')
+
+    rawBody.dump()
+  }
+})
+
+test('should not rewrite relative Location headers when proxy.rewriteLocationHeader is false', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/internal/hello',
+      handler: async () => {
+        return { ok: true }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/internal/redirect',
+      handler: async (_req, reply) => {
+        reply.redirect('/internal/hello')
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/whatever',
+            rewritePrefix: '/internal',
+            rewriteLocationHeader: false
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 302)
+    assert.equal(headers.location, '/internal/hello')
 
     rawBody.dump()
   }

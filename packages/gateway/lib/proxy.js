@@ -46,11 +46,12 @@ async function resolveApplicationProxyParameters (application, root) {
     // the application always being able to configure their value
     if (!application.proxy?.rewritePrefix) {
       rewritePrefix = meta.prefix ?? application.id
+      internalRewriteLocationHeader = false
     }
   }
 
-  if (rewritePrefix !== '') {
-    internalRewriteLocationHeader = false
+  if (typeof application.proxy?.rewriteLocationHeader === 'boolean') {
+    internalRewriteLocationHeader = application.proxy.rewriteLocationHeader
   }
 
   const require = createRequire(import.meta.filename)
