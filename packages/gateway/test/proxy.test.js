@@ -568,7 +568,7 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
-test('should honor proxy.rewritePrefix for requests and location headers', async t => {
+test('should honor proxy.rewritePrefix for requests without rewriting location headers', async t => {
   const application = await createApplication(t, [
     {
       method: 'GET',
@@ -629,7 +629,7 @@ test('should honor proxy.rewritePrefix for requests and location headers', async
       path: '/whatever/redirect'
     })
     assert.equal(statusCode, 302)
-    assert.equal(headers.location, '/whatever/hello')
+    assert.equal(headers.location, '/internal/hello')
 
     rawBody.dump()
   }
