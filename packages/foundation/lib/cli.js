@@ -1,3 +1,4 @@
+import Deepmerge from '@fastify/deepmerge'
 import { bgGreen, black, bold, green, isColorSupported } from 'colorette'
 import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
@@ -5,6 +6,7 @@ import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
 import { findConfigurationFileRecursive, loadConfigurationModule, saveConfigurationFile } from './configuration.js'
 import { hasJavascriptFiles } from './file-system.js'
+import { setPinoTimestamp } from './logger.js'
 import { detectApplicationType, getPlatformaticVersion } from './module.js'
 
 /* c8 ignore next 4 - else branches */
@@ -111,7 +113,7 @@ export function logo (color = true, name = undefined) {
   return color && isColorSupported ? str.replace(/\//g, s => green(s)) : str
 }
 
-export function createCliLogger (level, noPretty) {
+export function createCliLogger (level, noPretty = false, loggerConfig = {}) {
   let pretty
 
   /* c8 ignore next 3 - Covered elsewhere */
@@ -130,13 +132,23 @@ export function createCliLogger (level, noPretty) {
     })
   }
 
+  const resolvedConfig = { ...loggerConfig }
+  if (typeof resolvedConfig.timestamp === 'string') {
+    setPinoTimestamp(resolvedConfig)
+  }
+
+  const dm = Deepmerge()
+
   return pino(
-    {
-      level,
-      customLevels: {
-        done: 35
-      }
-    },
+    dm(
+      {
+        level,
+        customLevels: {
+          done: 35
+        }
+      },
+      resolvedConfig
+    ),
     pretty
   )
 }
