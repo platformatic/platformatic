@@ -163,7 +163,9 @@ The beauty of this architecture is that **Watt** manages the application orchest
 
 ### Create the Users Table
 
-Navigate to `web/db/migrations/` and edit the `001.do.sql` file:
+The wizard created a sample migration file (`001.do.sql`) with a `movies` table. Since that migration was already applied when we started the server, we'll create a **new** migration file for our Users table.
+
+Create a new file `web/db/migrations/002.do.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS Users (
@@ -174,7 +176,7 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 ```
 
-Also edit `web/db/migrations/001.undo.sql` to define how to reverse this migration:
+Create `web/db/migrations/002.undo.sql` to define how to reverse this migration:
 
 ```sql
 DROP TABLE Users;
@@ -186,7 +188,7 @@ Platformatic generates RESTful endpoints based on your table names. Using plural
 
 ### Create the Todos Table
 
-Create a new file `web/db/migrations/002.do.sql`:
+Create a new file `web/db/migrations/003.do.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS Todos (
@@ -200,7 +202,7 @@ CREATE TABLE IF NOT EXISTS Todos (
 );
 ```
 
-Create `web/db/migrations/002.undo.sql`:
+Create `web/db/migrations/003.undo.sql`:
 
 ```sql
 DROP TABLE Todos;
