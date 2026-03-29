@@ -117,6 +117,7 @@ export class Runtime extends EventEmitter {
   #concurrency
   #entrypointId
   #url
+  #entrypointPort
 
   #healthMetricsTimer
 
@@ -157,6 +158,7 @@ export class Runtime extends EventEmitter {
     this.#applications = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
+    this.#entrypointPort = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
@@ -1723,12 +1725,16 @@ export class Runtime extends EventEmitter {
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
     const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
+    // If we have a pinned entrypoint port (from a previous start), inject it
+    // into the server config for the new worker so it binds to the same port.
+    const workerConfig = { ...config, preload }
+    if (applicationConfig.entrypoint && this.#entrypointPort) {
+      workerConfig.server = { ...config.server, port: this.#entrypointPort }
+    }
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
-        config: {
-          ...config,
-          preload
-        },
+        config: workerConfig,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2169,18 +2175,17 @@ export class Runtime extends EventEmitter {
       if (workerUrl) {
         this.#url = workerUrl
 
-        // Pin the entrypoint port in the server config so that subsequent restarts
-        // (especially with stopBeforeStart when reuseTcpPorts is false) bind to the
-        // same port instead of getting a new random one.
+        // Pin the entrypoint port so that subsequent restarts (especially with
+        // stopBeforeStart when reuseTcpPorts is false) bind to the same port
+        // instead of getting a new random one.
         if (applicationConfig.entrypoint) {
           try {
-            const boundPort = new URL(workerUrl).port
+            const boundPort = Number(new URL(workerUrl).port)
             if (boundPort) {
-              config.server ??= {}
-              config.server.port = Number(boundPort)
+              this.#entrypointPort = boundPort
             }
           } catch {
-            // URL parsing failed, leave config unchanged
+            // URL parsing failed, leave unchanged
           }
         }
       }
