@@ -680,6 +680,14 @@ export class Runtime extends EventEmitter {
     if (this.#restartingApplications.has(id)) {
       return
     }
+
+    // Wait for the runtime to be fully started before attempting a restart.
+    // Restarting an application while the runtime is still starting causes
+    // races between the start and stop ITC commands in the worker thread.
+    if (this.#status === 'starting') {
+      await once(this, 'started')
+    }
+
     this.#restartingApplications.add(id)
 
     try {
@@ -1852,6 +1860,13 @@ export class Runtime extends EventEmitter {
     })
 
     worker[kITC].on('request:restart', async () => {
+      // Do not restart applications that are not fully started yet or when the runtime is still starting.
+      // The gateway sends request:restart when it receives application:added events,
+      // which can arrive while the worker is still in the starting phase.
+      if (this.#status !== 'started' || worker[kWorkerStatus] !== 'started') {
+        return
+      }
+
       try {
         await this.restartApplication(applicationId)
       } catch (e) {
@@ -2153,6 +2168,21 @@ export class Runtime extends EventEmitter {
 
       if (workerUrl) {
         this.#url = workerUrl
+
+        // Pin the entrypoint port in the server config so that subsequent restarts
+        // (especially with stopBeforeStart when reuseTcpPorts is false) bind to the
+        // same port instead of getting a new random one.
+        if (applicationConfig.entrypoint) {
+          try {
+            const boundPort = new URL(workerUrl).port
+            if (boundPort) {
+              config.server ??= {}
+              config.server.port = Number(boundPort)
+            }
+          } catch {
+            // URL parsing failed, leave config unchanged
+          }
+        }
       }
 
       // Wait for the interceptor to be ready
