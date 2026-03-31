@@ -34,12 +34,12 @@ export class GatewayCapability extends ServiceCapability {
     return this.dependencies
   }
 
-  async start (startOptions) {
+  async start () {
     if (this.url) {
       return this.url
     }
 
-    const url = await super.start(startOptions)
+    const url = await super.start()
 
     // Only register the runtime event handler once. start() can be called
     // multiple times (first with listen:false, then listen:true) so guard

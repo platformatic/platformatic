@@ -1725,16 +1725,12 @@ export class Runtime extends EventEmitter {
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
     const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
-    // If we have a pinned entrypoint port (from a previous start), inject it
-    // into the server config for the new worker so it binds to the same port.
-    const workerConfig = { ...config, preload }
-    if (applicationConfig.entrypoint && this.#entrypointPort) {
-      workerConfig.server = { ...config.server, port: this.#entrypointPort }
-    }
-
     const worker = new Worker(kWorkerFile, {
       workerData: {
-        config: workerConfig,
+        config: {
+          ...config,
+          preload
+        },
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2414,6 +2410,16 @@ export class Runtime extends EventEmitter {
       applicationConfig.entrypoint &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
 
+    // When we must stop before start (no reusePort available), pin the entrypoint
+    // port in the config so the replacement worker binds to the same port.
+    // We only do this for stopBeforeStart because when reusePort is available
+    // the new worker starts alongside the old one and must use port 0 to avoid
+    // SO_REUSEPORT routing requests to the stale old worker.
+    let configForNewWorker = config
+    if (stopBeforeStart && this.#entrypointPort) {
+      configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
+    }
+
     if (stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
     }
@@ -2423,8 +2429,8 @@ export class Runtime extends EventEmitter {
         this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
       }
 
-      // Create a new worker
-      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
+      // Create a new worker (use configForNewWorker which may have a pinned port for stopBeforeStart)
+      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, index, false)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -2432,7 +2438,7 @@ export class Runtime extends EventEmitter {
       }
 
       // Add the worker to the mesh
-      await this.#startWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
+      await this.#startWorker(configForNewWorker, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
