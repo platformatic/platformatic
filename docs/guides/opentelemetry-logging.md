@@ -328,6 +328,145 @@ datasources:
         tags: ['service.name']
 ```
 
+## Integration Example (AWS Cloudwatch)
+
+### Watt
+
+```json
+{
+    "logger": {
+        "timestamp": "isoTime"
+	    "openTelemetryExporter": {
+            "url": "http://localhost:4318/v1/logs"
+        }
+    },
+	"telemetry": {
+        "applicationName": "PROJECT_NAME",
+        "version": "1.0.0",
+        "enabled": true,
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "protocol": "http",
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
+    }
+}
+```
+
+### AWS
+
+This is the configuration for ADOT (AWS Distro for OpenTelemetry) which works
+with ECS and EKS.
+
+Here is the basic YAML required. There are references to variables that can be
+replaced with preferred values:
+
+* `$CLUSTER_NAME` - the name of the cluster being monitored
+* `$AWS_REGION` - the YAML assumes the same region but that is not required
+
+```yaml
+extensions:
+  health_check:
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: watt-metrics
+          scrape_interval: 30s
+          static_configs:
+            - targets: [\"localhost:9090\"]
+
+exporters:
+  awscloudwatchlogs:
+    log_group_name: \"/ecs/$CLUSTER_NAME/otel-logs\"
+    log_stream_name: otel
+    region: $AWS_REGION
+  awsemf:
+    namespace: ECS/leads-demo
+    region: $AWS_REGION
+    log_group_name: \"/ecs/$CLUSTER_NAME/otel-metrics\"
+    dimension_rollup_option: NoDimensionRollup
+    metric_declarations:
+      - dimensions: [[serviceId, method, status_code]]
+        metric_name_selectors: [\".*\"]
+        label_matchers:
+          - label_names: [method]
+            regex: \".+\"
+      - dimensions: [[serviceId, type]]
+        metric_name_selectors: [\".*\"]
+        label_matchers:
+          - label_names: [type]
+            regex: \".+\"
+      - dimensions: [[serviceId, space]]
+        metric_name_selectors: [\".*\"]
+        label_matchers:
+          - label_names: [space]
+            regex: \".+\"
+      - dimensions: [[serviceId, kind]]
+        metric_name_selectors: [\".*\"]
+        label_matchers:
+          - label_names: [kind]
+            regex: \".+\"
+      - dimensions: [[serviceId, version]]
+        metric_name_selectors: [\".*\"]
+        label_matchers:
+          - label_names: [version]
+            regex: \".+\"
+      - dimensions: [[serviceId]]
+        metric_name_selectors: [\".*\"]
+  awsxray:
+    region: $AWS_REGION
+
+service:
+  extensions: [health_check]
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [awscloudwatchlogs]
+    metrics:
+      receivers: [prometheus, otlp]
+      exporters: [awsemf]
+    traces:
+      receivers: [otlp]
+      exporters: [awsxray]
+```
+
+Add the configuration in SSM:
+
+```sh
+aws ssm put-parameter \
+    --name "/ecs/$CLUSTER_NAME/adot-config" \
+    --value file://config.yaml \
+    --type String \
+    --overwrite \
+    --profile "$AWS_PROFILE"
+```
+
+Create log groups:
+
+```sh
+for log_group in "/ecs/$CLUSTER_NAME/otel-logs" "/ecs/$CLUSTER_NAME/otel-metrics"; do
+    aws logs create-log-group \
+        --log-group-name "$log_group" \
+        --profile "$AWS_PROFILE" 2>/dev/null || true
+
+    aws logs put-retention-policy \
+        --log-group-name "$log_group" \
+        --retention-in-days 7 \
+        --profile "$AWS_PROFILE"
+done
+```
+
+
 ## Multi-Application Setup
 
 When using multiple applications in a Watt runtime, each inherits the logger configuration:

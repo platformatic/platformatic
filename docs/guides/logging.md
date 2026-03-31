@@ -117,9 +117,9 @@ This logs all messages to console with pretty formatting, and errors to a file.
 
 **Problem:** You need to send logs to Elasticsearch, Splunk, OpenTelemetry collectors, or other logging systems.
 
-**Solution:** Use specialized transport targets:
+**Solution:** Use specialized transport targets.
 
-**OpenTelemetry (Recommended for Observability):**
+### OpenTelemetry (Recommended for Observability)
 
 ```json
 {
@@ -151,7 +151,7 @@ This automatically:
 
 See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed configuration.
 
-**Elasticsearch:**
+### Elasticsearch
 
 ```json
 {
@@ -172,6 +172,19 @@ See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed c
 ```
 
 Install the transport: `npm install pino-elasticsearch`
+
+### AWS Cloudwatch
+
+AWS Cloudwatch can use the timestamp from logs in the Cloudwatch and Cloudwatch
+Insights dashboards. To do this, the timestamp format needs to be changed.
+
+```json
+{
+    "logger": {
+        "timestamp": "isoTime",
+    }
+}
+```
 
 ## Redact Sensitive Information
 
