@@ -117,6 +117,7 @@ export class Runtime extends EventEmitter {
   #concurrency
   #entrypointId
   #url
+  #entrypointPort
 
   #healthMetricsTimer
 
@@ -157,6 +158,7 @@ export class Runtime extends EventEmitter {
     this.#applications = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
+    this.#entrypointPort = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
@@ -680,6 +682,14 @@ export class Runtime extends EventEmitter {
     if (this.#restartingApplications.has(id)) {
       return
     }
+
+    // Wait for the runtime to be fully started before attempting a restart.
+    // Restarting an application while the runtime is still starting causes
+    // races between the start and stop ITC commands in the worker thread.
+    if (this.#status === 'starting') {
+      await once(this, 'started')
+    }
+
     this.#restartingApplications.add(id)
 
     try {
@@ -1852,6 +1862,13 @@ export class Runtime extends EventEmitter {
     })
 
     worker[kITC].on('request:restart', async () => {
+      // Do not restart applications that are not fully started yet or when the runtime is still starting.
+      // The gateway sends request:restart when it receives application:added events,
+      // which can arrive while the worker is still in the starting phase.
+      if (this.#status !== 'started' || worker[kWorkerStatus] !== 'started') {
+        return
+      }
+
       try {
         await this.restartApplication(applicationId)
       } catch (e) {
@@ -2153,6 +2170,20 @@ export class Runtime extends EventEmitter {
 
       if (workerUrl) {
         this.#url = workerUrl
+
+        // Pin the entrypoint port so that subsequent restarts (especially with
+        // stopBeforeStart when reuseTcpPorts is false) bind to the same port
+        // instead of getting a new random one.
+        if (applicationConfig.entrypoint) {
+          try {
+            const boundPort = Number(new URL(workerUrl).port)
+            if (boundPort) {
+              this.#entrypointPort = boundPort
+            }
+          } catch {
+            // URL parsing failed, leave unchanged
+          }
+        }
       }
 
       // Wait for the interceptor to be ready
@@ -2379,6 +2410,16 @@ export class Runtime extends EventEmitter {
       applicationConfig.entrypoint &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
 
+    // When we must stop before start (no reusePort available), pin the entrypoint
+    // port in the config so the replacement worker binds to the same port.
+    // We only do this for stopBeforeStart because when reusePort is available
+    // the new worker starts alongside the old one and must use port 0 to avoid
+    // SO_REUSEPORT routing requests to the stale old worker.
+    let configForNewWorker = config
+    if (stopBeforeStart && this.#entrypointPort && config.server) {
+      configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
+    }
+
     if (stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, index, worker, silent, label)
     }
@@ -2388,8 +2429,8 @@ export class Runtime extends EventEmitter {
         this.logger.debug(`Preparing to start a replacement for ${label}  ...`)
       }
 
-      // Create a new worker
-      newWorker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, false)
+      // Create a new worker (use configForNewWorker which may have a pinned port for stopBeforeStart)
+      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, index, false)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -2397,7 +2438,7 @@ export class Runtime extends EventEmitter {
       }
 
       // Add the worker to the mesh
-      await this.#startWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
+      await this.#startWorker(configForNewWorker, applicationConfig, workersCount, applicationId, index, false, 0, newWorker, true)
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {

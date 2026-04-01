@@ -41,8 +41,13 @@ export class GatewayCapability extends ServiceCapability {
 
     const url = await super.start()
 
-    this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
-    globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)
+    // Only register the runtime event handler once. start() can be called
+    // multiple times (first with listen:false, then listen:true) so guard
+    // against duplicate registrations.
+    if (!this.#runtimeEventHandler) {
+      this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
+      globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)
+    }
 
     return url
   }

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
+  "server": {
+    "hostname": "127.0.0.1"
+  },
+  "watch": false,
+  "managementApi": true,
+  "restartOnError": 500,
+  "reuseTcpPorts": false,
+  "autoload": {
+    "path": ".",
+    "exclude": ["extra-service"]
+  },
+  "logger": {
+    "level": "debug"
+  }
+}
