@@ -2416,7 +2416,7 @@ export class Runtime extends EventEmitter {
     // the new worker starts alongside the old one and must use port 0 to avoid
     // SO_REUSEPORT routing requests to the stale old worker.
     let configForNewWorker = config
-    if (stopBeforeStart && this.#entrypointPort) {
+    if (stopBeforeStart && this.#entrypointPort && config.server) {
       configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
     }
 
