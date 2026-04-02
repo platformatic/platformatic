@@ -7,6 +7,12 @@ export const version = pkg.version
 
 export const schema = {
   ...runtimeSchema,
+  properties: {
+    ...runtimeSchema.properties,
+    module: {
+      type: 'string'
+    }
+  },
   $id: `https://schemas.platformatic.dev/wattpm/${pkg.version}.json`
 }
 

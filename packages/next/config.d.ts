@@ -7,6 +7,7 @@
 
 export interface PlatformaticNextJsConfig {
   $schema?: string;
+  module?: string;
   logger?: {
     level?: (
       | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")

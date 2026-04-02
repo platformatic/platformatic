@@ -35,7 +35,12 @@ const platformaticRuntimeSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Runtime Config',
   type: 'object',
-  properties: schemaComponents.runtimeProperties,
+  properties: {
+    ...schemaComponents.runtimeProperties,
+    module: {
+      type: 'string'
+    }
+  },
   anyOf: [
     { required: ['autoload'] },
     { required: ['applications'] },
