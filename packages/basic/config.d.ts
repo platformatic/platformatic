@@ -7,6 +7,7 @@
 
 export interface PlatformaticBasicConfig {
   $schema?: string;
+  module?: string;
   runtime?: {
     preload?: string | string[];
     basePath?: string;

@@ -580,4 +580,5 @@ export type PlatformaticRuntimeConfig = {
          */
         directory?: string;
       };
+  module?: string;
 };

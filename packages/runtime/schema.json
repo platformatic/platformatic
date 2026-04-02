@@ -2880,6 +2880,9 @@
           "additionalProperties": false
         }
       ]
+    },
+    "module": {
+      "type": "string"
     }
   },
   "anyOf": [

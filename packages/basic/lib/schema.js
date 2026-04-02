@@ -100,6 +100,9 @@ export const schema = {
     $schema: {
       type: 'string'
     },
+    module: {
+      type: 'string'
+    },
     runtime: utilsSchemaComponents.wrappedRuntime
   },
   additionalProperties: true
