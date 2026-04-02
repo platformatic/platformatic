@@ -1,4 +1,4 @@
-import { BaseContext } from '@platformatic/basic'
+import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticViteConfig } from './config.d.ts'
@@ -22,6 +22,14 @@ export declare function create (
   sourceOrConfig?: string | PlatformaticViteConfig,
   context?: ConfigurationOptions
 ): Promise<ViteCapability | ViteSSRCapability>
+
+export declare class ViteCapability extends BaseCapability<PlatformaticViteConfig, BaseOptions<ViteContext>> {
+  constructor (root: string, config: PlatformaticViteConfig, context?: object)
+}
+
+export declare class ViteSSRCapability extends ViteCapability {
+  constructor (root: string, config: PlatformaticViteConfig, context?: object)
+}
 
 export declare const packageJson: Record<string, unknown>
 export declare const schema: JSONSchemaType<PlatformaticViteConfig>
