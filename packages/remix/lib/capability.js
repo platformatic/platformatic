@@ -18,7 +18,7 @@ import { Readable } from 'node:stream'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-const supportedVersions = '^2.0.0'
+export const supportedVersions = '^2.0.0'
 
 export class RemixCapability extends ViteCapability {
   #app
@@ -188,7 +188,9 @@ export class RemixCapability extends ViteCapability {
     let ended = false
 
     req.raw.on('aborted', () => ac.abort())
-    req.raw.on('end', () => { ended = true })
+    req.raw.on('end', () => {
+      ended = true
+    })
     req.raw.on('close', () => {
       if (!ended) {
         ac.abort()

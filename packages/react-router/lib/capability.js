@@ -18,7 +18,7 @@ import { createRequestHandler } from 'react-router'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-const supportedVersions = '^7.0.0'
+export const supportedVersions = '^7.0.0'
 
 export class ReactRouterCapability extends ViteCapability {
   #app
@@ -219,7 +219,9 @@ export class ReactRouterCapability extends ViteCapability {
     let ended = false
 
     req.raw.on('aborted', () => ac.abort())
-    req.raw.on('end', () => { ended = true })
+    req.raw.on('end', () => {
+      ended = true
+    })
     req.raw.on('close', () => {
       if (!ended) {
         ac.abort()

@@ -16,7 +16,7 @@ import { pinoHttp } from 'pino-http'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = '^11.0.0'
+export const supportedVersions = '^11.0.0'
 
 export class NestCapability extends BaseCapability {
   #basePath

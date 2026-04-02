@@ -14,7 +14,7 @@ import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-const supportedVersions = '^1.0.0'
+export const supportedVersions = '^1.0.0'
 
 export class TanstackCapability extends ViteCapability {
   #tanstack
