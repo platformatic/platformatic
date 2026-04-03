@@ -6,7 +6,8 @@
   "types": "index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test:types": "tstyche",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
@@ -31,6 +32,7 @@
     "dedent": "^1.5.1",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.0",
+    "tstyche": "^6.2.0",
     "neostandard": "^0.12.0",
     "openapi-schema-validator": "^12.1.3",
     "pino-test": "^1.0.1",
