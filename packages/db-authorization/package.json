@@ -23,7 +23,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fast-jwt": "^5.0.0",
+    "fast-jwt": "^6.0.0",
     "fastify": "^5.7.0",
     "get-jwks": "^11.0.0",
     "neostandard": "^0.12.0",
