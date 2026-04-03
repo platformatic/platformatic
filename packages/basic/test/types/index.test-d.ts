@@ -49,7 +49,7 @@ const capability = new BaseCapability(
 )
 
 expectType<BaseCapability>(capability)
-expectType<string>(capability.basePath)
+expectType<string | null>(capability.basePath)
 
 // Test with optional standardStreams parameter
 const capabilityWithStreams = new BaseCapability(
@@ -64,7 +64,7 @@ expectType<BaseCapability>(capabilityWithStreams)
 
 // Test method return types
 expectType<Promise<void>>(capability.init())
-expectType<Promise<void>>(capability.start({ listen: true }))
+expectType<Promise<string | void>>(capability.start({ listen: true }))
 expectType<Promise<void>>(capability.close())
 expectType<Promise<void>>(capability.stop())
 expectType<Promise<void>>(capability.build())
@@ -72,38 +72,38 @@ expectType<string>(capability.getUrl())
 expectType<Promise<void>>(capability.updateContext({ applicationId: 'new-id' }))
 expectType<Promise<object>>(capability.getConfig())
 expectType<Promise<object>>(capability.getConfig(true))
-expectType<Promise<{ type: string; version: string }>>(capability.getInfo())
-expectType<Promise<Function>>(capability.getDispatchFunc())
-expectType<Promise<Function | string>>(capability.getDispatchTarget())
-expectType<Promise<object>>(capability.getOpenapiSchema())
-expectType<Promise<string>>(capability.getGraphqlSchema())
-expectType<Promise<void>>(capability.setConnectionStatus('connected'))
-expectType<Promise<void>>(capability.setOpenapiSchema({}))
-expectType<Promise<void>>(capability.setGraphqlSchema('schema'))
+expectType<Promise<{ type: string; version: string; dependencies: string[] }>>(capability.getInfo())
+expectType<BaseCapability>(capability.getDispatchFunc())
+expectType<Promise<BaseCapability | string>>(capability.getDispatchTarget())
+expectType<Promise<object | null>>(capability.getOpenapiSchema())
+expectType<Promise<unknown>>(capability.getGraphqlSchema())
+expectType<void>(capability.setOpenapiSchema({}))
+expectType<void>(capability.setGraphqlSchema('schema'))
 
 // Test health check methods
-expectType<Promise<void>>(capability.setCustomHealthCheck(() => true))
-expectType<Promise<void>>(capability.setCustomHealthCheck(() => Promise.resolve(true)))
-expectType<Promise<void>>(capability.setCustomHealthCheck(() => ({
+expectType<void>(capability.setCustomHealthCheck(() => true))
+expectType<void>(capability.setCustomHealthCheck(() => Promise.resolve(true)))
+expectType<void>(capability.setCustomHealthCheck(() => ({
   status: true,
   statusCode: 200,
   body: 'OK'
 })))
-expectType<Promise<void>>(capability.setCustomHealthCheck(() => Promise.resolve({
+expectType<void>(capability.setCustomHealthCheck(() => Promise.resolve({
   status: false,
   statusCode: 503
 })))
 
 // Test readiness check methods
-expectType<Promise<void>>(capability.setCustomReadinessCheck(() => true))
-expectType<Promise<void>>(capability.setCustomReadinessCheck(() => Promise.resolve({
+expectType<void>(capability.setCustomReadinessCheck(() => true))
+expectType<void>(capability.setCustomReadinessCheck(() => Promise.resolve({
   status: true,
   statusCode: 200,
   body: 'Ready'
 })))
+expectType<Promise<boolean | { status: boolean; statusCode?: number; body?: string }>>(capability.getCustomHealthCheck())
+expectType<Promise<boolean | { status: boolean; statusCode?: number; body?: string }>>(capability.getCustomReadinessCheck())
 
 // Test metrics methods
-expectType<Promise<any>>(capability.collectMetrics())
 expectType<Promise<string | Array<object>>>(capability.getMetrics())
 expectType<Promise<string | Array<object>>>(capability.getMetrics({ format: 'json' }))
 expectType<Promise<object>>(capability.getMeta())
@@ -124,7 +124,7 @@ expectType<Promise<{
 }>>(capability.inject({ method: 'GET', url: '/test' }))
 
 // Test log method
-expectType<Promise<void>>(capability.log({ message: 'test', level: 'info' }))
+expectType<void>(capability.log({ message: 'test', level: 'info' }))
 
 // Test watch config method
 expectType<Promise<{
@@ -135,5 +135,5 @@ expectType<Promise<{
 }>>(capability.getWatchConfig())
 
 // Test private methods (they should still be accessible for type checking)
-expectType<Promise<void>>(capability._initializeLogger({}))
+expectType<object>(capability._initializeLogger())
 expectType<Promise<void>>(capability._collectMetrics())

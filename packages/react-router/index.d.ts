@@ -27,6 +27,9 @@ export declare class ReactRouterCapability extends BaseCapability<
   PlatformaticReactRouterConfig,
   BaseOptions<ReactRouterContext>
 > {
+  outputDirectory?: string
+  buildInfoPath?: string
+
   constructor (root: string, config: PlatformaticReactRouterConfig, context?: object)
 }
 
