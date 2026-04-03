@@ -4,7 +4,7 @@ import {
   type PlatformaticViteConfig,
   type ViteConfiguration,
   type ViteContext,
-  type ViteCapability,
+  ViteCapability,
   type ViteSSRCapability,
   create,
   loadConfiguration,
@@ -20,6 +20,7 @@ test('Vite types', () => {
   const config = {} as PlatformaticViteConfig
   const configuration = {} as ViteConfiguration
   const context = {} as ViteContext
+  const capability = new ViteCapability('/tmp', config)
 
   expect(transform(configuration)).type.toBe<Promise<ViteConfiguration>>()
   expect(loadConfiguration('/tmp', config)).type.toBe<Promise<ViteConfiguration>>()
@@ -36,4 +37,6 @@ test('Vite types', () => {
   expect(supportedVersions).type.toBe<string[]>()
   expect(configuration).type.toBe<ViteConfiguration>()
   expect(context).type.toBe<ViteContext>()
+  expect(capability.outputDirectory).type.toBe<string | undefined>()
+  expect(capability.buildInfoPath).type.toBe<string | undefined>()
 })

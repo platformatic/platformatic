@@ -24,6 +24,9 @@ export declare function create (
 ): Promise<ViteCapability | ViteSSRCapability>
 
 export declare class ViteCapability extends BaseCapability<PlatformaticViteConfig, BaseOptions<ViteContext>> {
+  outputDirectory?: string
+  buildInfoPath?: string
+
   constructor (root: string, config: PlatformaticViteConfig, context?: object)
 }
 

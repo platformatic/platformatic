@@ -8,8 +8,9 @@ import type { PlatformaticServiceConfig } from './config.d.ts'
 export type { PlatformaticServiceConfig } from './config.d.ts'
 
 export interface ServiceContext extends BaseContext {
-  applicationFactory?: typeof platformaticService
+  applicationFactory?: (app: FastifyInstance, capability: ServiceCapability) => Promise<void>
   fastifyPlugins?: Function[]
+  loggerConfig?: object
 }
 
 export interface PlatformaticApplication<Config> {
@@ -68,6 +69,10 @@ export declare class ServiceCapability<Config = PlatformaticServiceConfig> exten
   Config,
   BaseOptions<ServiceContext>
 > {
+  applicationFactory: (app: FastifyInstance, capability: ServiceCapability) => Promise<void>
+  fastifyOptions?: Record<string, unknown>
+  loggerConfig?: object
+
   constructor (root: string, config: Config, context?: object)
   getApplication (): FastifyInstance
 }
