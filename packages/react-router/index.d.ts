@@ -9,7 +9,11 @@ export interface ReactRouterContext extends BaseContext {}
 
 export type ReactRouterConfiguration = Configuration<PlatformaticReactRouterConfig>
 
-export declare function transform (config: ReactRouterConfiguration): Promise<ReactRouterConfiguration>
+export declare function transform (
+  config: ReactRouterConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<ReactRouterConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticReactRouterConfig,

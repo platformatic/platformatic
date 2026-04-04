@@ -1,5 +1,6 @@
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
+import type { ConfigurationOptions } from '@platformatic/foundation'
 import {
   ReactRouterCapability,
   type ReactRouterConfiguration,
@@ -27,6 +28,8 @@ test('React Router types', () => {
   expect(create('/tmp', config)).type.toBe<Promise<ReactRouterCapability>>()
 
   expect(transform).type.toBeCallableWith(configuration)
+  expect(transform).type.toBeCallableWith(configuration, {} as object)
+  expect(transform).type.toBeCallableWith(configuration, {} as object, {} as ConfigurationOptions)
   expect(loadConfiguration).type.toBeCallableWith('/tmp', config)
 
   expect(new ReactRouterCapability('/tmp', config)).type.toBe<ReactRouterCapability>()

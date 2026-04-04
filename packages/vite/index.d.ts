@@ -9,7 +9,11 @@ export interface ViteContext extends BaseContext {}
 
 export type ViteConfiguration = Configuration<PlatformaticViteConfig>
 
-export declare function transform (config: ViteConfiguration): Promise<ViteConfiguration>
+export declare function transform (
+  config: ViteConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<ViteConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticViteConfig,

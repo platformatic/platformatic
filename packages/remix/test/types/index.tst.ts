@@ -1,5 +1,6 @@
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
+import type { ConfigurationOptions } from '@platformatic/foundation'
 import {
   RemixCapability,
   type PlatformaticRemixConfig,
@@ -26,6 +27,8 @@ test('Remix types', () => {
   expect(create('/tmp', config)).type.toBe<Promise<RemixCapability>>()
 
   expect(transform).type.toBeCallableWith(configuration)
+  expect(transform).type.toBeCallableWith(configuration, {} as object)
+  expect(transform).type.toBeCallableWith(configuration, {} as object, {} as ConfigurationOptions)
   expect(loadConfiguration).type.toBeCallableWith('/tmp', config)
 
   expect(new RemixCapability('/tmp', config)).type.toBe<RemixCapability>()

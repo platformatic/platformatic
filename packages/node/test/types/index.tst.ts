@@ -1,4 +1,4 @@
-import type { Configuration } from '@platformatic/foundation'
+import type { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
 import {
@@ -22,6 +22,9 @@ test('Node types', () => {
   const context = {} as NodeContext
 
   expect(transform(configuration)).type.toBe<Promise<NodeConfiguration>>()
+  expect(transform).type.toBeCallableWith(configuration)
+  expect(transform).type.toBeCallableWith(configuration, {} as object)
+  expect(transform).type.toBeCallableWith(configuration, {} as object, {} as ConfigurationOptions)
   expect(loadConfiguration('/tmp', config)).type.toBe<Promise<NodeConfiguration>>()
   expect(loadConfiguration(config)).type.toBe<Promise<NodeConfiguration>>()
   expect(create('/tmp', config)).type.toBe<Promise<NodeCapability>>()

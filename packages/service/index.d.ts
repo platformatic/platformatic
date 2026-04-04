@@ -23,7 +23,11 @@ export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyI
 
 export type ServiceConfiguration<T = {}> = Configuration<PlatformaticServiceConfig & T>
 
-export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration>
+export declare function transform (
+  config: ServiceConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<ServiceConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticServiceConfig,

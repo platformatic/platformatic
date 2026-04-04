@@ -1,5 +1,6 @@
 import type { JSONSchemaType } from 'ajv'
 import type { FastifyError } from 'fastify'
+import type { ConfigurationOptions } from '@platformatic/foundation'
 import { expect, test } from 'tstyche'
 import {
   NextCapability,
@@ -33,6 +34,8 @@ test('Next types', () => {
   expect(create(config)).type.toBe<Promise<NextCapability | NextImageOptimizerCapability>>()
 
   expect(transform).type.toBeCallableWith(configuration)
+  expect(transform).type.toBeCallableWith(configuration, {} as object)
+  expect(transform).type.toBeCallableWith(configuration, {} as object, {} as ConfigurationOptions)
   expect(loadConfiguration).type.toBeCallableWith('/tmp', config)
 
   expect(new NextCapability('/tmp', config)).type.toBe<NextCapability>()
