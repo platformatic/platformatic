@@ -9,7 +9,11 @@ export interface NestContext extends BaseContext {}
 
 export type NestConfiguration = Configuration<PlatformaticNestJSConfig>
 
-export declare function transform (config: NestConfiguration): Promise<NestConfiguration>
+export declare function transform (
+  config: NestConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<NestConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticNestJSConfig,

@@ -9,7 +9,11 @@ export interface AstroContext extends BaseContext {}
 
 export type AstroConfiguration = Configuration<PlatformaticAstroConfig>
 
-export declare function transform (config: AstroConfiguration): Promise<AstroConfiguration>
+export declare function transform (
+  config: AstroConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<AstroConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticAstroConfig,

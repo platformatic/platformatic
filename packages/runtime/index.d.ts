@@ -165,6 +165,10 @@ export function create (
 
 export declare function prepareApplication (config: RuntimeConfiguration, application: object): object
 
-export declare function transform (config: RuntimeConfiguration): Promise<RuntimeConfiguration>
+export declare function transform (
+  config: RuntimeConfiguration,
+  schema?: object,
+  context?: ConfigurationOptions
+): Promise<RuntimeConfiguration>
 
 export declare function loadApplicationsCommands (): Promise<ApplicationsCommands>

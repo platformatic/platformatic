@@ -10,7 +10,11 @@ export interface NextContext extends BaseContext {}
 
 export type NextConfiguration = Configuration<PlatformaticNextJsConfig>
 
-export declare function transform (config: NextConfiguration): Promise<NextConfiguration>
+export declare function transform (
+  config: NextConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<NextConfiguration>
 
 export declare function getAdapterPath (): string
 

@@ -1,4 +1,5 @@
 import type { JSONSchemaType } from 'ajv'
+import type { ConfigurationOptions } from '@platformatic/foundation'
 import { expect, test } from 'tstyche'
 import {
   type PlatformaticViteConfig,
@@ -23,6 +24,9 @@ test('Vite types', () => {
   const capability = new ViteCapability('/tmp', config)
 
   expect(transform(configuration)).type.toBe<Promise<ViteConfiguration>>()
+  expect(transform).type.toBeCallableWith(configuration)
+  expect(transform).type.toBeCallableWith(configuration, {} as object)
+  expect(transform).type.toBeCallableWith(configuration, {} as object, {} as ConfigurationOptions)
   expect(loadConfiguration('/tmp', config)).type.toBe<Promise<ViteConfiguration>>()
   expect(create('/tmp', config)).type.toBe<Promise<ViteCapability | ViteSSRCapability>>()
   expect(create(config)).type.toBe<Promise<ViteCapability | ViteSSRCapability>>()

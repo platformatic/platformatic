@@ -10,7 +10,11 @@ export interface NodeContext extends BaseContext {}
 
 export type NodeConfiguration = Configuration<PlatformaticNodeJsConfig>
 
-export declare function transform (config: NodeConfiguration): Promise<NodeConfiguration>
+export declare function transform (
+  config: NodeConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<NodeConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticNodeJsConfig,

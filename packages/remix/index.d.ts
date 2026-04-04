@@ -9,7 +9,11 @@ export interface RemixContext extends BaseContext {}
 
 export type RemixConfiguration = Configuration<PlatformaticRemixConfig>
 
-export declare function transform (config: RemixConfiguration): Promise<RemixConfiguration>
+export declare function transform (
+  config: RemixConfiguration,
+  schema?: object,
+  options?: ConfigurationOptions
+): Promise<RemixConfiguration>
 
 export declare function loadConfiguration (
   root: string | PlatformaticRemixConfig,
