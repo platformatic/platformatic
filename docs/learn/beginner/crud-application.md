@@ -135,7 +135,7 @@ If you prefer to use PostgreSQL from the start (recommended for enterprise devel
    docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=todo_app -p 5432:5432 -d postgres:15
    ```
 
-2. **Update your DB application configuration** in `web/db/.env`:
+2. **Update the connection string** in your project root `.env` file:
 
    ```bash
    # Replace the SQLite DATABASE_URL with PostgreSQL
@@ -153,7 +153,7 @@ The beauty of this architecture is that **Watt** manages the application orchest
 | Component                       | Role                 | Responsibilities                                                                                                                                                     | Configuration                              |
 | ------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | **Watt**                        | Application Server   | • Orchestrates multiple applications<br/>• Manages unified configuration<br/>• Handles application discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.json` + shared `.env`                |
-| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/platformatic.json` + `web/db/.env` |
+| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/platformatic.json` |
 
 **Key Distinction:**
 
@@ -311,23 +311,22 @@ One of Watt's key benefits is supporting multiple applications in one applicatio
 
 When you add a frontend application to your Watt application (like Next.js, React, or Vue), it needs to communicate with your database application. Watt makes this easy with unified configuration - set CORS once and it works across all your applications.
 
-Open your `web/db/.env` file and add:
+Open your project root `.env` file and add:
 
 ```
 PLT_SERVER_CORS_ORIGIN=http://localhost:3000
 ```
 
-Now add the CORS configuration to your API's config file in `web/db/platformatic.json`:
+Now add the CORS configuration to your `watt.json` file. Add the `cors` property inside the `server` section:
 
 ```json
 {
   "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
     "cors": {
       "origin": "{PLT_SERVER_CORS_ORIGIN}"
     }
-  },
-  "db": {
-    "connectionString": "{DATABASE_URL}"
   }
 }
 ```
