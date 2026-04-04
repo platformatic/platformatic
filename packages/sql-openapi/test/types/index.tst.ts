@@ -7,6 +7,7 @@ const pluginOptions: SQLOpenApiPluginOptions = {}
 test('plugin', () => {
   const instance = fastify()
 
+  instance.register(plugin)
   instance.register(plugin, pluginOptions)
 })
 
