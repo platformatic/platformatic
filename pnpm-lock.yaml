@@ -1454,6 +1454,9 @@ importers:
       systeminformation:
         specifier: ^5.27.11
         version: 5.31.3
+      tstyche:
+        specifier: ^6.2.0
+        version: 6.2.0(typescript@5.9.3)
       undici:
         specifier: ^7.0.0
         version: 7.24.0

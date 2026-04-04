@@ -4,7 +4,7 @@ import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
 import * as colorette from 'colorette'
 import { Logger } from 'pino'
-import { PlatformaticRuntimeConfig } from './config'
+import { PlatformaticRuntimeConfig } from './config.js'
 
 export type RuntimeConfiguration = Promise<Configuration<PlatformaticRuntimeConfig>>
 
@@ -48,21 +48,21 @@ export namespace errors {
 }
 
 export namespace symbols {
-  export declare const kConfig: unique symbol
-  export declare const kId: unique symbol
-  export declare const kFullId: unique symbol
-  export declare const kApplicationId: unique symbol
-  export declare const kWorkerId: unique symbol
-  export declare const kITC: unique symbol
-  export declare const kHealthCheckTimer: unique symbol
-  export declare const kHealthMetricsTimer: unique symbol
-  export declare const kLastHealthCheckELU: unique symbol
-  export declare const kLastWorkerScalerELU: unique symbol
-  export declare const kWorkerStatus: unique symbol
-  export declare const kWorkerHealthSignals: unique symbol
-  export declare const kStderrMarker: string
-  export declare const kInterceptors: unique symbol
-  export declare const kWorkersBroadcast: unique symbol
+  export const kConfig: unique symbol
+  export const kId: unique symbol
+  export const kFullId: unique symbol
+  export const kApplicationId: unique symbol
+  export const kWorkerId: unique symbol
+  export const kITC: unique symbol
+  export const kHealthCheckTimer: unique symbol
+  export const kHealthMetricsTimer: unique symbol
+  export const kLastHealthCheckELU: unique symbol
+  export const kLastWorkerScalerELU: unique symbol
+  export const kWorkerStatus: unique symbol
+  export const kWorkerHealthSignals: unique symbol
+  export const kStderrMarker: string
+  export const kInterceptors: unique symbol
+  export const kWorkersBroadcast: unique symbol
 }
 
 export interface InjectParams {
