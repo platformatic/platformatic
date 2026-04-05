@@ -2,9 +2,29 @@
 
 ## Overview
 
-Dynamic Workers is an automatic resource allocation algorithm that dynamically adjusts the number of workers for applications based on their Event Loop Utilization (ELU) metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
+Dynamic Workers is an automatic resource allocation system that dynamically adjusts the number of workers for applications based on health metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
 
-## How It Works
+Two scaling algorithms are available:
+
+- **v1** (default) — Threshold-based scaling using averaged ELU metrics over time windows
+- **v2** — Predictive scaling using Holt-Winters trend forecasting for proactive capacity management
+
+Select the algorithm using the `version` field in the `workers` configuration:
+
+```json
+{
+  "workers": {
+    "dynamic": true,
+    "version": "v2"
+  }
+}
+```
+
+---
+
+## v1: Threshold-Based Scaling (Default)
+
+### How It Works
 
 ### Health Metrics
 
@@ -222,4 +242,132 @@ Example (in application's `platformatic.json`):
 - App B cannot be scaled down (already at minWorkers = 1)
 
 **Decision:** No scaling (insufficient memory and no workers to reallocate)
+
+---
+
+## v2: Predictive Scaling
+
+### The Problem with Reactive Scaling
+
+Threshold-based scalers react when a metric crosses a limit — but by the time a new worker starts and begins absorbing traffic, the system may already be degraded. The scaler has no memory of prior state and no understanding of whether the metric is rising, falling, or stable. It cannot distinguish a sustained rise from a momentary spike, and it cannot right-size the response because it doesn't know how fast the metric is changing.
+
+### The Core Idea
+
+The predictive scaler uses time-series forecasting to estimate where the load will be in the near future — specifically, by the time a new worker would start and absorb its share of the traffic. If the predicted load at that future point exceeds the capacity of the current workers, the scaler adds workers *now*, so they are ready exactly when the extra capacity is needed.
+
+This shifts the scaling decision from "we are overloaded, add capacity" to "we will be overloaded in T seconds, add capacity now so it's ready in time."
+
+The algorithm tracks the **total load across all workers** (a sum, not a per-worker average). This is critical: a per-worker metric is corrupted by the algorithm's own scaling actions — adding a worker redistributes load and changes every worker's metric, even if external traffic is unchanged. The cluster-wide sum remains approximately invariant under scaling, allowing the algorithm to distinguish real traffic changes from internal redistribution artifacts.
+
+### How It Works
+
+The algorithm takes per-worker metric samples, combines them into a cluster-wide aggregate, smooths the signal to separate trend from noise, predicts where the aggregate is heading, and converts the prediction back into a worker count.
+
+Key properties:
+- **Asymmetric response** — reacts aggressively to rising load (fast smoothing) while remaining conservative on drops (slow smoothing), because the cost of being late on scale-up is higher than the cost of being late on scale-down
+- **Redistribution awareness** — newly added workers haven't absorbed their share of load yet; the algorithm gradually includes them to avoid prediction artifacts during the transition period
+- **Adaptive horizon** — the prediction look-ahead is tied to observed worker startup times, so the algorithm automatically adjusts how far ahead it looks based on the actual environment
+- **Hysteresis** — scale-down requires a larger margin than scale-up, preventing oscillation near the threshold
+
+Each metric (ELU, heap) is processed independently. When multiple metrics are used, the highest target worker count wins.
+
+### Global Arbitration
+
+When multiple applications are managed, the orchestrator coordinates scaling:
+
+- **Scale-downs** are applied freely — all applications that need fewer workers are scaled down in the same cycle
+- **Scale-ups** are limited to one per processing cycle across all applications
+- When multiple applications need to scale up, the one with the **highest relative need** is chosen: `(desiredTarget - currentTarget) / currentTarget`. This favors applications with fewer workers relative to demand (scaling 1→2 has more impact than 4→5)
+- Scale-ups are gated by:
+  - Total worker count limit (`total`)
+  - Available system memory (`maxMemory`, defaults to 90% of system memory)
+
+### Configuration
+
+#### Global Configuration
+
+```json
+{
+  "workers": {
+    "dynamic": true,
+    "version": "v2",
+    "minimum": 1,
+    "maximum": 4,
+    "total": 8,
+    "eluThreshold": 0.8,
+    "heapThresholdMb": 500,
+    "processIntervalMs": 10000,
+    "scaleUpMargin": 0.1,
+    "scaleDownMargin": 0.3,
+    "redistributionMs": 30000,
+
+    "alphaUp": 0.2,
+    "alphaDown": 0.1,
+    "betaUp": 0.2,
+    "betaDown": 0.1,
+    "cooldowns": {
+      "scaleUpAfterScaleUpMs": 5000,
+      "scaleUpAfterScaleDownMs": 5000,
+      "scaleDownAfterScaleUpMs": 30000,
+      "scaleDownAfterScaleDownMs": 20000
+    }
+  }
+}
+```
+
+**Metric thresholds:**
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `eluThreshold` | `0.8` | The per-worker ELU value above which a worker is considered overloaded. The algorithm uses this as the capacity limit when converting its load forecast into a worker count |
+| `heapThresholdMb` | — | Per-worker heap overload threshold in MB. When set, heap is tracked as an independent metric alongside ELU — the highest worker count across all metrics wins. Disabled if absent |
+
+**Prediction tuning:**
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `processIntervalMs` | `10000` | How often the algorithm runs. Samples that arrive between runs are accumulated and processed together |
+
+| `scaleUpMargin` | `0.1` | When the predicted load requires a fractional worker (e.g. 2.08 workers), the algorithm only provisions the extra worker if the fractional part exceeds this margin. Below the margin, the evidence for the extra worker is weak — the trend may not materialize — so the algorithm waits for the next cycle to confirm |
+| `scaleDownMargin` | `0.3` | After removing a worker, load redistributes across fewer workers, raising per-worker metrics. This margin ensures enough headroom to absorb that increase plus a safety buffer that prevents the removal from immediately triggering a scale-up |
+| `redistributionMs` | `30000` | Expected time for a new worker to fully absorb its share of traffic. During this period, the new worker's contribution is gradually weighted from 0 to 1 in the aggregate, preventing its initially low metrics from distorting the load signal |
+
+The algorithm uses Holt-Winters exponential smoothing with separate parameters for upward and downward movements. This asymmetry lets the algorithm react quickly to rising load while requiring sustained evidence before acting on drops.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `alphaUp` | `0.2` | Controls how much each data point moves the smoothed level when load is rising. Higher values track spikes faster but are more sensitive to noise |
+| `alphaDown` | `0.1` | Same as `alphaUp` but for falling load. A lower value means the algorithm requires several ticks of sustained decrease before the level drops significantly |
+| `betaUp` | `0.2` | Controls how quickly the trend changes direction when load is rising. Higher values pivot the trend immediately on reversal; lower values keep extrapolating until sustained change accumulates |
+| `betaDown` | `0.1` | Same as `betaUp` but for falling trends. A lower value means the algorithm is slow to conclude that a downward trend is real |
+
+**Cooldowns:**
+
+Cooldowns are optional safety guards. The core algorithm already prevents cascading scale-ups by tracking pending workers that have been requested but haven't started yet. Cooldowns add additional spacing between decisions.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `cooldowns.scaleUpAfterScaleUpMs` | `5000` | Minimum time since the last scale-up decision before another scale-up is allowed |
+| `cooldowns.scaleUpAfterScaleDownMs` | `5000` | Minimum time since the last scale-down decision before a scale-up. Prevents rapid back-and-forth oscillation |
+| `cooldowns.scaleDownAfterScaleUpMs` | `30000` | Minimum time since a worker actually started (not since the decision). The clock starts when the worker registers, not when the decision was made — what matters is how long the worker has been running and absorbing load |
+| `cooldowns.scaleDownAfterScaleDownMs` | `20000` | Minimum time since the last scale-down decision. Limits how quickly capacity is removed |
+
+#### Per-Application Overrides
+
+Most v2 parameters can be overridden per application. Global values act as defaults; per-app values take precedence when specified:
+
+```json
+{
+  "runtime": {
+    "workers": {
+      "minimum": 2,
+      "maximum": 8,
+      "eluThreshold": 0.7,
+      "scaleUpMargin": 0.05
+    }
+  }
+}
+```
+
+The following properties are **global-only** and cannot be overridden per application: `version`, `processIntervalMs`, `dynamic`, `total`, `maxMemory`.
 
