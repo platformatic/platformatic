@@ -35,20 +35,30 @@ export class CacheHandler {
   #subprefix
   #meta
   #maxTTL
+  #sections
   #cacheHitMetric
   #cacheMissMetric
+  #cacheHitMetricDef
+  #cacheMissMetricDef
 
-  constructor () {
+  constructor (options) {
+    options ??= {}
     ensureRedis()
     ensureMsgpackr()
 
-    this.#config ??= globalThis.platformatic.config.cache
+    const baseConfig = globalThis.platformatic.config.cache
+    const resolvedConfig = options.configKey ? { ...baseConfig, ...baseConfig[options.configKey] } : baseConfig
+
+    this.#config ??= resolvedConfig
     this.#logger ??= createPlatformaticLogger()
     this.#store ??= getConnection(this.#config.url)
     this.#maxTTL ??= this.#config.maxTTL
     this.#prefix ??= this.#config.prefix
     this.#subprefix ??= getPlatformaticSubprefix()
     this.#meta ??= getPlatformaticMeta()
+    this.#sections = options.sections ?? sections
+    this.#cacheHitMetricDef = options.cacheHitMetric ?? CACHE_HIT_METRIC
+    this.#cacheMissMetricDef = options.cacheMissMetric ?? CACHE_MISS_METRIC
 
     if (!this.#config) {
       throw new Error('Please provide a the "config" option.')
@@ -70,7 +80,7 @@ export class CacheHandler {
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
 
     let rawValue
     try {
@@ -131,7 +141,7 @@ export class CacheHandler {
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
 
     try {
       // Gather the value
@@ -160,7 +170,7 @@ export class CacheHandler {
       // As Next.js limits tags to 64, we don't need to manage batches here
       if (Array.isArray(tags)) {
         for (const tag of tags) {
-          const tagsKey = this.#keyFor(tag, sections.tags)
+          const tagsKey = this.#keyFor(tag, this.#sections.tags)
           promises.push(this.#store.sadd(tagsKey, key))
           promises.push(this.#store.expire(tagsKey, expire))
         }
@@ -191,7 +201,7 @@ export class CacheHandler {
       const toDelete = new Set()
 
       for (const tag of tags) {
-        const tagsKey = this.#keyFor(tag, sections.tags)
+        const tagsKey = this.#keyFor(tag, this.#sections.tags)
 
         // For each key in the tag set, expire the key
         for await (const keys of this.#store.sscanStream(tagsKey)) {
@@ -228,7 +238,7 @@ export class CacheHandler {
 
     if (Array.isArray(value.tags)) {
       for (const tag of value.tags) {
-        const tagsKey = this.#keyFor(tag, sections.tags)
+        const tagsKey = this.#keyFor(tag, this.#sections.tags)
         promises.push(this.#store.expire(tagsKey, expire, 'gt'))
       }
     }
@@ -244,18 +254,18 @@ export class CacheHandler {
     const { client, registry } = globalThis.platformatic.prometheus
 
     this.#cacheHitMetric =
-      registry.getSingleMetric(CACHE_HIT_METRIC.name) ??
+      registry.getSingleMetric(this.#cacheHitMetricDef.name) ??
       new client.Counter({
-        name: CACHE_HIT_METRIC.name,
-        help: CACHE_HIT_METRIC.help,
+        name: this.#cacheHitMetricDef.name,
+        help: this.#cacheHitMetricDef.help,
         registers: [registry]
       })
 
     this.#cacheMissMetric =
-      registry.getSingleMetric(CACHE_MISS_METRIC.name) ??
+      registry.getSingleMetric(this.#cacheMissMetricDef.name) ??
       new client.Counter({
-        name: CACHE_MISS_METRIC.name,
-        help: CACHE_MISS_METRIC.help,
+        name: this.#cacheMissMetricDef.name,
+        help: this.#cacheMissMetricDef.help,
         registers: [registry]
       })
   }

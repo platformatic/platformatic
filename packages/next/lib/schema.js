@@ -53,6 +53,29 @@ export const cache = {
           type: 'string'
         }
       ]
+    },
+    remote: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string'
+        },
+        prefix: {
+          type: 'string'
+        },
+        maxTTL: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 0
+            },
+            {
+              type: 'string'
+            }
+          ]
+        }
+      },
+      additionalProperties: false
     }
   },
   required: ['adapter', 'url'],

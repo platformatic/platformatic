@@ -400,6 +400,10 @@ export class NextCapability extends BaseCapability {
       } else if (pltNextModifications.componentsCache) {
         nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
         nextConfig.cacheHandlers.default = getCacheHandlerPath(`${pltNextModifications.componentsCache}-components`)
+
+        if (pltNextModifications.remoteComponentsCache) {
+          nextConfig.cacheHandlers.remote = getCacheHandlerPath(`${pltNextModifications.remoteComponentsCache}-components-remote`)
+        }
       }
     }
 
@@ -501,8 +505,24 @@ export class NextCapability extends BaseCapability {
       const requiredServerFilesPath = resolvePath(distDir, 'required-server-files.json')
       const requiredServerFiles = JSON.parse(await readFile(requiredServerFilesPath, 'utf-8'))
 
+      let modified = false
+
       if (requiredServerFiles.config.cacheHandler) {
         requiredServerFiles.config.cacheHandler = resolvePath(distDir, requiredServerFiles.config.cacheHandler)
+        modified = true
+      }
+
+      if (requiredServerFiles.config.cacheHandlers?.default) {
+        requiredServerFiles.config.cacheHandlers.default = resolvePath(distDir, requiredServerFiles.config.cacheHandlers.default)
+        modified = true
+      }
+
+      if (requiredServerFiles.config.cacheHandlers?.remote) {
+        requiredServerFiles.config.cacheHandlers.remote = resolvePath(distDir, requiredServerFiles.config.cacheHandlers.remote)
+        modified = true
+      }
+
+      if (modified) {
         await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
       }
     }
