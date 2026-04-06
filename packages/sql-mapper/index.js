@@ -223,6 +223,12 @@ export async function connect ({
     if (!dbschema) {
       dbschema = await queries.listTables(db, sql, schemaList)
 
+      // Also introspect database views
+      if (queries.listViews) {
+        const views = await queries.listViews(db, sql, schemaList)
+        dbschema = dbschema.concat(views)
+      }
+
       // TODO make this parallel or a single query
       for (const wrap of dbschema) {
         const { table, schema } = wrap
@@ -271,7 +277,7 @@ export async function connect ({
       }
     }
 
-    for (const { table, schema, columns, constraints } of dbschema) {
+    for (const { table, schema, columns, constraints, isView } of dbschema) {
       // The following line is a safety net when developing this module,
       // it should never happen.
       /* istanbul ignore next */
@@ -298,10 +304,11 @@ export async function connect ({
         limit,
         schemaList,
         columns,
-        constraints
+        constraints,
+        isView
       )
-      // Check for primary key of all entities
-      if (entity.primaryKeys.size === 0) {
+      // Check for primary key of all entities (views are allowed without PKs)
+      if (entity.primaryKeys.size === 0 && !isView) {
         log.warn({ table }, 'Cannot find any primary keys for table')
         continue
       }
@@ -386,7 +393,19 @@ async function dropTable (db, sql, table) {
     }
     return table
   } catch (err) {
-    // ignore, it will be dropped on the next roundon the next roundon the next roundon the next round
+    // ignore, it will be dropped on the next round
+  }
+}
+
+async function dropView (db, sql, view) {
+  try {
+    if (db.isSQLite) {
+      await db.query(sql`DROP VIEW ${sql(view)};`)
+    } else {
+      await db.query(sql`DROP VIEW ${sql(view)} CASCADE;`)
+    }
+  } catch {
+    // ignore
   }
 }
 
@@ -401,6 +420,20 @@ export async function dropAllTables (db, sql, schemas) {
     queries = queriesFactory.mariadb
   } else if (db.isSQLite) {
     queries = queriesFactory.sqlite
+  }
+
+  // Drop views first since they may depend on tables
+  if (queries.listViews) {
+    const views = (await queries.listViews(db, sql, schemas)).map(v => {
+      /* istanbul ignore next */
+      if (v.schema) {
+        return `${v.schema}.${v.table}`
+      }
+      return v.table
+    })
+    for (const view of views) {
+      await dropView(db, sql, view)
+    }
   }
 
   const tables = new Set(

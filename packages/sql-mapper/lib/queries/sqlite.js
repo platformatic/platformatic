@@ -231,4 +231,12 @@ export async function updateMany (db, sql, table, schema, criteria, input, field
   return res
 }
 
+export async function listViews (db, sql) {
+  const res = await db.query(sql`
+    SELECT name FROM sqlite_master
+    WHERE type='view'
+  `)
+  return res.map(r => ({ schema: null, table: r.name, isView: true }))
+}
+
 export const hasILIKE = false
