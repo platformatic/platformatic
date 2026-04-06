@@ -3,7 +3,7 @@ import fastify from 'fastify'
 import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import sqlGraphQL from '../index.js'
-import { clear, connInfo, isMysql, isSQLite } from './helper.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 async function createTablesAndViews (db, sql) {
   if (isSQLite) {
