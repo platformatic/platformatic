@@ -146,7 +146,9 @@ export class CacheHandler {
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      const expire = Math.min(revalidate, this.#maxTTL)
+      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
+      // Use maxTTL as the expiration in that case.
+      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
 
       if (expire < 1) {
         return
