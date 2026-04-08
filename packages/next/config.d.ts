@@ -122,6 +122,7 @@ export interface PlatformaticNextJsConfig {
     entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
+    processSpawner?: string;
   };
   runtime?: {
     preload?: string | string[];

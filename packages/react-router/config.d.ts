@@ -122,6 +122,7 @@ export interface PlatformaticReactRouterConfig {
     entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
+    processSpawner?: string;
   };
   runtime?: {
     preload?: string | string[];

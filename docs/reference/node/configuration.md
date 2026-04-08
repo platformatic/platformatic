@@ -21,6 +21,14 @@ Supported object properties:
 - **`changeDirectoryBeforeExecution`**: If set to `true`, change the current working directory to the application root before running any of the commands above. The default is `false`.
 - **`preferLocalCommands`**: If set to `true`, resolve non-absolute commands from the application's `node_modules/.bin` before checking the current working directory. The default is `true`.
 - **`entrypointPort`**: The main port the application will listen on. If not provided, it will use the port of the first TCP server that the application starts. This setting should be provided only if the application starts multiple TCP servers and the main one is not the first that actually listens on a port.
+- **`processSpawner`**: Path to a custom module used to spawn application processes.
+  The module must export an async or sync `spawn(executable, args, options, stdout, stderr)` function that will receive the following arguments:
+  - **`executable`**: Command executable.
+  - **`args`**: Array of command arguments.
+  - **`options`**: `child_process.spawn` options.
+  - **`stdout`** and **`stderr`**: Writable streams where process output should be piped with `{ end: false }` and set to UTF-8 encoding.
+
+  The function must return a `ChildProcess` instance (or a `Promise` that resolves to one), after the "spawn" event has been triggered.
 
 ## `node`
 

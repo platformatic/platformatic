@@ -68,6 +68,9 @@ const buildableApplication = {
     preferLocalCommands: {
       type: 'boolean',
       default: true
+    },
+    processSpawner: {
+      type: 'string'
     }
   },
   additionalProperties: false,

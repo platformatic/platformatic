@@ -122,6 +122,7 @@ export interface PlatformaticAstroConfig {
     entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
+    processSpawner?: string;
   };
   runtime?: {
     preload?: string | string[];

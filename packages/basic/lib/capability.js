@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
-import { cleanBasePath } from './utils.js'
+import { cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
@@ -64,6 +64,7 @@ export class BaseCapability extends EventEmitter {
   metricsRegistry
   otlpBridge
 
+  #processSpawner
   #subprocessStarted
   #metricsCollected
   #pendingDependenciesWaits
@@ -530,7 +531,12 @@ export class BaseCapability extends EventEmitter {
       this.#subprocessStarted = true
     } catch (e) {
       this.childManager.close()
-      throw new Error(`Cannot execute command "${command}": executable not found`)
+
+      if (e.code === 'ENOENT') {
+        throw new Error(`Cannot execute command "${command}": executable not found`)
+      } else {
+        throw e
+      }
     } finally {
       await this.childManager.eject()
     }
@@ -683,27 +689,46 @@ export class BaseCapability extends EventEmitter {
       }
     }
 
-    /* c8 ignore next 3 */
-    const subprocess =
-      platform() === 'win32'
-        ? spawn(command.replace(/^node\b/, process.execPath), {
-          cwd: this.root,
-          shell: true,
-          windowsVerbatimArguments: true
-        })
-        : spawn(executable, args, { cwd: this.root, shell: hasChainedCommands })
+    const spawnOptions = { cwd: this.root }
 
-    subprocess.stdout.setEncoding('utf8')
-    subprocess.stderr.setEncoding('utf8')
+    if (platform() === 'win32') {
+      executable = command.replace(/^node\b/, process.execPath)
+      args = []
 
-    subprocess.stdout.pipe(this.stdout, { end: false })
-    subprocess.stderr.pipe(this.stderr, { end: false })
+      spawnOptions.shell = true
+      spawnOptions.windowsVerbatimArguments = true
+    } else {
+      spawnOptions.shell = hasChainedCommands
+    }
 
-    // Wait for the process to be started
-    await new Promise((resolve, reject) => {
-      subprocess.on('spawn', resolve)
-      subprocess.on('error', reject)
-    })
+    let subprocess
+    if (this.config?.application?.processSpawner) {
+      if (!this.#processSpawner) {
+        const imported = await importFile(resolve(this.root, this.config.application.processSpawner))
+
+        this.#processSpawner = imported.spawn ?? imported.default ?? imported
+
+        if (typeof this.#processSpawner !== 'function') {
+          throw new Error('processSpawner must export a function or a spawn function')
+        }
+      }
+
+      subprocess = await this.#processSpawner(executable, args, spawnOptions, this.stdout, this.stderr)
+    } else {
+      subprocess = spawn(executable, args, spawnOptions)
+
+      subprocess.stdout.setEncoding('utf8')
+      subprocess.stderr.setEncoding('utf8')
+
+      subprocess.stdout.pipe(this.stdout, { end: false })
+      subprocess.stderr.pipe(this.stderr, { end: false })
+
+      // Wait for the process to be started
+      await new Promise((resolve, reject) => {
+        subprocess.on('spawn', resolve)
+        subprocess.on('error', reject)
+      })
+    }
 
     return subprocess
   }
