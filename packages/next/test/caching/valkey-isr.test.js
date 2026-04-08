@@ -999,6 +999,98 @@ test('can be used without the runtime - standalone mode', async t => {
   ])
 })
 
+test('should cache static pages with revalidate: false (force-static / SSG)', async t => {
+  const logs = []
+  const logsPromise = Promise.withResolvers()
+  const logger = {
+    trace: (obj, msg) => {
+      logs.push({ msg, key: obj.key, value: obj.value })
+
+      if (msg === 'cache get') {
+        logsPromise.resolve()
+      }
+    },
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  const monitorPromise = Promise.withResolvers()
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+
+    if (args[0] === 'get') {
+      monitorPromise.resolve()
+    }
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:static-page`
+
+  // revalidate: false means "cache forever" in Next.js (SSG/force-static pages)
+  await handler.set(key, 'static-content', { revalidate: false, tags: ['static-tag'] }, true)
+  const cached = await handler.get(key, base64ValueMatcher, true)
+  await logsPromise.promise
+  await monitorPromise.promise
+
+  // The key should be stored with maxTTL (86400) as the expiration
+  verifyValkeySequence(valkeyCalls, [
+    ['set', key, base64ValueMatcher, 'EX', '86400'],
+    ['sadd', keyFor(valkeyPrefix, '', 'tags', 'static-tag'), key],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'static-tag'), '86400'],
+    ['get', key]
+  ])
+
+  deepStrictEqual(
+    { ...cached, lastModified: 0 },
+    {
+      value: 'static-content',
+      lastModified: 0,
+      revalidate: false,
+      tags: ['static-tag'],
+      maxTTL: 86400
+    }
+  )
+})
+
+test('should not cache when revalidate is 0 (SSR / no-cache)', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:ssr-page`
+
+  // revalidate: 0 means "do not cache" (SSR)
+  await handler.set(key, 'ssr-content', { revalidate: 0, tags: [] }, true)
+  const cached = await handler.get(key, base64ValueMatcher, true)
+
+  // Should not have been cached
+  deepStrictEqual(cached, undefined)
+})
+
 test('should track Next.js cache hit and miss ratio in Prometheus', async t => {
   const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
