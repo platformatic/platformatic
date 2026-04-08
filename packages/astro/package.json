@@ -32,12 +32,12 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@astrojs/node": "^9.2.0",
+    "@astrojs/node": "^10.0.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
-    "astro": "^5.7.1",
+    "astro": "^6.1.4",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
