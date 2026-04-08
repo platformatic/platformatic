@@ -48,8 +48,17 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
     nextConfig.cacheComponents = true
     nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
     nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
+
+    if (config.cache.remote) {
+      nextConfig.cacheHandlers.remote = getCacheHandlerPath(`${config.cache.adapter}-components-remote`)
+    }
+
     nextConfig.cacheMaxMemorySize = 0
     modifications.push(['componentsCache', config.cache.adapter])
+
+    if (config.cache.remote) {
+      modifications.push(['remoteComponentsCache', config.cache.adapter])
+    }
   } else {
     delete nextConfig.cacheHandlers
     nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)

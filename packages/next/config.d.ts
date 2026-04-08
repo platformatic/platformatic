@@ -704,5 +704,10 @@ export interface PlatformaticNextJsConfig {
     cacheComponents?: boolean;
     maxTTL?: number | string;
     ignoreNextConfig?: boolean | string;
+    remote?: {
+      url?: string;
+      prefix?: string;
+      maxTTL?: number | string;
+    };
   };
 }

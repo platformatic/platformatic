@@ -42,6 +42,13 @@ const assertComponentsCacheHandlers = (nextConfig) => {
   notStrictEqual(nextConfig.cacheComponents, false)
   ok(nextConfig.cacheHandler.includes('null-isr'))
   ok(nextConfig.cacheHandlers.default.includes('redis-components'))
+  strictEqual(nextConfig.cacheHandlers.remote, undefined)
+}
+const assertComponentsCacheHandlersWithRemote = (nextConfig) => {
+  notStrictEqual(nextConfig.cacheComponents, false)
+  ok(nextConfig.cacheHandler.includes('null-isr'))
+  ok(nextConfig.cacheHandlers.default.includes('redis-components'))
+  ok(nextConfig.cacheHandlers.remote.includes('redis-components-remote'))
 }
 const assertNoCacheHandlers = (nextConfig) => {
   strictEqual(nextConfig.cacheHandler, undefined)
@@ -214,5 +221,39 @@ describe('enhanceNextConfig with caching', () => {
     })
     assertIsrCacheHandler(nextConfig)
     strictEqual(nextConfig.cacheComponents, false)
+  })
+
+  test('adds remote Components caching handler when cache.remote is configured', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+      config.cache.remote = { url: 'redis://remote:6379' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlersWithRemote(nextConfig)
+  })
+
+  test('does not add remote handler when cache.remote is not configured', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlers(nextConfig)
+  })
+
+  test('does not add remote handler without cacheComponents', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.remote = { url: 'redis://remote:6379' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertIsrCacheHandler(nextConfig)
+  })
+
+  test('adds remote handler with partial config (no url override)', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+      config.cache.remote = { prefix: 'plt:remote' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlersWithRemote(nextConfig)
   })
 })
