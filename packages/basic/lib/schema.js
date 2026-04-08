@@ -70,8 +70,7 @@ const buildableApplication = {
       default: true
     },
     processSpawner: {
-      type: 'string',
-      default: false
+      type: 'string'
     }
   },
   additionalProperties: false,
