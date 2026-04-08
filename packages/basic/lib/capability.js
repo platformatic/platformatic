@@ -693,6 +693,8 @@ export class BaseCapability extends EventEmitter {
 
     if (platform() === 'win32') {
       executable = command.replace(/^node\b/, process.execPath)
+      args = []
+
       spawnOptions.shell = true
       spawnOptions.windowsVerbatimArguments = true
     } else {
