@@ -122,6 +122,7 @@ export interface PlatformaticTanStackConfig {
     entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
+    processSpawner?: boolean & string;
   };
   runtime?: {
     preload?: string | string[];
