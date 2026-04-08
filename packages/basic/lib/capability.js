@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
-import { cleanBasePath } from './utils.js'
+import { cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
@@ -702,7 +702,7 @@ export class BaseCapability extends EventEmitter {
     let subprocess
     if (this.config?.application?.processSpawner) {
       if (!this.#processSpawner) {
-        const imported = await import(resolve(this.root, this.config.application.processSpawner))
+        const imported = await importFile(resolve(this.root, this.config.application.processSpawner))
 
         this.#processSpawner = imported.spawn ?? imported.default ?? imported
 
