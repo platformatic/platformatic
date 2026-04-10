@@ -431,7 +431,17 @@ export async function createFromConfig (t, options, applicationFactory, creation
 
   const directory = await createTemporaryDirectory(t)
 
-  const gateway = await create(directory, Object.assign({}, defaultConfig, options), {
+  // Deep-merge server so callers that only override sub-fields (e.g.
+  // `server: { logger: { level: 'fatal' } }`) still inherit the pinned
+  // `hostname: '127.0.0.1'`. Previously, a shallow `Object.assign` would
+  // wipe out the default hostname and the framework would bind to `::1`
+  // on dual-stack hosts.
+  const mergedConfig = Object.assign({}, defaultConfig, options)
+  if (options?.server) {
+    mergedConfig.server = { ...defaultConfig.server, ...options.server }
+  }
+
+  const gateway = await create(directory, mergedConfig, {
     applicationFactory,
     isStandalone: true,
     isEntrypoint: true,
