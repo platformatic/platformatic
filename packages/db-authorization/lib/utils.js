@@ -18,6 +18,10 @@ export function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
     const roleKeys = roleKey.split('.')
     rolesRaw = user
     for (const key of roleKeys) {
+      if (rolesRaw === null || rolesRaw === undefined || typeof rolesRaw !== 'object') {
+        rolesRaw = undefined
+        break
+      }
       rolesRaw = rolesRaw[key]
     }
   } else {
@@ -25,9 +29,9 @@ export function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
   }
 
   if (typeof rolesRaw === 'string') {
-    output = rolesRaw.split(',')
+    output = rolesRaw.split(',').map(role => role.trim()).filter(Boolean)
   } else if (Array.isArray(rolesRaw)) {
-    output = rolesRaw
+    output = rolesRaw.filter(role => typeof role === 'string').map(role => role.trim()).filter(Boolean)
   }
   if (output.length === 0) {
     output.push(anonymousRole)
