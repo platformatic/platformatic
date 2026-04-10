@@ -22,8 +22,8 @@ export function generateChildrenId () {
 }
 
 export function getSocketPath (id) {
-  if (this.PLT_CHILD_PROCESS_SOCKET_PATH) {
-    return this.PLT_CHILD_PROCESS_SOCKET_PATH
+  if (process.env.PLT_CHILD_PROCESS_SOCKET_PATH) {
+    return process.env.PLT_CHILD_PROCESS_SOCKET_PATH
   }
 
   let socketPath = null
