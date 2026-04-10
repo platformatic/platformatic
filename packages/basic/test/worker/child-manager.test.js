@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { platform } from 'node:os'
 import { test } from 'node:test'
 import { WebSocket } from 'ws'
@@ -62,6 +62,26 @@ test('ChildManager - listen - should log when receiving invalid messages', async
   await manager.close()
 
   deepStrictEqual(messages[0][1].err.message, 'Unexpected token \'N\', "NO-WAY" is not valid JSON')
+})
+
+test('ChildManager - getSocketPath - should use path from environment override', async () => {
+  createLogger()
+
+  const originalSocketPath = process.env.PLT_CHILD_PROCESS_SOCKET_PATH
+  const customSocketPath = '/tmp/platformatic-child-manager.socket'
+  process.env.PLT_CHILD_PROCESS_SOCKET_PATH = customSocketPath
+
+  try {
+    const manager = new ChildManager({})
+    strictEqual(manager.getSocketPath(), customSocketPath)
+    await manager.close()
+  } finally {
+    if (originalSocketPath === undefined) {
+      delete process.env.PLT_CHILD_PROCESS_SOCKET_PATH
+    } else {
+      process.env.PLT_CHILD_PROCESS_SOCKET_PATH = originalSocketPath
+    }
+  }
 })
 
 test('ChildManager - send - should not fail when a client is missing', async t => {
