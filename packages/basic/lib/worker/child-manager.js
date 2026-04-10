@@ -17,11 +17,15 @@ export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
 // UNIX socket length limitation on MacOS, we don't.
-export function generateChildrenId (context) {
+export function generateChildrenId () {
   return [process.pid, randomBytes(4).toString('hex')].join('-')
 }
 
 export function getSocketPath (id) {
+  if (process.env.PLT_CHILD_PROCESS_SOCKET_PATH) {
+    return process.env.PLT_CHILD_PROCESS_SOCKET_PATH
+  }
+
   let socketPath = null
 
   /* c8 ignore next 7 */
