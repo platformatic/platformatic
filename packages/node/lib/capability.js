@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -397,7 +398,7 @@ export class NodeCapability extends BaseCapability {
     }
 
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     createServerListener(
       false,

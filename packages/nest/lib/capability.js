@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -242,7 +243,7 @@ export class NestCapability extends BaseCapability {
 
   async #listen () {
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     if (typeof serverOptions?.backlog === 'number') {
       createServerListener(false, false, { backlog: serverOptions.backlog })

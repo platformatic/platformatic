@@ -36,6 +36,7 @@ test('get application config via capability api', async t => {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     },
     server: {
+      hostname: '127.0.0.1',
       keepAliveTimeout: 5000,
       logger: {
         level: 'fatal'

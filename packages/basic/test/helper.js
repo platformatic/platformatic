@@ -328,6 +328,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
       config = await transform(config, ...args)
       config.logger ??= {}
       config.server ??= {}
+      // Pin hostname to IPv4 loopback for deterministic test URLs. Without
+      // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
+      // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
+      config.server.hostname ??= '127.0.0.1'
 
       // Assign the port
       if (typeof port === 'number') {
@@ -870,7 +874,9 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
 
   // Create the runtime
   const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
-    config.server = { port }
+    // Preserve the hostname already set by prepareRuntime's transform
+    // (127.0.0.1) — only override the port here.
+    config.server = { ...config.server, port }
     config.applications[0].workers = { static: 5, dynamic: false }
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 

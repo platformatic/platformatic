@@ -1,6 +1,7 @@
 import fastifyStatic from '@fastify/static'
 import {
   BaseCapability,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -272,7 +273,7 @@ export class ViteCapability extends BaseCapability {
 
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+      const listenOptions = buildListenOptions(serverOptions)
 
       if (typeof serverOptions?.backlog === 'number') {
         createServerListener(false, false, { backlog: serverOptions.backlog })

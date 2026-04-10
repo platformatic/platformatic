@@ -1,4 +1,4 @@
-import { BaseCapability, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
 import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
 import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
@@ -297,7 +297,7 @@ export class ServiceCapability extends BaseCapability {
 
   async _listen () {
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     if (typeof serverOptions?.backlog === 'number') {
       listenOptions.backlog = serverOptions.backlog

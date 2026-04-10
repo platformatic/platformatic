@@ -167,6 +167,21 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
+test('wrapInRuntimeConfig does not synthesize a server hostname when none is configured', async t => {
+  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
+
+  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
+  // Simulate a project where neither the top-level nor the runtime config
+  // declare a server section. The wrapped runtime must not end up with a
+  // hardcoded hostname.
+  delete config.server
+  delete config.runtime.server
+
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  strictEqual(runtimeConfig.server?.hostname, undefined)
+})
+
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
@@ -176,7 +191,9 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   ok(typeof runtimeConfig.web, 'undefined')
   ok(typeof runtimeConfig.autoload, 'undefined')
   ok(runtimeConfig.watch === false)
-  deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
+  // When the user only sets server.port (no hostname), we must not silently
+  // inject a hostname — the underlying framework's default should apply.
+  deepStrictEqual(runtimeConfig.server, { port: 1234 })
   deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,

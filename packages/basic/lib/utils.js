@@ -8,6 +8,19 @@ export function getServerUrl (server) {
   return new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
 }
 
+// Builds the options object passed to `app.listen(...)`. When no hostname has
+// been configured we intentionally leave `host` unset so that the underlying
+// framework picks its own default, instead of silently forcing 127.0.0.1.
+export function buildListenOptions (serverConfig) {
+  const options = { port: serverConfig?.port || 0 }
+
+  if (serverConfig?.hostname) {
+    options.host = serverConfig.hostname
+  }
+
+  return options
+}
+
 export async function injectViaRequest (baseUrl, injectParams, onInject) {
   try {
     const url = new URL(injectParams.url, baseUrl).href
