@@ -103,11 +103,6 @@ export async function createRuntime (configOrRoot, sourceOrConfig, context) {
     async transform (config, ...args) {
       config = await originalTransform(config, ...args)
       config.logger ??= {}
-      // Pin hostname to IPv4 loopback for deterministic test URLs. Without
-      // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
-      // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
-      config.server ??= {}
-      config.server.hostname ??= '127.0.0.1'
 
       const debug = process.env.PLT_TESTS_DEBUG === 'true'
       const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
