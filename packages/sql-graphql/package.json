@@ -13,7 +13,7 @@
     "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "test:types": "tsd"
+    "test:types": "tstyche"
   },
   "repository": {
     "type": "git",
@@ -36,7 +36,7 @@
     "fastify": "^5.7.0",
     "fastify-tsconfig": "^3.0.0",
     "neostandard": "^0.12.0",
-    "tsd": "^0.33.0",
+    "tstyche": "^6.2.0",
     "typescript": "^5.5.4",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"
@@ -52,9 +52,6 @@
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
     "mercurius": "^16.0.0"
-  },
-  "tsd": {
-    "directory": "test/types"
   },
   "engines": {
     "node": ">=22.19.0"
