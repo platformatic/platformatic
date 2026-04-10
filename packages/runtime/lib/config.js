@@ -142,9 +142,17 @@ export async function wrapInRuntimeConfig (config, context) {
     // on purpose, the package.json might be missing
   }
 
-  // If the application supports its (so far, only @platformatic/service and descendants)
-  const { hostname, port, http2, https } = config.server ?? {}
-  const server = { hostname, port, http2, https }
+  // Carry over only the server properties that the user actually set, so
+  // we do not end up with a `{ hostname: undefined, ... }` object that then
+  // gets populated by schema defaults or trips truthy checks downstream.
+  const server = {}
+  if (config.server) {
+    for (const key of ['hostname', 'port', 'http2', 'https']) {
+      if (config.server[key] !== undefined) {
+        server[key] = config.server[key]
+      }
+    }
+  }
   const production = context?.isProduction ?? context?.production
 
   const runtimeConfig = config.runtime ?? {}
@@ -153,7 +161,7 @@ export async function wrapInRuntimeConfig (config, context) {
   /* c8 ignore next */
   const wrapped = {
     $schema: schema.$id,
-    server,
+    ...(Object.keys(server).length > 0 ? { server } : {}),
     watch: !production,
     ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
     entrypoint: applicationId,

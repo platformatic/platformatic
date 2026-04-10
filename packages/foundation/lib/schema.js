@@ -357,8 +357,7 @@ export const server = {
   type: 'object',
   properties: {
     hostname: {
-      type: 'string',
-      default: '127.0.0.1'
+      type: 'string'
     },
     port: {
       anyOf: [{ type: 'integer' }, { type: 'string' }]
