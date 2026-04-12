@@ -452,7 +452,7 @@ importers:
         version: 5.0.1
       graphql:
         specifier: ^16.8.1
-        version: 16.13.1
+        version: 16.13.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -513,7 +513,7 @@ importers:
         version: 15.0.4
       mercurius:
         specifier: ^16.0.0
-        version: 16.8.0(graphql@16.13.1)
+        version: 16.8.0(graphql@16.13.2)
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
@@ -783,7 +783,7 @@ importers:
         version: 5.1.0
       graphql:
         specifier: ^16.8.1
-        version: 16.13.1
+        version: 16.13.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -792,7 +792,7 @@ importers:
         version: 1.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.8.0(graphql@16.13.1)
+        version: 16.8.0(graphql@16.13.2)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1429,7 +1429,7 @@ importers:
         version: 5.8.4
       graphql:
         specifier: ^16.8.1
-        version: 16.13.1
+        version: 16.13.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1646,13 +1646,13 @@ importers:
         version: 5.1.0
       graphql:
         specifier: ^16.9.0
-        version: 16.13.1
+        version: 16.13.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.8.0(graphql@16.13.1)
+        version: 16.8.0(graphql@16.13.2)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1786,19 +1786,19 @@ importers:
         version: 5.1.0
       graphql:
         specifier: ^16.8.1
-        version: 16.13.1
+        version: 16.13.2
       graphql-scalars:
         specifier: ^1.22.5
-        version: 1.25.0(graphql@16.13.1)
+        version: 1.25.0(graphql@16.13.2)
       graphql-type-json:
         specifier: ^0.3.2
-        version: 0.3.2(graphql@16.13.1)
+        version: 0.3.2(graphql@16.13.2)
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.8.0(graphql@16.13.1)
+        version: 16.8.0(graphql@16.13.2)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^0.3.0
@@ -7402,8 +7402,8 @@ packages:
       ws:
         optional: true
 
-  graphql@16.13.1:
-    resolution: {integrity: sha512-gGgrVCoDKlIZ8fIqXBBb0pPKqDgki0Z/FSKNiQzSGj2uEYHr1tq5wmBegGwJx6QB5S5cM0khSBpi/JFHMCvsmQ==}
+  graphql@16.13.2:
+    resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   gunzip-maybe@1.4.2:
@@ -12493,9 +12493,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.1)':
+  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.2)':
     dependencies:
-      graphql: 16.13.1
+      graphql: 16.13.2
 
   '@grpc/grpc-js@1.14.3':
     dependencies:
@@ -12983,8 +12983,8 @@ snapshots:
   '@mercuriusjs/federation@5.0.0':
     dependencies:
       '@fastify/error': 4.2.0
-      graphql: 16.13.1
-      mercurius: 16.8.0(graphql@16.13.1)
+      graphql: 16.13.2
+      mercurius: 16.8.0(graphql@16.13.2)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -12992,11 +12992,11 @@ snapshots:
   '@mercuriusjs/gateway@5.2.0(@fastify/websocket@11.2.0)(crossws@0.3.5)':
     dependencies:
       '@mercuriusjs/federation': 5.0.0
-      '@mercuriusjs/subscription-client': 2.0.0(graphql@16.13.1)
+      '@mercuriusjs/subscription-client': 2.0.0(graphql@16.13.2)
       fastify-plugin: 5.1.0
-      graphql: 16.13.1
-      graphql-ws: 6.0.7(@fastify/websocket@11.2.0)(crossws@0.3.5)(graphql@16.13.1)(ws@8.19.0)
-      mercurius: 16.8.0(graphql@16.13.1)
+      graphql: 16.13.2
+      graphql-ws: 6.0.7(@fastify/websocket@11.2.0)(crossws@0.3.5)(graphql@16.13.2)(ws@8.19.0)
+      mercurius: 16.8.0(graphql@16.13.2)
       p-map: 7.0.4
       single-user-cache: 2.1.0
       tiny-lru: 11.4.7
@@ -13009,10 +13009,10 @@ snapshots:
       - crossws
       - utf-8-validate
 
-  '@mercuriusjs/subscription-client@2.0.0(graphql@16.13.1)':
+  '@mercuriusjs/subscription-client@2.0.0(graphql@16.13.2)':
     dependencies:
       '@fastify/error': 4.2.0
-      graphql: 16.13.1
+      graphql: 16.13.2
       secure-json-parse: 3.0.2
       ws: 8.19.0
     transitivePeerDependencies:
@@ -13772,8 +13772,8 @@ snapshots:
     dependencies:
       abstract-logger: 0.2.5
       fastify: 5.8.4
-      graphql: 16.13.1
-      mercurius: 16.8.0(graphql@16.13.1)
+      graphql: 16.13.2
+      mercurius: 16.8.0(graphql@16.13.2)
       metaline: 1.1.0
       pino: 9.14.0
       undici: 7.24.0
@@ -17335,34 +17335,34 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql-jit@0.8.7(graphql@16.13.1):
+  graphql-jit@0.8.7(graphql@16.13.2):
     dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.1)
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.2)
       fast-json-stringify: 5.16.1
       generate-function: 2.3.1
-      graphql: 16.13.1
+      graphql: 16.13.2
       lodash.memoize: 4.1.2
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  graphql-scalars@1.25.0(graphql@16.13.1):
+  graphql-scalars@1.25.0(graphql@16.13.2):
     dependencies:
-      graphql: 16.13.1
+      graphql: 16.13.2
       tslib: 2.8.1
 
-  graphql-type-json@0.3.2(graphql@16.13.1):
+  graphql-type-json@0.3.2(graphql@16.13.2):
     dependencies:
-      graphql: 16.13.1
+      graphql: 16.13.2
 
-  graphql-ws@6.0.7(@fastify/websocket@11.2.0)(crossws@0.3.5)(graphql@16.13.1)(ws@8.19.0):
+  graphql-ws@6.0.7(@fastify/websocket@11.2.0)(crossws@0.3.5)(graphql@16.13.2)(ws@8.19.0):
     dependencies:
-      graphql: 16.13.1
+      graphql: 16.13.2
     optionalDependencies:
       '@fastify/websocket': 11.2.0
       crossws: 0.3.5
       ws: 8.19.0
 
-  graphql@16.13.1: {}
+  graphql@16.13.2: {}
 
   gunzip-maybe@1.4.2:
     dependencies:
@@ -18592,14 +18592,14 @@ snapshots:
       type-fest: 0.18.1
       yargs-parser: 20.2.9
 
-  mercurius@16.8.0(graphql@16.13.1):
+  mercurius@16.8.0(graphql@16.13.2):
     dependencies:
       '@fastify/error': 4.2.0
       '@fastify/static': 9.0.0
       '@fastify/websocket': 11.2.0
       fastify-plugin: 5.1.0
-      graphql: 16.13.1
-      graphql-jit: 0.8.7(graphql@16.13.1)
+      graphql: 16.13.2
+      graphql-jit: 0.8.7(graphql@16.13.2)
       mqemitter: 7.1.0
       p-map: 4.0.0
       quick-lru: 7.3.0
