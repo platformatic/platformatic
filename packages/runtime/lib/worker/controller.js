@@ -72,6 +72,7 @@ export class Controller extends EventEmitter {
       metricsConfig,
       serverConfig,
       worker: workerData?.worker,
+      resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
       fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig)
     }

@@ -1,4 +1,5 @@
 import fastify from 'fastify'
+import v8 from 'node:v8'
 
 // Allocate ~50MB of V8 heap memory so health metrics can distinguish
 // this child process from the coordinator worker thread
@@ -19,6 +20,11 @@ const app = fastify({
 
 app.get('/hello', async () => {
   return { from: 'subprocess' }
+})
+
+app.get('/heap-limit', async () => {
+  const stats = v8.getHeapStatistics()
+  return { heapSizeLimit: stats.heap_size_limit }
 })
 
 app.listen({ port: 0 })

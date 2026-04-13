@@ -15,6 +15,6 @@
     "interval": 1000,
     "maxELU": 0.95,
     "maxHeapUsed": 0.95,
-    "maxHeapTotal": "1GB"
+    "maxHeapTotal": "512MB"
   }
 }

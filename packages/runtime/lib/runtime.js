@@ -1728,6 +1728,11 @@ export class Runtime extends EventEmitter {
           index,
           count: workersCount
         },
+        resourceLimits: {
+          maxOldGenerationSizeMb,
+          maxYoungGenerationSizeMb,
+          codeRangeSizeMb
+        },
         inspectorOptions,
         dirname: this.#root
       },

@@ -48,3 +48,32 @@ test('health metrics for child process should reflect subprocess memory, not coo
     'This likely means health metrics are coming from the coordinator thread, not the child process.'
   )
 })
+
+test('child process should have V8 resource limits from health config', { skip: isWindows && 'Skipping on Windows' }, async t => {
+  const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+
+  const app = await createRuntime(configFile)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  // The fixture has maxHeapTotal: "512MB". Query the child process's
+  // actual V8 heap limit to verify the flag was propagated.
+  const res = await app.inject('subprocess', { method: 'GET', url: '/heap-limit' })
+  ok(res.statusCode === 200, `Expected 200, got ${res.statusCode}`)
+
+  const { heapSizeLimit } = JSON.parse(res.body)
+
+  // V8 heap_size_limit should be close to 512MB.
+  // V8 adds some overhead so the actual limit may be slightly higher,
+  // but it should be well below the default (~4GB on 64-bit systems).
+  const maxHeapTotal = 512 * 1024 * 1024
+  ok(
+    heapSizeLimit <= maxHeapTotal * 1.5,
+    `V8 heap limit should be close to 512MB, got ${(heapSizeLimit / 1024 / 1024).toFixed(0)}MB. ` +
+    'This likely means --max-old-space-size was not passed to the child process.'
+  )
+})
