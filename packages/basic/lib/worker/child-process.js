@@ -79,7 +79,6 @@ export class ChildProcess extends ITC {
   #metricsRegistry
   #pendingMessages
   #replStream
-  #lastELU
 
   constructor (executable) {
     super({
@@ -417,13 +416,10 @@ export class ChildProcess extends ITC {
 
   #getHealth () {
     const currentELU = performance.eventLoopUtilization()
-    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
-    this.#lastELU = currentELU
-
     const { heapUsed, heapTotal } = process.memoryUsage()
 
     return {
-      elu,
+      currentELU,
       heapUsed,
       heapTotal
     }
