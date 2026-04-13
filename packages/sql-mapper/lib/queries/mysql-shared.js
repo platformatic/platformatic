@@ -7,6 +7,7 @@ export async function listTables (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.tables
       WHERE table_schema in (${schemaList})
+      AND TABLE_TYPE = 'BASE TABLE'
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   } else {
@@ -14,6 +15,7 @@ export async function listTables (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.tables
       WHERE table_schema = (SELECT DATABASE())
+      AND TABLE_TYPE = 'BASE TABLE'
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   }
@@ -104,6 +106,25 @@ export async function updateMany (db, sql, table, schema, criteria, input, field
   `
   const res = await db.query(select)
   return res
+}
+
+export async function listViews (db, sql, schemas) {
+  if (schemas) {
+    const schemaList = sql.__dangerous__rawValue(schemas.map(s => `'${s}'`))
+    const res = await db.query(sql`
+      SELECT TABLE_SCHEMA, TABLE_NAME
+      FROM information_schema.views
+      WHERE table_schema in (${schemaList})
+    `)
+    return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
+  } else {
+    const res = await db.query(sql`
+      SELECT TABLE_SCHEMA, TABLE_NAME
+      FROM information_schema.views
+      WHERE table_schema = (SELECT DATABASE())
+    `)
+    return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
+  }
 }
 
 export const hasILIKE = false

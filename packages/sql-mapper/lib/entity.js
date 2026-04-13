@@ -29,7 +29,8 @@ function createMapper (
   useSchemaInName,
   limitConfig,
   columns,
-  constraintsList
+  constraintsList,
+  isView
 ) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
   const entityName = useSchemaInName ? toUpperFirst(`${camelcase(schema)}${toSingular(table)}`) : toSingular(table)
@@ -430,7 +431,7 @@ function createMapper (
     return res.map(fixOutput)
   }
 
-  return {
+  const entity = {
     name: entityName,
     singularName,
     pluralName,
@@ -443,11 +444,17 @@ function createMapper (
     fixOutput,
     find,
     count,
-    insert,
-    save,
-    delete: _delete,
-    updateMany
+    isView: !!isView
   }
+
+  if (!isView) {
+    entity.insert = insert
+    entity.save = save
+    entity.delete = _delete
+    entity.updateMany = updateMany
+  }
+
+  return entity
 }
 
 export function buildEntity (
@@ -463,7 +470,8 @@ export function buildEntity (
   limitConfig,
   schemaList,
   columns,
-  constraintsList
+  constraintsList,
+  isView
 ) {
   const columnsNames = columns.map(c => c.column_name)
   for (const ignoredColumn of Object.keys(ignore)) {
@@ -623,7 +631,10 @@ export function buildEntity (
     autoTimestamp,
     schema,
     useSchemaInName,
-    limitConfig
+    limitConfig,
+    undefined,
+    undefined,
+    isView
   )
   entity.relations = currentRelations
 

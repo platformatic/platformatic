@@ -111,4 +111,23 @@ export async function listEnumValues (db, sql, table, schema) {
   return db.query(query)
 }
 
+export async function listViews (db, sql, schemas) {
+  if (schemas) {
+    const schemaList = sql.__dangerous__rawValue(schemas.map(s => `'${s}'`))
+    const res = await db.query(sql`
+    SELECT viewname, schemaname
+    FROM pg_catalog.pg_views
+    WHERE
+      schemaname in (${schemaList})`)
+    return res.map(r => ({ schema: r.schemaname, table: r.viewname, isView: true }))
+  }
+  const res = await db.query(sql`
+    SELECT viewname, schemaname
+    FROM pg_catalog.pg_views
+    WHERE
+      schemaname = current_schema()
+  `)
+  return res.map(r => ({ schema: r.schemaname, table: r.viewname, isView: true }))
+}
+
 export const hasILIKE = true
