@@ -45,7 +45,6 @@ export class Controller extends EventEmitter {
   #fileWatcher
   #debouncedRestart
   #context
-  #lastELU
 
   constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
     super()
@@ -59,7 +58,6 @@ export class Controller extends EventEmitter {
     this.#listening = false
     this.capability = null
     this.#fileWatcher = null
-    this.#lastELU = performance.eventLoopUtilization()
 
     this.#context = {
       controller: this,
@@ -74,6 +72,7 @@ export class Controller extends EventEmitter {
       metricsConfig,
       serverConfig,
       worker: workerData?.worker,
+      resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
       fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig)
     }
@@ -261,13 +260,10 @@ export class Controller extends EventEmitter {
 
   async getHealth () {
     const currentELU = performance.eventLoopUtilization()
-    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
-    this.#lastELU = currentELU
-
     const { heapUsed, heapTotal } = process.memoryUsage()
 
     return {
-      elu,
+      currentELU,
       heapUsed,
       heapTotal
     }

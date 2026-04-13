@@ -291,8 +291,8 @@ test('ChildProcess - getHealth should return health metrics', async t => {
   const health = await childManager.send(socket, 'getHealth')
 
   // Verify health metrics structure
-  ok(typeof health.elu === 'number', 'Expected ELU to be a number')
-  ok(health.elu >= 0 && health.elu <= 1, `Expected ELU to be between 0 and 1, got ${health.elu}`)
+  ok(typeof health.currentELU === 'object', 'Expected currentELU to be an object')
+  ok(typeof health.currentELU.utilization === 'number', 'Expected currentELU.utilization to be a number')
   ok(typeof health.heapUsed === 'number', 'Expected heapUsed to be a number')
   ok(health.heapUsed > 0, 'Expected heapUsed to be positive')
   ok(typeof health.heapTotal === 'number', 'Expected heapTotal to be a number')

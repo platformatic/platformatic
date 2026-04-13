@@ -625,7 +625,8 @@ export class BaseCapability extends EventEmitter {
             }
           : {},
       telemetryConfig: this.telemetryConfig,
-      compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache
+      compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
+      resourceLimits: this.context.resourceLimits
     }
   }
 

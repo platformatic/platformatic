@@ -174,7 +174,22 @@ export class ChildManager extends ITC {
       telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 
-    process.env.NODE_OPTIONS = `${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
+    // Propagate V8 resource limits to the child process via NODE_OPTIONS.
+    // Note: --code-range-size is not allowed in NODE_OPTIONS, only via CLI args.
+    let v8Flags = ''
+    const limits = this.#context.resourceLimits
+    if (limits) {
+      const flags = []
+      if (limits.maxOldGenerationSizeMb > 0) {
+        flags.push(`--max-old-space-size=${limits.maxOldGenerationSizeMb}`)
+      }
+      if (limits.maxYoungGenerationSizeMb > 0) {
+        flags.push(`--max-semi-space-size=${limits.maxYoungGenerationSizeMb}`)
+      }
+      v8Flags = flags.join(' ')
+    }
+
+    process.env.NODE_OPTIONS = `${v8Flags} ${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
   }
 
   async eject () {
