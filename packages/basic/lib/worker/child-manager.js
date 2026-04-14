@@ -184,7 +184,9 @@ export class ChildManager extends ITC {
         flags.push(`--max-old-space-size=${limits.maxOldGenerationSizeMb}`)
       }
       if (limits.maxYoungGenerationSizeMb > 0) {
-        flags.push(`--max-semi-space-size=${limits.maxYoungGenerationSizeMb}`)
+        // --max-semi-space-size sets ONE semi-space; young gen has two.
+        // resourceLimits.maxYoungGenerationSizeMb is the total young gen size.
+        flags.push(`--max-semi-space-size=${Math.ceil(limits.maxYoungGenerationSizeMb / 2)}`)
       }
       v8Flags = flags.join(' ')
     }
