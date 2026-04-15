@@ -107,20 +107,23 @@ export function constructGraph (app, entity, opts, ignore) {
   resolvers.Mutation = resolvers.Mutation || {}
   loaders.Query = loaders.Query || {}
 
-  const getBy = camelcase(
-    [
-      'get',
-      singular,
-      ...primaryKeys
-        .map((key, i) => {
-          if (i === 0) {
-            return ['by', key]
-          }
-          return ['and', key]
-        })
-        .flat()
-    ].join('_')
-  )
+  let getBy
+  if (primaryKeys.length > 0) {
+    getBy = camelcase(
+      [
+        'get',
+        singular,
+        ...primaryKeys
+          .map((key, i) => {
+            if (i === 0) {
+              return ['by', key]
+            }
+            return ['and', key]
+          })
+          .flat()
+      ].join('_')
+    )
+  }
 
   const whereFields = Object.keys(fields).reduce((acc, field) => {
     let graphqlFields
@@ -172,29 +175,31 @@ export function constructGraph (app, entity, opts, ignore) {
     }
   })
 
-  queryTopFields[getBy] = {
-    type,
-    args: {
-      ...primaryKeys.reduce((acc, primaryKey) => {
-        acc[primaryKey] = { type: new GraphQLNonNull(fields[primaryKey].type) }
-        return acc
-      }, {})
-    }
-  }
-  loaders.Query[getBy] = {
-    loader (queries, ctx) {
-      const keys = []
-      for (const query of queries) {
-        const pairs = []
-        for (const key of primaryKeys) {
-          pairs.push({ key, value: query.params[key] })
-        }
-        keys.push(pairs)
+  if (getBy) {
+    queryTopFields[getBy] = {
+      type,
+      args: {
+        ...primaryKeys.reduce((acc, primaryKey) => {
+          acc[primaryKey] = { type: new GraphQLNonNull(fields[primaryKey].type) }
+          return acc
+        }, {})
       }
-      return loadMany(keys, queries, ctx)
-    },
-    opts: {
-      cache: false
+    }
+    loaders.Query[getBy] = {
+      loader (queries, ctx) {
+        const keys = []
+        for (const query of queries) {
+          const pairs = []
+          for (const key of primaryKeys) {
+            pairs.push({ key, value: query.params[key] })
+          }
+          keys.push(pairs)
+        }
+        return loadMany(keys, queries, ctx)
+      },
+      opts: {
+        cache: false
+      }
     }
   }
 
@@ -275,68 +280,73 @@ export function constructGraph (app, entity, opts, ignore) {
     return { total }
   }
 
-  const save = camelcase(['save', singular])
+  // Views are read-only: skip all mutations
+  if (!entity.isView) {
+    const save = camelcase(['save', singular])
 
-  mutationTopFields[save] = {
-    type,
-    args: {
-      input: { type: new GraphQLNonNull(inputType) }
+    mutationTopFields[save] = {
+      type,
+      args: {
+        input: { type: new GraphQLNonNull(inputType) }
+      }
+    }
+
+    resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const insert = camelcase(['insert', plural])
+
+    mutationTopFields[insert] = {
+      type: new GraphQLList(type),
+      args: {
+        inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
+      }
+    }
+
+    resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const deleteKey = camelcase(['delete', plural])
+    mutationTopFields[deleteKey] = {
+      type: new GraphQLList(type),
+      args: {
+        where: { type: whereArgType }
+      }
+    }
+
+    resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
+      const fields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
+      return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
     }
   }
 
-  resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
-    const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
-  }
+  if (primaryKeys.length > 0) {
+    federationReplacements.push({
+      find: new RegExp(`type ${entityName}`),
+      replace: `type ${entityName} @key(fields: "${primaryKeys}")`
+    })
 
-  const insert = camelcase(['insert', plural])
-
-  mutationTopFields[insert] = {
-    type: new GraphQLList(type),
-    args: {
-      inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
-    }
-  }
-
-  resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
-    const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
-  }
-
-  const deleteKey = camelcase(['delete', plural])
-  mutationTopFields[deleteKey] = {
-    type: new GraphQLList(type),
-    args: {
-      where: { type: whereArgType }
-    }
-  }
-
-  resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
-    const fields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
-    return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
-  }
-
-  federationReplacements.push({
-    find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
-  })
-
-  if (federationMetadata) {
-    loaders[entityName] = loaders[entityName] || {}
-    loaders[entityName].__resolveReference = {
-      loader (queries, ctx) {
-        const keys = []
-        for (const { obj } of queries) {
-          const pairs = []
-          for (const key of primaryKeys) {
-            pairs.push({ key, value: obj[key] })
+    if (federationMetadata) {
+      loaders[entityName] = loaders[entityName] || {}
+      loaders[entityName].__resolveReference = {
+        loader (queries, ctx) {
+          const keys = []
+          for (const { obj } of queries) {
+            const pairs = []
+            for (const key of primaryKeys) {
+              pairs.push({ key, value: obj[key] })
+            }
+            keys.push(pairs)
           }
-          keys.push(pairs)
+          return loadMany(keys, queries, ctx)
+        },
+        opts: {
+          cache: false
         }
-        return loadMany(keys, queries, ctx)
-      },
-      opts: {
-        cache: false
       }
     }
   }

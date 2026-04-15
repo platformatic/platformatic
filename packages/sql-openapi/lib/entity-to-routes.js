@@ -68,12 +68,35 @@ export async function entityPlugin (app, opts) {
     }
   }
 
+  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
+
+  // Views without primary keys only get a list route
+  if (entity.isView && entity.primaryKeys.size === 0) {
+    app.addHook('preValidation', async req => {
+      if (typeof req.query.fields === 'string') {
+        req.query.fields = req.query.fields.split(',')
+      }
+    })
+
+    const fields = getFieldsForEntity(entity, ignore)
+    rootEntityRoutes(
+      app,
+      entity,
+      whereArgs,
+      orderByArgs,
+      {},
+      entitySchema,
+      fields,
+      entitySchemaInput,
+      ignoreRoutes
+    )
+    return
+  }
+
   const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)
   const entityLinks = getEntityLinksForEntity(app, entity)
-
-  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
 
   app.addHook('preValidation', async req => {
     if (typeof req.query.fields === 'string') {
@@ -372,7 +395,7 @@ export async function entityPlugin (app, opts) {
   const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === openapiPath && ignoreRoute.method === 'PUT'
   })
-  if (!ignoredPUTRoute) {
+  if (!ignoredPUTRoute && !entity.isView) {
     app.route({
       url: `/:${primaryKeyCamelcase}`,
       method: 'PUT',
@@ -421,7 +444,7 @@ export async function entityPlugin (app, opts) {
   const ignoredDELETERoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === openapiPath && ignoreRoute.method === 'DELETE'
   })
-  if (!ignoredDELETERoute) {
+  if (!ignoredDELETERoute && !entity.isView) {
     app.delete(
       `/:${primaryKeyCamelcase}`,
       {

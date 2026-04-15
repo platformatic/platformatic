@@ -520,7 +520,7 @@ export async function createApplication (
     }
 
     if (generator.applications.some(({ application }) => application.module === '@platformatic/db' && application.config.database === 'sqlite')) {
-      content += '\nallowBuilds:\n- better-sqlite3'
+      content += '\nallowBuilds:\n  better-sqlite3: true'
     }
 
     await writeFile(pnpmWorkspacePath, content)

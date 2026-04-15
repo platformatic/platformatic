@@ -135,8 +135,18 @@ async function setupOpenAPI (app, opts) {
       continue
     }
     const localPrefix = `${prefix}/${entity.pluralName}`
-    // TODO support ignore
-    if (entity.primaryKeys.size === 1) {
+
+    if (entity.isView) {
+      // Views are read-only: only register GET list route
+      app.register(entityPlugin, {
+        entity,
+        prefix: localPrefix,
+        ignore: ignore[entity.singularName] || {},
+        ignoreRoutes,
+        ignoreAllReverseRoutes: true
+      })
+    } else if (entity.primaryKeys.size === 1) {
+      // TODO support ignore
       app.register(entityPlugin, {
         entity,
         prefix: localPrefix,

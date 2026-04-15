@@ -223,7 +223,7 @@ export function rootEntityRoutes (
     return ignoreRoute.path === app.prefix && ignoreRoute.method === 'POST'
   })
 
-  if (!ignoredPOSTRoute) {
+  if (!ignoredPOSTRoute && !entity.isView) {
     app.post(
       '/',
       {
@@ -291,7 +291,7 @@ export function rootEntityRoutes (
   const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === app.prefix && ignoreRoute.method === 'PUT'
   })
-  if (!ignoredPUTRoute) {
+  if (!ignoredPUTRoute && !entity.isView) {
     app.put('/', {
       schema: {
         operationId: 'update' + capitalize(entity.pluralName),
