@@ -36,7 +36,7 @@ test('Creates a Platformatic DB application with no migrations', async t => {
   equal(await isFileAccessible(join(baseProjectDir, 'pnpm-workspace.yaml')), true)
 
   const pnpmWorkspace = await readFile(join(baseProjectDir, 'pnpm-workspace.yaml'), 'utf8')
-  equal(pnpmWorkspace.includes('allowBuilds:\n- better-sqlite3'), true)
+  equal(pnpmWorkspace.includes('allowBuilds:\n  better-sqlite3: true'), true)
 
   // Here check the generated application
   const applications = await getApplications(join(baseProjectDir, 'web'))
