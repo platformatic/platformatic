@@ -1,4 +1,4 @@
-import sqlMapper from '@platformatic/sql-mapper'
+import sqlMapper, { createConnectionPool } from '@platformatic/sql-mapper'
 import fastify from 'fastify'
 import { equal, deepEqual as same, ok } from 'node:assert'
 import { test } from 'node:test'
@@ -6,40 +6,54 @@ import { printSchema } from 'graphql'
 import sqlGraphQL from '../index.js'
 import { clear, connInfo, isPg } from './helper.js'
 
-test('[PG] vector fields are exposed as float lists', { skip: !isPg }, async t => {
-  const seedApp = fastify()
-  t.after(async () => {
-    try {
-      await seedApp.close()
-    } catch {}
+const fakeLogger = {
+  trace: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  fatal: () => {}
+}
+
+async function ensureVectorExtension (t) {
+  const { db, sql } = await createConnectionPool({
+    log: fakeLogger,
+    connectionString: connInfo.connectionString,
+    poolSize: 1
   })
 
-  seedApp.register(sqlMapper, {
-    ...connInfo,
-    async onDatabaseLoad (db, sql) {
-      await clear(db, sql)
-      await db.query(sql`DROP TABLE IF EXISTS embeddings`)
-      await db.query(sql`CREATE TABLE embeddings (
-        id SERIAL PRIMARY KEY,
-        embedding TEXT NOT NULL
-      );`)
+  try {
+    const rows = await db.query(sql`SELECT 1 FROM pg_available_extensions WHERE name = 'vector'`)
+    if (rows.length === 0) {
+      t.skip('pgvector extension not available')
+      return false
     }
-  })
 
-  await seedApp.ready()
+    return true
+  } finally {
+    await db.dispose()
+  }
+}
 
-  const dbschema = structuredClone(seedApp.platformatic.dbschema)
-  const embeddings = dbschema.find(table => table.table === 'embeddings')
-  embeddings.columns.find(column => column.column_name === 'embedding').udt_name = 'vector'
-
-  await seedApp.close()
+test('[PG] vector fields are exposed as float lists', { skip: !isPg }, async t => {
+  if (!(await ensureVectorExtension(t))) {
+    return
+  }
 
   const app = fastify()
   t.after(() => app.close())
 
   app.register(sqlMapper, {
     ...connInfo,
-    dbschema
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await db.query(sql`CREATE EXTENSION IF NOT EXISTS vector`)
+      await db.query(sql`DROP TABLE IF EXISTS embeddings`)
+      await db.query(sql`CREATE TABLE embeddings (
+        id SERIAL PRIMARY KEY,
+        embedding vector(3) NOT NULL
+      )`)
+    }
   })
   app.register(sqlGraphQL)
 

@@ -1,44 +1,58 @@
-import sqlMapper from '@platformatic/sql-mapper'
+import sqlMapper, { createConnectionPool } from '@platformatic/sql-mapper'
 import fastify from 'fastify'
 import { equal, deepEqual as same } from 'node:assert/strict'
 import { test } from 'node:test'
 import sqlOpenAPI from '../index.js'
 import { clear, connInfo, isPg } from './helper.js'
 
-test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
-  const seedApp = fastify()
-  t.after(async () => {
-    try {
-      await seedApp.close()
-    } catch {}
+const fakeLogger = {
+  trace: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  fatal: () => {}
+}
+
+async function ensureVectorExtension (t) {
+  const { db, sql } = await createConnectionPool({
+    log: fakeLogger,
+    connectionString: connInfo.connectionString,
+    poolSize: 1
   })
 
-  seedApp.register(sqlMapper, {
-    ...connInfo,
-    async onDatabaseLoad (db, sql) {
-      await clear(db, sql)
-      await db.query(sql`DROP TABLE IF EXISTS embeddings`)
-      await db.query(sql`CREATE TABLE embeddings (
-        id SERIAL PRIMARY KEY,
-        embedding TEXT NOT NULL
-      );`)
+  try {
+    const rows = await db.query(sql`SELECT 1 FROM pg_available_extensions WHERE name = 'vector'`)
+    if (rows.length === 0) {
+      t.skip('pgvector extension not available')
+      return false
     }
-  })
 
-  await seedApp.ready()
+    return true
+  } finally {
+    await db.dispose()
+  }
+}
 
-  const dbschema = structuredClone(seedApp.platformatic.dbschema)
-  const embeddings = dbschema.find(table => table.table === 'embeddings')
-  embeddings.columns.find(column => column.column_name === 'embedding').udt_name = 'vector'
-
-  await seedApp.close()
+test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
+  if (!(await ensureVectorExtension(t))) {
+    return
+  }
 
   const app = fastify()
   t.after(() => app.close())
 
   app.register(sqlMapper, {
     ...connInfo,
-    dbschema
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await db.query(sql`CREATE EXTENSION IF NOT EXISTS vector`)
+      await db.query(sql`DROP TABLE IF EXISTS embeddings`)
+      await db.query(sql`CREATE TABLE embeddings (
+        id SERIAL PRIMARY KEY,
+        embedding vector(3) NOT NULL
+      )`)
+    }
   })
   app.register(sqlOpenAPI)
 
@@ -57,13 +71,17 @@ test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
       items: {
         type: 'number'
       },
+      minItems: 3,
+      maxItems: 3,
       nullable: true
     })
     same(json.components.schemas.EmbeddingInput.properties.embedding, {
       type: 'array',
       items: {
         type: 'number'
-      }
+      },
+      minItems: 3,
+      maxItems: 3
     })
   }
 
@@ -81,6 +99,18 @@ test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
       id: 1,
       embedding: [1, 2.5, 3]
     })
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/embeddings',
+      body: {
+        embedding: [1, 2.5]
+      }
+    })
+
+    equal(res.statusCode, 400)
   }
 
   {

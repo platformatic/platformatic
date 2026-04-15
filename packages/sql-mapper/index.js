@@ -77,18 +77,14 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
-async function registerPostgreSQLExtensionTypes (db, log) {
+async function registerPostgreSQLExtensionTypes (db) {
   try {
     await db.registerTypeParser('vector', parseVector)
-  } catch (err) {
-    log.trace({ err }, 'unable to register the PostgreSQL vector type parser')
-  }
+  } catch {}
 
   try {
     await db.registerTypeParser('_vector', value => db.parseArray(value, parseVector))
-  } catch (err) {
-    log.trace({ err }, 'unable to register the PostgreSQL vector[] type parser')
-  }
+  } catch {}
 }
 
 export async function createConnectionPool ({
@@ -117,7 +113,7 @@ export async function createConnectionPool ({
       queueTimeoutMilliseconds,
       acquireLockTimeoutMilliseconds
     )
-    await registerPostgreSQLExtensionTypes(db, log)
+    await registerPostgreSQLExtensionTypes(db)
     sql = createConnectionPoolPg.sql
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {

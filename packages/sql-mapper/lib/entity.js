@@ -500,7 +500,8 @@ export function buildEntity (
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
-      isArray: column.isArray
+      isArray: column.isArray,
+      vectorDimensions: column.vectorDimensions
     }
 
     // To get enum values in mysql and mariadb

@@ -15,7 +15,8 @@ test('vector fields are mapped to arrays of numbers', async () => {
       embedding: {
         camelcase: 'embedding',
         sqlType: 'vector',
-        isNullable: false
+        isNullable: false,
+        vectorDimensions: 1536
       }
     }
   }
@@ -33,7 +34,9 @@ test('vector fields are mapped to arrays of numbers', async () => {
         type: 'array',
         items: {
           type: 'number'
-        }
+        },
+        minItems: 1536,
+        maxItems: 1536
       }
     },
     required: ['embedding'],
