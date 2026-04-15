@@ -14,6 +14,7 @@ import {
 } from './errors.js'
 import { wrapDB } from './telemetry.js'
 import { sanitizeLimit, tableName, toLowerFirst, toSingular, toUpperFirst } from './utils.js'
+import { isVectorType, parseVector, serializeVector } from './vector.js'
 
 function createMapper (
   defaultDb,
@@ -75,7 +76,7 @@ function createMapper (
   function fixInput (input) {
     const newInput = {}
     for (const key of Object.keys(input)) {
-      const value = input[key]
+      let value = input[key]
       let newKey = inputToFieldMap[key]
       if (newKey === undefined) {
         if (fields[key] !== undefined) {
@@ -84,6 +85,11 @@ function createMapper (
           throw new UnknownFieldError(key)
         }
       }
+
+      if (isVectorType(fields[newKey].sqlType)) {
+        value = serializeVector(value)
+      }
+
       newInput[newKey] = value
     }
     return newInput
@@ -99,6 +105,9 @@ function createMapper (
       const newKey = fieldMapToRetrieve[key]
       if (primaryKeys.has(key) && value !== null && value !== undefined) {
         value = value.toString()
+      }
+      if (newKey && isVectorType(fields[key].sqlType)) {
+        value = parseVector(value)
       }
       newOutput[newKey] = value
     }
@@ -327,6 +336,10 @@ function createMapper (
   }
 
   function computeCriteriaValue (fieldWrap, value) {
+    if (isVectorType(fieldWrap.sqlType)) {
+      return sql`${serializeVector(value)}`
+    }
+
     if (Array.isArray(value)) {
       return sql`(${sql.join(
         value.map(v => computeCriteriaValue(fieldWrap, v)),

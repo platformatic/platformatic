@@ -13,6 +13,7 @@ import {
 import * as queriesFactory from './lib/queries/index.js'
 import { setupTelemetry } from './lib/telemetry.js'
 import { areSchemasSupported } from './lib/utils.js'
+import { parseVector } from './lib/vector.js'
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -76,6 +77,20 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
+async function registerPostgreSQLExtensionTypes (db, log) {
+  try {
+    await db.registerTypeParser('vector', parseVector)
+  } catch (err) {
+    log.trace({ err }, 'unable to register the PostgreSQL vector type parser')
+  }
+
+  try {
+    await db.registerTypeParser('_vector', value => db.parseArray(value, parseVector))
+  } catch (err) {
+    log.trace({ err }, 'unable to register the PostgreSQL vector[] type parser')
+  }
+}
+
 export async function createConnectionPool ({
   log,
   connectionString,
@@ -102,6 +117,7 @@ export async function createConnectionPool ({
       queueTimeoutMilliseconds,
       acquireLockTimeoutMilliseconds
     )
+    await registerPostgreSQLExtensionTypes(db, log)
     sql = createConnectionPoolPg.sql
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {

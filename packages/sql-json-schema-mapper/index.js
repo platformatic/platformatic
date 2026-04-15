@@ -58,6 +58,19 @@ export function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
+function mapSQLTypeToOpenAPISchema (sqlType) {
+  if (sqlType === 'vector') {
+    return {
+      type: 'array',
+      items: {
+        type: 'number'
+      }
+    }
+  }
+
+  return { type: mapSQLTypeToOpenAPIType(sqlType) }
+}
+
 export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   const fields = entity.camelCasedFields
   const properties = {}
@@ -83,7 +96,7 @@ export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = fals
         additionalProperties: true
       }
     } else {
-      properties[field.camelcase] = { type }
+      properties[field.camelcase] = mapSQLTypeToOpenAPISchema(field.sqlType)
     }
     if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
