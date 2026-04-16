@@ -811,6 +811,33 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
   await capability.stopCommand()
 })
 
+test('BaseCapability - stopCommand - should not throw if subprocess was never assigned', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' }
+    }
+  )
+
+  // subprocess is never set — stopCommand should return without throwing
+  await capability.stopCommand()
+})
+
 test('BaseCapability - spawn - should handle chained commands', { skip: isWindows }, async t => {
   const capability = await create(t)
 
