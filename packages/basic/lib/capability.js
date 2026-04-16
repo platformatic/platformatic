@@ -558,6 +558,10 @@ export class BaseCapability extends EventEmitter {
   }
 
   async stopCommand () {
+    if (!this.subprocess) {
+      return
+    }
+
     const exitTimeout = this.runtimeConfig.gracefulShutdown.application
 
     this.#subprocessStarted = false
