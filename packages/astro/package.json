@@ -25,7 +25,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/middie": "^9.0.0",
-    "@fastify/static": "^8.0.0",
+    "@fastify/static": "^9.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "fastify": "^5.7.0",
