@@ -529,6 +529,9 @@ export class BaseCapability extends EventEmitter {
       await this.childManager.inject()
       this.subprocess = await this.spawn(command)
       this.#subprocessStarted = true
+      // Let the runtime know this worker hosts a child process so it reads
+      // health metrics via ITC instead of from the coordinator thread handle.
+      globalThis[kITC]?.notify('subprocess:started')
     } catch (e) {
       this.childManager.close()
 

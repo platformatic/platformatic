@@ -61,6 +61,7 @@ import {
   kHealthCheckTimer,
   kId,
   kInterceptorReadyPromise,
+  kIsSubprocessHost,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
@@ -73,6 +74,9 @@ import {
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
+const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
+const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
+const kHealthITCTimeoutMs = 5000
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -1515,12 +1519,57 @@ export class Runtime extends EventEmitter {
     return status
   }
 
-  async getWorkerHealth (worker, options = {}) {
-    // Use ITC to get health from the worker. This correctly forwards to child
-    // processes when the service uses startWithCommand (subprocess mode),
-    // instead of reading the coordinator thread's metrics.
-    const { currentELU, heapUsed, heapTotal } = await sendViaITC(worker, 'getHealth')
+  getWorkerHealth (worker, options = {}) {
+    // For subprocess workers we must round-trip through ITC to reach the child;
+    // for pure worker-thread workers we can read ELU/heap directly from the
+    // worker handle, which is served by Node's C++ layer and does not depend
+    // on the worker's event loop being responsive. Going through ITC for
+    // thread workers means a CPU-bound or stuck worker can freeze the whole
+    // health-collection loop, which in turn blocks the management API.
+    if (worker[kIsSubprocessHost]) {
+      return this.#getSubprocessWorkerHealth(worker, options)
+    }
 
+    const currentELU = worker.performance.eventLoopUtilization()
+    const previousELU = options.previousELU
+
+    let elu = currentELU
+    if (previousELU) {
+      elu = worker.performance.eventLoopUtilization(elu, previousELU)
+    }
+
+    if (!features.node.worker.getHeapStatistics) {
+      return { elu: elu.utilization, currentELU }
+    }
+
+    // Only refresh heap statistics every 60 health checks (once per minute).
+    // This keeps the common path fully synchronous — no promise allocation.
+    const counter = (worker[kHeapCheckCounter] ?? 0) + 1
+    worker[kHeapCheckCounter] = counter >= 60 ? 0 : counter
+
+    if (counter >= 60 || !worker[kLastHeapStats]) {
+      return worker.getHeapStatistics().then(({ used_heap_size: heapUsed, total_heap_size: heapTotal }) => {
+        worker[kLastHeapStats] = { heapUsed, heapTotal }
+        return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
+      })
+    }
+
+    const { heapUsed, heapTotal } = worker[kLastHeapStats]
+    return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
+  }
+
+  async #getSubprocessWorkerHealth (worker, options) {
+    // Bound the ITC call so a hung child cannot freeze the health loop.
+    // On timeout we fall back to last-known ELU with a null heap reading so
+    // that the loop keeps rescheduling and signals remain observable.
+    const result = await executeWithTimeout(sendViaITC(worker, 'getHealth'), kHealthITCTimeoutMs, kTimeout)
+
+    if (result === kTimeout) {
+      const previousELU = options.previousELU ?? worker.performance.eventLoopUtilization()
+      return { elu: 1, heapUsed: null, heapTotal: null, currentELU: previousELU }
+    }
+
+    const { currentELU, heapUsed, heapTotal } = result
     const previousELU = options.previousELU
     let elu = currentELU
     if (previousELU) {
@@ -1851,6 +1900,14 @@ export class Runtime extends EventEmitter {
 
       this.emit(event, ...payload, workerId, applicationId, index)
       this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
+    })
+
+    // The worker notifies us when its capability has spawned a child process
+    // (e.g. Next.js in dev mode). From that point on health metrics must come
+    // from the child via ITC; for thread-only workers we keep reading the
+    // handle directly in getWorkerHealth().
+    worker[kITC].on('subprocess:started', () => {
+      worker[kIsSubprocessHost] = true
     })
 
     worker[kITC].on('request:restart', async () => {
