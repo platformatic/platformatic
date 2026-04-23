@@ -1519,7 +1519,7 @@ export class Runtime extends EventEmitter {
     return status
   }
 
-  async getWorkerHealth (worker, options = {}) {
+  getWorkerHealth (worker, options = {}) {
     // For subprocess workers we must round-trip through ITC to reach the child;
     // for pure worker-thread workers we can read ELU/heap directly from the
     // worker handle, which is served by Node's C++ layer and does not depend
@@ -1542,13 +1542,16 @@ export class Runtime extends EventEmitter {
       return { elu: elu.utilization, currentELU }
     }
 
-    // Only check heap statistics every 60 health checks (once per minute)
+    // Only refresh heap statistics every 60 health checks (once per minute).
+    // This keeps the common path fully synchronous — no promise allocation.
     const counter = (worker[kHeapCheckCounter] ?? 0) + 1
     worker[kHeapCheckCounter] = counter >= 60 ? 0 : counter
 
     if (counter >= 60 || !worker[kLastHeapStats]) {
-      const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
-      worker[kLastHeapStats] = { heapUsed, heapTotal }
+      return worker.getHeapStatistics().then(({ used_heap_size: heapUsed, total_heap_size: heapTotal }) => {
+        worker[kLastHeapStats] = { heapUsed, heapTotal }
+        return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
+      })
     }
 
     const { heapUsed, heapTotal } = worker[kLastHeapStats]
