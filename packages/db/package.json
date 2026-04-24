@@ -51,7 +51,7 @@
     "@fastify/cors": "^10.0.0",
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
-    "@fastify/static": "^8.0.0",
+    "@fastify/static": "^9.0.0",
     "@fastify/swagger": "^9.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
