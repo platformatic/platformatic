@@ -2,7 +2,8 @@ import { ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { kIsSubprocessHost } from '../lib/worker/symbols.js'
+import { transform } from '../index.js'
+import { kApplicationId, kIsSubprocessHost } from '../lib/worker/symbols.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -93,5 +94,102 @@ test(
       samplesDuringBlock >= 2,
       `expected multiple entrypoint health samples during the ${blockMs}ms block, got ${samplesDuringBlock}`
     )
+  }
+)
+
+test(
+  'health collection collects from multiple workers in parallel',
+  { skip: isWindows && 'Skipping on Windows' },
+  async t => {
+    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+
+    const app = await createRuntime(configFile)
+
+    t.after(async () => {
+      await app.close()
+    })
+
+    await app.start()
+
+    // Block the entrypoint worker for 3s.  Because collection is parallel,
+    // the subprocess worker's health metrics should still arrive within the
+    // normal 1-second cadence — not delayed until the block ends.
+    const blockMs = 3000
+    const blockPromise = app.inject('entrypoint', { method: 'GET', url: `/block/${blockMs}` })
+
+    const startedAt = Date.now()
+    let subprocessSampleDuringBlock = false
+    while (Date.now() - startedAt < blockMs - 500) {
+      const [m] = await once(app, 'application:worker:health:metrics')
+      if (m.application === 'subprocess' && m.currentHealth) {
+        subprocessSampleDuringBlock = true
+        break
+      }
+    }
+
+    await blockPromise
+
+    ok(
+      subprocessSampleDuringBlock,
+      'subprocess health metrics should arrive while entrypoint is blocked (parallel collection)'
+    )
+  }
+)
+
+test(
+  'worker is replaced when health collection consistently fails',
+  { skip: isWindows && 'Skipping on Windows', timeout: 30_000 },
+  async t => {
+    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+
+    const app = await createRuntime(configFile, undefined, {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        // Aggressive health check settings so the test completes quickly.
+        config.health = {
+          ...config.health,
+          enabled: true,
+          gracePeriod: 100,
+          interval: 1000,
+          maxUnhealthyChecks: 2,
+          maxELU: 0.95,
+          maxHeapUsed: 0.95,
+          maxHeapTotal: '512MB'
+        }
+        return config
+      }
+    })
+
+    t.after(async () => {
+      await app.close()
+    })
+
+    await app.start()
+
+    // Wait until we get at least one healthy metric from the entrypoint so
+    // the health check timer has been set up and is running.
+    while (true) {
+      const [m] = await once(app, 'application:worker:health:metrics')
+      if (m.application === 'entrypoint' && m.currentHealth) break
+    }
+
+    // Override getWorkerHealth to throw for the entrypoint worker, simulating
+    // a stuck worker whose health cannot be collected.
+    const originalGetWorkerHealth = app.getWorkerHealth.bind(app)
+    app.getWorkerHealth = function (worker, options) {
+      if (worker[kApplicationId] === 'entrypoint') {
+        throw new Error('simulated health collection failure')
+      }
+      return originalGetWorkerHealth(worker, options)
+    }
+
+    // The health check timer should count null-health results as unhealthy.
+    // After maxUnhealthyChecks (2) consecutive failures it should replace
+    // the worker, emitting 'application:worker:unhealthy'.
+    const [unhealthyEvent] = await once(app, 'application:worker:unhealthy')
+    strictEqual(unhealthyEvent.application, 'entrypoint')
+
+    // Restore so the replacement worker can be health-checked normally.
+    app.getWorkerHealth = originalGetWorkerHealth
   }
 )

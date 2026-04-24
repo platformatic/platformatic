@@ -2023,40 +2023,46 @@ export class Runtime extends EventEmitter {
         return
       }
 
-      // Iterate through all workers and collect health metrics
+      // Collect health from all workers in parallel so that a slow ITC
+      // round-trip (e.g. subprocess timeout) does not block every other worker.
+      const pending = []
       for (const worker of this.#workers.values()) {
         if (worker[kWorkerStatus] !== 'started') {
           continue
         }
 
-        const id = worker[kApplicationId]
-        const index = worker[kWorkerId]
-        const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
+        pending.push((async () => {
+          const id = worker[kApplicationId]
+          const index = worker[kWorkerId]
+          const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
 
-        let health = null
-        try {
-          health = await this.getWorkerHealth(worker, {
-            previousELU: worker[kLastHealthCheckELU]
+          let health = null
+          try {
+            health = await this.getWorkerHealth(worker, {
+              previousELU: worker[kLastHealthCheckELU]
+            })
+          } catch (err) {
+            this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
+          } finally {
+            worker[kLastHealthCheckELU] = health?.currentELU ?? null
+          }
+
+          const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
+
+          // We use emit instead of emitAndNotify to avoid sending a postMessages
+          // to each workers even if they are not interested in health metrics.
+          // No one of the known capabilities use this event yet.
+          this.emit('application:worker:health:metrics', {
+            id: worker[kId],
+            application: id,
+            worker: index,
+            currentHealth: health,
+            healthSignals
           })
-        } catch (err) {
-          this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
-        } finally {
-          worker[kLastHealthCheckELU] = health?.currentELU ?? null
-        }
-
-        const healthSignals = worker[kWorkerHealthSignals]?.getAll() ?? []
-
-        // We use emit instead of emitAndNotify to avoid sending a postMessages
-        // to each workers even if they are not interested in health metrics.
-        // No one of the known capabilities use this event yet.
-        this.emit('application:worker:health:metrics', {
-          id: worker[kId],
-          application: id,
-          worker: index,
-          currentHealth: health,
-          healthSignals
-        })
+        })())
       }
+
+      await Promise.allSettled(pending)
 
       // Reschedule the next check. We are not using .refresh() because it's more
       // expensive (weird).
@@ -2109,53 +2115,45 @@ export class Runtime extends EventEmitter {
     worker[kHealthCheckTimer] = setTimeout(async () => {
       if (worker[kWorkerStatus] !== 'started') return
 
-      if (lastHealthMetrics) {
-        const health = lastHealthMetrics.currentHealth
-        const memoryUsage = health.heapUsed / maxHeapTotal
-        const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
+      // No health data received yet — reschedule and wait.
+      if (!lastHealthMetrics) {
+        worker[kHealthCheckTimer].refresh()
+        return
+      }
+
+      const health = lastHealthMetrics.currentHealth
+
+      // When health collection failed (threw) or timed out, currentHealth is
+      // null.  Treat this as an unhealthy check so that a stuck worker that
+      // cannot even report its own health is eventually replaced.
+      if (!health) {
+        unhealthyChecks++
+
+        this.logger.error(
+          `Health collection failed for the ${errorLabel}. ` +
+            `Unhealthy check ${unhealthyChecks}/${maxUnhealthyChecks}.`
+        )
 
         this.emit('application:worker:health', {
           id: worker[kId],
           application: id,
           worker: index,
-          currentHealth: health,
-          unhealthy,
+          currentHealth: null,
+          unhealthy: true,
           healthConfig
         })
-
-        if (health.elu > maxELU) {
-          this.logger.error(
-            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
-              `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
-          )
-        }
-
-        if (memoryUsage > maxHeapUsed) {
-          this.logger.error(
-            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
-              `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
-          )
-        }
-
-        if (unhealthy) {
-          unhealthyChecks++
-        } else {
-          unhealthyChecks = 0
-        }
 
         if (unhealthyChecks === maxUnhealthyChecks) {
           try {
             this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
 
             this.logger.error(
-              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
-              `The ${errorLabel} is unhealthy. Replacing it ...`
+              `The ${errorLabel} is unhealthy (health collection failed). Replacing it ...`
             )
 
             await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
           } catch (e) {
             this.logger.error(
-              { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
               `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
             )
 
@@ -2164,6 +2162,61 @@ export class Runtime extends EventEmitter {
         } else {
           worker[kHealthCheckTimer].refresh()
         }
+        return
+      }
+
+      const memoryUsage = health.heapUsed != null ? health.heapUsed / maxHeapTotal : 0
+      const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
+
+      this.emit('application:worker:health', {
+        id: worker[kId],
+        application: id,
+        worker: index,
+        currentHealth: health,
+        unhealthy,
+        healthConfig
+      })
+
+      if (health.elu > maxELU) {
+        this.logger.error(
+          `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
+            `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+        )
+      }
+
+      if (memoryUsage > maxHeapUsed) {
+        this.logger.error(
+          `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
+            `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
+        )
+      }
+
+      if (unhealthy) {
+        unhealthyChecks++
+      } else {
+        unhealthyChecks = 0
+      }
+
+      if (unhealthyChecks === maxUnhealthyChecks) {
+        try {
+          this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
+
+          this.logger.error(
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+            `The ${errorLabel} is unhealthy. Replacing it ...`
+          )
+
+          await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
+        } catch (e) {
+          this.logger.error(
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
+            `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
+          )
+
+          worker.terminate()
+        }
+      } else {
+        worker[kHealthCheckTimer].refresh()
       }
     }, interval).unref()
   }
