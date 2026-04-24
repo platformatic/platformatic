@@ -59,7 +59,7 @@ export function mapSQLTypeToOpenAPIType (sqlType) {
 }
 
 export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
-  const fields = entity.fields
+  const fields = entity.camelCasedFields
   const properties = {}
   const required = []
   for (const name of Object.keys(fields)) {

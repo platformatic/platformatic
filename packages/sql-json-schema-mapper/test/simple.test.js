@@ -65,6 +65,20 @@ async function createBasicGeneratedTests (db, sql) {
   }
 }
 
+async function createBasicUsers (db, sql) {
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+  }
+}
+
 test('simple db, simple rest API', async t => {
   const app = fastify()
   app.register(sqlMapper, {
@@ -218,6 +232,31 @@ test('stored and virtual generated columns should be read only', async t => {
       same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
       same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
     }
+  }
+})
+
+test('ignore one snake_case field using camelCase', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicUsers(db, sql)
+    }
+  })
+  t.after(() => app.close())
+
+  await app.ready()
+
+  {
+    const user = app.platformatic.entities.user
+    const userJsonSchema = mapSQLEntityToJSONSchema(user, {
+      passwordHash: true
+    })
+
+    equal(userJsonSchema.properties.passwordHash, undefined)
   }
 })
 
