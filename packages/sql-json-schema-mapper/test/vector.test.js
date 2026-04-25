@@ -5,7 +5,7 @@ import { mapSQLEntityToJSONSchema } from '../index.js'
 test('vector fields are mapped to arrays of numbers', async () => {
   const entity = {
     name: 'Embedding',
-    fields: {
+    camelCasedFields: {
       id: {
         camelcase: 'id',
         sqlType: 'int4',
