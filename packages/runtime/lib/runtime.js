@@ -77,6 +77,8 @@ const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 const kHealthITCTimeoutMs = 5000
+const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
+const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -133,6 +135,7 @@ export class Runtime extends EventEmitter {
 
   #applicationsConfigsPatches
   #applications
+  #applicationRestartCounts
   #workers
   #workersBroadcastChannel
   #workerITCHandlers
@@ -158,6 +161,7 @@ export class Runtime extends EventEmitter {
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
     this.#concurrency = Math.max(1, config.startupConcurrency ?? this.#context.concurrency ?? DEFAULT_CONCURRENCY)
     this.#applications = new Map()
+    this.#applicationRestartCounts = new Map()
     this.#workers = new RoundRobinMap()
     this.#url = undefined
     this.#entrypointPort = undefined
@@ -501,6 +505,7 @@ export class Runtime extends EventEmitter {
       }
 
       this.#applications.set(application.id, application)
+      this.#applicationRestartCounts.set(application.id, this.#applicationRestartCounts.get(application.id) ?? 0)
       setupInvocations.push([application])
       toStart.push(application.id)
     }
@@ -542,6 +547,7 @@ export class Runtime extends EventEmitter {
     for (const application of applications) {
       this.#dynamicWorkersScaler?.remove(application)
       this.#applications.delete(application)
+      this.#applicationRestartCounts.delete(application)
     }
 
     for (const application of applications) {
@@ -712,6 +718,7 @@ export class Runtime extends EventEmitter {
         await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
       }
 
+      this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
       this.#restartingApplications.delete(id)
@@ -1151,6 +1158,10 @@ export class Runtime extends EventEmitter {
   async getMetrics (format = 'json') {
     let metrics = null
 
+    const applicationRestartMetrics = format === 'json'
+      ? this.#getApplicationRestartMetricsJson()
+      : this.#formatApplicationRestartMetricsText()
+
     // Get process-level metrics once from main thread registry (if available)
     let processMetricsJson = null
     if (this.#processMetricsRegistry) {
@@ -1216,7 +1227,66 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    if (metrics !== null && applicationRestartMetrics.length > 0) {
+      metrics = format === 'json'
+        ? [...applicationRestartMetrics, ...metrics]
+        : applicationRestartMetrics + metrics
+    }
+
     return { metrics }
+  }
+
+  #incrementApplicationRestartCount (applicationId) {
+    this.#applicationRestartCounts.set(applicationId, (this.#applicationRestartCounts.get(applicationId) ?? 0) + 1)
+  }
+
+  #getApplicationRestartMetricLabels (applicationId) {
+    return {
+      ...this.#config.metrics?.labels,
+      [this.#metricsLabelName]: applicationId
+    }
+  }
+
+  #getApplicationRestartMetricsJson () {
+    const metrics = []
+
+    for (const applicationId of this.#applications.keys()) {
+      metrics.push({
+        name: kApplicationRestartsMetricName,
+        help: kApplicationRestartsMetricHelp,
+        type: 'counter',
+        aggregator: 'sum',
+        values: [{
+          value: this.#applicationRestartCounts.get(applicationId) ?? 0,
+          labels: this.#getApplicationRestartMetricLabels(applicationId),
+          metricName: kApplicationRestartsMetricName
+        }]
+      })
+    }
+
+    return metrics
+  }
+
+  #formatApplicationRestartMetricsText () {
+    let output = ''
+
+    for (const applicationId of this.#applications.keys()) {
+      const labelParts = []
+      const labels = this.#getApplicationRestartMetricLabels(applicationId)
+
+      for (const [key, val] of Object.entries(labels)) {
+        const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+        labelParts.push(`${key}="${escapedVal}"`)
+      }
+
+      const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
+
+      output += `# HELP ${kApplicationRestartsMetricName} ${kApplicationRestartsMetricHelp}\n`
+      output += `# TYPE ${kApplicationRestartsMetricName} counter\n`
+      output += `${kApplicationRestartsMetricName}${labelStr} ${this.#applicationRestartCounts.get(applicationId) ?? 0}\n`
+    }
+
+    return output
   }
 
   // Apply labels to process metrics and push to output array (for JSON format)
@@ -2153,6 +2223,7 @@ export class Runtime extends EventEmitter {
             )
 
             await this.#replaceWorker(config, applicationConfig, workersCount, id, index, worker)
+            this.#incrementApplicationRestartCount(id)
           } catch (e) {
             this.logger.error(
               { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
@@ -2424,6 +2495,7 @@ export class Runtime extends EventEmitter {
         try {
           await this.#setupWorker(config, applicationConfig, workersCount, id, index)
           await this.#startWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
+          this.#incrementApplicationRestartCount(id)
 
           this.logger.info(
             `The ${this.#workerExtendedLabel(id, index, workersCount)} has been successfully restarted ...`
