@@ -583,7 +583,7 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       fast-jwt:
         specifier: ^6.0.0
-        version: 6.2.1
+        version: 6.2.3
       fastify:
         specifier: ^5.7.0
         version: 5.8.5
@@ -1520,7 +1520,7 @@ importers:
         version: 4.22.1
       fast-jwt:
         specifier: ^6.0.0
-        version: 6.2.1
+        version: 6.2.3
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -6865,8 +6865,8 @@ packages:
     resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
     engines: {node: '>=20'}
 
-  fast-jwt@6.2.1:
-    resolution: {integrity: sha512-tmXFiZpaFGm18TjhWE5bIQ6OoJGFifAQzW3g2H+HhHfmpvsjSswXt8i8RpI2u4EgyBugXiOTXvBMHXrs2hOg+w==}
+  fast-jwt@6.2.3:
+    resolution: {integrity: sha512-A8NqEOEO7tvUHx+ZXxc+qcbCbZXrBEvANATx5MqppygvJh1F+cHGtDuRuJjehsXDplbfCodNOFcyeWwB+ZIRyw==}
     engines: {node: '>=20'}
 
   fast-levenshtein@2.0.6:
@@ -9817,6 +9817,10 @@ packages:
 
   safe-regex2@5.1.0:
     resolution: {integrity: sha512-pNHAuBW7TrcleFHsxBr5QMi/Iyp0ENjUKz7GCcX1UO7cMh+NmVK6HxQckNL1tJp1XAJVjG6B8OKIPqodqj9rtw==}
+    hasBin: true
+
+  safe-regex2@5.1.1:
+    resolution: {integrity: sha512-mOSBvHGDZMuIEZMdOz/aCEYDCv0E7nfcNsIhUF+/P+xC7Hyf3FkvymqgPbg9D1EdSGu+uKbJgy09K/RKKc7kJA==}
     hasBin: true
 
   safe-stable-stringify@2.5.0:
@@ -16624,13 +16628,13 @@ snapshots:
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.40.3
 
-  fast-jwt@6.2.1:
+  fast-jwt@6.2.3:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.40.3
-      safe-regex2: 5.1.0
+      safe-regex2: 5.1.1
 
   fast-levenshtein@2.0.6: {}
 
@@ -20443,6 +20447,10 @@ snapshots:
       is-regex: 1.2.1
 
   safe-regex2@5.1.0:
+    dependencies:
+      ret: 0.5.0
+
+  safe-regex2@5.1.1:
     dependencies:
       ret: 0.5.0
 
