@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/react-router",
-  "version": "3.52.3",
+  "version": "3.52.4",
   "description": "Platformatic React Router Capability",
   "main": "index.js",
   "type": "module",
