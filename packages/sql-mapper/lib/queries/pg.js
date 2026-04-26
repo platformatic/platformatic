@@ -46,10 +46,16 @@ export async function listColumns (db, sql, table, schema) {
   */
 
   const res = await db.query(sql`
-    SELECT column_name, udt_name, is_nullable, is_generated, data_type
-    FROM information_schema.columns
-    WHERE table_name = ${table}
-    AND table_schema = ${schema}
+    SELECT c.column_name, c.udt_name, c.is_nullable, c.is_generated, c.data_type,
+      pg_catalog.format_type(a.atttypid, a.atttypmod) AS formatted_type
+    FROM information_schema.columns c
+    JOIN pg_catalog.pg_class cls ON cls.relname = c.table_name
+    JOIN pg_catalog.pg_namespace ns ON ns.oid = cls.relnamespace AND ns.nspname = c.table_schema
+    JOIN pg_catalog.pg_attribute a ON a.attrelid = cls.oid AND a.attname = c.column_name
+    WHERE c.table_name = ${table}
+    AND c.table_schema = ${schema}
+    AND a.attnum > 0
+    AND NOT a.attisdropped
   `)
 
   for (const col of res) {
@@ -58,6 +64,11 @@ export async function listColumns (db, sql, table, schema) {
       col.isArray = true
     } else {
       col.isArray = false
+    }
+
+    const match = col.formatted_type?.match(/^vector\((\d+)\)$/)
+    if (match) {
+      col.vectorDimensions = Number(match[1])
     }
   }
 
