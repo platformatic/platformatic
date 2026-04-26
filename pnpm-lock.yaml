@@ -22,7 +22,7 @@ importers:
         version: 9.3.2
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -383,7 +383,7 @@ importers:
         version: 4.2.0
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.7.0
@@ -732,7 +732,7 @@ importers:
         version: 12.6.2
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.7.0
@@ -1032,7 +1032,7 @@ importers:
         version: 11.1.16(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)
       '@nestjs/platform-fastify':
         specifier: ^11.1.2
-        version: 11.1.16(@fastify/static@9.1.1)(@fastify/view@10.0.2)(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)
+        version: 11.1.16(@fastify/static@9.1.3)(@fastify/view@10.0.2)(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)
       '@platformatic/gateway':
         specifier: workspace:*
         version: link:../gateway
@@ -1211,7 +1211,7 @@ importers:
     dependencies:
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1290,7 +1290,7 @@ importers:
     dependencies:
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1577,7 +1577,7 @@ importers:
         version: 4.2.0
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.7.0
@@ -2158,7 +2158,7 @@ importers:
     dependencies:
       '@fastify/static':
         specifier: ^9.0.0
-        version: 9.1.1
+        version: 9.1.3
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -3380,8 +3380,8 @@ packages:
   '@fastify/session@11.1.1':
     resolution: {integrity: sha512-nuKwTHxh3eJsI4NJeXoYVGzXUsg+kH1WfHgS7IofVyVhmjc+A6qGr+29WQy8hYZiNtmCjfG415COpf5xTBkW4Q==}
 
-  '@fastify/static@9.1.1':
-    resolution: {integrity: sha512-LHxFea3qdwe0Pbbkh/yux7/k6nFNLGTNcbLKVYgmRDB6LdDE/8TFSO7qWZ0IzM/nF6iwR8W03oFlwe4v79R1Ow==}
+  '@fastify/static@9.1.3':
+    resolution: {integrity: sha512-aXrYtsiryLhRxRNaxNqsn7FUISeb7rB9q4eHUPIot5aeQBLNahnz1m6thzm7JWC1poSGXS9XrX8DvuMivp2hkQ==}
 
   '@fastify/swagger@9.7.0':
     resolution: {integrity: sha512-Vp1SC1GC2Hrkd3faFILv86BzUNyFz5N4/xdExqtCgkGASOzn/x+eMe4qXIGq7cdT6wif/P/oa6r1Ruqx19paZA==}
@@ -12203,7 +12203,7 @@ snapshots:
       fastify-plugin: 5.1.0
       safe-stable-stringify: 2.5.0
 
-  '@fastify/static@9.1.1':
+  '@fastify/static@9.1.3':
     dependencies:
       '@fastify/accept-negotiator': 2.0.1
       '@fastify/send': 4.1.0
@@ -12872,7 +12872,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nestjs/platform-fastify@11.1.16(@fastify/static@9.1.1)(@fastify/view@10.0.2)(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)':
+  '@nestjs/platform-fastify@11.1.16(@fastify/static@9.1.3)(@fastify/view@10.0.2)(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)':
     dependencies:
       '@fastify/cors': 11.2.0
       '@fastify/formbody': 8.0.2
@@ -12887,7 +12887,7 @@ snapshots:
       reusify: 1.1.0
       tslib: 2.8.1
     optionalDependencies:
-      '@fastify/static': 9.1.1
+      '@fastify/static': 9.1.3
       '@fastify/view': 10.0.2
 
   '@nestjs/schematics@11.0.9(chokidar@4.0.3)(typescript@5.9.3)':
@@ -18328,7 +18328,7 @@ snapshots:
   mercurius@16.8.0(graphql@16.13.2):
     dependencies:
       '@fastify/error': 4.2.0
-      '@fastify/static': 9.1.1
+      '@fastify/static': 9.1.3
       '@fastify/websocket': 11.2.0
       fastify-plugin: 5.1.0
       graphql: 16.13.2
