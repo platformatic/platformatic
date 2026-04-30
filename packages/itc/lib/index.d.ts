@@ -38,7 +38,7 @@ export class ITC extends EventEmitter {
   close (): void
 }
 
-export function startOutgoingMessagingSpan(
+export function startOutgoingMessagingSpan (
   mode: string,
   sourceApplication: string,
   targetApplication: string,
@@ -46,7 +46,7 @@ export function startOutgoingMessagingSpan(
   options?: OutgoingMessagingSpanOptions
 ): Promise<OutgoingMessagingSpan | null>
 
-export function startOutgoingMessagingSpanSync(
+export function startOutgoingMessagingSpanSync (
   mode: string,
   sourceApplication: string,
   targetApplication: string,
@@ -54,7 +54,7 @@ export function startOutgoingMessagingSpanSync(
   options?: OutgoingMessagingSpanOptions
 ): OutgoingMessagingSpan | null
 
-export function traceIncomingMessagingHandler(
+export function traceIncomingMessagingHandler (
   applicationId: string,
   messageName: string,
   handler: Handler,
