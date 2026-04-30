@@ -1,12 +1,12 @@
 packages:
   # all packages in direct subdirs of packages/
   - 'packages/*'
-auto-install-peers: true
-strict-peer-dependencies: false
-child-concurrency: 1
-resolution-mode: highest
-prefer-symlinked-executables: true
+autoIstallPeers: true
+strictPeerDependencies: false
+childConcurrency: 1
+resolutionMode: highest
+preferSymlinkedExecutables: true
 hoist: false
-node-linker: hoisted
-package-import-method: copy
+nodeLinker: hoisted
+packageImportMethod: copy
 minimumReleaseAge: 1440
