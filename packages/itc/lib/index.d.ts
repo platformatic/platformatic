@@ -1,3 +1,4 @@
+import type { Context } from '@opentelemetry/api'
 import { EventEmitter } from 'node:events'
 import { MessagePort } from 'node:worker_threads'
 
@@ -10,6 +11,22 @@ export interface ITCConstructorOptions {
   throwOnMissingHandler?: boolean
 }
 
+export interface OutgoingMessagingSpanOptions {
+  telemetryContext?: Context
+  telemetryMetadata?: Record<string, string>
+}
+
+export interface OutgoingMessagingSpan {
+  meta: {
+    mode: string
+    sourceApplication?: string
+    targetApplication?: string
+    telemetry: Record<string, string>
+  } | null
+  run<T>(callback: () => T): T
+  end(error?: Error | null): void
+}
+
 export class ITC extends EventEmitter {
   constructor (options: ITCConstructorOptions)
 
@@ -20,3 +37,27 @@ export class ITC extends EventEmitter {
   listen (): void
   close (): void
 }
+
+export function startOutgoingMessagingSpan(
+  mode: string,
+  sourceApplication: string,
+  targetApplication: string,
+  messageName: string,
+  options?: OutgoingMessagingSpanOptions
+): Promise<OutgoingMessagingSpan | null>
+
+export function startOutgoingMessagingSpanSync(
+  mode: string,
+  sourceApplication: string,
+  targetApplication: string,
+  messageName: string,
+  options?: OutgoingMessagingSpanOptions
+): OutgoingMessagingSpan | null
+
+export function traceIncomingMessagingHandler(
+  applicationId: string,
+  messageName: string,
+  handler: Handler,
+  data: any,
+  handlerContext?: Record<string, any>
+): Promise<any>

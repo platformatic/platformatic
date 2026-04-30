@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.56.0.json",
+  "node": {
+    "hasServer": false
+  }
+}
