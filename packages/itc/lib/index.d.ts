@@ -38,13 +38,15 @@ export class ITC extends EventEmitter {
   close (): void
 }
 
+export function initializeITCTelemetry (): Promise<any>
+
 export function startOutgoingMessagingSpan (
   mode: string,
   sourceApplication: string,
   targetApplication: string,
   messageName: string,
   options?: OutgoingMessagingSpanOptions
-): Promise<OutgoingMessagingSpan | null>
+): OutgoingMessagingSpan | null
 
 export function startOutgoingMessagingSpanSync (
   mode: string,
@@ -60,4 +62,4 @@ export function traceIncomingMessagingHandler (
   handler: Handler,
   data: any,
   handlerContext?: Record<string, any>
-): Promise<any>
+): any

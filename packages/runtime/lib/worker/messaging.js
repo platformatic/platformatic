@@ -68,7 +68,7 @@ export class MessagingITC extends ITC {
   }
 
   async send (application, name, message, options) {
-    const telemetry = await startOutgoingMessagingSpan('send', this.#id, application, name, {
+    const telemetry = startOutgoingMessagingSpan('send', this.#id, application, name, {
       telemetryContext: options?.telemetryContext,
       telemetryMetadata: options?.telemetryMetadata
     })
@@ -261,7 +261,7 @@ export class MessagingITC extends ITC {
   }
 
   #wrapHandler (messageName, handler) {
-    return async (data, context) => traceIncomingMessagingHandler(this.#id, messageName, handler, data, context)
+    return (data, context) => traceIncomingMessagingHandler(this.#id, messageName, handler, data, context)
   }
 
   #handlePendingResponse (channel) {

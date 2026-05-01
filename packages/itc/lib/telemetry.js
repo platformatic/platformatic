@@ -1,5 +1,8 @@
 import { ROOT_CONTEXT, SpanKind, SpanStatusCode, context, propagation, trace } from '@opentelemetry/api'
 
+let tracer = null
+let telemetryInitialization = null
+
 function createMessagingSpanName (type, application, messageName) {
   return `ITC ${type} ${application}.${messageName}`
 }
@@ -60,22 +63,31 @@ function endSpan (span, error) {
 }
 
 function getTracer () {
+  if (tracer) {
+    return tracer
+  }
+
   const tracerProvider = globalThis.platformatic?.tracerProvider
   if (!tracerProvider) {
     return null
   }
 
-  return tracerProvider.getTracer('@platformatic/itc')
+  tracer = tracerProvider.getTracer('@platformatic/itc')
+  return tracer
 }
 
-async function waitForTelemetryReady () {
-  try {
-    await globalThis.platformatic?.telemetryReady
-  } catch {
-    // Ignore telemetry initialization failures and fall back to untraced messaging.
+export function initializeITCTelemetry () {
+  if (telemetryInitialization) {
+    return telemetryInitialization
   }
 
-  return getTracer()
+  telemetryInitialization = Promise.resolve(globalThis.platformatic?.telemetryReady)
+    .catch(() => {
+      // Ignore telemetry initialization failures and fall back to untraced messaging.
+    })
+    .then(() => getTracer())
+
+  return telemetryInitialization
 }
 
 function createNoopOutgoingTelemetry (mode, sourceApplication, targetApplication, telemetryMetadata) {
@@ -139,27 +151,22 @@ function createOutgoingMessagingSpan (tracer, mode, sourceApplication, targetApp
   }
 }
 
-export async function startOutgoingMessagingSpan (mode, sourceApplication, targetApplication, messageName, options = {}) {
-  const tracer = await waitForTelemetryReady()
-  if (!tracer) {
+export function startOutgoingMessagingSpan (mode, sourceApplication, targetApplication, messageName, options = {}) {
+  const activeTracer = getTracer()
+  if (!activeTracer) {
     return createNoopOutgoingTelemetry(mode, sourceApplication, targetApplication, options.telemetryMetadata)
   }
 
-  return createOutgoingMessagingSpan(tracer, mode, sourceApplication, targetApplication, messageName, options)
+  return createOutgoingMessagingSpan(activeTracer, mode, sourceApplication, targetApplication, messageName, options)
 }
 
 export function startOutgoingMessagingSpanSync (mode, sourceApplication, targetApplication, messageName, options = {}) {
-  const tracer = getTracer()
-  if (!tracer) {
-    return createNoopOutgoingTelemetry(mode, sourceApplication, targetApplication, options.telemetryMetadata)
-  }
-
-  return createOutgoingMessagingSpan(tracer, mode, sourceApplication, targetApplication, messageName, options)
+  return startOutgoingMessagingSpan(mode, sourceApplication, targetApplication, messageName, options)
 }
 
-export async function traceIncomingMessagingHandler (applicationId, messageName, handler, data, handlerContext = {}) {
-  const tracer = await waitForTelemetryReady()
-  if (!tracer) {
+export function traceIncomingMessagingHandler (applicationId, messageName, handler, data, handlerContext = {}) {
+  const activeTracer = getTracer()
+  if (!activeTracer) {
     return handler(data, handlerContext)
   }
 
@@ -171,7 +178,7 @@ export async function traceIncomingMessagingHandler (applicationId, messageName,
   const parentContext = propagation.extract(ROOT_CONTEXT, telemetryCarrier)
   const spanType = handlerContext.notification ? 'consume' : 'handle'
   const spanKind = handlerContext.notification ? SpanKind.CONSUMER : SpanKind.SERVER
-  const span = tracer.startSpan(
+  const span = activeTracer.startSpan(
     createMessagingSpanName(spanType, sourceApplication ?? 'unknown', messageName),
     {
       kind: spanKind,
@@ -186,14 +193,26 @@ export async function traceIncomingMessagingHandler (applicationId, messageName,
   )
 
   const spanContext = trace.setSpan(parentContext, span)
-  let error = null
 
   try {
-    return await context.with(spanContext, () => handler(data, handlerContext))
-  } catch (err) {
-    error = err
-    throw err
-  } finally {
+    const result = context.with(spanContext, () => handler(data, handlerContext))
+
+    if (result?.then) {
+      return result
+        .then(value => {
+          endSpan(span)
+          return value
+        })
+        .catch(error => {
+          endSpan(span, error)
+          throw error
+        })
+    }
+
+    endSpan(span)
+    return result
+  } catch (error) {
     endSpan(span, error)
+    throw error
   }
 }

@@ -1,7 +1,16 @@
 import type { EventEmitter } from 'node:events'
 import type { MessagePort } from 'node:worker_threads'
 import { expect, test } from 'tstyche'
-import { type Handler, ITC, type ITCConstructorOptions } from '../../lib/index.js'
+import {
+  type Handler,
+  initializeITCTelemetry,
+  ITC,
+  type ITCConstructorOptions,
+  type OutgoingMessagingSpan,
+  startOutgoingMessagingSpan,
+  startOutgoingMessagingSpanSync,
+  traceIncomingMessagingHandler
+} from '../../lib/index.js'
 
 declare const port: MessagePort
 
@@ -42,4 +51,11 @@ test('ITC', () => {
 
   expect(itc.listen()).type.toBe<void>()
   expect(itc.close()).type.toBe<void>()
+})
+
+test('telemetry helpers', () => {
+  expect(initializeITCTelemetry()).type.toBe<Promise<any>>()
+  expect(startOutgoingMessagingSpan('send', 'source', 'target', 'message')).type.toBe<OutgoingMessagingSpan | null>()
+  expect(startOutgoingMessagingSpanSync('send', 'source', 'target', 'message')).type.toBe<OutgoingMessagingSpan | null>()
+  expect(traceIncomingMessagingHandler('target', 'message', () => null, null)).type.toBe<any>()
 })
