@@ -46,9 +46,13 @@
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@scalar/fastify-api-reference": "1.34.6",
+    "ajv": "^8.12.0",
     "camelcase": "^6.3.0",
+    "fast-json-stringify": "^6.3.0",
+    "fast-uri": "^3.0.6",
     "fastify-plugin": "^5.0.0",
-    "inflected": "^2.1.0"
+    "inflected": "^2.1.0",
+    "secure-json-parse": "^4.1.0"
   },
   "engines": {
     "node": ">=22.19.0"
