@@ -25,7 +25,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/aws-lambda": "^5.0.0",
-    "@fastify/compress": "^8.0.0",
     "bindings": "^1.5.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
@@ -44,6 +43,7 @@
   "dependencies": {
     "@fastify/accepts": "^5.0.0",
     "@fastify/autoload": "^6.0.0",
+    "@fastify/compress": "^8.0.0",
     "@fastify/cors": "^10.0.0",
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",

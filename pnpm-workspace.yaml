@@ -1,7 +1,7 @@
 packages:
   # all packages in direct subdirs of packages/
   - 'packages/*'
-autoIstallPeers: true
+autoInstallPeers: true
 strictPeerDependencies: false
 childConcurrency: 1
 resolutionMode: highest
