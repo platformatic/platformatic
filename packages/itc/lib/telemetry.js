@@ -193,26 +193,28 @@ export function traceIncomingMessagingHandler (applicationId, messageName, handl
   )
 
   const spanContext = trace.setSpan(parentContext, span)
+  let result
 
   try {
-    const result = context.with(spanContext, () => handler(data, handlerContext))
-
-    if (result?.then) {
-      return result
-        .then(value => {
-          endSpan(span)
-          return value
-        })
-        .catch(error => {
-          endSpan(span, error)
-          throw error
-        })
-    }
-
-    endSpan(span)
-    return result
+    result = context.with(spanContext, () => handler(data, handlerContext))
   } catch (error) {
     endSpan(span, error)
     throw error
   }
+
+  if (result?.then) {
+    return result.then(
+      value => {
+        endSpan(span)
+        return value
+      },
+      error => {
+        endSpan(span, error)
+        throw error
+      }
+    )
+  }
+
+  endSpan(span)
+  return result
 }
