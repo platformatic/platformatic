@@ -302,7 +302,8 @@ test('config - should list configuration for the runtime', async t => {
         watch: false,
         workers: {
           dynamic: false,
-          static: 1
+          static: 1,
+          version: 'v1'
         },
         dependencies: [],
         localUrl: 'http://alternative.plt.local'
@@ -316,7 +317,8 @@ test('config - should list configuration for the runtime', async t => {
         watch: false,
         workers: {
           dynamic: false,
-          static: 1
+          static: 1,
+          version: 'v1'
         },
         dependencies: [],
         localUrl: 'http://main.plt.local'
@@ -325,7 +327,8 @@ test('config - should list configuration for the runtime', async t => {
     applicationTimeout: 300000,
     workers: {
       dynamic: false,
-      static: 1
+      static: 1,
+      version: 'v1'
     },
     workersRestartDelay: 0,
     watch: false,
