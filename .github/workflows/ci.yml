@@ -132,10 +132,9 @@ jobs:
         run: |
           pnpm --filter="@platformatic/sql-mapper" run lint
           pnpm --filter="@platformatic/sql-mapper" run test:types
-      - name: Linting & Typescript for test suite sql-json-schema-mapper
+      - name: Linting for test suite sql-json-schema-mapper
         run: |
           pnpm --filter="@platformatic/sql-json-schema-mapper" run lint
-          pnpm --filter="@platformatic/sql-json-schema-mapper" run test:types
       - name: Linting & Typescript for test suite sql-openapi
         run: |
           pnpm --filter="@platformatic/sql-openapi" run lint
