@@ -1,12 +1,22 @@
 packages:
   # all packages in direct subdirs of packages/
   - 'packages/*'
-autoIstallPeers: true
-strictPeerDependencies: false
+allowBuilds:
+  '@datadog/pprof': true
+  '@fastify/pre-commit': true
+  '@nestjs/core': true
+  better-sqlite3: true
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
+autoInstallPeers: true
 childConcurrency: 1
-resolutionMode: highest
-preferSymlinkedExecutables: true
 hoist: false
+minimumReleaseAge: 1440
 nodeLinker: hoisted
 packageImportMethod: copy
-minimumReleaseAge: 1440
+preferSymlinkedExecutables: true
+resolutionMode: highest
+strictPeerDependencies: false

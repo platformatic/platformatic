@@ -116,97 +116,136 @@ function extractLinks (readmeFiles) {
   return allLinks
 }
 
-// Function to check HTTP(S) links
-function checkHttpLink (url) {
+function requestHttpLink (url, method = 'HEAD') {
   return new Promise(resolve => {
     try {
       const urlObj = new URL(url)
       const client = urlObj.protocol === 'https:' ? https : http
 
       const options = {
-        method: 'HEAD',
-        timeout: 5000, // Reduced timeout for faster checking
+        method,
+        timeout: 5000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Platformatic-Link-Checker/1.0)'
         }
       }
 
       const req = client.request(url, options, res => {
-        res.on('error', () => {}) // no errors
-        res.resume() // Consume response data to free up memory
-        // Handle redirects
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          // Resolve relative redirect locations
-          let redirectUrl = res.headers.location
-          if (redirectUrl.startsWith('/')) {
-            const baseUrl = new URL(url)
-            redirectUrl = `${baseUrl.protocol}//${baseUrl.host}${redirectUrl}`
-          }
-          // Check the redirect location
-          checkHttpLink(redirectUrl).then(resolve)
-        } else if (res.statusCode === 404) {
-          resolve({ ok: false, status: res.statusCode, reason: 'Not Found (404)' })
-        } else if (res.statusCode === 403) {
-          resolve({ ok: true, status: res.statusCode, reason: 'Forbidden 403, assuming correct' })
-        } else if (res.statusCode >= 200 && res.statusCode < 400) {
-          // For Docusaurus sites, we need to check content for "Page Not Found"
-          if (url.includes('docs.platformatic.dev')) {
-            // Do a GET request to check content
-            const getReq = client.get(
-              url,
-              {
-                timeout: 5000, // Reduced timeout
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (compatible; Platformatic-Link-Checker/1.0)'
-                }
-              },
-              getRes => {
-                let body = ''
-                getRes.on('data', chunk => (body += chunk))
-                getRes.on('end', () => {
-                  // Check for specific Docusaurus 404 page indicators
-                  if (
-                    body.includes('<title>Page Not Found') ||
-                    body.includes('This page could not be found') ||
-                    body.includes('We could not find what you were looking for') ||
-                    (body.includes('404') && body.includes('Page Not Found'))
-                  ) {
-                    resolve({ ok: false, status: 200, reason: 'Page shows "Not Found" content' })
-                  } else {
-                    resolve({ ok: true, status: res.statusCode })
-                  }
-                })
-              }
-            )
-            getReq.on('error', () => {
-              resolve({ ok: true, status: res.statusCode }) // Assume OK if can't get content
-            })
-            getReq.on('timeout', () => {
-              getReq.destroy()
-              resolve({ ok: true, status: res.statusCode }) // Assume OK if timeout
-            })
-          } else {
-            resolve({ ok: true, status: res.statusCode })
-          }
-        } else {
-          resolve({ ok: false, status: res.statusCode, reason: `HTTP ${res.statusCode}` })
-        }
+        resolve({ client, res })
       })
 
       req.on('error', err => {
-        resolve({ ok: false, status: 0, reason: err.message })
+        resolve({ error: err })
       })
 
       req.on('timeout', () => {
         req.destroy()
-        resolve({ ok: false, status: 0, reason: 'Timeout' })
+        resolve({ error: new Error('Timeout') })
       })
 
       req.end()
     } catch (err) {
-      resolve({ ok: false, status: 0, reason: err.message })
+      resolve({ error: err })
     }
   })
+}
+
+// Function to check HTTP(S) links
+async function checkHttpLink (url) {
+  const attempt = await requestHttpLink(url, 'HEAD')
+  if (attempt.error) {
+    return { ok: false, status: 0, reason: attempt.error.message }
+  }
+
+  const { client, res } = attempt
+  res.on('error', () => {})
+  res.resume()
+
+  // Handle redirects
+  if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+    let redirectUrl = res.headers.location
+    if (redirectUrl.startsWith('/')) {
+      const baseUrl = new URL(url)
+      redirectUrl = `${baseUrl.protocol}//${baseUrl.host}${redirectUrl}`
+    }
+    return checkHttpLink(redirectUrl)
+  }
+
+  if (res.statusCode === 404) {
+    return { ok: false, status: res.statusCode, reason: 'Not Found (404)' }
+  }
+
+  if (res.statusCode === 403) {
+    return { ok: true, status: res.statusCode, reason: 'Forbidden 403, assuming correct' }
+  }
+
+  if (res.statusCode === 405 || res.statusCode === 429) {
+    const retry = await requestHttpLink(url, 'GET')
+    if (retry.error) {
+      return { ok: true, status: res.statusCode, reason: `HEAD returned ${res.statusCode}, GET failed (${retry.error.message}), assuming correct` }
+    }
+
+    retry.res.on('error', () => {})
+    retry.res.resume()
+
+    if (retry.res.statusCode === 404) {
+      return { ok: false, status: retry.res.statusCode, reason: 'Not Found (404)' }
+    }
+
+    if (retry.res.statusCode >= 200 && retry.res.statusCode < 400) {
+      return { ok: true, status: retry.res.statusCode, reason: `HEAD returned ${res.statusCode}, GET succeeded` }
+    }
+
+    if (retry.res.statusCode === 429) {
+      return { ok: true, status: retry.res.statusCode, reason: 'Rate limited (429), assuming correct' }
+    }
+
+    return { ok: false, status: retry.res.statusCode, reason: `HEAD ${res.statusCode}, GET ${retry.res.statusCode}` }
+  }
+
+  if (res.statusCode >= 200 && res.statusCode < 400) {
+    // For Docusaurus sites, we need to check content for "Page Not Found"
+    if (url.includes('docs.platformatic.dev')) {
+      return new Promise(resolve => {
+        const getReq = client.get(
+          url,
+          {
+            timeout: 5000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; Platformatic-Link-Checker/1.0)'
+            }
+          },
+          getRes => {
+            let body = ''
+            getRes.on('data', chunk => (body += chunk))
+            getRes.on('end', () => {
+              if (
+                body.includes('<title>Page Not Found') ||
+                body.includes('This page could not be found') ||
+                body.includes('We could not find what you were looking for') ||
+                (body.includes('404') && body.includes('Page Not Found'))
+              ) {
+                resolve({ ok: false, status: 200, reason: 'Page shows "Not Found" content' })
+              } else {
+                resolve({ ok: true, status: res.statusCode })
+              }
+            })
+          }
+        )
+        getReq.on('error', () => {
+          resolve({ ok: true, status: res.statusCode })
+        })
+        getReq.on('timeout', () => {
+          getReq.destroy()
+          resolve({ ok: true, status: res.statusCode })
+        })
+      })
+    }
+
+    return { ok: true, status: res.statusCode }
+  }
+
+  return { ok: false, status: res.statusCode, reason: `HTTP ${res.statusCode}` }
 }
 
 // Function to check file links
