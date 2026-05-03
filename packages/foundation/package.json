@@ -24,7 +24,6 @@
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@iarna/toml": "^2.2.5",
-    "@types/debug": "^4.1.12",
     "@watchable/unpromise": "^1.0.2",
     "ajv": "^8.12.0",
     "boring-name-generator": "^1.0.3",
