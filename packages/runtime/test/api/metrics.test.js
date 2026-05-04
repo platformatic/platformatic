@@ -80,7 +80,8 @@ test('should get runtime metrics in a json format', async t => {
     'http_client_stats_queued',
     'http_client_stats_running',
     'http_client_stats_size',
-    'active_resources_event_loop'
+    'active_resources_event_loop',
+    'platformatic_application_restarts_total'
   ]
 
   const applications = ['service-1', 'service-2', 'service-db']
@@ -107,6 +108,41 @@ test('should get runtime metrics in a json format', async t => {
       }
     }
   }
+})
+
+test('should track application restarts in runtime metrics', async t => {
+  const projectDir = join(fixturesDir, 'metrics')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.restartApplication('service-2')
+  await app.restartApplication('service-2')
+
+  const { metrics } = await app.getMetrics()
+  const restartMetrics = metrics.filter(metric => metric.name === 'platformatic_application_restarts_total')
+
+  strictEqual(restartMetrics.length, 3)
+  strictEqual(restartMetrics[0].type, 'counter')
+  strictEqual(restartMetrics[0].aggregator, 'sum')
+
+  const restartCounts = Object.fromEntries(
+    restartMetrics.map(({ values }) => {
+      const [{ labels, value }] = values
+      return [labels.applicationId, value]
+    })
+  )
+
+  deepStrictEqual(restartCounts, {
+    'service-1': 0,
+    'service-2': 2,
+    'service-db': 0
+  })
 })
 
 test('should get runtime metrics in a text format', async t => {
@@ -166,7 +202,8 @@ test('should get runtime metrics in a text format', async t => {
     'http_client_stats_queued',
     'http_client_stats_running',
     'http_client_stats_size',
-    'active_resources_event_loop'
+    'active_resources_event_loop',
+    'platformatic_application_restarts_total'
   ]
   for (const metricName of expectedMetricNames) {
     ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)

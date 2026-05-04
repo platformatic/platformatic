@@ -169,7 +169,8 @@ test('should start a prometheus server on port 9090', async t => {
     'http_client_stats_queued',
     'http_client_stats_running',
     'http_client_stats_size',
-    'active_resources_event_loop'
+    'active_resources_event_loop',
+    'platformatic_application_restarts_total'
   ]
 
   for (const metricName of expectedMetricNames) {

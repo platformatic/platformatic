@@ -48,7 +48,8 @@ const expectedMetricNames = [
   'http_client_stats_queued',
   'http_client_stats_running',
   'http_client_stats_size',
-  'active_resources_event_loop'
+  'active_resources_event_loop',
+  'platformatic_application_restarts_total'
 ]
 
 test('should get prom metrics from the management api', async t => {
