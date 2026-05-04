@@ -1,5 +1,5 @@
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
-import { ITC } from '@platformatic/itc'
+import { initializeITCTelemetry, ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
@@ -147,7 +147,9 @@ export async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-export function setupITC (controller, application, dispatcher, sharedContext) {
+export async function setupITC (controller, application, dispatcher, sharedContext) {
+  await initializeITCTelemetry()
+
   const logger = globalThis.platformatic.logger
   const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 

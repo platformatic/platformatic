@@ -271,7 +271,7 @@ async function main () {
   }
 
   // Setup interaction with parent port
-  const itc = setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
+  const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
   globalThis.platformatic.itc = itc
 

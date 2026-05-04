@@ -49,18 +49,24 @@ export function parseResponse (response) {
   return response
 }
 
-export function generateRequest (name, data) {
+export function generateRequest (name, data, meta) {
   if (typeof name !== 'string') {
     throw new RequestNameIsNotString(name.toString())
   }
 
-  return {
+  const request = {
     type: PLT_ITC_REQUEST_TYPE,
     version: PLT_ITC_VERSION,
     reqId: randomUUID(),
     name,
     data
   }
+
+  if (typeof meta !== 'undefined') {
+    request.meta = meta
+  }
+
+  return request
 }
 
 export function generateResponse (request, error, data) {
@@ -74,13 +80,19 @@ export function generateResponse (request, error, data) {
   }
 }
 
-export function generateNotification (name, data) {
-  return {
+export function generateNotification (name, data, meta) {
+  const notification = {
     type: PLT_ITC_NOTIFICATION_TYPE,
     version: PLT_ITC_VERSION,
     name,
     data
   }
+
+  if (typeof meta !== 'undefined') {
+    notification.meta = meta
+  }
+
+  return notification
 }
 
 export function generateUnhandledErrorResponse (error) {
@@ -298,7 +310,7 @@ export class ITC extends EventEmitter {
     try {
       this._enableKeepAlive()
 
-      const request = generateRequest(name, message)
+      const request = generateRequest(name, message, options?.meta)
       this._send(request, options)
 
       const promiseWithResolvers = Promise.withResolvers()
@@ -317,7 +329,7 @@ export class ITC extends EventEmitter {
   }
 
   notify (name, message, options) {
-    this._send(generateNotification(name, message), options)
+    this._send(generateNotification(name, message, options?.meta), options)
   }
 
   handle (message, handler) {
@@ -471,3 +483,4 @@ export class ITC extends EventEmitter {
 }
 
 export * as errors from './errors.js'
+export * from './telemetry.js'
