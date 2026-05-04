@@ -167,9 +167,6 @@ importers:
       eslint:
         specifier: '9'
         version: 9.39.4(jiti@2.6.1)
-      execa:
-        specifier: ^9.0.0
-        version: 9.6.1
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -657,9 +654,6 @@ importers:
       '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
-      '@types/debug':
-        specifier: ^4.1.12
-        version: 4.1.12
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -1572,9 +1566,6 @@ importers:
       '@fastify/autoload':
         specifier: ^6.0.0
         version: 6.3.1
-      '@fastify/compress':
-        specifier: ^8.0.0
-        version: 8.3.1
       '@fastify/cors':
         specifier: ^10.0.0
         version: 10.1.0
@@ -1690,6 +1681,9 @@ importers:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
         version: 5.1.4
+      '@fastify/compress':
+        specifier: ^8.0.0
+        version: 8.3.1
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
