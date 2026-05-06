@@ -15,6 +15,8 @@ autoInstallPeers: true
 childConcurrency: 1
 hoist: false
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@platformatic/*'
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
