@@ -484,7 +484,7 @@ export interface PlatformaticDatabaseConfig {
     /**
      * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
      */
-    diagLogger?: boolean;
+    diagLogger?: boolean | string;
   };
   runtime?: {
     preload?: string | string[];
@@ -879,7 +879,7 @@ export interface PlatformaticDatabaseConfig {
       /**
        * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
        */
-      diagLogger?: boolean;
+      diagLogger?: boolean | string;
     };
     verticalScaler?: {
       enabled?: boolean;
