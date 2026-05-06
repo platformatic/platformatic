@@ -566,6 +566,10 @@ export interface PlatformaticComposerConfig {
             additionalProperties?: never;
             [k: string]: unknown;
           };
+      /**
+       * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
+       */
+      diagLogger?: boolean;
     };
     verticalScaler?: {
       enabled?: boolean;
@@ -603,6 +607,7 @@ export interface PlatformaticComposerConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {
@@ -790,6 +795,10 @@ export interface PlatformaticComposerConfig {
           additionalProperties?: never;
           [k: string]: unknown;
         };
+    /**
+     * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
+     */
+    diagLogger?: boolean;
   };
   watch?:
     | {
@@ -891,6 +900,8 @@ export interface PlatformaticComposerConfig {
             routes?: string[];
             upstream?: string;
             prefix?: string;
+            rewritePrefix?: string;
+            rewriteLocationHeader?: boolean;
             hostname?: string;
             custom?: {
               path: string;

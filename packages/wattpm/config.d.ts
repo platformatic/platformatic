@@ -493,6 +493,10 @@ export type PlatformaticRuntimeConfig = {
           additionalProperties?: never;
           [k: string]: unknown;
         };
+    /**
+     * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
+     */
+    diagLogger?: boolean;
   };
   verticalScaler?: {
     enabled?: boolean;

@@ -10,6 +10,7 @@ import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { readFileSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { setupDiagLogger } from './diag-logger.js'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import util from 'node:util'
@@ -35,6 +36,8 @@ contextManager.enable()
 context.setGlobalContextManager(contextManager)
 
 const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+  setupDiagLogger(opts)
+
   const { applicationName, instrumentations = [] } = opts
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
 
