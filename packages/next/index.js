@@ -1,21 +1,8 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { kMetadata } from '@platformatic/foundation'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
+import { loadConfiguration, transform } from './lib/config.js'
 import { NextImageOptimizerCapability } from './lib/image-optimizer.js'
-import { schema } from './lib/schema.js'
-
-/* c8 ignore next 9 */
-export async function transform (config, schema, options) {
-  config = await basicTransform(config, schema, options)
-  config.watch = { enabled: false }
-
-  if (config.cache?.adapter === 'redis') {
-    config.cache.adapter = 'valkey'
-  }
-
-  return config
-}
 
 export function getAdapterPath () {
   return resolvePath(import.meta.dirname, 'lib', 'adapter.js')
@@ -99,18 +86,6 @@ export async function enhanceNextConfig (nextConfig, ...args) {
   return nextConfig
 }
 
-export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
-    validationOptions,
-    transform,
-    replaceEnv: true,
-    root,
-    ...context
-  })
-}
-
 export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
 
@@ -119,6 +94,8 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 }
 
 export * from './lib/capability.js'
+export * from './lib/commands/index.js'
+export * from './lib/config.js'
 export * as errors from './lib/errors.js'
 export * from './lib/image-optimizer.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
