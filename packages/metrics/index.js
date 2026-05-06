@@ -27,6 +27,11 @@ const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
 const kMetricsCleanups = Symbol('plt.metrics.MetricsCleanups')
 
+function getRegistrySet (registry, key) {
+  registry[key] ??= new Set()
+  return registry[key]
+}
+
 // Process-level metrics (same across all workers, collect once in main thread)
 export const PROCESS_LEVEL_METRICS = [
   'process_cpu_user_seconds_total',
@@ -71,8 +76,7 @@ export const THREAD_LEVEL_METRICS = [
 ]
 
 export function registerMetricsGroup (registry, group) {
-  registry[kMetricsGroups] ??= new Set()
-  registry[kMetricsGroups].add(group)
+  getRegistrySet(registry, kMetricsGroups).add(group)
 }
 
 export function hasMetricsGroup (registry, group) {
@@ -82,19 +86,18 @@ export function hasMetricsGroup (registry, group) {
 // Use this method when dealing with metrics registration in async functions.
 // This will ensure that the group is registered only once.
 export function ensureMetricsGroup (registry, group) {
-  registry[kMetricsGroups] ??= new Set()
+  const groups = getRegistrySet(registry, kMetricsGroups)
 
-  if (registry[kMetricsGroups]?.has(group)) {
+  if (groups.has(group)) {
     return true
   }
 
-  registry[kMetricsGroups].add(group)
+  groups.add(group)
   return false
 }
 
 export function registerMetricsCleanup (registry, cleanup) {
-  registry[kMetricsCleanups] ??= new Set()
-  registry[kMetricsCleanups].add(cleanup)
+  getRegistrySet(registry, kMetricsCleanups).add(cleanup)
 }
 
 export function clearRegistry (registry) {
@@ -111,24 +114,110 @@ export function clearRegistry (registry) {
   }
 }
 
-function getHttpClientLabels (request, response, error) {
-  let origin
-
-  try {
-    origin = new URL(request?.origin ?? request?.path)
-  } catch {
-    origin = null
+function getDefaultHttpClientServerPort (urlScheme) {
+  if (urlScheme === 'https') {
+    return 443
   }
 
-  const urlScheme = origin?.protocol ? origin.protocol.slice(0, -1) : 'unknown'
-  const defaultPort = urlScheme === 'https' ? 443 : urlScheme === 'http' ? 80 : 0
+  if (urlScheme === 'http') {
+    return 80
+  }
+
+  return ''
+}
+
+function normalizeHttpClientScheme (protocol) {
+  if (!protocol) {
+    return 'unknown'
+  }
+
+  return protocol.endsWith(':') ? protocol.slice(0, -1) : protocol
+}
+
+function getHttpClientServerPort (rawPort, urlScheme) {
+  if (rawPort) {
+    const port = Number(rawPort)
+    if (Number.isFinite(port)) {
+      return port
+    }
+  }
+
+  return getDefaultHttpClientServerPort(urlScheme)
+}
+
+function getHttpClientOriginLabels (rawOrigin) {
+  if (!rawOrigin) {
+    return {
+      server_address: 'unknown',
+      server_port: '',
+      url_scheme: 'unknown'
+    }
+  }
+
+  if (typeof rawOrigin === 'object') {
+    const urlScheme = normalizeHttpClientScheme(rawOrigin.protocol)
+    return {
+      server_address: rawOrigin.hostname ?? 'unknown',
+      server_port: getHttpClientServerPort(rawOrigin.port, urlScheme),
+      url_scheme: urlScheme
+    }
+  }
+
+  const origin = String(rawOrigin)
+  const schemeEnd = origin.indexOf('://')
+  if (schemeEnd === -1) {
+    return {
+      server_address: 'unknown',
+      server_port: '',
+      url_scheme: 'unknown'
+    }
+  }
+
+  const urlScheme = origin.slice(0, schemeEnd)
+  let host = origin.slice(schemeEnd + 3)
+  const pathStart = host.indexOf('/')
+  if (pathStart !== -1) {
+    host = host.slice(0, pathStart)
+  }
+
+  const credentialsEnd = host.lastIndexOf('@')
+  if (credentialsEnd !== -1) {
+    host = host.slice(credentialsEnd + 1)
+  }
+
+  let serverAddress = host
+  let rawPort = ''
+
+  if (host.startsWith('[')) {
+    const addressEnd = host.indexOf(']')
+    if (addressEnd !== -1) {
+      serverAddress = host.slice(1, addressEnd)
+      if (host[addressEnd + 1] === ':') {
+        rawPort = host.slice(addressEnd + 2)
+      }
+    }
+  } else {
+    const portStart = host.lastIndexOf(':')
+    if (portStart !== -1 && host.indexOf(':') === portStart) {
+      serverAddress = host.slice(0, portStart)
+      rawPort = host.slice(portStart + 1)
+    }
+  }
+
+  return {
+    server_address: serverAddress || 'unknown',
+    server_port: getHttpClientServerPort(rawPort, urlScheme),
+    url_scheme: urlScheme
+  }
+}
+
+function getHttpClientLabels (request, response, error) {
+  const originLabels = getHttpClientOriginLabels(request?.origin ?? request?.path)
 
   return {
     method: request?.method ?? 'unknown',
     status_code: response?.statusCode ?? '',
-    server_address: origin?.hostname ?? 'unknown',
-    server_port: origin?.port ? Number(origin.port) : defaultPort,
-    url_scheme: urlScheme,
+    ...originLabels,
     error_type: error ? String(error.code ?? error.name ?? 'unknown') : ''
   }
 }
