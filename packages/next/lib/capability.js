@@ -15,7 +15,6 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
-import * as errors from './errors.js'
 import { version } from './schema.js'
 import { parseStandaloneNextConfig, requireStandaloneStartServer, resolveStandaloneEntrypoint } from './standalone.js'
 
@@ -521,5 +520,4 @@ export class NextCapability extends BaseCapability {
 
     return distDir
   }
-
 }

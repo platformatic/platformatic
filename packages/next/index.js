@@ -1,7 +1,7 @@
 import { kMetadata } from '@platformatic/foundation'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
-import { loadConfiguration, transform } from './lib/config.js'
+import { loadConfiguration } from './lib/config.js'
 import { NextImageOptimizerCapability } from './lib/image-optimizer.js'
 
 export function getAdapterPath () {
