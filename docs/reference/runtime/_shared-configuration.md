@@ -260,6 +260,7 @@ The object supports the following settings:
   - **`options`** (`object`) — These options are supported:
     - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
     - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+- **`diagLogger`** (`boolean`) — Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
 
 ### `basePath`
 
@@ -274,6 +275,7 @@ OTLP traces can be consumed by different solutions, like [Jaeger](https://www.ja
 {
   "telemetry": {
     "applicationName": "test-application",
+    "diagLogger": true,
     "exporter": {
       "type": "otlp",
       "options": {

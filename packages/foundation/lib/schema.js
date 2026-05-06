@@ -702,6 +702,10 @@ export const telemetry = {
         },
         openTelemetryExporter
       ]
+    },
+    diagLogger: {
+      type: 'boolean',
+      description: 'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
     }
   },
   required: ['applicationName'],
