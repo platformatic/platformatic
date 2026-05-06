@@ -4,7 +4,7 @@ import Issues from '../getting-started/issues.md';
 
 ## Introduction
 
-Watt includes [built-in telemetry support](./distributed-tracing.md) that can be configured declaratively in your `watt.json` or `platformatic.json` files. This works well for most use cases with OTLP and Zipkin exporters.
+Watt includes [built-in telemetry support](./distributed-tracing.md) that can be configured declaratively in your `watt.json` or `platformatic.json` files. This works well for most use cases with OTLP over HTTP or gRPC, and Zipkin exporters.
 
 However, you may need manual OpenTelemetry SDK setup when you:
 

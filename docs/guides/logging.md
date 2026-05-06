@@ -149,6 +149,24 @@ This automatically:
 - Includes trace context (trace ID, span ID, flags)
 - Adds service metadata for filtering
 
+The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support OTLP over gRPC with:
+
+```json
+{
+  "telemetry": {
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "protocol": "grpc",
+        "url": "http://otel-collector:4317"
+      }
+    }
+  }
+}
+```
+
+When using gRPC, do not include `/v1/traces` in the URL.
+
 See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed configuration.
 
 ### Elasticsearch

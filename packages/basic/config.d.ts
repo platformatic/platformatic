@@ -374,6 +374,14 @@ export interface PlatformaticBasicConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;
@@ -399,6 +407,14 @@ export interface PlatformaticBasicConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;

@@ -252,6 +252,60 @@ test('should configure OTLP correctly', async () => {
   equal(exporterUrl, 'http://localhost:4317/')
 })
 
+test('should configure OTLP grpc correctly', async () => {
+  const handler = async (request, reply) => {
+    return {}
+  }
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'otlp',
+        options: {
+          protocol: 'grpc',
+          url: 'http://localhost:4317'
+        }
+      }
+    },
+    handler,
+    test.after
+  )
+
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
+  const exporterAddress = (exporter._delegate ?? exporter)._transport._parameters.address
+  equal(exporter.constructor.name, 'OTLPTraceExporter')
+  equal(exporterAddress, 'localhost:4317')
+})
+
+test('should configure OTLP grpc correctly using the transport alias', async () => {
+  const handler = async (request, reply) => {
+    return {}
+  }
+  const app = await setupApp(
+    {
+      applicationName: 'test-application',
+      version: '1.0.0',
+      exporter: {
+        type: 'otlp',
+        options: {
+          transport: 'grpc',
+          url: 'http://localhost:4317'
+        }
+      }
+    },
+    handler,
+    test.after
+  )
+
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
+  const exporterAddress = (exporter._delegate ?? exporter)._transport._parameters.address
+  equal(exporter.constructor.name, 'OTLPTraceExporter')
+  equal(exporterAddress, 'localhost:4317')
+})
+
 test('should configure Zipkin correctly', async () => {
   const handler = async (request, reply) => {
     return {}

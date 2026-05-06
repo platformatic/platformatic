@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Platformatic supports Open Telemetry integration. This allows you to send telemetry data to one of the OTLP compatible servers ([see here](https://opentelemetry.io/ecosystem/vendors/)) or to a Zipkin server. Let's show this with [Jaeger](https://www.jaegertracing.io/).
+Platformatic supports Open Telemetry integration. This allows you to send telemetry data to one of the OTLP compatible servers ([see here](https://opentelemetry.io/ecosystem/vendors/)) over HTTP or gRPC, or to a Zipkin server. Let's show this with [Jaeger](https://www.jaegertracing.io/).
 
 :::tip Advanced Setup
 For manual OpenTelemetry SDK setup with custom instrumentations or exporters, see the [Advanced OpenTelemetry Setup](./opentelemetry-sdk-setup.md) guide.
@@ -22,6 +22,29 @@ docker run -d --name jaeger \
 ```
 
 Check that the server is running by opening [http://localhost:16686/](http://localhost:16686/) in your browser.
+
+:::tip OTLP transport selection
+The examples below use OTLP over HTTP with `http://localhost:4318/v1/traces`.
+
+You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and changing the URL to `http://localhost:4317`.
+
+```json
+{
+  "telemetry": {
+    "applicationName": "test-db",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "protocol": "grpc",
+        "url": "http://localhost:4317"
+      }
+    }
+  }
+}
+```
+
+When using gRPC, do not include `/v1/traces` in the URL.
+:::
 
 ## Platformatic setup
 
@@ -268,7 +291,7 @@ Starting from this example, it's also possible to run the same test using Zipkin
 docker run -d -p 9411:9411 openzipkin/zipkin
 ```
 
-Then, you need to change the `telemetry` configuration in all the `platformatic.*.json` to the following (only the `exporter` object is different`)
+Then, you need to change the `telemetry` configuration in all the `platformatic.*.json` files to the following (only the `exporter` object is different):
 
 ```json
   "telemetry": {
