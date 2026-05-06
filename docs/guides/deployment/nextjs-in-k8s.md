@@ -379,11 +379,10 @@ From the project root:
 
 ```bash
 npx wattpm build
-npx wattpm help
 npx wattpm <app-id>:pack --output .platformatic/next-bundle
 ```
 
-Use the application command shown under **Applications Commands** in `wattpm help`. For a single imported app, the application id usually comes from `package.json`.
+Replace `<app-id>` with your application id. For a single imported app, it usually comes from `package.json`.
 
 The packed bundle contains:
 - the Next standalone output
