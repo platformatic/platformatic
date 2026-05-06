@@ -26,6 +26,8 @@ const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
 const kMetricsCleanups = Symbol('plt.metrics.MetricsCleanups')
+const kHttpClientRequestStart = Symbol('plt.metrics.HttpClientRequestStart')
+const kHttpClientRequestStatusCode = Symbol('plt.metrics.HttpClientRequestStatusCode')
 
 function getRegistrySet (registry, key) {
   registry[key] ??= new Set()
@@ -114,112 +116,35 @@ export function clearRegistry (registry) {
   }
 }
 
-function getDefaultHttpClientServerPort (urlScheme) {
-  if (urlScheme === 'https') {
-    return 443
+function getNestedMapValue (map, key) {
+  let value = map.get(key)
+  if (!value) {
+    value = new Map()
+    map.set(key, value)
   }
-
-  if (urlScheme === 'http') {
-    return 80
-  }
-
-  return ''
+  return value
 }
 
-function normalizeHttpClientScheme (protocol) {
-  if (!protocol) {
-    return 'unknown'
-  }
-
-  return protocol.endsWith(':') ? protocol.slice(0, -1) : protocol
+function getHttpClientRequestOrigin (request) {
+  return typeof request.origin === 'string' && request.origin.length > 0 ? request.origin : 'unknown'
 }
 
-function getHttpClientServerPort (rawPort, urlScheme) {
-  if (rawPort) {
-    const port = Number(rawPort)
-    if (Number.isFinite(port)) {
-      return port
-    }
-  }
-
-  return getDefaultHttpClientServerPort(urlScheme)
+function getHttpClientErrorType (error) {
+  return error ? String(error.code ?? error.name ?? 'unknown') : ''
 }
 
-function getHttpClientOriginLabels (rawOrigin) {
-  if (!rawOrigin) {
-    return {
-      server_address: 'unknown',
-      server_port: '',
-      url_scheme: 'unknown'
-    }
+function getHttpClientObserver (observers, metric, method, statusCode, dispatcherStatsUrl, errorType) {
+  const methodObservers = getNestedMapValue(observers, method)
+  const statusCodeObservers = getNestedMapValue(methodObservers, statusCode)
+  const dispatcherStatsUrlObservers = getNestedMapValue(statusCodeObservers, dispatcherStatsUrl)
+  let observer = dispatcherStatsUrlObservers.get(errorType)
+
+  if (!observer) {
+    observer = metric.labels(method, statusCode, dispatcherStatsUrl, errorType)
+    dispatcherStatsUrlObservers.set(errorType, observer)
   }
 
-  if (typeof rawOrigin === 'object') {
-    const urlScheme = normalizeHttpClientScheme(rawOrigin.protocol)
-    return {
-      server_address: rawOrigin.hostname ?? 'unknown',
-      server_port: getHttpClientServerPort(rawOrigin.port, urlScheme),
-      url_scheme: urlScheme
-    }
-  }
-
-  const origin = String(rawOrigin)
-  const schemeEnd = origin.indexOf('://')
-  if (schemeEnd === -1) {
-    return {
-      server_address: 'unknown',
-      server_port: '',
-      url_scheme: 'unknown'
-    }
-  }
-
-  const urlScheme = origin.slice(0, schemeEnd)
-  let host = origin.slice(schemeEnd + 3)
-  const pathStart = host.indexOf('/')
-  if (pathStart !== -1) {
-    host = host.slice(0, pathStart)
-  }
-
-  const credentialsEnd = host.lastIndexOf('@')
-  if (credentialsEnd !== -1) {
-    host = host.slice(credentialsEnd + 1)
-  }
-
-  let serverAddress = host
-  let rawPort = ''
-
-  if (host.startsWith('[')) {
-    const addressEnd = host.indexOf(']')
-    if (addressEnd !== -1) {
-      serverAddress = host.slice(1, addressEnd)
-      if (host[addressEnd + 1] === ':') {
-        rawPort = host.slice(addressEnd + 2)
-      }
-    }
-  } else {
-    const portStart = host.lastIndexOf(':')
-    if (portStart !== -1 && host.indexOf(':') === portStart) {
-      serverAddress = host.slice(0, portStart)
-      rawPort = host.slice(portStart + 1)
-    }
-  }
-
-  return {
-    server_address: serverAddress || 'unknown',
-    server_port: getHttpClientServerPort(rawPort, urlScheme),
-    url_scheme: urlScheme
-  }
-}
-
-function getHttpClientLabels (request, response, error) {
-  const originLabels = getHttpClientOriginLabels(request?.origin ?? request?.path)
-
-  return {
-    method: request?.method ?? 'unknown',
-    status_code: response?.statusCode ?? '',
-    ...originLabels,
-    error_type: error ? String(error.code ?? error.name ?? 'unknown') : ''
-  }
+  return observer
 }
 
 export function collectHttpClientMetrics (registry) {
@@ -227,39 +152,53 @@ export function collectHttpClientMetrics (registry) {
     return
   }
 
+  const observers = new Map()
+
   const requestDurationMetric = new Histogram({
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
-    labelNames: ['method', 'status_code', 'server_address', 'server_port', 'url_scheme', 'error_type'],
+    labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
     collect: function () {
-      process.nextTick(() => this.reset())
+      process.nextTick(() => {
+        this.reset()
+        observers.clear()
+      })
     },
     registers: [registry]
   })
 
-  const requests = new WeakMap()
-
   const onRequestCreate = ({ request }) => {
     if (request && typeof request === 'object') {
-      requests.set(request, { start: performance.now() })
+      request[kHttpClientRequestStart] = performance.now()
     }
   }
 
   const onRequestHeaders = ({ request, response }) => {
-    const data = request && typeof request === 'object' ? requests.get(request) : undefined
-    if (data) {
-      data.response = response
+    if (request && typeof request === 'object') {
+      request[kHttpClientRequestStatusCode] = response?.statusCode ?? ''
     }
   }
 
   const observeRequest = ({ request, response, error }) => {
-    const data = request && typeof request === 'object' ? requests.get(request) : undefined
-    if (!data) {
+    if (!request || typeof request !== 'object') {
       return
     }
 
-    requests.delete(request)
-    requestDurationMetric.observe(getHttpClientLabels(request, response ?? data.response, error), (performance.now() - data.start) / 1000)
+    const start = request[kHttpClientRequestStart]
+    if (start === undefined) {
+      return
+    }
+
+    const duration = (performance.now() - start) / 1000
+    const method = request.method ?? 'unknown'
+    const statusCode = response?.statusCode ?? request[kHttpClientRequestStatusCode] ?? ''
+    const dispatcherStatsUrl = getHttpClientRequestOrigin(request)
+    const errorType = getHttpClientErrorType(error)
+
+    delete request[kHttpClientRequestStart]
+    delete request[kHttpClientRequestStatusCode]
+
+    getHttpClientObserver(observers, requestDurationMetric, method, statusCode, dispatcherStatsUrl, errorType).observe(duration)
   }
 
   subscribe('undici:request:create', onRequestCreate)

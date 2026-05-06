@@ -75,9 +75,6 @@ export interface MetricValue {
     applicationId: string
     workerId?: number
     dispatcher_stats_url?: string
-    server_address?: string
-    server_port?: number | string
-    url_scheme?: string
     error_type?: string
   }
   metricName?: string

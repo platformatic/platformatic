@@ -99,9 +99,7 @@ test('httpMetrics observes outgoing HTTP client request durations', async t => {
   assert.strictEqual(count.labels.workerId, 2)
   assert.strictEqual(count.labels.method, 'POST')
   assert.strictEqual(count.labels.status_code, 201)
-  assert.strictEqual(count.labels.server_address, 'api.example.com')
-  assert.strictEqual(count.labels.server_port, 8443)
-  assert.strictEqual(count.labels.url_scheme, 'https')
+  assert.strictEqual(count.labels.dispatcher_stats_url, 'https://api.example.com:8443')
   assert.strictEqual(count.labels.error_type, '')
 })
 
@@ -126,9 +124,7 @@ test('httpMetrics observes outgoing HTTP client request errors', async t => {
   assert.strictEqual(count.value, 1)
   assert.strictEqual(count.labels.method, 'GET')
   assert.strictEqual(count.labels.status_code, '')
-  assert.strictEqual(count.labels.server_address, 'dependency.internal')
-  assert.strictEqual(count.labels.server_port, 80)
-  assert.strictEqual(count.labels.url_scheme, 'http')
+  assert.strictEqual(count.labels.dispatcher_stats_url, 'http://dependency.internal')
   assert.strictEqual(count.labels.error_type, 'UND_ERR_SOCKET')
 })
 
