@@ -799,6 +799,11 @@ export class BaseCapability extends EventEmitter {
       this.#reuseTcpPortsSubscribers = null
     }
 
+    if (this.metricsRegistry) {
+      clearRegistry(this.metricsRegistry)
+      this.#metricsCollected = false
+    }
+
     // Stop OTLP bridge if running
     if (this.otlpBridge) {
       this.otlpBridge.stop()

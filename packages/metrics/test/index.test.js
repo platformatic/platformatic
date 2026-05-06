@@ -1,6 +1,7 @@
 import assert from 'node:assert'
+import { channel } from 'node:diagnostics_channel'
 import { test } from 'node:test'
-import { buildCustomLabelsConfig, client, collectMetrics } from '../index.js'
+import { buildCustomLabelsConfig, clearRegistry, client, collectMetrics } from '../index.js'
 
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 
@@ -58,21 +59,82 @@ test('workerId is NOT included in labels when negative', async () => {
   assert.strictEqual(values[0].labels.workerId, undefined)
 })
 
-test('httpMetrics creates histogram and summary with collect functions', async () => {
+test('httpMetrics creates histogram and summary with collect functions', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
   const metrics = await result.registry.getMetricsAsJSON()
 
   const histogram = metrics.find(m => m.name === 'http_request_all_duration_seconds')
   const summary = metrics.find(m => m.name === 'http_request_all_summary_seconds')
+  const clientHistogram = metrics.find(m => m.name === 'http_client_request_duration_seconds')
 
   assert.ok(histogram, 'histogram metric should exist')
   assert.ok(summary, 'summary metric should exist')
+  assert.ok(clientHistogram, 'client histogram metric should exist')
   assert.strictEqual(histogram.help, 'request duration in seconds summary for all requests')
   assert.strictEqual(summary.help, 'request duration in seconds histogram for all requests')
+  assert.strictEqual(clientHistogram.help, 'outgoing HTTP client request duration in seconds')
 })
 
-test('httpMetrics histogram resets after metric collection', async () => {
+test('httpMetrics observes outgoing HTTP client request durations', async t => {
+  const result = await collectMetrics('test-service', 2, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
+
+  const request = {
+    method: 'POST',
+    origin: 'https://api.example.com:8443',
+    path: '/v1/resources'
+  }
+
+  channel('undici:request:create').publish({ request })
+  channel('undici:request:headers').publish({ request, response: { statusCode: 201 } })
+  channel('undici:request:trailers').publish({ request })
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  const histogram = metrics.find(m => m.name === 'http_client_request_duration_seconds')
+  const count = histogram.values.find(v => v.metricName === 'http_client_request_duration_seconds_count')
+
+  assert.strictEqual(count.value, 1)
+  assert.strictEqual(count.labels.applicationId, 'test-service')
+  assert.strictEqual(count.labels.workerId, 2)
+  assert.strictEqual(count.labels.method, 'POST')
+  assert.strictEqual(count.labels.status_code, 201)
+  assert.strictEqual(count.labels.server_address, 'api.example.com')
+  assert.strictEqual(count.labels.server_port, 8443)
+  assert.strictEqual(count.labels.url_scheme, 'https')
+  assert.strictEqual(count.labels.error_type, '')
+})
+
+test('httpMetrics observes outgoing HTTP client request errors', async t => {
+  const result = await collectMetrics('test-service', 3, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
+
+  const request = {
+    method: 'GET',
+    origin: 'http://dependency.internal',
+    path: '/health'
+  }
+  const error = Object.assign(new Error('socket closed'), { code: 'UND_ERR_SOCKET' })
+
+  channel('undici:request:create').publish({ request })
+  channel('undici:request:error').publish({ request, error })
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  const histogram = metrics.find(m => m.name === 'http_client_request_duration_seconds')
+  const count = histogram.values.find(v => v.metricName === 'http_client_request_duration_seconds_count')
+
+  assert.strictEqual(count.value, 1)
+  assert.strictEqual(count.labels.method, 'GET')
+  assert.strictEqual(count.labels.status_code, '')
+  assert.strictEqual(count.labels.server_address, 'dependency.internal')
+  assert.strictEqual(count.labels.server_port, 80)
+  assert.strictEqual(count.labels.url_scheme, 'http')
+  assert.strictEqual(count.labels.error_type, 'UND_ERR_SOCKET')
+})
+
+test('httpMetrics histogram resets after metric collection', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
 
   // Get the histogram metric using the public API
   const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
@@ -99,8 +161,9 @@ test('httpMetrics histogram resets after metric collection', async () => {
   assert.strictEqual(count?.value || 0, 0, 'histogram count should be reset to 0')
 })
 
-test('httpMetrics summary resets after metric collection', async () => {
+test('httpMetrics summary resets after metric collection', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
 
   // Get the summary metric using the public API
   const summaryMetric = result.registry.getSingleMetric('http_request_all_summary_seconds')
@@ -203,7 +266,7 @@ test('buildCustomLabelsConfig handles case-insensitive header names', () => {
   assert.deepStrictEqual(labels, { domain: 'example.com' })
 })
 
-test('httpMetrics with custom labels configuration', async () => {
+test('httpMetrics with custom labels configuration', async t => {
   const httpCustomLabels = [
     { name: 'domain', header: 'x-forwarded-host', default: 'localhost' }
   ]
@@ -212,6 +275,7 @@ test('httpMetrics with custom labels configuration', async () => {
     httpMetrics: true,
     httpCustomLabels
   })
+  t.after(() => clearRegistry(result.registry))
 
   const metrics = await result.registry.getMetricsAsJSON()
   const histogram = metrics.find(m => m.name === 'http_request_all_duration_seconds')
@@ -230,8 +294,9 @@ test('httpMetrics with custom labels configuration', async () => {
   assert.ok(hasCustomLabel, 'custom domain label should be present in histogram values')
 })
 
-test('httpMetrics does not include telemetry_id label by default', async () => {
+test('httpMetrics does not include telemetry_id label by default', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
+  t.after(() => clearRegistry(result.registry))
 
   const histogramMetric = result.registry.getSingleMetric('http_request_all_duration_seconds')
   assert.ok(histogramMetric, 'histogram metric should exist')

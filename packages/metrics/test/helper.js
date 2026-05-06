@@ -124,6 +124,10 @@ export const expectedMetrics = [
   {
     name: 'http_request_all_duration_seconds',
     type: 'histogram'
+  },
+  {
+    name: 'http_client_request_duration_seconds',
+    type: 'histogram'
   }
 ]
 
@@ -141,19 +145,19 @@ function assertSummary (metrics, metric) {
 }
 
 function assertHistogram (metrics, metric) {
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.005"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.01"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.025"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.05"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.1"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.25"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.5"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="1"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="2.5"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="5"'))
-  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="10"'))
-  ok(metrics.includes('http_request_all_duration_seconds_sum{'))
-  ok(metrics.includes('http_request_all_duration_seconds_count{'))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.005"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.01"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.025"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.05"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.1"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.25"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="0.5"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="1"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="2.5"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="5"`))
+  ok(metrics.includes(`${metric.name}_bucket{le="10"`))
+  ok(metrics.includes(`${metric.name}_sum{`))
+  ok(metrics.includes(`${metric.name}_count{`))
 }
 
 export function assertMetric (metrics, metric) {

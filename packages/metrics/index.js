@@ -1,4 +1,5 @@
 import collectHttpMetrics from '@platformatic/http-metrics'
+import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
 import client from '@platformatic/prom-client'
@@ -21,9 +22,10 @@ import gc from '@platformatic/prom-client/lib/metrics/gc.js'
 export * as client from '@platformatic/prom-client'
 
 const { eventLoopUtilization } = performance
-const { Registry, Gauge, Counter, collectDefaultMetrics } = client
+const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
+const kMetricsCleanups = Symbol('plt.metrics.MetricsCleanups')
 
 // Process-level metrics (same across all workers, collect once in main thread)
 export const PROCESS_LEVEL_METRICS = [
@@ -90,11 +92,126 @@ export function ensureMetricsGroup (registry, group) {
   return false
 }
 
+export function registerMetricsCleanup (registry, cleanup) {
+  registry[kMetricsCleanups] ??= new Set()
+  registry[kMetricsCleanups].add(cleanup)
+}
+
 export function clearRegistry (registry) {
+  if (registry[kMetricsCleanups]) {
+    for (const cleanup of registry[kMetricsCleanups]) {
+      cleanup()
+    }
+    registry[kMetricsCleanups].clear()
+  }
+
   registry.clear()
   if (registry[kMetricsGroups]) {
     registry[kMetricsGroups].clear()
   }
+}
+
+function getHttpClientLabels (request, response, error) {
+  let origin
+
+  try {
+    origin = new URL(request?.origin ?? request?.path)
+  } catch {
+    origin = null
+  }
+
+  const urlScheme = origin?.protocol ? origin.protocol.slice(0, -1) : 'unknown'
+  const defaultPort = urlScheme === 'https' ? 443 : urlScheme === 'http' ? 80 : 0
+
+  return {
+    method: request?.method ?? 'unknown',
+    status_code: response?.statusCode ?? '',
+    server_address: origin?.hostname ?? 'unknown',
+    server_port: origin?.port ? Number(origin.port) : defaultPort,
+    url_scheme: urlScheme,
+    error_type: error ? String(error.code ?? error.name ?? 'unknown') : ''
+  }
+}
+
+export function collectHttpClientMetrics (registry) {
+  if (ensureMetricsGroup(registry, 'http-client')) {
+    return
+  }
+
+  const requestDurationMetric = new Histogram({
+    name: 'http_client_request_duration_seconds',
+    help: 'outgoing HTTP client request duration in seconds',
+    labelNames: ['method', 'status_code', 'server_address', 'server_port', 'url_scheme', 'error_type'],
+    collect: function () {
+      process.nextTick(() => this.reset())
+    },
+    registers: [registry]
+  })
+
+  const requests = new WeakMap()
+
+  const onRequestCreate = ({ request }) => {
+    if (request && typeof request === 'object') {
+      requests.set(request, { start: performance.now() })
+    }
+  }
+
+  const onRequestHeaders = ({ request, response }) => {
+    const data = request && typeof request === 'object' ? requests.get(request) : undefined
+    if (data) {
+      data.response = response
+    }
+  }
+
+  const observeRequest = ({ request, response, error }) => {
+    const data = request && typeof request === 'object' ? requests.get(request) : undefined
+    if (!data) {
+      return
+    }
+
+    requests.delete(request)
+    requestDurationMetric.observe(getHttpClientLabels(request, response ?? data.response, error), (performance.now() - data.start) / 1000)
+  }
+
+  subscribe('undici:request:create', onRequestCreate)
+  subscribe('undici:request:headers', onRequestHeaders)
+  subscribe('undici:request:trailers', observeRequest)
+  subscribe('undici:request:error', observeRequest)
+
+  registerMetricsCleanup(registry, () => {
+    unsubscribe('undici:request:create', onRequestCreate)
+    unsubscribe('undici:request:headers', onRequestHeaders)
+    unsubscribe('undici:request:trailers', observeRequest)
+    unsubscribe('undici:request:error', observeRequest)
+  })
+}
+
+function collectHttpServerMetrics (registry, metricsConfig) {
+  if (ensureMetricsGroup(registry, 'http')) {
+    return
+  }
+
+  // Build custom labels configuration
+  const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+
+  collectHttpMetrics(registry, {
+    customLabels,
+    getCustomLabels,
+    histogram: {
+      name: 'http_request_all_duration_seconds',
+      help: 'request duration in seconds summary for all requests',
+      collect: function () {
+        process.nextTick(() => this.reset())
+      }
+    },
+    summary: {
+      name: 'http_request_all_summary_seconds',
+      help: 'request duration in seconds histogram for all requests',
+      collect: function () {
+        process.nextTick(() => this.reset())
+      }
+    }
+  })
 }
 
 export async function collectThreadCpuMetrics (registry) {
@@ -283,28 +400,9 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
     await collectThreadCpuMetrics(registry)
   }
 
-  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
-    // Build custom labels configuration
-    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
-
-    collectHttpMetrics(registry, {
-      customLabels,
-      getCustomLabels,
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      }
-    })
+  if (metricsConfig.httpMetrics) {
+    collectHttpServerMetrics(registry, metricsConfig)
+    collectHttpClientMetrics(registry)
   }
 
   return {
@@ -365,28 +463,9 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
     await collectThreadCpuMetrics(registry)
   }
 
-  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
-    // Build custom labels configuration
-    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
-
-    collectHttpMetrics(registry, {
-      customLabels,
-      getCustomLabels,
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      }
-    })
+  if (metricsConfig.httpMetrics) {
+    collectHttpServerMetrics(registry, metricsConfig)
+    collectHttpClientMetrics(registry)
   }
 
   return {
