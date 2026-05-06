@@ -276,8 +276,6 @@ Here's an example of a minimal `package.json` for a Next.js standalone app:
 }
 ```
 
-This is a standard Next.js package.json - no Watt dependencies needed. The `wattpm` and `@platformatic/next` packages are installed only in the Docker production image.
-
 And a minimal `watt.json`:
 
 ```json
@@ -295,7 +293,7 @@ And a minimal `watt.json`:
 }
 ```
 
-The only required change is to insert `standalone: true` in the `next` section.
+The only required configuration change is `next.standalone: true` in `watt.json`.
 
 #### Why use Watt with standalone instead of raw Next.js standalone?
 
@@ -306,62 +304,67 @@ While Next.js standalone mode produces a minimal `server.js` that can run indepe
 - Health check endpoints
 - Unified logging and observability
 
-The trade-off is a slightly larger Docker image since Watt and its dependencies (`@platformatic/*` packages) must be included alongside the standalone build.
+#### Preferred deployment flow: pack a self-contained bundle
 
-#### Dockerfile for Standalone Mode
+Use the Next-specific application command exposed by Watt to create a deployable bundle that already includes the runtime pieces Watt needs.
 
-Next.js standalone mode uses [@vercel/nft](https://github.com/vercel/nft) to trace dependencies and only includes packages that are actually imported by your application code.
+From the project root:
 
-The `.next/static` folder and `public` folder must be copied manually if needed.
+```bash
+npx wattpm build
+npx wattpm help
+npx wattpm <app-id>:pack --output .platformatic/next-bundle
+```
+
+Use the application command shown under **Applications Commands** in `wattpm help`. For a single imported app, the application id usually comes from `package.json`.
+
+The packed bundle contains:
+- the Next standalone output
+- `.next/static`
+- `public/` when present
+- a bundle-local `watt.json`
+- a bundle-local `./node_modules/.bin/wattpm`
+
+That means the production image only needs to copy the bundle and start it.
+
+#### Dockerfile for the packed bundle
 
 ```Dockerfile
-# Stage 1: Build
+# Stage 1: Build and pack
 FROM node:24-slim AS builder
 
 WORKDIR /app
 COPY ./ ./
-RUN npm install && npm run build
+RUN npm install
+RUN npx wattpm build
+RUN npx wattpm my-next-app:pack --output .platformatic/next-bundle
 
 # Stage 2: Production
 FROM node:24-slim
 
 WORKDIR /app
-
-# Copy the necessary files from the builder stage
-COPY --from=builder /app/.next/standalone .
-COPY --from=builder /app/watt.json ./watt.json
-COPY --from=builder /app/.next/static .next/static
-# Remove or comment out the following if you don't have a public folder
-COPY --from=builder /app/public ./public
-
-# Install Watt and Platformatic Next with a specific version
-ARG PLT_VERSION=3.33.0
-RUN npm install -g wattpm@${PLT_VERSION} @platformatic/next@${PLT_VERSION}
+COPY --from=builder /app/.platformatic/next-bundle/ ./
 
 ENV PLT_SERVER_HOSTNAME=0.0.0.0
 ENV PORT=3042
 EXPOSE 3042
-CMD ["wattpm", "start"]
+CMD ["./node_modules/.bin/wattpm", "start"]
 ```
 
-**Important**: You must specify the Platformatic version (`PLT_VERSION`) in the Dockerfile. Both `wattpm` and `@platformatic/next` must use the same version. Update the default value in the `ARG` line, or override it at build time:
+This flow has two advantages over installing Watt in the production image:
+- the final image does not run `npm install`
+- the Dockerfile does not need to hardcode a Platformatic version
+
+#### Verifying standalone packing
+
+After packing, verify that the bundle contains the expected files:
 
 ```bash
-docker build --build-arg PLT_VERSION=3.30.0 -t my-next-app .
+ls -la .platformatic/next-bundle/
+ls -la .platformatic/next-bundle/node_modules/.bin/wattpm
 ```
 
-#### Verifying Standalone Mode
-
-After building, verify that standalone mode is working:
-
-```bash
-# Check that .next/standalone exists
-ls -la .next/standalone/
-
-# The directory should contain server.js and minimal dependencies
-```
-
-When Watt starts with a standalone build, it automatically detects and uses the standalone server internally while providing all the Watt runtime features.
+When Watt starts from the packed bundle, it automatically detects and uses the standalone server internally while keeping the Watt runtime features available.
 
 ### Building the image
 
