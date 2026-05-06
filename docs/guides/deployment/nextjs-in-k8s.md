@@ -258,7 +258,7 @@ Add `output: "standalone"` to your `next.config.js` or `next.config.mjs`.
 export default nextConfig
 ```
 
-Here's an example of a minimal `package.json` for a Next.js standalone app:
+Here's one option for a minimal `package.json` for a Next.js standalone app:
 
 ```json
 {
@@ -276,7 +276,29 @@ Here's an example of a minimal `package.json` for a Next.js standalone app:
 }
 ```
 
-This is a standard Next.js package.json - no Watt dependencies needed. The `wattpm` and `@platformatic/next` packages are installed only in the Docker production image.
+This keeps the application manifest as a standard Next.js `package.json`. In this setup, `wattpm` and `@platformatic/next` are installed only in the Docker production image.
+
+If you want Dependabot, Renovate, or your lockfile to manage the Platformatic runtime version too, you can instead declare `wattpm` and `@platformatic/next` in `package.json` and start the container with the local binary from `node_modules/.bin`:
+
+```json
+{
+  "name": "my-next-app",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@platformatic/next": "^3.52.4",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "wattpm": "^3.52.4"
+  }
+}
+```
+
+Use this second approach if you want the Platformatic version to live in package-manager-managed metadata instead of in the Dockerfile.
 
 And a minimal `watt.json`:
 
@@ -349,6 +371,43 @@ CMD ["wattpm", "start"]
 ```bash
 docker build --build-arg PLT_VERSION=3.30.0 -t my-next-app .
 ```
+
+#### Alternative: manage Watt dependencies in `package.json`
+
+If you prefer to manage `wattpm` and `@platformatic/next` with Dependabot, Renovate, or your lockfile, add them to `package.json` and install production dependencies in the final image instead of installing Platformatic globally.
+
+In that case, use a Dockerfile like this:
+
+```Dockerfile
+# Stage 1: Build
+FROM node:24-slim AS builder
+
+WORKDIR /app
+COPY ./ ./
+RUN npm install && npm run build
+
+# Stage 2: Production
+FROM node:24-slim
+
+WORKDIR /app
+
+# Copy the necessary files from the builder stage
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/watt.json ./watt.json
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/.next/static ./.next/static
+# Remove or comment out the following if you don't have a public folder
+COPY --from=builder /app/public ./public
+
+RUN npm install --omit=dev
+
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV PORT=3042
+EXPOSE 3042
+CMD ["./node_modules/.bin/wattpm", "start"]
+```
+
+Use `CMD ["./node_modules/.bin/wattpm", "start"]` here rather than `CMD ["wattpm", "start"]`, because `wattpm` is installed locally in `node_modules/.bin`.
 
 #### Verifying Standalone Mode
 
