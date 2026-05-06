@@ -1,4 +1,8 @@
 import { diag } from '@opentelemetry/api'
+import { resourceFromAttributes } from '@opentelemetry/resources'
+import { BatchSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { deepStrictEqual, strictEqual } from 'node:assert'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
@@ -88,7 +92,7 @@ test('setupDiagLogger configures the OpenTelemetry diagnostic logger using the p
   t.after(() => diag.disable())
 })
 
-test('createPlatformaticDiagLogger preserves additional OpenTelemetry diagnostic arguments with pino', async () => {
+test('createPlatformaticDiagLogger preserves additional primitive OpenTelemetry diagnostic arguments with pino', async () => {
   const lines = []
   const stream = new Writable({
     write (chunk, _encoding, callback) {
@@ -100,9 +104,88 @@ test('createPlatformaticDiagLogger preserves additional OpenTelemetry diagnostic
 
   const diagLogger = createPlatformaticDiagLogger(logger)
   diagLogger.warn('first', 'second', 42)
-  diagLogger.debug('caught hook error: ', new Error('boom'))
 
   strictEqual(lines[0].msg, 'first second 42')
-  strictEqual(lines[1].msg.includes('caught hook error:'), true)
-  strictEqual(lines[1].msg.includes('Error: boom'), true)
+})
+
+test('createPlatformaticDiagLogger serializes object diagnostic details with pino', async () => {
+  const lines = []
+  const stream = new Writable({
+    write (chunk, _encoding, callback) {
+      lines.push(JSON.parse(chunk.toString()))
+      callback()
+    }
+  })
+  const logger = pino({ level: 'trace' }, stream)
+
+  const diagLogger = createPlatformaticDiagLogger(logger)
+  diagLogger.debug('caught hook error: ', new Error('boom'))
+
+  strictEqual(lines[0].msg, 'caught hook error: ')
+  strictEqual(lines[0].details[0].name, 'Error')
+  strictEqual(lines[0].details[0].message, 'boom')
+  strictEqual(typeof lines[0].details[0].stack, 'string')
+})
+
+test('createPlatformaticDiagLogger uses toJSON() for diagnostic details when available', async () => {
+  const lines = []
+  const stream = new Writable({
+    write (chunk, _encoding, callback) {
+      lines.push(JSON.parse(chunk.toString()))
+      callback()
+    }
+  })
+  const logger = pino({ level: 'trace' }, stream)
+
+  class SpanLike {
+    constructor (name) {
+      this.name = name
+      this.attributes = { hidden: true }
+    }
+
+    toJSON () {
+      return {
+        name: this.name,
+        attributes: {
+          visible: true
+        }
+      }
+    }
+  }
+
+  const diagLogger = createPlatformaticDiagLogger(logger)
+  diagLogger.debug('items to be sent', [new SpanLike('first')])
+
+  strictEqual(lines[0].msg, 'items to be sent')
+  deepStrictEqual(lines[0].details, [[{ name: 'first', attributes: { visible: true } }]])
+})
+
+test('createPlatformaticDiagLogger renders spans with a compact structured shape', async () => {
+  const lines = []
+  const stream = new Writable({
+    write (chunk, _encoding, callback) {
+      lines.push(JSON.parse(chunk.toString()))
+      callback()
+    }
+  })
+  const logger = pino({ level: 'trace' }, stream)
+  const provider = new NodeTracerProvider({
+    resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'test-service' }),
+    spanProcessors: [new BatchSpanProcessor(new InMemorySpanExporter())]
+  })
+  const tracer = provider.getTracer('test-scope')
+  const span = tracer.startSpan('hello')
+  span.setAttribute('foo', 'bar')
+  span.end()
+
+  const diagLogger = createPlatformaticDiagLogger(logger)
+  diagLogger.debug('items to be sent', [span])
+
+  strictEqual(lines[0].msg, 'items to be sent')
+  strictEqual(lines[0].details[0][0].name, 'hello')
+  strictEqual(lines[0].details[0][0].attributes.foo, 'bar')
+  strictEqual(lines[0].details[0][0].resource['service.name'], 'test-service')
+  strictEqual(lines[0].details[0][0].instrumentationScope.name, 'test-scope')
+  strictEqual('_spanProcessor' in lines[0].details[0][0], false)
+  strictEqual('_performanceStartTime' in lines[0].details[0][0], false)
 })
