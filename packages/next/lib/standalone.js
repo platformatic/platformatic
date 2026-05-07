@@ -5,7 +5,7 @@ import * as errors from './errors.js'
 
 export async function resolveStandaloneEntrypoint (root) {
   const serverEntrypoints = await Array.fromAsync(
-    glob(['server.js', '.next/standalone/**/server.js'], {
+    glob('**/server.js', {
       cwd: root,
       exclude: ['node_modules', '**/node_modules/**']
     })
