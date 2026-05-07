@@ -544,11 +544,21 @@ export class BaseCapability extends EventEmitter {
       await this.childManager.eject()
     }
 
-    // If the process exits prematurely, terminate the thread with the same code
-    this.subprocess.on('exit', code => {
-      if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
+    // If the process exits prematurely, terminate the thread with the same code.
+    // When the child is killed by a signal (V8 FATAL/SIGABRT, OOM SIGKILL, native
+    // segfault, etc.) Node invokes the listener with code=null and signal set —
+    // propagate those as a non-zero exit so the runtime can replace the worker
+    // promptly instead of waiting for ELU/heap monitoring to flag it unhealthy.
+    this.subprocess.on('exit', (code, signal) => {
+      if (!this.#subprocessStarted) {
+        return
+      }
+      if (typeof code === 'number' && code !== 0) {
         this.childManager.close()
         process.exit(code)
+      } else if (signal) {
+        this.childManager.close()
+        process.exit(1)
       }
     })
 
