@@ -22,7 +22,7 @@
     "express": "^5.1.0",
     "fastify": "^5.7.0",
     "neostandard": "^0.12.2",
-    "protobufjs": "^7.5.3",
+    "protobufjs": "^8.0.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
