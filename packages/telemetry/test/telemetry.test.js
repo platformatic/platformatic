@@ -249,7 +249,7 @@ test('should configure OTLP correctly', async () => {
   const exporter = exporters[0]
   const exporterUrl = (exporter._delegate ?? exporter)._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
-  equal(exporterUrl, 'http://localhost:4317')
+  equal(exporterUrl, 'http://localhost:4317/')
 })
 
 test('should configure Zipkin correctly', async () => {
@@ -417,7 +417,7 @@ test('should configure an exporter as an array', async () => {
   const exporter = exporters[0]
   const exporterUrl = (exporter._delegate ?? exporter)._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
-  equal(exporterUrl, 'http://localhost:4317')
+  equal(exporterUrl, 'http://localhost:4317/')
 })
 
 test('do not stop closing the server if the exporter fails', async () => {
