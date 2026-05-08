@@ -704,7 +704,14 @@ export const telemetry = {
       ]
     },
     diagLogger: {
-      type: 'boolean',
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ],
       description: 'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
     }
   },
