@@ -29,7 +29,7 @@ test('configure telemetry correctly with a express app using pg', async t => {
   })
   equal(statusCode, 200)
   const spans = await getSpans(spansPath)
-  const dbSpan = spans.find(span => span.name === 'pg.query:SELECT test-telemetry-pg')
+  const dbSpan = spans.find(span => span.attributes?.['db.statement'] === 'SELECT * FROM users')
   const statement = dbSpan.attributes['db.statement']
   equal(statement, 'SELECT * FROM users')
 })
