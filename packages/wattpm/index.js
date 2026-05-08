@@ -144,7 +144,6 @@ export async function main () {
     default:
       if (requestedCommand) {
         const applicationsCommands = await loadApplicationsCommands(this.executableName)
-        console.log(applicationsCommands)
         const applicationCommand = applicationsCommands.commands[requestedCommand]
 
         if (applicationCommand) {
@@ -166,8 +165,11 @@ export async function main () {
   }
 
   if (applicationCommandContext) {
+    const invocationCwd = process.cwd()
     process.chdir(applicationCommandContext.path)
     return command.call(this, logger, applicationCommandContext.config, unparsed.slice(1), {
+      application: applicationCommandContext,
+      cwd: invocationCwd,
       colorette,
       parseArgs,
       logFatalError

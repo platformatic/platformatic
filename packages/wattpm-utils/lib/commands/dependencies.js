@@ -11,7 +11,7 @@ import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import { rsort, satisfies } from 'semver'
@@ -37,6 +37,36 @@ async function executeCommand (root, ...args) {
   return execa(...args)
 }
 
+async function withTemporaryPnpmConfig (directory, fn) {
+  const npmrc = resolve(directory, '.npmrc')
+  const marker = 'minimum-release-age-exclude[]=@platformatic/*'
+  let originalContents = null
+
+  if (!existsSync(npmrc)) {
+    await writeFile(npmrc, `${marker}\n`, 'utf-8')
+  } else {
+    const contents = await readFile(npmrc, 'utf-8')
+    if (!contents.includes(marker)) {
+      originalContents = contents
+      const prefix = contents.endsWith('\n') || contents.length === 0 ? '' : '\n'
+      await writeFile(npmrc, `${contents}${prefix}${marker}\n`, 'utf-8')
+    }
+  }
+
+  try {
+    return await fn()
+  } finally {
+    if (originalContents !== null) {
+      await writeFile(npmrc, originalContents, 'utf-8')
+    } else if (existsSync(npmrc)) {
+      const contents = await readFile(npmrc, 'utf-8')
+      if (contents === `${marker}\n`) {
+        await rm(npmrc, { force: true })
+      }
+    }
+  }
+}
+
 export async function installDependencies (logger, root, applications, production, packageManager) {
   if (typeof applications === 'string') {
     const config = await loadConfiguration(applications, null, { validate: false })
@@ -59,11 +89,17 @@ export async function installDependencies (logger, root, applications, productio
   try {
     logger.info(`Installing ${production ? 'production ' : ''}dependencies for the project using ${packageManager} ...`)
 
-    await executeCommand(root, packageManager, args, {
+    const installProjectDependencies = () => executeCommand(root, packageManager, args, {
       cwd: root,
       stdio: 'inherit',
       reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
     })
+
+    if (packageManager === 'pnpm') {
+      await withTemporaryPnpmConfig(root, installProjectDependencies)
+    } else {
+      await installProjectDependencies()
+    }
     /* c8 ignore next 7 */
   } catch (error) {
     return logFatalError(
@@ -102,11 +138,18 @@ export async function installDependencies (logger, root, applications, productio
         }
       }
 
-      await executeCommand(root, applicationPackageManager, applicationPackageArgs, {
-        cwd: resolve(root, path),
+      const applicationRoot = resolve(root, path)
+      const installApplicationDependencies = () => executeCommand(root, applicationPackageManager, applicationPackageArgs, {
+        cwd: applicationRoot,
         stdio: 'inherit',
         reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
       })
+
+      if (applicationPackageManager === 'pnpm') {
+        await withTemporaryPnpmConfig(applicationRoot, installApplicationDependencies)
+      } else {
+        await installApplicationDependencies()
+      }
       /* c8 ignore next 7 */
     } catch (error) {
       return logFatalError(

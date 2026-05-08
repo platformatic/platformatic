@@ -88,7 +88,7 @@ Configures Next.js. Supported object properties:
   }
   ```
 
-- **`standalone`**: Set to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output).
+- **`standalone`**: Set to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output). This also enables the Next-specific application command used to pack a self-contained bundle for deployment. Run `wattpm help` in your project to see the available `<app-id>:pack` command.
 - **`https`**: Enables HTTPS in development mode when Platformatic starts Next.js with the default development command.
   - **`enabled`** (`boolean` or `string`): Enables Next.js experimental HTTPS.
   - **`key`**: Path (relative to the application root) to the HTTPS private key file.

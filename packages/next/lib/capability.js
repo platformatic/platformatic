@@ -11,14 +11,12 @@ import {
 } from '@platformatic/basic'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
-import { existsSync } from 'node:fs'
-import { glob, readFile, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
-import * as errors from './errors.js'
 import { version } from './schema.js'
+import { parseStandaloneNextConfig, requireStandaloneStartServer, resolveStandaloneEntrypoint } from './standalone.js'
 
 export const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
@@ -53,7 +51,7 @@ export class NextCapability extends BaseCapability {
     process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
 
     if (!building && this.isProduction && this.config.next?.standalone) {
-      this.#standaloneEntrypoint = await this.#resolveStandaloneEntrypoint()
+      this.#standaloneEntrypoint = await resolveStandaloneEntrypoint(this.root)
       this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.#standaloneEntrypoint, 'next')), '../..')
     } else {
       this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
@@ -382,14 +380,7 @@ export class NextCapability extends BaseCapability {
 
     // Parse the server.js to extract the nextConfig.
     // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
-    let nextConfig
-    try {
-      const serverJsContent = await readFile(this.#standaloneEntrypoint, 'utf-8')
-      const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
-      nextConfig = JSON.parse(nextConfigMatch[1])
-    } catch (e) {
-      throw new errors.CannotParseStandaloneServer({ cause: e })
-    }
+    const nextConfig = await parseStandaloneNextConfig(this.#standaloneEntrypoint)
 
     // Fix cache handlers path
     if (nextConfig.env?.PLT_NEXT_MODIFICATIONS) {
@@ -430,7 +421,7 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const { startServer } = this.#requireStandaloneEntrypoint(this.#standaloneEntrypoint)
+      const { startServer } = requireStandaloneStartServer(this.#standaloneEntrypoint)
 
       await startServer({
         dir: dirname(this.#standaloneEntrypoint),
@@ -528,46 +519,5 @@ export class NextCapability extends BaseCapability {
     }
 
     return distDir
-  }
-
-  async #resolveStandaloneEntrypoint () {
-    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
-    // inside .next/standalone due to turbopack limitations in determining the root of the project.
-    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
-    const serverEntrypoints = await Array.fromAsync(
-      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
-    )
-
-    let serverEntrypoint
-    for (const entrypoint of serverEntrypoints) {
-      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
-        const candidate = resolvePath(this.root, entrypoint)
-        const contents = await readFile(candidate, 'utf-8')
-
-        if (contents.includes('process.env.__NEXT_PRIVATE_STANDALONE_CONFIG =')) {
-          serverEntrypoint = candidate
-          break
-        }
-      }
-    }
-
-    if (!serverEntrypoint) {
-      throw new errors.StandaloneServerNotFound()
-    }
-
-    return serverEntrypoint
-  }
-
-  #requireStandaloneEntrypoint (serverEntrypoint) {
-    let serverModule
-
-    try {
-      serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
-    } catch (e) {
-      // Fallback to bundled capability
-      serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
-    }
-
-    return serverModule.default ?? serverModule
   }
 }

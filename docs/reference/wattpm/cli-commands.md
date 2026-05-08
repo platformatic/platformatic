@@ -162,6 +162,47 @@ wattpm update
 wattpm update --force
 ```
 
+## Application Commands
+
+Some capabilities expose commands for a specific application. These commands are discovered from your project configuration and shown under **Applications Commands** in:
+
+```bash
+wattpm help
+```
+
+Examples include database migration commands such as `service-db:migrations:apply` and capability-specific commands such as Next standalone packing.
+
+### `wattpm <app-id>:pack`
+
+Creates a self-contained standalone bundle for a Next.js application.
+
+```bash
+wattpm <app-id>:pack
+```
+
+**Requirements:**
+
+- the target application must use `@platformatic/next`
+- Next.js must be configured with `output: "standalone"`
+- the Platformatic application config must set `next.standalone: true`
+
+**Options:**
+
+- `-o, --output <path>` - Output directory for the packed bundle
+- `--no-build` - Fail if the standalone build output is missing instead of building it first
+
+**Example:**
+
+```bash
+wattpm my-next-app:pack --output .platformatic/next-bundle
+```
+
+The resulting bundle is intended to be started with:
+
+```bash
+./node_modules/.bin/wattpm start
+```
+
 ## Application Management Commands
 
 These commands help you manage running Watt applications:
