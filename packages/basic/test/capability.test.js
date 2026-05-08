@@ -740,6 +740,30 @@ test('BaseCapability - startCommand - should kill the process on non-zero exit c
   deepStrictEqual(await promise, 123)
 })
 
+test(
+  'BaseCapability - startCommand - should kill the process when the child dies from a signal',
+  { skip: isWindows },
+  async t => {
+    const capability = await create(t)
+
+    const { promise, resolve, reject } = Promise.withResolvers()
+    t.mock.method(process, 'exit', code => {
+      resolve(code)
+    })
+
+    const timeout = setTimeout(() => {
+      reject(new Error('process.exit was not called within 5s after signal-induced child exit'))
+    }, 5000)
+    timeout.unref()
+    t.after(() => clearTimeout(timeout))
+
+    const executablePath = fileURLToPath(new URL('./fixtures/signal-exit.js', import.meta.url))
+    await capability.startWithCommand(`node ${executablePath}`)
+
+    deepStrictEqual(await promise, 1)
+  }
+)
+
 test('BaseCapability - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
   const capability = await create(
     t,
