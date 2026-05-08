@@ -49,10 +49,10 @@ test('every @opentelemetry/* package resolves to a single version in the telemet
   assert.equal(
     dupes.length,
     0,
-    `Duplicate @opentelemetry/* versions detected in @platformatic/telemetry's dep tree.\n` +
-      `Each @opentelemetry/* package must resolve to exactly one version, otherwise ` +
-      `instrumentations and the SDK will use mismatched class instances and lose spans.\n` +
-      `Fix by aligning the pinned versions in package.json with what @opentelemetry/sdk-node pins.\n\n` +
+    'Duplicate @opentelemetry/* versions detected in the @platformatic/telemetry dep tree.\n' +
+      'Each @opentelemetry/* package must resolve to exactly one version, otherwise ' +
+      'instrumentations and the SDK will use mismatched class instances and lose spans.\n' +
+      'Fix by aligning the pinned versions in package.json with what @opentelemetry/sdk-node pins.\n\n' +
       `Duplicates:\n${dupes.join('\n')}`
   )
 })
