@@ -1,17 +1,22 @@
+import { existsSync } from 'node:fs'
 import { glob, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { resolve as resolvePath } from 'node:path'
+import { dirname, resolve as resolvePath } from 'node:path'
 import * as errors from './errors.js'
 
 export async function resolveStandaloneEntrypoint (root) {
   const serverEntrypoints = await Array.fromAsync(
-    glob('**/server.js', {
+    glob(['server.js', '.next/standalone/**/server.js', '**/server.js'], {
       cwd: root,
       exclude: ['node_modules', '**/node_modules/**']
     })
   )
 
   for (const entrypoint of serverEntrypoints) {
+    if (entrypoint !== 'server.js' && !existsSync(resolvePath(root, dirname(entrypoint), '.next'))) {
+      continue
+    }
+
     const candidate = resolvePath(root, entrypoint)
     const contents = await readFile(candidate, 'utf-8')
 
