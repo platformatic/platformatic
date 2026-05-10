@@ -116,15 +116,6 @@ export function clearRegistry (registry) {
   }
 }
 
-function getNestedMapValue (map, key) {
-  let value = map.get(key)
-  if (!value) {
-    value = new Map()
-    map.set(key, value)
-  }
-  return value
-}
-
 function getHttpClientRequestOrigin (request) {
   return typeof request.origin === 'string' && request.origin.length > 0 ? request.origin : 'unknown'
 }
@@ -133,36 +124,17 @@ function getHttpClientErrorType (error) {
   return error ? String(error.code ?? error.name ?? 'unknown') : ''
 }
 
-function getHttpClientObserver (observers, metric, method, statusCode, dispatcherStatsUrl, errorType) {
-  const methodObservers = getNestedMapValue(observers, method)
-  const statusCodeObservers = getNestedMapValue(methodObservers, statusCode)
-  const dispatcherStatsUrlObservers = getNestedMapValue(statusCodeObservers, dispatcherStatsUrl)
-  let observer = dispatcherStatsUrlObservers.get(errorType)
-
-  if (!observer) {
-    observer = metric.labels(method, statusCode, dispatcherStatsUrl, errorType)
-    dispatcherStatsUrlObservers.set(errorType, observer)
-  }
-
-  return observer
-}
-
 export function collectHttpClientMetrics (registry) {
   if (ensureMetricsGroup(registry, 'http-client')) {
     return
   }
-
-  const observers = new Map()
 
   const requestDurationMetric = new Histogram({
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
     labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
     collect: function () {
-      process.nextTick(() => {
-        this.reset()
-        observers.clear()
-      })
+      process.nextTick(() => this.reset())
     },
     registers: [registry]
   })
@@ -198,7 +170,12 @@ export function collectHttpClientMetrics (registry) {
     delete request[kHttpClientRequestStart]
     delete request[kHttpClientRequestStatusCode]
 
-    getHttpClientObserver(observers, requestDurationMetric, method, statusCode, dispatcherStatsUrl, errorType).observe(duration)
+    requestDurationMetric.observe({
+      method,
+      status_code: statusCode,
+      dispatcher_stats_url: dispatcherStatsUrl,
+      error_type: errorType
+    }, duration)
   }
 
   subscribe('undici:request:create', onRequestCreate)
