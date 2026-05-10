@@ -19,6 +19,8 @@ minimumReleaseAgeExclude:
   - '@platformatic/*'
   # Renovate security update: protobufjs@8.0.1
   - protobufjs@8.0.1
+  # Renovate security update: fast-uri@3.1.2
+  - fast-uri@3.1.2
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
