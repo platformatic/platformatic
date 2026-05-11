@@ -21,6 +21,8 @@ minimumReleaseAgeExclude:
   - protobufjs@8.0.1
   # Renovate security update: fast-uri@3.1.2
   - fast-uri@3.1.2
+  # Renovate security update: next@16.2.5
+  - next@16.2.5
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
