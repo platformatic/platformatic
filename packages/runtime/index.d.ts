@@ -142,7 +142,26 @@ export class WrappedGenerator extends BaseGenerator {}
 
 export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 
-export declare class Runtime {}
+export declare class Runtime {
+  init (): Promise<void>
+  start (silent?: boolean): Promise<void>
+  stop (silent?: boolean): Promise<void>
+  close (silent?: boolean): Promise<void>
+  restart (applications?: string[]): Promise<string | undefined>
+  inject (id: string, injectParams: InjectParams): Promise<InjectResponse>
+  getUrl (): string | undefined
+  getRuntimeStatus (): string
+  getRuntimeMetadata (): Promise<RuntimeMetadata>
+  getRuntimeEnv (): Record<string, string>
+  getRuntimeConfig (includeMeta?: boolean): Record<string, unknown>
+  getApplicationsIds (): string[]
+  getApplicationDetails (id: string, allowUnloaded?: boolean): Promise<ApplicationDetails>
+  startApplication (id: string, silent?: boolean): Promise<void>
+  stopApplication (id: string, silent?: boolean): Promise<void>
+  restartApplication (id: string): Promise<void>
+  addApplications (applications: unknown[], start?: boolean): Promise<ApplicationDetails[]>
+  removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
+}
 
 export function wrapInRuntimeConfig (
   config: Configuration<unknown>,
