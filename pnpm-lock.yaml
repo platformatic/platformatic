@@ -347,7 +347,7 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       esmock:
         specifier: ^2.6.4
-        version: 2.7.3
+        version: 2.7.5
       fastify:
         specifier: ^5.7.0
         version: 5.8.5
@@ -6634,8 +6634,8 @@ packages:
       jiti:
         optional: true
 
-  esmock@2.7.3:
-    resolution: {integrity: sha512-/M/YZOjgyLaVoY6K83pwCsGE1AJQnj4S4GyXLYgi/Y79KL8EeW6WU7Rmjc89UO7jv6ec8+j34rKeWOfiLeEu0A==}
+  esmock@2.7.5:
+    resolution: {integrity: sha512-jKwL7yYpVOERalCllSnPur59s9M0gV5BKijtmOKclqDMuhqdS7DT/a7cODjz6w1XusE0wAaHBTrK+zgab/ENgw==}
     engines: {node: '>=14.16.0'}
 
   espree@10.4.0:
@@ -16227,7 +16227,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  esmock@2.7.3: {}
+  esmock@2.7.5: {}
 
   espree@10.4.0:
     dependencies:
