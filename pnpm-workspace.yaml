@@ -17,8 +17,8 @@ hoist: false
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@platformatic/*'
-  # Renovate security update: protobufjs@8.0.1
-  - protobufjs@8.0.1
+  # Renovate security update: protobufjs@8.0.1 || 8.0.2
+  - protobufjs@8.0.1 || 8.0.2
   # Renovate security update: fast-uri@3.1.2
   - fast-uri@3.1.2
   # Renovate security update: next@16.2.5 || 16.2.6
