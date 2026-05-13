@@ -438,6 +438,7 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`healthChecksTimeouts`**: The number of milliseconds to wait for Prometheus liveness or readiness checks before considering them timed out. Default: `5000` (5 seconds).
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
+- **`httpClientMetrics`** (`boolean` or `string`, default: `false`): Enable outgoing HTTP client request duration metrics (`http_client_request_duration_seconds`). This metric includes labels for the method, status code, dispatcher URL, and error type.
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
 - **`httpCustomLabels`** (array of `object`): Custom labels to add to HTTP metrics (`http_request_all_duration_seconds` and `http_request_all_summary_seconds`). Each label extracts its value from an HTTP request header. By default, no custom labels are added. Each object supports:
   - **`name`** (**required**, `string`): The label name to use in metrics.

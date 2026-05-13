@@ -53,6 +53,20 @@ You can also use completely custom label names:
 
 This will use `myCustomAppName="my-service"` as the label in metrics.
 
+## Outgoing HTTP Client Metrics
+
+Outgoing HTTP client request duration metrics are disabled by default to avoid creating labels for dependencies that do not need to be observed. Enable them with `httpClientMetrics`:
+
+```json
+{
+  "metrics": {
+    "httpClientMetrics": true
+  }
+}
+```
+
+This exposes `http_client_request_duration_seconds` with labels for the HTTP method, status code, dispatcher URL, and error type.
+
 :::caution
 Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::

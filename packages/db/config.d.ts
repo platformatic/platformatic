@@ -723,6 +723,10 @@ export interface PlatformaticDatabaseConfig {
            * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
            */
           applicationLabel?: string;
+          /**
+           * Enable outgoing HTTP client request duration metrics
+           */
+          httpClientMetrics?: boolean | string;
           readiness?:
             | boolean
             | {

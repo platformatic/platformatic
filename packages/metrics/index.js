@@ -124,6 +124,10 @@ function getHttpClientErrorType (error) {
   return error ? String(error.code ?? error.name ?? 'unknown') : ''
 }
 
+function isHttpClientMetricsEnabled (metricsConfig) {
+  return metricsConfig.httpClientMetrics === true || metricsConfig.httpClientMetrics === 'true'
+}
+
 export function collectHttpClientMetrics (registry) {
   if (ensureMetricsGroup(registry, 'http-client')) {
     return
@@ -407,7 +411,9 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
 
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
-    collectHttpClientMetrics(registry)
+    if (isHttpClientMetricsEnabled(metricsConfig)) {
+      collectHttpClientMetrics(registry)
+    }
   }
 
   return {
@@ -470,7 +476,9 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
 
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
-    collectHttpClientMetrics(registry)
+    if (isHttpClientMetricsEnabled(metricsConfig)) {
+      collectHttpClientMetrics(registry)
+    }
   }
 
   return {

@@ -70,14 +70,24 @@ test('httpMetrics creates histogram and summary with collect functions', async t
 
   assert.ok(histogram, 'histogram metric should exist')
   assert.ok(summary, 'summary metric should exist')
-  assert.ok(clientHistogram, 'client histogram metric should exist')
+  assert.strictEqual(clientHistogram, undefined, 'client histogram metric should not exist by default')
   assert.strictEqual(histogram.help, 'request duration in seconds summary for all requests')
   assert.strictEqual(summary.help, 'request duration in seconds histogram for all requests')
+})
+
+test('httpMetrics creates HTTP client histogram when enabled', async t => {
+  const result = await collectMetrics('test-service', 1, { httpMetrics: true, httpClientMetrics: true })
+  t.after(() => clearRegistry(result.registry))
+  const metrics = await result.registry.getMetricsAsJSON()
+
+  const clientHistogram = metrics.find(m => m.name === 'http_client_request_duration_seconds')
+
+  assert.ok(clientHistogram, 'client histogram metric should exist')
   assert.strictEqual(clientHistogram.help, 'outgoing HTTP client request duration in seconds')
 })
 
 test('httpMetrics observes outgoing HTTP client request durations', async t => {
-  const result = await collectMetrics('test-service', 2, { httpMetrics: true })
+  const result = await collectMetrics('test-service', 2, { httpMetrics: true, httpClientMetrics: true })
   t.after(() => clearRegistry(result.registry))
 
   const request = {
@@ -104,7 +114,7 @@ test('httpMetrics observes outgoing HTTP client request durations', async t => {
 })
 
 test('httpMetrics observes outgoing HTTP client request errors', async t => {
-  const result = await collectMetrics('test-service', 3, { httpMetrics: true })
+  const result = await collectMetrics('test-service', 3, { httpMetrics: true, httpClientMetrics: true })
   t.after(() => clearRegistry(result.registry))
 
   const request = {
