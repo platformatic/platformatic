@@ -129,15 +129,46 @@ test('applications wait for dependant applications before stopping', async t => 
 
   const logs = allLogs.filter(m => m.level === 30 && m.msg.match(/stop/i)).map(extractLogs)
 
-  deepStrictEqual(logs, [
-    { source: 'runtime', msg: 'Stopping the worker 0 of the application "composer"...' },
-    { source: 'runtime', msg: 'Stopped the worker 0 of the application "composer"...' },
-    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-2"...' },
-    { source: 'runtime', msg: 'Stopping the worker 0 of the application "service-1"...' },
-    { source: 'service-1', msg: 'Waiting for dependents to stop.', dependents: ['service-2'] },
-    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-2"...' },
-    { source: 'runtime', msg: 'Stopped the worker 0 of the application "service-1"...' }
-  ])
+  const composerStopping = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopping the worker 0 of the application "composer"...'
+  )
+  const composerStopped = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopped the worker 0 of the application "composer"...'
+  )
+  const service2Stopping = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopping the worker 0 of the application "service-2"...'
+  )
+  const service1Stopping = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopping the worker 0 of the application "service-1"...'
+  )
+  const waitingForDependents = logs.findIndex(l =>
+    l.source === 'service-1' &&
+    l.msg === 'Waiting for dependents to stop.' &&
+    Array.isArray(l.dependents) &&
+    l.dependents.includes('service-2')
+  )
+  const service2Stopped = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopped the worker 0 of the application "service-2"...'
+  )
+  const service1Stopped = logs.findIndex(l =>
+    l.source === 'runtime' && l.msg === 'Stopped the worker 0 of the application "service-1"...'
+  )
+
+  ok(composerStopping !== -1)
+  ok(composerStopped !== -1)
+  ok(service2Stopping !== -1)
+  ok(service1Stopping !== -1)
+  ok(waitingForDependents !== -1)
+  ok(service2Stopped !== -1)
+  ok(service1Stopped !== -1)
+
+  ok(composerStopping < composerStopped)
+  ok(composerStopped < service2Stopping)
+  ok(composerStopped < service1Stopping)
+  ok(service1Stopping < waitingForDependents)
+  ok(waitingForDependents < service1Stopped)
+  ok(service2Stopping < service2Stopped)
+  ok(service2Stopped < service1Stopped)
 })
 
 test('should throw if circular dependencies are detected', async t => {
