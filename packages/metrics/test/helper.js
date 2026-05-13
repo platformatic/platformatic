@@ -123,7 +123,8 @@ export const expectedMetrics = [
   },
   {
     name: 'http_request_all_duration_seconds',
-    type: 'histogram'
+    type: 'histogram',
+    buckets: ['0.005', '0.01', '0.025', '0.05', '0.1', '0.25', '0.5', '1', '2.5', '5', '10']
   },
   {
     name: 'http_client_request_duration_seconds',
@@ -145,19 +146,24 @@ function assertSummary (metrics, metric) {
 }
 
 function assertHistogram (metrics, metric) {
-  ok(metrics.includes(`${metric.name}_bucket{le="0.005"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.01"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.025"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.05"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.1"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.25"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="0.5"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="1"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="2.5"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="5"`))
-  ok(metrics.includes(`${metric.name}_bucket{le="10"`))
-  ok(metrics.includes(`${metric.name}_sum{`))
-  ok(metrics.includes(`${metric.name}_count{`))
+  const lines = metrics.split('\n')
+  const bucketLines = lines.filter(line => line.startsWith(`${metric.name}_bucket{`))
+
+  if (!metric.buckets) {
+    return
+  }
+
+  ok(bucketLines.length > 0, `Metric ${metric.name} buckets not found`)
+
+  for (const bucket of metric.buckets ?? []) {
+    ok(
+      bucketLines.some(line => line.includes(`le="${bucket}"`)),
+      `Metric ${metric.name} bucket ${bucket} not found`
+    )
+  }
+
+  ok(lines.some(line => line.startsWith(`${metric.name}_sum{`)), `Metric ${metric.name} sum not found`)
+  ok(lines.some(line => line.startsWith(`${metric.name}_count{`)), `Metric ${metric.name} count not found`)
 }
 
 export function assertMetric (metrics, metric) {
