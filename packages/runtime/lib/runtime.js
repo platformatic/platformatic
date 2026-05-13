@@ -400,7 +400,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.logger) {
-      this.#loggerDestination?.end()
+      await this.#closeLoggerDestination()
 
       this.logger = abstractLogger
       this.#loggerDestination = null
@@ -408,6 +408,32 @@ export class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('closed')
+  }
+
+  #closeLoggerDestination () {
+    if (!this.#loggerDestination?.end) {
+      return
+    }
+
+    return new Promise(resolve => {
+      let resolved = false
+      const done = () => {
+        if (resolved) {
+          return
+        }
+
+        resolved = true
+        clearTimeout(timeout)
+        resolve()
+      }
+      const timeout = setTimeout(done, 1000)
+
+      this.#loggerDestination.once?.('error', done)
+      this.#loggerDestination.once?.('close', done)
+      this.#loggerDestination.once?.('finish', done)
+
+      this.#loggerDestination.end(done)
+    })
   }
 
   async closeAndThrow (error) {
@@ -471,7 +497,6 @@ export class Runtime extends EventEmitter {
       worker[kITC].notify('runtime:event', { event, payload })
     }
 
-    this.logger.trace({ event, payload }, 'Runtime event')
     return this.emit(event, ...payload)
   }
 
@@ -1969,7 +1994,6 @@ export class Runtime extends EventEmitter {
       event = `application:worker:event:${event}`
 
       this.emit(event, ...payload, workerId, applicationId, index)
-      this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
     })
 
     // The worker notifies us when its capability has spawned a child process
