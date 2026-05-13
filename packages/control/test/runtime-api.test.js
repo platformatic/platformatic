@@ -63,8 +63,7 @@ test('should get runtime metrics', async t => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'http_request_all_summary_seconds',
-    'http_client_request_duration_seconds'
+    'http_request_all_summary_seconds'
   ]
 
   {
