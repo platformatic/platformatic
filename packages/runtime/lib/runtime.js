@@ -20,6 +20,7 @@ import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { Readable } from 'node:stream'
+import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
@@ -400,11 +401,22 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.logger) {
-      this.#loggerDestination?.end()
+      const loggerDestination = this.#loggerDestination
+      const loggerCloseables = this.#loggerContext?.closeables ?? []
 
       this.logger = abstractLogger
       this.#loggerDestination = null
       this.#loggerContext = null
+
+      if (loggerDestination) {
+        loggerDestination.end()
+        await finished(loggerDestination).catch(() => {})
+      }
+
+      for (const closeable of loggerCloseables) {
+        closeable.end?.()
+        await finished(closeable).catch(() => {})
+      }
     }
 
     this.#updateStatus('closed')

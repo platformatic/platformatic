@@ -63,6 +63,7 @@ const colors = [
 function createLoggerContext () {
   const context = {
     colors: {},
+    closeables: [],
     maxLength: 0,
     updatePrefixes (ids) {
       context.colors = {}
@@ -179,28 +180,29 @@ export async function createLogger (config) {
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
   if (config.telemetry && config.logger.openTelemetryExporter) {
-    multiStream.add(
-      pino.transport({
-        target: 'pino-opentelemetry-transport',
-        options: {
-          resourceAttributes: {
-            'service.name': config.telemetry.applicationName,
-            'service.version': config.telemetry.version
-          },
-          logRecordProcessorOptions: [
-            {
-              recordProcessorType: 'simple',
-              exporterOptions: {
-                protocol: config.logger.openTelemetryExporter.protocol,
-                httpExporterOptions: {
-                  url: config.logger.openTelemetryExporter.url
-                }
+    const openTelemetryTransport = pino.transport({
+      target: 'pino-opentelemetry-transport',
+      options: {
+        resourceAttributes: {
+          'service.name': config.telemetry.applicationName,
+          'service.version': config.telemetry.version
+        },
+        logRecordProcessorOptions: [
+          {
+            recordProcessorType: 'simple',
+            exporterOptions: {
+              protocol: config.logger.openTelemetryExporter.protocol,
+              httpExporterOptions: {
+                url: config.logger.openTelemetryExporter.url
               }
             }
-          ]
-        }
-      })
-    )
+          }
+        ]
+      }
+    })
+
+    context.closeables.push(openTelemetryTransport)
+    multiStream.add(openTelemetryTransport)
   }
 
   const logsFileMb = 5

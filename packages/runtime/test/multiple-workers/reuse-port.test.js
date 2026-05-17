@@ -1,5 +1,6 @@
 import { features } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
+import { createServer } from 'node:net'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -7,17 +8,49 @@ import { request } from 'undici'
 import { createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
+async function waitForPortRelease (port, attempts = 50, interval = 100) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const server = createServer()
+
+    try {
+      await new Promise((resolve, reject) => {
+        server.once('error', reject)
+        server.listen(port, '127.0.0.1', resolve)
+      })
+
+      await new Promise((resolve, reject) => {
+        server.close(error => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+
+      return
+    } catch {
+      await sleep(interval)
+    }
+  }
+
+  throw new Error(`Port ${port} was not released in time`)
+}
+
 test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const port = await getPort.default()
+  const port = await getPort.default({ host: '127.0.0.1' })
 
-  // Give some time to the OS to release the port
-  await sleep(1000)
+  await waitForPortRelease(port)
 
   await updateConfigFile(configFile, contents => {
-    contents.server = { port }
+    contents.server = {
+      hostname: '127.0.0.1',
+      port
+    }
     contents.autoload = undefined
   })
 
