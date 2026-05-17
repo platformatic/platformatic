@@ -108,7 +108,6 @@ export class Runtime extends EventEmitter {
   error
 
   #loggerDestination
-  #loggerDestinations = new Set()
   #loggerContext
   #stdio
 
@@ -401,7 +400,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.logger) {
-      await this.#closeLoggerDestination()
+      this.#loggerDestination?.end()
 
       this.logger = abstractLogger
       this.#loggerDestination = null
@@ -409,32 +408,6 @@ export class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('closed')
-  }
-
-  #closeLoggerDestination () {
-    if (!this.#loggerDestination?.end) {
-      return
-    }
-
-    return new Promise(resolve => {
-      let resolved = false
-      const done = () => {
-        if (resolved) {
-          return
-        }
-
-        resolved = true
-        clearTimeout(timeout)
-        resolve()
-      }
-      const timeout = setTimeout(done, 1000)
-
-      this.#loggerDestination.once?.('error', done)
-      this.#loggerDestination.once?.('close', done)
-      this.#loggerDestination.once?.('finish', done)
-
-      this.#loggerDestination.end(done)
-    })
   }
 
   async closeAndThrow (error) {
@@ -498,28 +471,8 @@ export class Runtime extends EventEmitter {
       worker[kITC].notify('runtime:event', { event, payload })
     }
 
-    this.#writeRuntimeEventLog({ event, payload })
+    this.logger.trace({ event, payload }, 'Runtime event')
     return this.emit(event, ...payload)
-  }
-
-  #writeRuntimeEventLog (fields) {
-    if (this.#loggerDestinations.size === 0) {
-      return
-    }
-
-    const line = JSON.stringify({ level: 10, time: Date.now(), msg: 'Runtime event', ...fields }) + '\n'
-
-    for (const destination of this.#loggerDestinations) {
-      if (destination.destroyed || destination.writableEnded) {
-        continue
-      }
-
-      try {
-        destination.write(line)
-      } catch {
-        this.#loggerDestinations.delete(destination)
-      }
-    }
   }
 
   async sendCommandToApplication (id, name, message) {
@@ -941,7 +894,6 @@ export class Runtime extends EventEmitter {
   async addLoggerDestination (writableStream) {
     // Add the stream - We output everything we get
     this.#loggerDestination.add({ stream: writableStream, level: 1 })
-    this.#loggerDestinations.add(writableStream)
 
     // Immediately get the counter of the lastId so we can use it to later remove it
     const id = this.#loggerDestination.lastId
@@ -950,7 +902,6 @@ export class Runtime extends EventEmitter {
       writableStream.removeListener('close', onClose)
       writableStream.removeListener('error', onClose)
       this.removeListener('closed', onClose)
-      this.#loggerDestinations.delete(writableStream)
       this.#loggerDestination.remove(id)
     }
 
@@ -2017,8 +1968,8 @@ export class Runtime extends EventEmitter {
     worker[kITC].on('event', ({ event, payload }) => {
       event = `application:worker:event:${event}`
 
-      this.#writeRuntimeEventLog({ event, payload, id: workerId, application: applicationId, worker: index })
       this.emit(event, ...payload, workerId, applicationId, index)
+      this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
     })
 
     // The worker notifies us when its capability has spawned a child process
