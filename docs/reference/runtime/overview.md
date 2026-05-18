@@ -25,7 +25,7 @@ The following configuration file can be used to start a new Platformatic Runtime
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json",
   "autoload": {
     "path": "./packages",
     "exclude": ["docs"]

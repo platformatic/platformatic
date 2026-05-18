@@ -31,8 +31,8 @@ test('Runtime.init', () => {
 })
 
 test('Runtime.start', () => {
-  expect(runtime.start()).type.toBe<Promise<void>>()
-  expect(runtime.start(true)).type.toBe<Promise<void>>()
+  expect(runtime.start()).type.toBe<Promise<string | undefined>>()
+  expect(runtime.start(true)).type.toBe<Promise<string | undefined>>()
 })
 
 test('Runtime.stop', () => {
