@@ -163,6 +163,7 @@ test('should start a prometheus server on port 9090', async t => {
     'http_request_all_summary_seconds',
     'http_cache_hit_count',
     'http_cache_miss_count',
+    'http_client_request_duration_seconds',
     'http_client_stats_free',
     'http_client_stats_connected',
     'http_client_stats_pending',

@@ -1228,6 +1228,11 @@ export const runtimeProperties = {
             description:
               'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
           },
+          httpClientMetrics: {
+            anyOf: [{ type: 'boolean' }, { type: 'string' }],
+            default: false,
+            description: 'Enable outgoing HTTP client request duration metrics'
+          },
           readiness: {
             anyOf: [
               { type: 'boolean' },

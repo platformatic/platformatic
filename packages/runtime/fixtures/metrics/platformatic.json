@@ -18,6 +18,7 @@
     }
   },
   "metrics": {
+    "httpClientMetrics": true,
     "labels": {
       "custom_label": "custom-value"
     }

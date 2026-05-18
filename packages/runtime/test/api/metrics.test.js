@@ -74,6 +74,7 @@ test('should get runtime metrics in a json format', async t => {
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
+    'http_client_request_duration_seconds',
     'http_client_stats_free',
     'http_client_stats_connected',
     'http_client_stats_pending',
@@ -196,6 +197,7 @@ test('should get runtime metrics in a text format', async t => {
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
+    'http_client_request_duration_seconds',
     'http_client_stats_free',
     'http_client_stats_connected',
     'http_client_stats_pending',
@@ -440,6 +442,11 @@ test('should get runtime metrics in a json format without a application call', a
   strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
   strictEqual(summaryMetric.type, 'summary')
   strictEqual(summaryMetric.aggregator, 'sum')
+
+  const clientDurationMetric = metrics.find(({ name }) => name === 'http_client_request_duration_seconds')
+  strictEqual(clientDurationMetric.name, 'http_client_request_duration_seconds')
+  strictEqual(clientDurationMetric.type, 'histogram')
+  strictEqual(clientDurationMetric.aggregator, 'sum')
 
   const freeMetric = metrics.find(({ name }) => name === 'http_client_stats_free')
   strictEqual(freeMetric.name, 'http_client_stats_free')

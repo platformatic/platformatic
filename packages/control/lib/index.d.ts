@@ -62,7 +62,7 @@ export interface MetricValue {
     route?: string
     quantile?: number
     method?: string
-    status_code?: number
+    status_code?: number | string
     telemetry_id?: string
     type?: string
     space?: string
@@ -75,6 +75,7 @@ export interface MetricValue {
     applicationId: string
     workerId?: number
     dispatcher_stats_url?: string
+    error_type?: string
   }
   metricName?: string
   exemplar?: unknown

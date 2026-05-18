@@ -241,8 +241,9 @@ export class ChildProcess extends ITC {
     return once(this.#socket, 'close')
   }
 
-  /* c8 ignore next 3 */
+  /* c8 ignore next 4 */
   _close () {
+    clearRegistry(this.#metricsRegistry)
     this.#socket.close()
   }
 
