@@ -606,6 +606,17 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "bufferPoolSize": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -1315,6 +1326,18 @@
                 }
               ],
               "default": 268435456
+            },
+            "bufferPoolSize": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 262144
             }
           },
           "additionalProperties": false
@@ -2331,6 +2354,17 @@
                   ]
                 },
                 "codeRangeSize": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "bufferPoolSize": {
                   "anyOf": [
                     {
                       "type": "number",

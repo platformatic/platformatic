@@ -3,15 +3,18 @@ import {
   buildPinoTimestamp,
   disablePinoDirectWrite,
   ensureLoggableError,
-  getPrivateSymbol
+  getPrivateSymbol,
+  parseMemorySize
 } from '@platformatic/foundation'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
 import { hostname } from 'node:os'
 import { join, resolve } from 'node:path'
+import { setDefaultHighWaterMark } from 'node:stream'
 import { pathToFileURL } from 'node:url'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -113,6 +116,36 @@ async function performPreloading (...sources) {
   }
 }
 
+function resolveHealthSize (runtimeConfig, applicationConfig, field, logger) {
+  const raw = applicationConfig.health?.[field] ?? runtimeConfig.health?.[field]
+  if (raw === undefined) {
+    return undefined
+  }
+
+  const size = typeof raw === 'string' ? parseMemorySize(raw) : raw
+
+  if (!Number.isInteger(size) || size < 0) {
+    logger.warn({ [field]: raw }, `Invalid health.${field}, ignoring`)
+    return undefined
+  }
+
+  return size
+}
+
+function setupBufferPool (runtimeConfig, applicationConfig, logger) {
+  const size = resolveHealthSize(runtimeConfig, applicationConfig, 'bufferPoolSize', logger)
+  if (size !== undefined) {
+    Buffer.poolSize = size
+  }
+}
+
+function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
+  const size = resolveHealthSize(runtimeConfig, applicationConfig, 'defaultHighWaterMark', logger)
+  if (size !== undefined) {
+    setDefaultHighWaterMark(false, size)
+  }
+}
+
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
@@ -176,6 +209,9 @@ async function main () {
 
   const runtimeConfig = workerData.config
   const applicationConfig = workerData.applicationConfig
+
+  setupBufferPool(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
+  setupDefaultHighWaterMark(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
 
   // Enable compile cache early before loading user modules
   await setupCompileCache(runtimeConfig, applicationConfig, globalThis.platformatic.logger)

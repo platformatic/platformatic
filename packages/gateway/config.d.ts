@@ -528,6 +528,7 @@ export interface PlatformaticGatewayConfig {
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
+      bufferPoolSize?: number | string;
     };
     undici?: {
       agentOptions?: {
@@ -892,6 +893,7 @@ export interface PlatformaticGatewayConfig {
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
+        bufferPoolSize?: number | string;
       };
       arguments?: string[];
       env?: {
