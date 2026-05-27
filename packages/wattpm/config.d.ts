@@ -43,6 +43,7 @@ export type PlatformaticRuntimeConfig = {
           maxYoungGeneration?: number | string;
           codeRangeSize?: number | string;
           bufferPoolSize?: number | string;
+          defaultHighWaterMark?: number | string;
         };
         dependencies?: string[];
         arguments?: string[];
@@ -240,6 +241,7 @@ export type PlatformaticRuntimeConfig = {
     maxYoungGeneration?: number | string;
     codeRangeSize?: number | string;
     bufferPoolSize?: number | string;
+    defaultHighWaterMark?: number | string;
   };
   undici?: {
     agentOptions?: {

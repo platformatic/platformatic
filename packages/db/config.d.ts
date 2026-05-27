@@ -622,6 +622,7 @@ export interface PlatformaticDatabaseConfig {
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
       bufferPoolSize?: number | string;
+      defaultHighWaterMark?: number | string;
     };
     undici?: {
       agentOptions?: {
@@ -987,6 +988,7 @@ export interface PlatformaticDatabaseConfig {
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
         bufferPoolSize?: number | string;
+        defaultHighWaterMark?: number | string;
       };
       arguments?: string[];
       env?: {

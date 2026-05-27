@@ -1551,6 +1551,17 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "defaultHighWaterMark": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -2262,6 +2273,18 @@
               "default": 268435456
             },
             "bufferPoolSize": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 262144
+            },
+            "defaultHighWaterMark": {
               "anyOf": [
                 {
                   "type": "number",
@@ -3299,6 +3322,17 @@
                   ]
                 },
                 "bufferPoolSize": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "defaultHighWaterMark": {
                   "anyOf": [
                     {
                       "type": "number",
