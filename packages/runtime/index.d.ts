@@ -144,7 +144,7 @@ export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 
 export declare class Runtime {
   init (): Promise<void>
-  start (silent?: boolean): Promise<void>
+  start (silent?: boolean): Promise<string | undefined>
   stop (silent?: boolean): Promise<void>
   close (silent?: boolean): Promise<void>
   restart (applications?: string[]): Promise<string | undefined>
