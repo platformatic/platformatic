@@ -2289,7 +2289,7 @@ importers:
     dependencies:
       '@datadog/pprof':
         specifier: ^5.3.0
-        version: 5.14.1
+        version: 5.14.4
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
@@ -2658,8 +2658,8 @@ packages:
   '@databases/validate-unicode@1.0.0':
     resolution: {integrity: sha512-dLKqxGcymeVwEb/6c44KjOnzaAafFf0Wxa8xcfEjx/qOl3rdijsKYBAtIGhtVtOlpPf/PFKfgTuFurSPn/3B/g==}
 
-  '@datadog/pprof@5.14.1':
-    resolution: {integrity: sha512-MlODCE9Gltmx7WChOg1BkIm7W2iE4CDW7K72BMwgzCvxFkG9rFWVsuA7/NEZL1nDvJ0qDe2du7DZZdZHTjcVPw==}
+  '@datadog/pprof@5.14.4':
+    resolution: {integrity: sha512-egEZDD9v98RBI8ijbHyaWQeY8rW0WEu004As5D7SUkdqSMORhrnh7ZdsM46PUzQgAc85IaEZoukWS9UhMvWn9w==}
     engines: {node: '>=16'}
 
   '@emnapi/core@1.10.0':
@@ -8847,8 +8847,8 @@ packages:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
 
-  node-gyp-build@3.9.0:
-    resolution: {integrity: sha512-zLcTg6P4AbcHPq465ZMFNXx7XpKKJh+7kkN699NiQWisR2uWYOWNWqRHAmbnmKiL4e9aLSlmy5U7rEMUXV59+A==}
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
   node-mock-http@1.0.4:
@@ -10130,6 +10130,11 @@ packages:
 
   srvx@0.11.15:
     resolution: {integrity: sha512-iXsux0UcOjdvs0LCMa2Ws3WwcDUozA3JN3BquNXkaFPP7TpRqgunKdEgoZ/uwb1J6xaYHfxtz9Twlh6yzwM6Tg==}
+    engines: {node: '>=20.16.0'}
+    hasBin: true
+
+  srvx@0.11.16:
+    resolution: {integrity: sha512-bp07zRuycfTY43IjAvvTFnmnJi8ikW0VFiHwOhhYcVW/L4xQ1XY4PAd4Nuum1rsA17C39zL7x+CDhrn5AL32Rw==}
     engines: {node: '>=20.16.0'}
     hasBin: true
 
@@ -11717,9 +11722,9 @@ snapshots:
 
   '@databases/validate-unicode@1.0.0': {}
 
-  '@datadog/pprof@5.14.1':
+  '@datadog/pprof@5.14.4':
     dependencies:
-      node-gyp-build: 3.9.0
+      node-gyp-build: 4.8.4
       pprof-format: 2.2.1
       source-map: 0.7.6
 
@@ -16930,7 +16935,7 @@ snapshots:
   h3@2.0.1-rc.20(crossws@0.4.5(srvx@0.10.1)):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.15
+      srvx: 0.11.16
     optionalDependencies:
       crossws: 0.4.5(srvx@0.10.1)
 
@@ -19026,7 +19031,7 @@ snapshots:
       detect-libc: 2.1.2
     optional: true
 
-  node-gyp-build@3.9.0: {}
+  node-gyp-build@4.8.4: {}
 
   node-mock-http@1.0.4: {}
 
@@ -20621,6 +20626,8 @@ snapshots:
   srvx@0.10.1: {}
 
   srvx@0.11.15: {}
+
+  srvx@0.11.16: {}
 
   ssri@10.0.6:
     dependencies:
