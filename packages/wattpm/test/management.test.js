@@ -343,7 +343,9 @@ test('config - should list configuration for the runtime', async t => {
       maxHeapUsed: 0.99,
       maxUnhealthyChecks: 10,
       maxYoungGeneration: 134217728,
-      codeRangeSize: 268435456
+      codeRangeSize: 268435456,
+      bufferPoolSize: 262144,
+      defaultHighWaterMark: 262144
     },
     resolvedApplicationsBasePath: 'external',
     metrics: {

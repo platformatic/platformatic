@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.44.0.json",
+  "entrypoint": "service",
+  "services": [
+    {
+      "id": "service",
+      "path": "./service",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "info"
+  },
+  "health": {
+    "enabled": false,
+    "bufferPoolSize": 262144,
+    "defaultHighWaterMark": 262144
+  },
+  "restartOnError": 1000
+}

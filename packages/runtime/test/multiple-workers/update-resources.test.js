@@ -529,7 +529,9 @@ test('should report on failures', async t => {
           maxHeapUsed: 0.99,
           maxHeapTotal: 536870912,
           maxYoungGeneration: 134217728,
-          codeRangeSize: 268435456
+          codeRangeSize: 268435456,
+          bufferPoolSize: 262144,
+          defaultHighWaterMark: 262144
         },
         new: {
           maxHeapTotal: 536870912
