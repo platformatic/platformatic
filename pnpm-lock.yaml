@@ -47,10 +47,10 @@ importers:
         version: link:../service
       '@types/react':
         specifier: ^19.1.11
-        version: 19.2.14
+        version: 19.2.15
       '@types/react-dom':
         specifier: ^19.1.7
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.15)
       astro:
         specifier: ^6.1.4
         version: 6.3.3(@types/node@22.19.19)(db0@0.3.4(better-sqlite3@11.10.0)(mysql2@3.22.3(@types/node@22.19.19)))(ioredis@5.10.1)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.47.1)(tsx@4.22.1)(yaml@2.9.0)
@@ -1117,10 +1117,10 @@ importers:
         version: 22.19.19
       '@types/react':
         specifier: ^19.1.11
-        version: 19.2.14
+        version: 19.2.15
       '@types/react-dom':
         specifier: ^19.1.7
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.15)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1245,10 +1245,10 @@ importers:
         version: 7.15.1(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.9.3)
       '@types/react':
         specifier: ^19.1.11
-        version: 19.2.14
+        version: 19.2.15
       '@types/react-dom':
         specifier: ^19.1.7
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.15)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1327,10 +1327,10 @@ importers:
         version: 2.17.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@types/react':
         specifier: ^19.1.11
-        version: 19.2.14
+        version: 19.2.15
       '@types/react-dom':
         specifier: ^19.1.7
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.15)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -5168,8 +5168,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.14':
-    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+  '@types/react@19.2.15':
+    resolution: {integrity: sha512-eRwcGNHve+E8qtEQSSRl6urh+rFop4v8gm6O8rGv25CodbvFdLjA1vVQ1KkiFE0w0UPOnb8tDiFKL5lp0rtY5Q==}
 
   '@types/through@0.0.33':
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
@@ -10133,6 +10133,11 @@ packages:
     engines: {node: '>=20.16.0'}
     hasBin: true
 
+  srvx@0.11.16:
+    resolution: {integrity: sha512-bp07zRuycfTY43IjAvvTFnmnJi8ikW0VFiHwOhhYcVW/L4xQ1XY4PAd4Nuum1rsA17C39zL7x+CDhrn5AL32Rw==}
+    engines: {node: '>=20.16.0'}
+    hasBin: true
+
   ssri@10.0.6:
     resolution: {integrity: sha512-MGrFH9Z4NP9Iyhqn16sDtBpRRNJ0Y2hNa6D65h736fVSaPCHr4DM4sWUNvVaSuC+0OBGhwsrydQwmgfg5LncqQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -14175,11 +14180,11 @@ snapshots:
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.3(@types/react@19.2.15)':
     dependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.2.15
 
-  '@types/react@19.2.14':
+  '@types/react@19.2.15':
     dependencies:
       csstype: 3.2.3
 
@@ -16930,7 +16935,7 @@ snapshots:
   h3@2.0.1-rc.20(crossws@0.4.5(srvx@0.10.1)):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.15
+      srvx: 0.11.16
     optionalDependencies:
       crossws: 0.4.5(srvx@0.10.1)
 
@@ -20621,6 +20626,8 @@ snapshots:
   srvx@0.10.1: {}
 
   srvx@0.11.15: {}
+
+  srvx@0.11.16: {}
 
   ssri@10.0.6:
     dependencies:
