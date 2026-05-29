@@ -2,7 +2,8 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureLoggableError
+  ensureLoggableError,
+  mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { clearRegistry, client, collectThreadMetrics } from '@platformatic/metrics'
@@ -576,6 +577,7 @@ export class ChildProcess extends ITC {
   #setupInterceptors () {
     const globalDispatcher = new Agent().compose(createInterceptor(this))
     setGlobalDispatcher(globalDispatcher)
+    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher)
   }
 
   #setupHandlers () {

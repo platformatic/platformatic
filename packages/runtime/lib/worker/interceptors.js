@@ -1,3 +1,4 @@
+import { mirrorGlobalDispatcherForBuiltinFetch } from '@platformatic/foundation'
 import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -27,9 +28,11 @@ export async function setDispatcher (runtimeConfig) {
 
   const dispatcherOpts = await getDispatcherOpts(runtimeConfig.undici)
 
-  setGlobalDispatcher(
-    new Agent(dispatcherOpts).compose([threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean))
+  const dispatcher = new Agent(dispatcherOpts).compose(
+    [threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean)
   )
+  setGlobalDispatcher(dispatcher)
+  mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
 
   return { threadDispatcher }
 }
