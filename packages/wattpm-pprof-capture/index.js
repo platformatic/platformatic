@@ -6,6 +6,21 @@ import { SourceMapperWrapper } from './lib/source-mapper-wrapper.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
+// @datadog/pprof >= 5.14.2 introduced a regression in the legacy time profiler
+// `stop()`: it now clears the internal source mapper (via handleStopNoRestart)
+// *before* serializing the profile, so transpiled frames (e.g. TypeScript) are
+// no longer mapped back to their original `.ts` sources. The `stopV2()` entry
+// point serializes the profile while the source mapper is still set — the
+// behaviour `stop()` had in earlier versions. It is not re-exported on the
+// public `time` facade, so resolve it from the internal module when available
+// and fall back to the public `stop()` otherwise (e.g. older versions).
+let stopTimeProfilerV2 = null
+try {
+  ;({ stopV2: stopTimeProfilerV2 } = await import('@datadog/pprof/out/src/time-profiler.js'))
+} catch {
+  // Internal module path not available; fall back to the public stop().
+}
+
 // SourceMapper for resolving transpiled code locations back to original source
 let sourceMapper = null
 let sourceMapperInitialized = false
@@ -159,9 +174,11 @@ function stopProfiler (type, state) {
     state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
     profiler.stop()
   } else {
-    // CPU time profiler returns the profile when stopping
-    // sourceMapper was already passed to start(), so it's applied automatically
-    state.latestProfile = profiler.stop()
+    // CPU time profiler returns the profile when stopping.
+    // sourceMapper was already passed to start(), so it's applied automatically.
+    // Use stopV2() when available so the source mapper is honoured during
+    // serialization (see the note next to stopTimeProfilerV2 above).
+    state.latestProfile = stopTimeProfilerV2 ? stopTimeProfilerV2() : profiler.stop()
   }
 }
 
