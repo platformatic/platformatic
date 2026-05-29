@@ -19,6 +19,11 @@ import {
   searchJavascriptFiles
 } from '../index.js'
 
+// fs.watch aborts the process on Windows + Node 24 with a libuv assertion
+// in src/win/fs-event.c. Tracked upstream at https://github.com/nodejs/node/issues/63638.
+const skipFsWatch =
+  process.platform === 'win32' && parseInt(process.versions.node.split('.')[0], 10) >= 24
+
 test('FileWatcher - should throw an error if there is no path argument', async t => {
   throws(() => new FileWatcher({}), { message: 'path option is required' })
 })
@@ -64,7 +69,7 @@ test('FileWatcher - should not watch not allowed files', async t => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('FileWatcher - should emit event if file is updated', async t => {
+test('FileWatcher - should emit event if file is updated', { skip: skipFsWatch }, async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
@@ -85,7 +90,7 @@ test('FileWatcher - should emit event if file is updated', async t => {
   await Promise.race([sleep(5000), promise])
 })
 
-test('FileWatcher - should not call fs watch twice', async t => {
+test('FileWatcher - should not call fs watch twice', { skip: skipFsWatch }, async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })

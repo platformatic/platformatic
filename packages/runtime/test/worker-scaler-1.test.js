@@ -16,6 +16,39 @@ const configurations = {
   'worker-scaler': 'platformatic.worker-scaler.json'
 }
 
+function countWorkers (workers, applicationId) {
+  let count = 0
+  for (const worker of Object.values(workers)) {
+    if (worker.application === applicationId) count++
+  }
+  return count
+}
+
+async function waitForWorkers (app, applicationId, expectedCount, { timeoutMs = 30000, intervalMs = 250 } = {}) {
+  const start = Date.now()
+  let workers
+  while (Date.now() - start < timeoutMs) {
+    workers = await app.getWorkers()
+    if (countWorkers(workers, applicationId) === expectedCount) return workers
+    await sleep(intervalMs)
+  }
+  return workers
+}
+
+async function driveLoad (entryUrl, signal) {
+  while (!signal.aborted) {
+    try {
+      await request(entryUrl + '/service-2/cpu-intensive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeout: 500 })
+      })
+    } catch {
+      // Ignore transient errors while the scaler is adding workers.
+    }
+  }
+}
+
 for (const [name, file] of Object.entries(configurations)) {
   test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
     const configFile = join(fixturesDir, 'worker-scaler', file)
@@ -71,33 +104,16 @@ for (const [name, file] of Object.entries(configurations)) {
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ timeout: 1000 })
+    const ac = new AbortController()
+    const load = driveLoad(entryUrl, ac.signal)
+    t.after(async () => {
+      ac.abort()
+      await load
     })
-    assert.strictEqual(statusCode, 200)
 
-    await sleep(10000)
-
-    const workers = await app.getWorkers()
-
-    const service1Workers = []
-    const service2Workers = []
-
-    for (const worker of Object.values(workers)) {
-      if (worker.application === 'service-1') {
-        service1Workers.push(worker)
-      }
-      if (worker.application === 'service-2') {
-        service2Workers.push(worker)
-      }
-    }
-
-    assert.strictEqual(service1Workers.length, 1)
-    assert.strictEqual(service2Workers.length, 2)
+    const workers = await waitForWorkers(app, 'service-2', 2)
+    assert.strictEqual(countWorkers(workers, 'service-1'), 1)
+    assert.strictEqual(countWorkers(workers, 'service-2'), 2)
   })
 
   test(`should not scale applications when the elu is lower than treshold (configuration ${name})`, async t => {
