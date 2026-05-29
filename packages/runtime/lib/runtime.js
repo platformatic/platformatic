@@ -3255,6 +3255,15 @@ export class Runtime extends EventEmitter {
       return argv
     }
 
+    // Starting from Node.js 25 the Permission Model also gates network access
+    // (dns.lookup, server.listen, outbound connections and fetch) behind
+    // --allow-net. Applications always need to bind their HTTP server and reach
+    // other applications through the internal mesh, so we always grant it when
+    // available. On older versions the flag does not exist and must be omitted.
+    if (features.node.permission.network) {
+      allows.add('--allow-net')
+    }
+
     // We need to allow read access to the node_modules folder both at the runtime level and at the application level
     allows.add(`--allow-fs-read=${join(this.#root, 'node_modules', '*')}`)
     allows.add(`--allow-fs-read=${join(applicationConfig.path, 'node_modules', '*')}`)

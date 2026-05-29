@@ -273,11 +273,15 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 
 // Node types
 export declare function checkNodeVersionForApplications (): void
+export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
 export declare const features: {
   node: {
     reusePort: boolean
     worker: {
       getHeapStatistics: boolean
+    }
+    permission: {
+      network: boolean
     }
   }
 }

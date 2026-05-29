@@ -5,7 +5,8 @@ import {
   kHandledError,
   listRecognizedConfigurationFiles,
   loadConfiguration,
-  loadConfigurationModule
+  loadConfigurationModule,
+  mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
@@ -326,6 +327,7 @@ export class Controller extends EventEmitter {
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
     setGlobalDispatcher(dispatcher)
+    mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
   }
 
   #setupHandlers () {

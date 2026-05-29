@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -157,7 +157,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -187,7 +187,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -214,7 +214,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -241,7 +241,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -268,7 +268,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -295,7 +295,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
         suite: [main, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -323,7 +323,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -351,7 +351,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -377,7 +377,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -404,7 +404,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -435,7 +435,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -464,7 +464,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -503,7 +503,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -538,7 +538,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -565,7 +565,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -592,7 +592,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -619,7 +619,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -652,7 +652,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -685,7 +685,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -712,7 +712,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -737,7 +737,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -764,7 +764,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -791,7 +791,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -817,7 +817,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
         suite: [main, caching, compatibility, integration]
     env:
       VALKEY_HOST: localhost
@@ -850,7 +850,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -877,7 +877,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -904,7 +904,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -931,7 +931,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -958,7 +958,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -985,7 +985,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: pnpm/action-setup@v4.1.0
