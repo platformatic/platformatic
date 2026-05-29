@@ -14,7 +14,7 @@
     "test:mysql": "DB=mysql npm run test:runner",
     "test:mysql8": "DB=mysql8 npm run test:runner",
     "test:sqlite": "DB=sqlite npm run test:runner",
-    "test:types": "tsd"
+    "test:types": "tstyche"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "eslint": "9",
     "fastify": "^5.7.0",
     "neostandard": "^0.12.0",
-    "tsd": "^0.33.0",
+    "tstyche": "^6.2.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
@@ -48,9 +48,6 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
     "inflected": "^2.1.0"
-  },
-  "tsd": {
-    "directory": "test/types"
   },
   "engines": {
     "node": ">=22.19.0"
