@@ -280,6 +280,9 @@ export declare const features: {
     worker: {
       getHeapStatistics: boolean
     }
+    permission: {
+      network: boolean
+    }
   }
 }
 
