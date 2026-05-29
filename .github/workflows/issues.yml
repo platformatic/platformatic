@@ -10,7 +10,7 @@ jobs:
     name: Add issue or PR to project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.INTERNAL_GH_APP_ID }}
