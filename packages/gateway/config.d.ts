@@ -276,6 +276,7 @@ export interface PlatformaticGatewayConfig {
             };
           };
     }[];
+    handler?: string;
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;

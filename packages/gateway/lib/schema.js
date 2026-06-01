@@ -199,6 +199,7 @@ export const gateway = {
         additionalProperties: false
       }
     },
+    handler: { type: 'string' },
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
