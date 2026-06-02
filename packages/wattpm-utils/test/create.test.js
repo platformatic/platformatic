@@ -341,8 +341,7 @@ test('create - should not attempt to wrap twice', async t => {
       type: 'list',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'yes'
-    },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
+    }
   ])
 
   const seconduserInputHandler = await setupUserInputHandler(t, [])
