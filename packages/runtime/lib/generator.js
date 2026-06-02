@@ -19,17 +19,6 @@ import { transform } from './config.js'
 import { schema } from './schema.js'
 import { getArrayDifference } from './utils.js'
 
-const wrappableProperties = {
-  logger: {
-    level: '{PLT_SERVER_LOGGER_LEVEL}'
-  },
-  server: {
-    hostname: '{PLT_SERVER_HOSTNAME}',
-    port: '{PORT}'
-  },
-  managementApi: '{PLT_MANAGEMENT_API}'
-}
-
 const engines = {
   node: '>=22.19.0'
 }
@@ -42,13 +31,36 @@ const NoApplicationNamedError = createError(
 )
 const NoEntryPointError = createError(`${ERROR_PREFIX}_NO_ENTRYPOINT`, 'No entrypoint had been defined.')
 
+function getRuntimeWrappableProperties (skipServer) {
+  const wrappableProperties = {
+    logger: {
+      level: '{PLT_SERVER_LOGGER_LEVEL}'
+    },
+    managementApi: '{PLT_MANAGEMENT_API}'
+  }
+
+  if (!skipServer) {
+    wrappableProperties.server = {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}'
+    }
+  }
+
+  return wrappableProperties
+}
+
 function getRuntimeBaseEnvVars (config) {
-  return {
-    PLT_SERVER_HOSTNAME: '127.0.0.1',
-    PORT: config.port || 3042,
+  const env = {
     PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
     PLT_MANAGEMENT_API: true
   }
+
+  if (!config.skipServer) {
+    env.PLT_SERVER_HOSTNAME = '127.0.0.1'
+    env.PORT = config.port || 3042
+  }
+
+  return env
 }
 
 export class RuntimeGenerator extends BaseGenerator {
@@ -195,7 +207,7 @@ export class RuntimeGenerator extends BaseGenerator {
         path: this.config.autoload || this.applicationsFolder,
         exclude: ['docs']
       },
-      ...wrappableProperties
+      ...getRuntimeWrappableProperties(this.config.skipServer)
     }
 
     return config
@@ -251,13 +263,15 @@ export class RuntimeGenerator extends BaseGenerator {
       return
     }
 
-    // port
-    this.questions.push({
-      type: 'input',
-      name: 'port',
-      default: 3042,
-      message: 'What port do you want to use?'
-    })
+    if (!this.config.skipServer) {
+      // port
+      this.questions.push({
+        type: 'input',
+        name: 'port',
+        default: 3042,
+        message: 'What port do you want to use?'
+      })
+    }
   }
 
   setApplicationsDirectory () {
@@ -611,7 +625,7 @@ export class WrappedGenerator extends BaseGenerator {
   async #createConfigFile () {
     const config = {
       $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
-      runtime: wrappableProperties
+      runtime: getRuntimeWrappableProperties(this.config.skipServer)
     }
 
     this.addFile({
