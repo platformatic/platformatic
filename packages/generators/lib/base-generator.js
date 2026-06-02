@@ -271,7 +271,7 @@ class BaseGenerator extends FileGenerator {
       }
 
       // port
-      if (!this.config.skipPort) {
+      if (!this.config.skipServer) {
         this.questions.push({
           type: 'input',
           name: 'port',

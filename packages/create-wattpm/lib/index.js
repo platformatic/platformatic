@@ -302,7 +302,7 @@ export async function createApplication (
             install,
             process.cwd(),
             additionalGeneratorOptions,
-            { ...additionalGeneratorConfig, skipTypescript: true }
+            { ...additionalGeneratorConfig, skipTypescript: true, skipServer: true }
           )
         }
       } else {

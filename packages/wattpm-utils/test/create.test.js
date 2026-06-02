@@ -283,7 +283,6 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'yes'
     },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -294,15 +293,11 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
   deepStrictEqual(envFile.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
 
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -332,10 +327,6 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       },
       managementApi: '{PLT_MANAGEMENT_API}',
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      }
     }
   })
 })
@@ -350,8 +341,7 @@ test('create - should not attempt to wrap twice', async t => {
       type: 'list',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'yes'
-    },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
+    }
   ])
 
   const seconduserInputHandler = await setupUserInputHandler(t, [])
@@ -410,7 +400,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
       question: 'This folder seems to already contain a Next.js application. Do you want to wrap into Watt?',
       reply: 'yes'
     },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -424,8 +413,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
   deepStrictEqual(envFile.split(/\r?\n/), [
     'A=B',
     'C=D',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -433,8 +420,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
     'E=F',
     'G=H',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -470,10 +455,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       },
       managementApi: '{PLT_MANAGEMENT_API}',
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      }
     }
   })
 })
