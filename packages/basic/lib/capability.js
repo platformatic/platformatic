@@ -850,12 +850,11 @@ export class BaseCapability extends EventEmitter {
 
     const port = this.config.application?.entrypointPort
 
-    if (typeof port !== 'number') {
-      return url.toString()
+    if (typeof port === 'number') {
+      url.port = port
     }
 
-    url.port = this.config.application.entrypointPort
-    return url.toString()
+    return url.pathname === '/' && url.search === '' && url.hash === '' ? url.origin : url.toString()
   }
 
   async #collectMetrics () {
