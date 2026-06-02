@@ -50,15 +50,15 @@ function getRuntimeWrappableProperties (skipServer) {
 }
 
 function getRuntimeBaseEnvVars (config) {
-  const env = {
-    PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
-    PLT_MANAGEMENT_API: true
-  }
+  const env = {}
 
   if (!config.skipServer) {
     env.PLT_SERVER_HOSTNAME = '127.0.0.1'
     env.PORT = config.port || 3042
   }
+
+  env.PLT_SERVER_LOGGER_LEVEL = config.logLevel || 'info'
+  env.PLT_MANAGEMENT_API = true
 
   return env
 }
