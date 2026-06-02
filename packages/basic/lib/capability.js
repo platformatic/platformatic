@@ -842,16 +842,16 @@ export class BaseCapability extends EventEmitter {
   }
 
   _getEntrypointUrl (raw) {
-    const port = this.config.application?.entrypointPort
-
-    if (typeof port !== 'number') {
-      return raw
-    }
-
     const url = new URL(raw)
 
     if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
       url.hostname = 'localhost'
+    }
+
+    const port = this.config.application?.entrypointPort
+
+    if (typeof port !== 'number') {
+      return url.toString()
     }
 
     url.port = this.config.application.entrypointPort

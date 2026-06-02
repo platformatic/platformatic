@@ -438,6 +438,79 @@ test('should proxy all applications if none are defined', async t => {
   }
 })
 
+test('should fail with actionable error when a gateway application is missing from the graph', async t => {
+  const tmpBaseDir = resolve(import.meta.dirname, '../tmp')
+
+  await createDirectory(tmpBaseDir)
+
+  const tmpDir = await mkdtemp(resolve(tmpBaseDir, 'plt-gateway-missing-app-'))
+  const gatewayDir = resolve(tmpDir, 'gateway')
+  const gatewayConfigPath = resolve(gatewayDir, 'platformatic.gateway.json')
+  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await createDirectory(gatewayDir)
+
+  await writeFile(
+    runtimeConfigPath,
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
+      entrypoint: 'composer',
+      watch: false,
+      services: [
+        {
+          id: 'composer',
+          path: gatewayDir,
+          config: gatewayConfigPath
+        }
+      ],
+      logger: {
+        level: 'fatal'
+      }
+    }),
+    'utf-8'
+  )
+
+  await writeFile(
+    gatewayConfigPath,
+    JSON.stringify({
+      module: resolve(import.meta.dirname, '../index.js'),
+      gateway: {
+        applications: [
+          {
+            id: 'missing',
+            proxy: {}
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    }),
+    'utf-8'
+  )
+
+  const runtime = await createRuntime(runtimeConfigPath)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await assert.rejects(
+    async () => {
+      await runtime.init()
+      await runtime.start()
+    },
+    error => {
+      assert.equal(error.code, 'PLT_RUNTIME_APPLICATION_DEPENDENCY_NOT_FOUND')
+      assert.match(error.message, /Application dependency missing not found. Available applications are: composer/)
+
+      return true
+    }
+  )
+})
+
 test('should fix the path using the referer only if asked to', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
   const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
