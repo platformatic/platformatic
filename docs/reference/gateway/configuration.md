@@ -209,6 +209,35 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`addEmptySchema`** (`boolean`) - If true, the gateway will add an empty response schema to the composed OpenAPI specification. Default is `false`.
 
+- **`handler`** (`string`) - Path to a JavaScript or TypeScript module that exports a custom proxy handler, either as `handler` or as the default export. The handler receives `(request, reply, dest, options)`, where `dest` is the rewritten proxy destination and `options` are the reply options passed to `reply.from()`. By default, proxied requests call `reply.from(dest, options)`; use this option to customize that behavior.
+
+  ```js title="handler.js"
+  export function handler (request, reply, dest, options) {
+    if (request.headers['x-custom-response'] === 'true') {
+      return reply.send({ dest })
+    }
+
+    return reply.from(dest, options)
+  }
+  ```
+
+  ```json title="Example JSON object"
+  {
+    "gateway": {
+      "handler": "./handler.js",
+      "applications": [
+        {
+          "id": "api",
+          "proxy": {
+            "prefix": "/api",
+            "upstream": "http://localhost:3000"
+          }
+        }
+      ]
+    }
+  }
+  ```
+
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
   ```json title="Example JSON object"

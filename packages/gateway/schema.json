@@ -919,6 +919,9 @@
             "additionalProperties": false
           }
         },
+        "handler": {
+          "type": "string"
+        },
         "openapi": {
           "type": "object",
           "properties": {

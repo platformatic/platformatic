@@ -641,6 +641,98 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
+test('should support gateway handler named export', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/api2/a',
+      handler: async () => {
+        return { upstream: true }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      handler: resolve(import.meta.dirname, './proxy/fixtures/handler.js'),
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/api',
+            rewritePrefix: '/api2'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/a'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), {
+    url: '/api/a',
+    dest: '/api2/a',
+    hasRewriteHeaders: true
+  })
+})
+
+test('should support gateway handler default export delegating to reply.from()', { skip: true }, async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/api2/a',
+      handler: async () => {
+        return { upstream: true }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      handler: resolve(import.meta.dirname, './proxy/fixtures/default-handler.js'),
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/api',
+            rewritePrefix: '/api2'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/a'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), { upstream: true })
+})
+
 test('should rewrite relative Location headers from rewritePrefix to prefix by default', async t => {
   const application = await createApplication(t, [
     {

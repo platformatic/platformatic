@@ -88,6 +88,18 @@ async function proxyPlugin (app, opts) {
   const hostnameLessProxies = []
   const root = opts.capability?.root ?? import.meta.dirname
 
+  let handler
+  if (opts.handler) {
+    const require = createRequire(import.meta.filename)
+    const custom = await loadModule(require, resolve(root, opts.handler))
+
+    if (typeof custom.handler === 'function') {
+      handler = custom.handler
+    } else if (typeof custom.default === 'function') {
+      handler = custom.default
+    }
+  }
+
   for (const application of opts.applications) {
     if (!application.proxy) {
       // When a application defines no expose config at all
@@ -191,6 +203,7 @@ async function proxyPlugin (app, opts) {
       prefix,
       rewritePrefix,
       upstream,
+      handler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
 
