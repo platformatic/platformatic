@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
+import { ensureTrailingSlash } from '../lib/utils.js'
 import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
@@ -91,7 +92,7 @@ test('BaseCapability - startCommand - should expose the configured entrypoint po
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
   await capability.startWithCommand(`node ${executablePath}`)
 
-  deepStrictEqual(capability.url, 'http://127.0.0.1:3042/')
+  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
   await capability.stopCommand()
 })
 
@@ -110,7 +111,7 @@ test('BaseCapability - setupChildManagerEventsForwarding - should keep entrypoin
   capability.setupChildManagerEventsForwarding(childManager)
   childManager.emit('url', 'http://127.0.0.1:1234', 'client-ws')
 
-  deepStrictEqual(capability.url, 'http://127.0.0.1:3042/')
+  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
   deepStrictEqual(capability.clientWs, 'client-ws')
 })
 
