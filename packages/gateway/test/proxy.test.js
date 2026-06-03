@@ -568,7 +568,7 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
-test('should support gateway handler named export', { skip: true }, async t => {
+test('should support gateway handler named export', async t => {
   const application = await createApplication(t, [
     {
       method: 'GET',
