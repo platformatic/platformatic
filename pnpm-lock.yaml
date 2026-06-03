@@ -725,8 +725,8 @@ importers:
         specifier: ^4.0.0
         version: 4.2.0
       '@fastify/http-proxy':
-        specifier: ^11.4.0
-        version: 11.4.4
+        specifier: ^11.5.0
+        version: 11.5.0
       '@fastify/reply-from':
         specifier: ^12.0.0
         version: 12.6.2
@@ -3348,8 +3348,8 @@ packages:
   '@fastify/forwarded@3.0.1':
     resolution: {integrity: sha512-JqDochHFqXs3C3Ml3gOY58zM7OqO9ENqPo0UqAjAjH8L01fRZqwX9iLeX34//kiJubF7r2ZQHtBRU36vONbLlw==}
 
-  '@fastify/http-proxy@11.4.4':
-    resolution: {integrity: sha512-wXoKaxW31pQc6H48Xqx//j6A2ikOiadht55DNkEFaseEUkJ9MzvURLK6Qqg0OOIEZGjTiEjjnbERv3NLFBc2Ug==}
+  '@fastify/http-proxy@11.5.0':
+    resolution: {integrity: sha512-UxmqkVvTRzbN8A8xSRBmKFhGufhFGDxoBCzPkp5+GDYRb4ew/WwmsZTYd13yJ3TWyOlpRhoQVVLHfcb0wPVkCg==}
 
   '@fastify/jwt@9.1.0':
     resolution: {integrity: sha512-CiGHCnS5cPMdb004c70sUWhQTfzrJHAeTywt7nVw6dAiI0z1o4WRvU94xfijhkaId4bIxTCOjFgn4sU+Gvk43w==}
@@ -12174,7 +12174,7 @@ snapshots:
 
   '@fastify/forwarded@3.0.1': {}
 
-  '@fastify/http-proxy@11.4.4':
+  '@fastify/http-proxy@11.5.0':
     dependencies:
       '@fastify/reply-from': 12.6.2
       fast-querystring: 1.1.2
