@@ -49,6 +49,10 @@ export const ApplicationStartTimeoutError = createError(
   `${ERROR_PREFIX}_APPLICATION_START_TIMEOUT`,
   "Application with id '%s' failed to start in %dms."
 )
+export const ApplicationDependencyNotFoundError = createError(
+  `${ERROR_PREFIX}_APPLICATION_DEPENDENCY_NOT_FOUND`,
+  'Application dependency %s not found. Available applications are: %s'
+)
 export const ApplicationsDependenciesCycleError = createError(
   `${ERROR_PREFIX}_APPLICATIONS_DEPENDENCIES_CYCLE`,
   'Detected a cycle in the applications dependencies: %s'

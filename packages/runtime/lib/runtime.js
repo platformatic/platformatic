@@ -582,7 +582,7 @@ export class Runtime extends EventEmitter {
 
     // Now, topological sort the applications based on their dependencies.
     // If circular dependencies are detected, an error with proper error code is thrown.
-    applications = topologicalSort(dependencies)
+    applications = topologicalSort(applications, dependencies)
 
     // Group into dependency levels so that each level's dependencies are all
     // in previous levels. Levels are started sequentially, but applications
