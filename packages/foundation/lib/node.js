@@ -26,14 +26,18 @@ export function checkNodeVersionForApplications () {
   which undici version Node bundles. This can be dropped once undici aligns the
   symbols across versions: https://github.com/nodejs/undici/pull/5319
 */
-export function mirrorGlobalDispatcherForBuiltinFetch (dispatcher) {
+const kMirroredGlobalDispatcher = Symbol.for('platformatic.undici.mirroredGlobalDispatcher')
+const kMirroredLegacyGlobalDispatcher = Symbol.for('platformatic.undici.mirroredLegacyGlobalDispatcher')
+
+export function mirrorGlobalDispatcherForBuiltinFetch (dispatcher, legacyDispatcher = dispatcher) {
   for (const version of [1, 2]) {
     const symbol = Symbol.for(`undici.globalDispatcher.${version}`)
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, symbol)
+    const value = version === 1 ? legacyDispatcher : dispatcher
 
     if (!descriptor) {
       Object.defineProperty(globalThis, symbol, {
-        value: dispatcher,
+        value,
         writable: true,
         enumerable: false,
         configurable: false
@@ -41,9 +45,31 @@ export function mirrorGlobalDispatcherForBuiltinFetch (dispatcher) {
     } else if (descriptor.writable) {
       // The symbol is created as non-configurable but writable, so a plain
       // assignment is the only legal way to update an already-defined slot.
-      globalThis[symbol] = dispatcher
+      globalThis[symbol] = value
     }
   }
+
+  globalThis[kMirroredGlobalDispatcher] = dispatcher
+  globalThis[kMirroredLegacyGlobalDispatcher] = legacyDispatcher
+}
+
+export function getGlobalDispatcherFromKnownUndiciSymbols () {
+  const mirroredDispatcher = globalThis[kMirroredGlobalDispatcher]
+  const mirroredLegacyDispatcher = globalThis[kMirroredLegacyGlobalDispatcher]
+  const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
+  const dispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
+
+  if (mirroredDispatcher) {
+    if (dispatcher && dispatcher !== mirroredDispatcher) {
+      return dispatcher
+    }
+
+    if (legacyDispatcher && legacyDispatcher !== (mirroredLegacyDispatcher ?? mirroredDispatcher)) {
+      return legacyDispatcher
+    }
+  }
+
+  return dispatcher ?? legacyDispatcher
 }
 
 export const features = {
