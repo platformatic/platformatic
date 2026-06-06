@@ -25,7 +25,7 @@ import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/prom
 import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
-import { Agent, request, interceptors as undiciInterceptors } from 'undici'
+import { Agent, getGlobalDispatcher, request, setGlobalDispatcher, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
@@ -82,6 +82,15 @@ const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
 const MAX_LISTENERS_COUNT = 100
+
+// Undici 7.27+ and Node.js built-in Undici share the v2 global dispatcher
+// symbol, but their request handler interfaces are not interchangeable. If the
+// built-in dispatcher is installed before userland Undici is imported, userland
+// `request()` can fail with `UND_ERR_INVALID_ARG`. Ensure this package starts
+// from a dispatcher created by its own Undici copy.
+if (!(getGlobalDispatcher() instanceof Agent)) {
+  setGlobalDispatcher(new Agent())
+}
 
 function parseOrigins (origins) {
   if (!origins) return undefined
