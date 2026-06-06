@@ -90,7 +90,7 @@
     "semgrator": "^0.3.0",
     "sonic-boom": "^4.2.0",
     "systeminformation": "^5.27.11",
-    "undici": "^7.27.1",
+    "undici": "^7.27.2",
     "undici-thread-interceptor": "^1.3.1",
     "ws": "^8.16.0"
   },
