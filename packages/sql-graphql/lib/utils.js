@@ -61,6 +61,8 @@ export function sqlTypeToGraphQL (sqlType) {
       return GraphQLJSONObject
     case 'jsonb':
       return GraphQLJSONObject
+    case 'vector':
+      return new graphql.GraphQLList(graphql.GraphQLFloat)
     default:
       return graphql.GraphQLString
   }
