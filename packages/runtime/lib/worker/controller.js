@@ -17,6 +17,7 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
+import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
 function fetchApplicationUrl (application, key) {
   if (!key.endsWith('_URL') || !application.id) {
@@ -193,6 +194,9 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.start({ listen })
+      if (refreshGlobalDispatcher()) {
+        this.#updateDispatcher()
+      }
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
@@ -326,6 +330,7 @@ export class Controller extends EventEmitter {
 
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
+    markAsPlatformaticDispatcher(dispatcher)
     setGlobalDispatcher(dispatcher)
     mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
   }

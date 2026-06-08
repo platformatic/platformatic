@@ -1,14 +1,40 @@
-import { mirrorGlobalDispatcherForBuiltinFetch } from '@platformatic/foundation'
+import { getGlobalDispatcherFromKnownUndiciSymbols, mirrorGlobalDispatcherForBuiltinFetch } from '@platformatic/foundation'
 import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parentPort, workerData } from 'node:worker_threads'
-import { Agent, Client, Pool, setGlobalDispatcher } from 'undici'
+import { Agent, Client, Pool } from 'undici'
 import { wire } from 'undici-thread-interceptor'
 import { createChannelCreationHook } from '../policies.js'
 import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
 import { kInterceptors } from './symbols.js'
+
+const kPlatformaticGlobalDispatcher = Symbol.for('platformatic.undici.globalDispatcher')
+
+let composeRuntimeDispatcher
+
+export function markAsPlatformaticDispatcher (dispatcher) {
+  Object.defineProperty(dispatcher, kPlatformaticGlobalDispatcher, {
+    value: true,
+    enumerable: false,
+    configurable: true
+  })
+}
+
+export function refreshGlobalDispatcher () {
+  if (!composeRuntimeDispatcher) {
+    return false
+  }
+
+  const dispatcher = getGlobalDispatcherFromKnownUndiciSymbols()
+  if (!dispatcher || dispatcher[kPlatformaticGlobalDispatcher]) {
+    return false
+  }
+
+  composeRuntimeDispatcher(dispatcher)
+  return true
+}
 
 export async function setDispatcher (runtimeConfig) {
   const threadDispatcher = createThreadInterceptor(runtimeConfig)
@@ -28,13 +54,35 @@ export async function setDispatcher (runtimeConfig) {
 
   const dispatcherOpts = await getDispatcherOpts(runtimeConfig.undici)
 
-  const dispatcher = new Agent(dispatcherOpts).compose(
-    [threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean)
-  )
-  setGlobalDispatcher(dispatcher)
-  mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
+  function installDispatcher (baseDispatcher) {
+    const dispatcher = baseDispatcher.compose(
+      [threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean)
+    )
+
+    markAsPlatformaticDispatcher(dispatcher)
+    mirrorGlobalDispatcherForBuiltinFetch(dispatcher, createLegacyDispatcher(dispatcher))
+    return dispatcher
+  }
+
+  composeRuntimeDispatcher = installDispatcher
+  installDispatcher(new Agent(dispatcherOpts))
 
   return { threadDispatcher }
+}
+
+function createLegacyDispatcher (dispatcher) {
+  const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
+  const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
+
+  if (legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper') {
+    try {
+      return new legacyDispatcher.constructor(dispatcher)
+    } catch {
+      return dispatcher
+    }
+  }
+
+  return dispatcher
 }
 
 export async function updateUndiciInterceptors (undiciConfig) {
