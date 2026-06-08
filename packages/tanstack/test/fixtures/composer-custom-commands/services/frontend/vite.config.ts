@@ -1,3 +1,4 @@
+import { getBasePath, getITC } from '@platformatic/globals'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
@@ -5,7 +6,7 @@ import { defineConfig } from 'vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  base: globalThis.platformatic?.basePath ?? '/',
+  base: getBasePath(false) ?? '/',
   plugins: [
     tsConfigPaths(),
     tanstackStart(),
@@ -20,7 +21,8 @@ export default defineConfig({
     {
       name: 'platformatic',
       configResolved: config => {
-        globalThis[Symbol.for('plt.children.itc')]?.notify('config', config)
+        const itc = getITC()
+        itc.notify('config', config)
       }
     }
   ],

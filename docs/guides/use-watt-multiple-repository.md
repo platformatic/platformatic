@@ -58,10 +58,10 @@ cd my-microapplications-app
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.21.0",
-    "@platformatic/next": "^2.21.0",
-    "@platformatic/node": "^2.21.0",
-    "wattpm": "^2.21.0"
+    "@platformatic/runtime": ">=3.0.0",
+    "@platformatic/next": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0",
+    "wattpm": ">=3.0.0"
   },
   "workspaces": ["web/*", "external/*"]
 }

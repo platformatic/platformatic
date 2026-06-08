@@ -42,9 +42,25 @@ test('getServerUrl - should return the correct IPv4 address', async t => {
 
 test('getServerUrl - should return the correct IPv6 address', async t => {
   const server = createHttpServer(t)
-  await listen(server, { host: '::1', port: 0 })
+  try {
+    await listen(server, { host: '::1', port: 0 })
+  } catch (err) {
+    if (err.code === 'EADDRNOTAVAIL') {
+      t.skip('IPv6 loopback is not available')
+      return
+    }
+
+    throw err
+  }
 
   deepStrictEqual(getServerUrl(server), `http://[::1]:${server.address().port}`)
+})
+
+test('getServerUrl - should normalize wildcard IPv6 address', async t => {
+  const server = createHttpServer(t)
+  await listen(server, { host: '::', port: 0 })
+
+  deepStrictEqual(getServerUrl(server), `http://127.0.0.1:${server.address().port}`)
 })
 
 test('injectViaRequest - should perform a request', async t => {

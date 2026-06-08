@@ -1,9 +1,11 @@
+import { getMessaging } from '@platformatic/globals'
 export default async function (app) {
   app.get('/id', async () => {
     return { from: 'application-1' }
   })
 
-  globalThis.platformatic.messaging.handle('id', () => 'application-1')
+  const messaging = getMessaging()
+  messaging.handle('id', () => 'application-1')
 
   app.get('/interceptor/application-2', async (_, reply) => {
     const res = await fetch('http://application-2.plt.local/id')
@@ -18,12 +20,14 @@ export default async function (app) {
   })
 
   app.get('/messaging/application-2', async () => {
-    const from = await globalThis.platformatic.messaging.send('application-2', 'id')
+    const messaging = getMessaging()
+    const from = await messaging.send('application-2', 'id')
     return { from }
   })
 
   app.get('/messaging/application-3', async (_, reply) => {
-    const from = await globalThis.platformatic.messaging.send('application-3', 'id')
+    const messaging = getMessaging()
+    const from = await messaging.send('application-3', 'id')
     return { from }
   })
 

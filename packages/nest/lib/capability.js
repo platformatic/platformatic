@@ -9,6 +9,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { getEvents } from '@platformatic/globals'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -78,7 +79,8 @@ export class NestCapability extends BaseCapability {
 
       // We use url changing as a way to notify restarts
       this.childManager.on('url', () => {
-        globalThis.platformatic.events.emitAndNotify('url', this.url)
+        const events = getEvents()
+        events.emitAndNotify('url', this.url)
       })
     } else {
       return this.#startProduction(listen)

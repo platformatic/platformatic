@@ -162,8 +162,7 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
 
     if (!packageJson.dependencies[capability]) {
       packageJson.dependencies[capability] = `^${version}`
-      packageJson.devDependencies ??= {}
-      packageJson.devDependencies[capability] = undefined
+      delete packageJson.devDependencies?.[capability]
 
       if (capability === '@platformatic/node') {
         logger.info(

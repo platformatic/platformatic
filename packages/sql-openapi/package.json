@@ -43,6 +43,7 @@
     "@fastify/error": "^4.0.0",
     "@fastify/swagger": "^9.0.0",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@scalar/fastify-api-reference": "1.34.6",

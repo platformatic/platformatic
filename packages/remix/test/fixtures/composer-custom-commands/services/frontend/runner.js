@@ -1,5 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
+import { getBasePath, getLogger } from '@platformatic/globals'
 import { createRequestHandler } from '@remix-run/node'
 import fastify from 'fastify'
 import { join, resolve } from 'node:path'
@@ -29,8 +30,8 @@ function handleRequest (handle, req) {
   )
 }
 
-const app = fastify({ loggerInstance: globalThis.platformatic?.logger })
-const basePath = globalThis.platformatic?.basePath ?? '/'
+const app = fastify({ loggerInstance: getLogger() })
+const basePath = getBasePath(false) ?? '/'
 
 await app.register(fastifyStatic, {
   root: resolve(process.cwd(), resolve(process.cwd(), 'build/client')),

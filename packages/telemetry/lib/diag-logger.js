@@ -1,4 +1,5 @@
 import { diag, DiagLogLevel } from '@opentelemetry/api'
+import { getLogger } from '@platformatic/globals'
 import util from 'node:util'
 
 const pinoToDiagLogLevels = {
@@ -35,7 +36,8 @@ function callLogger (logger, method, fallback, args) {
   fallback(...args)
 }
 
-export function createPlatformaticDiagLogger (logger = globalThis.platformatic?.logger) {
+export function createPlatformaticDiagLogger (logger) {
+  logger ??= getLogger(false)
   let target = logger
 
   if (typeof target?.child === 'function') {
@@ -55,7 +57,8 @@ export function createPlatformaticDiagLogger (logger = globalThis.platformatic?.
   }
 }
 
-export function setupDiagLogger (opts, logger = globalThis.platformatic?.logger) {
+export function setupDiagLogger (opts, logger) {
+  logger ??= getLogger(false)
   if (opts?.diagLogger !== true) {
     return false
   }

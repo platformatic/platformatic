@@ -4,7 +4,8 @@
   },
   "main": "dist/index.js",
   "dependencies": {
-    "@platformatic/node": "^2.57.0",
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0",
     "fastify": "^5.7.0"
   },
   "devDependencies": {

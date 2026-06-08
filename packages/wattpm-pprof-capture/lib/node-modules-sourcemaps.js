@@ -1,3 +1,4 @@
+import { getLogger } from '@platformatic/globals'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -184,7 +185,7 @@ function resolveModulePath (appPath, moduleName) {
  */
 export async function loadNodeModulesSourceMaps (appPath, moduleNames, debug = false) {
   const entries = new Map()
-  const logger = globalThis.platformatic?.logger
+  const logger = getLogger(false)
 
   if (debug && logger) {
     logger.debug({ appPath, moduleNames }, 'Loading source maps from node_modules')

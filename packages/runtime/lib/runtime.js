@@ -9,6 +9,7 @@ import {
   kTimeout,
   parseMemorySize
 } from '@platformatic/foundation'
+import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import { collectProcessMetrics, client as metricsClient } from '@platformatic/metrics'
 import fastify from 'fastify'
@@ -1168,6 +1169,10 @@ export class Runtime extends EventEmitter {
   }
 
   async getMetrics (format = 'json') {
+    if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
+      throw new Error('Metrics are disabled')
+    }
+
     let metrics = null
 
     const applicationRestartMetrics = format === 'json'
@@ -1734,7 +1739,7 @@ export class Runtime extends EventEmitter {
         applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
 
         if (!existsSync(applicationConfig.path)) {
-          const executable = globalThis.platformatic?.executable ?? 'platformatic'
+          const executable = getExecutable() ?? 'platformatic'
           this.logger.error(
             `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
             id

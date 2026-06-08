@@ -1,4 +1,5 @@
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
+import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
 import { initializeITCTelemetry, ITC } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
@@ -150,10 +151,10 @@ export async function waitEventFromITC (worker, event) {
 export async function setupITC (controller, application, dispatcher, sharedContext) {
   await initializeITCTelemetry()
 
-  const logger = globalThis.platformatic.logger
+  const logger = getLogger()
   const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 
-  Object.assign(globalThis.platformatic ?? {}, {
+  updateGlobals({
     messaging: {
       handle: messaging.handle.bind(messaging),
       send: messaging.send.bind(messaging),
@@ -172,7 +173,8 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           await once(controller, 'start')
         } else {
           // This gives a chance to a capability to perform custom logic
-          globalThis.platformatic.events.emit('start')
+          const events = getEvents()
+          events.emit('start')
 
           try {
             await controller.start()
@@ -205,7 +207,8 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
         if (force || status.startsWith('start')) {
           // This gives a chance to a capability to perform custom logic
-          globalThis.platformatic.events.emit('stop')
+          const events = getEvents()
+          events.emit('stop')
 
           await controller.stop(force, dependents)
         }
@@ -419,9 +422,16 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         // For service-based capabilities, expose the Fastify app
         replServer.context.app = controller.capability?.getApplication?.()
         replServer.context.capability = controller.capability
-        replServer.context.platformatic = globalThis.platformatic
+        replServer.context.platformatic = {
+          capability: controller.capability,
+          config: controller.config,
+          events: getEvents(),
+          itc,
+          logger: getLogger(),
+          messaging: getMessaging()
+        }
         replServer.context.config = controller.applicationConfig
-        replServer.context.logger = globalThis.platformatic?.logger
+        replServer.context.logger = getLogger()
 
         replServer.on('exit', () => {
           port.postMessage({ type: 'exit' })

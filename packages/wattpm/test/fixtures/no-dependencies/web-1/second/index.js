@@ -1,7 +1,9 @@
+import { getLogger } from '@platformatic/globals'
 const fastify = require('fastify')
 
+const logger = getLogger()
 const app = fastify({
-  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: 'trace' })
+  loggerInstance: logger.child({}, { level: 'trace' })
 })
 
 app.get('/', async () => {

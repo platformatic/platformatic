@@ -1,3 +1,4 @@
+import { getEvents } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const server = createServer((_, res) => {
@@ -7,5 +8,6 @@ const server = createServer((_, res) => {
 server.listen(0)
 
 export function close () {
-  globalThis.platformatic?.events.emitAndNotify('close:function')
+  const events = getEvents()
+  events.emitAndNotify('close:function')
 }

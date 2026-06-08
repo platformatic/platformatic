@@ -8,6 +8,7 @@ const { Pool } = pg
 const connectionString = 'postgresql://postgres:postgres@127.0.0.1:5432/test-telemetry-pg'
 
 const main = async () => {
+  const { setConnectionString } = require('@platformatic/globals')
   await migrate(connectionString)
   const pool = new Pool({ connectionString })
   const app = express()
@@ -15,7 +16,7 @@ const main = async () => {
   app.use('/users', require('./routes/users')(pool))
 
   // ...and of the DB connection
-  globalThis.platformatic.setConnectionString(connectionString)
+  setConnectionString(connectionString)
 
   app.listen(0)
 }

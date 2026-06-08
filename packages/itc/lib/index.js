@@ -332,6 +332,14 @@ export class ITC extends EventEmitter {
     this._send(generateNotification(name, message, options?.meta), options)
   }
 
+  async process (name, message, context) {
+    const request = generateRequest(name, message, context?.meta)
+    const { error, data } = await this.#dispatchRequest(request, context)
+
+    if (error !== null) throw error
+    return data
+  }
+
   handle (message, handler) {
     this.#handlers.set(message, handler)
   }
@@ -399,6 +407,16 @@ export class ITC extends EventEmitter {
   }
 
   async #handleRequest (raw, context) {
+    const response = await this.#dispatchRequest(raw, context)
+
+    this._send(response, context)
+
+    if (this.#closeAfterCurrentRequest) {
+      this.close()
+    }
+  }
+
+  async #dispatchRequest (raw, context) {
     let request = null
     let handler = null
     let response = null
@@ -436,11 +454,7 @@ export class ITC extends EventEmitter {
       this.#handling = false
     }
 
-    this._send(response, context)
-
-    if (this.#closeAfterCurrentRequest) {
-      this.close()
-    }
+    return response
   }
 
   #handleResponse (response, context) {

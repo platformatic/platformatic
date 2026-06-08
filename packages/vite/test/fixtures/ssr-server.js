@@ -1,3 +1,4 @@
+import { getLogger } from '@platformatic/globals'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import express from 'express'
 import { readFile } from 'node:fs/promises'
@@ -13,7 +14,8 @@ async function serve (vite, clientModule, req, res, next) {
   }
 
   try {
-    globalThis.platformatic?.logger?.info({ req: { host: req.hostname } }, 'incoming request')
+    const logger = getLogger()
+    logger.info({ req: { host: req.hostname } }, 'incoming request')
 
     const { generate } = await vite.ssrLoadModule(clientModule)
     const template = await vite.transformIndexHtml(

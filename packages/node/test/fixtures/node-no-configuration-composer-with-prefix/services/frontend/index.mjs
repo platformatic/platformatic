@@ -1,3 +1,4 @@
+import { getITC } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const server = createServer((req, res) => {
@@ -39,7 +40,8 @@ const server = createServer((req, res) => {
   }
 })
 
-globalThis[Symbol.for('plt.runtime.itc')].handle('closeServer', () => {
+const itc = getITC()
+itc.handle('closeServer', () => {
   return new Promise((resolve, reject) => {
     server.close(err => {
       if (err) {

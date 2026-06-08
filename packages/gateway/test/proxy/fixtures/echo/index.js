@@ -1,3 +1,4 @@
+import { getApplicationId } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const server = createServer((req, res) => {
@@ -5,7 +6,7 @@ const server = createServer((req, res) => {
     'content-type': 'application/json',
     connection: 'close'
   })
-  res.end(JSON.stringify({ service: globalThis.platformatic.applicationId }))
+  res.end(JSON.stringify({ service: getApplicationId() }))
 })
 
 server.listen(0)

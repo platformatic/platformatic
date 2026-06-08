@@ -66,13 +66,14 @@ cd web/api; npm install fastify @fastify/postgresql @fastify/autoload; cd ..
 Then replace the `web/api/index.js` file with:
 
 ```javascript
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
 
 export async function create () {
   const app = fastify({
-    loggerIntance: globalThis.platformatic?.logger
+    loggerIntance: getLogger()
   })
 
   // Register PostgreSQL plugin
@@ -140,8 +141,8 @@ This autoload behavior simplifies deployment and ensures all your services are a
 
 ### Custom Health Check Functions
 
-- **`setCustomHealthCheck`**: Sets a custom liveness check function that runs on the `/status` (or custom liveness) endpoint
-- **`setCustomReadinessCheck`**: Sets a custom readiness check function that runs on the `/ready` (or custom readiness) endpoint
+- **`setCustomHealthCheck()`**: Sets a custom liveness check for the `/status` endpoint or custom liveness endpoint.
+- **`setCustomReadinessCheck()`**: Sets a custom readiness check for the `/ready` endpoint or custom readiness endpoint.
 
 Both methods accept a function that returns:
 
@@ -158,13 +159,14 @@ Both methods accept a function that returns:
 Update your `web/api/index.js` to implements comprehensive health checks:
 
 ```javascript
+import { getLogger, setCustomHealthCheck, setCustomReadinessCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
 
 export async function create () {
   const app = fastify({
-    loggerIntance: globalThis.platformatic?.logger
+    loggerIntance: getLogger()
   })
 
   // Register PostgreSQL plugin
@@ -178,7 +180,7 @@ export async function create () {
   })
 
   // Register custom liveness check (for /status endpoint)
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     try {
       // Check PostgreSQL database connectivity
       const client = await app.pg.connect()
@@ -200,7 +202,7 @@ export async function create () {
   })
 
   // Register custom readiness check (for /ready endpoint)
-  globalThis.platformatic.setCustomReadinessCheck(async () => {
+  setCustomReadinessCheck(async () => {
     try {
       // Check if PostgreSQL connection pool is ready
       if (!app.pg || !app.pg.pool) {
@@ -533,8 +535,10 @@ graph TB
 Services within a Watt application can communicate with each other using the automatic service discovery:
 
 ```javascript
+import { setCustomHealthCheck } from '@platformatic/globals'
+
 // Health check for internal services using Watt's service mesh
-globalThis.platformatic.setCustomHealthCheck(async () => {
+setCustomHealthCheck(async () => {
   try {
     const healthChecks = await Promise.allSettled([
       // Database service health check

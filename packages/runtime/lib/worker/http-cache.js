@@ -1,7 +1,7 @@
+import { getClientSpansAls, getITC } from '@platformatic/globals'
 import { randomUUID } from 'node:crypto'
 import { Readable, Writable } from 'node:stream'
 import { interceptors } from 'undici'
-import { kITC } from './symbols.js'
 
 const kCacheIdHeader = Symbol('cacheIdHeader')
 const CACHE_ID_HEADER = 'x-plt-http-cache-id'
@@ -28,7 +28,7 @@ export class RemoteCacheStore {
       this.#logger.error(err, 'Error in onRequest http cache hook')
     }
 
-    const itc = globalThis[kITC]
+    const itc = getITC()
     if (!itc) return
 
     const sanitizedRequest = this.#sanitizeRequest(request)
@@ -68,7 +68,7 @@ export class RemoteCacheStore {
       value.headers = { ...value.headers, [CACHE_ID_HEADER]: cacheEntryId }
     }
 
-    const itc = globalThis[kITC]
+    const itc = getITC()
     if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
     const acc = []
@@ -96,7 +96,7 @@ export class RemoteCacheStore {
   }
 
   delete (request) {
-    const itc = globalThis[kITC]
+    const itc = getITC()
     if (!itc) throw new Error('Cannot delete from cache without an ITC instance')
 
     request = this.#sanitizeRequest(request)
@@ -120,7 +120,7 @@ export function httpCacheInterceptor (interceptorOpts) {
 
   // AsyncLocalStorage that contains a client http request span
   // Exists only when the nodejs capability telemetry is enabled
-  const clientSpansAls = globalThis.platformatic.clientSpansAls
+  const clientSpansAls = getClientSpansAls(false)
 
   return originalDispatch => {
     const dispatch = (opts, handler) => {

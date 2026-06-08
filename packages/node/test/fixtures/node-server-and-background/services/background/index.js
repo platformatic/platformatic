@@ -1,5 +1,7 @@
+import { getEvents } from '@platformatic/globals'
 function doWork () {
-  globalThis.platformatic.events.emitAndNotify('work')
+  const events = getEvents()
+  events.emitAndNotify('work')
 }
 
 const intervalId = setInterval(doWork, 30_000)
@@ -8,5 +10,6 @@ export async function close () {
   // this and other alike clean ups
   clearTimeout(intervalId)
 
-  globalThis.platformatic.events.emitAndNotify('close:function')
+  const events = getEvents()
+  events.emitAndNotify('close:function')
 }

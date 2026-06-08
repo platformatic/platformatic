@@ -1,5 +1,6 @@
 import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -35,11 +36,11 @@ function ensureCleanup (t, folders) {
 }
 
 test('should increment and decrement activeWsConnections metric', async t => {
-  const initPromClient = globalThis.platformatic?.prometheus
+  const initPromClient = getPrometheus(false)
   const prometheusRegistry = new client.Registry()
 
   if (!initPromClient) {
-    globalThis.platformatic = { ...globalThis.platformatic, prometheus: { registry: prometheusRegistry, client } }
+    updateGlobals({ prometheus: { registry: prometheusRegistry, client } })
   }
 
   const { application, wsServer } = await createWebsocketApplication(t)
@@ -116,7 +117,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
   assert.equal(await getActiveConnections(), 0)
 
   await gateway.close()
-  globalThis.platformatic.prometheus = initPromClient
+  updateGlobals({ prometheus: initPromClient })
 })
 
 test('should proxy openapi requests', async t => {
@@ -689,7 +690,7 @@ test('should support gateway handler named export', async t => {
   })
 })
 
-test('should support gateway handler default export delegating to reply.from()', { skip: true }, async t => {
+test('should support gateway handler default export delegating to reply.from()', async t => {
   const application = await createApplication(t, [
     {
       method: 'GET',
@@ -948,7 +949,7 @@ test('should properly configure the frontends on their paths if no gateway confi
   await createDirectory(resolve(nextModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
 
-  // Make sure there is @platformatic/next available in the next application.
+  // Make sure there is @platformatic/remix available in the next application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
@@ -1813,16 +1814,20 @@ test('should proxy to a websocket application with reconnect options', async t =
   })
 
   const gatewayOrigin = await gateway.start({ listen: true })
-  globalThis.platformatic.events ??= new EventEmitter()
+  try {
+    getEvents()
+  } catch {
+    updateGlobals({ events: new EventEmitter() })
+  }
 
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
   await once(client, 'open')
   client.send('hello')
 
-  await once(globalThis.platformatic.events, 'proxy:onIncomingMessage')
+  await once(getEvents(), 'proxy:onIncomingMessage')
 
-  await once(globalThis.platformatic.events, 'onConnect')
-  await once(globalThis.platformatic.events, 'onOutgoingMessage')
+  await once(getEvents(), 'onConnect')
+  await once(getEvents(), 'onOutgoingMessage')
 
   // close the target to cause reconnection
   await wsApplication.close()
@@ -1830,12 +1835,12 @@ test('should proxy to a websocket application with reconnect options', async t =
 
   await createWebsocketApplication(t, {}, port)
 
-  await once(globalThis.platformatic.events, 'onReconnect')
-  await once(globalThis.platformatic.events, 'onPong')
+  await once(getEvents(), 'onReconnect')
+  await once(getEvents(), 'onPong')
 
   client.close()
 
-  await once(globalThis.platformatic.events, 'onDisconnect')
+  await once(getEvents(), 'onDisconnect')
 })
 
 test('should dynamically proxy a using custom logic', async t => {

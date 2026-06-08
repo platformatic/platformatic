@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@platformatic/remix": "^2.3.1",
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/remix": ">=3.0.0",
     "@remix-run/dev": "^2.16.8",
     "@remix-run/node": "^2.16.8",
     "@remix-run/react": "^2.16.8",

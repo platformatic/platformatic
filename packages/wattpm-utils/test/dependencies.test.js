@@ -153,27 +153,27 @@ test('update - should update version in package.json files', async t => {
   const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
-    wattpm: '^2.41.0',
-    '@platformatic/runtime': '^2.41.0'
+    wattpm: '^3.55.0',
+    '@platformatic/runtime': '^3.55.0'
   })
 
   const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^2.41.0',
+    '@platformatic/node': '^3.55.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '2.41.0'
+    '@platformatic/vite': '3.55.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^2.41.0'
+    '@platformatic/telemetry': '^3.55.0'
   })
 
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^2.41.0',
+    '@platformatic/service': '^3.55.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
@@ -181,19 +181,19 @@ test('update - should update version in package.json files', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/runtime of the application from ^2.1.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/runtime of the application from ^3.0.0 to ^3.55.0 ...'
     )
   )
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the application main from ^2.41.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^3.55.0 to ^3.55.0 ...'
     )
   )
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -219,18 +219,18 @@ test('update - should work when executed inside an application folder', async t 
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^2.41.0',
+    '@platformatic/node': '^3.55.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '2.41.0'
+    '@platformatic/vite': '3.55.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^2.41.0'
+    '@platformatic/telemetry': '^3.55.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^2.41.0',
+    '@platformatic/service': '^3.55.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
@@ -238,7 +238,7 @@ test('update - should work when executed inside an application folder', async t 
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -268,19 +268,19 @@ test('update - should work when loaded from an application file', async t => {
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^2.41.0',
+    '@platformatic/node': '^3.55.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '2.41.0'
+    '@platformatic/vite': '3.55.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^2.41.0'
+    '@platformatic/telemetry': '^3.55.0'
   })
 
   // The another application is not updated, because it is not considered as part of the project.
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^2.0.0',
+    '@platformatic/service': '^3.0.0',
     '@platformatic/db': '^1.0.0',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
@@ -288,13 +288,13 @@ test('update - should work when loaded from an application file', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the application main from ^2.41.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^3.55.0 to ^3.55.0 ...'
     )
   )
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -313,23 +313,23 @@ test('update - should fail when a dependency cannot be updated', async t => {
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
-    wattpm: '^2.41.0',
-    '@platformatic/runtime': '^2.41.0'
+    wattpm: '^3.55.0',
+    '@platformatic/runtime': '^3.55.0'
   })
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/db': '~1.1.0 || ~1.15.0',
-    '@platformatic/node': '^2.0.0',
+    '@platformatic/node': '^3.0.0',
     '@platformatic/remix': '~2.5.0',
     '@platformatic/vite': '>1'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^2.0.0'
+    '@platformatic/telemetry': '^3.0.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^2.41.0',
+    '@platformatic/service': '^3.55.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'

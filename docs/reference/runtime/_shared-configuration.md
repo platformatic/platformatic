@@ -352,7 +352,7 @@ An object with the following settings:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
-  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `globalThis.platformatic.logger`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 
@@ -388,7 +388,7 @@ The number of milliseconds to wait when invoking another application using the i
 
 ### `messagingTimeout`
 
-The number of milliseconds to wait when invoking another application using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
+The number of milliseconds to wait when invoking another application using the messaging API before considering the request timed out. Default: `300000` (5 minutes).
 
 ### `startupConcurrency`
 
@@ -687,7 +687,7 @@ This configuration can also be set at the application level to override the runt
 
 The `management` per-application configuration grants an application access to runtime management operations directly through the ITC (Inter-Thread Communication) channel. This allows orchestrator-style applications to list services, restart applications, inspect configuration, proxy requests, and more — without requiring the HTTP-based `managementApi` to be enabled.
 
-When enabled, a `ManagementClient` instance is available at `globalThis.platformatic.management` inside the application worker. Applications without `management` enabled have no access to these operations.
+When enabled, a `ManagementClient` instance is available via `getManagement()` inside the application worker. Applications without `management` enabled have no access to these operations.
 
 This setting can also be configured at the [runtime level](#management) to apply to all applications at once.
 
@@ -752,22 +752,25 @@ Configuration options (object form):
 **Usage example inside a privileged application:**
 
 ```javascript
+import { getManagement } from '@platformatic/globals'
+
 export function create () {
   const app = fastify()
+  const management = getManagement()
 
   app.get('/services', async () => {
-    const { applications } = await globalThis.platformatic.management.getApplications()
+    const { applications } = await management.getApplications()
     return applications
   })
 
   app.post('/services/:id/restart', async req => {
-    await globalThis.platformatic.management.restartApplication(req.params.id)
+    await management.restartApplication(req.params.id)
     return { ok: true }
   })
 
   app.get('/proxy/:id/*', async req => {
     const { id, '*': url } = req.params
-    return globalThis.platformatic.management.inject(id, {
+    return management.inject(id, {
       method: 'GET',
       url: '/' + url
     })

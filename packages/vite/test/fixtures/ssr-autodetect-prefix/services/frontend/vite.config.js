@@ -1,3 +1,4 @@
+import { getLogLevel } from '@platformatic/globals'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -7,7 +8,7 @@ const root = resolve(dirname(path), 'client')
 export default {
   root,
   base: '/nested/base/dir/',
-  logLevel: globalThis.platformatic?.logLevel ?? 'info',
+  logLevel: getLogLevel(false) ?? 'info',
   // This is needed for GitHub actions due to https://github.com/vitejs/vite/issues/10802
   resolve: {
     preserveSymlinks: true

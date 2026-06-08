@@ -1,5 +1,6 @@
 import httpProxy from '@fastify/http-proxy'
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
+import { getITC, getPrometheus } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -7,7 +8,6 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { initMetrics } from './metrics.js'
 
-const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
 
 const urlPattern = /^https?:\/\//
@@ -24,8 +24,9 @@ async function resolveApplicationProxyParameters (application, root) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
   // Only fetch meta for local applications - remote applications won't be in the runtime
   let allMeta = {}
-  if (isLocalApplication(application)) {
-    allMeta = (await globalThis[kITC]?.send('getApplicationMeta', application.id)) ?? {}
+  const itc = isLocalApplication(application) ? getITC(false) : undefined
+  if (itc) {
+    allMeta = await itc.send('getApplicationMeta', application.id)
   }
   const meta = allMeta.gateway ?? allMeta.composer ?? { prefix: application.id }
 
@@ -192,7 +193,8 @@ async function proxyPlugin (app, opts) {
       : null
 
     if (!metrics) {
-      metrics = initMetrics(globalThis.platformatic?.prometheus)
+      const prometheus = getPrometheus(false)
+      metrics = initMetrics(prometheus)
     }
 
     const getUpstream = application.proxy?.custom?.getUpstream

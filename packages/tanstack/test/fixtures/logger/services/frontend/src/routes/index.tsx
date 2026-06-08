@@ -1,6 +1,8 @@
+import { getLogger } from '@platformatic/globals'
 import { createFileRoute } from '@tanstack/react-router'
 
-globalThis.platformatic.logger?.info('Log from TanStack App page')
+const logger = getLogger()
+logger.info('Log from TanStack App page')
 const version = 123
 
 function Home () {

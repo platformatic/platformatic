@@ -1,4 +1,14 @@
 import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
+import {
+  getApplicationId,
+  getConfig,
+  getEvents,
+  getLogLevel,
+  getRoot,
+  getValkeyClients,
+  getWorkerId,
+  updateGlobals
+} from '@platformatic/globals'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { hostname } from 'node:os'
@@ -12,8 +22,7 @@ const require = createRequire(import.meta.url)
 let Redis
 let msgpackr
 
-globalThis.platformatic ??= {}
-globalThis.platformatic.valkeyClients = new Map()
+updateGlobals({ valkeyClients: new Map() })
 
 export function keyFor (prefix, subprefix, section, key) {
   let result = prefix?.length ? prefix + ':' : ''
@@ -48,13 +57,15 @@ export function ensureMsgpackr () {
 }
 
 export function getConnection (url) {
-  let client = globalThis.platformatic.valkeyClients.get(url)
+  const valkeyClients = getValkeyClients()
+  let client = valkeyClients.get(url)
 
   if (!client) {
     client = new Redis(url, { enableAutoPipelining: true })
-    globalThis.platformatic.valkeyClients.set(url, client)
+    valkeyClients.set(url, client)
 
-    globalThis.platformatic.events.on('plt:next:close', () => {
+    const events = getEvents()
+    events.on('plt:next:close', () => {
       client.disconnect(false)
     })
   }
@@ -63,11 +74,12 @@ export function getConnection (url) {
 }
 
 export function createPlatformaticLogger () {
-  const loggerConfig = globalThis.platformatic?.config?.logger
+  const config = getConfig()
+  const loggerConfig = config.logger
 
   const pinoOptions = {
     ...loggerConfig,
-    level: globalThis.platformatic?.logLevel ?? loggerConfig?.level ?? 'info'
+    level: getLogLevel(false) ?? loggerConfig?.level ?? 'info'
   }
   if (pinoOptions.formatters) {
     pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
@@ -76,8 +88,9 @@ export function createPlatformaticLogger () {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
-  if (globalThis.platformatic?.applicationId) {
-    pinoOptions.name = `cache:${globalThis.platformatic.applicationId}`
+  const applicationId = getApplicationId()
+  if (applicationId) {
+    pinoOptions.name = `cache:${applicationId}`
   }
 
   if (pinoOptions.base !== null) {
@@ -85,7 +98,7 @@ export function createPlatformaticLogger () {
       ...(pinoOptions.base ?? {}),
       pid: process.pid,
       hostname: hostname(),
-      worker: globalThis.platformatic?.workerId
+      worker: getWorkerId()
     }
   } else if (pinoOptions.base === null) {
     pinoOptions.base = undefined
@@ -95,7 +108,7 @@ export function createPlatformaticLogger () {
 }
 
 export function getPlatformaticSubprefix () {
-  const root = fileURLToPath(globalThis.platformatic.root)
+  const root = fileURLToPath(getRoot())
 
   return existsSync(resolve(root, '.next/BUILD_ID'))
     ? readFileSync(resolve(root, '.next/BUILD_ID'), 'utf-8').trim()
@@ -104,8 +117,8 @@ export function getPlatformaticSubprefix () {
 
 export function getPlatformaticMeta () {
   return {
-    applicationId: globalThis.platformatic.applicationId,
-    workerId: globalThis.platformatic.workerId
+    applicationId: getApplicationId(),
+    workerId: getWorkerId()
   }
 }
 

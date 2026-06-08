@@ -40,10 +40,10 @@ To properly work when using with in application where the entrypoint is a Platfo
 
 ```typescript
 import type { Config } from '@react-router/dev/config'
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 
 export default {
-  basename: getGlobal()?.basePath ?? '/'
+  basename: getBasePath(false) ?? '/'
   ssr: true
 } satisfies Config
 ```
@@ -51,13 +51,13 @@ export default {
 You also need to adjust the `base` option in your `vite.config.ts`:
 
 ```typescript
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  base: getGlobal()?.basePath ?? '/',
+  base: getBasePath(false) ?? '/',
   plugins: [reactRouter(), tsconfigPaths()]
 })
 ```
@@ -69,12 +69,13 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
 
    ```typescript
+   import { getBasePath } from '@platformatic/globals'
    import { reactRouter } from '@react-router/dev/vite'
    import { defineConfig } from 'vite'
    import tsconfigPaths from 'vite-tsconfig-paths'
 
    export default defineConfig(({ isSsrBuild }) => ({
-     base: globalThis.platformatic?.basePath ?? '/',
+     base: getBasePath(false) ?? '/',
      build: {
        rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
      },

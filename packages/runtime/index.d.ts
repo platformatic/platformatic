@@ -61,7 +61,6 @@ export namespace symbols {
   export const kWorkerStatus: unique symbol
   export const kWorkerHealthSignals: unique symbol
   export const kStderrMarker: string
-  export const kInterceptors: unique symbol
   export const kWorkersBroadcast: unique symbol
 }
 

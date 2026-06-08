@@ -4,11 +4,14 @@ import { BaseGenerator } from '@platformatic/generators'
 import { basename, dirname, sep } from 'node:path'
 
 const indexFileJS = `
+import { getLogger } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 export function create() {
+  const logger = getLogger()
+  
   return createServer((_, res) => {
-    globalThis.platformatic.logger.debug('Serving request.')
+    logger.debug('Serving request.')
     res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -16,14 +19,14 @@ export function create() {
 `
 
 const indexFileTS = `
-import { getGlobal } from '@platformatic/globals'
+import { getLogger } from '@platformatic/globals'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 
 export function create() {
-  const platformatic = getGlobal()
-
+  const logger = getLogger()
+  
   return createServer((_: IncomingMessage, res: ServerResponse) => {
-    platformatic?.logger.debug('Serving request.')
+    logger.debug('Serving request.')
     res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
     res.end(JSON.stringify({ hello: 'world' }))
   })
@@ -73,6 +76,7 @@ export class Generator extends BaseGenerator {
 
     let indexTemplate = indexFileJS
     const dependencies = {
+      '@platformatic/globals': `^${this.platformaticVersion}`,
       '@platformatic/node': `^${this.platformaticVersion}`
     }
 
@@ -81,7 +85,6 @@ export class Generator extends BaseGenerator {
     if (this.config.typescript) {
       indexTemplate = indexFileTS
 
-      dependencies['@platformatic/globals'] = `^${this.platformaticVersion}`
       devDependencies['@platformatic/tsconfig'] = '^0.1.0'
       devDependencies['@types/node'] = '^22.0.0'
     }

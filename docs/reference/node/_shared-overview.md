@@ -2,6 +2,68 @@ import Issues from '../../getting-started/issues.md';
 
 ## API
 
+During application execution, Platformatic exposes runtime APIs through typed getters from `@platformatic/globals`.
+
+```js
+import { getApplicationId, getLogger } from '@platformatic/globals'
+
+const applicationId = getApplicationId()
+const logger = getLogger()
+
+logger.info({ applicationId }, 'Application started')
+```
+
+:::note
+Direct access through the legacy global object is still supported for compatibility, but deprecated. Use the typed getters from `@platformatic/globals` instead.
+:::
+
+### Typed Getters
+
+The available getters are:
+
+- **`isBuilding()`**: Returns whether the application is currently running a build step.
+- **`getExecutable()`**: Returns the Platformatic executable name.
+- **`getRuntimeId()`**: Returns the current runtime worker thread id.
+- **`getHost()`**: Returns the application host.
+- **`getPort()`**: Returns the application port.
+- **`getConfig()`**: Returns the application configuration object.
+- **`getApplicationId()`**: Returns the application id.
+- **`getWorkerId()`**: Returns the current application worker id.
+- **`getRoot()`**: Returns the application root directory.
+- **`isEntrypoint()`**: Returns whether the application is the runtime entrypoint.
+- **`getBasePath()`**: Returns the base path of the application in the gateway.
+- **`getRuntimeBasePath()`**: Returns the runtime base path.
+- **`getWantsAbsoluteUrls()`**: Returns whether the application expects absolute URLs.
+- **`getLogger()`**: Returns the application logger.
+- **`getLogLevel()`**: Returns the configured application log level.
+- **`getInterceptLogging()`**: Returns whether logging interception is enabled.
+- **`getPrometheus()`**: Returns the Prometheus client and registry used by the runtime.
+- **`getClientSpansAls()`**: Returns the async local storage used for client spans.
+- **`getInterceptors()`**: Returns the runtime worker interceptor registry.
+- **`getOnHttpCacheRequest()`**: Returns the HTTP cache request metric callback.
+- **`getOnHttpCacheHit()`**: Returns the HTTP cache hit metric callback.
+- **`getOnHttpCacheMiss()`**: Returns the HTTP cache miss metric callback.
+- **`getInvalidateHttpCache()`**: Returns the HTTP cache invalidation function.
+- **`setBasePath()`**: Overrides the application base path. If not properly configured in the gateway, this can make your application inaccessible.
+- **`setOpenapiSchema()`**: Overrides the OpenAPI schema exposed by the application.
+- **`setGraphqlSchema()`**: Overrides the GraphQL schema exposed by the application.
+- **`setConnectionString()`**: Overrides the application database connection string.
+- **`setCustomHealthCheck()`**: Sets a custom health check.
+- **`setCustomReadinessCheck()`**: Sets a custom readiness check.
+- **`getEvents()`**: Returns the application `PlatformaticEvents` event emitter. The `close` event is emitted when the process is being closed. A listener should finish graceful shutdown within 10 seconds. `PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime.
+- **`getITC()`**: Returns the low-level ITC API.
+- **`getMessaging()`**: Returns the messaging API.
+- **`getCapability()`**: Returns the current application capability instance.
+- **`getClosing()`**: Returns whether the application is currently closing.
+- **`getSharedContext()`**: Returns the shared context API. Context is shared between all runtime applications.
+- **`getManagement()`**: Returns the management API when management is enabled for the application.
+- **`getSendHealthSignal()`**: Returns the function used to send a health signal from the application to the runtime.
+- **`getGlobal()`**: Returns the complete legacy global object. Prefer the specific getters above.
+
+If the object returned by the `create` or `build` factory has a `Symbol.asyncDispose` method, it will be automatically called during shutdown.
+
+### Legacy `globalThis.platformatic` API
+
 During application execution some APIs are made available in the `globalThis.platformatic` object.
 
 - **`globalThis.platformatic.setBasePath(path)`**: This function can be used to override the base path for the application. If not properly configured in the gateway, this can make your application inaccessible.
@@ -38,15 +100,15 @@ The healthcheck function will ensure the readiness of the application, and the r
 
 ### Messaging API
 
-Services can talk to each other using a messaging API available in the `globalThis.platformatic.messaging` object.
+Services can talk to each other using the messaging API returned by `getMessaging()` from `@platformatic/globals`.
 
 The messaging API contains the following functions:
 
-- **`globalThis.platformatic.messaging.handle(message, handler)`**: Registers a message handler for the specified message.
+- **`handle(message, handler)`**: Registers a message handler for the specified message.
   - `message`: a string with the name of the message
   - `handler`: a function that will be invoked when a message with the specified name is received
 
-- **`globalThis.platformatic.messaging.send(application, message, data, options)`**: Sends a message to an application worker.
+- **`send(application, message, data, options)`**: Sends a message to an application worker.
   - `application`: a string with the name of the application
   - `message`: a string with the name of the message
   - `data`: any cloneable JavaScript value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
@@ -56,7 +118,7 @@ The messaging API contains the following functions:
 The `send` method sends a message to one receiving application worker using a round-robin algorithm.
 The `send` method awaits for the response from the message handler. By default it uses a 30s timeout. To change the timeout, update the `messagingTimeout` option in the watt [configuration](../wattpm/configuration.md#messagingtimeout).
 
-- **globalThis.platformatic.messaging.notify(application, message, data)**: Notifies all application workers with a message.
+- **`notify(application, message, data)`**: Notifies all application workers with a message.
   - `application`: a string with the name of the application
   - `message`: a string with the name of the message
   - `data`: any cloneable JavaScript value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
@@ -64,15 +126,17 @@ The `send` method awaits for the response from the message handler. By default i
 The `notify` method sends a message to all application workers. It does not wait for the response from the message handler.
 Notification messages are exchanged using Node.js [`BroadcastChannel`](https://nodejs.org/dist/latest/docs/api/worker_threads.html#class-broadcastchannel-extends-eventtarget). The data must be cloneable value. All non-cloneable values (functions, symbols, etc.) will be sanitized.
 
-Once an application adds a handler via `globalThis.platformatic.messaging.handle` API, then any other application can invoke the function using the `globalThis.platformatic.messaging.send` API.
+Once an application adds a handler via `handle`, then any other application can invoke the function using `send`.
 If an application makes a `send` call, before a handler is registered, the `send` call throws an error. To make sure that an application is ready, use a runtime [dependencies API](../wattpm/configuration.md#applications).
 
 Here is an example:
 
 ```js
 // web/service/index.js
+import { getMessaging } from '@platformatic/globals'
 
-globalThis.platformatic.messaging.handle({
+const messaging = getMessaging()
+messaging.handle({
   async time ({ offset }) {
     return Date.now() + offset
   }
@@ -83,9 +147,11 @@ The `send` method sends a message to one receiving application worker using a ro
 
 ```js
 // web/entrypoint/index.js
+import { getMessaging } from '@platformatic/globals'
 
+const messaging = getMessaging()
 app.get('/time', async req => {
-  const response = await globalThis.platformatic.messaging.send('application', 'time', { offset: 1000 })
+  const response = await messaging.send('application', 'time', { offset: 1000 })
 
   return { thread: response }
 })
@@ -95,9 +161,11 @@ The `notify` method sends a message to all application workers. Notification mes
 
 ```js
 // web/entrypoint/index.js
+import { getMessaging } from '@platformatic/globals'
 
+const messaging = getMessaging()
 app.get('/time', async req => {
-  globalThis.platformatic.messaging.notify('application', 'time', { offset: 1000 })
+  messaging.notify('application', 'time', { offset: 1000 })
 
   return { thread: 'ok' }
 })
@@ -106,8 +174,12 @@ app.get('/time', async req => {
 Note that messages are exchanged using Node.js [`MessageChannel`](https://nodejs.org/dist/latest/docs/api/worker_threads.html#class-messagechannel) so you must eventually provide a `transferList` as via the `send` options:
 
 ```js
+import { getMessaging } from '@platformatic/globals'
+import { MessageChannel } from 'node:worker_threads'
+
+const messaging = getMessaging()
 const { port1, port2 } = new MessageChannel()
-const response = await globalThis.platformatic.messaging.send(
+const response = await messaging.send(
   'application',
   'connect',
   { port: port1 },
@@ -117,14 +189,16 @@ const response = await globalThis.platformatic.messaging.send(
 
 ## Custom Metrics
 
-Custom metrics can be registered and exported by accessing the same Prometheus registry that the rest of the Platformatic runtime is using via `globalThis.platformatic.prometheus.registry`.
+Custom metrics can be registered and exported by accessing the same Prometheus registry that the rest of the Platformatic runtime is using via `getPrometheus()`.
 
-In order to ensure the maximum compatibility the client package (`@platformatic/prom-client`) is available in `globalThis.platformatic.prometheus.client`. This package is API compatible with the standard `prom-client` package but significantly faster.
+In order to ensure the maximum compatibility the client package (`@platformatic/prom-client`) is available in the object returned by `getPrometheus()`. This package is API compatible with the standard `prom-client` package but significantly faster.
 
 Here is an example of how to register a custom metric:
 
 ```js
-const { client, registry } = globalThis.platformatic.prometheus
+import { getPrometheus } from '@platformatic/globals'
+
+const { client, registry } = getPrometheus()
 
 // Register the metric
 const customMetrics = new client.Counter({ name: 'custom', help: 'Custom Description', registers: [registry] })
@@ -139,23 +213,11 @@ customMetrics.inc(123)
 Remember that it is a good practice to register metrics as soon as possible during the boot phase.
 :::
 
-### Typings for the API
-
-In order to get full Typescript support for the API above, you can install the `@platformatic/globals` package and get an alternative, typed, access to the `globalThis.platformatic` object.
-
-The usage of the package is straightforward:
-
-```js
-import { getGlobal } from '@platformatic/globals'
-
-const pltApi = getGlobal()
-```
-
 ### Custom Healthcheck
 
 Custom health check can be defined to provide more specific and detailed information about the health of your application, in case the default healthcheck for the application itself is not enough and you need to add more checks for the application dependencies.
 
-This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a Platformatic application.
+This can be done by using `setCustomHealthCheck()`, and run it as a Platformatic application.
 
 The function should return a boolean value, or an object with the following properties, that will be used to set the status code and body of the response to the healthcheck endpoint:
 
@@ -168,12 +230,12 @@ Here is an example of how to set a custom health check:
 `app.js`
 
 ```js
+import { setCustomHealthCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify()
-
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     return Promise.all([
       // Check if the database is reachable
       app.db.query('SELECT 1'),
@@ -193,12 +255,12 @@ export function create () {
 Setting custom response for the healthcheck endpoint:
 
 ```js
+import { setCustomHealthCheck, setCustomReadinessCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify()
-
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     // Check if the database is reachable
     if (!app.db.query('SELECT 1')) {
       return {
@@ -218,7 +280,7 @@ export function create () {
     }
   })
 
-  globalThis.platformatic.setCustomReadinessCheck(async () => {
+  setCustomReadinessCheck(async () => {
     return Promise.all([
       // Check if the database is reachable
       app.db.query('SELECT 1'),
@@ -255,8 +317,9 @@ export function create () {
     "start": "wattpm start"
   },
   "dependencies": {
+    "@platformatic/globals": ">=3.0.0",
     "fastify": "^5.0.0",
-    "@platformatic/node": "^2.48.0"
+    "@platformatic/node": ">=3.0.0"
   }
 }
 ```

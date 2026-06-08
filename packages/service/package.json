@@ -53,6 +53,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/generators": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

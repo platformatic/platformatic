@@ -1,5 +1,6 @@
 import Swagger from '@fastify/swagger'
 import { deepmerge } from '@platformatic/foundation'
+import { getRuntimeBasePath } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 
 // For some unknown reason, c8 is not detecting any of this
@@ -16,7 +17,7 @@ async function setupOpenAPIPlugin (app, options) {
         description: 'This is a service built on top of Platformatic',
         version: '1.0.0'
       },
-      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }]
+      servers: [{ url: getRuntimeBasePath(false) ?? '/' }]
     },
     typeof openapi === 'object' ? openapi : {}
   )

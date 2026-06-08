@@ -27,8 +27,7 @@ test('should inject Platformatic code by default when building', async t => {
 
     return writeFile(
       resolve(root, 'services/frontend/build.js'),
-      // eslint-disable-next-line no-template-curly-in-string
-      "console.log(`INJECTED ${typeof globalThis.platformatic !== 'undefined'}`)",
+      "import { getLogger } from '@platformatic/globals'\nlet injected = true\ntry { getLogger() } catch { injected = false }\nconsole.log('INJECTED ' + injected)",
       'utf-8'
     )
   })
@@ -53,8 +52,7 @@ test('should not inject Platformatic code when building if asked to', async t =>
 
     return writeFile(
       resolve(root, 'services/frontend/build.js'),
-      // eslint-disable-next-line no-template-curly-in-string
-      "console.log(`INJECTED ${typeof globalThis.platformatic !== 'undefined'}`)",
+      "import { getLogger } from '@platformatic/globals'\nlet injected = true\ntry { getLogger() } catch { injected = false }\nconsole.log('INJECTED ' + injected)",
       'utf-8'
     )
   })

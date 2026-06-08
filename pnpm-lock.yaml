@@ -29,6 +29,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       fastify:
         specifier: ^5.7.0
         version: 5.8.5
@@ -87,6 +90,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
@@ -185,6 +191,9 @@ importers:
       '@platformatic/gateway':
         specifier: workspace:*
         version: link:../gateway
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
     devDependencies:
       c8:
         specifier: ^10.0.0
@@ -748,6 +757,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:^
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/graphql-composer':
         specifier: ^0.10.0
         version: 0.10.1
@@ -924,6 +936,9 @@ importers:
 
   packages/globals:
     dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.1
       '@platformatic/prom-client':
         specifier: ^1.0.0
         version: 1.0.0
@@ -958,6 +973,9 @@ importers:
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.1
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -1014,6 +1032,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       get-port:
         specifier: ^7.1.0
         version: 7.2.0
@@ -1084,6 +1105,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/image-optimizer':
         specifier: ^0.2.1
         version: 0.2.1
@@ -1163,6 +1187,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -1224,6 +1251,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
@@ -1303,6 +1333,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
@@ -1394,6 +1427,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
@@ -1599,6 +1635,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics
@@ -1958,6 +1997,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -2031,6 +2073,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
@@ -2137,6 +2182,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       fast-uri:
         specifier: ^3.0.6
         version: 3.1.2
@@ -2183,6 +2231,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/node':
         specifier: workspace:*
         version: link:../node
@@ -2241,6 +2292,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -2296,6 +2350,9 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       undici:
         specifier: ^7.27.2
         version: 7.27.2
@@ -2330,6 +2387,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime

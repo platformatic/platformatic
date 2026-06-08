@@ -1,5 +1,6 @@
 import Swagger from '@fastify/swagger'
 import { deepmerge, findNearestString } from '@platformatic/foundation'
+import { getRuntimeBasePath } from '@platformatic/globals'
 import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import fp from 'fastify-plugin'
 import { entityPlugin } from './lib/entity-to-routes.js'
@@ -16,7 +17,7 @@ async function setupOpenAPI (app, opts) {
         description: 'Exposing a SQL database as REST',
         version: '1.0.0'
       },
-      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }]
+      servers: [{ url: getRuntimeBasePath(false) ?? '/' }]
     },
     opts
   )

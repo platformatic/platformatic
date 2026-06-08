@@ -1,4 +1,6 @@
-const itc = globalThis[Symbol.for('plt.children.itc')]
+import { getITC } from '@platformatic/globals'
+
+const itc = getITC()
 
 const interval = setInterval(() => {
   // No-op

@@ -1,12 +1,14 @@
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
+import { getBasePath, getLogLevel, getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function build () {
+  const logger = getLogger()
   const app = fastify({
-    loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+    loggerInstance: logger.child({}, { level: getLogLevel(false) ?? 'info' })
   })
 
-  const prefix = globalThis.platformatic?.basePath ?? ''
+  const prefix = getBasePath(false) ?? ''
 
   app.get(ensureTrailingSlash(cleanBasePath(prefix)), async () => {
     return { production: process.env.NODE_ENV === 'production' }

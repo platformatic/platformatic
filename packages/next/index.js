@@ -1,4 +1,5 @@
 import { kMetadata } from '@platformatic/foundation'
+import { getBasePath, getConfig, getLogger, getNextVersion, getNotifyConfig } from '@platformatic/globals'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
 import { loadConfiguration } from './lib/config.js'
@@ -9,7 +10,9 @@ export function getAdapterPath () {
 }
 
 function enhanceNextCacheConfig (nextConfig, modifications) {
-  const { config, nextVersion, logger } = globalThis.platformatic
+  const config = getConfig()
+  const nextVersion = getNextVersion()
+  const logger = getLogger()
 
   if (!config.cache?.adapter || config.cache?.enabled === false) return
 
@@ -62,7 +65,9 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig = await nextConfig(...args)
   }
 
-  const { basePath, config } = globalThis.platformatic
+  const basePath = getBasePath()
+  const config = getConfig()
+  const notifyConfig = getNotifyConfig()
 
   if (typeof nextConfig.basePath === 'undefined') {
     nextConfig.basePath = basePath
@@ -82,7 +87,7 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig.env.PLT_NEXT_MODIFICATIONS = JSON.stringify(Object.fromEntries(modifications))
   }
 
-  globalThis.platformatic.notifyConfig(nextConfig)
+  notifyConfig(nextConfig)
   return nextConfig
 }
 

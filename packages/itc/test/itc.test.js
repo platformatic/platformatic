@@ -202,6 +202,21 @@ test('should allow missing handlers using throwOnMissingHandler', async t => {
   ifError(await itc1.send(requestName, 'test-request'))
 })
 
+test('should process a local request', async t => {
+  const { port1 } = new MessageChannel()
+  const itc = new ITC({ port: port1, name: 'itc' })
+  const context = { hello: 'world' }
+
+  t.after(() => itc.close())
+
+  itc.handle('test-command', async (request, handlerContext) => {
+    deepStrictEqual(handlerContext, context)
+    return { request }
+  })
+
+  deepStrictEqual(await itc.process('test-command', { ok: true }, context), { request: { ok: true } })
+})
+
 test('should skip non-platformatic message', async t => {
   const { port1, port2 } = new MessageChannel()
 

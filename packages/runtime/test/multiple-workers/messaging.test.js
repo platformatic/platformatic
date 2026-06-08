@@ -343,7 +343,9 @@ test('should return an error if the target worker throws an error while saving t
       'module.exports = async function (app) {',
       `
         module.exports = async function (app) {
-          globalThis[Symbol.for('plt.runtime.itc')].handle('saveMessagingChannel', function () {
+          const { getITC } = require('@platformatic/globals')
+          const itc = getITC()
+          itc.handle('saveMessagingChannel', function () {
             throw new Error('Kaboom!')
           })
         \n
@@ -376,9 +378,11 @@ test('should return an error if the target worker times out while saving the cha
       'module.exports = async function (app) {',
       `
         module.exports = async function (app) {
-          const existingHandler = globalThis[Symbol.for('plt.runtime.itc')].getHandler('saveMessagingChannel')
+          const { getITC } = require('@platformatic/globals')
+          const itc = getITC()
+          const existingHandler = itc.getHandler('saveMessagingChannel')
 
-          globalThis[Symbol.for('plt.runtime.itc')].handle('saveMessagingChannel', async function (...args) {
+          itc.handle('saveMessagingChannel', async function (...args) {
             await require('node:timers/promises').setTimeout(5000)
             return existingHandler(...args)
           })

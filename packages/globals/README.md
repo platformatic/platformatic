@@ -1,6 +1,6 @@
 # @platformatic/globals
 
-Platformatic Globals exports a single function to get the Platformatic Global object inside a runtime with full typings experience
+Platformatic Globals exports access to Platformatic runtime APIs.
 
 ## Install
 
@@ -11,10 +11,15 @@ npm install @platformatic/globals
 ## Usage
 
 ```ts
-import { getGlobal } from '@platformatic/globals'
+import { getApplicationId, getCapability, getClosing, getMessaging } from '@platformatic/globals'
 
-const platformatic = getGlobal()
+const applicationId = getApplicationId()
+const capability = getCapability()
+const closing = getClosing()
+const messaging = getMessaging()
 ```
+
+Direct access through the legacy global object is still supported for compatibility, but deprecated. Use the typed getters instead.
 
 ## License
 

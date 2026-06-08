@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/gateway": "workspace:*"
   },
   "engines": {

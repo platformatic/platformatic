@@ -1,14 +1,16 @@
+import { getBasePath, getITC } from '@platformatic/globals'
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: globalThis.platformatic?.basePath ?? '/',
+  base: getBasePath(false) ?? '/',
   plugins: [
-    remix({ basename: globalThis.platformatic?.basePath ?? '/' }),
+    remix({ basename: getBasePath(false) ?? '/' }),
     {
       name: 'platformatic',
       configResolved: config => {
-        globalThis[Symbol.for('plt.children.itc')]?.notify('config', config)
+        const itc = getITC()
+        itc.notify('config', config)
       }
     }
   ],

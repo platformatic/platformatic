@@ -1,4 +1,5 @@
 import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import { bold } from 'colorette'
 import { createCommand } from './lib/commands/create.js'
 import { installCommand, updateCommand } from './lib/commands/dependencies.js'
@@ -8,7 +9,7 @@ import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/version.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: this.executableId }
+  updateGlobals({ executable: this.executableId })
 
   const options = {
     'no-pretty': {

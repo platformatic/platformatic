@@ -1,6 +1,7 @@
+import { getBasePath } from '@platformatic/globals'
 import type { Config } from '@react-router/dev/config'
 
 export default {
-  basename: globalThis.platformatic?.basePath ?? '/',
+  basename: getBasePath(false) ?? '/',
   ssr: true
 } satisfies Config

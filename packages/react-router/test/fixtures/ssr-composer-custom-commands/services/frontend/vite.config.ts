@@ -1,9 +1,10 @@
+import { getBasePath } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig(({ isSsrBuild }) => ({
-  base: globalThis.platformatic?.basePath ?? '/',
+  base: getBasePath(false) ?? '/',
   build: {
     rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
   },

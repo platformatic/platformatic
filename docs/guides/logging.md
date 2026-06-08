@@ -479,11 +479,15 @@ In this example, the logger is configured to use a file transport and the `level
 
 ## Programmatic Usage
 
-When using Platformatic programmatically, you can derive from the `globalThis.platformatic.logger` object as follows:
+When using Platformatic programmatically, you can derive from the logger returned by `getLogger()` as follows:
 
 ```js
+import { getLogger } from '@platformatic/globals'
+
+const logger = getLogger()
+
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger.child(
+  loggerInstance: logger.child(
     { application: 'app1' },
     {
       formatters: {
@@ -546,15 +550,16 @@ The other applications have their own logger configuration, for example the `bac
 }
 ```
 
-In the `node` application the logger is available as `globalThis.platformatic.logger`, for example
+In the `node` application the logger is available via `getLogger()`, for example
 
 `backend/src/app.js`
 
 ```js
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger
+  loggerInstance: getLogger()
 })
 ```
 
@@ -574,13 +579,16 @@ The `next` application has a custom formatter that adds the `application` proper
 }
 ```
 
-Then in the `next` application the logger is available as `globalThis.platformatic.logger`, for example
+Then in the `next` application the logger is available via `getLogger()`, for example
 
 `next/src/app/page.jsx`
 
 ```jsx
+import { getLogger } from '@platformatic/globals'
+
 export default function Home () {
-  globalThis.platformatic.logger?.debug('Home page called')
+  const logger = getLogger()
+  logger.debug('Home page called')
 
   return (
     <main>

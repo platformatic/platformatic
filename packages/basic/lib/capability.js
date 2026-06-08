@@ -7,6 +7,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
+import { getITC, getPrometheus, getTelemetryReady, updateGlobals } from '@platformatic/globals'
 import {
   clearRegistry,
   client,
@@ -28,8 +29,6 @@ import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseCapability extends EventEmitter {
   status
@@ -139,8 +138,10 @@ export class BaseCapability extends EventEmitter {
       reuseTcpPorts: this.reuseTcpPorts
     })
 
-    if (globalThis.platformatic.prometheus) {
-      this.metricsRegistry = globalThis.platformatic.prometheus.registry
+    const prometheus = getPrometheus(false)
+
+    if (prometheus) {
+      this.metricsRegistry = prometheus.registry
     } else {
       this.metricsRegistry = new client.Registry()
       this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
@@ -235,14 +236,15 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependenciesStart (dependencies = []) {
-    if (!globalThis[kITC]) {
+    const itc = getITC(false)
+    if (!itc) {
       return
     }
 
     const pending = new Set(dependencies)
 
     // Ask the runtime the status of the dependencies and don't wait if they are already started
-    const workers = await globalThis[kITC].send('getWorkers')
+    const workers = await itc.send('getWorkers')
 
     for (const worker of Object.values(workers)) {
       if (this.dependencies.includes(worker.application) && worker.status === 'started') {
@@ -281,12 +283,12 @@ export class BaseCapability extends EventEmitter {
     }
 
     const cleanupEvents = () => {
-      globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+      itc.removeListener('runtime:event', runtimeEventHandler)
       this.context.controller.removeListener('stopping', stopHandler)
       this.#pendingDependenciesWaits.delete(promise)
     }
 
-    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    itc.on('runtime:event', runtimeEventHandler)
     this.context.controller.on('stopping', stopHandler)
     this.#pendingDependenciesWaits.add(promise)
 
@@ -294,14 +296,15 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependentsStop (dependents = []) {
-    if (!globalThis[kITC]) {
+    const itc = getITC(false)
+    if (!itc) {
       return
     }
 
     const pending = new Set(dependents)
 
     // Ask the runtime the status of the dependencies and don't wait if they are already stopped
-    const workers = await globalThis[kITC].send('getWorkers')
+    const workers = await itc.send('getWorkers')
 
     for (const worker of Object.values(workers)) {
       if (this.dependencies.includes(worker.application) && worker.status === 'started') {
@@ -325,12 +328,12 @@ export class BaseCapability extends EventEmitter {
       pending.delete(payload.application)
 
       if (pending.size === 0) {
-        globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+        itc.removeListener('runtime:event', runtimeEventHandler)
         resolve()
       }
     }
 
-    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    itc.on('runtime:event', runtimeEventHandler)
     return promise
   }
 
@@ -448,7 +451,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+    updateGlobals(globals)
   }
 
   verifyOutputDirectory (path) {
@@ -531,7 +534,10 @@ export class BaseCapability extends EventEmitter {
       this.#subprocessStarted = true
       // Let the runtime know this worker hosts a child process so it reads
       // health metrics via ITC instead of from the coordinator thread handle.
-      globalThis[kITC]?.notify('subprocess:started')
+      const itc = getITC(false)
+      if (itc) {
+        itc.notify('subprocess:started')
+      }
     } catch (e) {
       this.childManager.close()
 
@@ -670,13 +676,20 @@ export class BaseCapability extends EventEmitter {
     })
 
     childManager.on('event', event => {
-      globalThis[kITC]?.notify('event', event)
+      const itc = getITC(false)
+      if (itc) {
+        itc.notify('event', event)
+      }
+
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
     // Forward health signals from child process to runtime
     childManager.on('healthSignals', ({ workerId, signals }) => {
-      globalThis[kITC]?.send('sendHealthSignals', { workerId, signals })
+      const itc = getITC(false)
+      if (itc) {
+        itc.send('sendHealthSignals', { workerId, signals })
+      }
     })
 
     // This is not really important for the URL but sometimes it also a sign
@@ -879,7 +892,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   #setHttpCacheMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
+    const { client, registry } = getPrometheus()
 
     // Metrics already registered, no need to register them again
     if (ensureMetricsGroup(registry, 'http.cache')) {
@@ -898,79 +911,76 @@ export class BaseCapability extends EventEmitter {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => {
-      cacheHitMetric.inc()
-    }
-    globalThis.platformatic.onHttpCacheMiss = () => {
-      cacheMissMetric.inc()
-    }
-
     const httpStatsFreeMetric = new client.Gauge({
       name: 'http_client_stats_free',
       help: 'Number of free (idle) http clients (sockets)',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsFree = (url, val) => {
-      httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsConnectedMetric = new client.Gauge({
       name: 'http_client_stats_connected',
       help: 'Number of open socket connections',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsConnected = (url, val) => {
-      httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsPendingMetric = new client.Gauge({
       name: 'http_client_stats_pending',
       help: 'Number of pending requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsPending = (url, val) => {
-      httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsQueuedMetric = new client.Gauge({
       name: 'http_client_stats_queued',
       help: 'Number of queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsQueued = (url, val) => {
-      httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsRunningMetric = new client.Gauge({
       name: 'http_client_stats_running',
       help: 'Number of currently active requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsRunning = (url, val) => {
-      httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsSizeMetric = new client.Gauge({
       name: 'http_client_stats_size',
       help: 'Number of active, pending, or queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsSize = (url, val) => {
-      httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const activeResourcesEventLoopMetric = new client.Gauge({
       name: 'active_resources_event_loop',
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
+    updateGlobals({
+      onHttpCacheHit () {
+        cacheHitMetric.inc()
+      },
+      onHttpCacheMiss () {
+        cacheMissMetric.inc()
+      },
+      onHttpStatsFree (url, val) {
+        httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsConnected (url, val) {
+        httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsPending (url, val) {
+        httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsQueued (url, val) {
+        httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsRunning (url, val) {
+        httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsSize (url, val) {
+        httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onActiveResourcesEventLoop (val) {
+        activeResourcesEventLoopMetric.set(val)
+      }
+    })
   }
 
   async #setupOtlpExporter () {
@@ -980,8 +990,9 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    if (globalThis.platformatic?.telemetryReady) {
-      await globalThis.platformatic.telemetryReady
+    const telemetryReady = getTelemetryReady(false)
+    if (telemetryReady) {
+      await telemetryReady
     }
 
     // Setup and start OTLP exporter bridge
@@ -1000,6 +1011,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async #invalidateHttpCache (opts = {}) {
-    await globalThis[kITC].send('invalidateHttpCache', opts)
+    const itc = getITC()
+    await itc.send('invalidateHttpCache', opts)
   }
 }

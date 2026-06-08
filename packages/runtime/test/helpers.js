@@ -22,7 +22,7 @@ export async function getTempDir () {
 }
 
 export async function createTemporaryDirectory (t, prefix) {
-  const directory = join(tempPath, `test-runtime-${prefix}-${process.pid}-${tempDirCounter++}`)
+  const directory = join(tempPath, `plt-${prefix}-${process.pid}-${tempDirCounter++}`)
 
   t.after(async () => {
     if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {

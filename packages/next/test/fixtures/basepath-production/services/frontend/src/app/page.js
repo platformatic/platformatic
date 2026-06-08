@@ -1,3 +1,4 @@
+import { getBasePath } from '@platformatic/globals'
 const version = 123
 
 export default async function Home() {
@@ -7,7 +8,7 @@ export default async function Home() {
 
   return (
     <code>
-      {globalThis.platformatic.basePath} {JSON.stringify(result.ok)}
+      {getBasePath(false)} {JSON.stringify(result.ok)}
     </code>
   )
 }

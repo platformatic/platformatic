@@ -10,9 +10,10 @@ import {
   startOutgoingMessagingSpanSync,
   traceIncomingMessagingHandler
 } from '@platformatic/itc'
+import { getITC } from '@platformatic/globals'
 import { MessagingError } from '../errors.js'
 import { RoundRobinMap } from './round-robin-map.js'
-import { kITC, kWorkersBroadcast } from './symbols.js'
+import { kWorkersBroadcast } from './symbols.js'
 
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
 
@@ -85,8 +86,9 @@ export class MessagingITC extends ITC {
       if (!worker.channel) {
         // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
         // the request to the worker, using executeWithTimeout with the user set timeout value.
+        const itc = getITC()
         const channel = await executeWithTimeout(
-          globalThis[kITC].send('getWorkerMessagingChannel', {
+          itc.send('getWorkerMessagingChannel', {
             id: this.#id,
             application: worker.application,
             worker: worker.worker

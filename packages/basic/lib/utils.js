@@ -3,7 +3,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
-  const { family, address, port } = server.address()
+  let { family, address, port } = server.address()
+
+  if (family === 'IPv6' && address === '::') {
+    family = 'IPv4'
+    address = '127.0.0.1'
+  }
 
   return new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
 }

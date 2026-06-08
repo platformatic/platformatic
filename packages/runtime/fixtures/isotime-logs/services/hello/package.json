@@ -1,4 +1,7 @@
 {
   "type": "module",
-  "main": "server.js"
+  "main": "server.js",
+  "dependencies": {
+    "@platformatic/globals": ">=3.0.0"
+  }
 }

@@ -1,3 +1,4 @@
+import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -6,13 +7,14 @@ const root = resolve(dirname(path), 'client')
 
 export default {
   root,
-  base: globalThis.platformatic?.basePath ?? '/',
-  logLevel: globalThis.platformatic?.logLevel ?? 'info',
+  base: getBasePath(false) ?? '/',
+  logLevel: getLogLevel(false) ?? 'info',
   plugins: [
     {
       name: 'platformatic',
       configResolved: config => {
-        globalThis[Symbol.for('plt.children.itc')]?.notify('config', config)
+        const itc = getITC()
+        itc.notify('config', config)
       }
     }
   ],

@@ -1,11 +1,12 @@
 import { ensureTrailingSlash } from '@platformatic/basic'
+import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
 import { defineConfig } from 'vite'
 
-const basePath = ensureTrailingSlash(globalThis.platformatic?.basePath ?? '/')
+const basePath = ensureTrailingSlash(getBasePath(false) ?? '/')
 
 export default defineConfig({
   base: basePath,
-  logLevel: globalThis.platformatic?.logLevel ?? 'info',
+  logLevel: getLogLevel(false) ?? 'info',
   integrations: [
     {
       name: 'platformatic',
@@ -16,7 +17,8 @@ export default defineConfig({
           config.vite.server.hmr.path = basePath
         },
         'astro:config:done': ({ config }) => {
-          globalThis[Symbol.for('plt.children.itc')]?.notify('config', config, process.pid)
+          const itc = getITC()
+          itc.notify('config', config, process.pid)
         }
       }
     }

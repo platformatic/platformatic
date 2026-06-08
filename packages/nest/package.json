@@ -27,6 +27,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/generators": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "get-port": "^7.1.0",
     "light-my-request": "^6.0.0",
     "pino-http": "^10.2.0"

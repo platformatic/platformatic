@@ -1,20 +1,27 @@
+import { getEvents } from '@platformatic/globals'
 export default {
   onIncomingMessage: (context, source, target, { data, binary }) => {
-    globalThis.platformatic.events.emit('proxy:onIncomingMessage')
+    const events = getEvents()
+    events.emit('proxy:onIncomingMessage')
   },
   onOutgoingMessage: (context, source, target, { data, binary }) => {
-    globalThis.platformatic.events.emit('onOutgoingMessage')
+    const events = getEvents()
+    events.emit('onOutgoingMessage')
   },
   onConnect: (context, source, target) => {
-    globalThis.platformatic.events.emit('onConnect')
+    const events = getEvents()
+    events.emit('onConnect')
   },
   onDisconnect: (context, source) => {
-    globalThis.platformatic.events.emit('onDisconnect')
+    const events = getEvents()
+    events.emit('onDisconnect')
   },
   onReconnect: (context, source, target) => {
-    globalThis.platformatic.events.emit('onReconnect')
+    const events = getEvents()
+    events.emit('onReconnect')
   },
   onPong: (context, source, target) => {
-    globalThis.platformatic.events.emit('onPong')
+    const events = getEvents()
+    events.emit('onPong')
   }
 }

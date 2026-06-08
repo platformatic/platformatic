@@ -10,6 +10,7 @@ import {
 } from '../index.js'
 import { keyFor } from '../lib/caching/valkey-common.js'
 import { abstractLogger } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 
 const setupGlobal = (additionalSetup = (platformatic) => {}) => {
   const config = {
@@ -19,18 +20,18 @@ const setupGlobal = (additionalSetup = (platformatic) => {}) => {
     },
   }
   const nextVersion = { major: 16 }
-  globalThis.platformatic = {
+  updateGlobals({
     basePath: '',
     logger: abstractLogger,
     notifyConfig: () => {},
     config,
     nextVersion,
-  }
-  additionalSetup(globalThis.platformatic)
+  })
+  additionalSetup({ config, nextVersion })
 }
 
 afterEach(() => {
-  globalThis.platformatic = undefined
+  updateGlobals({ basePath: undefined, logger: undefined, notifyConfig: undefined, config: undefined, nextVersion: undefined })
 })
 
 const assertIsrCacheHandler = (nextConfig) => {

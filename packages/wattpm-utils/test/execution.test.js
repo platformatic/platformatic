@@ -32,7 +32,14 @@ test('start - should use default folders for resolved applications', async t => 
   // multiple pipe(split2()) calls losing messages
   let started = false
   let url
-  startProcess.stderr?.pipe(startProcess.stdout)
+
+  if (startProcess.stderr) {
+    startProcess.stderr.pipe(split2()).on('data', (log) => {
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
+        process._rawDebug(log.toString())
+      }
+    })
+  }
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     if (process.env.PLT_TESTS_DEBUG === 'true') {

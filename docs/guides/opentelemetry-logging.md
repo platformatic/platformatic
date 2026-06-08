@@ -97,7 +97,7 @@ Application Logger
 
 ### Trace Context Injection
 
-Every log entry of `globalThis.platformatic.logger` automatically includes trace context when a span is active:
+Every log entry created through the logger returned by `getLogger()` automatically includes trace context when a span is active:
 
 ```json
 {

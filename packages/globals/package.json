@@ -4,7 +4,13 @@
   "description": "Platformatic Global Object Getter",
   "type": "module",
   "main": "./lib/index.js",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
   "types": "./lib/index.d.ts",
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
@@ -30,6 +36,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@platformatic/prom-client": "^1.0.0",
     "pino": "^9.9.0"
   },

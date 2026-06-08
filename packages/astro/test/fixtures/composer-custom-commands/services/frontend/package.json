@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@platformatic/astro": "^3.49.1",
-    "@platformatic/basic": "^2.3.1",
+    "@platformatic/basic": ">=3.0.0",
+    "@platformatic/globals": ">=3.0.0",
     "astro": "^6.1.4",
     "vite": "^5.4.4"
   },

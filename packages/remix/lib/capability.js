@@ -9,6 +9,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { updateGlobals } from '@platformatic/globals'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/node'
 import fastify from 'fastify'
@@ -87,7 +88,7 @@ export class RemixCapability extends ViteCapability {
     const { viteBuild } = await importFile(resolve(this.#remix, 'dist/cli/commands.js'))
 
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       await viteBuild(this.root, {
         emptyOutDir: true,
@@ -96,7 +97,7 @@ export class RemixCapability extends ViteCapability {
         profile: false
       })
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
   }
 

@@ -520,8 +520,11 @@ export async function createGatewayInRuntime (
   await writeFile(
     pluginConfigPath,
     `
+      import { getITC } from '@platformatic/globals'
+
       export default async function (app) {
-        globalThis[Symbol.for('plt.runtime.itc')].handle('getSchema', () => {
+        const itc = getITC()
+        itc.handle('getSchema', () => {
           return app.graphqlSupergraph.sdl
         })
       }
@@ -539,8 +542,9 @@ export async function createGatewayInRuntime (
   await runtime.init()
 
   t.after(async () => {
+    await runtime.close()
+
     if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
-      await runtime.close()
       await safeRemove(tmpDir)
     }
   })

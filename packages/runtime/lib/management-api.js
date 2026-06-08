@@ -9,7 +9,7 @@ import {
 } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { platform, tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
 import { prepareApplication } from './config.js'
@@ -342,8 +342,8 @@ export async function startManagementApi (runtime, config) {
   const customSocket = typeof config === 'object' ? config?.socket : null
 
   const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
-  if (platform() !== 'win32' && !customSocket) {
-    await createDirectory(runtimePIDDir, true)
+  if (platform() !== 'win32') {
+    await createDirectory(customSocket ? dirname(customSocket) : runtimePIDDir, typeof customSocket !== 'string')
   }
 
   let socketPath = null

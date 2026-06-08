@@ -54,6 +54,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/fastify-openapi-glue": "^5.1.0",
     "@platformatic/foundation": "workspace:^",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/graphql-composer": "^0.10.0",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",

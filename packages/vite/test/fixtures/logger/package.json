@@ -9,8 +9,8 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.60.0",
-    "@platformatic/vite": "^2.60.0",
+    "@platformatic/runtime": ">=3.0.0",
+    "@platformatic/vite": ">=3.0.0",
     "platformatic": "^2.60.0"
   }
 }

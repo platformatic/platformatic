@@ -1,4 +1,5 @@
+import { getLogLevel } from '@platformatic/globals'
 export default {
   base: '/nested/base/dir/',
-  logLevel: globalThis.platformatic?.logLevel ?? 'info'
+  logLevel: getLogLevel(false) ?? 'info'
 }

@@ -1,5 +1,6 @@
 import fastifyReplyFrom from '@fastify/reply-from'
 import fastifySwagger from '@fastify/swagger'
+import { getRuntimeBasePath } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { readFile } from 'node:fs/promises'
 import { getGlobalDispatcher, request } from 'undici'
@@ -186,7 +187,7 @@ export async function openApiGenerator (app, opts) {
         title: opts.openapi?.title || 'Platformatic Gateway',
         version: opts.openapi?.version || '1.0.0'
       },
-      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
+      servers: [{ url: getRuntimeBasePath(false) ?? '/' }],
       components: app.composedOpenApiSchema.components
     },
     transform ({ schema, url }) {
