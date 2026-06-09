@@ -19,46 +19,72 @@ Direct access through the legacy global object is still supported for compatibil
 
 ### Typed Getters
 
+All typed getters, except `getGlobal()`, accept an optional `throwOnMissing` boolean parameter. It defaults to `true`, which throws when the requested runtime API is not available. Pass `false` to return `undefined` instead.
+
+The related helpers are:
+
+- **`getGlobal<T>()`**: Returns the complete legacy global object, optionally extended with the generic type `T`. Prefer the specific getters below.
+- **`hasField(name)`**: Returns whether the runtime API identified by `name` is available.
+- **`updateGlobals(updates)`**: Updates the legacy global object with the values in `updates` and returns the updated global object.
+
 The available getters are:
 
-- **`isBuilding()`**: Returns whether the application is currently running a build step.
-- **`getExecutable()`**: Returns the Platformatic executable name.
-- **`getRuntimeId()`**: Returns the current runtime worker thread id.
-- **`getHost()`**: Returns the application host.
-- **`getPort()`**: Returns the application port.
-- **`getConfig()`**: Returns the application configuration object.
-- **`getApplicationId()`**: Returns the application id.
-- **`getWorkerId()`**: Returns the current application worker id.
-- **`getRoot()`**: Returns the application root directory.
-- **`isEntrypoint()`**: Returns whether the application is the runtime entrypoint.
-- **`getBasePath()`**: Returns the base path of the application in the gateway.
-- **`getRuntimeBasePath()`**: Returns the runtime base path.
-- **`getWantsAbsoluteUrls()`**: Returns whether the application expects absolute URLs.
-- **`getLogger()`**: Returns the application logger.
-- **`getLogLevel()`**: Returns the configured application log level.
-- **`getInterceptLogging()`**: Returns whether logging interception is enabled.
-- **`getPrometheus()`**: Returns the Prometheus client and registry used by the runtime.
-- **`getClientSpansAls()`**: Returns the async local storage used for client spans.
-- **`getInterceptors()`**: Returns the runtime worker interceptor registry.
-- **`getOnHttpCacheRequest()`**: Returns the HTTP cache request metric callback.
-- **`getOnHttpCacheHit()`**: Returns the HTTP cache hit metric callback.
-- **`getOnHttpCacheMiss()`**: Returns the HTTP cache miss metric callback.
-- **`getInvalidateHttpCache()`**: Returns the HTTP cache invalidation function.
-- **`setBasePath()`**: Overrides the application base path. If not properly configured in the gateway, this can make your application inaccessible.
-- **`setOpenapiSchema()`**: Overrides the OpenAPI schema exposed by the application.
-- **`setGraphqlSchema()`**: Overrides the GraphQL schema exposed by the application.
-- **`setConnectionString()`**: Overrides the application database connection string.
-- **`setCustomHealthCheck()`**: Sets a custom health check.
-- **`setCustomReadinessCheck()`**: Sets a custom readiness check.
-- **`getEvents()`**: Returns the application `PlatformaticEvents` event emitter. The `close` event is emitted when the process is being closed. A listener should finish graceful shutdown within 10 seconds. `PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime.
-- **`getITC()`**: Returns the low-level ITC API.
-- **`getMessaging()`**: Returns the messaging API.
-- **`getCapability()`**: Returns the current application capability instance.
-- **`getClosing()`**: Returns whether the application is currently closing.
-- **`getSharedContext()`**: Returns the shared context API. Context is shared between all runtime applications.
-- **`getManagement()`**: Returns the management API when management is enabled for the application.
-- **`getSendHealthSignal()`**: Returns the function used to send a health signal from the application to the runtime.
-- **`getGlobal()`**: Returns the complete legacy global object. Prefer the specific getters above.
+- **`isBuilding(throwOnMissing?)`**: Returns whether the application is currently running a build step.
+- **`getExecutable(throwOnMissing?)`**: Returns the Platformatic executable name.
+- **`getRuntimeId(throwOnMissing?)`**: Returns the current runtime worker thread id.
+- **`getNextVersion(throwOnMissing?)`**: Returns the Next.js version detected for the application.
+- **`getExitOnUnhandledErrors(throwOnMissing?)`**: Returns whether the runtime exits on unhandled errors.
+- **`getReuseTcpPorts(throwOnMissing?)`**: Returns whether TCP port reuse is enabled.
+- **`getHost(throwOnMissing?)`**: Returns the application host.
+- **`getPort(throwOnMissing?)`**: Returns the application port.
+- **`getAdditionalServerOptions(throwOnMissing?)`**: Returns the additional server options for the application.
+- **`getTelemetryConfig(throwOnMissing?)`**: Returns the telemetry configuration object.
+- **`getConfig(throwOnMissing?)`**: Returns the application configuration object.
+- **`getApplicationId(throwOnMissing?)`**: Returns the application id.
+- **`getWorkerId(throwOnMissing?)`**: Returns the current application worker id.
+- **`getRoot(throwOnMissing?)`**: Returns the application root directory.
+- **`isEntrypoint(throwOnMissing?)`**: Returns whether the application is the runtime entrypoint.
+- **`getBasePath(throwOnMissing?)`**: Returns the base path of the application in the gateway.
+- **`getRuntimeBasePath(throwOnMissing?)`**: Returns the runtime base path.
+- **`getWantsAbsoluteUrls(throwOnMissing?)`**: Returns whether the application expects absolute URLs.
+- **`getLogger(throwOnMissing?)`**: Returns the application logger.
+- **`getLogLevel(throwOnMissing?)`**: Returns the configured application log level.
+- **`getInterceptLogging(throwOnMissing?)`**: Returns whether logging interception is enabled.
+- **`getPrometheus(throwOnMissing?)`**: Returns the Prometheus client and registry used by the runtime.
+- **`getClientSpansAls(throwOnMissing?)`**: Returns the async local storage used for client spans.
+- **`getInterceptors(throwOnMissing?)`**: Returns the runtime worker interceptor registry.
+- **`getValkeyClients(throwOnMissing?)`**: Returns the Valkey clients map.
+- **`getOnHttpCacheRequest(throwOnMissing?)`**: Returns the HTTP cache request metric callback, called with `key`.
+- **`getOnHttpCacheHit(throwOnMissing?)`**: Returns the HTTP cache hit metric callback, called with `key`.
+- **`getOnHttpCacheMiss(throwOnMissing?)`**: Returns the HTTP cache miss metric callback, called with `key`.
+- **`getOnHttpStatsFree(throwOnMissing?)`**: Returns the HTTP stats callback for free connections, called with `url` and `value`.
+- **`getOnHttpStatsConnected(throwOnMissing?)`**: Returns the HTTP stats callback for connected connections, called with `url` and `value`.
+- **`getOnHttpStatsPending(throwOnMissing?)`**: Returns the HTTP stats callback for pending requests, called with `url` and `value`.
+- **`getOnHttpStatsQueued(throwOnMissing?)`**: Returns the HTTP stats callback for queued requests, called with `url` and `value`.
+- **`getOnHttpStatsRunning(throwOnMissing?)`**: Returns the HTTP stats callback for running requests, called with `url` and `value`.
+- **`getOnHttpStatsSize(throwOnMissing?)`**: Returns the HTTP stats callback for pool size, called with `url` and `value`.
+- **`getOnActiveResourcesEventLoop(throwOnMissing?)`**: Returns the active event loop resources metric callback, called with `value`.
+- **`getInvalidateHttpCache(throwOnMissing?)`**: Returns the HTTP cache invalidation function, called with an object containing optional `keys` and `tags` arrays.
+- **`getEvents(throwOnMissing?)`**: Returns the application `PlatformaticEvents` event emitter. The `close` event is emitted when the process is being closed. A listener should finish graceful shutdown within 10 seconds. `PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime.
+- **`getITC(throwOnMissing?)`**: Returns the low-level ITC API.
+- **`getMessaging(throwOnMissing?)`**: Returns the messaging API.
+- **`getCapability(throwOnMissing?)`**: Returns the current application capability instance.
+- **`getClosing(throwOnMissing?)`**: Returns whether the application is currently closing.
+- **`getSharedContext(throwOnMissing?)`**: Returns the shared context API. Context is shared between all runtime applications.
+- **`getManagement(throwOnMissing?)`**: Returns the management API when management is enabled for the application.
+- **`getSendHealthSignal(throwOnMissing?)`**: Returns the function used to send a health signal from the application to the runtime.
+- **`getTelemetryReady(throwOnMissing?)`**: Returns the promise that resolves when telemetry is ready.
+- **`getTracerProvider(throwOnMissing?)`**: Returns the OpenTelemetry tracer provider.
+- **`getNotifyConfig(throwOnMissing?)`**: Returns the function used to notify the runtime of configuration changes.
+
+The available setters are:
+
+- **`setBasePath(path)`**: Overrides the application base path. If not properly configured in the gateway, this can make your application inaccessible.
+- **`setOpenapiSchema(schema)`**: Overrides the OpenAPI schema exposed by the application.
+- **`setGraphqlSchema(schema)`**: Overrides the GraphQL schema exposed by the application.
+- **`setConnectionString(connection)`**: Overrides the application database connection string.
+- **`setCustomHealthCheck(healthCheck)`**: Sets a custom health check. The function can return a boolean or an object with `status`, `statusCode`, and `body`, either directly or as a promise.
+- **`setCustomReadinessCheck(readinessCheck)`**: Sets a custom readiness check. The function can return a boolean or an object with `status`, `statusCode`, and `body`, either directly or as a promise.
 
 If the object returned by the `create` or `build` factory has a `Symbol.asyncDispose` method, it will be automatically called during shutdown.
 
