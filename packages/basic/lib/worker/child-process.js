@@ -174,14 +174,14 @@ export class ChildProcess extends ITC {
     if (!windowsNpmExecutables.includes(executable)) {
       this.#setupLogger()
 
-      if (getExitOnUnhandledErrors(false)) {
+      if (getExitOnUnhandledErrors({ throwOnMissing: false })) {
         this.#setupHandlers()
       }
 
       this.#setupServer()
       this.#setupInterceptors()
 
-      if (getReuseTcpPorts(false)) {
+      if (getReuseTcpPorts({ throwOnMissing: false })) {
         this.#setupTcpPortsHandling()
       }
     }
@@ -547,7 +547,7 @@ export class ChildProcess extends ITC {
 
         let port = getPort()
         const host = getHost()
-        const isEntrypointApplication = isEntrypoint(false)
+        const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
         const additionalOptions = getAdditionalServerOptions()
 
         if (typeof port !== 'number' && port !== false) {
@@ -567,7 +567,7 @@ export class ChildProcess extends ITC {
         }
 
         Object.assign(options, additionalOptions)
-        const events = getEvents(false)
+        const events = getEvents({ throwOnMissing: false })
         if (events) {
           events.emitAndNotify('serverOptions', options)
         }
@@ -596,9 +596,9 @@ export class ChildProcess extends ITC {
 
     tracingChannel('net.server.listen').subscribe(subscribers)
 
-    const isEntrypointApplication = isEntrypoint(false)
-    const runtimeBasePath = getRuntimeBasePath(false) ?? ''
-    const wantsAbsoluteUrls = getWantsAbsoluteUrls(false)
+    const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
+    const runtimeBasePath = getRuntimeBasePath({ throwOnMissing: false }) ?? ''
+    const wantsAbsoluteUrls = getWantsAbsoluteUrls({ throwOnMissing: false })
 
     if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)

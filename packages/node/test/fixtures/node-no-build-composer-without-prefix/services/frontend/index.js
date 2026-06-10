@@ -3,7 +3,7 @@ import { getBasePath } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const server = createServer((req, res) => {
-  const prefix = getBasePath(false) ?? ''
+  const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
   if (req.url === ensureTrailingSlash(cleanBasePath(prefix))) {
     res.writeHead(200, {

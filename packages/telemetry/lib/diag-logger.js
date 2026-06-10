@@ -37,7 +37,7 @@ function callLogger (logger, method, fallback, args) {
 }
 
 export function createPlatformaticDiagLogger (logger) {
-  logger ??= getLogger(false)
+  logger ??= getLogger({ throwOnMissing: false })
   let target = logger
 
   if (typeof target?.child === 'function') {
@@ -58,7 +58,7 @@ export function createPlatformaticDiagLogger (logger) {
 }
 
 export function setupDiagLogger (opts, logger) {
-  logger ??= getLogger(false)
+  logger ??= getLogger({ throwOnMissing: false })
   if (opts?.diagLogger !== true) {
     return false
   }

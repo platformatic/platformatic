@@ -136,3 +136,13 @@ test('getters should throw when global fields are not available', () => {
 
   throws(() => globals.getLogger(), /globalThis\.platformatic\.logger is not available/)
 })
+
+test('getters should return undefined when throwOnMissing is false', () => {
+  globalThis.platformatic = { [globals.kFields]: new Set() }
+
+  strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+
+  delete globalThis.platformatic
+
+  strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+})

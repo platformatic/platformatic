@@ -68,7 +68,7 @@ function getTracer () {
     return tracer
   }
 
-  const tracerProvider = getTracerProvider(false)
+  const tracerProvider = getTracerProvider({ throwOnMissing: false })
   if (!tracerProvider) {
     return null
   }
@@ -82,7 +82,7 @@ export function initializeITCTelemetry () {
     return telemetryInitialization
   }
 
-  telemetryInitialization = Promise.resolve(getTelemetryReady(false))
+  telemetryInitialization = Promise.resolve(getTelemetryReady({ throwOnMissing: false }))
     .catch(() => {
       // Ignore telemetry initialization failures and fall back to untraced messaging.
     })

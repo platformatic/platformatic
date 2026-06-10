@@ -260,7 +260,7 @@ export class Controller extends EventEmitter {
 
   async getMetrics ({ format }) {
     const dispatcher = getGlobalDispatcher()
-    const onHttpStatsFree = getOnHttpStatsFree(false)
+    const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
 
     if (onHttpStatsFree && dispatcher?.stats) {
       const onHttpStatsConnected = getOnHttpStatsConnected()
@@ -279,7 +279,7 @@ export class Controller extends EventEmitter {
         onHttpStatsSize(url, size || 0)
       }
     }
-    const onActiveResourcesEventLoop = getOnActiveResourcesEventLoop(false)
+    const onActiveResourcesEventLoop = getOnActiveResourcesEventLoop({ throwOnMissing: false })
     if (onActiveResourcesEventLoop) {
       onActiveResourcesEventLoop(getActiveResourcesInfo().length)
     }

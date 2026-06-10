@@ -187,7 +187,7 @@ export async function openApiGenerator (app, opts) {
         title: opts.openapi?.title || 'Platformatic Gateway',
         version: opts.openapi?.version || '1.0.0'
       },
-      servers: [{ url: getRuntimeBasePath(false) ?? '/' }],
+      servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }],
       components: app.composedOpenApiSchema.components
     },
     transform ({ schema, url }) {

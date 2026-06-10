@@ -5,7 +5,7 @@ import fastify from 'fastify'
 import { resolve } from 'node:path'
 
 const app = fastify({ loggerInstance: getLogger() })
-const basePath = getBasePath(false) ?? '/'
+const basePath = getBasePath({ throwOnMissing: false }) ?? '/'
 
 await app.register(fastifyStatic, {
   root: resolve(process.cwd(), resolve(process.cwd(), 'build/client')),

@@ -79,7 +79,7 @@ export function createPlatformaticLogger () {
 
   const pinoOptions = {
     ...loggerConfig,
-    level: getLogLevel(false) ?? loggerConfig?.level ?? 'info'
+    level: getLogLevel({ throwOnMissing: false }) ?? loggerConfig?.level ?? 'info'
   }
   if (pinoOptions.formatters) {
     pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)

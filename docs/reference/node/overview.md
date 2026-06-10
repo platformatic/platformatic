@@ -114,10 +114,10 @@ import fastify from 'fastify'
 
 export function create () {
   const app = fastify({
-    logger: { level: getLogLevel(false) ?? 'info' }
+    logger: { level: getLogLevel({ throwOnMissing: false }) ?? 'info' }
   })
 
-  const prefix = getBasePath(false) ?? ''
+  const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
   app.get(`${prefix}/env`, async () => {
     return { production: process.env.NODE_ENV === 'production' }
@@ -135,7 +135,7 @@ import express from 'express'
 
 const app = express()
 
-const prefix = getBasePath(false) ?? ''
+const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
 app.get(`${prefix}/env`, (req, res) => {
   res.send({ production: process.env.NODE_ENV === 'production' })

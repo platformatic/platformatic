@@ -31,7 +31,7 @@ function handleRequest (handle, req) {
 }
 
 const app = fastify({ loggerInstance: getLogger() })
-const basePath = getBasePath(false) ?? '/'
+const basePath = getBasePath({ throwOnMissing: false }) ?? '/'
 
 await app.register(fastifyStatic, {
   root: resolve(process.cwd(), resolve(process.cwd(), 'build/client')),

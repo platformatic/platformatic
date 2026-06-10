@@ -2,8 +2,8 @@ import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: getBasePath(false) ?? '/',
-  logLevel: getLogLevel(false) ?? 'info',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
+  logLevel: getLogLevel({ throwOnMissing: false }) ?? 'info',
   plugins: [
     {
       name: 'platformatic',

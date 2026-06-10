@@ -71,7 +71,7 @@ const profilingState = {
 // Keep trying until ITC is available. This is needed because preloads run
 // before the app thread initialization, so messaging and ITC don't exist yet.
 const registerInterval = setInterval(() => {
-  const itc = getITC(false)
+  const itc = getITC({ throwOnMissing: false })
 
   if (itc) {
     itc.handle('getLastProfile', getLastProfile)
@@ -228,7 +228,7 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
     // Was not running: only start if ELU rises above start threshold
     : isAboveThreshold(state)
 
-  const logger = getLogger(false)
+  const logger = getLogger({ throwOnMissing: false })
   if (shouldRun) {
     // ELU is high enough, start/restart profiling
     if (!wasRunning && !state.profilerStarted && logger) {
@@ -258,7 +258,7 @@ async function initializeSourceMapper (options = {}) {
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
     if (!appPath) {
-      const logger = getLogger(false)
+      const logger = getLogger({ throwOnMissing: false })
       if (logger) {
         logger.debug('No application path available for sourcemap resolution')
       }
@@ -286,7 +286,7 @@ async function initializeSourceMapper (options = {}) {
     // Wrap the SourceMapper to fix Windows path normalization
     sourceMapper = new SourceMapperWrapper(innerMapper)
 
-    const logger = getLogger(false)
+    const logger = getLogger({ throwOnMissing: false })
     if (logger) {
       const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
       logger.info(
@@ -295,7 +295,7 @@ async function initializeSourceMapper (options = {}) {
       )
     }
   } catch (err) {
-    const logger = getLogger(false)
+    const logger = getLogger({ throwOnMissing: false })
     if (logger) {
       logger.warn(
         { err: err.message, stack: err.stack },

@@ -48,7 +48,7 @@ export class CacheHandler {
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
-    const platformaticConfig = getConfig(false)
+    const platformaticConfig = getConfig({ throwOnMissing: false })
 
     if (!this.#standalone && platformaticConfig) {
       this.#config ??= platformaticConfig.cache

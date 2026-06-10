@@ -43,7 +43,7 @@ export class GatewayCapability extends ServiceCapability {
     // Only register the runtime event handler once. start() can be called
     // multiple times (first with listen:false, then listen:true) so guard
     // against duplicate registrations.
-    const itc = getITC(false)
+    const itc = getITC({ throwOnMissing: false })
     if (!this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
       itc.on('runtime:event', this.#runtimeEventHandler)
@@ -53,7 +53,7 @@ export class GatewayCapability extends ServiceCapability {
   }
 
   stop () {
-    const itc = getITC(false)
+    const itc = getITC({ throwOnMissing: false })
     if (this.#runtimeEventHandler && itc) {
       itc.removeListener('runtime:event', this.#runtimeEventHandler)
     }

@@ -4,7 +4,7 @@ import { request } from 'undici'
 
 const logger = getLogger()
 const app = fastify({
-  loggerInstance: logger.child({}, { level: getLogLevel(false) ?? 'info' })
+  loggerInstance: logger.child({}, { level: getLogLevel({ throwOnMissing: false }) ?? 'info' })
 })
 
 app.get('/', async () => {

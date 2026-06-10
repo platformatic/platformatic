@@ -120,7 +120,7 @@ export function httpCacheInterceptor (interceptorOpts) {
 
   // AsyncLocalStorage that contains a client http request span
   // Exists only when the nodejs capability telemetry is enabled
-  const clientSpansAls = getClientSpansAls(false)
+  const clientSpansAls = getClientSpansAls({ throwOnMissing: false })
 
   return originalDispatch => {
     const dispatch = (opts, handler) => {

@@ -8,7 +8,7 @@ const root = resolve(dirname(path), 'client')
 export default {
   root,
   base: '/nested/base/dir/',
-  logLevel: getLogLevel(false) ?? 'info',
+  logLevel: getLogLevel({ throwOnMissing: false }) ?? 'info',
   // This is needed for GitHub actions due to https://github.com/vitejs/vite/issues/10802
   resolve: {
     preserveSymlinks: true

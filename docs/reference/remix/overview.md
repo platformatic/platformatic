@@ -68,11 +68,11 @@ import { defineConfig } from 'vite'
 import { getBasePath } from '@platformatic/globals'
 
 export default defineConfig({
-  base: getBasePath(false) ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   /* ... */
   plugins: [
     remix({
-      basename: getBasePath(false) ?? '/'
+      basename: getBasePath({ throwOnMissing: false }) ?? '/'
       /* ... */
     })
   ]

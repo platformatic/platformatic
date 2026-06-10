@@ -22,13 +22,13 @@ export function createServerListener (overridePort = true, overrideHost = false,
       // Check if we need to override the port only if a static port is being requested
       if (overridePort !== false && overridePort !== 0) {
         // The user application has requested a specific port, which is not the entrypoint one. Override it.
-        if (options.port !== overridePort && isEntrypoint(false)) {
+        if (options.port !== overridePort && isEntrypoint({ throwOnMissing: false })) {
           options.port = overridePort
         }
       }
 
       Object.assign(options, additionalOptions)
-      const events = getEvents(false)
+      const events = getEvents({ throwOnMissing: false })
       if (events) {
         events.emitAndNotify('serverOptions', options)
       }

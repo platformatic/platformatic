@@ -253,19 +253,19 @@ function createHttpCacheInterceptor (runtimeConfig) {
   const cacheInterceptor = httpCacheInterceptor({
     store: new RemoteCacheStore({
       onRequest: opts => {
-        const onHttpCacheRequest = getOnHttpCacheRequest(false)
+        const onHttpCacheRequest = getOnHttpCacheRequest({ throwOnMissing: false })
         if (onHttpCacheRequest) {
           onHttpCacheRequest(opts)
         }
       },
       onCacheHit: opts => {
-        const onHttpCacheHit = getOnHttpCacheHit(false)
+        const onHttpCacheHit = getOnHttpCacheHit({ throwOnMissing: false })
         if (onHttpCacheHit) {
           onHttpCacheHit(opts)
         }
       },
       onCacheMiss: opts => {
-        const onHttpCacheMiss = getOnHttpCacheMiss(false)
+        const onHttpCacheMiss = getOnHttpCacheMiss({ throwOnMissing: false })
         if (onHttpCacheMiss) {
           onHttpCacheMiss(opts)
         }

@@ -43,7 +43,7 @@ import type { Config } from '@react-router/dev/config'
 import { getBasePath } from '@platformatic/globals'
 
 export default {
-  basename: getBasePath(false) ?? '/'
+  basename: getBasePath({ throwOnMissing: false }) ?? '/'
   ssr: true
 } satisfies Config
 ```
@@ -57,7 +57,7 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  base: getBasePath(false) ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   plugins: [reactRouter(), tsconfigPaths()]
 })
 ```
@@ -75,7 +75,7 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
    import tsconfigPaths from 'vite-tsconfig-paths'
 
    export default defineConfig(({ isSsrBuild }) => ({
-     base: getBasePath(false) ?? '/',
+     base: getBasePath({ throwOnMissing: false }) ?? '/',
      build: {
        rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
      },

@@ -36,7 +36,7 @@ function ensureCleanup (t, folders) {
 }
 
 test('should increment and decrement activeWsConnections metric', async t => {
-  const initPromClient = getPrometheus(false)
+  const initPromClient = getPrometheus({ throwOnMissing: false })
   const prometheusRegistry = new client.Registry()
 
   if (!initPromClient) {

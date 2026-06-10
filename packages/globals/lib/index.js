@@ -1,6 +1,8 @@
 export const kFields = Symbol.for('plt.globals.fields')
 
-function getField (name, throwOnMissing = true) {
+function getField (name, options) {
+  const { throwOnMissing = true } = options ?? {}
+
   if (throwOnMissing && !globalThis.platformatic?.[kFields]?.has(name)) {
     throw new Error(`globalThis.platformatic.${name} is not available`)
   }
@@ -28,148 +30,148 @@ export function hasField (name) {
   return globalThis.platformatic?.[kFields]?.has(name) ?? false
 }
 
-export function isBuilding (throwOnMissing = true) {
-  return getField('isBuilding', throwOnMissing)
+export function isBuilding (options) {
+  return getField('isBuilding', options)
 }
 
-export function getExecutable (throwOnMissing = true) {
-  return getField('executable', throwOnMissing)
+export function getExecutable (options) {
+  return getField('executable', options)
 }
 
-export function getRuntimeId (throwOnMissing = true) {
-  return getField('runtimeId', throwOnMissing)
+export function getRuntimeId (options) {
+  return getField('runtimeId', options)
 }
 
-export function getNextVersion (throwOnMissing = true) {
-  return getField('nextVersion', throwOnMissing)
+export function getNextVersion (options) {
+  return getField('nextVersion', options)
 }
 
-export function getExitOnUnhandledErrors (throwOnMissing = true) {
-  return getField('exitOnUnhandledErrors', throwOnMissing)
+export function getExitOnUnhandledErrors (options) {
+  return getField('exitOnUnhandledErrors', options)
 }
 
-export function getReuseTcpPorts (throwOnMissing = true) {
-  return getField('reuseTcpPorts', throwOnMissing)
+export function getReuseTcpPorts (options) {
+  return getField('reuseTcpPorts', options)
 }
 
-export function getHost (throwOnMissing = true) {
-  return getField('host', throwOnMissing)
+export function getHost (options) {
+  return getField('host', options)
 }
 
-export function getPort (throwOnMissing = true) {
-  return getField('port', throwOnMissing)
+export function getPort (options) {
+  return getField('port', options)
 }
 
-export function getAdditionalServerOptions (throwOnMissing = true) {
-  return getField('additionalServerOptions', throwOnMissing)
+export function getAdditionalServerOptions (options) {
+  return getField('additionalServerOptions', options)
 }
 
-export function getTelemetryConfig (throwOnMissing = true) {
-  return getField('telemetryConfig', throwOnMissing)
+export function getTelemetryConfig (options) {
+  return getField('telemetryConfig', options)
 }
 
-export function getConfig (throwOnMissing = true) {
-  return getField('config', throwOnMissing)
+export function getConfig (options) {
+  return getField('config', options)
 }
 
-export function getApplicationId (throwOnMissing = true) {
-  return getField('applicationId', throwOnMissing)
+export function getApplicationId (options) {
+  return getField('applicationId', options)
 }
 
-export function getWorkerId (throwOnMissing = true) {
-  return getField('workerId', throwOnMissing)
+export function getWorkerId (options) {
+  return getField('workerId', options)
 }
 
-export function getRoot (throwOnMissing = true) {
-  return getField('root', throwOnMissing)
+export function getRoot (options) {
+  return getField('root', options)
 }
 
-export function isEntrypoint (throwOnMissing = true) {
-  return getField('isEntrypoint', throwOnMissing)
+export function isEntrypoint (options) {
+  return getField('isEntrypoint', options)
 }
 
-export function getBasePath (throwOnMissing = true) {
-  return getField('basePath', throwOnMissing)
+export function getBasePath (options) {
+  return getField('basePath', options)
 }
 
-export function getRuntimeBasePath (throwOnMissing = true) {
-  return getField('runtimeBasePath', throwOnMissing)
+export function getRuntimeBasePath (options) {
+  return getField('runtimeBasePath', options)
 }
 
-export function getWantsAbsoluteUrls (throwOnMissing = true) {
-  return getField('wantsAbsoluteUrls', throwOnMissing)
+export function getWantsAbsoluteUrls (options) {
+  return getField('wantsAbsoluteUrls', options)
 }
 
-export function getLogger (throwOnMissing = true) {
-  return getField('logger', throwOnMissing)
+export function getLogger (options) {
+  return getField('logger', options)
 }
 
-export function getLogLevel (throwOnMissing = true) {
-  return getField('logLevel', throwOnMissing)
+export function getLogLevel (options) {
+  return getField('logLevel', options)
 }
 
-export function getInterceptLogging (throwOnMissing = true) {
-  return getField('interceptLogging', throwOnMissing)
+export function getInterceptLogging (options) {
+  return getField('interceptLogging', options)
 }
 
-export function getPrometheus (throwOnMissing = true) {
-  return getField('prometheus', throwOnMissing)
+export function getPrometheus (options) {
+  return getField('prometheus', options)
 }
 
-export function getClientSpansAls (throwOnMissing = true) {
-  return getField('clientSpansAls', throwOnMissing)
+export function getClientSpansAls (options) {
+  return getField('clientSpansAls', options)
 }
 
-export function getInterceptors (throwOnMissing = true) {
-  return getField('interceptors', throwOnMissing)
+export function getInterceptors (options) {
+  return getField('interceptors', options)
 }
 
-export function getValkeyClients (throwOnMissing = true) {
-  return getField('valkeyClients', throwOnMissing)
+export function getValkeyClients (options) {
+  return getField('valkeyClients', options)
 }
 
-export function getOnHttpCacheRequest (throwOnMissing = true) {
-  return getField('onHttpCacheRequest', throwOnMissing)
+export function getOnHttpCacheRequest (options) {
+  return getField('onHttpCacheRequest', options)
 }
 
-export function getOnHttpCacheHit (throwOnMissing = true) {
-  return getField('onHttpCacheHit', throwOnMissing)
+export function getOnHttpCacheHit (options) {
+  return getField('onHttpCacheHit', options)
 }
 
-export function getOnHttpCacheMiss (throwOnMissing = true) {
-  return getField('onHttpCacheMiss', throwOnMissing)
+export function getOnHttpCacheMiss (options) {
+  return getField('onHttpCacheMiss', options)
 }
 
-export function getOnHttpStatsFree (throwOnMissing = true) {
-  return getField('onHttpStatsFree', throwOnMissing)
+export function getOnHttpStatsFree (options) {
+  return getField('onHttpStatsFree', options)
 }
 
-export function getOnHttpStatsConnected (throwOnMissing = true) {
-  return getField('onHttpStatsConnected', throwOnMissing)
+export function getOnHttpStatsConnected (options) {
+  return getField('onHttpStatsConnected', options)
 }
 
-export function getOnHttpStatsPending (throwOnMissing = true) {
-  return getField('onHttpStatsPending', throwOnMissing)
+export function getOnHttpStatsPending (options) {
+  return getField('onHttpStatsPending', options)
 }
 
-export function getOnHttpStatsQueued (throwOnMissing = true) {
-  return getField('onHttpStatsQueued', throwOnMissing)
+export function getOnHttpStatsQueued (options) {
+  return getField('onHttpStatsQueued', options)
 }
 
-export function getOnHttpStatsRunning (throwOnMissing = true) {
-  return getField('onHttpStatsRunning', throwOnMissing)
+export function getOnHttpStatsRunning (options) {
+  return getField('onHttpStatsRunning', options)
 }
 
-export function getOnHttpStatsSize (throwOnMissing = true) {
-  return getField('onHttpStatsSize', throwOnMissing)
+export function getOnHttpStatsSize (options) {
+  return getField('onHttpStatsSize', options)
 }
 
-export function getOnActiveResourcesEventLoop (throwOnMissing = true) {
-  return getField('onActiveResourcesEventLoop', throwOnMissing)
+export function getOnActiveResourcesEventLoop (options) {
+  return getField('onActiveResourcesEventLoop', options)
 }
 
-export function getInvalidateHttpCache (throwOnMissing = true) {
-  return getField('invalidateHttpCache', throwOnMissing)
+export function getInvalidateHttpCache (options) {
+  return getField('invalidateHttpCache', options)
 }
 
 export function setBasePath (...args) {
@@ -196,48 +198,48 @@ export function setCustomReadinessCheck (...args) {
   return getField('setCustomReadinessCheck')(...args)
 }
 
-export function getEvents (throwOnMissing = true) {
-  return getField('events', throwOnMissing)
+export function getEvents (options) {
+  return getField('events', options)
 }
 
-export function getITC (throwOnMissing = true) {
-  return getField('itc', throwOnMissing)
+export function getITC (options) {
+  return getField('itc', options)
 }
 
-export function getMessaging (throwOnMissing = true) {
-  return getField('messaging', throwOnMissing)
+export function getMessaging (options) {
+  return getField('messaging', options)
 }
 
-export function getCapability (throwOnMissing = true) {
-  return getField('capability', throwOnMissing)
+export function getCapability (options) {
+  return getField('capability', options)
 }
 
-export function getClosing (throwOnMissing = true) {
-  return getField('closing', throwOnMissing)
+export function getClosing (options) {
+  return getField('closing', options)
 }
 
-export function getSharedContext (throwOnMissing = true) {
-  return getField('sharedContext', throwOnMissing)
+export function getSharedContext (options) {
+  return getField('sharedContext', options)
 }
 
-export function getManagement (throwOnMissing = true) {
-  return getField('management', throwOnMissing)
+export function getManagement (options) {
+  return getField('management', options)
 }
 
-export function getSendHealthSignal (throwOnMissing = true) {
-  return getField('sendHealthSignal', throwOnMissing)
+export function getSendHealthSignal (options) {
+  return getField('sendHealthSignal', options)
 }
 
-export function getTelemetryReady (throwOnMissing = true) {
-  return getField('telemetryReady', throwOnMissing)
+export function getTelemetryReady (options) {
+  return getField('telemetryReady', options)
 }
 
-export function getTracerProvider (throwOnMissing = true) {
-  return getField('tracerProvider', throwOnMissing)
+export function getTracerProvider (options) {
+  return getField('tracerProvider', options)
 }
 
-export function getNotifyConfig (throwOnMissing = true) {
-  return getField('notifyConfig', throwOnMissing)
+export function getNotifyConfig (options) {
+  return getField('notifyConfig', options)
 }
 
 export default getGlobal

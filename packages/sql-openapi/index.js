@@ -17,7 +17,7 @@ async function setupOpenAPI (app, opts) {
         description: 'Exposing a SQL database as REST',
         version: '1.0.0'
       },
-      servers: [{ url: getRuntimeBasePath(false) ?? '/' }]
+      servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }]
     },
     opts
   )

@@ -27,7 +27,7 @@ function handler (_, res) {
   const platformatic = {
     additionalServerOptions: getAdditionalServerOptions(),
     applicationId: getApplicationId(),
-    basePath: getBasePath(false),
+    basePath: getBasePath({ throwOnMissing: false }),
     config: getConfig(),
     exitOnUnhandledErrors: getExitOnUnhandledErrors(),
     host: getHost(),

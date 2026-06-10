@@ -185,7 +185,7 @@ function resolveModulePath (appPath, moduleName) {
  */
 export async function loadNodeModulesSourceMaps (appPath, moduleNames, debug = false) {
   const entries = new Map()
-  const logger = getLogger(false)
+  const logger = getLogger({ throwOnMissing: false })
 
   if (debug && logger) {
     logger.debug({ appPath, moduleNames }, 'Loading source maps from node_modules')

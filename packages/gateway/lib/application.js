@@ -114,7 +114,7 @@ export async function ensureApplications (gatewayId, config) {
   }
 
   if (!gatewayId) {
-    gatewayId = getApplicationId(false) ?? gatewayId
+    gatewayId = getApplicationId({ throwOnMissing: false }) ?? gatewayId
   }
 
   config.gateway ??= {}

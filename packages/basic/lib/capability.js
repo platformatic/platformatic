@@ -138,7 +138,7 @@ export class BaseCapability extends EventEmitter {
       reuseTcpPorts: this.reuseTcpPorts
     })
 
-    const prometheus = getPrometheus(false)
+    const prometheus = getPrometheus({ throwOnMissing: false })
 
     if (prometheus) {
       this.metricsRegistry = prometheus.registry
@@ -236,7 +236,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependenciesStart (dependencies = []) {
-    const itc = getITC(false)
+    const itc = getITC({ throwOnMissing: false })
     if (!itc) {
       return
     }
@@ -296,7 +296,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependentsStop (dependents = []) {
-    const itc = getITC(false)
+    const itc = getITC({ throwOnMissing: false })
     if (!itc) {
       return
     }
@@ -534,7 +534,7 @@ export class BaseCapability extends EventEmitter {
       this.#subprocessStarted = true
       // Let the runtime know this worker hosts a child process so it reads
       // health metrics via ITC instead of from the coordinator thread handle.
-      const itc = getITC(false)
+      const itc = getITC({ throwOnMissing: false })
       if (itc) {
         itc.notify('subprocess:started')
       }
@@ -676,7 +676,7 @@ export class BaseCapability extends EventEmitter {
     })
 
     childManager.on('event', event => {
-      const itc = getITC(false)
+      const itc = getITC({ throwOnMissing: false })
       if (itc) {
         itc.notify('event', event)
       }
@@ -686,7 +686,7 @@ export class BaseCapability extends EventEmitter {
 
     // Forward health signals from child process to runtime
     childManager.on('healthSignals', ({ workerId, signals }) => {
-      const itc = getITC(false)
+      const itc = getITC({ throwOnMissing: false })
       if (itc) {
         itc.send('sendHealthSignals', { workerId, signals })
       }
@@ -990,7 +990,7 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady(false)
+    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
     if (telemetryReady) {
       await telemetryReady
     }

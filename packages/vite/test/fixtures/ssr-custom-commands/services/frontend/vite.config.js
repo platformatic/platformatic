@@ -7,8 +7,8 @@ const root = resolve(dirname(path), 'client')
 
 export default {
   root,
-  base: getBasePath(false) ?? '/',
-  logLevel: getLogLevel(false) ?? 'info',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
+  logLevel: getLogLevel({ throwOnMissing: false }) ?? 'info',
   plugins: [
     {
       name: 'platformatic',

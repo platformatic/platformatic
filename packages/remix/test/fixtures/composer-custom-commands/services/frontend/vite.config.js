@@ -3,9 +3,9 @@ import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: getBasePath(false) ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   plugins: [
-    remix({ basename: getBasePath(false) ?? '/' }),
+    remix({ basename: getBasePath({ throwOnMissing: false }) ?? '/' }),
     {
       name: 'platformatic',
       configResolved: config => {

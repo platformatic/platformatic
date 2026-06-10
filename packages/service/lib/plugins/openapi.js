@@ -17,7 +17,7 @@ async function setupOpenAPIPlugin (app, options) {
         description: 'This is a service built on top of Platformatic',
         version: '1.0.0'
       },
-      servers: [{ url: getRuntimeBasePath(false) ?? '/' }]
+      servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }]
     },
     typeof openapi === 'object' ? openapi : {}
   )

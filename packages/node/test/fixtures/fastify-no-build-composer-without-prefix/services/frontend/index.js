@@ -4,10 +4,10 @@ import fastify from 'fastify'
 
 const logger = getLogger()
 const app = fastify({
-  loggerInstance: logger.child({}, { level: getLogLevel(false) ?? 'info' })
+  loggerInstance: logger.child({}, { level: getLogLevel({ throwOnMissing: false }) ?? 'info' })
 })
 
-const prefix = getBasePath(false) ?? ''
+const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
 app.get(ensureTrailingSlash(cleanBasePath(prefix)), async () => {
   return { production: process.env.NODE_ENV === 'production' }

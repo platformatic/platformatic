@@ -4,7 +4,7 @@ import Koa from 'koa'
 
 export function build () {
   const app = new Koa()
-  const prefix = getBasePath(false) ?? ''
+  const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
   app.use(async ctx => {
     if (ctx.request.url === ensureTrailingSlash(cleanBasePath(prefix))) {

@@ -24,7 +24,7 @@ async function resolveApplicationProxyParameters (application, root) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
   // Only fetch meta for local applications - remote applications won't be in the runtime
   let allMeta = {}
-  const itc = isLocalApplication(application) ? getITC(false) : undefined
+  const itc = isLocalApplication(application) ? getITC({ throwOnMissing: false }) : undefined
   if (itc) {
     allMeta = await itc.send('getApplicationMeta', application.id)
   }
@@ -193,7 +193,7 @@ async function proxyPlugin (app, opts) {
       : null
 
     if (!metrics) {
-      const prometheus = getPrometheus(false)
+      const prometheus = getPrometheus({ throwOnMissing: false })
       metrics = initMetrics(prometheus)
     }
 

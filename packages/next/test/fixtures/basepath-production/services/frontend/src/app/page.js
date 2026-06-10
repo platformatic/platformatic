@@ -8,7 +8,7 @@ export default async function Home() {
 
   return (
     <code>
-      {getBasePath(false)} {JSON.stringify(result.ok)}
+      {getBasePath({ throwOnMissing: false })} {JSON.stringify(result.ok)}
     </code>
   )
 }
