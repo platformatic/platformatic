@@ -460,7 +460,7 @@ wattpm inject [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, uses entrypoint if omitted)
+- `application` - Application name (optional, uses the entrypoint if omitted and one exists)
 
 **Options:**
 

@@ -158,9 +158,14 @@ The base path, relative to the configuration file to store resolved applications
 
 ### `entrypoint`
 
-The Platformatic Runtime's entrypoint is an applicaiton that is exposed
-publicly. This value must be the `ID` of an application defined via the `autoload` or
+The Platformatic Runtime's entrypoint is an application that is exposed
+publicly. This optional value must be the `ID` of an application defined via the `autoload` or
 `applications` configuration.
+
+If `entrypoint` is omitted, the runtime automatically selects one when there is a single
+application or exactly one Gateway application. If it cannot select a single entrypoint,
+the runtime starts without a public entrypoint; applications remain reachable through their
+internal `.plt.local` URLs and APIs such as `runtime.inject()`.
 
 ### `workers`
 

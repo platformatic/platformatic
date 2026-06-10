@@ -87,7 +87,7 @@ Walks the applications declared in the nearest runtime configuration and aggrega
 ### Lifecycle
 
 - **`runtime.start(silent = false): Promise<string | undefined>`** — Starts all applications. Returns the entrypoint's external URL (or `undefined` if no entrypoint binds an external port). If `init()` hasn't been called yet, `start()` calls it.
-- **`runtime.stop(silent = false): Promise<void>`** — Stops all applications. The entrypoint is stopped first so it stops accepting new requests immediately.
+- **`runtime.stop(silent = false): Promise<void>`** — Stops all applications. If an entrypoint exists, it is stopped first so it stops accepting new requests immediately.
 - **`runtime.close(silent = false): Promise<void>`** — Stops applications and tears the runtime down completely (closes the management API, broadcast channels, dispatcher, etc.). After `close()` the runtime cannot be restarted; create a new instance.
 - **`runtime.restart(applications?: string[]): Promise<string | undefined>`** — Restarts every application (or only the IDs in `applications`). Returns the entrypoint URL once the restart completes.
 - **`runtime.init(): Promise<void>`** — Performs one-time setup (loads capabilities, prepares workers). Usually called transitively by `start()`; call it explicitly only if you need the runtime in `init`'ed state without starting applications.
@@ -122,7 +122,7 @@ The response object exposes `statusCode`, `statusMessage`, `headers`, `body` (st
 
 ### Introspection
 
-- **`runtime.getUrl(): string | undefined`** — The entrypoint's external URL once started.
+- **`runtime.getUrl(): string | undefined`** — The entrypoint's external URL once started, or `undefined` when there is no entrypoint.
 - **`runtime.getRuntimeStatus(): string`** — One of `starting`, `started`, `stopping`, `stopped`, `closed`.
 - **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `url`, `platformaticVersion`.
 - **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareApplication()`).
@@ -136,7 +136,7 @@ The response object exposes `statusCode`, `statusMessage`, `headers`, `body` (st
 - **`runtime.stopApplication(id, silent = false): Promise<void>`**
 - **`runtime.restartApplication(id): Promise<void>`**
 
-These act on a single application by `id`. The entrypoint can be restarted but cannot be removed (see below).
+These act on a single application by `id`. If an entrypoint exists, it can be restarted but cannot be removed (see below).
 
 ## Adding and removing applications at runtime
 
@@ -175,7 +175,7 @@ Stops the listed applications and removes them from the runtime. `applications` 
 await app.removeApplications(['analytics-service'])
 ```
 
-The entrypoint cannot be removed; attempting to do so throws a `CannotRemoveEntrypointError`.
+The entrypoint, when configured or automatically detected, cannot be removed; attempting to do so throws a `CannotRemoveEntrypointError`.
 
 ### Example: dynamic application management
 
