@@ -7,11 +7,20 @@ import { on } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import split2 from 'split2'
 import { request } from 'undici'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
+
+async function waitForRuntimeStarted (startProcess) {
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.event === 'started') {
+      return
+    }
+  }
+}
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -85,10 +94,10 @@ test('dev - should start if no entrypoint is defined', async t => {
     return startProcess.catch(() => {})
   })
 
-  const startProcess = wattpm('dev', rootDir, { reject: false })
-  await sleep(2000)
+  const startProcess = wattpm('dev', rootDir)
+  await waitForRuntimeStarted(startProcess)
 
-  ok(startProcess.exitCode !== 1)
+  ok(startProcess.exitCode === null)
 })
 
 test('dev - should restart an application if files are changed', async t => {
@@ -467,10 +476,10 @@ test('start - should start if no entrypoint is defined', async t => {
     return startProcess.catch(() => {})
   })
 
-  const startProcess = wattpm('start', rootDir, { reject: false })
-  await sleep(2000)
+  const startProcess = wattpm('start', rootDir)
+  await waitForRuntimeStarted(startProcess)
 
-  ok(startProcess.exitCode !== 1)
+  ok(startProcess.exitCode === null)
 })
 
 test('stop - should stop an application', async t => {
