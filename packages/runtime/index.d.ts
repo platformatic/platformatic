@@ -1,6 +1,7 @@
 import { FastifyError } from '@fastify/error'
 import { Configuration, ConfigurationOptions, logFatalError, parseArgs } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
+import { PlatformaticGlobal } from '@platformatic/globals'
 import { JSONSchemaType } from 'ajv'
 import * as colorette from 'colorette'
 import { Logger } from 'pino'
@@ -25,6 +26,12 @@ export interface ApplicationsCommands {
   applications: Record<string, Configuration<unknown>>
   commands: Record<string, ApplicationCommand>
   help: Record<string, string | (() => string)>
+}
+
+export interface LoopbackMessagingOptions {
+  logger?: Logger
+  mount?: boolean
+  runtimeConfig?: { messagingTimeout?: number; [key: string]: unknown }
 }
 
 export namespace errors {
@@ -190,3 +197,8 @@ export declare function transform (
 ): Promise<RuntimeConfiguration>
 
 export declare function loadApplicationsCommands (): Promise<ApplicationsCommands>
+
+export declare function setupLoopbackMessaging (
+  targetId: string,
+  options?: LoopbackMessagingOptions
+): PlatformaticGlobal['messaging'] & { unmount: () => void }

@@ -101,8 +101,9 @@ If the application uses the `commands` property then it's always responsible to 
 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
-If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Alternatively, you can set the `node.hasServer` property to false in your `watt.json` file.
-To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
+If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
+
+Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.json` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
 
 ## Example applications entrypoints
 
@@ -145,6 +146,22 @@ app.listen(3000)
 ```
 
 ### Background only application
+
+```js
+export async function create () {
+  const id = setInterval(() => console.log('alive'), 10_000)
+
+  return {
+    isBackgroundApplication: true,
+    id,
+    async close (app) {
+      clearInterval(app.id)
+    }
+  }
+}
+```
+
+Alternatively, for modules that start background work when imported, export `hasServer` as `false`:
 
 ```js
 import { getMessaging } from '@platformatic/globals'

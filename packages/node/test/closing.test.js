@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -150,6 +150,27 @@ test('should invoke close handler for background apps without close', async t =>
   ok(events.find(m => m.event === 'application:worker:event:work'))
   ok(events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+  await checkWarningEmitted(root, false)
+})
+
+test('should support factory returned background apps', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-background-with-factory')
+  const eventsPromise = collectEvents(runtime)
+
+  const url = await startRuntime(t, runtime)
+  strictEqual(url, undefined)
+
+  await runtime.close()
+  const events = await eventsPromise
+  const logs = await getLogsFromFile(root)
+
+  deepStrictEqual(events.filter(m => m.event === 'application:worker:event:create').length, 1)
+
+  const closeAppEvent = events.find(m => m.event === 'application:worker:event:close:app')
+  strictEqual(closeAppEvent.payload[0], 'factory-background-app')
+  ok(!events.find(m => m.event === 'application:worker:event:close:module'))
+
+  ok(!logs.find(m => m.msg === 'Platformatic is now listening at undefined'))
   await checkWarningEmitted(root, false)
 })
 

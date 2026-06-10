@@ -124,9 +124,12 @@ export class NodeCapability extends BaseCapability {
 
     await super._start({ listen })
 
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      await this._listen()
+    if (this.#app) {
+      // Listen if entrypoint
+      if (this.#hasServer() && listen) {
+        await this._listen()
+      }
+
       return this.url
     }
 
@@ -193,12 +196,17 @@ export class NodeCapability extends BaseCapability {
     this.#factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
     this.#appClose = this.#module['close']
 
-    if (this.#hasServer()) {
-      if (this.#factory) {
-        // We have build function, this Capability will not use HTTP unless it is the entrypoint
-        serverPromise.cancel()
+    if (this.#factory) {
+      const application = await this.#module[this.#factory]()
+      this.#app = application
 
-        this.#app = await this.#module[this.#factory]()
+      if (application.isBackgroundApplication === true && typeof application.close === 'function') {
+        this.#appClose = function appClose () {
+          application.close(application)
+        }
+      }
+
+      if (this.#hasServer()) {
         this.#isFastify = isFastify(this.#app)
         this.#isKoa = isKoa(this.#app)
 
@@ -214,21 +222,28 @@ export class NodeCapability extends BaseCapability {
         if (listen) {
           await this._listen()
         }
-      } else {
-        // User blackbox function, we wait for it to listen on a port
-        this.#server = await serverPromise
-        this.#dispatcher = this.#server.listeners('request')[0]
-
-        this.url = getServerUrl(this.#server)
       }
+    } else if (this.#hasServer()) {
+      // User blackbox function, we wait for it to listen on a port
+      this.#server = await serverPromise
+      this.#dispatcher = this.#server.listeners('request')[0]
+
+      this.url = getServerUrl(this.#server)
     }
 
     await this._collectMetrics()
+
+    // No need to keep the server promise around anymore, we either have the URL or we are a background service
+    serverPromise.cancel()
     return this.url
   }
 
   #hasServer () {
-    return this.config.node?.hasServer !== false && this.#module?.hasServer !== false
+    return (
+      this.#app?.isBackgroundApplication !== true &&
+      this.config.node?.hasServer !== false &&
+      this.#module?.hasServer !== false
+    )
   }
 
   setClosing () {

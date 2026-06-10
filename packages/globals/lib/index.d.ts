@@ -147,6 +147,7 @@ export type PlatformaticGlobalInterface = PlatformaticGlobal
 
 export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
 export declare function updateGlobals (updates: Partial<PlatformaticGlobal>): PlatformaticGlobal
+export declare function removeGlobals (fields: string[]): PlatformaticGlobal | undefined
 export declare function hasField (name: string): boolean
 export declare function isBuilding (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['isBuilding']
 export declare function isBuilding (options: OptionalGlobalGetterOptions): PlatformaticGlobal['isBuilding'] | undefined

@@ -77,7 +77,7 @@ export class MessagingITC extends ITC {
 
     try {
       // Get the next worker for the application
-      const worker = this.#workers.next(application)
+      const worker = this._getNextWorker(application)
 
       if (!worker) {
         throw new MessagingError(application, 'No workers available')
@@ -102,10 +102,7 @@ export class MessagingITC extends ITC {
         }
 
         worker.channel = channel
-        this.#setupChannel(channel)
-
-        channel[kPendingResponses] = new Map()
-        channel.on('close', this.#handlePendingResponse.bind(this, channel))
+        this._setupChannel(channel)
       }
 
       const context = { ...options }
@@ -166,13 +163,11 @@ export class MessagingITC extends ITC {
 
   async addSource (channel) {
     this.#sources.add(channel)
-    this.#setupChannel(channel)
+    this._setupChannel(channel)
+  }
 
-    // This has been closed on the other side.
-    // Pending messages will be silently discarded by Node (as postMessage does not throw) so we don't need to handle them.
-    channel.on('close', () => {
-      this.#sources.delete(channel)
-    })
+  _getNextWorker (application) {
+    return this.#workers.next(application)
   }
 
   _send (request, context) {
@@ -183,7 +178,7 @@ export class MessagingITC extends ITC {
       channel[kPendingResponses].set(request.reqId, { application, request })
     }
 
-    channel.postMessage(sanitize(request, transferList), { transferList })
+    channel.postMessage(sanitize(request, transferList), transferList)
   }
 
   _createClosePromise () {
@@ -211,10 +206,21 @@ export class MessagingITC extends ITC {
     this.#sources.clear()
   }
 
-  #setupChannel (channel) {
+  _setupChannel (channel) {
+    if (channel[kPendingResponses]) {
+      return
+    }
+
+    channel[kPendingResponses] = new Map()
+
     // Setup the message for processing
     channel.on('message', event => {
       this.#listener(event, { channel, message: event })
+    })
+
+    channel.on('close', () => {
+      this.#sources.delete(channel)
+      this.#handlePendingResponse(channel)
     })
   }
 

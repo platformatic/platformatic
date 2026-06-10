@@ -1721,6 +1721,10 @@ export class Runtime extends EventEmitter {
   }
 
   #showUrl () {
+    if (!this.#url) {
+      return
+    }
+
     this.logger.info(`Platformatic is now listening at ${this.#url}`)
   }
 

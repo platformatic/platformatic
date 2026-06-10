@@ -120,6 +120,55 @@ await app.close()
 
 The response object exposes `statusCode`, `statusMessage`, `headers`, `body` (string), `payload` (alias of `body`), and `rawPayload` (`ArrayBuffer`).
 
+### Testing Messaging API handlers
+
+Use `setupLoopbackMessaging()` to test an application's Messaging API handlers without starting a runtime.
+
+Application under test:
+
+```js
+import { getMessaging } from '@platformatic/globals'
+
+export async function create () {
+  const messaging = getMessaging()
+  const interval = setInterval(() => {}, 1000)
+
+  messaging.handle('ping', payload => {
+    return { pong: payload }
+  })
+
+  return {
+    isBackgroundApplication: true,
+    close () {
+      clearInterval(interval)
+    }
+  }
+}
+```
+
+Test:
+
+```js
+import { setupLoopbackMessaging } from '@platformatic/runtime'
+import { deepStrictEqual } from 'node:assert'
+import { test } from 'node:test'
+import { create } from './app.js'
+
+test('handles ping messages', async t => {
+  const messaging = setupLoopbackMessaging('frontend')
+  const app = await create()
+
+  t.after(() => {
+    messaging.unmount()
+    return app.close?.()
+  })
+
+  const response = await messaging.send('frontend', 'ping', { hello: 'world' })
+
+  deepStrictEqual(response, { pong: { hello: 'world' } })
+})
+```
+
 ### Introspection
 
 - **`runtime.getUrl(): string | undefined`** — The entrypoint's external URL once started.
