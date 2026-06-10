@@ -19,7 +19,7 @@ Direct access through the legacy global object is still supported for compatibil
 
 ### Typed Getters
 
-All typed getters, except `getGlobal()`, accept an optional `throwOnMissing` boolean parameter. It defaults to `true`, which throws when the requested runtime API is not available. Pass `false` to return `undefined` instead.
+All typed getters, except `getGlobal()`, accept an optional `throwOnMissing` boolean parameter. They return the typed runtime API value when available. The parameter defaults to `true`, which throws when the requested runtime API is not available. Pass `false` to return `undefined` instead.
 
 The related helpers are:
 
@@ -29,49 +29,49 @@ The related helpers are:
 
 The available getters are:
 
-- **`isBuilding(throwOnMissing?)`**: Returns whether the application is currently running a build step.
-- **`getExecutable(throwOnMissing?)`**: Returns the Platformatic executable name.
-- **`getRuntimeId(throwOnMissing?)`**: Returns the current runtime worker thread id.
-- **`getNextVersion(throwOnMissing?)`**: Returns the Next.js version detected for the application.
-- **`getExitOnUnhandledErrors(throwOnMissing?)`**: Returns whether the runtime exits on unhandled errors.
-- **`getReuseTcpPorts(throwOnMissing?)`**: Returns whether TCP port reuse is enabled.
-- **`getHost(throwOnMissing?)`**: Returns the application host.
-- **`getPort(throwOnMissing?)`**: Returns the application port.
-- **`getAdditionalServerOptions(throwOnMissing?)`**: Returns the additional server options for the application.
-- **`getTelemetryConfig(throwOnMissing?)`**: Returns the telemetry configuration object.
-- **`getConfig(throwOnMissing?)`**: Returns the application configuration object.
-- **`getApplicationId(throwOnMissing?)`**: Returns the application id.
-- **`getWorkerId(throwOnMissing?)`**: Returns the current application worker id.
-- **`getRoot(throwOnMissing?)`**: Returns the application root directory.
-- **`isEntrypoint(throwOnMissing?)`**: Returns whether the application is the runtime entrypoint.
-- **`getBasePath(throwOnMissing?)`**: Returns the base path of the application in the gateway.
-- **`getRuntimeBasePath(throwOnMissing?)`**: Returns the runtime base path.
-- **`getWantsAbsoluteUrls(throwOnMissing?)`**: Returns whether the application expects absolute URLs.
-- **`getLogger(throwOnMissing?)`**: Returns the application logger.
+- **`isBuilding(throwOnMissing?)`**: Returns a boolean indicating whether the application is currently running a build step.
+- **`getExecutable(throwOnMissing?)`**: Returns the Platformatic executable name as a string.
+- **`getRuntimeId(throwOnMissing?)`**: Returns the current runtime worker thread id as a number.
+- **`getNextVersion(throwOnMissing?)`**: Returns an object with the detected Next.js version, with `major` and optional `minor` numbers.
+- **`getExitOnUnhandledErrors(throwOnMissing?)`**: Returns a boolean indicating whether the runtime exits on unhandled errors.
+- **`getReuseTcpPorts(throwOnMissing?)`**: Returns a boolean indicating whether TCP port reuse is enabled.
+- **`getHost(throwOnMissing?)`**: Returns the application host as a string.
+- **`getPort(throwOnMissing?)`**: Returns the application port as a number.
+- **`getAdditionalServerOptions(throwOnMissing?)`**: Returns the additional server options for the application as an object.
+- **`getTelemetryConfig(throwOnMissing?)`**: Returns the telemetry configuration as an object.
+- **`getConfig(throwOnMissing?)`**: Returns the application configuration as an object.
+- **`getApplicationId(throwOnMissing?)`**: Returns the application id as a string.
+- **`getWorkerId(throwOnMissing?)`**: Returns the current application worker id as a number or string.
+- **`getRoot(throwOnMissing?)`**: Returns the application root directory as a string.
+- **`isEntrypoint(throwOnMissing?)`**: Returns a boolean indicating whether the application is the runtime entrypoint.
+- **`getBasePath(throwOnMissing?)`**: Returns the application base path in the gateway as a string, or `null` when no base path is configured.
+- **`getRuntimeBasePath(throwOnMissing?)`**: Returns the runtime base path as a string, or `null` when no runtime base path is configured.
+- **`getWantsAbsoluteUrls(throwOnMissing?)`**: Returns a boolean indicating whether the application expects absolute URLs.
+- **`getLogger(throwOnMissing?)`**: Returns the application Pino logger instance.
 - **`getLogLevel(throwOnMissing?)`**: Returns the configured application log level.
-- **`getInterceptLogging(throwOnMissing?)`**: Returns whether logging interception is enabled.
-- **`getPrometheus(throwOnMissing?)`**: Returns the Prometheus client and registry used by the runtime.
-- **`getClientSpansAls(throwOnMissing?)`**: Returns the async local storage used for client spans.
-- **`getInterceptors(throwOnMissing?)`**: Returns the runtime worker interceptor registry.
+- **`getInterceptLogging(throwOnMissing?)`**: Returns a boolean indicating whether logging interception is enabled.
+- **`getPrometheus(throwOnMissing?)`**: Returns an object containing the Prometheus client and registry used by the runtime.
+- **`getClientSpansAls(throwOnMissing?)`**: Returns the async local storage instance used for client spans.
+- **`getInterceptors(throwOnMissing?)`**: Returns the runtime worker interceptor registry as an object.
 - **`getValkeyClients(throwOnMissing?)`**: Returns the Valkey clients map.
-- **`getOnHttpCacheRequest(throwOnMissing?)`**: Returns the HTTP cache request metric callback, called with `key`.
-- **`getOnHttpCacheHit(throwOnMissing?)`**: Returns the HTTP cache hit metric callback, called with `key`.
-- **`getOnHttpCacheMiss(throwOnMissing?)`**: Returns the HTTP cache miss metric callback, called with `key`.
-- **`getOnHttpStatsFree(throwOnMissing?)`**: Returns the HTTP stats callback for free connections, called with `url` and `value`.
-- **`getOnHttpStatsConnected(throwOnMissing?)`**: Returns the HTTP stats callback for connected connections, called with `url` and `value`.
-- **`getOnHttpStatsPending(throwOnMissing?)`**: Returns the HTTP stats callback for pending requests, called with `url` and `value`.
-- **`getOnHttpStatsQueued(throwOnMissing?)`**: Returns the HTTP stats callback for queued requests, called with `url` and `value`.
-- **`getOnHttpStatsRunning(throwOnMissing?)`**: Returns the HTTP stats callback for running requests, called with `url` and `value`.
-- **`getOnHttpStatsSize(throwOnMissing?)`**: Returns the HTTP stats callback for pool size, called with `url` and `value`.
-- **`getOnActiveResourcesEventLoop(throwOnMissing?)`**: Returns the active event loop resources metric callback, called with `value`.
+- **`getOnHttpCacheRequest(throwOnMissing?)`**: Returns the HTTP cache request metric callback, a function called with `key`.
+- **`getOnHttpCacheHit(throwOnMissing?)`**: Returns the HTTP cache hit metric callback, a function called with `key`.
+- **`getOnHttpCacheMiss(throwOnMissing?)`**: Returns the HTTP cache miss metric callback, a function called with `key`.
+- **`getOnHttpStatsFree(throwOnMissing?)`**: Returns the HTTP stats callback for free connections, a function called with `url` and `value`.
+- **`getOnHttpStatsConnected(throwOnMissing?)`**: Returns the HTTP stats callback for connected connections, a function called with `url` and `value`.
+- **`getOnHttpStatsPending(throwOnMissing?)`**: Returns the HTTP stats callback for pending requests, a function called with `url` and `value`.
+- **`getOnHttpStatsQueued(throwOnMissing?)`**: Returns the HTTP stats callback for queued requests, a function called with `url` and `value`.
+- **`getOnHttpStatsRunning(throwOnMissing?)`**: Returns the HTTP stats callback for running requests, a function called with `url` and `value`.
+- **`getOnHttpStatsSize(throwOnMissing?)`**: Returns the HTTP stats callback for pool size, a function called with `url` and `value`.
+- **`getOnActiveResourcesEventLoop(throwOnMissing?)`**: Returns the active event loop resources metric callback, a function called with `value`.
 - **`getInvalidateHttpCache(throwOnMissing?)`**: Returns the HTTP cache invalidation function, called with an object containing optional `keys` and `tags` arrays.
 - **`getEvents(throwOnMissing?)`**: Returns the application `PlatformaticEvents` event emitter. The `close` event is emitted when the process is being closed. A listener should finish graceful shutdown within 10 seconds. `PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime.
-- **`getITC(throwOnMissing?)`**: Returns the low-level ITC API.
-- **`getMessaging(throwOnMissing?)`**: Returns the messaging API.
-- **`getCapability(throwOnMissing?)`**: Returns the current application capability instance.
-- **`getClosing(throwOnMissing?)`**: Returns whether the application is currently closing.
-- **`getSharedContext(throwOnMissing?)`**: Returns the shared context API. Context is shared between all runtime applications.
-- **`getManagement(throwOnMissing?)`**: Returns the management API when management is enabled for the application.
+- **`getITC(throwOnMissing?)`**: Returns the low-level ITC API used for internal thread communication.
+- **`getMessaging(throwOnMissing?)`**: Returns the messaging API with `send`, `notify`, and `handle` methods.
+- **`getCapability(throwOnMissing?)`**: Returns the current application capability instance as an object.
+- **`getClosing(throwOnMissing?)`**: Returns a boolean indicating whether the application is currently closing.
+- **`getSharedContext(throwOnMissing?)`**: Returns the shared context API with `get` and `update` methods. Context is shared between all runtime applications.
+- **`getManagement(throwOnMissing?)`**: Returns the management API object when management is enabled for the application.
 - **`getSendHealthSignal(throwOnMissing?)`**: Returns the function used to send a health signal from the application to the runtime.
 - **`getTelemetryReady(throwOnMissing?)`**: Returns the promise that resolves when telemetry is ready.
 - **`getTracerProvider(throwOnMissing?)`**: Returns the OpenTelemetry tracer provider.
