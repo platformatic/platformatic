@@ -37,7 +37,6 @@ import {
   CannotRemoveEntrypointError,
   InvalidArgumentError,
   MessagingError,
-  MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
   WorkerInterceptorJoinTimeoutError,
@@ -275,9 +274,6 @@ export class Runtime extends EventEmitter {
       await this.init()
     }
 
-    if (typeof this.#config.entrypoint === 'undefined') {
-      throw new MissingEntrypointError()
-    }
     this.#updateStatus('starting')
     this.#createWorkersBroadcastChannel()
 
@@ -328,7 +324,9 @@ export class Runtime extends EventEmitter {
     this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
-    this.#showUrl()
+    if (this.#url) {
+      this.#showUrl()
+    }
     return this.#url
   }
 
@@ -1123,6 +1121,10 @@ export class Runtime extends EventEmitter {
   }
 
   async getEntrypointDetails () {
+    if (!this.#entrypointId) {
+      return null
+    }
+
     return this.getApplicationDetails(this.#entrypointId)
   }
 

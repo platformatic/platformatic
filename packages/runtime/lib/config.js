@@ -18,8 +18,7 @@ import {
   InspectorHostError,
   InspectorPortError,
   InvalidArgumentError,
-  InvalidEntrypointError,
-  MissingEntrypointError
+  InvalidEntrypointError
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
@@ -438,15 +437,8 @@ export async function transform (config, _, context) {
     }
   }
 
-  if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
-    if (config.entrypoint) {
-      throw new InvalidEntrypointError(config.entrypoint)
-    } else if (applications.length >= 1) {
-      throw new MissingEntrypointError()
-    }
-    // If there are no applications, and no entrypoint it's an empty app.
-    // It won't start, but we should be able to parse and operate on it,
-    // like adding other applications.
+  if (!hasValidEntrypoint && config.entrypoint && !context.allowMissingEntrypoint) {
+    throw new InvalidEntrypointError(config.entrypoint)
   }
 
   if (typeof config.metrics === 'boolean') {
