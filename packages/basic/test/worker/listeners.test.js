@@ -1,3 +1,4 @@
+import { updateGlobals } from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects } from 'node:assert'
 import { spawn } from 'node:child_process'
@@ -44,12 +45,12 @@ test('createServerListener - should override the port with fixed value', async t
   const port = await getPort()
   const server = createHttpServer(t)
 
-  globalThis.platformatic = {
+  updateGlobals({
     isEntrypoint: true,
     events: { emitAndNotify () {} }
-  }
+  })
   t.after(() => {
-    delete globalThis.platformatic
+    updateGlobals({ isEntrypoint: undefined, events: undefined })
   })
 
   const listener = createServerListener(port)
@@ -64,12 +65,12 @@ test('createServerListener - should not override a fixed port for non-entrypoint
   const originalPort = await getPort()
   const server = createHttpServer(t)
 
-  globalThis.platformatic = {
+  updateGlobals({
     isEntrypoint: false,
     events: { emitAndNotify () {} }
-  }
+  })
   t.after(() => {
-    delete globalThis.platformatic
+    updateGlobals({ isEntrypoint: undefined, events: undefined })
   })
 
   const listener = createServerListener(port)

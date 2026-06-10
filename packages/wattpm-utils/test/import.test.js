@@ -439,7 +439,6 @@ test('import - when launched without arguments, should fix the configuration of 
       dependencies: {
         '@platformatic/node': `^${version}`
       },
-      devDependencies: {}
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
@@ -492,8 +491,7 @@ test('import - when launched without arguments, should fix the configuration of 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'package.json')), {
       dependencies: {
         '@platformatic/node': `^${version}`
-      },
-      devDependencies: {}
+      }
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
@@ -544,7 +542,8 @@ test('import - when launched without arguments from an application file, should 
 
   deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json')), {
     dependencies: {
-      '@platformatic/node': '^2.3.1'
+      '@platformatic/globals': '>=3.0.0',
+      '@platformatic/node': '>=3.0.0'
     },
     type: 'module'
   })

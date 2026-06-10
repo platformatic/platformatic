@@ -1,3 +1,4 @@
+import { getITC } from '@platformatic/globals'
 import { createServer } from 'node:http'
 import { platform, tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -26,4 +27,5 @@ function handler (_, res) {
 }
 
 const server = createServer(handler).listen({ path: socketPath })
-globalThis[Symbol.for('plt.children.itc')].notify('path', socketPath)
+const itc = getITC()
+itc.notify('path', socketPath)

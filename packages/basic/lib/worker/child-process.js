@@ -5,6 +5,25 @@ import {
   ensureLoggableError,
   mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
+import {
+  getAdditionalServerOptions,
+  getApplicationId,
+  getConfig,
+  getEvents,
+  getExitOnUnhandledErrors,
+  getHost,
+  getITC,
+  getLogger,
+  getPort,
+  getPrometheus,
+  getReuseTcpPorts,
+  getRuntimeBasePath,
+  getWantsAbsoluteUrls,
+  getWorkerId,
+  hasField,
+  isEntrypoint,
+  updateGlobals
+} from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { clearRegistry, client, collectThreadMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
@@ -26,7 +45,8 @@ import { getSocketPath } from './child-manager.js'
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
-    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    const itc = getITC()
+    itc.notify('event', { event, payload: args })
     return super.emit(event, ...args)
   }
 }
@@ -82,6 +102,8 @@ export class ChildProcess extends ITC {
   #replStream
 
   constructor (executable) {
+    const events = getEvents()
+
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -115,7 +137,7 @@ export class ChildProcess extends ITC {
           let handled = false
 
           try {
-            handled = globalThis.platformatic.events.emit('close', signal)
+            handled = events.emit('close', signal)
           } catch (error) {
             this.#logger.error({ err: ensureLoggableError(error) }, 'Error while handling close event.')
             process.exitCode = 1
@@ -123,7 +145,7 @@ export class ChildProcess extends ITC {
 
           if (!handled) {
             this.#logger.warn(
-              `Please register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+              `Please register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
             )
 
             // No user event, just exit without errors
@@ -135,8 +157,8 @@ export class ChildProcess extends ITC {
           return handled
         },
         setClosing: () => {
-          globalThis.platformatic.closing = true
-          globalThis.platformatic.events.emit('closing')
+          updateGlobals({ closing: true })
+          events.emit('closing')
         }
       }
     })
@@ -152,14 +174,14 @@ export class ChildProcess extends ITC {
     if (!windowsNpmExecutables.includes(executable)) {
       this.#setupLogger()
 
-      if (globalThis.platformatic.exitOnUnhandledErrors) {
+      if (getExitOnUnhandledErrors({ throwOnMissing: false })) {
         this.#setupHandlers()
       }
 
       this.#setupServer()
       this.#setupInterceptors()
 
-      if (globalThis.platformatic.reuseTcpPorts) {
+      if (getReuseTcpPorts({ throwOnMissing: false })) {
         this.#setupTcpPortsHandling()
       }
     }
@@ -179,7 +201,7 @@ export class ChildProcess extends ITC {
   }
 
   registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+    updateGlobals(globals)
   }
 
   setOpenapiSchema (schema) {
@@ -267,7 +289,7 @@ export class ChildProcess extends ITC {
   }
 
   #setHttpCacheMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
+    const { client, registry } = getPrometheus()
 
     const cacheHitMetric = new client.Counter({
       name: 'http_cache_hit_count',
@@ -281,79 +303,76 @@ export class ChildProcess extends ITC {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => {
-      cacheHitMetric.inc()
-    }
-    globalThis.platformatic.onHttpCacheMiss = () => {
-      cacheMissMetric.inc()
-    }
-
     const httpStatsFreeMetric = new client.Gauge({
       name: 'http_client_stats_free',
       help: 'Number of free (idle) http clients (sockets)',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsFree = (url, val) => {
-      httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsConnectedMetric = new client.Gauge({
       name: 'http_client_stats_connected',
       help: 'Number of open socket connections',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsConnected = (url, val) => {
-      httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsPendingMetric = new client.Gauge({
       name: 'http_client_stats_pending',
       help: 'Number of pending requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsPending = (url, val) => {
-      httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsQueuedMetric = new client.Gauge({
       name: 'http_client_stats_queued',
       help: 'Number of queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsQueued = (url, val) => {
-      httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsRunningMetric = new client.Gauge({
       name: 'http_client_stats_running',
       help: 'Number of currently active requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsRunning = (url, val) => {
-      httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsSizeMetric = new client.Gauge({
       name: 'http_client_stats_size',
       help: 'Number of active, pending, or queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsSize = (url, val) => {
-      httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const activeResourcesEventLoopMetric = new client.Gauge({
       name: 'active_resources_event_loop',
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
+    updateGlobals({
+      onHttpCacheHit () {
+        cacheHitMetric.inc()
+      },
+      onHttpCacheMiss () {
+        cacheMissMetric.inc()
+      },
+      onHttpStatsFree (url, val) {
+        httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsConnected (url, val) {
+        httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsPending (url, val) {
+        httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsQueued (url, val) {
+        httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsRunning (url, val) {
+        httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsSize (url, val) {
+        httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onActiveResourcesEventLoop (val) {
+        activeResourcesEventLoopMetric.set(val)
+      }
+    })
   }
 
   async #getMetrics ({ format } = {}) {
@@ -381,7 +400,7 @@ export class ChildProcess extends ITC {
 
     // Start the REPL with the stream
     const replServer = repl.start({
-      prompt: `${globalThis.platformatic.applicationId}> `,
+      prompt: `${getApplicationId()}> `,
       input: replStream,
       output: replStream,
       terminal: false,
@@ -391,9 +410,16 @@ export class ChildProcess extends ITC {
     })
 
     // Expose useful context - note that in subprocess mode, app/capability may not be available
-    replServer.context.platformatic = globalThis.platformatic
-    replServer.context.config = globalThis.platformatic.config
-    replServer.context.logger = globalThis.platformatic.logger
+    replServer.context.platformatic = {
+      applicationId: getApplicationId(),
+      config: getConfig(),
+      events: getEvents(),
+      itc: getITC(),
+      logger: getLogger(),
+      workerId: getWorkerId()
+    }
+    replServer.context.config = getConfig()
+    replServer.context.logger = getLogger()
 
     replServer.on('exit', () => {
       this.notify('repl:exit', {})
@@ -454,7 +480,7 @@ export class ChildProcess extends ITC {
             try {
               const signals = queue.splice(0)
               this.notify('healthSignals', {
-                workerId: globalThis.platformatic.workerId,
+                workerId: getWorkerId(),
                 signals
               })
             } catch (err) {
@@ -469,7 +495,7 @@ export class ChildProcess extends ITC {
       return promise
     }
 
-    globalThis.platformatic.sendHealthSignal = sendHealthSignal
+    updateGlobals({ sendHealthSignal })
   }
 
   #setupLogger () {
@@ -477,11 +503,18 @@ export class ChildProcess extends ITC {
 
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseCapability.
-    const loggerOptions = globalThis.platformatic?.config?.logger ?? {}
+    let loggerOptions = {}
+    if (hasField('config')) {
+      const config = getConfig()
+      loggerOptions = config.logger ?? {}
+    }
+    const applicationId = getApplicationId()
+    const workerId = getWorkerId()
+
     const pinoOptions = {
       ...loggerOptions,
       level: loggerOptions.level ?? 'info',
-      name: globalThis.platformatic.applicationId
+      name: applicationId
     }
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
@@ -495,7 +528,7 @@ export class ChildProcess extends ITC {
         ...(pinoOptions.base ?? {}),
         pid: process.pid,
         hostname: hostname(),
-        worker: parseInt(globalThis.platformatic.workerId)
+        worker: parseInt(workerId)
       }
     } else if (loggerOptions.base === null) {
       pinoOptions.base = undefined
@@ -512,10 +545,10 @@ export class ChildProcess extends ITC {
           return
         }
 
-        let port = globalThis.platformatic.port
-        const host = globalThis.platformatic.host
-        const isEntrypoint = globalThis.platformatic.isEntrypoint
-        const additionalOptions = globalThis.platformatic.additionalServerOptions ?? {}
+        let port = getPort()
+        const host = getHost()
+        const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
+        const additionalOptions = getAdditionalServerOptions()
 
         if (typeof port !== 'number' && port !== false) {
           port = 0
@@ -524,7 +557,7 @@ export class ChildProcess extends ITC {
         // Check if we need to override the port only if a static port is being requested
         if (port !== false && port !== 0) {
           // The user application has requested a specific port, which is not the entrypoint one. Override it.
-          if (options.port !== port && isEntrypoint) {
+          if (options.port !== port && isEntrypointApplication) {
             options.port = port
           }
         }
@@ -534,7 +567,10 @@ export class ChildProcess extends ITC {
         }
 
         Object.assign(options, additionalOptions)
-        globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
+        const events = getEvents({ throwOnMissing: false })
+        if (events) {
+          events.emitAndNotify('serverOptions', options)
+        }
       },
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
@@ -560,8 +596,11 @@ export class ChildProcess extends ITC {
 
     tracingChannel('net.server.listen').subscribe(subscribers)
 
-    const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
-    if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
+    const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
+    const runtimeBasePath = getRuntimeBasePath({ throwOnMissing: false }) ?? ''
+    const wantsAbsoluteUrls = getWantsAbsoluteUrls({ throwOnMissing: false })
+
+    if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
   }
@@ -581,7 +620,10 @@ export class ChildProcess extends ITC {
   }
 
   #setupHandlers () {
-    const errorLabel = `worker ${globalThis.platformatic.workerId} of the application "${globalThis.platformatic.applicationId}"`
+    const workerId = getWorkerId()
+    const applicationId = getApplicationId()
+
+    const errorLabel = `worker ${workerId} of the application "${applicationId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
@@ -708,8 +750,8 @@ async function main () {
   // Enable compile cache early before loading user modules
   await setupCompileCache(data)
 
-  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, data)
-  globalThis.platformatic.events = new ForwardingEventEmitter()
+  const events = new ForwardingEventEmitter()
+  updateGlobals({ ...data, events })
 
   if (loader) {
     register(loader, { data })
@@ -730,9 +772,8 @@ async function main () {
   }
 
   const childProcess = new ChildProcess(executable)
-  globalThis[Symbol.for('plt.children.itc')] = childProcess
-  globalThis.platformatic.itc = childProcess
-  globalThis.platformatic.events.target = childProcess
+  updateGlobals({ itc: childProcess })
+  events.target = childProcess
 }
 
 await main()

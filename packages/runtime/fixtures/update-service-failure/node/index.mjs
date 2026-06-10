@@ -1,8 +1,9 @@
+import { getWorkerId } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
-  if (globalThis.platformatic.workerId > 1) {
-    throw new Error('CRASH starting worker ' + globalThis.platformatic.workerId)
+  if (getWorkerId() > 1) {
+    throw new Error('CRASH starting worker ' + getWorkerId())
   }
 
   const app = fastify()

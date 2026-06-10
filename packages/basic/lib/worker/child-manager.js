@@ -1,4 +1,5 @@
 import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { getLogger, updateGlobals } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
@@ -73,7 +74,7 @@ export class ChildManager extends ITC {
     this.#context = context
     this.#scripts = scripts
     this.#originalNodeOptions = process.env.NODE_OPTIONS
-    this.#logger = globalThis.platformatic.logger
+    this.#logger = getLogger()
     this.#server = createServer(this.#childProcessFetchHandler.bind(this))
     this.#socketPath ??= getSocketPath(this.#id)
     this.#clients = new Set()
@@ -208,7 +209,7 @@ export class ChildManager extends ITC {
   }
 
   async register () {
-    Object.assign(globalThis.platformatic, this.#context)
+    updateGlobals(this.#context)
     register(this.#loader, { data: this.#context })
 
     for (const script of this.#scripts) {

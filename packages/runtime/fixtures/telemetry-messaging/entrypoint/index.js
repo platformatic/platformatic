@@ -1,5 +1,3 @@
-'use strict'
-
 const { context, trace } = require('@opentelemetry/api')
 const { createServer } = require('node:http')
 
@@ -20,13 +18,15 @@ function getPathValue (pathname, prefix) {
 
 module.exports.create = function create () {
   return createServer(async (req, res) => {
+    const { getMessaging } = require('@platformatic/globals')
     const url = new URL(req.url, 'http://127.0.0.1')
 
     try {
       if (req.method === 'GET') {
         const sendValue = getPathValue(url.pathname, '/send/')
         if (sendValue !== null && sendValue !== '') {
-          const response = await globalThis.platformatic.messaging.send('ipc', 'reverse', sendValue)
+          const messaging = getMessaging()
+          const response = await messaging.send('ipc', 'reverse', sendValue)
           return writeJson(res, 200, response)
         }
 
@@ -44,7 +44,8 @@ module.exports.create = function create () {
             telemetryMetadata.tracestate = tracestate
           }
 
-          const response = await globalThis.platformatic.messaging.send('ipc', 'reverse', sendManualValue, {
+          const messaging = getMessaging()
+          const response = await messaging.send('ipc', 'reverse', sendManualValue, {
             telemetryMetadata
           })
 
@@ -53,7 +54,8 @@ module.exports.create = function create () {
 
         if (url.pathname === '/fail') {
           try {
-            await globalThis.platformatic.messaging.send('ipc', 'fail')
+            const messaging = getMessaging()
+            await messaging.send('ipc', 'fail')
             return writeJson(res, 200, { ok: true })
           } catch (error) {
             return writeJson(res, 500, { message: error.message })

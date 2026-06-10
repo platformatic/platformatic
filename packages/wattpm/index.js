@@ -1,4 +1,5 @@
 import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
@@ -20,7 +21,7 @@ import { version } from './lib/schema.js'
 export * from './lib/schema.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: this.executableId }
+  updateGlobals({ executable: this.executableId })
 
   const options = {
     'no-pretty': {

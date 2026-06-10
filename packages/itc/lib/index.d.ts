@@ -32,6 +32,7 @@ export class ITC extends EventEmitter {
 
   send (name: string, message: any, options?: Record<string, any>): Promise<any>
   notify (name: string, message: any, options?: Record<string, any>): void
+  process (name: string, message: any, context?: Record<string, any>): Promise<any>
   handle (message: string, handler: Handler): void
   getHandler (message: string): Handler | undefined
   listen (): void

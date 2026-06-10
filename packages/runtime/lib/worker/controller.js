@@ -8,6 +8,16 @@ import {
   loadConfigurationModule,
   mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
+import {
+  getLogger,
+  getOnActiveResourcesEventLoop,
+  getOnHttpStatsConnected,
+  getOnHttpStatsFree,
+  getOnHttpStatsPending,
+  getOnHttpStatsQueued,
+  getOnHttpStatsRunning,
+  getOnHttpStatsSize
+} from '@platformatic/globals'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -30,7 +40,8 @@ function fetchApplicationUrl (application, key) {
 function handleUnhandled (app, type, err) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
 
-  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
+  const logger = getLogger()
+  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
 
   executeWithTimeout(app?.stop(), 1000)
     .catch()
@@ -143,7 +154,8 @@ export class Controller extends EventEmitter {
       }
     } catch (err) {
       if (err.validationErrors) {
-        globalThis.platformatic.logger.error(
+        const logger = getLogger()
+        logger.error(
           { err: ensureLoggableError(err) },
           'The application threw a validation error.'
         )
@@ -248,18 +260,29 @@ export class Controller extends EventEmitter {
 
   async getMetrics ({ format }) {
     const dispatcher = getGlobalDispatcher()
-    if (globalThis.platformatic?.onHttpStatsFree && dispatcher?.stats) {
+    const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
+
+    if (onHttpStatsFree && dispatcher?.stats) {
+      const onHttpStatsConnected = getOnHttpStatsConnected()
+      const onHttpStatsPending = getOnHttpStatsPending()
+      const onHttpStatsQueued = getOnHttpStatsQueued()
+      const onHttpStatsRunning = getOnHttpStatsRunning()
+      const onHttpStatsSize = getOnHttpStatsSize()
+
       for (const url in dispatcher.stats) {
         const { free, connected, pending, queued, running, size } = dispatcher.stats[url]
-        globalThis.platformatic.onHttpStatsFree(url, free || 0)
-        globalThis.platformatic.onHttpStatsConnected(url, connected || 0)
-        globalThis.platformatic.onHttpStatsPending(url, pending || 0)
-        globalThis.platformatic.onHttpStatsQueued(url, queued || 0)
-        globalThis.platformatic.onHttpStatsRunning(url, running || 0)
-        globalThis.platformatic.onHttpStatsSize(url, size || 0)
+        onHttpStatsFree(url, free || 0)
+        onHttpStatsConnected(url, connected || 0)
+        onHttpStatsPending(url, pending || 0)
+        onHttpStatsQueued(url, queued || 0)
+        onHttpStatsRunning(url, running || 0)
+        onHttpStatsSize(url, size || 0)
       }
     }
-    globalThis.platformatic.onActiveResourcesEventLoop(getActiveResourcesInfo().length)
+    const onActiveResourcesEventLoop = getOnActiveResourcesEventLoop({ throwOnMissing: false })
+    if (onActiveResourcesEventLoop) {
+      onActiveResourcesEventLoop(getActiveResourcesInfo().length)
+    }
     return this.capability.getMetrics({ format })
   }
 
@@ -304,7 +327,8 @@ export class Controller extends EventEmitter {
   }
 
   #logAndThrow (err) {
-    globalThis.platformatic.logger.error(
+    const logger = getLogger()
+    logger.error(
       { err: ensureLoggableError(err) },
       err[kHandledError] ? err.message : 'The application threw an error.'
     )
@@ -341,7 +365,8 @@ export class Controller extends EventEmitter {
 
     process.on('newListener', event => {
       if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        globalThis.platformatic.logger.warn(
+        const logger = getLogger()
+        logger.warn(
           `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
         )
       }

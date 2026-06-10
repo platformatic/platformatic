@@ -9,7 +9,7 @@
     "borp": "^0.21.0"
   },
   "dependencies": {
-    "@platformatic/service": "^2.70.0"
+    "@platformatic/service": ">=3.0.0"
   },
   "engines": {
     "node": "^18.8.0 || >=20.6.0"

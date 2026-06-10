@@ -1,3 +1,4 @@
+import { getITC, updateGlobals } from '@platformatic/globals'
 import {
   HealthSignalMustBeObjectError,
   HealthSignalTypeMustBeStringError
@@ -60,7 +61,8 @@ export function initHealthSignalsApi (options = {}) {
           isSending = false
           try {
             const signals = queue.getAll()
-            await globalThis.platformatic.itc.send('sendHealthSignals', {
+            const itc = getITC()
+            await itc.send('sendHealthSignals', {
               workerId,
               signals
             })
@@ -76,5 +78,5 @@ export function initHealthSignalsApi (options = {}) {
     return promise
   }
 
-  globalThis.platformatic.sendHealthSignal = sendHealthSignal
+  updateGlobals({ sendHealthSignal })
 }

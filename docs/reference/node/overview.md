@@ -44,13 +44,14 @@ It's possible for the node applications to expose the OpenAPI or GraphQL schemas
 This can be done adding few lines of code, e.g. for fastify:
 
 ```javascript
+import { getLogger, setOpenapiSchema } from '@platformatic/globals'
 import fastify from 'fastify'
 import fastifySwagger from '@fastify/swagger'
 
 export async function build () {
 
   const server = fastify({
-    loggerInstance: globalThis.platformatic?.logger
+    loggerInstance: getLogger()
   })
 
   await server.register(fastifySwagger, {
@@ -66,7 +67,7 @@ export async function build () {
 
   server.addHook('onReady', async () => {
     const schema = server.swagger()
-    globalThis.platformatic.setOpenapiSchema(schema)
+    setOpenapiSchema(schema)
   })
 ```
 
@@ -76,9 +77,10 @@ It's possible to specify if a node application uses a connection string (and whi
 This is useful to map which application uses which database and to potentialy track database changes.
 
 ```javascript
+import { setConnectionString } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
-globalThis.platformatic.setConnectionString('postgres://dbuser:dbpass@mydbhost/apidb')
+setConnectionString('postgres://dbuser:dbpass@mydbhost/apidb')
 
 const server = createServer((_req, res) => {
   res.end(JSON.stringify({ ok: true }))
@@ -107,14 +109,15 @@ To gracefully shut down an application with `hasServer=false`, you may export a 
 ### Fastify with build function
 
 ```js
+import { getBasePath, getLogLevel } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify({
-    logger: { level: globalThis.platformatic?.logLevel ?? 'info' }
+    logger: { level: getLogLevel({ throwOnMissing: false }) ?? 'info' }
   })
 
-  const prefix = globalThis.platformatic?.basePath ?? ''
+  const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
   app.get(`${prefix}/env`, async () => {
     return { production: process.env.NODE_ENV === 'production' }
@@ -127,11 +130,12 @@ export function create () {
 ### Express with no build function
 
 ```js
+import { getBasePath } from '@platformatic/globals'
 import express from 'express'
 
 const app = express()
 
-const prefix = globalThis.platformatic?.basePath ?? ''
+const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
 app.get(`${prefix}/env`, (req, res) => {
   res.send({ production: process.env.NODE_ENV === 'production' })
@@ -143,9 +147,12 @@ app.listen(3000)
 ### Background only application
 
 ```js
+import { getMessaging } from '@platformatic/globals'
+
 export const hasServer = false
 
-globalThis.platformatic.messaging.handle('ping', () => 'pong')
+const messaging = getMessaging()
+messaging.handle('ping', () => 'pong')
 
 const timeoutId = setTimeout(() => console.log('done'), 10_000)
 
@@ -185,10 +192,13 @@ export async function close () {
 
 ### `close` Event Handler
 
-Alternatively, you can register a close event handler using the global Platformatic events:
+Alternatively, you can register a close event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime.
 
 ```js
-globalThis.platformatic.events.on('close', () => {
+import { getEvents } from '@platformatic/globals'
+
+const events = getEvents()
+events.on('close', () => {
   console.log('Received close event, cleaning up...')
 
   // Perform your cleanup operations

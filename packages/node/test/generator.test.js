@@ -26,11 +26,14 @@ test('should generate proper index.js file (Javascript)', async () => {
   const file = generator.getFileObject('index.js')
 
   deepStrictEqual(file.contents.split(/\r?\n/), [
+    "import { getLogger } from '@platformatic/globals'",
     "import { createServer } from 'node:http'",
     '',
     'export function create() {',
+    '  const logger = getLogger()',
+    '  ',
     '  return createServer((_, res) => {',
-    "    globalThis.platformatic.logger.debug('Serving request.')",
+    "    logger.debug('Serving request.')",
     "    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })",
     "    res.end(JSON.stringify({ hello: 'world' }))",
     '  })',
@@ -45,6 +48,7 @@ test('should prepare a valid package.json file (Javascript)', async () => {
   const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
 
   deepStrictEqual(packageJson.main, 'index.js')
+  deepStrictEqual(packageJson.dependencies['@platformatic/globals'], `^${version}`)
   deepStrictEqual(packageJson.dependencies['@platformatic/node'], `^${version}`)
   deepStrictEqual(packageJson.devDependencies, {})
 })
@@ -56,14 +60,14 @@ test('should generate proper index.js file (Typescript)', async () => {
   const file = generator.getFileObject('index.ts')
 
   deepStrictEqual(file.contents.split(/\r?\n/), [
-    "import { getGlobal } from '@platformatic/globals'",
+    "import { getLogger } from '@platformatic/globals'",
     "import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'",
     '',
     'export function create() {',
-    '  const platformatic = getGlobal()',
-    '',
+    '  const logger = getLogger()',
+    '  ',
     '  return createServer((_: IncomingMessage, res: ServerResponse) => {',
-    "    platformatic?.logger.debug('Serving request.')",
+    "    logger.debug('Serving request.')",
     "    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })",
     "    res.end(JSON.stringify({ hello: 'world' }))",
     '  })',

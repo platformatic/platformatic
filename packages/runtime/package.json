@@ -68,6 +68,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/generators": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/prom-client": "^1.0.0",

@@ -1,9 +1,10 @@
+import { getLogger } from '@platformatic/globals'
 import { notFound } from 'next/navigation'
 
 export const revalidate = 120
 
 export default async function Home() {
-  globalThis.platformatic.logger?.info({ secret: '1234567890' }, 'Home page called')
+  getLogger().info({ secret: '1234567890' }, 'Home page called')
 
   const version = Date.now()
   let time

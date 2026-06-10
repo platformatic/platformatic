@@ -108,9 +108,9 @@ For detailed technical documentation about the mesh network implementation, thre
 By default, each application is executed in a separate and dedicated [Node.js Worker Thread](https://nodejs.org/dist/latest/docs/api/worker_threads.html) within the same process.
 This means that `worker.isMainThread` will return `false` and there are some limitations like the inability to use `process.chdir`.
 
-The application application runtime configuration is accessible via the `workerData` and `globalThis.platformatic` objects, which allows to bypass such limitations.
+The application runtime configuration is accessible via `workerData` and the typed getters from `@platformatic/globals`, which allows to bypass such limitations.
 
-If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting `globalThis.platformatic` and the interapplication communication automatically.
+If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting the runtime APIs and the interapplication communication automatically.
 
 # TrustProxy
 

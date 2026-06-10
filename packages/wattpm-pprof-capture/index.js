@@ -1,10 +1,9 @@
-import { time, heap, SourceMapper } from '@datadog/pprof'
+import { heap, SourceMapper, time } from '@datadog/pprof'
+import { getITC, getLogger } from '@platformatic/globals'
 import { performance } from 'node:perf_hooks'
 import { workerData } from 'node:worker_threads'
 import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 import { SourceMapperWrapper } from './lib/source-mapper-wrapper.js'
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 // @datadog/pprof >= 5.14.2 introduced a regression in the legacy time profiler
 // `stop()`: it now clears the internal source mapper (via handleStopNoRestart)
@@ -70,14 +69,15 @@ const profilingState = {
 }
 
 // Keep trying until ITC is available. This is needed because preloads run
-// before the app thread initialization, so globalThis.platformatic.messaging
-// and ITC don't exist yet.
+// before the app thread initialization, so messaging and ITC don't exist yet.
 const registerInterval = setInterval(() => {
-  if (globalThis[kITC]) {
-    globalThis[kITC].handle('getLastProfile', getLastProfile)
-    globalThis[kITC].handle('startProfiling', startProfiling)
-    globalThis[kITC].handle('stopProfiling', stopProfiling)
-    globalThis[kITC].handle('getProfilingState', getProfilingState)
+  const itc = getITC({ throwOnMissing: false })
+
+  if (itc) {
+    itc.handle('getLastProfile', getLastProfile)
+    itc.handle('startProfiling', startProfiling)
+    itc.handle('stopProfiling', stopProfiling)
+    itc.handle('getProfilingState', getProfilingState)
     clearInterval(registerInterval)
   }
 }, 10)
@@ -228,18 +228,19 @@ function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) 
     // Was not running: only start if ELU rises above start threshold
     : isAboveThreshold(state)
 
+  const logger = getLogger({ throwOnMissing: false })
   if (shouldRun) {
     // ELU is high enough, start/restart profiling
-    if (!wasRunning && !state.profilerStarted && globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.debug(
+    if (!wasRunning && !state.profilerStarted && logger) {
+      logger.debug(
         { type, eluThreshold: state.eluThreshold, currentELU },
         'Starting profiler due to ELU threshold exceeded'
       )
     }
     startProfiler(type, state, state.options)
-  } else if (!shouldRun && wasRunning && globalThis.platformatic?.logger && state.eluThreshold != null) {
+  } else if (!shouldRun && wasRunning && state.eluThreshold != null && logger) {
     // Log when deciding not to restart after stopping (only in rotation context)
-    globalThis.platformatic.logger.debug(
+    logger.debug(
       { type, eluThreshold: state.eluThreshold, currentELU },
       'Pausing profiler due to ELU below threshold'
     )
@@ -257,8 +258,9 @@ async function initializeSourceMapper (options = {}) {
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
     if (!appPath) {
-      if (globalThis.platformatic?.logger) {
-        globalThis.platformatic.logger.debug('No application path available for sourcemap resolution')
+      const logger = getLogger({ throwOnMissing: false })
+      if (logger) {
+        logger.debug('No application path available for sourcemap resolution')
       }
       return
     }
@@ -284,16 +286,18 @@ async function initializeSourceMapper (options = {}) {
     // Wrap the SourceMapper to fix Windows path normalization
     sourceMapper = new SourceMapperWrapper(innerMapper)
 
-    if (globalThis.platformatic?.logger) {
+    const logger = getLogger({ throwOnMissing: false })
+    if (logger) {
       const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
-      globalThis.platformatic.logger.info(
+      logger.info(
         { appPath, hasSourceMapper: !!sourceMapper, hasMappingInfo: hasMappings },
         'SourceMapper initialized for profiling'
       )
     }
   } catch (err) {
-    if (globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.warn(
+    const logger = getLogger({ throwOnMissing: false })
+    if (logger) {
+      logger.warn(
         { err: err.message, stack: err.stack },
         'Failed to initialize SourceMapper'
       )

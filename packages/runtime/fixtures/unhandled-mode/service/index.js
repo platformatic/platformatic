@@ -1,5 +1,7 @@
+import { getEvents } from '@platformatic/globals'
 process.on('uncaughtException', () => {
-  globalThis.platformatic.events.emitAndNotify('uncaughtException')
+  const events = getEvents()
+  events.emitAndNotify('uncaughtException')
 })
 
 export default async function (fastify) {

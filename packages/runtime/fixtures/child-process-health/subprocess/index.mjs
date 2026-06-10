@@ -1,3 +1,4 @@
+import { getApplicationId, getLogLevel, getWorkerId } from '@platformatic/globals'
 import fastify from 'fastify'
 import v8 from 'node:v8'
 
@@ -11,10 +12,10 @@ globalThis.__keepAlive = data
 
 const app = fastify({
   logger: {
-    name: [globalThis.platformatic.applicationId, globalThis.platformatic.workerId]
+    name: [getApplicationId(), getWorkerId()]
       .filter(f => typeof f !== 'undefined')
       .join(':'),
-    level: globalThis.platformatic?.logLevel ?? 'info'
+    level: getLogLevel(false) ?? 'info'
   }
 })
 

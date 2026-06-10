@@ -39,6 +39,7 @@
     "@opentelemetry/sdk-trace-base": "2.7.1",
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "fast-uri": "^3.0.6",
     "fastify-plugin": "^5.0.1"
   },

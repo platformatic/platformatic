@@ -2,7 +2,7 @@
   "_id": "@platformatic/runtime",
   "_rev": "269-53ab968064bb35e55fac6023efe65720",
   "name": "@platformatic/runtime",
-  "dist-tags": { "next": "2.30.1-alpha.1", "latest": "2.41.0" },
+  "dist-tags": { "next": "2.30.1-alpha.1", "latest": "3.55.0" },
   "versions": {
     "0.26.0": {
       "name": "@platformatic/runtime",
@@ -28463,12 +28463,12 @@
         "host": "s3://npm-registry-packages-npm-production"
       }
     },
-    "2.41.0": {
+    "3.55.0": {
       "name": "@platformatic/runtime",
-      "version": "2.41.0",
+      "version": "3.55.0",
       "author": { "url": "https://platformatic.dev", "name": "Platformatic Inc.", "email": "oss@platformatic.dev" },
       "license": "Apache-2.0",
-      "_id": "@platformatic/runtime@2.41.0",
+      "_id": "@platformatic/runtime@3.55.0",
       "maintainers": [
         { "name": "mzugm", "email": "mzugm@1368435.ca" },
         { "name": "ivan-tymoshenko", "email": "ivan@tymoshenko.me" },
@@ -28483,7 +28483,7 @@
       "bin": { "plt-runtime": "runtime.mjs" },
       "dist": {
         "shasum": "0760ba605e333fbd860fea7101c83b280c944961",
-        "tarball": "https://registry.npmjs.org/@platformatic/runtime/-/runtime-2.41.0.tgz",
+        "tarball": "https://registry.npmjs.org/@platformatic/runtime/-/runtime-3.55.0.tgz",
         "fileCount": 43,
         "integrity": "sha512-XJ12ujHMiHzCL4KTrJwWTZX3hGTOi3VvQ6Nk/4Ze4/VOnAS6vD5KgNzfwATsAa4v7j4pvmUmOd75lxXE/Ps1uQ==",
         "signatures": [
@@ -28495,7 +28495,7 @@
         "unpackedSize": 206495
       },
       "main": "index.js",
-      "_from": "file:platformatic-runtime-2.41.0.tgz",
+      "_from": "file:platformatic-runtime-3.55.0.tgz",
       "types": "./index.d.ts",
       "scripts": {
         "lint": "eslint",
@@ -28512,7 +28512,7 @@
         "test:multiple-workers": "borp  test/multiple-workers/*.test.js test/multiple-workers/*.test.mjs"
       },
       "_npmUser": { "name": "matteo.collina", "email": "hello@matteocollina.com" },
-      "_resolved": "/tmp/ae9335f4d120bc1d3bd784babf33ae0f/platformatic-runtime-2.41.0.tgz",
+      "_resolved": "/tmp/ae9335f4d120bc1d3bd784babf33ae0f/platformatic-runtime-3.55.0.tgz",
       "_integrity": "sha512-XJ12ujHMiHzCL4KTrJwWTZX3hGTOi3VvQ6Nk/4Ze4/VOnAS6vD5KgNzfwATsAa4v7j4pvmUmOd75lxXE/Ps1uQ==",
       "repository": { "url": "git+https://github.com/platformatic/platformatic.git", "type": "git" },
       "_npmVersion": "11.0.0",
@@ -28544,17 +28544,17 @@
         "close-with-grace": "^2.0.0",
         "tail-file-stream": "^0.2.0",
         "thread-cpu-usage": "^0.2.0",
-        "@platformatic/itc": "2.41.0",
+        "@platformatic/itc": "3.55.0",
         "@fastify/websocket": "^11.0.0",
         "@opentelemetry/api": "^1.8.0",
-        "@platformatic/basic": "2.41.0",
-        "@platformatic/foundation": "2.41.0",
+        "@platformatic/basic": "3.55.0",
+        "@platformatic/foundation": "3.55.0",
         "fastest-levenshtein": "^1.0.16",
-        "@platformatic/config": "2.41.0",
+        "@platformatic/config": "3.55.0",
         "@watchable/unpromise": "^1.0.2",
-        "@platformatic/telemetry": "2.41.0",
-        "@platformatic/generators": "2.41.0",
-        "@platformatic/ts-compiler": "2.41.0",
+        "@platformatic/telemetry": "3.55.0",
+        "@platformatic/generators": "3.55.0",
+        "@platformatic/ts-compiler": "3.55.0",
         "undici-thread-interceptor": "^0.11.0",
         "@platformatic/http-metrics": "^0.2.1",
         "@platformatic/undici-cache-memory": "^0.8.1"
@@ -28573,22 +28573,22 @@
         "typescript": "^5.5.4",
         "neostandard": "^0.12.0",
         "@fastify/express": "^4.0.0",
-        "@platformatic/db": "2.41.0",
+        "@platformatic/db": "3.55.0",
         "inspector-client": "^0.2.0",
         "@fastify/compress": "^8.0.0",
         "@fastify/formbody": "^8.0.0",
-        "@platformatic/node": "2.41.0",
+        "@platformatic/node": "3.55.0",
         "why-is-node-running": "^2.2.2",
-        "@platformatic/service": "2.41.0",
-        "@platformatic/gateway": "2.41.0",
+        "@platformatic/service": "3.55.0",
+        "@platformatic/gateway": "3.55.0",
         "pino-abstract-transport": "^2.0.0",
         "undici-oidc-interceptor": "^0.5.0",
-        "@platformatic/sql-mapper": "2.41.0",
-        "@platformatic/sql-graphql": "2.41.0",
+        "@platformatic/sql-mapper": "3.55.0",
+        "@platformatic/sql-graphql": "3.55.0",
         "json-schema-to-typescript": "^15.0.0"
       },
       "_npmOperationalInternal": {
-        "tmp": "tmp/runtime_2.41.0_1738060928244_0.13765395703776284",
+        "tmp": "tmp/runtime_3.55.0_1738060928244_0.13765395703776284",
         "host": "s3://npm-registry-packages-npm-production"
       }
     }
@@ -28861,7 +28861,7 @@
     "2.39.0": "2025-01-23T08:25:20.033Z",
     "2.39.1": "2025-01-23T18:46:26.180Z",
     "2.40.0": "2025-01-24T09:32:02.114Z",
-    "2.41.0": "2025-01-28T10:42:08.459Z"
+    "3.55.0": "2025-01-28T10:42:08.459Z"
   },
   "bugs": { "url": "https://github.com/platformatic/platformatic/issues" },
   "author": { "url": "https://platformatic.dev", "name": "Platformatic Inc.", "email": "oss@platformatic.dev" },

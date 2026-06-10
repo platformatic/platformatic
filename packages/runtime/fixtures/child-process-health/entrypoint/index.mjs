@@ -1,10 +1,11 @@
+import { getApplicationId, getLogLevel } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify({
     logger: {
-      name: globalThis.platformatic.applicationId,
-      level: globalThis.platformatic?.logLevel ?? 'info'
+      name: getApplicationId(),
+      level: getLogLevel(false) ?? 'info'
     }
   })
 

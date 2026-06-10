@@ -9,6 +9,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { getEvents, updateGlobals } from '@platformatic/globals'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -115,7 +116,8 @@ export class NextCapability extends BaseCapability {
       return this.stopCommand()
     }
 
-    globalThis.platformatic.events.emit('plt:next:close')
+    const events = getEvents()
+    events.emit('plt:next:close')
 
     if (this.isProduction && this.#server) {
       await this._closeServer(this.#server)
@@ -339,7 +341,7 @@ export class NextCapability extends BaseCapability {
 
   async #startProductionNext () {
     try {
-      globalThis.platformatic.config = this.config
+      updateGlobals({ config: this.config })
       await this.childManager.inject()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 

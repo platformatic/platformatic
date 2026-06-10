@@ -58,8 +58,8 @@ class MockedWritable extends Writable {
   }
 }
 
-// These come from @platformatic/service, where they are not listed explicitly inside applications
-export const defaultDependencies = ['fastify', 'typescript']
+// These come from @platformatic/service and shared fixtures, where they are not listed explicitly inside applications
+export const defaultDependencies = ['@platformatic/globals', 'fastify', 'typescript']
 
 export const internalApplicationsFiles = [
   'services/composer/plugins/example.ts',
@@ -82,7 +82,7 @@ export async function create (t, context = {}, config = {}, name = 'base', versi
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseCapability(name, version, base, config, context, {
+  return new BaseCapability(name, version, base, config, { applicationId: 'test', ...context }, {
     stdout: new MockedWritable(),
     stderr: new MockedWritable()
   })

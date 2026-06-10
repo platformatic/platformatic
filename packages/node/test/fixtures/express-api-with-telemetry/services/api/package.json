@@ -2,7 +2,7 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
-    "@platformatic/node": "^2.3.1",
+    "@platformatic/node": ">=3.0.0",
     "express": "^4.19.2"
   }
 }

@@ -1,8 +1,10 @@
+import { getEvents } from '@platformatic/globals'
 import fastify from 'fastify'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 process.on('unhandledRejection', () => {
-  globalThis.platformatic.events.emitAndNotify('unhandledRejection')
+  const events = getEvents()
+  events.emitAndNotify('unhandledRejection')
 })
 
 async function trigger () {

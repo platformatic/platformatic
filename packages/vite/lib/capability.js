@@ -11,6 +11,7 @@ import {
   resolvePackageViaCJS
 } from '@platformatic/basic'
 import { ensureLoggableError } from '@platformatic/foundation'
+import { getLogger, updateGlobals } from '@platformatic/globals'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
@@ -114,7 +115,7 @@ export class ViteCapability extends BaseCapability {
     const { build, createBuilder } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       const buildOptions = {
         root: this.root,
@@ -144,7 +145,7 @@ export class ViteCapability extends BaseCapability {
         await build(buildOptions)
       }
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
 
     await writeFile(resolve(outDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')
@@ -319,7 +320,8 @@ export class ViteCapability extends BaseCapability {
         const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
         this.#basePath = buildInfo.basePath
       } catch (e) {
-        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
+        const logger = getLogger()
+        logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
       }
     }
 
@@ -379,7 +381,8 @@ export class ViteSSRCapability extends NodeCapability {
           const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
           this.#basePath = buildInfo.basePath
         } catch (e) {
-          globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
+          const logger = getLogger()
+          logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
         }
       }
     }
@@ -416,7 +419,7 @@ export class ViteSSRCapability extends NodeCapability {
 
     // Build the client
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       const buildOptions = {
         root: resolve(this.root, clientDirectory),
@@ -447,7 +450,7 @@ export class ViteSSRCapability extends NodeCapability {
         await build(buildOptions)
       }
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
 
     await writeFile(resolve(clientOutDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')

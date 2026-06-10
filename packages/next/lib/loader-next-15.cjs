@@ -15,10 +15,11 @@ const {
   variableDeclarator
 } = require('@babel/types')
 const { transformSync } = require('amaro')
+const { getConfig, getRoot } = require('@platformatic/globals')
 
 const originalReadFile = fsPromises.readFile
 const originalReadFileSync = fs.readFileSync
-const targetFile = resolve(fileURLToPath(globalThis.platformatic.root), 'next.config.ts')
+const targetFile = resolve(fileURLToPath(getRoot()), 'next.config.ts')
 
 const originalId = '__pltEnhanceNextConfig'
 
@@ -122,8 +123,9 @@ function restoreReadMethods () {
 
 async function patchNextConfigTS (contents) {
   let transformed = contents
+  const config = getConfig()
 
-  if (!globalThis.platformatic.config.next?.useExperimentalAdapter) {
+  if (!config.next?.useExperimentalAdapter) {
     const { code } = transformSync(contents.toString('utf-8'), { mode: 'strip-only' })
     const transformer = detectFormat(code) === 'esm' ? transformESM : transformCJS
     transformed = transformer(code)
@@ -157,7 +159,9 @@ fs.readFileSync = function readAndPatchNextConfigTSSync (url, options) {
     return contents
   }
 
-  if (globalThis.platformatic.config.next?.useExperimentalAdapter) {
+  const config = getConfig()
+
+  if (config.next?.useExperimentalAdapter) {
     return contents
   }
 

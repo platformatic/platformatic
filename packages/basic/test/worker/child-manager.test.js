@@ -1,4 +1,5 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { updateGlobals } from '@platformatic/globals'
 import { platform } from 'node:os'
 import { test } from 'node:test'
 import { WebSocket } from 'ws'
@@ -33,8 +34,7 @@ function createLogger () {
     }
   }
 
-  globalThis.platformatic ??= {}
-  globalThis.platformatic.logger = logger
+  updateGlobals({ logger })
 
   return messages
 }

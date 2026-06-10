@@ -1,4 +1,11 @@
 import { getGlobalDispatcherFromKnownUndiciSymbols, mirrorGlobalDispatcherForBuiltinFetch } from '@platformatic/foundation'
+import {
+  getInterceptors,
+  getLogger,
+  getOnHttpCacheHit,
+  getOnHttpCacheMiss,
+  getOnHttpCacheRequest
+} from '@platformatic/globals'
 import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -8,7 +15,6 @@ import { Agent, Client, Pool } from 'undici'
 import { wire } from 'undici-thread-interceptor'
 import { createChannelCreationHook } from '../policies.js'
 import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
-import { kInterceptors } from './symbols.js'
 
 const kPlatformaticGlobalDispatcher = Symbol.for('platformatic.undici.globalDispatcher')
 
@@ -86,7 +92,7 @@ function createLegacyDispatcher (dispatcher) {
 }
 
 export async function updateUndiciInterceptors (undiciConfig) {
-  const updatableInterceptors = globalThis[kInterceptors]
+  const updatableInterceptors = getInterceptors()
   if (!updatableInterceptors) return
 
   if (Array.isArray(undiciConfig?.interceptors)) {
@@ -146,11 +152,7 @@ async function loadInterceptors (_require, interceptorsConfigs, key) {
 }
 
 async function loadInterceptor (_require, interceptorConfig, key) {
-  let updatableInterceptors = globalThis[kInterceptors]
-  if (!updatableInterceptors) {
-    updatableInterceptors = {}
-    globalThis[kInterceptors] = updatableInterceptors
-  }
+  const updatableInterceptors = getInterceptors()
 
   const { module, options } = interceptorConfig
 
@@ -247,24 +249,34 @@ function parseOrigins (origins) {
 
 function createHttpCacheInterceptor (runtimeConfig) {
   const httpCache = runtimeConfig.httpCache
+
   const cacheInterceptor = httpCacheInterceptor({
     store: new RemoteCacheStore({
       onRequest: opts => {
-        globalThis.platformatic?.onHttpCacheRequest?.(opts)
+        const onHttpCacheRequest = getOnHttpCacheRequest({ throwOnMissing: false })
+        if (onHttpCacheRequest) {
+          onHttpCacheRequest(opts)
+        }
       },
       onCacheHit: opts => {
-        globalThis.platformatic?.onHttpCacheHit?.(opts)
+        const onHttpCacheHit = getOnHttpCacheHit({ throwOnMissing: false })
+        if (onHttpCacheHit) {
+          onHttpCacheHit(opts)
+        }
       },
       onCacheMiss: opts => {
-        globalThis.platformatic?.onHttpCacheMiss?.(opts)
+        const onHttpCacheMiss = getOnHttpCacheMiss({ throwOnMissing: false })
+        if (onHttpCacheMiss) {
+          onHttpCacheMiss(opts)
+        }
       },
-      logger: globalThis.platformatic.logger
+      logger: getLogger()
     }),
     methods: httpCache.methods ?? ['GET', 'HEAD'],
     origins: parseOrigins(httpCache.origins),
     cacheByDefault: httpCache.cacheByDefault,
     type: httpCache.type,
-    logger: globalThis.platformatic.logger
+    logger: getLogger()
   })
   return cacheInterceptor
 }

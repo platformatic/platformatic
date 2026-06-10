@@ -27,8 +27,8 @@ function collectEvents (runtime, endEvent = 'closed') {
 
 async function checkWarningEmitted (root, expected, custom = false) {
   const message = custom
-    ? 'Please register a "close" event handler in globalThis.platformatic.events for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
-    : 'Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
+    ? 'Please register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
+    : 'Please export a "close" function or register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
 
   const logs = await getLogsFromFile(root)
   deepStrictEqual(

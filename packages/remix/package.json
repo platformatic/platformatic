@@ -27,6 +27,7 @@
     "@fastify/static": "^9.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "fastify": "^5.7.0",
     "semver": "^7.6.3"

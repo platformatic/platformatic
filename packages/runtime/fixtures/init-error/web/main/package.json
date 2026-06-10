@@ -3,6 +3,7 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
+    "@platformatic/globals": "^3.37.0",
     "@platformatic/node": "^3.37.0"
   },
   "devDependencies": {}

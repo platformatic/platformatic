@@ -2,7 +2,8 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
-    "@platformatic/basic": "^2.70.0",
-    "@platformatic/node": "^2.70.0"
+    "@platformatic/basic": ">=3.0.0",
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0"
   }
 }

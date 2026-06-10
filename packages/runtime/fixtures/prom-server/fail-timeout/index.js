@@ -1,9 +1,10 @@
+import { getLogger, setCustomHealthCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
-  const app = fastify({ loggerInstance: globalThis.platformatic.logger })
+  const app = fastify({ loggerInstance: getLogger() })
 
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     return true
   })
 
@@ -12,7 +13,7 @@ export function create () {
   })
 
   app.post('/fail', (req, res) => {
-    globalThis.platformatic.setCustomHealthCheck(() => {
+    setCustomHealthCheck(() => {
       return new Promise(resolve => {
         const t = setTimeout(() => {
           resolve(false)

@@ -26,6 +26,7 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "semver": "^7.6.3"
   },

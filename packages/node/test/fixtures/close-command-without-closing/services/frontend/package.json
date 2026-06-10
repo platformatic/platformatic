@@ -3,6 +3,6 @@
   "type": "module",
   "scripts": {},
   "dependencies": {
-    "@platformatic/node": "^2.56.0"
+    "@platformatic/node": ">=3.0.0"
   }
 }

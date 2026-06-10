@@ -1,4 +1,5 @@
 import { ensureLoggableError } from '@platformatic/foundation'
+import { getConfig, getPrometheus, hasField } from '@platformatic/globals'
 import { ReadableStream } from 'node:stream/web'
 import {
   createPlatformaticLogger,
@@ -46,7 +47,8 @@ export class CacheHandler {
     ensureRedis()
     ensureMsgpackr()
 
-    const baseConfig = globalThis.platformatic.config.cache
+    const platformaticConfig = getConfig()
+    const baseConfig = platformaticConfig.cache
     const resolvedConfig = options.configKey ? { ...baseConfig, ...baseConfig[options.configKey] } : baseConfig
 
     this.#config ??= resolvedConfig
@@ -72,7 +74,7 @@ export class CacheHandler {
       throw new Error('Please provide a the "store" option.')
     }
 
-    if (globalThis.platformatic) {
+    if (hasField('prometheus')) {
       this.#registerMetrics()
     }
   }
@@ -255,7 +257,7 @@ export class CacheHandler {
   }
 
   #registerMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
+    const { client, registry } = getPrometheus()
 
     this.#cacheHitMetric =
       registry.getSingleMetric(this.#cacheHitMetricDef.name) ??

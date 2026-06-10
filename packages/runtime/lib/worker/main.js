@@ -6,6 +6,7 @@ import {
   getPrivateSymbol,
   parseMemorySize
 } from '@platformatic/foundation'
+import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
@@ -25,11 +26,12 @@ import { initHealthSignalsApi } from './health-signals.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
-import { kId, kITC, kStderrMarker } from './symbols.js'
+import { kStderrMarker } from './symbols.js'
 
 function handlePreInitializationUnhandled (type, err) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-  globalThis.platformatic.logger.error(
+  const logger = getLogger()
+  logger.error(
     { err: ensureLoggableError(err) },
     `The ${label} threw an ${type} before initialization.`
   )
@@ -38,7 +40,8 @@ function handlePreInitializationUnhandled (type, err) {
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
-    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    const itc = getITC()
+    itc.notify('event', { event, payload: args })
     return this.emit(event, ...args)
   }
 }
@@ -201,8 +204,9 @@ async function main () {
   const cleanup = setupHandlers()
 
   installUndiciGlobals(globalThis)
-  globalThis[kId] = threadId
-  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
+  updateGlobals({
+    runtimeId: threadId,
+    interceptors: {},
     logger: createLogger(),
     events: new ForwardingEventEmitter()
   })
@@ -210,11 +214,11 @@ async function main () {
   const runtimeConfig = workerData.config
   const applicationConfig = workerData.applicationConfig
 
-  setupBufferPool(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
-  setupDefaultHighWaterMark(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
+  setupBufferPool(runtimeConfig, applicationConfig, getLogger())
+  setupDefaultHighWaterMark(runtimeConfig, applicationConfig, getLogger())
 
   // Enable compile cache early before loading user modules
-  await setupCompileCache(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
+  await setupCompileCache(runtimeConfig, applicationConfig, getLogger())
 
   await performPreloading(runtimeConfig, applicationConfig)
 
@@ -226,7 +230,8 @@ async function main () {
     envfile = resolve(workerData.applicationConfig.path, '.env')
   }
 
-  globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
+  const logger = getLogger()
+  logger.debug({ envfile }, 'Loading envfile...')
 
   try {
     process.loadEnvFile(envfile)
@@ -301,15 +306,16 @@ async function main () {
 
   const sharedContext = new SharedContext()
   // Limit the amount of methods a user can call
-  globalThis.platformatic.sharedContext = {
-    get: () => sharedContext.get(),
-    update: (...args) => sharedContext.update(...args)
-  }
+  updateGlobals({
+    sharedContext: {
+      get: () => sharedContext.get(),
+      update: (...args) => sharedContext.update(...args)
+    }
+  })
 
   // Setup interaction with parent port
   const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
-  globalThis[kITC] = itc
-  globalThis.platformatic.itc = itc
+  updateGlobals({ itc })
 
   // Setup management client for privileged applications
   if (applicationConfig.management) {
@@ -322,7 +328,7 @@ async function main () {
       const ops = typeof applicationConfig.management === 'object'
         ? applicationConfig.management.operations
         : undefined
-      globalThis.platformatic.management = new ManagementClient(ops)
+      updateGlobals({ management: new ManagementClient(ops) })
     }
   }
 

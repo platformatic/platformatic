@@ -1,8 +1,9 @@
+import { getLogLevel, getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
+const logger = getLogger()
 const app = fastify({
-  // @ts-expect-error
-  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+  loggerInstance: logger.child({}, { level: getLogLevel({ throwOnMissing: false }) ?? 'info' })
 })
 
 app.get('/', async () => {

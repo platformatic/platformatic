@@ -12,6 +12,7 @@ import {
   resolvePackageViaCJS
 } from '@platformatic/basic'
 import { ensureLoggableError } from '@platformatic/foundation'
+import { getLogger, updateGlobals } from '@platformatic/globals'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -109,7 +110,7 @@ export class AstroCapability extends BaseCapability {
     const { build } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       await build({
         root: this.root,
@@ -130,7 +131,7 @@ export class AstroCapability extends BaseCapability {
         ]
       })
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
 
     await writeFile(
@@ -292,7 +293,8 @@ export class AstroCapability extends BaseCapability {
         const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
         this.#basePath = buildInfo.basePath
       } catch (e) {
-        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
+        const logger = getLogger()
+        logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
       }
     }
 

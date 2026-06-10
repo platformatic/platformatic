@@ -6,7 +6,7 @@
     "services/*"
   ],
   "dependencies": {
-    "@platformatic/runtime": "^2.3.1",
-    "platformatic": "^2.3.1"
+    "@platformatic/runtime": ">=3.0.0",
+    "wattpm": ">=3.0.0"
   }
 }

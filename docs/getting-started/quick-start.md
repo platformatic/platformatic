@@ -50,11 +50,14 @@ By choosing the `@platformatic/node` application, you have already created your 
 This file is created as your nodejs app:
 
 ```js
+import { getLogger } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 export function create () {
+  const logger = getLogger()
+
   return createServer((_, res) => {
-    globalThis.platformatic.logger.debug('Serving request.')
+    logger.debug('Serving request.')
     res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
     res.end(JSON.stringify({ hello: 'world' }))
   })

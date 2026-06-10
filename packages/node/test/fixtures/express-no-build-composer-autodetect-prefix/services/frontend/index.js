@@ -1,6 +1,7 @@
+import { setBasePath } from '@platformatic/globals'
 import express from 'express'
 
-globalThis.platformatic?.setBasePath('/nested/base/dir')
+setBasePath('/nested/base/dir')
 
 const app = express()
 

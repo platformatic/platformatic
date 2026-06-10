@@ -1,9 +1,13 @@
+import { getEvents, getITC } from '@platformatic/globals'
+const events = getEvents()
+const itc = getITC()
+
 function doWork () {
-  globalThis.platformatic.events.emitAndNotify('work')
+  events.emitAndNotify('work')
   setTimeout(doWork, 30_000)
 }
 
-globalThis[Symbol.for('plt.runtime.itc')]?.on('runtime:event', e => {
+itc.on('runtime:event', e => {
   if (e.event === 'background:start') {
     doWork()
   }

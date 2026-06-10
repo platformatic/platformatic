@@ -8,6 +8,7 @@ import {
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
+import { getEvents } from '@platformatic/globals'
 import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
 import { once } from 'node:events'
@@ -258,11 +259,12 @@ export class NodeCapability extends BaseCapability {
     await super.stop()
 
     // Emit the close event so that an application can handle it
-    const closeHandled = globalThis.platformatic.events.emit('close')
+    const events = getEvents()
+    const closeHandled = events.emit('close')
 
     if (!this.#isFastify && !this.#appClose && !closeHandled && !this.#app?.[Symbol.asyncDispose]) {
       this.logger.warn(
-        `Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+        `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
       )
     }
 

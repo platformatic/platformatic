@@ -1,5 +1,6 @@
 import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
 import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
+import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
@@ -60,7 +61,7 @@ export class ServiceCapability extends BaseCapability {
     // openTelemetry decorator exists and then configure accordingly.
     // Skip manual telemetry plugin if automatic instrumentation is already active
     // (loaded via --import from node-telemetry.js)
-    const hasAutomaticInstrumentation = !!globalThis.platformatic?.tracerProvider
+    const hasAutomaticInstrumentation = !!getTracerProvider({ throwOnMissing: false })
     if (isKeyEnabled('telemetry', config) && !hasAutomaticInstrumentation) {
       await this.#app.register(telemetry, config.telemetry)
     }

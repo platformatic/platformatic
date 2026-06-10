@@ -4,6 +4,6 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@platformatic/service": "^2.3.1"
+    "@platformatic/service": ">=3.0.0"
   }
 }

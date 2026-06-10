@@ -1,10 +1,12 @@
+import { getLogLevel, getLogger, setBasePath } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function build () {
-  globalThis.platformatic?.setBasePath('/nested/base/dir')
+  setBasePath('/nested/base/dir')
 
+  const logger = getLogger()
   const app = fastify({
-    loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+    loggerInstance: logger.child({}, { level: getLogLevel({ throwOnMissing: false }) ?? 'info' })
   })
 
   app.get('/nested/base/dir/', async () => {

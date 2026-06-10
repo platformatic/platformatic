@@ -1,10 +1,10 @@
-'use strict'
-
 const { request } = require('undici')
 const { getGreeting } = require('./deps/dep1')
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function (app) {
+  const { getSharedContext } = require('@platformatic/globals')
+
   app.get('/', async () => {
     return { hello: await getGreeting() + '123' }
   })
@@ -44,12 +44,14 @@ module.exports = async function (app) {
   })
 
   app.get('/shared-context', { schema: { hide: true } }, async () => {
-    return globalThis.platformatic.sharedContext.get()
+    const sharedContext = getSharedContext()
+    return sharedContext.get()
   })
 
   app.patch('/shared-context', { shema: { hide: true } }, async (req, res) => {
     const { context, overwrite } = req.body
-    globalThis.platformatic.sharedContext.update(context, { overwrite })
+    const sharedContext = getSharedContext()
+    sharedContext.update(context, { overwrite })
     res.status(200).send()
   })
 }

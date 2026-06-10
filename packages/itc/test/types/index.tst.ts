@@ -45,6 +45,10 @@ test('ITC', () => {
   expect(itc.notify('message', { key: 'value' }, { timeout: 1000 })).type.toBe<void>()
   expect(itc.notify).type.not.toBeCallableWith(123, { key: 'value' })
 
+  expect(itc.process('message', { key: 'value' })).type.toBe<Promise<any>>()
+  expect(itc.process('message', { key: 'value' }, { timeout: 1000 })).type.toBe<Promise<any>>()
+  expect(itc.process).type.not.toBeCallableWith(123, { key: 'value' })
+
   expect(itc.handle('message', () => ({ key: 'value' }))).type.toBe<void>()
   expect(itc.handle('message', async () => ({ key: 'value' }))).type.toBe<void>()
   expect(itc.handle).type.not.toBeCallableWith(123, () => ({ key: 'value' }))

@@ -1,10 +1,9 @@
 import { kMetadata, replaceEnv } from '@platformatic/foundation'
+import { getEvents, getITC } from '@platformatic/globals'
 import { ServiceCapability } from '@platformatic/service'
 import { ensureApplications, platformaticGateway } from './application.js'
 import { notHostConstraints } from './not-host-constraints.js'
 import { packageJson } from './schema.js'
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 export class GatewayCapability extends ServiceCapability {
   #meta
@@ -44,17 +43,19 @@ export class GatewayCapability extends ServiceCapability {
     // Only register the runtime event handler once. start() can be called
     // multiple times (first with listen:false, then listen:true) so guard
     // against duplicate registrations.
-    if (!this.#runtimeEventHandler) {
+    const itc = getITC({ throwOnMissing: false })
+    if (!this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
-      globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)
+      itc.on('runtime:event', this.#runtimeEventHandler)
     }
 
     return url
   }
 
   stop () {
-    if (this.#runtimeEventHandler) {
-      globalThis[kITC]?.removeListener('runtime:event', this.#runtimeEventHandler)
+    const itc = getITC({ throwOnMissing: false })
+    if (this.#runtimeEventHandler && itc) {
+      itc.removeListener('runtime:event', this.#runtimeEventHandler)
     }
 
     return super.stop()
@@ -77,7 +78,8 @@ export class GatewayCapability extends ServiceCapability {
   async isHealthy () {
     // If no dependencies (still booting), assume healthy
     if (this.dependencies) {
-      const workers = await globalThis[kITC].send('getWorkers')
+      const itc = getITC()
+      const workers = await itc.send('getWorkers')
 
       const unstarted = new Set(this.dependencies)
       for (const worker of Object.values(workers)) {
@@ -87,12 +89,14 @@ export class GatewayCapability extends ServiceCapability {
       }
 
       if (unstarted.size > 0) {
-        globalThis.platformatic.events.emitAndNotify('unhealthy')
+        const events = getEvents()
+        events.emitAndNotify('unhealthy')
         return false
       }
     }
 
-    globalThis.platformatic.events.emitAndNotify('healthy')
+    const events = getEvents()
+    events.emitAndNotify('healthy')
     return true
   }
 
@@ -106,7 +110,8 @@ export class GatewayCapability extends ServiceCapability {
 
   #handleRuntimeEvent ({ event }) {
     if (event === 'application:added' || event === 'application:removed') {
-      globalThis[kITC].notify('request:restart')
+      const itc = getITC()
+      itc.notify('request:restart')
     }
   }
 }

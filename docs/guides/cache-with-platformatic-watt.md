@@ -75,13 +75,14 @@ cd web/api; npm install fastify @fastify/autoload; mkdir -p routes; cd ..
 Then replace the `web/api/index.js` file with:
 
 ```js
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
 
 export async function create () {
   const app = fastify({
-    loggerIntance: globalThis.platformatic?.logger
+    loggerIntance: getLogger()
   })
 
   app.register(autoload, {
@@ -331,13 +332,17 @@ You can fine-tune the cache behavior with additional options:
 
 When you need to invalidate cache for a specific endpoint:
 
-**Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same `globalThis.platformatic.invalidateHttpCache()` method can be used with Express, Koa, or any other framework.
+**Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same function returned by `getInvalidateHttpCache()` can be used with Express, Koa, or any other framework.
 
 ```js
 // web/api/routes/admin.js
+import { getInvalidateHttpCache } from '@platformatic/globals'
+
 export default async function  (fastify) {
+  const invalidateHttpCache = getInvalidateHttpCache()
+
   fastify.delete('/invalidate-counter-cache', async (req, reply) => {
-    await globalThis.platformatic.invalidateHttpCache({
+    await invalidateHttpCache({
       keys: [
         {
           origin: 'http://composer.plt.local',
@@ -352,7 +357,7 @@ export default async function  (fastify) {
 
   // Invalidate internal service cache as well
   fastify.delete('/invalidate-data-cache', async (req, reply) => {
-    await globalThis.platformatic.invalidateHttpCache({
+    await invalidateHttpCache({
       keys: [
         {
           origin: 'http://data-service.plt.local',
@@ -373,7 +378,11 @@ For more flexible invalidation across multiple related endpoints:
 
 ```js
 // routes/admin.js
+import { getInvalidateHttpCache } from '@platformatic/globals'
+
 export default async function  (fastify) {
+  const invalidateHttpCache = getInvalidateHttpCache()
+
   fastify.delete(
     '/invalidate-by-tags',
     {
@@ -390,7 +399,7 @@ export default async function  (fastify) {
     async (req, reply) => {
       const tags = req.query.tags.split(',')
 
-      await globalThis.platformatic.invalidateHttpCache({ tags })
+      await invalidateHttpCache({ tags })
 
       return {
         message: `Cache invalidated for tags: ${tags.join(', ')}`,
@@ -407,14 +416,17 @@ Invalidate cache automatically when data changes:
 
 ```js
 // routes/products.js
+import { getInvalidateHttpCache } from '@platformatic/globals'
 import { createProduct, updateProduct } from '../lib/database.js'
 
 export default async function  (fastify) {
+  const invalidateHttpCache = getInvalidateHttpCache()
+
   fastify.post('/products', async (req, reply) => {
     const newProduct = await createProduct(req.body)
 
     // Invalidate all product-related cache
-    await globalThis.platformatic.invalidateHttpCache({
+    await invalidateHttpCache({
       tags: ['products', `product-${newProduct.id}`]
     })
 
@@ -425,7 +437,7 @@ export default async function  (fastify) {
     const updatedProduct = await updateProduct(req.params.id, req.body)
 
     // Invalidate specific product cache
-    await globalThis.platformatic.invalidateHttpCache({
+    await invalidateHttpCache({
       tags: [`product-${req.params.id}`, 'products']
     })
 
@@ -503,6 +515,8 @@ Here's a complete working example that demonstrates all caching concepts:
 
 ```js
 // routes/cache-demo.js
+import { getInvalidateHttpCache } from '@platformatic/globals'
+
 export default async function  (fastify) {
   let counter = 0
 
@@ -539,8 +553,10 @@ export default async function  (fastify) {
   )
 
   // Invalidation endpoints
+  const invalidateHttpCache = getInvalidateHttpCache()
+
   fastify.delete('/invalidate-counter', async (req, reply) => {
-    await globalThis.platformatic.invalidateHttpCache({
+    await invalidateHttpCache({
       keys: [
         {
           origin: 'http://localhost:3042',
@@ -568,7 +584,7 @@ export default async function  (fastify) {
     },
     async (req, reply) => {
       const tags = req.query.tags.split(',')
-      await globalThis.platformatic.invalidateHttpCache({ tags })
+      await invalidateHttpCache({ tags })
 
       return { message: `Invalidated tags: ${tags.join(', ')}` }
     }

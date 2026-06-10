@@ -1,11 +1,14 @@
+import { getEvents, getITC } from '@platformatic/globals'
 let timeoutId
+const events = getEvents()
+const itc = getITC()
 
 function doWork () {
-  globalThis.platformatic.events.emitAndNotify('work')
+  events.emitAndNotify('work')
   timeoutId = setTimeout(doWork, 30_000)
 }
 
-globalThis[Symbol.for('plt.runtime.itc')]?.on('runtime:event', e => {
+itc.on('runtime:event', e => {
   if (e.event === 'background:start') {
     doWork()
   }
@@ -15,5 +18,5 @@ export async function close () {
   // this and other alike clean ups
   clearTimeout(timeoutId)
 
-  globalThis.platformatic.events.emitAndNotify('close:function')
+  events.emitAndNotify('close:function')
 }

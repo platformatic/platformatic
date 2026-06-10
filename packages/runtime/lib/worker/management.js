@@ -1,4 +1,4 @@
-import { kITC } from './symbols.js'
+import { getITC } from '@platformatic/globals'
 
 export class ManagementClient {
   #allowedOperations
@@ -14,7 +14,8 @@ export class ManagementClient {
       throw new Error(`Operation "${operation}" is not allowed`)
     }
 
-    return globalThis[kITC].send('management:' + operation, data)
+    const itc = getITC()
+    return itc.send('management:' + operation, data)
   }
 
   getRuntimeStatus () {

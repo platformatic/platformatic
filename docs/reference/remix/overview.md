@@ -65,14 +65,14 @@ properly set the Vite's `base` property and the `remix.basename` property as fol
 ```js
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 
 export default defineConfig({
-  base: getGlobal()?.basePath ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   /* ... */
   plugins: [
     remix({
-      basename: getGlobal()?.basePath ?? '/'
+      basename: getBasePath({ throwOnMissing: false }) ?? '/'
       /* ... */
     })
   ]
