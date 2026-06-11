@@ -12,6 +12,16 @@ import { request } from 'undici'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
+async function waitForRuntimeStarted (startProcess) {
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.event === 'started') {
+      return
+    }
+  }
+}
+
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
@@ -72,22 +82,22 @@ test('dev - should complain if no configuration file is found', async t => {
   )
 })
 
-test('dev - should complain if no entrypoint is defined', async t => {
+test('dev - should start if no entrypoint is defined', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
     delete config.entrypoint
   })
 
-  const devstartProcess = await wattpm('dev', rootDir, { reject: false })
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
 
-  deepStrictEqual(devstartProcess.exitCode, 1)
+  const startProcess = wattpm('dev', rootDir)
+  await waitForRuntimeStarted(startProcess)
 
-  ok(
-    devstartProcess.stdout.includes(
-      'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
-    )
-  )
+  ok(startProcess.exitCode === null)
 })
 
 test('dev - should restart an application if files are changed', async t => {
@@ -454,22 +464,22 @@ test('start - should throw an error when an application has no path and it is no
   )
 })
 
-test('start - should complain if no entrypoint is defined', async t => {
+test('start - should start if no entrypoint is defined', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
     delete config.entrypoint
   })
 
-  const devstartProcess = await wattpm('start', rootDir, { reject: false })
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
 
-  deepStrictEqual(devstartProcess.exitCode, 1)
+  const startProcess = wattpm('start', rootDir)
+  await waitForRuntimeStarted(startProcess)
 
-  ok(
-    devstartProcess.stdout.includes(
-      'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
-    )
-  )
+  ok(startProcess.exitCode === null)
 })
 
 test('stop - should stop an application', async t => {

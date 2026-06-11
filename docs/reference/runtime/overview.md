@@ -42,8 +42,10 @@ or as a Platformatic Runtime application. Runtime application enables certain co
 ## Inter-application communication
 
 Platformatic Runtime allows multiple microservice applications to run
-within a single process. Only the entrypoint binds to an operating system
-port and can be reached from outside the runtime.
+within a single process. When an entrypoint is configured or automatically detected,
+only the entrypoint binds to an operating system port and can be reached from outside
+the runtime. If no entrypoint is configured or detected, the runtime starts without an
+external application URL.
 
 Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection

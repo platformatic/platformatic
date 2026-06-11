@@ -278,15 +278,20 @@ test('should inherit full logger options from runtime to different applications'
 test('should get json logs from thread applications when they are not pino default config', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
-  let requested = false
+  let incomingRequest = false
+  let requestCompleted = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
       await requestAndDump(url, { path: '/' })
-      requested = true
     },
     done: message => {
-      return requested
+      for (const log of stdioOutputToLogs([message]).filter(log => log.caller === 'STDOUT')) {
+        incomingRequest ||= log.stdout.msg === 'incoming request'
+        requestCompleted ||= log.stdout.msg === 'request completed'
+      }
+
+      return incomingRequest && requestCompleted
     }
   })
   const logs = stdioOutputToLogs(stdout).filter(log => log.caller === 'STDOUT')

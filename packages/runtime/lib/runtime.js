@@ -37,7 +37,6 @@ import {
   CannotRemoveEntrypointError,
   InvalidArgumentError,
   MessagingError,
-  MissingEntrypointError,
   MissingPprofCapture,
   RuntimeAbortedError,
   WorkerInterceptorJoinTimeoutError,
@@ -275,14 +274,18 @@ export class Runtime extends EventEmitter {
       await this.init()
     }
 
-    if (typeof this.#config.entrypoint === 'undefined') {
-      throw new MissingEntrypointError()
-    }
     this.#updateStatus('starting')
     this.#createWorkersBroadcastChannel()
 
     try {
-      await this.startApplications(this.getApplicationsIds(), silent)
+      const applications = this.getApplicationsIds()
+      await this.startApplications(applications, silent)
+
+      if (applications.length === 0) {
+        this.#updateStatus('started')
+        await this.close(silent)
+        return
+      }
 
       if (this.#config.inspectorOptions) {
         const { port } = this.#config.inspectorOptions
@@ -328,7 +331,9 @@ export class Runtime extends EventEmitter {
     this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
-    this.#showUrl()
+    if (this.#url) {
+      this.#showUrl()
+    }
     return this.#url
   }
 
@@ -1123,6 +1128,10 @@ export class Runtime extends EventEmitter {
   }
 
   async getEntrypointDetails () {
+    if (!this.#entrypointId) {
+      return null
+    }
+
     return this.getApplicationDetails(this.#entrypointId)
   }
 
@@ -2722,6 +2731,12 @@ export class Runtime extends EventEmitter {
 
   async #createWorkersBroadcastChannel () {
     this.#workersBroadcastChannel?.close()
+
+    if (this.#config.applications.length === 0) {
+      this.#workersBroadcastChannel = undefined
+      return
+    }
+
     this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
   }
 
