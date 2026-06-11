@@ -761,8 +761,8 @@ importers:
         specifier: workspace:*
         version: link:../globals
       '@platformatic/graphql-composer':
-        specifier: ^0.10.0
-        version: 0.10.1
+        specifier: ^0.11.0
+        version: 0.11.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -4623,8 +4623,8 @@ packages:
   '@platformatic/fastify-openapi-glue@5.1.0':
     resolution: {integrity: sha512-R5bHPQast/w5p+I+/Y5X1r+A8Fxqn7z0etWeaSYrFkbLvvGTEFGvldu0QGXnKjHo6XQo0P2o6D6gNr5uc36ZEA==}
 
-  '@platformatic/graphql-composer@0.10.1':
-    resolution: {integrity: sha512-c10wlGoAOgD8dMP1HyyCOK5qUi9o+TPlMZ1fj0AL8D49aDKZczkMsR6V+rNa4jPrujxWPGQlylJNEgF7HXOGsg==}
+  '@platformatic/graphql-composer@0.11.0':
+    resolution: {integrity: sha512-e3EZH1okfdQPkhTNPrijgGQrlETFVO1V5WOjxN4EJFYRlurZdmqSuJw56JgvD08TMhdRXgwQK9bAbn1ZY2YzHg==}
 
   '@platformatic/http-metrics@0.3.0':
     resolution: {integrity: sha512-e+wQJDCd9v7yKeV4u30ibAe5uGB14k+jDw1w9FqsM3tDgFY0UEHb24hJR9j2bVa6091e+ppGy3L4LhyUR92M0w==}
@@ -13488,7 +13488,7 @@ snapshots:
       fastify-plugin: 5.1.0
       js-yaml: 4.2.0
 
-  '@platformatic/graphql-composer@0.10.1':
+  '@platformatic/graphql-composer@0.11.0':
     dependencies:
       abstract-logger: 0.2.5
       fastify: 5.8.5
