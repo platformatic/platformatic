@@ -176,6 +176,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export { prepareApplication, transform, wrapInRuntimeConfig } from './lib/config.js'
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
+export { setupLoopbackMessaging } from './lib/loopback-messaging.js'
 export { Runtime } from './lib/runtime.js'
 export { schema } from './lib/schema.js'
 export * from './lib/version.js'

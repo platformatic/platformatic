@@ -4,6 +4,7 @@ import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel
 export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
   const { promise, resolve, reject } = Promise.withResolvers()
 
+  let completed = false
   const subscribers = {
     asyncStart ({ options }) {
       // Unix socket, do nothing
@@ -44,11 +45,16 @@ export function createServerListener (overridePort = true, overrideHost = false,
   }
 
   function cancel () {
+    completed = true
     tracingChannel('net.server.listen').unsubscribe(subscribers)
   }
 
   tracingChannel('net.server.listen').subscribe(subscribers)
   promise.cancel = function () {
+    if (completed) {
+      return
+    }
+
     cancel()
     resolve(null)
   }

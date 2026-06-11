@@ -39,7 +39,7 @@ Configures Node. Supported object properties:
 - **`dispatchViaHttp`**: If set to `true`, then the application will serve requests coming from the mesh network via a TCP port.
 - **`disableBuildInDevelopment`**: If set to `true`, it will not automatically build an application in development mode.
 - **`disablePlatformaticInBuild`**: If set to `true`, then no Platformatic code will be started when running the `build` command.
-- **`hasServer`**: If set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port.
+- **`hasServer`**: If set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Applications that export a `create` or `build` function can also return an object with `isBackgroundApplication: true` to select background mode at runtime.
 
 ## `logger`
 

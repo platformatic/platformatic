@@ -127,6 +127,27 @@ test('updateGlobals should merge and return global fields', () => {
   deepStrictEqual(updated.config, { hello: 'world' })
 })
 
+test('removeGlobals should remove global fields', () => {
+  globals.updateGlobals({ messaging: {}, logger: {} })
+
+  strictEqual(globals.hasField('messaging'), true)
+  strictEqual(globals.hasField('logger'), true)
+
+  const updated = globals.removeGlobals(['messaging'])
+
+  strictEqual(updated, globalThis.platformatic)
+  strictEqual(globals.hasField('messaging'), false)
+  strictEqual(globals.hasField('logger'), true)
+  strictEqual(globalThis.platformatic.messaging, undefined)
+  throws(() => globals.getMessaging(), /globalThis\.platformatic\.messaging is not available/)
+})
+
+test('removeGlobals should be noop without global object', () => {
+  delete globalThis.platformatic
+
+  strictEqual(globals.removeGlobals(['messaging']), undefined)
+})
+
 test('getters should throw when global fields are not available', () => {
   globalThis.platformatic = { [globals.kFields]: new Set() }
 

@@ -26,6 +26,19 @@ export function updateGlobals (updates) {
   return globalThis.platformatic
 }
 
+export function removeGlobals (fields) {
+  if (!globalThis.platformatic?.[kFields]) {
+    return globalThis.platformatic
+  }
+
+  for (const field of fields) {
+    delete globalThis.platformatic[field]
+    globalThis.platformatic[kFields].delete(field)
+  }
+
+  return globalThis.platformatic
+}
+
 export function hasField (name) {
   return globalThis.platformatic?.[kFields]?.has(name) ?? false
 }
