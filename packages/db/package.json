@@ -48,7 +48,7 @@
   "dependencies": {
     "@fastify/accepts": "^5.0.0",
     "@fastify/basic-auth": "^6.0.0",
-    "@fastify/cors": "^10.0.0",
+    "@fastify/cors": "^11.0.0",
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@fastify/static": "^9.0.0",
