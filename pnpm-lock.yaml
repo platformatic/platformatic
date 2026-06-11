@@ -746,8 +746,8 @@ importers:
         specifier: ^9.0.0
         version: 9.7.0
       '@fastify/view':
-        specifier: ^10.0.1
-        version: 10.0.2
+        specifier: ^12.0.0
+        version: 12.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -3458,6 +3458,9 @@ packages:
 
   '@fastify/view@10.0.2':
     resolution: {integrity: sha512-tGjXFyDUMj5a+E8BBrQ2wpsVnpOfMq3cqy4WD8pnjWPE/HGNItBASUPoPUcX/QjPhxfuZZTYv2XdCmKXdcMZPw==}
+
+  '@fastify/view@12.0.0':
+    resolution: {integrity: sha512-Prcoim4yTwG6vPnIyGrWViDx6FFnchV0GQWeBgAgywlL1JflGhTLDhIsyd7EkOreYHyqALqxnmhhJhD4NrJTWw==}
 
   '@fastify/websocket@11.2.0':
     resolution: {integrity: sha512-3HrDPbAG1CzUCqnslgJxppvzaAZffieOVbLp1DAy1huCSynUWPifSvfdEDUR8HlJLp3sp1A36uOM2tJogADS8w==}
@@ -12339,6 +12342,12 @@ snapshots:
       fastify-plugin: 5.1.0
 
   '@fastify/view@10.0.2':
+    dependencies:
+      fastify-plugin: 5.1.0
+      toad-cache: 3.7.1
+    optional: true
+
+  '@fastify/view@12.0.0':
     dependencies:
       fastify-plugin: 5.1.0
       toad-cache: 3.7.1
