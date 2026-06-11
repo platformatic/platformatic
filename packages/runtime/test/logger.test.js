@@ -325,22 +325,19 @@ test(
   async t => {
     const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
-    let responses = 0
-    let requested = false
+    let serviceResponded = false
+    let nodeResponded = false
     const { stdout } = await execRuntime({
       configPath,
       onReady: async ({ url }) => {
         await requestAndDump(url, { path: '/service/' })
         await requestAndDump(url, { path: '/node/' })
-        requested = true
       },
       done: message => {
-        if (message.includes('call route / on service')) {
-          responses++
-        } else if (message.includes('call route / on node')) {
-          responses++
-        }
-        return requested && responses > 1
+        serviceResponded ||= message.includes('call route / on service')
+        nodeResponded ||= message.includes('call route / on node')
+
+        return serviceResponded && nodeResponded
       }
     })
     const logs = stdioOutputToLogs(stdout)
