@@ -37,6 +37,7 @@
     "create-wattpm": "workspace:*",
     "dotenv": "^16.4.5",
     "execa": "^9.4.0",
+    "fast-json-patch": "^3.1.1",
     "semver": "^7.7.0",
     "tar": "^7.5.7"
   },

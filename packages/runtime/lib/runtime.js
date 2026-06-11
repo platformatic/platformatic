@@ -278,7 +278,14 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     try {
-      await this.startApplications(this.getApplicationsIds(), silent)
+      const applications = this.getApplicationsIds()
+      await this.startApplications(applications, silent)
+
+      if (applications.length === 0) {
+        this.#updateStatus('started')
+        await this.close(silent)
+        return
+      }
 
       if (this.#config.inspectorOptions) {
         const { port } = this.#config.inspectorOptions
@@ -2720,6 +2727,12 @@ export class Runtime extends EventEmitter {
 
   async #createWorkersBroadcastChannel () {
     this.#workersBroadcastChannel?.close()
+
+    if (this.#config.applications.length === 0) {
+      this.#workersBroadcastChannel = undefined
+      return
+    }
+
     this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
   }
 
