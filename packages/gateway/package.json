@@ -28,7 +28,7 @@
     "@fastify/multipart": "^9.2.1",
     "@platformatic/db": "workspace:*",
     "@platformatic/prom-client": "^1.0.0",
-    "c8": "^10.0.0",
+    "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "dedent": "^1.5.1",
     "eslint": "9",
