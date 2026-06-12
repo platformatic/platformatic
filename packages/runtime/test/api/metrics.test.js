@@ -504,3 +504,30 @@ test('should get runtime metrics in a json format without a application call', a
     ok(value < 0.1)
   }
 })
+
+test('should get metrics when an application registered http stats globals without fields tracking', async t => {
+  const projectDir = join(fixturesDir, 'metrics-legacy-globals')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.inject('service-1', {
+    method: 'GET',
+    url: '/hello'
+  })
+
+  await app.inject('service-1', {
+    method: 'GET',
+    url: '/simulate-legacy-globals'
+  })
+
+  const { metrics } = await app.getMetrics()
+
+  const metricsNames = metrics.map(({ name }) => name)
+  ok(metricsNames.includes('http_request_all_summary_seconds'))
+})
