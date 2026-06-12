@@ -1211,6 +1211,7 @@ export const runtimeProperties = {
           },
           hostname: { type: 'string' },
           endpoint: { type: 'string' },
+          https: server.properties.https,
           auth: {
             type: 'object',
             properties: {

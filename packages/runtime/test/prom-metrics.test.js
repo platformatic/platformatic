@@ -3,7 +3,8 @@ import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { request } from 'undici'
+import getPort from 'get-port'
+import { Agent, request } from 'undici'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -37,6 +38,58 @@ The metrics are available at /metrics.
 The readiness endpoint is available at /ready.
 The liveness endpoint is available at /status.`
   )
+})
+
+test('supports https options', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  const dispatcher = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      hostname: '127.0.0.1',
+      port,
+      https: {
+        cert: { path: './https.crt' },
+        key: [{ path: './https.key' }]
+      }
+    },
+    workers: 1
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await dispatcher.close()
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request(`https://127.0.0.1:${port}`, {
+    method: 'GET',
+    path: '/metrics',
+    dispatcher
+  })
+  strictEqual(statusCode, 200)
+
+  const metrics = await body.text()
+  ok(metrics.includes('nodejs_version_info'))
 })
 
 test('Hello without readiness', async t => {
