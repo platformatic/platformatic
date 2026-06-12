@@ -25,6 +25,53 @@ Note that the metrics port is not the default in this configuration. This is bec
 
 All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/_shared-configuration.md#metrics) for more details.
 
+## Serving metrics over HTTPS (SSL/TLS)
+
+The metrics server can use HTTPS (TLS, often referred to as SSL). This also applies to the readiness and liveness endpoints exposed by the same server.
+
+Use certificate files when running in production or in Kubernetes:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "https": {
+      "key": { "path": "/etc/watt/tls/tls.key" },
+      "cert": { "path": "/etc/watt/tls/tls.crt" }
+    }
+  }
+}
+```
+
+You can also provide inline PEM strings. This is useful for local testing, but avoid committing certificates or private keys to source control:
+
+```json
+{
+  "metrics": {
+    "https": {
+      "key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "cert": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+    }
+  }
+}
+```
+
+When Prometheus scrapes an HTTPS metrics endpoint, set `scheme: https`. If you use a private CA or a self-signed certificate, configure `tls_config` accordingly:
+
+```yaml
+scrape_configs:
+  - job_name: 'platformatic'
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/ca.crt
+    static_configs:
+      - targets: ['192.168.69.195:9090']
+```
+
+For local testing with a self-signed certificate, use `curl -k https://localhost:9090/metrics`.
+
 ## Metrics Labels
 
 By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. You can customize this label name using the `applicationLabel` option. This is useful when migrating from older versions (which used `serviceId`) or when integrating with existing monitoring setups that expect different label names:

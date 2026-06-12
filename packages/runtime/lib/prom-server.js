@@ -2,6 +2,7 @@ import fastifyAccepts from '@fastify/accepts'
 import fastifyBasicAuth from '@fastify/basic-auth'
 import { loadModule } from '@platformatic/foundation'
 import fastify from 'fastify'
+import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 
@@ -52,6 +53,33 @@ async function checkReadiness (runtime) {
   return { response, status }
 }
 
+async function sanitizeHTTPSArgument (arg) {
+  if (typeof arg === 'string') {
+    return arg
+  } else if (!Array.isArray(arg)) {
+    return readFile(arg.path)
+  }
+
+  const sanitized = []
+  for (const item of arg) {
+    sanitized.push(typeof item === 'string' ? item : await readFile(item.path))
+  }
+
+  return sanitized
+}
+
+async function sanitizeHTTPSOptions (https) {
+  if (!https) {
+    return
+  }
+
+  return {
+    ...https,
+    key: await sanitizeHTTPSArgument(https.key),
+    cert: await sanitizeHTTPSArgument(https.cert)
+  }
+}
+
 async function checkLiveness (runtime) {
   const { status: ready, response: readinessResponse } = await checkReadiness(runtime)
   if (!ready) {
@@ -84,8 +112,9 @@ export async function startPrometheusServer (runtime, opts) {
   const port = opts.port ?? DEFAULT_PORT
   const metricsEndpoint = opts.endpoint ?? DEFAULT_METRICS_ENDPOINT
   const auth = opts.auth ?? null
+  const https = await sanitizeHTTPSOptions(opts.https)
 
-  const promServer = fastify({ name: 'Prometheus server', loggerInstance: runtime.logger })
+  const promServer = fastify({ name: 'Prometheus server', loggerInstance: runtime.logger, https })
   promServer.register(fastifyAccepts)
 
   let onRequestHook

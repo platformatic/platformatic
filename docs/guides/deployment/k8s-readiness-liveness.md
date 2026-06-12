@@ -128,6 +128,58 @@ You can customize the health check endpoints in your Watt configuration:
 }
 ```
 
+### Serving Health Endpoints over HTTPS (SSL/TLS)
+
+Readiness and liveness endpoints run on the metrics server, so enabling HTTPS (TLS, often referred to as SSL) for `metrics` also enables HTTPS for `/ready`, `/status`, and `/metrics`.
+
+For Kubernetes, store the certificate and private key in a Secret and mount it into the container. Then reference those files from `watt.json`:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "https": {
+      "key": { "path": "/etc/watt/tls/tls.key" },
+      "cert": { "path": "/etc/watt/tls/tls.crt" }
+    }
+  }
+}
+```
+
+You can also provide inline PEM strings, which is convenient for local testing:
+
+```json
+{
+  "metrics": {
+    "https": {
+      "key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "cert": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+    }
+  }
+}
+```
+
+Use file paths for production deployments so certificates can be rotated through your platform's secret management. Both `key` and `cert` also accept arrays if your TLS setup requires multiple keys or certificate chains.
+
+When the metrics server uses HTTPS, set `scheme: HTTPS` on Kubernetes HTTP probes:
+
+```yaml
+readinessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /ready
+    port: 9090
+
+livenessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /status
+    port: 9090
+```
+
+Kubernetes does not verify the certificate for HTTP probes that use `scheme: HTTPS`, so self-signed certificates work for probes. Prometheus or other external clients may still need CA configuration.
+
 ### Service Discovery and Autoload
 
 By default, Watt automatically loads all services in the `web` folder via the autoload configuration. You don't need to manually specify each service in the configuration. Watt will:
@@ -419,6 +471,37 @@ spec:
               cpu: '500m'
 ```
 
+If the metrics server uses HTTPS, add `scheme: HTTPS` under each `httpGet` block. If the certificate comes from a Kubernetes Secret, mount it into the container:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: watt-metrics-tls
+type: kubernetes.io/tls
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    ...
+    -----END PRIVATE KEY-----
+---
+# Add this to the watt-app container:
+volumeMounts:
+  - name: metrics-tls
+    mountPath: /etc/watt/tls
+    readOnly: true
+
+# Add this to the pod spec:
+volumes:
+  - name: metrics-tls
+    secret:
+      secretName: watt-metrics-tls
+```
+
 Key configuration points:
 
 - **Startup Probe**: Allows up to 100 seconds for application initialization
@@ -603,6 +686,11 @@ curl -v http://localhost:9090/ready
 curl -v http://localhost:9090/status
 # Expected: 200 OK "Healthy" (or custom response)
 
+# If metrics.https is configured, use HTTPS instead.
+# Use -k for local self-signed certificates.
+curl -vk https://localhost:9090/ready
+curl -vk https://localhost:9090/status
+
 # Test the main application endpoint with database integration
 curl http://localhost:3042/
 # Expected: {"message":"hello world","db_time":"2024-01-01T12:00:00.000Z"}
@@ -662,6 +750,11 @@ kubectl get events --field-selector reason=Unhealthy
 # Test health endpoints from within the pod
 kubectl exec <pod-name> -- curl -f http://localhost:9090/ready
 kubectl exec <pod-name> -- curl -f http://localhost:9090/status
+
+# If metrics.https is configured, use HTTPS.
+# Use -k when the pod uses a self-signed certificate.
+kubectl exec <pod-name> -- curl -fk https://localhost:9090/ready
+kubectl exec <pod-name> -- curl -fk https://localhost:9090/status
 
 # Watch Kubernetes pod status in real-time
 kubectl get pods -l app=watt-health-app -w
@@ -807,6 +900,10 @@ kubectl exec <pod-name> -- cat watt.json
 # Test endpoints with verbose output
 kubectl exec <pod-name> -- curl -v http://localhost:9090/ready
 kubectl exec <pod-name> -- curl -v http://localhost:9090/status
+
+# If metrics.https is configured, test HTTPS instead.
+kubectl exec <pod-name> -- curl -vk https://localhost:9090/ready
+kubectl exec <pod-name> -- curl -vk https://localhost:9090/status
 
 # Check application logs for errors
 kubectl logs <pod-name> --tail=100

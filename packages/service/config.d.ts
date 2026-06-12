@@ -559,6 +559,33 @@ export interface PlatformaticServiceConfig {
           enabled?: boolean | string;
           hostname?: string;
           endpoint?: string;
+          https?: {
+            allowHTTP1?: boolean;
+            key:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            cert:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            requestCert?: boolean;
+            rejectUnauthorized?: boolean;
+          };
           auth?: {
             username: string;
             password: string;

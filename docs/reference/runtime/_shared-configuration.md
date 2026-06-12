@@ -428,6 +428,12 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
+- **`https`** (`object`). Optional configuration for serving the Prometheus, readiness, and liveness endpoints over HTTPS. It supports the same certificate options as [`server.https`](#server):
+  - **`allowHTTP1`** (`boolean`). If `true`, the server will also accept HTTP/1.1 connections when HTTP/2 is enabled. Default: `false`.
+  - **`key`** (**required**, `string`, `object`, or `array`). A private key as an inline PEM string, an object with a `path` property pointing to a private key file, or an array of either form.
+  - **`cert`** (**required**, `string`, `object`, or `array`). A certificate as an inline PEM string, an object with a `path` property pointing to a certificate file, or an array of either form.
+  - **`requestCert`** (`boolean`). Request a client certificate.
+  - **`rejectUnauthorized`** (`boolean`). Reject clients without a valid certificate when `requestCert` is enabled.
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
   - **`username`** (`string`). The username for the Prometheus server authentication.
   - **`password`** (`string`). The password for the Prometheus server authentication.
