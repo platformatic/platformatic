@@ -440,7 +440,7 @@ importers:
         version: 13.0.3
       console-table-printer:
         specifier: ^2.12.0
-        version: 2.16.0
+        version: 2.16.1
       env-schema:
         specifier: ^7.0.0
         version: 7.0.0
@@ -780,7 +780,7 @@ importers:
         version: 8.20.0
       console-table-printer:
         specifier: ^2.12.0
-        version: 2.16.0
+        version: 2.16.1
       execa:
         specifier: ^9.0.0
         version: 9.6.1
@@ -1673,7 +1673,7 @@ importers:
         version: 2.0.20
       console-table-printer:
         specifier: ^2.12.0
-        version: 2.16.0
+        version: 2.16.1
       env-schema:
         specifier: ^7.0.0
         version: 7.0.0
@@ -6260,8 +6260,8 @@ packages:
     resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
     engines: {node: ^14.18.0 || >=16.10.0}
 
-  console-table-printer@2.16.0:
-    resolution: {integrity: sha512-X46F33vlP/jVYT3ajukzmOea4Bxet/jRjBKY/fhqr0IvTUNdfBYlrh+Juk0eiZJaTJYrzlEd4RFMF5cQac+m/w==}
+  console-table-printer@2.16.1:
+    resolution: {integrity: sha512-Sc9FRJ4O9xKGNrvulNdPfK5SyBcZ6lcaRnDE4AQ/uw6IDtjHhsqyzzqcnMikjyGaiOOF2tNOKoBhbVjRvFy9Lw==}
 
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
@@ -15592,7 +15592,7 @@ snapshots:
 
   consola@3.4.2: {}
 
-  console-table-printer@2.16.0:
+  console-table-printer@2.16.1:
     dependencies:
       simple-wcswidth: 1.1.2
 
