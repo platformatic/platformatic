@@ -382,8 +382,8 @@ importers:
         specifier: ^6.0.0
         version: 6.2.0
       '@fastify/cors':
-        specifier: ^10.0.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       '@fastify/deepmerge':
         specifier: ^2.0.0
         version: 2.0.2
@@ -1609,8 +1609,8 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@fastify/cors':
-        specifier: ^10.0.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       '@fastify/deepmerge':
         specifier: ^2.0.0
         version: 2.0.2
@@ -3383,9 +3383,6 @@ packages:
 
   '@fastify/cookie@11.0.2':
     resolution: {integrity: sha512-GWdwdGlgJxyvNv+QcKiGNevSspMQXncjMZ1J8IvuDQk0jvkzgWWZFNC2En3s+nHndZBGV8IbLwOI/sxCZw/mzA==}
-
-  '@fastify/cors@10.1.0':
-    resolution: {integrity: sha512-MZyBCBJtII60CU9Xme/iE4aEy8G7QpzGR8zkdXZkDFt7ElEMachbE61tfhAG/bvSaULlqlf0huMT12T7iqEmdQ==}
 
   '@fastify/cors@11.2.0':
     resolution: {integrity: sha512-LbLHBuSAdGdSFZYTLVA3+Ch2t+sA6nq3Ejc6XLAKiQ6ViS2qFnvicpj0htsx03FyYeLs04HfRNBsz/a8SvbcUw==}
@@ -8755,9 +8752,6 @@ packages:
   mnemonist@0.39.8:
     resolution: {integrity: sha512-vyWo2K3fjrUw8YeeZ1zF0fy6Mu59RHokURlld8ymdUPjMlD9EC9ov1/YPqTgqRvUN9nTr3Gqfz29LYAmu0PHPQ==}
 
-  mnemonist@0.40.0:
-    resolution: {integrity: sha512-kdd8AFNig2AD5Rkih7EPCXhu/iMvwevQFX/uEiGhZyPZi7fHqOoF4V4kHLpCfysxXMgQ4B52kdPMCwARshKvEg==}
-
   mnemonist@0.40.4:
     resolution: {integrity: sha512-ZAv+KNavneRVzu4tUeOgzkScI3W5BGwZ3rkxIpKtzzVgfTtWQFN1CgX0U72cyvyh3iTuHL3SiSmrQxTlryEIcw==}
 
@@ -12208,11 +12202,6 @@ snapshots:
     dependencies:
       cookie: 1.1.1
       fastify-plugin: 5.1.0
-
-  '@fastify/cors@10.1.0':
-    dependencies:
-      fastify-plugin: 5.1.0
-      mnemonist: 0.40.0
 
   '@fastify/cors@11.2.0':
     dependencies:
@@ -18875,10 +18864,6 @@ snapshots:
       ufo: 1.6.4
 
   mnemonist@0.39.8:
-    dependencies:
-      obliterator: 2.0.5
-
-  mnemonist@0.40.0:
     dependencies:
       obliterator: 2.0.5
 
