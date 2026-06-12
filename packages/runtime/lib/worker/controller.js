@@ -263,20 +263,22 @@ export class Controller extends EventEmitter {
     const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
 
     if (onHttpStatsFree && dispatcher?.stats) {
-      const onHttpStatsConnected = getOnHttpStatsConnected()
-      const onHttpStatsPending = getOnHttpStatsPending()
-      const onHttpStatsQueued = getOnHttpStatsQueued()
-      const onHttpStatsRunning = getOnHttpStatsRunning()
-      const onHttpStatsSize = getOnHttpStatsSize()
+      // The capability might come from an older version of @platformatic/basic
+      // which registered these globals without the fields tracking, so never throw.
+      const onHttpStatsConnected = getOnHttpStatsConnected({ throwOnMissing: false })
+      const onHttpStatsPending = getOnHttpStatsPending({ throwOnMissing: false })
+      const onHttpStatsQueued = getOnHttpStatsQueued({ throwOnMissing: false })
+      const onHttpStatsRunning = getOnHttpStatsRunning({ throwOnMissing: false })
+      const onHttpStatsSize = getOnHttpStatsSize({ throwOnMissing: false })
 
       for (const url in dispatcher.stats) {
         const { free, connected, pending, queued, running, size } = dispatcher.stats[url]
         onHttpStatsFree(url, free || 0)
-        onHttpStatsConnected(url, connected || 0)
-        onHttpStatsPending(url, pending || 0)
-        onHttpStatsQueued(url, queued || 0)
-        onHttpStatsRunning(url, running || 0)
-        onHttpStatsSize(url, size || 0)
+        onHttpStatsConnected?.(url, connected || 0)
+        onHttpStatsPending?.(url, pending || 0)
+        onHttpStatsQueued?.(url, queued || 0)
+        onHttpStatsRunning?.(url, running || 0)
+        onHttpStatsSize?.(url, size || 0)
       }
     }
     const onActiveResourcesEventLoop = getOnActiveResourcesEventLoop({ throwOnMissing: false })
