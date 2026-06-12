@@ -240,13 +240,20 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
   - `path`. e.g.: `/documentation/json`
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
-  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes.
+  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin`, `memory`, and `file` (default: `console`). `memory` is only supported for testing purposes.
   - **`options`** (`object`) — These options are supported:
-    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
-    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`path`** (`string`) — The path where spans are written when using the `file` exporter.
+    - **`protocol`** (`string`) — OTLP transport protocol. Supported values are `http` and `grpc`. Defaults to `http`.
+    - **`transport`** (`string`) — Alias for `protocol`. Supported values are `http` and `grpc`. Defaults to `http`.
 - **`diagLogger`** (`boolean`) — Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
 
 Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+For OTLP exporters:
+- Use HTTP with URLs like `http://localhost:4318/v1/traces`
+- Use gRPC with URLs like `http://localhost:4317` and do not include `/v1/traces`
 
 _Example_
 

@@ -393,7 +393,7 @@ graph TD
     G --> I[Trace Context<br/>Propagation]
     H --> I
 
-    I --> J[OTLP Exporter]
+    I --> J[OTLP Exporter<br/>HTTP or gRPC]
     I --> K[Jaeger Exporter]
     I --> L[Zipkin Exporter]
 

@@ -381,7 +381,7 @@ Watt uses [Pino](https://getpino.io/) for high-performance structured logging ac
 
 ### Distributed Tracing Architecture
 
-Watt implements distributed tracing using [OpenTelemetry](https://opentelemetry.io/) with support for multiple trace exporters:
+Watt implements distributed tracing using [OpenTelemetry](https://opentelemetry.io/) with support for multiple trace exporters, including OTLP over HTTP, OTLP over gRPC, Zipkin, console, memory, and file:
 
 ```ascii
 ┌──────────────────────────────────────────────────────────────────────┐

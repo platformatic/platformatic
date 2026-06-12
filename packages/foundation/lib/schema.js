@@ -649,6 +649,16 @@ export const openTelemetryExporter = {
         path: {
           type: 'string',
           description: 'The path to write the traces to. Only for file exporter.'
+        },
+        protocol: {
+          type: 'string',
+          enum: ['http', 'grpc'],
+          description: 'The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.'
+        },
+        transport: {
+          type: 'string',
+          enum: ['http', 'grpc'],
+          description: 'Alias for protocol. Only for the otlp exporter. Defaults to http.'
         }
       }
     },

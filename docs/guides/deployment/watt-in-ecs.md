@@ -104,6 +104,8 @@ This makes sure our logs are shipped to Cloudwatch and we integrate with the
 
 Next, a `telemetry` block must be added to _watt.json_ so that metrics flow into Cloudwatch.
 
+This example uses OTLP over HTTP. You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and using `http://localhost:4317` without `/v1/traces`.
+
 ```json
 {
     "telemetry": {

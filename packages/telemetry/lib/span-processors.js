@@ -35,8 +35,15 @@ export function getSpanProcessors (opts = {}, logger = abstractLogger) {
     if (exp.type === 'console') {
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     } else if (exp.type === 'otlp') {
-      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
-      exporterObj = new OTLPTraceExporter(exporterOptions)
+      const transport = exporterOptions.protocol ?? exporterOptions.transport ?? 'http'
+
+      if (transport === 'grpc') {
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-grpc')
+        exporterObj = new OTLPTraceExporter(exporterOptions)
+      } else {
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
+        exporterObj = new OTLPTraceExporter(exporterOptions)
+      }
     } else if (exp.type === 'zipkin') {
       const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
       exporterObj = new ZipkinExporter(exporterOptions)

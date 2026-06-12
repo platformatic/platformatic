@@ -46,6 +46,24 @@ This configuration:
 - Identifies the service as "my-service" v1.0.0
 - Automatically correlates logs with traces
 
+The trace exporter in the `telemetry` block also supports OTLP over gRPC:
+
+```json
+{
+  "telemetry": {
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "protocol": "grpc",
+        "url": "http://localhost:4317"
+      }
+    }
+  }
+}
+```
+
+When using gRPC for traces, do not include `/v1/traces` in the URL.
+
 ### Protocol Options
 
 The `openTelemetryExporter` supports two protocols:
