@@ -50,7 +50,7 @@
     "@fastify/reply-from": "^12.0.0",
     "@fastify/static": "^9.0.0",
     "@fastify/swagger": "^9.0.0",
-    "@fastify/view": "^10.0.1",
+    "@fastify/view": "^12.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/fastify-openapi-glue": "^5.1.0",
     "@platformatic/foundation": "workspace:^",
