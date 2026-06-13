@@ -1443,8 +1443,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       '@platformatic/undici-cache-memory':
-        specifier: ^0.8.1
-        version: 0.8.4
+        specifier: ^0.9.0
+        version: 0.9.0
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -4679,8 +4679,8 @@ packages:
     engines: {node: '>=20.18.1'}
     hasBin: true
 
-  '@platformatic/undici-cache-memory@0.8.4':
-    resolution: {integrity: sha512-/JVfPhyUW0GQkmr5lGAGOgh0lpJbTcLG8VB2uNqgNgH1fhPPFAM0l4pLSyeDzpTj2r/GJPLqhzvCgangnSHfoQ==}
+  '@platformatic/undici-cache-memory@0.9.0':
+    resolution: {integrity: sha512-ub1oMcewDpZD5PLFyfXeZYVe3aQBZXVwZ3wUssjvErdavBex+aptvps9UGDDD0k6L1KNlCCJZE74WrxRNGiewg==}
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -13752,7 +13752,7 @@ snapshots:
       protobufjs: 8.6.3
       undici: 7.27.2
 
-  '@platformatic/undici-cache-memory@0.8.4': {}
+  '@platformatic/undici-cache-memory@0.9.0': {}
 
   '@protobufjs/aspromise@1.1.2': {}
 
