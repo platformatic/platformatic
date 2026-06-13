@@ -242,6 +242,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'reference/runtime/overview',
+            'reference/runtime/globals',
             'reference/runtime/configuration',
             'reference/runtime/multithread-architecture',
             'reference/runtime/programmatic'

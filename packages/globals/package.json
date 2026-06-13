@@ -26,7 +26,16 @@
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "homepage": "https://docs.platformatic.dev/docs/reference/runtime/globals",
+  "keywords": [
+    "platformatic",
+    "watt",
+    "runtime",
+    "globals",
+    "logger",
+    "metrics",
+    "messaging"
+  ],
   "devDependencies": {
     "@types/node": "^22.10.6",
     "cleaner-spec-reporter": "^0.5.0",

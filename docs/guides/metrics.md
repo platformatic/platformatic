@@ -121,7 +121,7 @@ Use [environment variable placeholders](../reference/service/configuration.md#en
 ## Custom Metrics
 
 When running an application inside Platformatic, you can register and export custom metrics by accessing the application registry.
-Do to so, access the registry and client from the object returned by `getPrometheus()`. In order to ensure the maximum compatibility between Platformatic metrics and custom metrics, the client uses `@platformatic/prom-client` internally. This is API compatible with the standard `prom-client` package but significantly faster.
+To do so, access the registry and client from the object returned by [`getPrometheus()`](../reference/runtime/globals.md#logging-and-observability). To ensure maximum compatibility between Platformatic metrics and custom metrics, the client uses `@platformatic/prom-client` internally. This is API compatible with the standard `prom-client` package but significantly faster.
 
 Putting everything together, here it is an example of how to register a custom metric:
 

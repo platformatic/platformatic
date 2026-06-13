@@ -64,6 +64,8 @@ export function create () {
 }
 ```
 
+The `getLogger()` function comes from [`@platformatic/globals`](../reference/runtime/globals.md), which exposes runtime APIs to applications running inside Watt.
+
 :::note
 In this example, we are using the built-in `node:http` module to
 create a simple HTTP server that responds with a JSON object containing a counter.

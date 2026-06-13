@@ -193,8 +193,8 @@ This autoload behavior simplifies deployment and ensures all your services are a
 
 ### Custom Health Check Functions
 
-- **`setCustomHealthCheck()`**: Sets a custom liveness check for the `/status` endpoint or custom liveness endpoint.
-- **`setCustomReadinessCheck()`**: Sets a custom readiness check for the `/ready` endpoint or custom readiness endpoint.
+- **[`setCustomHealthCheck()`](../../reference/runtime/globals.md#health-checks-and-lifecycle)**: Sets a custom liveness check for the `/status` endpoint or custom liveness endpoint.
+- **[`setCustomReadinessCheck()`](../../reference/runtime/globals.md#health-checks-and-lifecycle)**: Sets a custom readiness check for the `/ready` endpoint or custom readiness endpoint.
 
 Both methods accept a function that returns:
 

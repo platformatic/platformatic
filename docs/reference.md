@@ -36,6 +36,8 @@ Framework integrations that let you run frontend applications alongside your API
 ### ⚙️ Runtime & Orchestration
 Development and production runtime environment for managing multiple applications.
 
+- **Runtime APIs** - Typed getters and setters exposed by `@platformatic/globals`.
+
 ### 🗄️ SQL Data Layer
 Low-level components for database integration and API generation:
 

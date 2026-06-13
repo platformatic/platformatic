@@ -769,6 +769,8 @@ Configuration options (object form):
 
 **Usage example inside a privileged application:**
 
+Use [`getManagement()`](/docs/reference/runtime/globals#messaging-and-shared-context) from `@platformatic/globals` to access the management API.
+
 ```javascript
 import { getManagement } from '@platformatic/globals'
 

@@ -122,7 +122,7 @@ The response object exposes `statusCode`, `statusMessage`, `headers`, `body` (st
 
 ### Testing Messaging API handlers
 
-Use `setupLoopbackMessaging()` to test an application's Messaging API handlers without starting a runtime.
+Use `setupLoopbackMessaging()` to test an application's [Messaging API](./globals.md#messaging-api) handlers without starting a runtime.
 
 Application under test:
 
