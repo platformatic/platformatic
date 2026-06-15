@@ -332,7 +332,7 @@ You can fine-tune the cache behavior with additional options:
 
 When you need to invalidate cache for a specific endpoint:
 
-**Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same function returned by `getInvalidateHttpCache()` can be used with Express, Koa, or any other framework.
+**Note:** This cache invalidation approach works with any Node.js web framework, not just Fastify. The same function returned by [`getInvalidateHttpCache()`](../reference/runtime/globals.md#http-cache-and-client-metrics) can be used with Express, Koa, or any other framework.
 
 ```js
 // web/api/routes/admin.js

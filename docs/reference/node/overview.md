@@ -36,7 +36,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Specify application info
 
-Some info can be specified for the node applications. Currently for this few lines of code must be added.
+Some info can be specified for Node.js applications through the [`@platformatic/globals` Runtime APIs](../runtime/globals.md). Currently, a few lines of code must be added.
 
 ### OpenAPI and GraphQL schema
 
