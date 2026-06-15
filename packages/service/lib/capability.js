@@ -1,5 +1,11 @@
 import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
-import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  deepmerge,
+  isKeyEnabled,
+  sanitizeHTTPSOptions
+} from '@platformatic/foundation'
 import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
@@ -10,7 +16,6 @@ import pino from 'pino'
 import { platformaticService } from './application.js'
 import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
-import { sanitizeHTTPSArgument } from './utils.js'
 
 export class ServiceCapability extends BaseCapability {
   #app
@@ -233,8 +238,7 @@ export class ServiceCapability extends BaseCapability {
     }
 
     if (config.server.https) {
-      config.server.https.key = await sanitizeHTTPSArgument(config.server.https.key)
-      config.server.https.cert = await sanitizeHTTPSArgument(config.server.https.cert)
+      config.server.https = await sanitizeHTTPSOptions(config.server.https)
     }
 
     // Assign the logger instance if it exists

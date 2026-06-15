@@ -27,7 +27,7 @@ import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
-import { cleanBasePath, importFile } from './utils.js'
+import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
 export class BaseCapability extends EventEmitter {
@@ -641,12 +641,7 @@ export class BaseCapability extends EventEmitter {
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
-      additionalServerOptions:
-        typeof this.serverConfig?.backlog === 'number'
-          ? {
-              backlog: this.serverConfig.backlog
-            }
-          : {},
+      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig),
       telemetryConfig: this.telemetryConfig,
       compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
       resourceLimits: this.context.resourceLimits

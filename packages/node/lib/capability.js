@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  buildAdditionalServerOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -165,7 +166,8 @@ export class NodeCapability extends BaseCapability {
       : undefined
 
     this.registerGlobals({
-      basePath: this.#basePath
+      basePath: this.#basePath,
+      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig)
     })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
@@ -175,7 +177,7 @@ export class NodeCapability extends BaseCapability {
     const serverPromise = createServerListener(
       serverOptions?.port ?? true,
       serverOptions?.hostname ?? true,
-      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+      await buildAdditionalServerOptions(serverOptions)
     )
 
     try {
@@ -420,7 +422,7 @@ export class NodeCapability extends BaseCapability {
     createServerListener(
       false,
       false,
-      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+      await buildAdditionalServerOptions(serverOptions)
     )
 
     if (this.#isFastify) {

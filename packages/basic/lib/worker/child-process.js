@@ -30,6 +30,7 @@ import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
+import { Server as HttpsServer } from 'node:https'
 import { createRequire, register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
@@ -583,8 +584,9 @@ export class ChildProcess extends ITC {
         }
 
         const { family, address: host, port } = address
+        const protocol = server instanceof HttpsServer ? 'https' : 'http'
         /* c8 ignore next */
-        const url = new URL(family === 'IPv6' ? `http://[${host}]:${port}` : `http://${host}:${port}`).origin
+        const url = new URL(family === 'IPv6' ? `${protocol}://[${host}]:${port}` : `${protocol}://${host}:${port}`).origin
 
         this.notify('url', url)
       },

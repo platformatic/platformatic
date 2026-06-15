@@ -869,11 +869,11 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   }
 }
 
-export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup) {
+export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup, requestOptions = {}) {
   const port = await getPort.default()
 
   // Create the runtime
-  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
+  const { runtime, root, config } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
     // Preserve the hostname already set by prepareRuntime's transform
     // (127.0.0.1) — only override the port here.
     config.server = { ...config.server, port }
@@ -889,7 +889,8 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Start the runtime
   const url = await startRuntime(t, runtime)
 
-  deepStrictEqual(url, `http://127.0.0.1:${port}`)
+  const protocol = config.server?.https ? 'https' : 'http'
+  deepStrictEqual(url, `${protocol}://127.0.0.1:${port}`)
 
   // Check that we get the response from different workers
   const workers = features.node.reusePort ? 5 : 1
@@ -899,7 +900,7 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
 
   // The round robin may take a few attempts to use all workers
   while (usedWorkers.size > 0 && attempts++ < workers * 5) {
-    const res = await request(url + '/')
+    const res = await request(url + '/', requestOptions)
     await integrityCheck?.(res)
 
     const worker = res.headers['x-plt-worker-id']

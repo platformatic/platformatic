@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
 import {
   buildListenOptions,
+  buildAdditionalServerOptions,
   cleanBasePath,
   ensureFileUrl,
   ensureTrailingSlash,
@@ -158,4 +159,21 @@ test('buildListenOptions - falls back to port 0 when port is not a number', () =
     host: '127.0.0.1',
     port: 0
   })
+})
+
+test('buildAdditionalServerOptions - returns backlog and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildAdditionalServerOptions({
+      backlog: 42,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      backlog: 42,
+      key: 'key',
+      cert: 'cert'
+    }
+  )
 })
