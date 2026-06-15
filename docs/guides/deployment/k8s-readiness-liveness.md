@@ -147,20 +147,53 @@ For Kubernetes, store the certificate and private key in a Secret and mount it i
 }
 ```
 
-You can also provide inline PEM strings, which is convenient for local testing:
+You can also store the PEM values in environment variables and reference them with configuration placeholders. This is useful when your deployment platform injects secrets as environment variables instead of files:
 
 ```json
 {
   "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
     "https": {
-      "key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
-      "cert": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+      "key": "{PLT_METRICS_TLS_KEY}",
+      "cert": "{PLT_METRICS_TLS_CERT}"
     }
   }
 }
 ```
 
-Use file paths for production deployments so certificates can be rotated through your platform's secret management. Both `key` and `cert` also accept arrays if your TLS setup requires multiple keys or certificate chains.
+In Kubernetes, create a TLS Secret:
+
+```bash
+kubectl create secret tls watt-metrics-tls --cert=./tls.crt --key=./tls.key
+```
+
+Then expose the Secret values as environment variables in your Deployment:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watt
+spec:
+  template:
+    spec:
+      containers:
+        - name: watt
+          env:
+            - name: PLT_METRICS_TLS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: watt-metrics-tls
+                  key: tls.key
+            - name: PLT_METRICS_TLS_CERT
+              valueFrom:
+                secretKeyRef:
+                  name: watt-metrics-tls
+                  key: tls.crt
+```
+
+The environment variables must contain the complete PEM private key and certificate, not paths to the files. Use file paths for production deployments if you want certificate rotation through mounted Secrets. Both `key` and `cert` also accept arrays if your TLS setup requires multiple keys or certificate chains.
 
 When the metrics server uses HTTPS, set `scheme: HTTPS` on Kubernetes HTTP probes:
 
