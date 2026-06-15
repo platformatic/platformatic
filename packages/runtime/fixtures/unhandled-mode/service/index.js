@@ -5,6 +5,10 @@ process.on('uncaughtException', () => {
 })
 
 export default async function (fastify) {
+  fastify.get('/listeners', async () => {
+    return { count: process.listeners('uncaughtException').length }
+  })
+
   fastify.get('/trigger', async () => {
     setTimeout(() => {
       throw new Error('UNHANDLED')

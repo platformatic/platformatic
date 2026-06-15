@@ -1,5 +1,6 @@
 import {
   getAdditionalServerOptions,
+  getApplicationConfig,
   getApplicationId,
   getBasePath,
   getConfig,
@@ -10,6 +11,7 @@ import {
   getLogger,
   getPort,
   getRoot,
+  getRuntimeConfig,
   getRuntimeBasePath,
   getTelemetryConfig,
   getWantsAbsoluteUrls,
@@ -26,6 +28,7 @@ function handler (_, res) {
 
   const platformatic = {
     additionalServerOptions: getAdditionalServerOptions(),
+    applicationConfig: getApplicationConfig(),
     applicationId: getApplicationId(),
     basePath: getBasePath({ throwOnMissing: false }),
     config: getConfig(),
@@ -36,6 +39,7 @@ function handler (_, res) {
     logger: getLogger(),
     port: getPort(),
     root: getRoot(),
+    runtimeConfig: getRuntimeConfig(),
     runtimeBasePath: getRuntimeBasePath(),
     telemetryConfig: getTelemetryConfig(),
     wantsAbsoluteUrls: getWantsAbsoluteUrls(),

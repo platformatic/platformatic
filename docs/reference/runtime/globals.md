@@ -79,6 +79,8 @@ The default export is `getGlobal`.
 | `getRuntimeBasePath(options?)` | Returns the runtime base path as a string, or `null` when no runtime base path is configured. |
 | `getWantsAbsoluteUrls(options?)` | Returns a boolean indicating whether the application expects absolute URLs. |
 | `getConfig(options?)` | Returns the application configuration object. |
+| `getRuntimeConfig(options?)` | Returns the runtime configuration object. |
+| `getApplicationConfig(options?)` | Returns the runtime application descriptor, or `null` when unavailable. |
 | `getAdditionalServerOptions(options?)` | Returns additional server options for the application as an object. |
 | `getNextVersion(options?)` | Returns an object with the detected Next.js version, with `major` and optional `minor` numbers. |
 | `getCapability(options?)` | Returns the current application capability instance as an object. |
@@ -304,6 +306,8 @@ During application execution some APIs are also available on `globalThis.platfor
 | Legacy API | Preferred API |
 | --- | --- |
 | `globalThis.platformatic.applicationId` | `getApplicationId()` |
+| `globalThis.platformatic.applicationConfig` | `getApplicationConfig()` |
+| `globalThis.platformatic.runtimeConfig` | `getRuntimeConfig()` |
 | `globalThis.platformatic.workerId` | `getWorkerId()` |
 | `globalThis.platformatic.root` | `getRoot()` |
 | `globalThis.platformatic.basePath` | `getBasePath()` |

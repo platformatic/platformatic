@@ -511,6 +511,7 @@ export interface PlatformaticGatewayConfig {
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;
+    exitOnUnhandledErrorsTimeout?: number;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;

@@ -128,6 +128,8 @@ export class BaseCapability extends EventEmitter {
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.context.applicationConfig ?? null,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
@@ -628,6 +630,8 @@ export class BaseCapability extends EventEmitter {
     return {
       id: this.id,
       config: this.config,
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.context.applicationConfig ?? null,
       applicationId: this.applicationId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
@@ -639,6 +643,7 @@ export class BaseCapability extends EventEmitter {
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
+      exitOnUnhandledErrorsTimeout: this.runtimeConfig.exitOnUnhandledErrorsTimeout ?? 100,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions:

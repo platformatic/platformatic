@@ -233,7 +233,13 @@ This setting is ignored in production, where applications are always restarted i
 
 When enabled (default), Platformatic automatically installs error handlers for [`uncaughtException`](https://nodejs.org/api/process.html#event-uncaughtexception) and [`unhandledRejection`](https://nodejs.org/api/process.html#event-unhandledrejection) events on each worker process. These handlers will automatically restart the affected worker when such errors occur.
 
+If application code installs its own listeners for these events, Platformatic tracks them, removes them from `process`, and invokes them before terminating the worker. This keeps Platformatic in control of the shutdown while still allowing error reporting tools to observe fatal errors.
+
 Setting this to `false` disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
+
+### `exitOnUnhandledErrorsTimeout`
+
+The number of milliseconds to wait after an `uncaughtException` or `unhandledRejection` before terminating the affected worker when `exitOnUnhandledErrors` is enabled. During this time, Platformatic invokes any tracked application listeners for the fatal error event. Default: `100`.
 
 ### `health`
 

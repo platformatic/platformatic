@@ -241,6 +241,7 @@ export interface PlatformaticTanStackConfig {
     startTimeout?: number;
     restartOnError?: boolean | number;
     exitOnUnhandledErrors?: boolean;
+    exitOnUnhandledErrorsTimeout?: number;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;

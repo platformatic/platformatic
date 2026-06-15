@@ -15,6 +15,8 @@ test('getters should return global fields', () => {
     additionalServerOptions: {},
     telemetryConfig: {},
     config: {},
+    runtimeConfig: {},
+    applicationConfig: {},
     applicationId: 'application',
     workerId: 1,
     root: '/tmp/application',
@@ -72,6 +74,8 @@ test('getters should return global fields', () => {
   strictEqual(globals.getAdditionalServerOptions(), values.additionalServerOptions)
   strictEqual(globals.getTelemetryConfig(), values.telemetryConfig)
   strictEqual(globals.getConfig(), values.config)
+  strictEqual(globals.getRuntimeConfig(), values.runtimeConfig)
+  strictEqual(globals.getApplicationConfig(), values.applicationConfig)
   strictEqual(globals.getApplicationId(), values.applicationId)
   strictEqual(globals.getWorkerId(), values.workerId)
   strictEqual(globals.getRoot(), values.root)

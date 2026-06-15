@@ -74,6 +74,8 @@ export interface PlatformaticGlobal {
   additionalServerOptions: object
   telemetryConfig: object
   config: object
+  runtimeConfig: object
+  applicationConfig: object | null
   applicationId: string
   workerId: number | string
   root: string
@@ -182,6 +184,12 @@ export declare function getTelemetryConfig (options: GlobalGetterOptions): Platf
 export declare function getConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['config']
 export declare function getConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['config'] | undefined
 export declare function getConfig (options: GlobalGetterOptions): PlatformaticGlobal['config'] | undefined
+export declare function getRuntimeConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['runtimeConfig']
+export declare function getRuntimeConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['runtimeConfig'] | undefined
+export declare function getRuntimeConfig (options: GlobalGetterOptions): PlatformaticGlobal['runtimeConfig'] | undefined
+export declare function getApplicationConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['applicationConfig']
+export declare function getApplicationConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['applicationConfig'] | undefined
+export declare function getApplicationConfig (options: GlobalGetterOptions): PlatformaticGlobal['applicationConfig'] | undefined
 export declare function getApplicationId (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['applicationId']
 export declare function getApplicationId (options: OptionalGlobalGetterOptions): PlatformaticGlobal['applicationId'] | undefined
 export declare function getApplicationId (options: GlobalGetterOptions): PlatformaticGlobal['applicationId'] | undefined

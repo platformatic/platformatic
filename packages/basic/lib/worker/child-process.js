@@ -11,6 +11,7 @@ import {
   getConfig,
   getEvents,
   getExitOnUnhandledErrors,
+  getRuntimeConfig,
   getHost,
   getITC,
   getLogger,
@@ -620,32 +621,48 @@ export class ChildProcess extends ITC {
   }
 
   #setupHandlers () {
-    const workerId = getWorkerId()
-    const applicationId = getApplicationId()
+    const unhandledListeners = { uncaughtException: [], unhandledRejection: [] }
 
-    const errorLabel = `worker ${workerId} of the application "${applicationId}"`
+    process.on(
+      'uncaughtException',
+      this.#handleUnhandled.bind(this, 'uncaughtException', unhandledListeners.uncaughtException)
+    )
+    process.on(
+      'unhandledRejection',
+      this.#handleUnhandled.bind(this, 'unhandledRejection', unhandledListeners.unhandledRejection)
+    )
 
-    function handleUnhandled (type, err) {
-      this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
-
-      // Give some time to the logger and ITC notifications to land before shutting down
-      setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), 100)
-    }
-
-    process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
-    process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
-
-    process.on('newListener', event => {
+    process.on('newListener', (event, listener) => {
       if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        this.#logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
-        )
+        unhandledListeners[event].push(listener)
+
+        process.nextTick(() => {
+          process.removeListener(event, listener)
+        })
       }
     })
   }
 
   #notifyConfig (config) {
     this.notify('config', config)
+  }
+
+  #handleUnhandled (event, listeners, err, ...args) {
+    const label = `worker ${getWorkerId()} of the application "${getApplicationId()}"`
+    const timeout = getRuntimeConfig({ throwOnMissing: false })?.exitOnUnhandledErrorsTimeout ?? 100
+
+    this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${label} threw an ${event} event.`)
+
+    // Give some time to the listeners, logger and ITC notifications to land before shutting down
+    setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), timeout)
+
+    for (const listener of listeners) {
+      try {
+        listener(err, ...args)
+      } catch (err) {
+        this.#logger.error({ err: ensureLoggableError(err) }, `${event} error listener failed.`)
+      }
+    }
   }
 }
 
