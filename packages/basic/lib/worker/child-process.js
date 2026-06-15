@@ -10,8 +10,6 @@ import {
   getApplicationId,
   getConfig,
   getEvents,
-  getExitOnUnhandledErrors,
-  getRuntimeConfig,
   getHost,
   getITC,
   getLogger,
@@ -19,6 +17,7 @@ import {
   getPrometheus,
   getReuseTcpPorts,
   getRuntimeBasePath,
+  getRuntimeConfig,
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
@@ -175,8 +174,15 @@ export class ChildProcess extends ITC {
     if (!windowsNpmExecutables.includes(executable)) {
       this.#setupLogger()
 
-      if (getExitOnUnhandledErrors({ throwOnMissing: false })) {
-        this.#setupHandlers()
+      const runtimeConfig = getRuntimeConfig({ throwOnMissing: false })
+      let exitOnUnhandledErrors = runtimeConfig?.exitOnUnhandledErrors
+
+      if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+        exitOnUnhandledErrors = 100
+      }
+
+      if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+        this.#setupHandlers(exitOnUnhandledErrors)
       }
 
       this.#setupServer()
@@ -620,16 +626,16 @@ export class ChildProcess extends ITC {
     mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher)
   }
 
-  #setupHandlers () {
+  #setupHandlers (timeout) {
     const unhandledListeners = { uncaughtException: [], unhandledRejection: [] }
 
     process.on(
       'uncaughtException',
-      this.#handleUnhandled.bind(this, 'uncaughtException', unhandledListeners.uncaughtException)
+      this.#handleUnhandled.bind(this, 'uncaughtException', unhandledListeners.uncaughtException, timeout)
     )
     process.on(
       'unhandledRejection',
-      this.#handleUnhandled.bind(this, 'unhandledRejection', unhandledListeners.unhandledRejection)
+      this.#handleUnhandled.bind(this, 'unhandledRejection', unhandledListeners.unhandledRejection, timeout)
     )
 
     process.on('newListener', (event, listener) => {
@@ -647,9 +653,8 @@ export class ChildProcess extends ITC {
     this.notify('config', config)
   }
 
-  #handleUnhandled (event, listeners, err, ...args) {
+  #handleUnhandled (event, listeners, timeout, err, ...args) {
     const label = `worker ${getWorkerId()} of the application "${getApplicationId()}"`
-    const timeout = getRuntimeConfig({ throwOnMissing: false })?.exitOnUnhandledErrorsTimeout ?? 100
 
     this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${label} threw an ${event} event.`)
 

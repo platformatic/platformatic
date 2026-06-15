@@ -65,7 +65,7 @@ export interface PlatformaticGlobal {
   executable: string
   runtimeId: number
   nextVersion: { major: number, minor?: number }
-  exitOnUnhandledErrors: boolean
+  exitOnUnhandledErrors: boolean | number
   reuseTcpPorts: boolean
 
   // Service configuration

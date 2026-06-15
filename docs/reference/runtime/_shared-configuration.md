@@ -235,11 +235,9 @@ When enabled (default), Platformatic automatically installs error handlers for [
 
 If application code installs its own listeners for these events, Platformatic tracks them, removes them from `process`, and invokes them before terminating the worker. This keeps Platformatic in control of the shutdown while still allowing error reporting tools to observe fatal errors.
 
-Setting this to `false` disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
+Set this to `true` to terminate the worker after `100` milliseconds. Set this to a positive number to use that number of milliseconds instead.
 
-### `exitOnUnhandledErrorsTimeout`
-
-The number of milliseconds to wait after an `uncaughtException` or `unhandledRejection` before terminating the affected worker when `exitOnUnhandledErrors` is enabled. During this time, Platformatic invokes any tracked application listeners for the fatal error event. Default: `100`.
+Setting this to `false`, `0`, or a negative number disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
 
 ### `health`
 

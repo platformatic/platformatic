@@ -288,7 +288,6 @@ test('config - should list configuration for the runtime', async t => {
     reuseTcpPorts: true,
     restartOnError: 2,
     exitOnUnhandledErrors: true,
-    exitOnUnhandledErrorsTimeout: 100,
     startTimeout: 30000,
     messagingTimeout: 30000,
     managementApi: true,

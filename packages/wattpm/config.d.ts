@@ -221,8 +221,7 @@ export type PlatformaticRuntimeConfig = {
   reuseTcpPorts?: boolean;
   startTimeout?: number;
   restartOnError?: boolean | number;
-  exitOnUnhandledErrors?: boolean;
-  exitOnUnhandledErrorsTimeout?: number;
+  exitOnUnhandledErrors?: boolean | number;
   gracefulShutdown?: {
     runtime: number | string;
     application: number | string;

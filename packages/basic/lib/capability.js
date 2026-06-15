@@ -643,7 +643,6 @@ export class BaseCapability extends EventEmitter {
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      exitOnUnhandledErrorsTimeout: this.runtimeConfig.exitOnUnhandledErrorsTimeout ?? 100,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions:

@@ -36,9 +36,8 @@ function fetchApplicationUrl (application, key) {
   return getApplicationUrl(application.id)
 }
 
-function handleUnhandled (app, event, listeners, err, ...args) {
+function handleUnhandled (app, event, listeners, timeout, err, ...args) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-  const timeout = app.runtimeConfig.exitOnUnhandledErrorsTimeout ?? 100
 
   const logger = getLogger()
   logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${event} event.`)
@@ -158,8 +157,14 @@ export class Controller extends EventEmitter {
         cleanupHandlers()
       }
 
-      if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
-        this.#setupHandlers()
+      let exitOnUnhandledErrors = this.runtimeConfig.exitOnUnhandledErrors
+
+      if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+        exitOnUnhandledErrors = 100
+      }
+
+      if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+        this.#setupHandlers(exitOnUnhandledErrors)
       }
     } catch (err) {
       if (err.validationErrors) {
@@ -367,16 +372,16 @@ export class Controller extends EventEmitter {
     mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
   }
 
-  #setupHandlers () {
+  #setupHandlers (timeout) {
     const unhandledListeners = { uncaughtException: [], unhandledRejection: [] }
 
     process.on(
       'uncaughtException',
-      handleUnhandled.bind(null, this, 'uncaughtException', unhandledListeners.uncaughtException)
+      handleUnhandled.bind(null, this, 'uncaughtException', unhandledListeners.uncaughtException, timeout)
     )
     process.on(
       'unhandledRejection',
-      handleUnhandled.bind(null, this, 'unhandledRejection', unhandledListeners.unhandledRejection)
+      handleUnhandled.bind(null, this, 'unhandledRejection', unhandledListeners.unhandledRejection, timeout)
     )
 
     process.on('newListener', (event, listener) => {

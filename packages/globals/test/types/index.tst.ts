@@ -14,7 +14,7 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.executable).type.toBe<string>()
   expect(platformatic.runtimeId).type.toBe<number>()
   expect(platformatic.nextVersion).type.toBe<{ major: number, minor?: number }>()
-  expect(platformatic.exitOnUnhandledErrors).type.toBe<boolean>()
+  expect(platformatic.exitOnUnhandledErrors).type.toBe<boolean | number>()
   expect(platformatic.reuseTcpPorts).type.toBe<boolean>()
 
   // Service configuration
