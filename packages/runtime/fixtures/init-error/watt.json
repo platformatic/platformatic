@@ -10,5 +10,6 @@
   ],
   "logger": {
     "level": "debug"
-  }
+  },
+  "exitOnUnhandledErrors": 1
 }
