@@ -8,6 +8,7 @@ import {
   importFile,
   resolvePackageViaESM
 } from '@platformatic/basic'
+import { sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { ViteCapability } from '@platformatic/vite'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -86,7 +87,24 @@ export class TanstackCapability extends ViteCapability {
       await buildAdditionalServerOptions(serverOptions)
     )
 
-    await importFile(resolve(outputDirectory, 'server/index.mjs'))
+    const httpsOptions = await sanitizeHTTPSOptions(serverOptions?.https)
+
+    if (!httpsOptions?.cert && !httpsOptions?.key) {
+      await this.#importProductionNitro(outputDirectory)
+    } else {
+      const originalCert = process.env.NITRO_SSL_CERT
+      const originalKey = process.env.NITRO_SSL_KEY
+
+      process.env.NITRO_SSL_CERT = this.#serializeCertificateValue(httpsOptions.cert)
+      process.env.NITRO_SSL_KEY = this.#serializeCertificateValue(httpsOptions.key)
+
+      try {
+        await this.#importProductionNitro(outputDirectory)
+      } finally {
+        this.#restoreEnvironmentVariables('NITRO_SSL_CERT', originalCert)
+        this.#restoreEnvironmentVariables('NITRO_SSL_KEY', originalKey)
+      }
+    }
 
     this.#server = await serverPromise
     this.#dispatcher = this.#server.listeners('request')[0]
@@ -128,5 +146,25 @@ export class TanstackCapability extends ViteCapability {
     // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
     return { statusCode, headers, body, payload, rawPayload }
+  }
+
+  #importProductionNitro (outputDirectory) {
+    return importFile(resolve(outputDirectory, 'server/index.mjs'))
+  }
+
+  #serializeCertificateValue (value) {
+    if (Array.isArray(value)) {
+      return value.map(item => item.toString()).join('\n')
+    }
+
+    return value.toString()
+  }
+
+  #restoreEnvironmentVariables (key, originalValue) {
+    if (typeof originalValue === 'undefined') {
+      delete process.env[key]
+    } else {
+      process.env[key] = originalValue
+    }
   }
 }

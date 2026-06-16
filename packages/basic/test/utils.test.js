@@ -179,6 +179,27 @@ test('buildAdditionalServerOptions - returns backlog and sanitized https options
   )
 })
 
+test('buildAdditionalServerOptions - can skip https options sanitization', async () => {
+  const https = {
+    key: { path: 'key' },
+    cert: { path: 'cert' }
+  }
+
+  deepStrictEqual(
+    await buildAdditionalServerOptions(
+      {
+        backlog: 42,
+        https
+      },
+      true
+    ),
+    {
+      backlog: 42,
+      ...https
+    }
+  )
+})
+
 test('buildFastifyOptions - returns http2 and sanitized https options', async () => {
   deepStrictEqual(
     await buildFastifyOptions({

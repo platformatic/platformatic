@@ -1,12 +1,11 @@
 import { sanitizeHTTPSOptions } from '@platformatic/foundation'
-import { Server as HttpsServer } from 'node:https'
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
   let { family, address, port } = server.address()
-  const protocol = server instanceof HttpsServer ? 'https' : 'http'
+  const protocol = typeof server.setSecureContext === 'function' ? 'https' : 'http'
 
   if (family === 'IPv6' && address === '::') {
     family = 'IPv4'
@@ -29,7 +28,7 @@ export function buildListenOptions (serverConfig) {
   return options
 }
 
-export async function buildAdditionalServerOptions (serverConfig) {
+export async function buildAdditionalServerOptions (serverConfig, skipHTTPSSanitization = false) {
   const options = {}
 
   if (typeof serverConfig?.backlog === 'number') {
@@ -37,7 +36,7 @@ export async function buildAdditionalServerOptions (serverConfig) {
   }
 
   if (serverConfig?.https) {
-    Object.assign(options, await sanitizeHTTPSOptions(serverConfig.https))
+    Object.assign(options, skipHTTPSSanitization ? serverConfig.https : await sanitizeHTTPSOptions(serverConfig.https))
   }
 
   return options

@@ -641,7 +641,7 @@ export class BaseCapability extends EventEmitter {
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
-      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig),
+      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
       telemetryConfig: this.telemetryConfig,
       compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
       resourceLimits: this.context.resourceLimits
