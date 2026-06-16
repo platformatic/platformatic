@@ -88,6 +88,25 @@ In this setup:
 
 When starting Next.js in development mode, production mode, or by using the `commands` property, Platformatic selects a random internal port for the Next.js HTTP server and overrides any user or application setting.
 
+## HTTPS
+
+When a Next.js application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic maps `server.https` to Next.js' experimental HTTPS development server options.
+
+Next.js does not support HTTPS in production mode with `next start`. To run a production Next.js application over HTTPS, terminate TLS before Watt or use a custom command/server that creates its own HTTPS server.
+
 ## Features
 
 - **Image Optimizer**: Run a standalone image optimization service. See [Image Optimizer](./image-optimizer.md).

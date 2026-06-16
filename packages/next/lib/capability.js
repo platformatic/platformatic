@@ -245,7 +245,7 @@ export class NextCapability extends BaseCapability {
           _: [this.root]
         }
 
-        const httpsOptions = this.config.next?.https ?? {}
+        const httpsOptions = this.#getDevelopmentHTTPSOptions()
 
         if (httpsOptions.enabled) {
           devOptions['--experimental-https-key'] = true
@@ -265,8 +265,7 @@ export class NextCapability extends BaseCapability {
 
         await nextDev(devOptions)
       } else {
-        const nextConfig = this.config.next ?? {}
-        const httpsOptions = nextConfig.https ?? {}
+        const httpsOptions = this.#getDevelopmentHTTPSOptions()
 
         if (httpsOptions.enabled) {
           serverOptions.experimentalHttps = true
@@ -450,6 +449,41 @@ export class NextCapability extends BaseCapability {
     }
 
     return scripts
+  }
+
+  #getDevelopmentHTTPSOptions () {
+    const nextHTTPSOptions = this.config.next?.https
+    if (nextHTTPSOptions?.enabled) {
+      return nextHTTPSOptions
+    }
+
+    const serverHTTPSOptions = this.serverConfig?.https
+    if (!serverHTTPSOptions) {
+      return {}
+    }
+
+    return {
+      enabled: true,
+      key: this.#getHTTPSPath(serverHTTPSOptions.key),
+      cert: this.#getHTTPSPath(serverHTTPSOptions.cert),
+      ca: this.#getHTTPSPath(serverHTTPSOptions.ca)
+    }
+  }
+
+  #getHTTPSPath (value) {
+    if (!value) {
+      return undefined
+    }
+
+    if (typeof value === 'string') {
+      return value
+    }
+
+    if (Array.isArray(value)) {
+      return this.#getHTTPSPath(value[0])
+    }
+
+    return value.path
   }
 
   // In development mode, Next.js starts the dev server using child_process.fork with stdio set to 'inherit'.

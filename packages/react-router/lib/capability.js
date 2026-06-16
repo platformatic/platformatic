@@ -1,5 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import {
+  buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -147,7 +148,7 @@ export class ReactRouterCapability extends ViteCapability {
     const serverModule = await importFile(resolve(serverRoot, 'index.js'))
 
     // Setup fastify
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
     this._setApp(this.#app)
 
     let assetsRoot = clientRoot

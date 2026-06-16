@@ -230,6 +230,23 @@ export declare class FileWatcher extends EventEmitter {
   isFileIgnored (fileName: string): boolean
 }
 
+// HTTPS types
+export type HTTPSConfigArgument = string | { path: string } | Array<string | { path: string }>
+export type SanitizedHTTPSConfigArgument = string | Buffer | Array<string | Buffer>
+export interface HTTPSConfig {
+  key: HTTPSConfigArgument
+  cert: HTTPSConfigArgument
+  allowHTTP1?: boolean
+  requestCert?: boolean
+  rejectUnauthorized?: boolean
+}
+export interface SanitizedHTTPSConfig extends Omit<HTTPSConfig, 'key' | 'cert'> {
+  key: SanitizedHTTPSConfigArgument
+  cert: SanitizedHTTPSConfigArgument
+}
+export declare function sanitizeHTTPSArgument (arg: HTTPSConfigArgument): Promise<SanitizedHTTPSConfigArgument>
+export declare function sanitizeHTTPSOptions (https?: HTTPSConfig): Promise<SanitizedHTTPSConfig | undefined>
+
 // Logger types
 export declare function setPinoFormatters (options: any): void
 export declare function buildPinoFormatters (formatters: { path: string }): object

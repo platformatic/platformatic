@@ -1,16 +1,18 @@
+import { sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
   let { family, address, port } = server.address()
+  const protocol = typeof server.setSecureContext === 'function' ? 'https' : 'http'
 
   if (family === 'IPv6' && address === '::') {
     family = 'IPv4'
     address = '127.0.0.1'
   }
 
-  return new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
+  return new URL(family === 'IPv6' ? `${protocol}://[${address}]:${port}` : `${protocol}://${address}:${port}`).origin
 }
 
 // Builds the options object passed to `app.listen(...)`. When no hostname has
@@ -21,6 +23,34 @@ export function buildListenOptions (serverConfig) {
 
   if (serverConfig?.hostname) {
     options.host = serverConfig.hostname
+  }
+
+  return options
+}
+
+export async function buildAdditionalServerOptions (serverConfig, skipHTTPSSanitization = false) {
+  const options = {}
+
+  if (typeof serverConfig?.backlog === 'number') {
+    options.backlog = serverConfig.backlog
+  }
+
+  if (serverConfig?.https) {
+    Object.assign(options, skipHTTPSSanitization ? serverConfig.https : await sanitizeHTTPSOptions(serverConfig.https))
+  }
+
+  return options
+}
+
+export async function buildFastifyOptions (serverConfig) {
+  const options = {}
+
+  if (serverConfig?.http2) {
+    options.http2 = serverConfig.http2
+  }
+
+  if (serverConfig?.https) {
+    options.https = await sanitizeHTTPSOptions(serverConfig.https)
   }
 
   return options

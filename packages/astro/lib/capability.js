@@ -2,6 +2,7 @@ import middie from '@fastify/middie'
 import fastifyStatic from '@fastify/static'
 import {
   BaseCapability,
+  buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -11,7 +12,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
-import { ensureLoggableError } from '@platformatic/foundation'
+import { ensureLoggableError, sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { getLogger, updateGlobals } from '@platformatic/globals'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
@@ -197,12 +198,14 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Prepare options
-    const { hostname, port, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https, backlog } = this.serverConfig ?? {}
+    const httpsOptions = await sanitizeHTTPSOptions(https)
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
     const serverOptions = {
       host: hostname || '127.0.0.1',
-      port: port || 0
+      port: port || 0,
+      https: httpsOptions
     }
 
     // Require Astro
@@ -223,7 +226,8 @@ export class AstroCapability extends BaseCapability {
       server: serverOptions,
       vite: {
         server: {
-          allowedHosts: ['.plt.local']
+          allowedHosts: ['.plt.local'],
+          https: httpsOptions
         }
       },
       integrations: [
@@ -281,7 +285,7 @@ export class AstroCapability extends BaseCapability {
       return this.url
     }
 
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
 
     const root = resolve(this.root, outputDirectory)
     this.verifyOutputDirectory(root)

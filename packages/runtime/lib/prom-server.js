@@ -1,8 +1,7 @@
 import fastifyAccepts from '@fastify/accepts'
 import fastifyBasicAuth from '@fastify/basic-auth'
-import { loadModule } from '@platformatic/foundation'
+import { loadModule, sanitizeHTTPSOptions } from '@platformatic/foundation'
 import fastify from 'fastify'
-import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 
@@ -51,33 +50,6 @@ async function checkReadiness (runtime) {
   })
 
   return { response, status }
-}
-
-async function sanitizeHTTPSArgument (arg) {
-  if (typeof arg === 'string') {
-    return arg
-  } else if (!Array.isArray(arg)) {
-    return readFile(arg.path)
-  }
-
-  const sanitized = []
-  for (const item of arg) {
-    sanitized.push(typeof item === 'string' ? item : await readFile(item.path))
-  }
-
-  return sanitized
-}
-
-async function sanitizeHTTPSOptions (https) {
-  if (!https) {
-    return
-  }
-
-  return {
-    ...https,
-    key: await sanitizeHTTPSArgument(https.key),
-    cert: await sanitizeHTTPSArgument(https.cert)
-  }
 }
 
 async function checkLiveness (runtime) {

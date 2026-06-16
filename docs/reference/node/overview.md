@@ -105,6 +105,46 @@ If your application entrypoint exports a `create` or `build` function that retur
 
 Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.json` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
 
+## HTTPS
+
+When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "entrypoint": "api",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042,
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  },
+  "applications": [
+    {
+      "id": "api",
+      "path": "./services/api"
+    }
+  ]
+}
+```
+
+Use `getAdditionalServerOptions()` in your Node.js application and pass the returned options to `node:https.createServer()`:
+
+```js
+import { getAdditionalServerOptions } from '@platformatic/globals'
+import { createServer } from 'node:https'
+
+const server = createServer(getAdditionalServerOptions(), (req, res) => {
+  res.end('ok')
+})
+
+server.listen(0)
+```
+
+Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects. `reuseTcpPorts` remains enabled by default and HTTPS servers use `SO_REUSEPORT` when the current Node.js version and operating system support it.
+
 ## Example applications entrypoints
 
 ### Fastify with build function

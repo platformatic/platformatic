@@ -4,6 +4,8 @@ import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
 import {
   buildListenOptions,
+  buildAdditionalServerOptions,
+  buildFastifyOptions,
   cleanBasePath,
   ensureFileUrl,
   ensureTrailingSlash,
@@ -158,4 +160,64 @@ test('buildListenOptions - falls back to port 0 when port is not a number', () =
     host: '127.0.0.1',
     port: 0
   })
+})
+
+test('buildAdditionalServerOptions - returns backlog and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildAdditionalServerOptions({
+      backlog: 42,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      backlog: 42,
+      key: 'key',
+      cert: 'cert'
+    }
+  )
+})
+
+test('buildAdditionalServerOptions - can skip https options sanitization', async () => {
+  const https = {
+    key: { path: 'key' },
+    cert: { path: 'cert' }
+  }
+
+  deepStrictEqual(
+    await buildAdditionalServerOptions(
+      {
+        backlog: 42,
+        https
+      },
+      true
+    ),
+    {
+      backlog: 42,
+      ...https
+    }
+  )
+})
+
+test('buildFastifyOptions - returns http2 and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildFastifyOptions({
+      hostname: '127.0.0.1',
+      port: 3042,
+      backlog: 42,
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }
+  )
 })
