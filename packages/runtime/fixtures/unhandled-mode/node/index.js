@@ -19,4 +19,8 @@ app.get('/trigger', async () => {
   return { ok: true }
 })
 
+app.get('/listeners', async () => {
+  return { count: process.listeners('unhandledRejection').length }
+})
+
 app.listen({ port: 0 })

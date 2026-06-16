@@ -618,7 +618,7 @@ export interface PlatformaticDatabaseConfig {
     reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
-    exitOnUnhandledErrors?: boolean;
+    exitOnUnhandledErrors?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;

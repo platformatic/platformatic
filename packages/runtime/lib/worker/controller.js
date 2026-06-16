@@ -1,6 +1,5 @@
 import {
   ensureLoggableError,
-  executeWithTimeout,
   FileWatcher,
   kHandledError,
   listRecognizedConfigurationFiles,
@@ -37,17 +36,24 @@ function fetchApplicationUrl (application, key) {
   return getApplicationUrl(application.id)
 }
 
-function handleUnhandled (app, type, err) {
+function handleUnhandled (app, event, listeners, timeout, err, ...args) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
 
   const logger = getLogger()
-  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
+  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${event} event.`)
 
-  executeWithTimeout(app?.stop(), 1000)
-    .catch()
-    .finally(() => {
-      process.exit(1)
-    })
+  // Give some time to the listeners, logger and ITC notifications to land before shutting down
+  setTimeout(() => process.exit(1), timeout)
+
+  for (const listener of listeners) {
+    try {
+      listener(err, ...args)
+    } catch (err) {
+      logger.error({ err: ensureLoggableError(err) }, `${event} error listener failed.`)
+    }
+  }
+
+  app.stop().catch()
 }
 
 export class Controller extends EventEmitter {
@@ -74,6 +80,8 @@ export class Controller extends EventEmitter {
 
     this.#context = {
       controller: this,
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.applicationConfig,
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
@@ -149,16 +157,19 @@ export class Controller extends EventEmitter {
         cleanupHandlers()
       }
 
-      if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
-        this.#setupHandlers()
+      let exitOnUnhandledErrors = this.runtimeConfig.exitOnUnhandledErrors
+
+      if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+        exitOnUnhandledErrors = 100
+      }
+
+      if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+        this.#setupHandlers(exitOnUnhandledErrors)
       }
     } catch (err) {
       if (err.validationErrors) {
         const logger = getLogger()
-        logger.error(
-          { err: ensureLoggableError(err) },
-          'The application threw a validation error.'
-        )
+        logger.error({ err: ensureLoggableError(err) }, 'The application threw a validation error.')
 
         throw err
       } else {
@@ -361,16 +372,25 @@ export class Controller extends EventEmitter {
     mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
   }
 
-  #setupHandlers () {
-    process.on('uncaughtException', handleUnhandled.bind(null, this, 'uncaught exception'))
-    process.on('unhandledRejection', handleUnhandled.bind(null, this, 'unhandled rejection'))
+  #setupHandlers (timeout) {
+    const unhandledListeners = { uncaughtException: [], unhandledRejection: [] }
 
-    process.on('newListener', event => {
+    process.on(
+      'uncaughtException',
+      handleUnhandled.bind(null, this, 'uncaughtException', unhandledListeners.uncaughtException, timeout)
+    )
+    process.on(
+      'unhandledRejection',
+      handleUnhandled.bind(null, this, 'unhandledRejection', unhandledListeners.unhandledRejection, timeout)
+    )
+
+    process.on('newListener', (event, listener) => {
       if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        const logger = getLogger()
-        logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
-        )
+        unhandledListeners[event].push(listener)
+
+        process.nextTick(() => {
+          process.removeListener(event, listener)
+        })
       }
     })
   }

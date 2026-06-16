@@ -1022,7 +1022,7 @@ export const runtimeProperties = {
   },
   exitOnUnhandledErrors: {
     default: true,
-    type: 'boolean'
+    anyOf: [{ type: 'boolean' }, { type: 'number' }]
   },
   gracefulShutdown: {
     type: 'object',

@@ -14,7 +14,7 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.executable).type.toBe<string>()
   expect(platformatic.runtimeId).type.toBe<number>()
   expect(platformatic.nextVersion).type.toBe<{ major: number, minor?: number }>()
-  expect(platformatic.exitOnUnhandledErrors).type.toBe<boolean>()
+  expect(platformatic.exitOnUnhandledErrors).type.toBe<boolean | number>()
   expect(platformatic.reuseTcpPorts).type.toBe<boolean>()
 
   // Service configuration
@@ -23,6 +23,8 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.additionalServerOptions).type.toBe<object>()
   expect(platformatic.telemetryConfig).type.toBe<object>()
   expect(platformatic.config).type.toBe<object>()
+  expect(platformatic.runtimeConfig).type.toBe<object>()
+  expect(platformatic.applicationConfig).type.toBe<object | null>()
   expect(platformatic.applicationId).type.toBe<string>()
   expect(platformatic.workerId).type.toBe<number | string>()
   expect(platformatic.root).type.toBe<string>()
@@ -62,6 +64,8 @@ test("getters", () => {
   expect(globals.getAdditionalServerOptions()).type.toBe<PlatformaticGlobal['additionalServerOptions']>()
   expect(globals.getTelemetryConfig()).type.toBe<PlatformaticGlobal['telemetryConfig']>()
   expect(globals.getConfig()).type.toBe<PlatformaticGlobal['config']>()
+  expect(globals.getRuntimeConfig()).type.toBe<PlatformaticGlobal['runtimeConfig']>()
+  expect(globals.getApplicationConfig()).type.toBe<PlatformaticGlobal['applicationConfig']>()
   expect(globals.getApplicationId()).type.toBe<PlatformaticGlobal['applicationId']>()
   expect(globals.getWorkerId()).type.toBe<PlatformaticGlobal['workerId']>()
   expect(globals.getRoot()).type.toBe<PlatformaticGlobal['root']>()

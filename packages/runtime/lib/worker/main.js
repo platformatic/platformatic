@@ -28,14 +28,12 @@ import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
 import { kStderrMarker } from './symbols.js'
 
-function handlePreInitializationUnhandled (type, err) {
+function handlePreInitializationUnhandled (type, timeout, err) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
   const logger = getLogger()
-  logger.error(
-    { err: ensureLoggableError(err) },
-    `The ${label} threw an ${type} before initialization.`
-  )
-  process.exit(exitCodes.PROCESS_UNHANDLED_ERROR)
+  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type} before initialization.`)
+
+  setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), timeout)
 }
 
 class ForwardingEventEmitter extends EventEmitter {
@@ -68,9 +66,9 @@ function patchLogging () {
   }
 }
 
-function setupHandlers () {
-  const unhandledExceptionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught exception')
-  const unhandledRejectionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught rejection')
+function setupHandlers (timeout) {
+  const unhandledExceptionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught exception', timeout)
+  const unhandledRejectionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught rejection', timeout)
   process.on('uncaughtException', unhandledExceptionHandler)
   process.on('unhandledRejection', unhandledRejectionHandler)
 
@@ -201,7 +199,16 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
 }
 
 async function main () {
-  const cleanup = setupHandlers()
+  let cleanup = null
+  let exitOnUnhandledErrors = workerData.config.exitOnUnhandledErrors
+
+  if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+    exitOnUnhandledErrors = 100
+  }
+
+  if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+    cleanup = setupHandlers(exitOnUnhandledErrors)
+  }
 
   installUndiciGlobals(globalThis)
   updateGlobals({
@@ -319,15 +326,14 @@ async function main () {
 
   // Setup management client for privileged applications
   if (applicationConfig.management) {
-    const mgmtEnabled = typeof applicationConfig.management === 'boolean'
-      ? applicationConfig.management
-      : applicationConfig.management.enabled !== false
+    const mgmtEnabled =
+      typeof applicationConfig.management === 'boolean'
+        ? applicationConfig.management
+        : applicationConfig.management.enabled !== false
 
     if (mgmtEnabled) {
       const { ManagementClient } = await import('./management.js')
-      const ops = typeof applicationConfig.management === 'object'
-        ? applicationConfig.management.operations
-        : undefined
+      const ops = typeof applicationConfig.management === 'object' ? applicationConfig.management.operations : undefined
       updateGlobals({ management: new ManagementClient(ops) })
     }
   }

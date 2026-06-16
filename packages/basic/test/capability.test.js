@@ -324,6 +324,13 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
@@ -396,6 +403,13 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
@@ -466,6 +480,13 @@ test('BaseCapability - startCommand - should override the port set for the entry
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
@@ -534,6 +555,13 @@ test('BaseCapability - startCommand - should not override the port when unset fo
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
@@ -611,6 +639,13 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'test-application-id',
       workerId: 0,
       basePath: '/whatever',
@@ -815,6 +850,13 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          application: 10
+        }
+      },
+      applicationConfig: null,
       basePath: '/whatever',
       applicationId: 'application',
       workerId: 0,

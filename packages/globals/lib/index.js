@@ -87,6 +87,14 @@ export function getConfig (options) {
   return getField('config', options)
 }
 
+export function getRuntimeConfig (options) {
+  return getField('runtimeConfig', options)
+}
+
+export function getApplicationConfig (options) {
+  return getField('applicationConfig', options)
+}
+
 export function getApplicationId (options) {
   return getField('applicationId', options)
 }

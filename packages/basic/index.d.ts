@@ -66,7 +66,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   subprocess?: ChildProcess
   subprocessConfig?: object
   reuseTcpPorts: boolean
-  exitOnUnhandledErrors: boolean
+  exitOnUnhandledErrors: boolean | number
 
   constructor (
     type: string,
