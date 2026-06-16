@@ -19,6 +19,12 @@ Full-stack React framework with server-side rendering and app router support.
 - **[Overview](../reference/next/overview.md)** - Getting started with Next.js integration
 - **[Configuration](../reference/next/configuration.md)** - Complete configuration reference
 
+### [Nuxt](../reference/nuxt/overview.md)
+Full-stack Vue framework powered by Nitro and Vite.
+
+- **[Overview](../reference/nuxt/overview.md)** - Getting started with Nuxt integration
+- **[Configuration](../reference/nuxt/configuration.md)** - Complete configuration reference
+
 ### [React Router](../reference/react-router/overview.md)
 A user‑obsessed, standards‑focused, multi‑strategy router you can deploy anywhere.
 

@@ -504,7 +504,10 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   }
 
   for (const content of contents) {
-    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
+    ok(
+      content instanceof RegExp ? content.test(html) : html.includes(content),
+      `Pattern: ${content.toString()}, Actual: ${html}`
+    )
   }
 }
 
@@ -539,7 +542,10 @@ export async function verifyHTMLViaInject (app, applicationId, url, contents) {
   }
 
   for (const content of contents) {
-    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
+    ok(
+      content instanceof RegExp ? content.test(html) : html.includes(content),
+      `Pattern: ${content.toString()}, Actual: ${html}`
+    )
   }
 }
 
