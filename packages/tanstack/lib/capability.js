@@ -1,4 +1,5 @@
 import {
+  buildAdditionalServerOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -82,7 +83,7 @@ export class TanstackCapability extends ViteCapability {
     const serverPromise = createServerListener(
       serverOptions?.port ?? true,
       serverOptions?.hostname ?? true,
-      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+      await buildAdditionalServerOptions(serverOptions)
     )
 
     await importFile(resolve(outputDirectory, 'server/index.mjs'))

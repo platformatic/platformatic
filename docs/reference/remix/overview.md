@@ -42,6 +42,25 @@ When running in production mode, a custom Fastify server will serve the built ap
 
 In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
+## HTTPS
+
+When a Remix application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic forwards the HTTPS options to the Vite development server used by Remix. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves the built Remix application.
+
+If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
+
 ### Using custom commands
 
 Due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6), you need to set:

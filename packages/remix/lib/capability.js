@@ -1,5 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import {
+  buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -159,7 +160,7 @@ export class RemixCapability extends ViteCapability {
     this.#basePath = ensureTrailingSlash(cleanBasePath(build.basename))
 
     // Setup fastify
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
     this._setApp(this.#app)
 
     // Since it uses the Fetch API, we don't need to parse the request body.

@@ -101,6 +101,25 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
 When starting React Router in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
 
+## HTTPS
+
+When a React Router application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic forwards the HTTPS options to the Vite development server used by React Router. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves SSR applications, or for the static server used by non-SSR builds.
+
+If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.

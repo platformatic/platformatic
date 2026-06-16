@@ -1,6 +1,7 @@
 import fastifyStatic from '@fastify/static'
 import {
   BaseCapability,
+  buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -10,7 +11,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
-import { ensureLoggableError } from '@platformatic/foundation'
+import { ensureLoggableError, sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { getLogger, updateGlobals } from '@platformatic/globals'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
@@ -224,7 +225,7 @@ export class ViteCapability extends BaseCapability {
       host: hostname || '127.0.0.1',
       port: port || 0,
       strictPort: false,
-      https,
+      https: await sanitizeHTTPSOptions(https),
       cors,
       hmr: true,
       allowedHosts: ['.plt.local'],
@@ -285,7 +286,7 @@ export class ViteCapability extends BaseCapability {
       return this.url
     }
 
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
 
     const outputDirectory = this.outputDirectory ?? resolve(this.root, config.application.outputDirectory)
 

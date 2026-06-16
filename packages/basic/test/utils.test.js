@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import {
   buildListenOptions,
   buildAdditionalServerOptions,
+  buildFastifyOptions,
   cleanBasePath,
   ensureFileUrl,
   ensureTrailingSlash,
@@ -174,6 +175,28 @@ test('buildAdditionalServerOptions - returns backlog and sanitized https options
       backlog: 42,
       key: 'key',
       cert: 'cert'
+    }
+  )
+})
+
+test('buildFastifyOptions - returns http2 and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildFastifyOptions({
+      hostname: '127.0.0.1',
+      port: 3042,
+      backlog: 42,
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
     }
   )
 })

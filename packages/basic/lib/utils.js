@@ -43,6 +43,20 @@ export async function buildAdditionalServerOptions (serverConfig) {
   return options
 }
 
+export async function buildFastifyOptions (serverConfig) {
+  const options = {}
+
+  if (serverConfig?.http2) {
+    options.http2 = serverConfig.http2
+  }
+
+  if (serverConfig?.https) {
+    options.https = await sanitizeHTTPSOptions(serverConfig.https)
+  }
+
+  return options
+}
+
 export async function injectViaRequest (baseUrl, injectParams, onInject) {
   try {
     const url = new URL(injectParams.url, baseUrl).href

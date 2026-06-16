@@ -37,6 +37,26 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
+export const httpsFixtureRoot = fileURLToPath(new URL('../../node/test/fixtures/node-https-standalone', import.meta.url))
+
+export function configureHTTPS (_root, config) {
+  config.server ??= {}
+  config.server.https = {
+    key: { path: resolve(httpsFixtureRoot, 'https.key') },
+    cert: { path: resolve(httpsFixtureRoot, 'https.crt') }
+  }
+}
+
+export function createHTTPSDispatcher (t) {
+  const dispatcher = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  }).compose(interceptors.redirect({ maxRedirections: 1 }))
+
+  t.after(() => dispatcher.close())
+  return dispatcher
+}
 
 class MockedWritable extends Writable {
   constructor () {
@@ -449,6 +469,17 @@ export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedCo
   deepStrictEqual(await body.json(), expectedContent)
 }
 
+export async function verifyJSONViaHTTPS (baseUrl, path, expectedCode, expectedContent, dispatcher) {
+  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  strictEqual(statusCode, expectedCode)
+
+  if (typeof expectedContent === 'function') {
+    return expectedContent(await body.json())
+  }
+
+  deepStrictEqual(await body.json(), expectedContent)
+}
+
 export async function verifyJSONViaInject (app, applicationId, method, url, expectedCode, expectedContent) {
   const { statusCode, body } = await app.inject(applicationId, { method, url })
   strictEqual(statusCode, expectedCode)
@@ -462,6 +493,22 @@ export async function verifyJSONViaInject (app, applicationId, method, url, expe
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const html = await body.text()
+
+  deepStrictEqual(statusCode, 200)
+  ok(headers['content-type']?.startsWith('text/html'))
+
+  if (typeof contents === 'function') {
+    return contents(html)
+  }
+
+  for (const content of contents) {
+    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
+  }
+}
+
+export async function verifyHTMLViaHTTPS (baseUrl, path, contents, dispatcher) {
   const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
 

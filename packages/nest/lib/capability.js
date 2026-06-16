@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
   createServerListener,
@@ -9,6 +10,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { getEvents } from '@platformatic/globals'
 import getPort from 'get-port'
 import inject from 'light-my-request'
@@ -215,14 +217,18 @@ export class NestCapability extends BaseCapability {
 
     // Create the server
     if (this.#isFastify) {
-      this.#app = await NestFactory.create(appModule, new Adapter({ loggerInstance: this.logger }))
+      this.#app = await NestFactory.create(appModule, new Adapter({
+        loggerInstance: this.logger,
+        ...(await buildFastifyOptions(this.serverConfig))
+      }))
 
       setup?.(this.#app)
       await this.#app.init()
 
       this.#server = this.#app.getInstance()
     } else {
-      this.#app = await NestFactory.create(appModule, new Adapter())
+      const httpsOptions = await sanitizeHTTPSOptions(this.serverConfig?.https)
+      this.#app = await NestFactory.create(appModule, new Adapter(), httpsOptions ? { httpsOptions } : undefined)
 
       const instance = this.#app.getInstance()
       instance.disable('x-powered-by')

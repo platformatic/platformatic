@@ -3,9 +3,11 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { cp, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { Agent, request } from 'undici'
+import { request } from 'undici'
 import {
   commonFixturesRoot,
+  configureHTTPS,
+  createHTTPSDispatcher,
   getLogsFromFile,
   prepareRuntime,
   setFixturesDir,
@@ -177,13 +179,14 @@ test('should support Next.js in standalone mode', async t => {
 })
 
 test('can start next with a HTTPS server in development mode', async t => {
-  const { runtime } = await prepareRuntime(t, 'https', false)
+  const { runtime } = await prepareRuntime(t, 'standalone', false, null, configureHTTPS)
 
   const url = await startRuntime(t, runtime)
-  const agent = new Agent({ connect: { rejectUnauthorized: false } })
+  const dispatcher = createHTTPSDispatcher(t)
+  ok(url.startsWith('https://'))
 
   {
-    const { statusCode } = await request(url.replace('http:', 'https:'), { dispatcher: agent })
+    const { statusCode } = await request(url, { dispatcher })
     deepStrictEqual(statusCode, 200)
   }
 })

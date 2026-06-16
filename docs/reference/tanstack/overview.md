@@ -52,6 +52,25 @@ process.env.NODE_ENV === 'production' &&
 
 When starting TanStack in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
 
+## HTTPS
+
+When a TanStack application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic forwards the HTTPS options to the Vite development server used by TanStack. In production mode, Platformatic passes the same HTTPS options to the built TanStack server when it starts listening.
+
+If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.
