@@ -1,8 +1,10 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { execa } from 'execa'
 import { readFile, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { request } from 'undici'
 import { create, transform } from '../index.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
@@ -14,6 +16,7 @@ export const LOGS_TIMEOUT = process.env.CI ? 5000 : 1000
 let tempDirCounter = 0
 
 export const tempPath = resolve(import.meta.dirname, '../../../tmp/')
+export const startPath = join(import.meta.dirname, 'cli/start.js')
 
 export async function getTempDir () {
   const dir = join(tempPath, `runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
@@ -89,6 +92,128 @@ export async function readLogs (path, delay = LOGS_TIMEOUT, raw = false) {
         return { __raw: line }
       }
     })
+}
+
+export function stdioOutputToLogs (data) {
+  const logs = data
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch {
+        return line
+          .trim()
+          .split('\n')
+          .map(l => {
+            try {
+              return JSON.parse(l)
+            } catch {}
+            return null
+          })
+          .filter(log => log)
+      }
+    })
+    .filter(log => log)
+
+  return logs.flat()
+}
+
+export async function requestAndDump (url, opts) {
+  try {
+    const { body } = await request(url, opts)
+    await body.text()
+  } catch {}
+}
+
+export function execRuntime ({ configPath, onReady, done, timeout = 30_000, env = {} }) {
+  return new Promise((resolve, reject) => {
+    if (!done && !onReady) {
+      reject(new Error('done or onReady fn is required'))
+      return
+    }
+
+    const result = {
+      stdout: [],
+      stderr: [],
+      url: null
+    }
+    let ready = false
+    let teardownCalled = false
+
+    async function teardown () {
+      if (teardownCalled) {
+        return
+      }
+      teardownCalled = true
+
+      timeoutId && clearTimeout(timeoutId)
+
+      if (!child) {
+        return
+      }
+      child.kill('SIGKILL')
+      child.catch(() => {})
+      child = null
+    }
+
+    let child = execa(process.execPath, [startPath, configPath], {
+      encoding: 'utf8',
+      env: { PLT_USE_PLAIN_CREATE: true, ...env }
+    })
+
+    const timeoutId = setTimeout(async () => {
+      clearTimeout(timeoutId)
+
+      await teardown()
+      reject(new Error('Timeout'))
+    }, timeout)
+
+    const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+    
+    child.stdout.on('data', message => {
+      if (verbose) {
+        process._rawDebug(message.toString())
+      }
+
+      const m = message.toString()
+      result.stdout.push(m)
+
+      if (done?.(m)) {
+        teardown().then(() => {
+          resolve(result)
+        })
+        return
+      }
+
+      if (ready) {
+        return
+      }
+
+      const match = m.match(/Platformatic is now listening at (http:\/\/127\.0\.0\.1:\d+)/)
+      if (match) {
+        result.url = match[1]
+        Promise.resolve(onReady?.({ url: result.url, result })).then(() => {
+          if (!done) {
+            teardown().then(() => {
+              resolve(result)
+            })
+          }
+        }, err => {
+          teardown().then(() => {
+            reject(new Error('Error calling onReady', { cause: err }))
+          })
+        })
+        ready = true
+      }
+    })
+
+    child.stderr.on('data', message => {
+      if (verbose) {
+        process._rawDebug(message.toString())
+      }
+
+      result.stderr.push(message.toString())
+    })
+  })
 }
 
 export async function createRuntime (configOrRoot, sourceOrConfig, context) {
