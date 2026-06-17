@@ -76,9 +76,8 @@ test('logs all levels from the sentry fixture', async (t) => {
   const { stdout } = await execRuntime({
     configPath,
     env: {
-      PLT_SENTRY_DSN:
-        'https://6a813b9a052def0ddfab5cad7a08f0c0@o4511575430856704.ingest.de.sentry.io/4511575432495184',
-      // PLT_SENTRY_TUNNEL: `http://127.0.0.1:${sentryPort}/sentry`,
+      PLT_SENTRY_DSN: 'https://public@example.com/1',
+      PLT_SENTRY_TUNNEL: `http://127.0.0.1:${sentryPort}/sentry`,
     },
     onReady: async ({ url, result }) => {
       await requestAndDump(url, { path: '/' })

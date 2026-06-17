@@ -168,7 +168,7 @@ export function execRuntime ({ configPath, onReady, done, timeout = 30_000, env 
     }, timeout)
 
     const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
-    
+
     child.stdout.on('data', message => {
       if (verbose) {
         process._rawDebug(message.toString())
