@@ -1,4 +1,7 @@
-import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+} from '@platformatic/foundation'
 import { isatty } from 'node:tty'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -158,6 +161,12 @@ export async function createLogger (config) {
   let cliStream
 
   if (config.logger.transport) {
+    if (Array.isArray(config.logger.transport.targets)) {
+      for (const target of config.logger.transport.targets) {
+        target.level ??= config.logger.level
+      }
+    }
+
     cliStream = pino.transport(config.logger.transport)
   } else if ((process.env.FORCE_TTY || isatty(1)) && process.env.PLT_PRETTY_PRINT !== 'false') {
     cliStream = createPrettifier(context)

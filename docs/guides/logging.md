@@ -22,6 +22,7 @@ The default configuration uses `level: info` with pretty-printed output in devel
 **Need to hide sensitive data?** → [Redact Sensitive Information](#redact-sensitive-information)
 **Need structured production logs?** → [Production Logging](#production-logging)
 **Need OpenTelemetry integration?** → [External System Integration](#external-system-integration) or [OpenTelemetry Logging Guide](./opentelemetry-logging.md)
+**Need Sentry integration?** → [Sentry](#sentry)
 
 ## Set Log Level
 
@@ -168,6 +169,74 @@ The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support
 When using gRPC, do not include `/v1/traces` in the URL.
 
 See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed configuration.
+
+### Sentry
+
+Watt can send runtime and application logs to [Sentry](https://sentry.io/) using [pino-sentry-transport](https://github.com/tomer-yechiel/pino-sentry-transport) as a Pino transport target.
+
+Install the transport and the Sentry SDK in your application:
+
+```bash
+npm install pino-sentry-transport @sentry/node
+```
+
+Then add a Sentry target to `logger.transport.targets`:
+
+```json
+{
+  "logger": {
+    "level": "info",
+    "transport": {
+      "targets": [
+        {
+          "target": "pino/file"
+        },
+        {
+          "target": "pino-sentry-transport",
+          "options": {
+            "sentry": {
+              "dsn": "{SENTRY_DSN}"              
+            },
+            "withLogRecord": true,
+            "tags": ["level", "name", "worker", "application"],
+            "context": ["err", "req", "url", "method", "application", "worker"]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+The top-level `logger.level` controls which logs Watt emits. Each transport target can also define its own `level`, which controls which emitted logs that target receives. Set the Sentry target level explicitly if it should differ from Pino's transport target default.
+
+Options inside `options.sentry` are passed to `@sentry/node` initialization. Use them for Sentry settings such as `dsn`, `environment`, `release`, or `tunnel`.
+
+Use `minLevel` if you also want `pino-sentry-transport` to filter records internally:
+
+```json
+{
+  "logger": {
+    "level": "debug",
+    "transport": {
+      "targets": [
+        {
+          "target": "pino-sentry-transport",
+          "level": "debug",
+          "options": {
+            "sentry": {
+              "dsn": "{SENTRY_DSN}"
+            },
+            "minLevel": 40
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+In this example, Watt emits `debug` and above, the Sentry transport target receives `debug` and above, and `pino-sentry-transport` sends only `warn` and above to Sentry.
 
 ### Elasticsearch
 
