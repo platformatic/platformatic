@@ -41,7 +41,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node: 22
@@ -65,7 +65,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -91,7 +91,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node: 22
@@ -114,7 +114,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node: 22
@@ -160,7 +160,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -190,7 +190,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -217,7 +217,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -244,7 +244,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -271,7 +271,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -299,7 +299,7 @@ jobs:
         suite: [main, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -326,7 +326,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -354,7 +354,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -380,7 +380,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -407,7 +407,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v6
         with:
@@ -438,7 +438,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -467,7 +467,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -506,7 +506,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -541,7 +541,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -568,7 +568,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -595,7 +595,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -622,7 +622,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -655,7 +655,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -688,7 +688,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -715,7 +715,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -740,7 +740,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v6
         with:
@@ -767,7 +767,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -794,7 +794,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -824,7 +824,7 @@ jobs:
       VALKEY_PORT: 6379
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -853,7 +853,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -880,7 +880,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -907,7 +907,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -934,7 +934,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -961,7 +961,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -988,7 +988,7 @@ jobs:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@v4.1.0
+      - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
