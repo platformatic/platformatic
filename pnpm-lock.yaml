@@ -793,12 +793,18 @@ importers:
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.1.0
+      find-my-way:
+        specifier: ^9.0.0
+        version: 9.6.0
       graphql:
         specifier: ^16.8.1
         version: 16.14.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
+      iovalkey:
+        specifier: ^0.3.0
+        version: 0.3.3
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
@@ -808,6 +814,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      msgpackr:
+        specifier: ^1.11.2
+        version: 1.12.1
       my-ua-parser:
         specifier: ^2.0.2
         version: 2.0.4

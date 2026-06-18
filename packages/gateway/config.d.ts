@@ -258,6 +258,28 @@ export interface PlatformaticGatewayConfig {
             custom?: {
               path: string;
             };
+            deduplication?: {
+              enabled?: boolean | string;
+              storage?:
+                | {
+                    adapter?: "memory";
+                  }
+                | {
+                    adapter: "valkey";
+                    url: string;
+                    prefix?: string;
+                  };
+              methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+              headers?: string[];
+              routes?: {
+                [k: string]: unknown;
+              }[];
+              key?: string;
+              timeout?: number;
+              retries?: number;
+              ttl?: number;
+              lockTtl?: number;
+            };
             ws?: {
               upstream?: string;
               reconnect?: {
@@ -277,6 +299,28 @@ export interface PlatformaticGatewayConfig {
           };
     }[];
     handler?: string;
+    deduplication?: {
+      enabled?: boolean | string;
+      storage?:
+        | {
+            adapter?: "memory";
+          }
+        | {
+            adapter: "valkey";
+            url: string;
+            prefix?: string;
+          };
+      methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+      headers?: string[];
+      routes?: {
+        [k: string]: unknown;
+      }[];
+      key?: string;
+      timeout?: number;
+      retries?: number;
+      ttl?: number;
+      lockTtl?: number;
+    };
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;

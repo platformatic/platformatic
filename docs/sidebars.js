@@ -133,6 +133,7 @@ const sidebars = {
               items: [
                 'reference/gateway/overview',
                 'reference/gateway/configuration',
+                'reference/gateway/deduplication',
                 'reference/gateway/api-modification',
                 'reference/gateway/plugin',
                 'reference/gateway/programmatic'

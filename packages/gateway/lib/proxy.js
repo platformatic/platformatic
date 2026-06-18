@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
+import { createDeduplicationHandler } from './deduplication/index.js'
 import { initMetrics } from './metrics.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
@@ -201,11 +202,24 @@ async function proxyPlugin (app, opts) {
     // When getUpstream is provided, upstream ust be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
 
+    let proxyHandler = handler
+    if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
+      proxyHandler = await createDeduplicationHandler({
+        app,
+        application,
+        baseConfig: opts.deduplication,
+        overrideConfig: application.proxy?.deduplication,
+        handler,
+        metrics,
+        root
+      })
+    }
+
     const proxyOptions = {
       prefix,
       rewritePrefix,
       upstream,
-      handler,
+      handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
 
