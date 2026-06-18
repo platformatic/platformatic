@@ -1,0 +1,8 @@
+{
+  "name": "otlp-exporter-command-main",
+  "main": "index.mjs",
+  "dependencies": {
+    "@platformatic/globals": "workspace:*",
+    "fastify": "^5.0.0"
+  }
+}

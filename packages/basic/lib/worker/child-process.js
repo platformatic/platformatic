@@ -18,6 +18,7 @@ import {
   getReuseTcpPorts,
   getRuntimeBasePath,
   getRuntimeConfig,
+  getTelemetryReady,
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
@@ -25,7 +26,7 @@ import {
   updateGlobals
 } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
-import { clearRegistry, client, collectThreadMetrics } from '@platformatic/metrics'
+import { clearRegistry, client, collectThreadMetrics, setupOtlpExporter } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -99,6 +100,7 @@ export class ChildProcess extends ITC {
   #socket
   #logger
   #metricsRegistry
+  #otlpBridge
   #pendingMessages
   #replStream
 
@@ -272,8 +274,12 @@ export class ChildProcess extends ITC {
     return once(this.#socket, 'close')
   }
 
-  /* c8 ignore next 4 */
+  /* c8 ignore next 8 */
   _close () {
+    if (this.#otlpBridge) {
+      this.#otlpBridge.stop()
+      this.#otlpBridge = null
+    }
     clearRegistry(this.#metricsRegistry)
     this.#socket.close()
   }
@@ -283,16 +289,52 @@ export class ChildProcess extends ITC {
     // by the main runtime thread and duplicated with worker labels
     await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
     this.#setHttpCacheMetrics()
+    await this.#setupOtlpExporter(applicationId, metricsConfig)
   }
 
   async #updateMetricsConfig ({ applicationId, workerId, metricsConfig }) {
     clearRegistry(this.#metricsRegistry)
+
+    if (this.#otlpBridge) {
+      this.#otlpBridge.stop()
+      this.#otlpBridge = null
+    }
 
     if (metricsConfig.enabled !== false) {
       // Use thread-specific metrics collection - process-level metrics are collected
       // by the main runtime thread and duplicated with worker labels
       await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
       this.#setHttpCacheMetrics()
+      await this.#setupOtlpExporter(applicationId, metricsConfig)
+    }
+  }
+
+  // For command-based capabilities the parent's metrics registry is empty (metric collection
+  // is delegated here), so the OTLP exporter must run inside the child over the populated
+  // child registry. See https://github.com/platformatic/platformatic/issues/4848
+  async #setupOtlpExporter (applicationId, metricsConfig) {
+    if (!metricsConfig?.otlpExporter) {
+      return
+    }
+
+    // Wait for telemetry to be ready before loading promotel to avoid race condition
+    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
+    if (telemetryReady) {
+      await telemetryReady
+    }
+
+    // Setup and start OTLP exporter bridge over the child's populated registry
+    this.#otlpBridge = await setupOtlpExporter(this.#metricsRegistry, metricsConfig.otlpExporter, applicationId)
+
+    if (this.#otlpBridge) {
+      this.#otlpBridge.start()
+      this.#logger.info(
+        {
+          endpoint: metricsConfig.otlpExporter.endpoint,
+          interval: metricsConfig.otlpExporter.interval || 60000
+        },
+        'OTLP metrics exporter started'
+      )
     }
   }
 
