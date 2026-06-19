@@ -118,6 +118,73 @@ export const graphqlComposerOptions = {
   additionalProperties: false
 }
 
+export const deduplicationRoute = {
+  type: 'object',
+  properties: {
+    method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+    methods: {
+      type: 'array',
+      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] }
+    },
+    path: { type: 'string' }
+  },
+  required: ['path'],
+  anyOf: [{ required: ['method'] }, { required: ['methods'] }],
+  additionalProperties: false
+}
+
+export const deduplicationStorage = {
+  anyOf: [
+    {
+      type: 'object',
+      properties: {
+        adapter: { type: 'string', const: 'memory', default: 'memory' }
+      },
+      additionalProperties: false
+    },
+    {
+      type: 'object',
+      properties: {
+        adapter: { type: 'string', const: 'valkey' },
+        url: { type: 'string' },
+        prefix: { type: 'string' }
+      },
+      required: ['adapter', 'url'],
+      additionalProperties: false
+    }
+  ]
+}
+
+export const deduplication = {
+  type: 'object',
+  properties: {
+    enabled: {
+      anyOf: [{ type: 'boolean' }, { type: 'string' }]
+    },
+    storage: deduplicationStorage,
+    methods: {
+      type: 'array',
+      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+      default: ['GET', 'HEAD']
+    },
+    headers: {
+      type: 'array',
+      items: { type: 'string' },
+      default: ['authorization', 'cookie', 'accept', 'accept-language']
+    },
+    routes: {
+      type: 'array',
+      items: deduplicationRoute
+    },
+    key: { type: 'string', resolvePath: true },
+    timeout: { type: 'integer', minimum: 0, default: 1000 },
+    retries: { type: 'integer', minimum: 0, default: 3 },
+    ttl: { type: 'integer', minimum: 0, default: 10000 },
+    lockTtl: { type: 'integer', minimum: 0, default: 500 }
+  },
+  additionalProperties: false
+}
+
 export const gateway = {
   type: 'object',
   properties: {
@@ -160,6 +227,7 @@ export const gateway = {
                     required: ['path'],
                     additionalProperties: false
                   },
+                  deduplication,
                   ws: {
                     type: 'object',
                     properties: {
@@ -200,6 +268,7 @@ export const gateway = {
       }
     },
     handler: { type: 'string' },
+    deduplication,
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
@@ -238,6 +307,9 @@ export const schemaComponents = {
   entities,
   graphqlApplication,
   graphqlComposerOptions,
+  deduplicationRoute,
+  deduplicationStorage,
+  deduplication,
   gateway,
   types
 }

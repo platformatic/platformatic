@@ -858,6 +858,166 @@
                         ],
                         "additionalProperties": false
                       },
+                      "deduplication": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "storage": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "adapter": {
+                                    "type": "string",
+                                    "const": "memory",
+                                    "default": "memory"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "adapter": {
+                                    "type": "string",
+                                    "const": "valkey"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "prefix": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "adapter",
+                                  "url"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "methods": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE",
+                                "PATCH",
+                                "OPTIONS",
+                                "HEAD"
+                              ]
+                            },
+                            "default": [
+                              "GET",
+                              "HEAD"
+                            ]
+                          },
+                          "headers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": [
+                              "authorization",
+                              "cookie",
+                              "accept",
+                              "accept-language"
+                            ]
+                          },
+                          "routes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "method": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GET",
+                                    "POST",
+                                    "PUT",
+                                    "DELETE",
+                                    "PATCH",
+                                    "OPTIONS",
+                                    "HEAD"
+                                  ]
+                                },
+                                "methods": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GET",
+                                      "POST",
+                                      "PUT",
+                                      "DELETE",
+                                      "PATCH",
+                                      "OPTIONS",
+                                      "HEAD"
+                                    ]
+                                  }
+                                },
+                                "path": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "path"
+                              ],
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "method"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "methods"
+                                  ]
+                                }
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "key": {
+                            "type": "string",
+                            "resolvePath": true
+                          },
+                          "timeout": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 1000
+                          },
+                          "retries": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 3
+                          },
+                          "ttl": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 10000
+                          },
+                          "lockTtl": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 500
+                          }
+                        },
+                        "additionalProperties": false
+                      },
                       "ws": {
                         "type": "object",
                         "properties": {
@@ -921,6 +1081,166 @@
         },
         "handler": {
           "type": "string"
+        },
+        "deduplication": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "storage": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "adapter": {
+                      "type": "string",
+                      "const": "memory",
+                      "default": "memory"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "adapter": {
+                      "type": "string",
+                      "const": "valkey"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "prefix": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "adapter",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "OPTIONS",
+                  "HEAD"
+                ]
+              },
+              "default": [
+                "GET",
+                "HEAD"
+              ]
+            },
+            "headers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "authorization",
+                "cookie",
+                "accept",
+                "accept-language"
+              ]
+            },
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH",
+                      "OPTIONS",
+                      "HEAD"
+                    ]
+                  },
+                  "methods": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS",
+                        "HEAD"
+                      ]
+                    }
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "anyOf": [
+                  {
+                    "required": [
+                      "method"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "methods"
+                    ]
+                  }
+                ],
+                "additionalProperties": false
+              }
+            },
+            "key": {
+              "type": "string",
+              "resolvePath": true
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1000
+            },
+            "retries": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 3
+            },
+            "ttl": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10000
+            },
+            "lockTtl": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 500
+            }
+          },
+          "additionalProperties": false
         },
         "openapi": {
           "type": "object",

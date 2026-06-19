@@ -238,6 +238,74 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
+- **`deduplication`** (`object`) - Deduplicates concurrent proxied requests with the same computed key. The first request is sent upstream, while matching concurrent requests wait for the first response and replay it. This can be configured globally under `gateway.deduplication` or per application under `gateway.applications[].proxy.deduplication`. Application-level settings override global settings. If both `handler` and `deduplication` are configured, deduplication runs first and the winning request is delegated to the custom handler. See [Request Deduplication](./deduplication.md) for usage examples.
+
+  Supported options:
+
+  - **`enabled`** (`boolean` or `string`) - Enables deduplication. Default: `false`.
+  - **`storage`** (`object`) - Storage backend configuration.
+
+    Supported sub-options:
+
+    - **`adapter`** (`string`, default: `memory`) - Selects the storage backend. Storage keeps in-flight locks and replayable responses: use `memory` within one gateway instance, or `valkey` to coordinate across gateway workers, instances, or pods through a Redis-compatible Valkey server.
+    - **`url`** (`string`, required when `adapter` is `valkey`) - Redis-compatible Valkey connection URL. Example: `redis://127.0.0.1:6379`.
+    - **`prefix`** (`string`, optional, only used when `adapter` is `valkey`) - Prefix prepended to every gateway deduplication key stored in Valkey. Use this when multiple applications share the same Valkey instance.
+
+    Examples:
+
+    ```json
+    {
+      "adapter": "memory"
+    }
+    ```
+
+    ```json
+    {
+      "adapter": "valkey",
+      "url": "redis://127.0.0.1:6379",
+      "prefix": "my-app"
+    }
+    ```
+
+  - **`methods`** (`array of string`, default: `['GET', 'HEAD']`) - Methods eligible for deduplication when `routes` is not specified.
+  - **`headers`** (`array of string`, default: `['authorization', 'cookie', 'accept', 'accept-language']`) - Request headers included in the default deduplication key.
+  - **`routes`** (`array`) - Optional route whitelist. When specified, routes decide whether deduplication applies instead of `methods` alone. Routes use `find-my-way` syntax and accept either `method` or `methods` plus `path`.
+  - **`key`** (`string`) - Path to a JavaScript or TypeScript module exporting a synchronous `computeDeduplicationKey(request, context)` function to customize key computation.
+  - **`timeout`** (`number`, default: `1000`) - Milliseconds a duplicate request waits for the leader response before retrying lock acquisition.
+  - **`retries`** (`number`, default: `3`) - Number of additional deduplication attempts before falling back to a normal proxied request.
+  - **`ttl`** (`number`, default: `10000`) - Milliseconds stored responses remain available for waiting requests.
+  - **`lockTtl`** (`number`, default: `500`) - Milliseconds before an in-flight lock expires.
+
+  Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
+
+  ```json
+  {
+    "gateway": {
+      "deduplication": {
+        "enabled": true,
+        "storage": {
+          "adapter": "valkey",
+          "url": "redis://127.0.0.1:6379",
+          "prefix": "my-app"
+        },
+        "routes": [
+          { "method": "GET", "path": "/blog/*" }
+        ]
+      }
+    }
+  }
+  ```
+
+  A custom key module receives the request and the default key context. The function must be synchronous:
+
+  ```js
+  export function computeDeduplicationKey (request, context) {
+    return `${context.origin}:${context.method}:${context.url}`
+  }
+  ```
+
+  Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
+
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
   ```json title="Example JSON object"
