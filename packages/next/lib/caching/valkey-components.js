@@ -215,14 +215,18 @@ export class CacheHandler {
             toDelete.add(key)
 
             // Batch full, execute it
-            if (toDelete.length >= MAX_BATCH_SIZE) {
+            if (toDelete.size >= MAX_BATCH_SIZE) {
               await this.#store.del(...toDelete)
               toDelete.clear()
             }
           }
         }
 
-        await this.#store.del(...toDelete)
+        // Spreading an empty Set would issue a DEL with no keys, which Valkey
+        // rejects. Only delete when there is something to delete.
+        if (toDelete.size) {
+          await this.#store.del(...toDelete)
+        }
         await this.#store.del(tagsKey)
       }
     } catch (e) {
