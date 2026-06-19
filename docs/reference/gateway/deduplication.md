@@ -4,7 +4,7 @@ Platformatic Gateway can deduplicate concurrent proxied requests that resolve to
 
 This is useful for reducing request stampedes when many clients ask for the same resource at the same time, such as framework prefetch requests or cache revalidation bursts.
 
-Deduplication is best-effort. Duplicate upstream requests can still happen, for example if the in-flight lock expires before the upstream response completes, if a request exhausts its retry attempts, or if a process fails while handling the leader request.
+Deduplication is best-effort. Duplicate upstream requests can still happen, for example if the in-flight lock expires before the upstream response completes, if a request exhausts its retry attempts, or if an instance fails while handling the leader request.
 
 ## Enable Deduplication
 
@@ -28,7 +28,7 @@ Configure deduplication globally under `gateway.deduplication`:
 }
 ```
 
-By default, deduplication applies to `GET` and `HEAD` requests and uses in-memory storage.
+By default, deduplication applies to `GET` and `HEAD` requests and uses `memory` storage.
 
 ## Per-Application Configuration
 
@@ -48,9 +48,7 @@ You can override the global configuration for a single proxied application with 
           "prefix": "/",
           "deduplication": {
             "enabled": true,
-            "routes": [
-              { "method": "GET", "path": "/blog/*" }
-            ]
+            "routes": [{ "method": "GET", "path": "/blog/*" }]
           }
         }
       }
@@ -104,7 +102,7 @@ For full control, provide a module that exports a synchronous `computeDeduplicat
 }
 ```
 
-```js title="deduplication-key.js"
+```js
 export function computeDeduplicationKey (request, context) {
   return `${context.origin}:${context.method}:${context.url}`
 }
@@ -151,13 +149,14 @@ Supported sub-options:
 
 ### Memory Storage
 
-The default storage adapter is `memory`. It deduplicates requests only within the current gateway process.
+The default storage adapter is `memory`. It deduplicates requests only within the current gateway instance.
 
 Use this when:
 
-- The gateway runs as a single process.
-- Best-effort per-process deduplication is enough.
-- You do not want an external Valkey dependency.
+- There is only a single instance of the gateway.
+- Best-effort per-instance deduplication is enough.
+
+Use [Valkey storage](#valkey-storage) when deduplication must coordinate requests across gateway workers, instances, or pods.
 
 ```json
 {
@@ -174,13 +173,15 @@ Use this when:
 
 ### Valkey Storage
 
-Use the `valkey` storage adapter to deduplicate across gateway workers or processes.
+Use the `valkey` storage adapter when deduplication must work across gateway workers or more than one gateway instance.
 
 Use this when:
 
 - The gateway runs with multiple workers.
-- Multiple gateway processes receive traffic for the same upstream application.
-- You need shared in-flight locks and response replay across processes.
+- Multiple gateway instances receive traffic for the same upstream application.
+- You need shared in-flight locks and response replay across workers or instances.
+
+Valkey stores in-flight locks and replayable responses so waiters handled by another worker, instance, or pod can reuse the leader response. This includes deployments with multiple pods even if each pod runs a single gateway instance.
 
 The `url` option is required and must be a Redis-compatible Valkey connection URL, for example `redis://127.0.0.1:6379`.
 
@@ -232,15 +233,19 @@ Example:
 
 If all retry attempts are exhausted, the request bypasses deduplication and is proxied normally. This keeps deduplication as an optimization instead of a source of request hangs.
 
+Gateway deduplication buffers the leader response before replaying it to waiters. For streamed or chunked responses, the final response size might not be known before the response has been read. Enforcing a hard size limit after the response starts would make duplicate requests wait and then receive no replayable result, so deduplication does not impose a response size cutoff.
+
+Enable deduplication only on controlled routes whose response sizes are bounded or roughly predictable. Large responses increase gateway memory usage and, when using Valkey storage, serialization and storage cost.
+
 ## Custom Gateway Handlers
 
 Deduplication composes with custom gateway handlers.
 
 When both `gateway.handler` and `gateway.deduplication` are configured, deduplication runs first. The winning request is delegated to the custom handler, and duplicate requests replay the winning response.
 
-Custom handlers that call `reply.from(dest, options)` do not need any special handling:
+Custom handlers that call `reply.from(dest, options)` do not need any special handling. The `reply.from()` method is added by `@fastify/reply-from`, which Platformatic Gateway ultimately uses to proxy upstream requests.
 
-```js title="handler.js"
+```js
 export function handler (request, reply, dest, options) {
   return reply.from(dest, options)
 }
@@ -248,7 +253,7 @@ export function handler (request, reply, dest, options) {
 
 If a custom handler overrides `onResponse`, it can still opt into response replay by calling `options.deduplicateResponse(request, reply, res)`:
 
-```js title="handler.js"
+```js
 export function handler (request, reply, dest, options) {
   return reply.from(dest, {
     ...options,
@@ -262,7 +267,7 @@ export function handler (request, reply, dest, options) {
 
 If a custom handler overrides `onError`, it can notify waiting duplicate requests by calling `options.deduplicateError(reply, error)`:
 
-```js title="handler.js"
+```js
 export function handler (request, reply, dest, options) {
   return reply.from(dest, {
     ...options,

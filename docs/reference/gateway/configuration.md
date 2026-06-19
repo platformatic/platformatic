@@ -247,19 +247,19 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     Supported sub-options:
 
-    - **`adapter`** (`string`, default: `memory`) - Selects the storage backend. Use `memory` to deduplicate only within the current gateway process. Use `valkey` to deduplicate across gateway workers or processes through a Redis-compatible Valkey server.
+    - **`adapter`** (`string`, default: `memory`) - Selects the storage backend. Storage keeps in-flight locks and replayable responses: use `memory` within one gateway instance, or `valkey` to coordinate across gateway workers, instances, or pods through a Redis-compatible Valkey server.
     - **`url`** (`string`, required when `adapter` is `valkey`) - Redis-compatible Valkey connection URL. Example: `redis://127.0.0.1:6379`.
     - **`prefix`** (`string`, optional, only used when `adapter` is `valkey`) - Prefix prepended to every gateway deduplication key stored in Valkey. Use this when multiple applications share the same Valkey instance.
 
     Examples:
 
-    ```json title="In-memory storage"
+    ```json
     {
       "adapter": "memory"
     }
     ```
 
-    ```json title="Valkey storage"
+    ```json
     {
       "adapter": "valkey",
       "url": "redis://127.0.0.1:6379",
@@ -278,7 +278,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
 
-  ```json title="Example JSON object"
+  ```json
   {
     "gateway": {
       "deduplication": {
@@ -298,7 +298,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   A custom key module receives the request and the default key context. The function must be synchronous:
 
-  ```js title="deduplication-key.js"
+  ```js
   export function computeDeduplicationKey (request, context) {
     return `${context.origin}:${context.method}:${context.url}`
   }

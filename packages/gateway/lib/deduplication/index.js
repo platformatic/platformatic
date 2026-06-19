@@ -1,31 +1,16 @@
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
+import { DynamicBuffer } from '@platformatic/dynamic-buffer'
 import Router from 'find-my-way'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { Readable } from 'node:stream'
+import stringify from 'safe-stable-stringify'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
 const require = createRequire(import.meta.url)
 const defaultDeduplicationHeaders = ['authorization', 'cookie', 'accept', 'accept-language']
 const defaultDeduplicationMethods = ['GET', 'HEAD']
-
-function sendResponse (onResponse, request, reply, res, chunks) {
-  const stream = Readable.from(
-    (async function * () {
-      for (const chunk of chunks) {
-        yield chunk
-      }
-    })()
-  )
-
-  if (onResponse) {
-    return onResponse(request, reply, { ...res, stream })
-  }
-
-  return reply.send(stream)
-}
 
 async function publishError ({ storage, key, token, responseId, config, metrics }) {
   metrics?.deduplicationError?.inc()
@@ -131,7 +116,7 @@ export async function createDeduplicationHandler ({
     }
     const key = computeDeduplicationKey
       ? computeDeduplicationKey(request, context)
-      : JSON.stringify({ origin: context.origin, method: context.method, url: context.url, headers: context.headers })
+      : stringify({ origin: context.origin, method: context.method, url: context.url, headers: context.headers })
 
     for (let attempt = 0; attempt <= config.retries; attempt++) {
       const token = randomUUID()
@@ -143,32 +128,37 @@ export async function createDeduplicationHandler ({
         const baseOnError = options.onError
 
         async function deduplicateResponse (proxiedRequest, proxiedReply, res) {
-          try {
-            const chunks = []
+          const body = new DynamicBuffer()
 
+          try {
             for await (const chunk of res.stream) {
-              chunks.push(chunk)
+              body.append(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
             }
 
-            const body = Buffer.concat(chunks)
             await storage.setResponse(
               responseId,
               {
                 statusCode: res.statusCode,
                 headers: proxiedReply.getHeaders(),
-                body: body.toString('base64')
+                body: body.buffers
               },
               config.ttl
             )
             await storage.notify(key, responseId, config.ttl)
             await storage.unlock(key, token)
-
-            return sendResponse(baseOnResponse, proxiedRequest, proxiedReply, res, [body])
           } catch (error) {
             app.log.error({ err: ensureLoggableError(error) }, 'Error while deduplicating gateway response')
             await publishError({ storage, key, token, responseId, config, metrics })
             throw error
           }
+
+          const stream = body.asReadable()
+
+          if (baseOnResponse) {
+            return baseOnResponse(proxiedRequest, proxiedReply, { ...res, stream })
+          }
+
+          return proxiedReply.send(stream)
         }
 
         async function deduplicateError (proxiedReply, error) {
@@ -210,7 +200,7 @@ export async function createDeduplicationHandler ({
       reply.code(response.statusCode)
       reply.headers(response.headers)
       metrics?.deduplicationReplay?.inc()
-      return reply.send(Buffer.from(response.body, 'base64'))
+      return reply.send(new DynamicBuffer(response.body).asReadable())
     }
 
     metrics?.deduplicationFallback?.inc()

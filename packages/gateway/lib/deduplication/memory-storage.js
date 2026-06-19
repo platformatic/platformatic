@@ -1,17 +1,14 @@
-import { EventEmitter, once } from 'node:events'
-
 export class MemoryDeduplicationStorage {
-  #events
   #locks
   #responsesIds
   #responses
+  #waiters
 
   constructor () {
-    this.#events = new EventEmitter()
-    this.#events.setMaxListeners(0)
     this.#locks = new Map()
     this.#responsesIds = new Map()
     this.#responses = new Map()
+    this.#waiters = new Map()
   }
 
   async lock (key, token, ttl) {
@@ -47,16 +44,26 @@ export class MemoryDeduplicationStorage {
       return responseId.id
     }
 
-    const aborter = new AbortController()
-    const timer = setTimeout(() => aborter.abort(), timeout).unref()
+    const waiter = Promise.withResolvers()
+    let waiters = this.#waiters.get(key)
+
+    if (!waiters) {
+      waiters = new Set()
+      this.#waiters.set(key, waiters)
+    }
+
+    waiters.add(waiter)
+    const timer = setTimeout(() => waiter.resolve(null), timeout).unref()
 
     try {
-      const [responseId] = await once(this.#events, key, { signal: aborter.signal })
-      return responseId
-    } catch {
-      return null
+      return await waiter.promise
     } finally {
       clearTimeout(timer)
+      waiters.delete(waiter)
+
+      if (waiters.size === 0 && this.#waiters.get(key) === waiters) {
+        this.#waiters.delete(key)
+      }
     }
   }
 
@@ -66,12 +73,20 @@ export class MemoryDeduplicationStorage {
       clearTimeout(previous.timeout)
     }
 
-    this.#events.emit(key, responseId)
     const timeout = setTimeout(() => {
       this.#responsesIds.delete(key)
     }, ttl).unref()
 
     this.#responsesIds.set(key, { id: responseId, timeout })
+
+    const waiters = this.#waiters.get(key)
+    if (waiters) {
+      this.#waiters.delete(key)
+
+      for (const waiter of waiters) {
+        waiter.resolve(responseId)
+      }
+    }
   }
 
   async getResponse (responseId) {
@@ -99,9 +114,15 @@ export class MemoryDeduplicationStorage {
       clearTimeout(responseId.timeout)
     }
 
-    this.#events.removeAllListeners()
+    for (const waiters of this.#waiters.values()) {
+      for (const waiter of waiters) {
+        waiter.resolve(null)
+      }
+    }
+
     this.#locks.clear()
     this.#responsesIds.clear()
     this.#responses.clear()
+    this.#waiters.clear()
   }
 }

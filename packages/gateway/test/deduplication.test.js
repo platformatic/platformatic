@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createDeduplicationHandler } from '../lib/deduplication/index.js'
+import { MemoryDeduplicationStorage } from '../lib/deduplication/memory-storage.js'
 import { ValkeyDeduplicationStorage } from '../lib/deduplication/valkey-storage.js'
 import { createApplication, createFromConfig } from './helper.js'
 
@@ -143,8 +144,19 @@ function createReply () {
     getHeaders () {
       return { 'content-type': 'text/plain' }
     },
-    send (payload) {
+    async send (payload) {
       this.payload = payload
+
+      if (payload?.[Symbol.asyncIterator]) {
+        const chunks = []
+
+        for await (const chunk of payload) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+        }
+
+        this.payload = Buffer.concat(chunks)
+      }
+
       return payload
     }
   }
@@ -261,6 +273,29 @@ test('should include configured headers in the deduplication key', async t => {
     { count: 1, query: {}, cookie: 'a=1' },
     { count: 2, query: {}, cookie: 'a=2' }
   ])
+})
+
+test('should deduplicate configured headers regardless of insertion order', async () => {
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, headers: ['x-b', 'x-a'], lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      await sleep(100)
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from([Buffer.from('ok')])
+      })
+    }
+  )
+
+  const firstRequest = { ...createRequest(), headers: { 'x-a': '1', 'x-b': '2' } }
+  const secondRequest = { ...createRequest(), headers: { 'x-b': '2', 'x-a': '1' } }
+
+  await Promise.all([handler(firstRequest, createReply(), '/value', {}), handler(secondRequest, createReply(), '/value', {})])
+
+  assert.equal(upstreamCalls, 1)
 })
 
 test('should not deduplicate methods outside of the configured methods', async t => {
@@ -465,6 +500,31 @@ test('should increment leader waiter and replay metrics', async () => {
   assert.equal(metrics.deduplicationReplay.value, 2)
 })
 
+test('should replay binary chunks without concatenating before storage', async () => {
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      await sleep(100)
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from([Buffer.from('he'), Buffer.from('ll'), Buffer.from('o')])
+      })
+    }
+  )
+
+  const replies = [createReply(), createReply()]
+  await Promise.all(replies.map(reply => handler(createRequest(), reply, '/value', {})))
+
+  assert.equal(upstreamCalls, 1)
+  assert.deepEqual(
+    replies.map(reply => reply.payload.toString()),
+    ['hello', 'hello']
+  )
+})
+
 test('should increment fallback metric', async () => {
   const metrics = createDeduplicationMetrics()
   let upstreamCalls = 0
@@ -505,6 +565,26 @@ test('should increment error metric', async () => {
   await handler(createRequest(), createReply(), '/value', {})
 
   assert.equal(metrics.deduplicationError.value, 1)
+})
+
+test('should notify all memory waiters for the same key', async t => {
+  const storage = new MemoryDeduplicationStorage()
+  t.after(() => storage.close())
+
+  const waiters = [storage.wait('key', 1000), storage.wait('key', 1000), storage.wait('key', 1000)]
+  await sleep(50)
+  await storage.notify('key', 'response-id', 1000)
+
+  assert.deepEqual(await Promise.all(waiters), ['response-id', 'response-id', 'response-id'])
+})
+
+test('should resolve memory waiters on close', async () => {
+  const storage = new MemoryDeduplicationStorage()
+  const waiter = storage.wait('key', 1000)
+
+  await storage.close()
+
+  assert.equal(await waiter, null)
 })
 
 test('should notify all Valkey waiters for the same key', async t => {
