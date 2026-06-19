@@ -213,6 +213,12 @@ const sidebars = {
             },
             {
               type: 'category',
+              label: 'Nuxt',
+              collapsed: true,
+              items: ['reference/nuxt/overview', 'reference/nuxt/configuration']
+            },
+            {
+              type: 'category',
               label: 'React Router',
               collapsed: true,
               items: ['reference/react-router/overview', 'reference/react-router/configuration']

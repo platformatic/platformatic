@@ -4,7 +4,9 @@ import {
   setFixturesDir,
   verifyBuildAndProductionMode,
   verifyJSONViaHTTP,
-  verifyJSONViaInject
+  verifyJSONViaInject,
+  verifyPlatformaticGateway,
+  verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
@@ -92,7 +94,7 @@ const configurations = [
     id: 'composer-with-prefix',
     name: 'NestJS application (in composer with prefix)',
     files,
-    checks: [verifyComposerWithPrefix],
+    checks: [verifyComposerWithPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'ts',
     prefix: '/frontend'
   },
@@ -100,7 +102,7 @@ const configurations = [
     id: 'composer-without-prefix',
     name: 'NestJS application (in composer without prefix)',
     files,
-    checks: [verifyComposerWithoutPrefix],
+    checks: [verifyComposerWithoutPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: ''
   },
@@ -108,7 +110,7 @@ const configurations = [
     id: 'composer-autodetect-prefix',
     name: 'NestJS application (in composer with autodetected prefix)',
     files,
-    checks: [verifyComposerAutodetectPrefix],
+    checks: [verifyComposerAutodetectPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/nested/base/dir'
   },
@@ -116,7 +118,7 @@ const configurations = [
     id: 'composer-custom-commands',
     name: 'NestJS (in composer with prefix using custom commands)',
     files,
-    checks: [verifyComposerWithPrefix],
+    checks: [verifyComposerWithPrefix, verifyPlatformaticGateway, verifyPlatformaticService],
     language: 'js',
     prefix: '/frontend'
   }

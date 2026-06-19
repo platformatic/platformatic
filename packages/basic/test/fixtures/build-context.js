@@ -1,1 +1,2 @@
-console.log(`INJECTED ${globalThis?.platformatic?.isBuilding ?? false}`)
+import { isBuilding } from '@platformatic/globals'
+console.log(`INJECTED ${isBuilding({ throwOnMissing: false }) ?? false}`)

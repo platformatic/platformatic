@@ -84,6 +84,12 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Server-side rendered React applications, static site generation
 - **Features**: SSR/SSG support, API routes, file-based routing, optimization
 
+##### [`@platformatic/nuxt`](../reference/nuxt/overview.md)
+
+- **Description**: Nuxt application integration
+- **Use Case**: Full-stack Vue applications with server-side rendering and static generation
+- **Features**: Nuxt development server, Nitro production output, Vite-powered development
+
 ##### [`@platformatic/vite`](../reference/vite/overview.md)
 
 - **Description**: Vite-based application support

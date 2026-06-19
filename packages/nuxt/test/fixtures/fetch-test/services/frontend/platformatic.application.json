@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/nuxt/3.52.4.json",
+  "application": {
+    "basePath": "/frontend"
+  }
+}

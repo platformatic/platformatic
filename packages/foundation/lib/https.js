@@ -1,15 +1,15 @@
 import { readFile } from 'node:fs/promises'
 
-export async function sanitizeHTTPSArgument (arg) {
+export async function sanitizeHTTPSArgument (arg, returnPath = false) {
   if (typeof arg === 'string') {
     return arg
   } else if (!Array.isArray(arg)) {
-    return readFile(arg.path)
+    return returnPath ? arg.path : readFile(arg.path)
   }
 
   const sanitized = []
   for (const item of arg) {
-    sanitized.push(typeof item === 'string' ? item : await readFile(item.path))
+    sanitized.push(await sanitizeHTTPSArgument(item, returnPath))
   }
 
   return sanitized
@@ -23,6 +23,6 @@ export async function sanitizeHTTPSOptions (https) {
   return {
     ...https,
     key: await sanitizeHTTPSArgument(https.key),
-    cert: await sanitizeHTTPSArgument(https.cert)
+    cert: await sanitizeHTTPSArgument(https.cert),
   }
 }

@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "dependencies": {
+    "@platformatic/gateway": "^3.52.4",
+    "@platformatic/nuxt": "^3.52.4",
+    "@platformatic/service": "^3.52.4",
+    "nuxt": "^4.4.8",
+    "vue": "^3.5.22"
+  }
+}

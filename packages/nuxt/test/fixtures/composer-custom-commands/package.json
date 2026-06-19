@@ -1,0 +1,11 @@
+{
+  "name": "test",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "dependencies": {
+    "@platformatic/runtime": "^2.3.1",
+    "platformatic": "^2.3.1"
+  }
+}
