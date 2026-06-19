@@ -23,6 +23,8 @@ minimumReleaseAgeExclude:
   - fast-uri@3.1.2
   # Renovate security update: next@16.2.5 || 16.2.6
   - next@16.2.5 || 16.2.6
+  # Renovate security update: astro@6.4.6
+  - astro@6.4.6
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
