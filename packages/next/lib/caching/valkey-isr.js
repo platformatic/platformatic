@@ -254,7 +254,11 @@ export class CacheHandler {
           }
         }
 
-        await this.#store.del(...toDelete)
+        // Spreading an empty Set would issue a DEL with no keys, which Valkey
+        // rejects. Only delete when there is something to delete.
+        if (toDelete.size) {
+          await this.#store.del(...toDelete)
+        }
         await this.#store.del(tagsKey)
       }
     } catch (e) {

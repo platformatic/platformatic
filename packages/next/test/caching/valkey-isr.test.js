@@ -505,6 +505,54 @@ test('should properly revalidate tags in Valkey', async t => {
   ])
 })
 
+test('should not issue an empty DEL when revalidating a tag with no entries', async t => {
+  const errors = []
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { errors.push({ msg, obj }) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  const tagsKey = keyFor(valkeyPrefix, '', 'tags', 'missing')
+
+  const monitorPromise = Promise.withResolvers()
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+
+    if (args[0] === 'del' && args[1] === tagsKey) {
+      monitorPromise.resolve()
+    }
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+
+  // The tag set has no live entries, so toDelete stays empty. Spreading it into
+  // DEL used to issue a keyless DEL, which Valkey rejects with
+  // "ERR wrong number of arguments for 'del' command".
+  await handler.revalidateTag('missing')
+  await monitorPromise.promise
+
+  verifyValkeySequence(valkeyCalls, [
+    ['sscan', tagsKey, '0'],
+    ['del', tagsKey]
+  ])
+
+  deepStrictEqual(errors, [])
+})
+
 test('should extend TTL when our limit is smaller than the user one', async t => {
   const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
