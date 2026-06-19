@@ -23,6 +23,8 @@ minimumReleaseAgeExclude:
   - fast-uri@3.1.2
   # Renovate security update: next@16.2.5 || 16.2.6
   - next@16.2.5 || 16.2.6
+  # Renovate security update: undici@8.5.0
+  - undici@8.5.0
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
