@@ -27,6 +27,8 @@ minimumReleaseAgeExclude:
   - astro@6.4.6
   # Renovate security update: tar@7.5.16
   - tar@7.5.16
+  # Renovate security update: vite@7.3.5
+  - vite@7.3.5
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
