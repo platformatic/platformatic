@@ -35,7 +35,7 @@
     "pino": "^9.9.0",
     "pino-pretty": "^13.0.0",
     "semver": "^7.6.3",
-    "undici": "7.27.2",
+    "undici": "7.28.0",
     "yaml": "^2.4.1"
   },
   "devDependencies": {
