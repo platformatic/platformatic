@@ -25,6 +25,15 @@ Note that the metrics port is not the default in this configuration. This is bec
 
 All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/_shared-configuration.md#metrics) for more details.
 
+The same server exposes Kubernetes readiness and liveness probes by default. Set the top-level `healthProbes` option to `false` to expose metrics without `/ready` and `/status`:
+
+```json
+{
+  "healthProbes": false,
+  "metrics": true
+}
+```
+
 ## Serving metrics over HTTPS (SSL/TLS)
 
 The metrics server can use HTTPS (TLS, often referred to as SSL). This also applies to the readiness and liveness endpoints exposed by the same server.

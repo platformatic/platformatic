@@ -109,6 +109,28 @@ Watt provides built-in health check endpoints through its metrics server. The me
 - **`/ready`** (Readiness endpoint): Indicates if all services are started and ready to accept traffic
 - **`/status`** (Liveness endpoint): Indicates if all services are healthy and their custom health checks pass
 
+The top-level `healthProbes` setting controls these Kubernetes probe endpoints. It defaults to `true`. Set it to `false` to disable both `/ready` and `/status` while keeping Prometheus metrics enabled.
+
+```json
+{
+  "healthProbes": false,
+  "metrics": true
+}
+```
+
+To expose Kubernetes probes without Prometheus metrics, disable metrics collection but keep the metrics server configuration for the probe host and port:
+
+```json
+{
+  "healthProbes": true,
+  "metrics": {
+    "enabled": false,
+    "hostname": "0.0.0.0",
+    "port": 9090
+  }
+}
+```
+
 ### Endpoint Customization
 
 You can customize the health check endpoints in your Watt configuration:

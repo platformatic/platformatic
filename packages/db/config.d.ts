@@ -640,6 +640,7 @@ export interface PlatformaticDatabaseConfig {
       bufferPoolSize?: number | string;
       defaultHighWaterMark?: number | string;
     };
+    healthProbes?: boolean | string;
     undici?: {
       agentOptions?: {
         [k: string]: unknown;

@@ -262,6 +262,7 @@ export interface PlatformaticTanStackConfig {
       bufferPoolSize?: number | string;
       defaultHighWaterMark?: number | string;
     };
+    healthProbes?: boolean | string;
     undici?: {
       agentOptions?: {
         [k: string]: unknown;

@@ -227,7 +227,7 @@ export class Runtime extends EventEmitter {
     if (config.metrics) {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics)
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics, config.healthProbes)
     } else {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
@@ -855,8 +855,8 @@ export class Runtime extends EventEmitter {
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
-    if (metricsConfig.enabled !== false) {
-      this.#prometheusServer = await startPrometheusServer(this, metricsConfig)
+    if (metricsConfig.enabled !== false || this.#config.healthProbes !== false) {
+      this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
     }
 
     const promises = []
