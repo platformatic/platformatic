@@ -1667,8 +1667,8 @@ importers:
         specifier: ^5.5.4
         version: 5.9.3
       undici-oidc-interceptor:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.9.0
+        version: 0.9.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
@@ -6799,6 +6799,9 @@ packages:
   async-cache-dedupe@2.2.0:
     resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
 
+  async-cache-dedupe@3.4.0:
+    resolution: {integrity: sha512-RkQr21CpltqMpbYpRaEAmF1BdUO5jnnS/scZkectmLiuWQ81w8u4lYraipbQf8zQ0yYvb3U0N1ozNAYmI4jQ3g==}
+
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
@@ -8152,10 +8155,6 @@ packages:
 
   fast-json-stringify@6.4.0:
     resolution: {integrity: sha512-ibRCQ0GZKJIQ+P3Et1h0LhPgp3PMTYk0MH8O+kW3lNYsvmaQww5Nn3f1jf73Q0jR1Yz3a1CDP4/NZD3vOajWJQ==}
-
-  fast-jwt@4.0.5:
-    resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
-    engines: {node: '>=16'}
 
   fast-jwt@5.0.6:
     resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
@@ -12423,8 +12422,8 @@ packages:
   unctx@2.5.0:
     resolution: {integrity: sha512-p+Rz9x0R7X+CYDkT+Xg8/GhpcShTlU8n+cf9OtOEf7zEQsNcCZO1dPKNRDqvUTaq+P32PMMkxWHwfrxkqfqAYg==}
 
-  undici-oidc-interceptor@0.5.0:
-    resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
+  undici-oidc-interceptor@0.9.0:
+    resolution: {integrity: sha512-CK+OIoqoVXkDBTn53Az/qIDRkWuppI7wh7nsNFkPOS8gGMbyqvW0TK/MEbaywzygkMqEQ/UnW7OP4tdW03sg6g==}
 
   undici-thread-interceptor@1.4.0:
     resolution: {integrity: sha512-r9iTT/xqt4192CQxOQ1Z1wMHX3zDSOQOnnNojNWN/WApJBUImPwVumdRRQ9DdoYmx0WjyXkRY94+1fDKLiFQVw==}
@@ -17920,6 +17919,11 @@ snapshots:
       mnemonist: 0.39.8
       safe-stable-stringify: 2.5.0
 
+  async-cache-dedupe@3.4.0:
+    dependencies:
+      mnemonist: 0.40.4
+      safe-stable-stringify: 2.5.0
+
   async-function@1.0.0: {}
 
   async-sema@3.1.1: {}
@@ -19597,13 +19601,6 @@ snapshots:
       fast-uri: 3.1.2
       json-schema-ref-resolver: 3.0.0
       rfdc: 1.4.1
-
-  fast-jwt@4.0.5:
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      asn1.js: 5.4.1
-      ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.39.8
 
   fast-jwt@5.0.6:
     dependencies:
@@ -25025,10 +25022,11 @@ snapshots:
       magic-string: 0.30.21
       unplugin: 2.3.11
 
-  undici-oidc-interceptor@0.5.0:
+  undici-oidc-interceptor@0.9.0:
     dependencies:
-      fast-jwt: 4.0.5
-      undici: 6.27.0
+      async-cache-dedupe: 3.4.0
+      fast-jwt: 6.2.4
+      undici: 7.27.2
 
   undici-thread-interceptor@1.4.0:
     dependencies:
