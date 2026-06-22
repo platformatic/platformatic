@@ -475,6 +475,38 @@ test('import - when launched without arguments, should fix the configuration of 
   ok(importProcess.stdout.includes('Installing dependencies for the application third using npm ...'))
 })
 
+test('import - should not install applications individually inside a pnpm workspace', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
+  await writeFile(
+    resolve(rootDir, 'pnpm-workspace.yaml'),
+    `packages:
+  - web-1/*
+  - web-2/*
+
+catalog:
+  vite: ^5.0.0
+`,
+    'utf-8'
+  )
+  await writeFile(
+    resolve(rootDir, 'web-1/fourth/package.json'),
+    JSON.stringify({ dependencies: { '@platformatic/globals': '>=3.0.0', vite: 'catalog:' } }),
+    'utf-8'
+  )
+
+  changeWorkingDirectory(t, rootDir)
+  const importProcess = await wattpmUtils('import', '-P', 'pnpm')
+
+  ok(importProcess.stdout.includes('Installing dependencies for the project using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application first using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application second using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application fourth using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application third using pnpm ...'))
+})
+
 test('import - when launched without arguments, should fix the configuration of all known applications without installing dependencies', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
   t.after(() => safeRemove(rootDir))
