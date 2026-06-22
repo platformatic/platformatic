@@ -12,7 +12,7 @@ import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, rm, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { isAbsolute, relative, resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
@@ -67,6 +67,11 @@ async function withTemporaryPnpmConfig (directory, fn) {
   }
 }
 
+function isPathInsideDirectory (directory, path) {
+  const relativePath = relative(directory, path)
+  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+}
+
 export async function installDependencies (logger, root, applications, production, packageManager) {
   if (typeof applications === 'string') {
     const config = await loadConfiguration(applications, null, { validate: false })
@@ -84,6 +89,7 @@ export async function installDependencies (logger, root, applications, productio
   }
 
   const args = getInstallationCommand(packageManager, production)
+  const isPnpmWorkspace = packageManager === 'pnpm' && existsSync(resolve(root, 'pnpm-workspace.yaml'))
 
   // Install dependencies of the application
   try {
@@ -110,8 +116,14 @@ export async function installDependencies (logger, root, applications, productio
   }
 
   for (let { id, path, packageManager: applicationPackageManager } of applications) {
+    const hasConfiguredPackageManager = !!applicationPackageManager
     applicationPackageManager ??= await getPackageManager(path, packageManager)
     const applicationPackageArgs = getInstallationCommand(applicationPackageManager, production)
+    const applicationRoot = resolve(root, path)
+
+    if (!hasConfiguredPackageManager && isPnpmWorkspace && applicationPackageManager === 'pnpm' && isPathInsideDirectory(root, applicationRoot)) {
+      continue
+    }
 
     try {
       logger.info(
@@ -138,7 +150,6 @@ export async function installDependencies (logger, root, applications, productio
         }
       }
 
-      const applicationRoot = resolve(root, path)
       const installApplicationDependencies = () => executeCommand(root, applicationPackageManager, applicationPackageArgs, {
         cwd: applicationRoot,
         stdio: 'inherit',
