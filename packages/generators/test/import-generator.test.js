@@ -85,7 +85,7 @@ test('should prepare questions for user input', async t => {
   deepStrictEqual(pathQuestion.message, 'Where is your application located?')
 
   const operationQuestion = gen.questions.at(-1)
-  deepStrictEqual(operationQuestion.type, 'list')
+  deepStrictEqual(operationQuestion.type, 'select')
   deepStrictEqual(operationQuestion.name, 'operation')
   deepStrictEqual(operationQuestion.message, 'Do you want to import or copy your application?')
   deepStrictEqual(operationQuestion.default, 'import')
