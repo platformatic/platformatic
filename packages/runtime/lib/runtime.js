@@ -580,10 +580,10 @@ export class Runtime extends EventEmitter {
   }
 
   async startApplications (applications, silent = false) {
-    // For each worker, get its dependencies from the first worker
+    // For each application, get its dependencies from any available worker.
     const dependencies = new Map()
     for (const applicationId of applications) {
-      const worker = await this.#getWorkerByIdOrNext(applicationId, 0)
+      const worker = await this.#getWorkerByIdOrNext(applicationId)
 
       dependencies.set(applicationId, await sendViaITC(worker, 'getDependencies'))
     }
@@ -730,12 +730,13 @@ export class Runtime extends EventEmitter {
       for (let i = 0; i < workersCount; i++) {
         const workerId = workersIds[i]
         const worker = this.#workers.get(workerId)
+        const workerIndex = parseInt(workerId.split(':')[1], 10)
 
         if (i > 0 && config.workersRestartDelay > 0) {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, i, worker, true)
+        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
       }
 
       this.#incrementApplicationRestartCount(id)
@@ -2031,8 +2032,9 @@ export class Runtime extends EventEmitter {
       }
     })
 
-    // Only activate watch for the first instance
-    if (index === 0) {
+    // Only activate watch for the first instance. Replacement workers get unique
+    // indices, so preserve the listener when replacing a single-worker app.
+    if (index === 0 || workersCount === 1) {
       // Handle applications changes
       // This is not purposely activated on when this.#config.watch === true
       // so that applications can eventually manually trigger a restart. This mechanism is current
