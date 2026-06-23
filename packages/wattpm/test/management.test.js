@@ -347,6 +347,7 @@ test('config - should list configuration for the runtime', async t => {
       bufferPoolSize: 262144,
       defaultHighWaterMark: 262144
     },
+    healthProbes: true,
     resolvedApplicationsBasePath: 'external',
     metrics: {
       enabled: true,
