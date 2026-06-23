@@ -988,6 +988,15 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
+    // For command-based (childManager) capabilities, metric collection is delegated to the
+    // child process, which owns the populated registry (the parent's `metricsRegistry` stays
+    // empty). The OTLP exporter is therefore set up inside the child over that registry.
+    // Setting it up here would export the empty parent registry.
+    // See https://github.com/platformatic/platformatic/issues/4848
+    if (this.childManager && this.clientWs) {
+      return
+    }
+
     // Wait for telemetry to be ready before loading promotel to avoid race condition
     const telemetryReady = getTelemetryReady({ throwOnMissing: false })
     if (telemetryReady) {
