@@ -25026,7 +25026,7 @@ snapshots:
     dependencies:
       async-cache-dedupe: 3.4.0
       fast-jwt: 6.2.4
-      undici: 7.27.2
+      undici: 7.28.0
 
   undici-thread-interceptor@1.4.0:
     dependencies:
