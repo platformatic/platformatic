@@ -1058,6 +1058,10 @@ export const runtimeProperties = {
     additionalProperties: false
   },
   health,
+  healthProbes: {
+    anyOf: [{ type: 'boolean' }, { type: 'string' }],
+    default: true
+  },
   undici: {
     type: 'object',
     properties: {

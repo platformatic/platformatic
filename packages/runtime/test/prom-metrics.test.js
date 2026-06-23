@@ -339,9 +339,117 @@ test('should track http cache hits/misses', async t => {
   ok(metrics.includes('http_cache_miss_count{applicationId="service-2",workerId="0"} 1'))
 })
 
-test('metrics can be disabled', async t => {
+test('metrics can be disabled while health probes stay enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'metrics-disabled.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The readiness endpoint is available at /ready.
+The liveness endpoint is available at /status.`
+    )
+  }
+
+  {
+    const { statusCode } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 404)
+  }
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/status'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+})
+
+test('health probes can be disabled while metrics stay enabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'health-probes-disabled.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.`
+    )
+  }
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 200)
+    ok((await body.text()).includes('nodejs_version_info'))
+  }
+
+  {
+    const { statusCode } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/ready'
+    })
+    strictEqual(statusCode, 404)
+  }
+
+  {
+    const { statusCode } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/status'
+    })
+    strictEqual(statusCode, 404)
+  }
+})
+
+test('prometheus server is not started when metrics and health probes are disabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'metrics-and-health-probes-disabled.json')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -356,7 +464,7 @@ test('metrics can be disabled', async t => {
   await rejects(
     request('http://127.0.0.1:9090', {
       method: 'GET',
-      path: '/metrics'
+      path: '/'
     })
   )
 })

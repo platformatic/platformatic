@@ -76,8 +76,11 @@ async function checkLiveness (runtime) {
   return { response, status }
 }
 
-export async function startPrometheusServer (runtime, opts) {
-  if (opts.enabled === false) {
+export async function startPrometheusServer (runtime, opts, healthProbes) {
+  const metricsEnabled = opts.enabled !== false
+  const healthProbesEnabled = healthProbes !== false
+
+  if (!metricsEnabled && !healthProbesEnabled) {
     return
   }
   const host = opts.hostname ?? DEFAULT_HOSTNAME
@@ -113,13 +116,17 @@ export async function startPrometheusServer (runtime, opts) {
     logLevel: 'warn',
     handler (req, reply) {
       reply.type('text/plain')
-      let response = `Hello from Platformatic Prometheus Server!\nThe metrics are available at ${metricsEndpoint}.`
+      let response = 'Hello from Platformatic Prometheus Server!'
 
-      if (opts.readiness !== false) {
+      if (metricsEnabled) {
+        response += `\nThe metrics are available at ${metricsEndpoint}.`
+      }
+
+      if (healthProbesEnabled && opts.readiness !== false) {
         response += `\nThe readiness endpoint is available at ${readinessEndpoint}.`
       }
 
-      if (opts.liveness !== false) {
+      if (healthProbesEnabled && opts.liveness !== false) {
         response += `\nThe liveness endpoint is available at ${livenessEndpoint}.`
       }
 
@@ -127,22 +134,24 @@ export async function startPrometheusServer (runtime, opts) {
     }
   })
 
-  promServer.route({
-    url: metricsEndpoint,
-    method: 'GET',
-    logLevel: 'warn',
-    onRequest: onRequestHook,
-    handler: async (req, reply) => {
-      const accepts = req.accepts()
-      const reqType = !accepts.type('text/plain') && accepts.type('application/json') ? 'json' : 'text'
-      if (reqType === 'text') {
-        reply.type('text/plain')
+  if (metricsEnabled) {
+    promServer.route({
+      url: metricsEndpoint,
+      method: 'GET',
+      logLevel: 'warn',
+      onRequest: onRequestHook,
+      handler: async (req, reply) => {
+        const accepts = req.accepts()
+        const reqType = !accepts.type('text/plain') && accepts.type('application/json') ? 'json' : 'text'
+        if (reqType === 'text') {
+          reply.type('text/plain')
+        }
+        return (await runtime.getMetrics(reqType)).metrics
       }
-      return (await runtime.getMetrics(reqType)).metrics
-    }
-  })
+    })
+  }
 
-  if (opts.readiness !== false) {
+  if (healthProbesEnabled && opts.readiness !== false) {
     const successStatusCode = opts.readiness?.success?.statusCode ?? DEFAULT_READINESS_SUCCESS_STATUS_CODE
     const successBody = opts.readiness?.success?.body ?? DEFAULT_READINESS_SUCCESS_BODY
     const failStatusCode = opts.readiness?.fail?.statusCode ?? DEFAULT_READINESS_FAIL_STATUS_CODE
@@ -181,7 +190,7 @@ export async function startPrometheusServer (runtime, opts) {
     })
   }
 
-  if (opts.liveness !== false) {
+  if (healthProbesEnabled && opts.liveness !== false) {
     const successStatusCode = opts.liveness?.success?.statusCode ?? DEFAULT_LIVENESS_SUCCESS_STATUS_CODE
     const successBody = opts.liveness?.success?.body ?? DEFAULT_LIVENESS_SUCCESS_BODY
     const failStatusCode = opts.liveness?.fail?.statusCode ?? DEFAULT_LIVENESS_FAIL_STATUS_CODE

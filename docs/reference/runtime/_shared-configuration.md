@@ -255,6 +255,12 @@ The object supports the following settings:
 - `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. Default: `128MB`
 - `codeRangeSize` (`number` or `string`): The maximum amount of memory that can be used for code range (compiled code). The value must be an amount in bytes or in memory units. Default: `268435456` (256MB).
 
+### `healthProbes`
+
+Enables the Kubernetes readiness and liveness probe endpoints on the Prometheus server. It can be a boolean or a string. Default: `true`.
+
+Set this to `false` to disable both probe endpoints globally. Individual probe endpoints can still be configured with `metrics.readiness` and `metrics.liveness` when `healthProbes` is enabled.
+
 ### `telemetry`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
@@ -427,6 +433,8 @@ Setting a lower value can be useful when:
 ### `metrics`
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime applications.
+
+The same server also exposes Kubernetes readiness and liveness probes when [`healthProbes`](#healthprobes) is enabled. If `metrics.enabled` is `false` and `healthProbes` is enabled, the server exposes only the probe endpoints. If both `metrics.enabled` and `healthProbes` are `false`, the server is not started.
 
 - **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
