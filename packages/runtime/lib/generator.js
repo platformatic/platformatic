@@ -268,8 +268,9 @@ export class RuntimeGenerator extends BaseGenerator {
       this.questions.push({
         type: 'input',
         name: 'port',
-        default: 3042,
-        message: 'What port do you want to use?'
+        default: '3042',
+        message: 'What port do you want to use?',
+        filter: Number
       })
     }
   }

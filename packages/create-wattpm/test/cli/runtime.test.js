@@ -16,17 +16,17 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'application1' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'yes' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'yes' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'application2' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'list', question: 'Which application should be exposed?', reply: 'application1' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Which application should be exposed?', reply: 'application1' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   // The actions must match IN ORDER
@@ -65,12 +65,12 @@ test('Add another application to an existing application', async t => {
   {
     const userInputHandler = await setupUserInputHandler(t, [
       { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-      { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+      { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
       { type: 'input', question: 'What is the name of the application?', reply: 'application1' },
-      { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-      { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+      { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+      { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
       { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-      { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+      { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
     ])
 
     await executeCreatePlatformatic(tmpDir, { pkgManager: 'pnpm', userInputHandler })
@@ -99,11 +99,11 @@ test('Add another application to an existing application', async t => {
   {
     // The actions must match IN ORDER
     const userInputHandler = await setupUserInputHandler(t, [
-      { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+      { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
       { type: 'input', question: 'What is the name of the application?', reply: 'application2' },
-      { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
-      { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-      { type: 'list', question: 'Which application should be exposed?', reply: 'application1' }
+      { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
+      { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+      { type: 'select', question: 'Which application should be exposed?', reply: 'application1' }
     ])
 
     // The actions must match IN ORDER

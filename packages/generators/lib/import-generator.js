@@ -45,7 +45,7 @@ export class ImportGenerator extends BaseGenerator {
     })
 
     this.questions.push({
-      type: 'list',
+      type: 'select',
       name: 'operation',
       message: 'Do you want to import or copy your application?',
       default: 'import',

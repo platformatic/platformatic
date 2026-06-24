@@ -15,12 +15,12 @@ test('Creates a Platformatic Gateway', async t => {
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await executeCreatePlatformatic(root, { userInputHandler })
@@ -47,12 +47,12 @@ test('Creates a Platformatic Gateway (TypeScript)', async t => {
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/gateway' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await executeCreatePlatformatic(root, { userInputHandler })

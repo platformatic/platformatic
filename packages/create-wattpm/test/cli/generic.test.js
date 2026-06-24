@@ -18,13 +18,13 @@ test('Support packages without generator via importing (new application)', async
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -74,21 +74,21 @@ test('Support packages without generator via importing (existing applications)',
   // The actions must match IN ORDER
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
     { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'list', question: 'Which application should be exposed?', reply: 'main' }
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Which application should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -163,13 +163,13 @@ test('Support packages without generator via copy (new application)', async t =>
   // The actions must match IN ORDER
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'copy' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -214,21 +214,21 @@ test('Support packages without generator via copy (existing applications)', asyn
   // The actions must match IN ORDER
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/vite' },
     { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'list', question: 'Which application should be exposed?', reply: 'main' }
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'copy' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Which application should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {

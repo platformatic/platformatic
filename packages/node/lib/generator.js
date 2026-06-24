@@ -46,7 +46,7 @@ export class Generator extends BaseGenerator {
 
     if (!this.config.skipTypescript) {
       this.questions.push({
-        type: 'list',
+        type: 'select',
         name: 'typescript',
         message: 'Do you want to use TypeScript?',
         default: false,
