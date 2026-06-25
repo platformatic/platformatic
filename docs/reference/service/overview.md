@@ -11,7 +11,7 @@ The HTTP Service is a core application type that runs within Watt (the Node.js A
 
 The HTTP Service handles custom application logic, business rules, and API endpoints that aren't automatically generated from your database schema. It's perfect for authentication, complex business logic, third-party integrations, and custom endpoints.
 
-For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
 ## Features
 

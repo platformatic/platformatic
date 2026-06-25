@@ -23,7 +23,7 @@ In this case, we are exposing the metrics on port 9091 (defaults to `9090`), and
 We can also specify the IP address to bind to (defaults to `0.0.0.0`).
 Note that the metrics port is not the default in this configuration. This is because if you want to test the integration running both Prometheus and Platformatic on the same host, Prometheus starts on `9090` port too.
 
-All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/_shared-configuration.md#metrics) for more details.
+All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/configuration.md#metrics) for more details.
 
 The same server exposes Kubernetes readiness and liveness probes by default. Set the top-level `healthProbes` option to `false` to expose metrics without `/ready` and `/status`:
 

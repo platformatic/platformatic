@@ -6,7 +6,7 @@ The Gateway Service is an API Gateway that runs within Watt (the Node.js Applica
 
 The Gateway Service aggregates APIs from multiple sources - whether they're other applications in your Watt application, external APIs, or legacy systems - presenting them as a cohesive, well-documented API to your clients.
 
-For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
 ## Features
 

@@ -10,7 +10,7 @@ script that will populate — or "seed" — our database (where `$db` is the id 
 ## Example
 
 Our seed script should export a `Function` that accepts an argument:
-an instance of [`@platformatic/sql-mapper`](/packages/sql-mapper/overview.md).
+an instance of [`@platformatic/sql-mapper`](../sql-mapper/overview.md).
 
 ```javascript title="seed.js"
 'use strict'

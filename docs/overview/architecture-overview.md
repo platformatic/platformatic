@@ -558,8 +558,8 @@ Watt uses [Prometheus](https://prometheus.io/) client libraries for metrics coll
 
 ## Next Steps
 
-- **[Configuration Guide](../reference/watt/configuration.md)**: Learn how to configure Watt applications
-- **[Application Mesh Details](../guides/application-mesh.md)**: Deep dive into inter-application communication
+- **[Configuration Guide](../reference/wattpm/configuration.md)**: Learn how to configure Watt applications
+- **[Application Mesh Details](../reference/runtime/multithread-architecture.md)**: Deep dive into inter-application communication
 - **[Deployment Patterns](../guides/deployment/)**: Production deployment strategies
 - **[Monitoring Setup](../guides/metrics.md)**: Setting up monitoring stack
 
