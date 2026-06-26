@@ -57,6 +57,7 @@ const sidebars = {
             'guides/using-watt-with-node-config',
             'guides/use-watt-multiple-repository',
             'guides/use-watt-with-ts-node',
+            'guides/use-watt-with-ai-agents',
             'guides/scheduler',
             'guides/dynamic-workers',
             'guides/next-image-optimizer'
