@@ -9,7 +9,7 @@ The Database Service is a core application type that runs within Watt (the Node.
 
 The Database Service supports PostgreSQL, MySQL, MariaDB, and SQLite, automatically introspecting your database schema to create type-safe, fully-featured APIs with support for relationships, filtering, pagination, and real-time subscriptions.
 
-For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
 ## Features
 
@@ -45,7 +45,7 @@ For a high level overview of how Watt and its applications work, please referenc
 
 ### Command Line usage (CLI)
 
-When using [Watt](../watt/overview.md), `@platformatic/db` applications will make some additional commands available on the terminal.
+When using [Watt](../wattpm/overview.md), `@platformatic/db` applications will make some additional commands available on the terminal.
 
 All the commands will be prefixed by the application id. For instance, if your application id is `movies`, then you will have the following commands available:
 
@@ -85,7 +85,7 @@ Database Service is perfect when you need:
 - **Enterprise Features**: Advanced authorization, migrations, and schema management
 
 :::info
-Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start-watt.md) to create your first Watt application with a Database Service! ⚡
+Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start.md) to create your first Watt application with a Database Service! ⚡
 :::
 
 ## Supported databases
