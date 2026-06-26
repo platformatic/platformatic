@@ -76,7 +76,7 @@ When the skill is loaded as a Claude Code plugin, it exposes argument-based slas
 
 | Capability | Description |
 |------------|-------------|
-| Framework detection | Identifies Next.js, Remix, Astro, NestJS, Express, Fastify, Koa, WordPress, Laravel, and PHP |
+| Framework detection | Identifies Next.js, Nuxt, React Router, TanStack Start, Vite, Remix, Astro, NestJS, Express, Fastify, Koa, WordPress, Laravel, and PHP |
 | Configuration generation | Creates a `watt.json` tuned to the detected framework |
 | Dependency installation | Installs `wattpm` and the matching `@platformatic/*` package |
 | Deployment automation | Generates Docker, Kubernetes, and cloud (Fly.io, Railway, Render) configuration |
@@ -90,6 +90,10 @@ When the skill is loaded as a Claude Code plugin, it exposes argument-based slas
 | Framework | Package | Detection |
 |-----------|---------|-----------|
 | Next.js | `@platformatic/next` | `next.config.{js,ts,mjs}` |
+| Nuxt | `@platformatic/nuxt` | `nuxt.config.{ts,js,mjs}` |
+| React Router | `@platformatic/react-router` | `react-router.config.{ts,js}` |
+| TanStack Start | `@platformatic/tanstack` | `@tanstack/react-start` in dependencies |
+| Vite | `@platformatic/vite` | `vite.config.{js,ts,mjs}` (fallback for Vite apps) |
 | Remix | `@platformatic/remix` | `remix.config.js` |
 | Astro | `@platformatic/astro` | `astro.config.{mjs,ts}` |
 | Express | `@platformatic/node` | `express` in dependencies |
@@ -99,6 +103,8 @@ When the skill is loaded as a Claude Code plugin, it exposes argument-based slas
 | WordPress | `@platformatic/php` | `wp-config.php` |
 | Laravel | `@platformatic/php` | `artisan` plus `composer.json` |
 | PHP | `@platformatic/php` | `composer.json` plus `public/index.php` |
+
+Several frameworks build on Vite (React Router, TanStack Start, Remix, Astro) and ship a `vite.config.*`. The agent matches the specific framework first and falls back to `@platformatic/vite` only when no more specific signal is present.
 
 ## Requirements
 
