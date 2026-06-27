@@ -12,6 +12,10 @@ This guide will help you set up and run an application composed of the following
 In this guide, we will use `Next.js` as our frontend framework, but Watt supports many more frameworks including Astro, Remix, Vite, and NestJS. See our [Framework Integration Guides](/docs/guides/frameworks) for complete details and setup instructions for all supported frameworks.
 :::
 
+:::tip
+Prefer to let an AI coding agent set this up? Platformatic ships an official Agent Skill for Watt that works with Claude Code, Cursor, GitHub Copilot, and other agents. See [Use Watt with AI Coding Agents](/docs/guides/use-watt-with-ai-agents).
+:::
+
 ## Prerequisites
 
 Before starting, ensure you have the following installed:
