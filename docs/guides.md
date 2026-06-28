@@ -8,6 +8,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 - **[Build a Modular Monolith](./guides/build-modular-monolith.md)** - Create a comprehensive library application with multiple Platformatic DB and Gateway services, learn API composition and client generation
 - **[Generate Frontend Code for REST APIs](./guides/generate-frontend-code-to-consume-platformatic-rest-api.md)** - Auto-generate TypeScript clients for your Platformatic REST APIs
 - **[Using Watt with Node Config](./guides/using-watt-with-node-config.md)** - Integrate Node.js configuration management with Watt applications
+- **[Use Watt with AI Coding Agents](./guides/use-watt-with-ai-agents.md)** - Let an AI coding agent set up, configure, and deploy Watt using the official Agent Skill
 
 ### Caching & Performance
 - **[Cache with Platformatic Watt](./guides/cache-with-platformatic-watt.md)** - Implement caching strategies to improve application performance
