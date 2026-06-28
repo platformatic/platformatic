@@ -2428,7 +2428,7 @@ importers:
     dependencies:
       '@datadog/pprof':
         specifier: ^5.3.0
-        version: 5.15.0
+        version: 5.15.1
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
@@ -2870,8 +2870,8 @@ packages:
   '@databases/validate-unicode@1.0.0':
     resolution: {integrity: sha512-dLKqxGcymeVwEb/6c44KjOnzaAafFf0Wxa8xcfEjx/qOl3rdijsKYBAtIGhtVtOlpPf/PFKfgTuFurSPn/3B/g==}
 
-  '@datadog/pprof@5.15.0':
-    resolution: {integrity: sha512-ODGC3pE+NHo+rz74bWyOyFeC5GgvqA6Xzk0wIBGs8W3v+A14I5Q+Pmc7EC8etk5gE8t0hGYYwA5ymSGCljov+Q==}
+  '@datadog/pprof@5.15.1':
+    resolution: {integrity: sha512-4mI750tX6okNROS4YKvGQjyAQ+VqfzDqzysCytOJhL2E2ktK/q4M0PtC7j70tiirGb/fO9fjma3IMNSRLYX+xQ==}
     engines: {node: '>=16'}
 
   '@dxup/nuxt@0.4.1':
@@ -13884,7 +13884,7 @@ snapshots:
 
   '@databases/validate-unicode@1.0.0': {}
 
-  '@datadog/pprof@5.15.0':
+  '@datadog/pprof@5.15.1':
     dependencies:
       node-gyp-build: 4.8.4
       pprof-format: 2.2.2
