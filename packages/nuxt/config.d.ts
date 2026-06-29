@@ -240,7 +240,7 @@ export interface PlatformaticNuxtConfig {
     reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
-    exitOnUnhandledErrors?: boolean;
+    exitOnUnhandledErrors?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;
@@ -262,6 +262,7 @@ export interface PlatformaticNuxtConfig {
       bufferPoolSize?: number | string;
       defaultHighWaterMark?: number | string;
     };
+    healthProbes?: boolean | string;
     undici?: {
       agentOptions?: {
         [k: string]: unknown;
@@ -352,6 +353,33 @@ export interface PlatformaticNuxtConfig {
           enabled?: boolean | string;
           hostname?: string;
           endpoint?: string;
+          https?: {
+            allowHTTP1?: boolean;
+            key:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            cert:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            requestCert?: boolean;
+            rejectUnauthorized?: boolean;
+          };
           auth?: {
             username: string;
             password: string;
@@ -490,6 +518,14 @@ export interface PlatformaticNuxtConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;
@@ -515,6 +551,14 @@ export interface PlatformaticNuxtConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;

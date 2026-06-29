@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/nuxt/3.52.4.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/nuxt/3.58.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Nuxt Config",
   "type": "object",
@@ -1183,7 +1183,14 @@
         },
         "exitOnUnhandledErrors": {
           "default": true,
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            }
+          ]
         },
         "gracefulShutdown": {
           "type": "object",
@@ -1364,6 +1371,17 @@
             }
           },
           "additionalProperties": false
+        },
+        "healthProbes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": true
         },
         "undici": {
           "type": "object",
@@ -1615,6 +1633,99 @@
                 },
                 "endpoint": {
                   "type": "string"
+                },
+                "https": {
+                  "type": "object",
+                  "properties": {
+                    "allowHTTP1": {
+                      "type": "boolean"
+                    },
+                    "key": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "resolvePath": true
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "cert": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "resolvePath": true
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "requestCert": {
+                      "type": "boolean"
+                    },
+                    "rejectUnauthorized": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "cert"
+                  ]
                 },
                 "auth": {
                   "type": "object",
@@ -1931,6 +2042,22 @@
                           "path": {
                             "type": "string",
                             "description": "The path to write the traces to. Only for file exporter."
+                          },
+                          "protocol": {
+                            "type": "string",
+                            "enum": [
+                              "http",
+                              "grpc"
+                            ],
+                            "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                          },
+                          "transport": {
+                            "type": "string",
+                            "enum": [
+                              "http",
+                              "grpc"
+                            ],
+                            "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                           }
                         }
                       },
@@ -1967,6 +2094,22 @@
                         "path": {
                           "type": "string",
                           "description": "The path to write the traces to. Only for file exporter."
+                        },
+                        "protocol": {
+                          "type": "string",
+                          "enum": [
+                            "http",
+                            "grpc"
+                          ],
+                          "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                        },
+                        "transport": {
+                          "type": "string",
+                          "enum": [
+                            "http",
+                            "grpc"
+                          ],
+                          "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                         }
                       }
                     },
