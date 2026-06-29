@@ -36,7 +36,7 @@ Direct access through the legacy `globalThis.platformatic` object is still suppo
 
 ## Documentation
 
-See the [Runtime APIs reference](https://docs.platformatic.dev/docs/reference/runtime/globals) for the complete API list and examples.
+See the [Runtime APIs reference](https://docs.platformatic.dev/docs/reference/runtime/configuration) for the complete API list and examples.
 
 ## License
 

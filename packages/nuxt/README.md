@@ -8,19 +8,6 @@ Platformatic capability for running [Nuxt](https://nuxt.com/) applications insid
 npm install @platformatic/nuxt
 ```
 
-## Configuration
+## License
 
-Create a `watt.json` in the root folder of your Nuxt application:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nuxt/3.52.4.json",
-  "application": {
-    "basePath": "/frontend"
-  }
-}
-```
-
-## Documentation
-
-See the [Nuxt reference documentation](../../docs/reference/nuxt/overview.md).
+Apache 2.0
