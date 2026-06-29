@@ -1,6 +1,7 @@
 import { execa } from 'execa'
 import { fastify } from 'fastify'
 import { deepStrictEqual, ok } from 'node:assert'
+import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
@@ -350,6 +351,63 @@ test('should use base and messageKey options', async t => {
   )
 })
 
+test('should use configured pino message key to detect thread application logs', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key-pino', 'platformatic.json')
+
+  let responses = 0
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
+    },
+    done: message => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  ok(
+    logs.find(log => {
+      return log.customBaseName === 'a' && log.theMessage === 'call route / on service' && !log.stdout
+    })
+  )
+
+  ok(
+    logs.find(log => {
+      return log.customBaseName === 'a' && log.theMessage === 'call route / on node' && !log.stdout
+    })
+  )
+})
+
+test('should use configured pino keys to detect thread application logs', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-pino-keys', 'platformatic.json')
+
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/custom-pino-keys' })
+      requested = true
+    },
+    done: message => {
+      return requested && message.includes('custom pino keys')
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  ok(
+    logs.find(log => {
+      return log.severity === 30 && typeof log.timestamp === 'number' && log.message === 'custom pino keys' && !log.stdout
+    })
+  )
+})
+
 test('should use null base in options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
@@ -444,6 +502,80 @@ test('should use colors when printing applications logs', async t => {
     stdout.match(
       // eslint-disable-next-line no-control-regex, no-regex-spaces
       /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) \w+:\d+ \|\u001b\[0m\u001b\[32m  INFO\u001b\[39m: \u001b\[36m/
+    )
+  )
+})
+
+test('should use pretty logs when FORCE_TTY is set in .env', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await writeFile(resolve(root, '.env'), 'FORCE_TTY=true', 'utf-8')
+
+  const child = execa(process.execPath, [startPath, configFile], {
+    env: { PLT_USE_PLAIN_CREATE: true },
+    cwd: root
+  })
+  child.catch(() => {})
+
+  t.after(() => {
+    child.kill('SIGKILL')
+  })
+
+  const promise = Promise.withResolvers()
+  let stdout = ''
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString()
+
+    if (stdout.includes('Platformatic is now listening')) {
+      child.kill('SIGKILL')
+      promise.resolve()
+    }
+  })
+
+  await promise.promise
+
+  ok(!stdout.trimStart().startsWith('{'))
+})
+
+test('should use colors when FORCE_COLOR is set in .env', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await updateFile(configFile, data => {
+    const config = JSON.parse(data)
+    config.logger.level = 'info'
+    return JSON.stringify(config, null, 2)
+  })
+  await writeFile(resolve(root, '.env'), 'FORCE_TTY=true\nFORCE_COLOR=true', 'utf-8')
+
+  const child = execa(process.execPath, [startPath, configFile], {
+    env: { PLT_USE_PLAIN_CREATE: true },
+    cwd: root
+  })
+  child.catch(() => {})
+
+  t.after(() => {
+    child.kill('SIGKILL')
+  })
+
+  const promise = Promise.withResolvers()
+  let stdout = ''
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString()
+
+    if (stdout.includes('Platformatic is now listening')) {
+      child.kill('SIGKILL')
+      promise.resolve()
+    }
+  })
+
+  await promise.promise
+
+  ok(
+    stdout.match(
+      // eslint-disable-next-line no-control-regex
+      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) \w+:\d+ \|\u001b\[0m/
     )
   )
 })

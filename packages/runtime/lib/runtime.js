@@ -116,6 +116,9 @@ export class Runtime extends EventEmitter {
   #root
   #config
   #env
+  #pinoLevelKey
+  #pinoTimeKey
+  #pinoMessageKey
   #context
   #sharedContext
   #isProduction
@@ -159,6 +162,9 @@ export class Runtime extends EventEmitter {
     this.#config = config
     this.#root = config[kMetadata].root
     this.#env = config[kMetadata].env
+    this.#pinoLevelKey = config.logger.pino?.level ?? 'level'
+    this.#pinoTimeKey = config.logger.pino?.time ?? 'time'
+    this.#pinoMessageKey = config.logger.pino?.message ?? 'msg'
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
     this.#concurrency = Math.max(1, config.startupConcurrency ?? this.#context.concurrency ?? DEFAULT_CONCURRENCY)
@@ -2887,10 +2893,10 @@ export class Runtime extends EventEmitter {
 
       if (message !== null && typeof message === 'object') {
         pinoLog =
-          typeof message.level === 'number' &&
+          typeof message[this.#pinoLevelKey] === 'number' &&
           // We want to accept both pino raw time (number) and time as formatted string
-          (typeof message.time === 'number' || typeof message.time === 'string') &&
-          typeof message.msg === 'string'
+          (typeof message[this.#pinoTimeKey] === 'number' || typeof message[this.#pinoTimeKey] === 'string') &&
+          typeof message[this.#pinoMessageKey] === 'string'
       }
 
       // Directly write to the Pino destination
@@ -2899,9 +2905,9 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        this.#loggerDestination.lastLevel = message.level
-        this.#loggerDestination.lastTime = message.time
-        this.#loggerDestination.lastMsg = message.msg
+        this.#loggerDestination.lastLevel = message[this.#pinoLevelKey]
+        this.#loggerDestination.lastTime = message[this.#pinoTimeKey]
+        this.#loggerDestination.lastMsg = message[this.#pinoMessageKey]
         this.#loggerDestination.lastObj = message
         this.#loggerDestination.lastLogger = logger
         this.#loggerDestination.write(raw + '\n')

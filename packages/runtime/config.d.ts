@@ -180,6 +180,11 @@ export type PlatformaticRuntimeConfig = {
       url: string;
     };
     captureStdio?: boolean;
+    pino?: {
+      level?: string;
+      time?: string;
+      message?: string;
+    };
     [k: string]: unknown;
   };
   server?: {
