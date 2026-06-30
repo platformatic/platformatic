@@ -17,6 +17,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 
 ### Multi-Repository & Scaling
 - **[Use Watt with Multiple Repositories](./guides/use-watt-multiple-repository.md)** - Manage Watt applications across multiple repositories
+- **[Watt Architecture Patterns](./guides/watt-architecture-patterns.md)** - Choose between pyramid and funnel architectures for Watt applications
 - **[Scheduler](./guides/scheduler.md)** - Implement scheduled tasks and background jobs in your applications
 
 ## Framework Integration
