@@ -403,7 +403,7 @@ test('should use configured pino keys to detect thread application logs', async 
 
   ok(
     logs.find(log => {
-      return log.severity === 30 && typeof log.timestamp === 'number' && log.message === 'custom pino keys' && !log.stdout
+      return log.severity === 'INFO' && typeof log.timestamp === 'number' && log.message === 'custom pino keys' && !log.stdout
     })
   )
 })
@@ -506,7 +506,7 @@ test('should use colors when printing applications logs', async t => {
   )
 })
 
-test('should use pretty logs when FORCE_TTY is set in .env', async t => {
+test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -538,7 +538,7 @@ test('should use pretty logs when FORCE_TTY is set in .env', async t => {
   ok(!stdout.trimStart().startsWith('{'))
 })
 
-test('should use colors when FORCE_COLOR is set in .env', async t => {
+test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 

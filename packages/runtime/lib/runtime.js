@@ -2890,10 +2890,13 @@ export class Runtime extends EventEmitter {
       }
 
       let pinoLog
+      let pinoLevel
 
       if (message !== null && typeof message === 'object') {
+        pinoLevel = message[this.#pinoLevelKey]
+
         pinoLog =
-          typeof message[this.#pinoLevelKey] === 'number' &&
+          (typeof pinoLevel === 'number' || (this.#pinoLevelKey !== 'level' && typeof pinoLevel === 'string')) &&
           // We want to accept both pino raw time (number) and time as formatted string
           (typeof message[this.#pinoTimeKey] === 'number' || typeof message[this.#pinoTimeKey] === 'string') &&
           typeof message[this.#pinoMessageKey] === 'string'
@@ -2905,7 +2908,12 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        this.#loggerDestination.lastLevel = message[this.#pinoLevelKey]
+        if (typeof pinoLevel === 'string') {
+          pinoLevel =
+            logger.levels.values[pinoLevel] ?? logger.levels.values[pinoLevel.toLowerCase()] ?? logger.levels.values[level]
+        }
+
+        this.#loggerDestination.lastLevel = pinoLevel
         this.#loggerDestination.lastTime = message[this.#pinoTimeKey]
         this.#loggerDestination.lastMsg = message[this.#pinoMessageKey]
         this.#loggerDestination.lastObj = message
