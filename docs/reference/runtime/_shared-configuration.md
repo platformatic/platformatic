@@ -45,6 +45,12 @@ the app worker thread.
 runtime. Each application object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the application.
+- **`enabled`** (`boolean`, `string`, or `object`) - If `false`, the application
+  is disabled and will not be loaded by the runtime. Boolean strings and
+  environment variable placeholders are supported. It can also be an object where
+  each key is an environment name and each value is a boolean. If the current
+  environment does not match any key, the application is enabled. Default:
+  `true`.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
