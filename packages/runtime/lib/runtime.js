@@ -119,6 +119,7 @@ export class Runtime extends EventEmitter {
   #pinoLevelKey
   #pinoTimeKey
   #pinoMessageKey
+  #pinoCustomizedKeys
   #context
   #sharedContext
   #isProduction
@@ -165,6 +166,8 @@ export class Runtime extends EventEmitter {
     this.#pinoLevelKey = config.logger.pino?.level ?? 'level'
     this.#pinoTimeKey = config.logger.pino?.time ?? 'time'
     this.#pinoMessageKey = config.logger.pino?.message ?? 'msg'
+    this.#pinoCustomizedKeys =
+      this.#pinoLevelKey !== 'level' || this.#pinoTimeKey !== 'time' || this.#pinoMessageKey !== 'msg'
     this.#context = context ?? {}
     this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false
     this.#concurrency = Math.max(1, config.startupConcurrency ?? this.#context.concurrency ?? DEFAULT_CONCURRENCY)
@@ -2896,7 +2899,7 @@ export class Runtime extends EventEmitter {
         pinoLevel = message[this.#pinoLevelKey]
 
         pinoLog =
-          (typeof pinoLevel === 'number' || (this.#pinoLevelKey !== 'level' && typeof pinoLevel === 'string')) &&
+          (typeof pinoLevel === 'number' || (this.#pinoCustomizedKeys && typeof pinoLevel === 'string')) &&
           // We want to accept both pino raw time (number) and time as formatted string
           (typeof message[this.#pinoTimeKey] === 'number' || typeof message[this.#pinoTimeKey] === 'string') &&
           typeof message[this.#pinoMessageKey] === 'string'
