@@ -6,7 +6,7 @@ have its own responsibility, framework, worker configuration, and operational pr
 This guide explains two common architecture patterns for Watt applications:
 
 - **Pyramid architecture**: one entrypoint fans out to many applications.
-- **Funnel architecture**: many identical CPU-bound peers feed one I/O-focused application.
+- **Funnel architecture**: many identical CPU-bound instances feed one I/O-focused application.
 
 Use these patterns to decide where to place entrypoints, CPU-heavy work, I/O-heavy work,
 and service boundaries in your Watt application.
@@ -16,11 +16,11 @@ and service boundaries in your Watt application.
 | Pattern | Shape | Use when |
 | --- | --- | --- |
 | Pyramid | 1 to N | One public application coordinates many downstream applications |
-| Funnel | N to 1 | Many identical CPU-bound peers feed one I/O-focused application |
+| Funnel | N to 1 | Many identical CPU-bound instances feed one I/O-focused application |
 
 You can also combine both patterns in the same Watt application. For example, a public
 gateway can route normal API requests to domain applications and send expensive jobs to
-CPU-bound peers that store results through a shared I/O application.
+CPU-bound instances that store results through a shared I/O application.
 
 ## Pyramid Architecture
 
@@ -68,14 +68,14 @@ Use metrics to identify overloaded applications and tracing to understand fan-ou
 
 ## Funnel Architecture
 
-Use the funnel pattern when many identical CPU-bound peers perform expensive work and
-converge on one I/O-focused application. The CPU peers are instances of the same Watt
+Use the funnel pattern when many identical CPU-bound instances perform expensive work and
+converge on one I/O-focused application. They are separate instances of the same Watt
 application exposed with `SO_REUSEPORT`.
 
 ![Funnel architecture diagram](./watt-architecture-patterns-images/funnel-architecture.png)
 
-The Watt boundary contains the identical CPU peers and the I/O application. Job or request
-sources sit outside Watt and reach one of the CPU peers through `SO_REUSEPORT`.
+The Watt boundary contains the identical CPU instances and the I/O application. Job or request
+sources sit outside Watt and reach one of the CPU instances through `SO_REUSEPORT`.
 
 In this pattern, the wide side handles CPU load. The narrow side handles I/O load. The
 I/O application centralizes access to databases, object storage, queues, shared state,
@@ -90,7 +90,7 @@ Use funnel architecture when:
 - You generate PDFs, reports, archives, or exports.
 - You transform, parse, validate, enrich, or index large payloads.
 - You wrap AI inference, embedding generation, or other compute-heavy work.
-- You need many identical peers for CPU work but want coordinated database, storage, shared state,
+- You need many identical instances for CPU work but want coordinated database, storage, shared state,
   or API access.
 
 This pattern fits systems where CPU saturation in the entrypoint is the main bottleneck
@@ -99,7 +99,7 @@ consistent.
 
 ### How to Scale It
 
-Scale the CPU-bound peers first. Give them worker limits that match the CPU budget
+Scale the CPU-bound instances first. Give them worker limits that match the CPU budget
 of the container or host. Keep the I/O application smaller and focused on resource access,
 backpressure, and consistency.
 
@@ -125,7 +125,7 @@ Many production systems use both patterns in the same Watt application.
 
 ![Combined architecture diagram](./watt-architecture-patterns-images/combined-architecture.png)
 
-The Watt boundary contains the public entrypoint, domain applications, CPU peers, and I/O
+The Watt boundary contains the public entrypoint, domain applications, CPU instances, and I/O
 applications. Clients and external resources stay outside that boundary.
 
 Use a combined architecture when your application has both request/response paths and
@@ -136,7 +136,7 @@ Keep the boundaries explicit:
 
 - The gateway or frontend handles public traffic.
 - Domain applications handle request/response business logic.
-- CPU peers handle expensive computation.
+- CPU instances handle expensive computation.
 - I/O applications coordinate databases, storage, queues, shared state, and external APIs.
 
 ## Operational Guidance
@@ -147,7 +147,7 @@ Design each Watt application around one primary load profile.
 | --- | --- | --- |
 | Public entrypoint | Routing, auth, composition, SSR | Request rate and latency |
 | Domain application | Business logic for one area | Request rate, latency, and error rate |
-| CPU-bound peer | Processing, rendering, parsing, transformation | CPU profile and event loop utilization |
+| CPU-bound instance | Processing, rendering, parsing, transformation | CPU profile and event loop utilization |
 | I/O-focused application | Database, storage, queues, shared state, external APIs | Connection usage, latency, and backpressure |
 
 Start with explicit worker limits for the applications that have known bottlenecks. Then
