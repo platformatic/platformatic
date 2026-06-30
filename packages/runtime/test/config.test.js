@@ -198,6 +198,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     {
       config: configFile,
       dependencies: [],
+      enabled: true,
       entrypoint: true,
       gitBranch: 'main',
       health: {},
@@ -215,6 +216,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     },
     {
       dependencies: [],
+      enabled: true,
       entrypoint: false,
       gitBranch: 'main',
       health: {},

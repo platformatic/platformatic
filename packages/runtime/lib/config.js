@@ -295,8 +295,27 @@ export async function prepareApplication (config, application, defaultWorkers) {
   return application
 }
 
+function isApplicationEnabled (application, environment) {
+  const { enabled } = application
+
+  if (typeof enabled === 'undefined') {
+    return true
+  }
+
+  if (typeof enabled === 'string') {
+    return enabled !== 'false'
+  }
+
+  if (typeof enabled === 'object' && enabled !== null) {
+    return enabled[environment] ?? true
+  }
+
+  return enabled
+}
+
 export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
+  const environment = production ? 'production' : 'development'
   const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
 
   const watchType = typeof config.watch
@@ -388,6 +407,12 @@ export async function transform (config, _, context) {
       } else {
         applications.push(application)
       }
+    }
+  }
+
+  for (let i = applications.length - 1; i >= 0; --i) {
+    if (!isApplicationEnabled(applications[i], environment)) {
+      applications.splice(i, 1)
     }
   }
 

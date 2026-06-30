@@ -18,6 +18,12 @@ export type PlatformaticRuntimeConfig = {
     mappings?: {
       [k: string]: {
         id: string;
+        enabled?:
+          | boolean
+          | string
+          | {
+              [k: string]: boolean;
+            };
         config?: string;
         useHttp?: boolean;
         reuseTcpPorts?: boolean;

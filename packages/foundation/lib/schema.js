@@ -784,6 +784,17 @@ export const application = {
     id: {
       type: 'string'
     },
+    enabled: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          additionalProperties: { type: 'boolean' }
+        }
+      ],
+      default: true
+    },
     path: {
       type: 'string',
       // This is required for the resolve command to allow empty paths after environment variable replacement
@@ -1518,6 +1529,7 @@ export const runtimeUnwrappablePropertiesList = [
 
 export const applicationsUnwrappablePropertiesList = [
   'id',
+  'enabled',
   'path',
   'config',
   'url',

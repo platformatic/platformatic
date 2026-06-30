@@ -58,6 +58,23 @@
               "id": {
                 "type": "string"
               },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "boolean"
+                    }
+                  }
+                ],
+                "default": true
+              },
               "config": {
                 "type": "string"
               },
@@ -426,6 +443,23 @@
         "properties": {
           "id": {
             "type": "string"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "default": true
           },
           "path": {
             "type": "string",
@@ -806,6 +840,23 @@
           "id": {
             "type": "string"
           },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "default": true
+          },
           "path": {
             "type": "string",
             "allowEmptyPaths": true,
@@ -1184,6 +1235,23 @@
         "properties": {
           "id": {
             "type": "string"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "default": true
           },
           "path": {
             "type": "string",
