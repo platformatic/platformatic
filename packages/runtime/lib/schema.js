@@ -10,6 +10,25 @@ const runtimeLogger = {
     captureStdio: {
       type: 'boolean',
       default: true
+    },
+    pino: {
+      type: 'object',
+      default: {},
+      properties: {
+        level: {
+          type: 'string',
+          default: 'level'
+        },
+        time: {
+          type: 'string',
+          default: 'time'
+        },
+        message: {
+          type: 'string',
+          default: 'msg'
+        }
+      },
+      additionalProperties: false
     }
   }
 }

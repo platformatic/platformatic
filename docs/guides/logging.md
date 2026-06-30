@@ -399,7 +399,7 @@ This provides:
 
 ### Note on using custom logger configuration
 
-When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread application is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
+When using custom logger configuration that changes the output keys, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, configure `logger.pino` so Watt can still recognize Pino log entries emitted by thread applications.
 
 For example, the difference between the default pino settings and a custom logger configuration that uses a custom `messageKey` is:
 
@@ -439,6 +439,22 @@ With custom logger configuration, for example
 }
 ```
 
+Set `logger.pino` to the keys emitted by your worker application logs:
+
+```json
+{
+  "logger": {
+    "pino": {
+      "level": "severity",
+      "time": "time",
+      "message": "message"
+    }
+  }
+}
+```
+
+By default, Watt uses `level`, `time` and `msg`. If the configured keys are not present, Watt treats the entry as a JSON log entry and wraps it in the `stdout` property:
+
 ```json
 {
   "severity": "INFO",
@@ -459,7 +475,7 @@ With custom logger configuration, for example
 }
 ```
 
-To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Applications logs](#capture-thread-applications-logs) for more details); the result will be close to the default pino settings:
+When the keys match `logger.pino`, the log entry is not wrapped in the `stdout` property. Alternatively, to avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Applications logs](#capture-thread-applications-logs) for more details); the result will be close to the default pino settings:
 
 ```json
 {

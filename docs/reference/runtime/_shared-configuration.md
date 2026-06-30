@@ -369,6 +369,10 @@ An object with the following settings:
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
+- **`pino`** — Configures the keys used to recognize Pino log entries emitted by worker applications before wrapping them in `stdout` or `stderr`. An object with properties:
+  - **`level`** — The key that contains the numeric log level. Default: `level`.
+  - **`time`** — The key that contains the log timestamp. Default: `time`.
+  - **`message`** — The key that contains the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.

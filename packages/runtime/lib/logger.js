@@ -1,6 +1,7 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  kMetadata,
 } from '@platformatic/foundation'
 import { isatty } from 'node:tty'
 import pino from 'pino'
@@ -63,7 +64,8 @@ const colors = [
   226 // bright yellow
 ]
 
-function createLoggerContext () {
+function createLoggerContext (config) {
+  const env = config[kMetadata].env
   const context = {
     colors: {},
     closeables: [],
@@ -76,7 +78,7 @@ function createLoggerContext () {
         context.maxLength = Math.max(context.maxLength, id.length)
         let hash = 0
 
-        if (!pretty.isColorSupported && process.env.FORCE_COLOR !== 'true') {
+        if (!pretty.isColorSupported && env.FORCE_COLOR !== 'true') {
           context.colors[id] = ''
           continue
         }
@@ -151,7 +153,8 @@ function createPrettifier (context) {
 
 // Create the runtime logger
 export async function createLogger (config) {
-  const context = createLoggerContext()
+  const env = config[kMetadata].env
+  const context = createLoggerContext(config)
 
   const loggerConfig = { ...config.logger, transport: undefined }
   if (config.logger.base === null) {
@@ -168,7 +171,7 @@ export async function createLogger (config) {
     }
 
     cliStream = pino.transport(config.logger.transport)
-  } else if ((process.env.FORCE_TTY || isatty(1)) && process.env.PLT_PRETTY_PRINT !== 'false') {
+  } else if ((env.FORCE_TTY || isatty(1)) && env.PLT_PRETTY_PRINT !== 'false') {
     cliStream = createPrettifier(context)
   } else {
     cliStream = pino.destination(1)
