@@ -6,7 +6,7 @@ have its own responsibility, framework, worker configuration, and operational pr
 This guide explains two common architecture patterns for Watt applications:
 
 - **Pyramid architecture**: one entrypoint fans out to many applications.
-- **Reverse pyramid architecture**: many CPU-bound applications feed one I/O-focused application.
+- **Funnel architecture**: many CPU-bound applications feed one I/O-focused application.
 
 Use these patterns to decide where to place entrypoints, CPU-heavy work, I/O-heavy work,
 and service boundaries in your Watt application.
@@ -16,7 +16,7 @@ and service boundaries in your Watt application.
 | Pattern | Shape | Use when |
 | --- | --- | --- |
 | Pyramid | 1 to N | One public application coordinates many downstream applications |
-| Reverse pyramid | N to 1 | Many CPU-bound applications feed one I/O-focused application |
+| Funnel | N to 1 | Many CPU-bound applications feed one I/O-focused application |
 
 You can also combine both patterns in the same Watt application. For example, a public
 gateway can route normal API requests to domain applications and send expensive jobs to
@@ -27,15 +27,7 @@ a CPU worker pool that stores results through a shared I/O application.
 Use the pyramid pattern when one application receives requests and coordinates work
 across several downstream applications.
 
-```text
-Client
-  |
-Entrypoint / Gateway / Frontend
-  |
-  +-- Users application
-  +-- Orders application
-  +-- Payments application
-```
+![Pyramid architecture diagram](./watt-architecture-patterns-images/pyramid-architecture.png)
 
 In this pattern, the top application is the public boundary. It can be a frontend, an
 API gateway, a composer, or another HTTP application. The downstream applications own
@@ -71,40 +63,32 @@ flows also need good tracing, because one client request can touch several appli
 
 Use metrics to identify overloaded applications and tracing to understand fan-out paths.
 
-## Reverse Pyramid Architecture
+## Funnel Architecture
 
-Use the reverse pyramid pattern when many CPU-bound applications perform expensive work
-and converge on one I/O-focused application.
+Use the funnel pattern when many CPU-bound applications perform expensive work and
+converge on one I/O-focused application.
 
-```text
-Job or request sources
-  |
-  +-- Image worker
-  +-- PDF worker
-  +-- Data transform worker
-          |
-          v
-    I/O application
-          |
-    Database / Storage / External APIs
-```
+![Funnel architecture diagram](./watt-architecture-patterns-images/funnel-architecture.png)
 
 In this pattern, the wide side handles CPU load. The narrow side handles I/O load. The
-I/O application centralizes access to databases, object storage, queues, external APIs,
-or other resources that need pooling, rate limiting, retries, or transactional control.
+I/O application centralizes access to databases, object storage, queues, shared state,
+external APIs, or other resources that need pooling, rate limiting, retries, or
+transactional control.
 
-### When to Use Reverse Pyramid Architecture
+### When to Use Funnel Architecture
 
-Use reverse pyramid architecture when:
+Use funnel architecture when:
 
 - You process images, audio, video, or other media.
 - You generate PDFs, reports, archives, or exports.
 - You transform, parse, validate, enrich, or index large payloads.
 - You wrap AI inference, embedding generation, or other compute-heavy work.
-- You need many workers for CPU work but want coordinated database, storage, or API access.
+- You need many workers for CPU work but want coordinated database, storage, shared state,
+  or API access.
 
-This pattern fits systems where CPU saturation is the main bottleneck, while I/O needs
-to stay controlled and consistent.
+This pattern fits systems where CPU saturation in the entrypoint is the main bottleneck
+and cannot be shifted, while I/O and shared state access need to stay controlled and
+consistent.
 
 ### How to Scale It
 
@@ -113,13 +97,14 @@ of the container or host. Keep the I/O application smaller and focused on resour
 backpressure, and consistency.
 
 If the I/O application becomes saturated, increase its workers carefully and verify that
-the backing database, storage service, queue, or external API can handle the extra load.
+the backing database, storage service, shared state, queue, or external API can handle
+the extra load.
 
 ### Tradeoffs
 
-Reverse pyramid architecture isolates expensive computation, but it needs clear
-backpressure. CPU workers should be idempotent where possible, because retries are common
-in processing pipelines.
+Funnel architecture isolates expensive computation, but it needs clear backpressure. CPU
+workers should be idempotent where possible, because retries are common in processing
+pipelines.
 
 The I/O application should not absorb CPU-heavy work. If it does, it becomes both the CPU
 and I/O bottleneck.
@@ -131,18 +116,7 @@ overloaded.
 
 Many production systems use both patterns in the same Watt application.
 
-```text
-Client
-  |
-Gateway / Frontend
-  |
-  +-- Users API
-  +-- Orders API
-  +-- CPU worker pool
-          |
-          v
-      I/O application
-```
+![Combined architecture diagram](./watt-architecture-patterns-images/combined-architecture.png)
 
 Use a combined architecture when your application has both request/response paths and
 CPU-heavy processing paths. For example, an API can handle user requests through domain
@@ -153,7 +127,7 @@ Keep the boundaries explicit:
 - The gateway or frontend handles public traffic.
 - Domain applications handle request/response business logic.
 - CPU workers handle expensive computation.
-- I/O applications coordinate databases, storage, queues, and external APIs.
+- I/O applications coordinate databases, storage, queues, shared state, and external APIs.
 
 ## Operational Guidance
 
@@ -164,7 +138,7 @@ Design each Watt application around one primary load profile.
 | Public entrypoint | Routing, auth, composition, SSR | Request rate and latency |
 | Domain application | Business logic for one area | Request rate, latency, and error rate |
 | CPU-bound application | Processing, rendering, parsing, transformation | CPU profile and event loop utilization |
-| I/O-focused application | Database, storage, queues, external APIs | Connection usage, latency, and backpressure |
+| I/O-focused application | Database, storage, queues, shared state, external APIs | Connection usage, latency, and backpressure |
 
 Start with explicit worker limits for the applications that have known bottlenecks. Then
 use metrics, tracing, and profiling to tune worker counts.
