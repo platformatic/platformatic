@@ -374,13 +374,13 @@ test('should use configured pino message key to detect thread application logs',
 
   ok(
     logs.find(log => {
-      return log.customBaseName === 'a' && log.theMessage === 'call route / on service' && !log.stdout
+      return log.name === 'service' && log.theMessage === 'call route / on service' && !log.stdout
     })
   )
 
   ok(
     logs.find(log => {
-      return log.customBaseName === 'a' && log.theMessage === 'call route / on node' && !log.stdout
+      return log.name === 'node' && log.theMessage === 'call route / on node' && !log.stdout
     })
   )
 })
