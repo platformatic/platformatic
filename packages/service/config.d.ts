@@ -469,7 +469,40 @@ export interface PlatformaticServiceConfig {
       bufferPoolSize?: number | string;
       defaultHighWaterMark?: number | string;
     };
-    healthProbes?: boolean | string;
+    healthProbes?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean | string;
+          hostname?: string;
+          port?: number | string;
+          readiness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          liveness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+        };
     undici?: {
       agentOptions?: {
         [k: string]: unknown;
@@ -628,6 +661,10 @@ export interface PlatformaticServiceConfig {
                   body?: string;
                 };
               };
+          /**
+           * @deprecated
+           * Deprecated. Health probe timeout configuration is no longer used.
+           */
           healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
