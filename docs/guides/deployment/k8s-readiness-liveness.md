@@ -131,15 +131,30 @@ To expose Kubernetes probes without Prometheus metrics, disable metrics collecti
 }
 ```
 
+Use a `healthProbes` object to configure Kubernetes probes separately from metrics. When the resolved `hostname` and `port` differ from the Prometheus server, the metrics server does not expose `/ready` or `/status`:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091
+  }
+}
+```
+
 ### Endpoint Customization
 
 You can customize the health check endpoints in your Watt configuration:
 
 ```json
 {
-  "metrics": {
+  "healthProbes": {
     "hostname": "0.0.0.0",
-    "port": 9090,
+    "port": 9091,
     "readiness": {
       "endpoint": "/health"
     },
