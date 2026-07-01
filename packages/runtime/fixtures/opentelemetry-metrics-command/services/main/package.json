@@ -1,0 +1,10 @@
+{
+  "name": "opentelemetry-metrics-command-main",
+  "main": "index.mjs",
+  "dependencies": {
+    "@opentelemetry/sdk-metrics": "^2.8.0",
+    "@platformatic/globals": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
+    "fastify": "^5.0.0"
+  }
+}

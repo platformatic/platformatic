@@ -127,6 +127,39 @@ process.on('SIGTERM', () => {
 
 The `workerData` object is automatically set by Watt for each worker thread and contains the application configuration. The `applicationConfig.id` property holds the service identifier as defined in your `watt.json`.
 
+## OpenTelemetry Metrics
+
+To forward user-created OpenTelemetry metrics through Watt, configure the runtime OTLP endpoint in `watt.json`:
+
+```json
+{
+  "metrics": {
+    "opentelemetry": {
+      "endpoint": "http://localhost:4318/v1/metrics",
+      "headers": {},
+      "interval": 60000
+    }
+  }
+}
+```
+
+Then use Watt's metrics exporter in your OpenTelemetry metrics setup:
+
+```javascript
+import { OpenTelemetryExporter } from '@platformatic/metrics'
+import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
+
+const meterProvider = new MeterProvider({
+  readers: [
+    new PeriodicExportingMetricReader({
+      exporter: new OpenTelemetryExporter()
+    })
+  ]
+})
+```
+
+Watt forwards only the metrics produced by your OpenTelemetry setup. It adds `applicationId` and `workerId` to the exported resource attributes before forwarding the data to the configured OTLP endpoint. Prometheus metrics are unaffected.
+
 ### Why the Hook is Required
 
 The module loading order is critical:

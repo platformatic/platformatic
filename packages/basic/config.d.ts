@@ -377,6 +377,29 @@ export interface PlatformaticBasicConfig {
             serviceVersion?: string;
           };
           /**
+           * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
+           */
+          opentelemetry?: {
+            /**
+             * Enable or disable OpenTelemetry metrics forwarding
+             */
+            enabled?: boolean | string;
+            /**
+             * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
+             */
+            endpoint: string;
+            /**
+             * Interval in milliseconds between metric forwards
+             */
+            interval?: number | string;
+            /**
+             * Additional HTTP headers for authentication
+             */
+            headers?: {
+              [k: string]: string;
+            };
+          };
+          /**
            * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
            */
           httpCustomLabels?: {

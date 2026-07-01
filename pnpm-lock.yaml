@@ -1016,6 +1016,9 @@ importers:
 
   packages/metrics:
     dependencies:
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/http-metrics':
         specifier: ^0.3.0
         version: 0.3.0
@@ -1491,6 +1494,9 @@ importers:
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.1
+      '@opentelemetry/exporter-metrics-otlp-proto':
+        specifier: 0.219.0
+        version: 0.219.0(@opentelemetry/api@1.9.1)
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1588,6 +1594,9 @@ importers:
       '@fastify/formbody':
         specifier: ^8.0.0
         version: 8.0.2
+      '@opentelemetry/sdk-metrics':
+        specifier: 2.8.0
+        version: 2.8.0(@opentelemetry/api@1.9.1)
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
