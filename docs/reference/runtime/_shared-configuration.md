@@ -263,9 +263,38 @@ The object supports the following settings:
 
 ### `healthProbes`
 
-Enables the Kubernetes readiness and liveness probe endpoints on the Prometheus server. It can be a boolean or a string. Default: `true`.
+Enables the Kubernetes readiness and liveness probe endpoints. It can be a boolean, a string, or an object. Default: `true`.
 
-Set this to `false` to disable both probe endpoints globally. Individual probe endpoints can still be configured with `metrics.readiness` and `metrics.liveness` when `healthProbes` is enabled.
+If `healthProbes` is `true`, unset, or a string, the probe endpoints are installed on the Prometheus server. Individual probe endpoints can still be configured with `metrics.readiness` and `metrics.liveness`.
+
+Set this to `false` to disable both probe endpoints globally.
+
+Use an object to configure the health probes server. Health probes are exposed on a standalone server only when the resolved `hostname` and `port` differ from the Prometheus server. Otherwise, they are installed on the Prometheus server.
+
+- **`enabled`** (`boolean` or `string`). Enables the health probe endpoints. Default: `true`.
+- **`hostname`** (`string`). The hostname where the health probes server will be listening. Default: `0.0.0.0`.
+- **`port`** (`number` or `string`). The port where the health probes server will be listening. Default: `9090`.
+- **`readiness`** (`object` or `boolean`). Optional readiness endpoint configuration. If omitted, `metrics.readiness` is used when present.
+- **`liveness`** (`object` or `boolean`). Optional liveness endpoint configuration. If omitted, `metrics.liveness` is used when present.
+
+```json title="Example health probes on a standalone server"
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091,
+    "readiness": {
+      "endpoint": "/health"
+    },
+    "liveness": {
+      "endpoint": "/live"
+    }
+  }
+}
+```
 
 ### `telemetry`
 
@@ -444,7 +473,9 @@ Setting a lower value can be useful when:
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime applications.
 
-The same server also exposes Kubernetes readiness and liveness probes when [`healthProbes`](#healthprobes) is enabled. If `metrics.enabled` is `false` and `healthProbes` is enabled, the server exposes only the probe endpoints. If both `metrics.enabled` and `healthProbes` are `false`, the server is not started.
+The same server also exposes Kubernetes readiness and liveness probes when [`healthProbes`](#healthprobes) is enabled without object overrides. If `metrics.enabled` is `false` and `healthProbes` is enabled without object overrides, the server exposes only the probe endpoints. If both `metrics.enabled` and `healthProbes` are `false`, the server is not started.
+
+When `healthProbes` is an object with a different resolved `hostname` and `port`, the Prometheus server follows only the metrics configuration and health probes are exposed on their own server.
 
 - **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
@@ -475,7 +506,7 @@ The same server also exposes Kubernetes readiness and liveness probes when [`hea
   - **`fail`** (`object`). The failure criteria for the Prometheus server liveness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
-- **`healthChecksTimeouts`**: The number of milliseconds to wait for Prometheus liveness or readiness checks before considering them timed out. Default: `5000` (5 seconds).
+- **`healthChecksTimeouts`**: Deprecated. This setting is accepted for compatibility but is no longer used.
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
 - **`httpClientMetrics`** (`boolean` or `string`, default: `false`): Enable outgoing HTTP client request duration metrics (`http_client_request_duration_seconds`). This metric includes labels for the method, status code, dispatcher URL, and error type.

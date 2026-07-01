@@ -46,7 +46,7 @@ import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
 import { createChannelCreationHook } from './policies.js'
-import { startPrometheusServer } from './prom-server.js'
+import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
@@ -135,6 +135,7 @@ export class Runtime extends EventEmitter {
 
   #managementApi
   #prometheusServer
+  #healthProbesServer
   #inspectorServer
   #metricsLabelName
 
@@ -238,11 +239,16 @@ export class Runtime extends EventEmitter {
     if (config.metrics) {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics, config.healthProbes)
     } else {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
     }
+
+    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    }
+
+    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
 
     // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
     // These metrics are the same across all workers and only need to be collected once
@@ -405,6 +411,10 @@ export class Runtime extends EventEmitter {
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
+    }
+
+    if (this.#healthProbesServer) {
+      await this.#healthProbesServer.close()
     }
 
     // Clean up process metrics registry
@@ -864,12 +874,17 @@ export class Runtime extends EventEmitter {
       this.#prometheusServer = null
     }
 
+    if (this.#healthProbesServer) {
+      await this.#healthProbesServer.close()
+      this.#healthProbesServer = null
+    }
+
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
-    if (metricsConfig.enabled !== false || this.#config.healthProbes !== false) {
-      this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
-    }
+    this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
+
+    this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
 
     const promises = []
     for (const worker of this.#workers.values()) {

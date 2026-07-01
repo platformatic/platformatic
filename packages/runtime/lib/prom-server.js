@@ -76,13 +76,59 @@ async function checkLiveness (runtime) {
   return { response, status }
 }
 
-export async function startPrometheusServer (runtime, opts, healthProbes) {
-  const metricsEnabled = opts.enabled !== false
-  const healthProbesEnabled = healthProbes !== false
+function isHealthProbesServerEnabled (healthProbes) {
+  return typeof healthProbes === 'object' && healthProbes !== null
+}
+
+function isHealthProbesEnabled (healthProbes) {
+  return healthProbes !== false && healthProbes?.enabled !== false
+}
+
+function resolveServerAddress (opts, fallback) {
+  opts = typeof opts === 'object' && opts !== null ? opts : {}
+  fallback = typeof fallback === 'object' && fallback !== null ? fallback : {}
+
+  return {
+    host: opts.hostname ?? fallback.hostname ?? DEFAULT_HOSTNAME,
+    port: opts.port ?? fallback.port ?? DEFAULT_PORT
+  }
+}
+
+function useSharedServer (metricsOpts, healthProbes) {
+  if (!isHealthProbesServerEnabled(healthProbes)) {
+    return true
+  }
+
+  const metricsAddress = resolveServerAddress(metricsOpts)
+  const healthProbesAddress = resolveServerAddress(healthProbes, metricsOpts)
+
+  return metricsAddress.host === healthProbesAddress.host && String(metricsAddress.port) === String(healthProbesAddress.port)
+}
+
+function resolveHealthProbesOptions (metricsOpts, healthProbes) {
+  metricsOpts = typeof metricsOpts === 'object' && metricsOpts !== null ? metricsOpts : {}
+
+  if (!isHealthProbesServerEnabled(healthProbes)) {
+    return metricsOpts
+  }
+
+  const { host, port } = resolveServerAddress(healthProbes, metricsOpts)
+  return {
+    ...healthProbes,
+    hostname: host,
+    port,
+    readiness: healthProbes.readiness ?? metricsOpts.readiness,
+    liveness: healthProbes.liveness ?? metricsOpts.liveness
+  }
+}
+
+async function startServer (runtime, opts, metricsEnabled, healthProbesEnabled) {
+  opts = typeof opts === 'object' && opts !== null ? opts : {}
 
   if (!metricsEnabled && !healthProbesEnabled) {
     return
   }
+
   const host = opts.hostname ?? DEFAULT_HOSTNAME
   const port = opts.port ?? DEFAULT_PORT
   const metricsEndpoint = opts.endpoint ?? DEFAULT_METRICS_ENDPOINT
@@ -237,4 +283,20 @@ export async function startPrometheusServer (runtime, opts, healthProbes) {
 
   await promServer.listen({ port, host })
   return promServer
+}
+
+export async function startPrometheusServer (runtime, opts, healthProbes) {
+  const metricsEnabled = opts !== false && opts?.enabled !== false
+  const healthProbesEnabled = isHealthProbesEnabled(healthProbes) && useSharedServer(opts, healthProbes)
+  const serverOpts = healthProbesEnabled && isHealthProbesServerEnabled(healthProbes) ? resolveHealthProbesOptions(opts, healthProbes) : opts
+
+  return startServer(runtime, serverOpts, metricsEnabled, healthProbesEnabled)
+}
+
+export async function startHealthProbesServer (runtime, metricsOpts, healthProbes) {
+  if (!isHealthProbesEnabled(healthProbes) || useSharedServer(metricsOpts, healthProbes)) {
+    return
+  }
+
+  return startServer(runtime, resolveHealthProbesOptions(metricsOpts, healthProbes), false, true)
 }
