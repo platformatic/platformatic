@@ -23,7 +23,8 @@ export async function listTables (db, sql, schemas) {
     SELECT tablename, schemaname
     FROM pg_catalog.pg_tables
     WHERE
-      schemaname in (${schemaList})`)
+      schemaname in (${schemaList})
+    ORDER BY schemaname, tablename`)
     return res.map(r => ({ schema: r.schemaname, table: r.tablename }))
   }
   const res = await db.query(sql`
@@ -31,6 +32,7 @@ export async function listTables (db, sql, schemas) {
     FROM pg_catalog.pg_tables
     WHERE
       schemaname = current_schema()
+    ORDER BY schemaname, tablename
   `)
   return res.map(r => ({ schema: r.schemaname, table: r.tablename }))
 }
@@ -56,6 +58,7 @@ export async function listColumns (db, sql, table, schema) {
     AND c.table_schema = ${schema}
     AND a.attnum > 0
     AND NOT a.attisdropped
+    ORDER BY c.ordinal_position
   `)
 
   for (const col of res) {
@@ -86,6 +89,11 @@ export async function listConstraints (db, sql, table, schema) {
         ON usage.constraint_name = usage2.constraint_name
         AND ( usage.table_name = ${table}
         AND usage.table_schema = ${schema} )
+      JOIN information_schema.columns cols
+        ON cols.table_schema = usage.table_schema
+        AND cols.table_name = usage.table_name
+        AND cols.column_name = usage.column_name
+    ORDER BY cols.ordinal_position, CASE constraints.constraint_type WHEN 'PRIMARY KEY' THEN 0 WHEN 'UNIQUE' THEN 1 WHEN 'FOREIGN KEY' THEN 2 ELSE 3 END, constraints.constraint_name, usage.ordinal_position
   `
   const constraintsList = await db.query(query)
   return constraintsList
@@ -117,7 +125,8 @@ export async function listEnumValues (db, sql, table, schema) {
     JOIN pg_type t ON e.enumtypid = t.oid 
     JOIN information_schema.columns c on c.udt_name = t.typname
     WHERE table_name = ${table}
-    AND table_schema = ${schema};
+    AND table_schema = ${schema}
+    ORDER BY column_name, e.enumsortorder;
     `
   return db.query(query)
 }
@@ -129,7 +138,8 @@ export async function listViews (db, sql, schemas) {
     SELECT viewname, schemaname
     FROM pg_catalog.pg_views
     WHERE
-      schemaname in (${schemaList})`)
+      schemaname in (${schemaList})
+    ORDER BY schemaname, viewname`)
     return res.map(r => ({ schema: r.schemaname, table: r.viewname, isView: true }))
   }
   const res = await db.query(sql`
@@ -137,6 +147,7 @@ export async function listViews (db, sql, schemas) {
     FROM pg_catalog.pg_views
     WHERE
       schemaname = current_schema()
+    ORDER BY schemaname, viewname
   `)
   return res.map(r => ({ schema: r.schemaname, table: r.viewname, isView: true }))
 }

@@ -14,6 +14,7 @@ export async function listTables (db, sql) {
   const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='table'
+    ORDER BY name
   `)
   // sqlite has no schemas
   return res.map(r => ({ schema: null, table: r.name }))
@@ -24,6 +25,7 @@ export async function listColumns (db, sql, table) {
   // therefore it is changed to pragma_table_xinfo
   const columns = await db.query(sql`
     SELECT * FROM pragma_table_xinfo(${table})
+    ORDER BY cid
   `)
   for (const column of columns) {
     column.column_name = column.name
@@ -43,6 +45,7 @@ export async function listConstraints (db, sql, table) {
     SELECT *
     FROM pragma_table_info(${table})
     WHERE pk > 0
+    ORDER BY pk
   `)
 
   for (const pk of pks) {
@@ -56,6 +59,7 @@ export async function listConstraints (db, sql, table) {
     SELECT  *
     FROM    pragma_index_list(${table}) as il
     JOIN    pragma_index_info(il.name) as ii
+    ORDER BY il.seq, ii.seqno
   `)
 
   for (const index of indexes) {
@@ -71,6 +75,7 @@ export async function listConstraints (db, sql, table) {
   const foreignKeys = await db.query(sql`
     SELECT *
     FROM pragma_foreign_key_list(${table})
+    ORDER BY id, seq
   `)
 
   for (const foreignKey of foreignKeys) {
@@ -235,6 +240,7 @@ export async function listViews (db, sql) {
   const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='view'
+    ORDER BY name
   `)
   return res.map(r => ({ schema: null, table: r.name, isView: true }))
 }
