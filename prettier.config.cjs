@@ -1,1 +1,0 @@
-/home/perseveranza/development/platformatic/ide-settings/prettier.config.cjs
