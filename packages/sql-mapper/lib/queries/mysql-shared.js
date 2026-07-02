@@ -8,6 +8,7 @@ export async function listTables (db, sql, schemas) {
       FROM information_schema.tables
       WHERE table_schema in (${schemaList})
       AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   } else {
@@ -16,6 +17,7 @@ export async function listTables (db, sql, schemas) {
       FROM information_schema.tables
       WHERE table_schema = (SELECT DATABASE())
       AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   }
@@ -27,18 +29,24 @@ export async function listColumns (db, sql, table, schema) {
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
+    ORDER BY ordinal_position
   `
   return db.query(query)
 }
 
 export async function listConstraints (db, sql, table, schema) {
   const query = sql`
-    SELECT TABLE_NAME as table_name, TABLE_SCHEMA as table_schema, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_table_schema AS foreign_table_schema, referenced_column_name AS foreign_column_name
+    SELECT k.TABLE_NAME as table_name, k.TABLE_SCHEMA as table_schema, k.COLUMN_NAME as column_name, t.CONSTRAINT_TYPE as constraint_type, k.referenced_table_name AS foreign_table_name, k.referenced_table_schema AS foreign_table_schema, k.referenced_column_name AS foreign_column_name
     FROM information_schema.table_constraints t
     JOIN information_schema.key_column_usage k
     USING (constraint_name, table_schema, table_name)
+    JOIN information_schema.columns c
+    ON c.table_schema = k.table_schema
+    AND c.table_name = k.table_name
+    AND c.column_name = k.column_name
     WHERE t.table_name = ${table}
     AND t.table_schema = ${schema}
+    ORDER BY c.ordinal_position, CASE t.constraint_type WHEN 'PRIMARY KEY' THEN 0 WHEN 'UNIQUE' THEN 1 WHEN 'FOREIGN KEY' THEN 2 ELSE 3 END, t.constraint_name, k.ordinal_position
     `
   return db.query(query)
 }
@@ -115,6 +123,7 @@ export async function listViews (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.views
       WHERE table_schema in (${schemaList})
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
   } else {
@@ -122,6 +131,7 @@ export async function listViews (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.views
       WHERE table_schema = (SELECT DATABASE())
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
   }

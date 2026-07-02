@@ -1,7 +1,7 @@
 import { deepEqual, equal, notEqual } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
-import { clear, connInfo, isMysql8, isSQLite } from './helper.js'
+import { clear, connInfo, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
@@ -38,7 +38,12 @@ test('unique key', async t => {
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  if (isMysql8 || isSQLite) {
+  // Schema introspection now deterministically orders constraints by the
+  // column's ordinal position, so the first-defined unique column (xx) is
+  // chosen as the surrogate primary key across all SQL engines. SQLite uses a
+  // separate pragma-based path that orders by index sequence, so it still
+  // picks the last-defined unique column (name).
+  if (isSQLite) {
     deepEqual(pageEntity.primaryKeys, new Set(['name']))
     equal(pageEntity.camelCasedFields.name.primaryKey, true)
   } else {

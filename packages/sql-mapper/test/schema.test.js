@@ -117,7 +117,7 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
         table: 'pages',
         constraints: [
           {
-            constraint_type: isMysql8 ? 'UNIQUE' : 'PRIMARY KEY'
+            constraint_type: 'PRIMARY KEY'
           }
         ],
         columns: [
