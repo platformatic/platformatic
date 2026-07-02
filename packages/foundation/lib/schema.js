@@ -1372,6 +1372,32 @@ export const runtimeProperties = {
             required: ['endpoint'],
             additionalProperties: false
           },
+          opentelemetry: {
+            type: 'object',
+            description: 'Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint',
+            properties: {
+              enabled: {
+                anyOf: [{ type: 'boolean' }, { type: 'string' }],
+                description: 'Enable or disable OpenTelemetry metrics forwarding'
+              },
+              endpoint: {
+                type: 'string',
+                description: 'OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)'
+              },
+              interval: {
+                anyOf: [{ type: 'integer' }, { type: 'string' }],
+                default: 60000,
+                description: 'Interval in milliseconds between metric forwards'
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Additional HTTP headers for authentication'
+              }
+            },
+            required: ['endpoint'],
+            additionalProperties: false
+          },
           httpCustomLabels: {
             type: 'array',
             description:
