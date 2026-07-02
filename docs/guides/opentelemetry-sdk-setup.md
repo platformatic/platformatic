@@ -129,7 +129,7 @@ The `workerData` object is automatically set by Watt for each worker thread and 
 
 ## OpenTelemetry Metrics
 
-To forward user-created OpenTelemetry metrics through Watt, configure the runtime OTLP endpoint in `watt.json`:
+To forward user-created OpenTelemetry metrics through Watt, configure the OTLP endpoint in the root runtime `watt.json`:
 
 ```json
 {
