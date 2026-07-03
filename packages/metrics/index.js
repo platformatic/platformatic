@@ -1,23 +1,24 @@
+import { getApplicationId, getITC, getWorkerId } from '@platformatic/globals'
 import collectHttpMetrics from '@platformatic/http-metrics'
+import client from '@platformatic/prom-client'
 import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
-import client from '@platformatic/prom-client'
 
 // Import individual metric collectors from prom-client
-import processCpuTotal from '@platformatic/prom-client/lib/metrics/processCpuTotal.js'
-import processStartTime from '@platformatic/prom-client/lib/metrics/processStartTime.js'
-import osMemoryHeap from '@platformatic/prom-client/lib/metrics/osMemoryHeap.js'
-import processOpenFileDescriptors from '@platformatic/prom-client/lib/metrics/processOpenFileDescriptors.js'
-import processMaxFileDescriptors from '@platformatic/prom-client/lib/metrics/processMaxFileDescriptors.js'
 import eventLoopLag from '@platformatic/prom-client/lib/metrics/eventLoopLag.js'
-import processHandles from '@platformatic/prom-client/lib/metrics/processHandles.js'
-import processRequests from '@platformatic/prom-client/lib/metrics/processRequests.js'
-import processResources from '@platformatic/prom-client/lib/metrics/processResources.js'
+import gc from '@platformatic/prom-client/lib/metrics/gc.js'
 import heapSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSizeAndUsed.js'
 import heapSpacesSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSpacesSizeAndUsed.js'
+import osMemoryHeap from '@platformatic/prom-client/lib/metrics/osMemoryHeap.js'
+import processCpuTotal from '@platformatic/prom-client/lib/metrics/processCpuTotal.js'
+import processHandles from '@platformatic/prom-client/lib/metrics/processHandles.js'
+import processMaxFileDescriptors from '@platformatic/prom-client/lib/metrics/processMaxFileDescriptors.js'
+import processOpenFileDescriptors from '@platformatic/prom-client/lib/metrics/processOpenFileDescriptors.js'
+import processRequests from '@platformatic/prom-client/lib/metrics/processRequests.js'
+import processResources from '@platformatic/prom-client/lib/metrics/processResources.js'
+import processStartTime from '@platformatic/prom-client/lib/metrics/processStartTime.js'
 import version from '@platformatic/prom-client/lib/metrics/version.js'
-import gc from '@platformatic/prom-client/lib/metrics/gc.js'
 
 export * as client from '@platformatic/prom-client'
 
@@ -28,6 +29,65 @@ export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
 const kMetricsCleanups = Symbol('plt.metrics.MetricsCleanups')
 const kHttpClientRequestStart = Symbol('plt.metrics.HttpClientRequestStart')
 const kHttpClientRequestStatusCode = Symbol('plt.metrics.HttpClientRequestStatusCode')
+export const openTelemetryITCMessage = 'plt.metrics.itc.notification'
+
+export class OpenTelemetryExporter {
+  constructor (options = {}) {
+    this._shutdown = false
+    this.applicationId = options.applicationId
+    this.workerId = options.workerId
+    this.itc = options.itc
+  }
+
+  export (resourceMetrics, resultCallback) {
+    if (this._shutdown) {
+      resultCallback({ code: 1 })
+      return
+    }
+
+    try {
+      const itc = this.itc ?? getITC({ throwOnMissing: false })
+      if (!itc) {
+        resultCallback({ code: 1, error: new Error('Platformatic ITC is not available') })
+        return
+      }
+
+      const applicationId = this.applicationId ?? getApplicationId({ throwOnMissing: false })
+      const workerId = this.workerId ?? getWorkerId({ throwOnMissing: false })
+
+      itc.notify(openTelemetryITCMessage, this.#addPlatformaticAttributes(resourceMetrics, applicationId, workerId))
+      resultCallback({ code: 0 })
+    } catch (error) {
+      resultCallback({ code: 1, error })
+    }
+  }
+
+  async forceFlush () {}
+
+  async shutdown () {
+    this._shutdown = true
+  }
+
+  #addPlatformaticAttributes (resourceMetrics, applicationId, workerId) {
+    return {
+      ...resourceMetrics,
+      resource: {
+        ...resourceMetrics.resource,
+        attributes: {
+          ...this.#getResourceAttributes(resourceMetrics),
+          applicationId,
+          ...(typeof workerId !== 'undefined' ? { workerId } : {})
+        }
+      }
+    }
+  }
+
+  #getResourceAttributes (resourceMetrics) {
+    const resource = resourceMetrics.resource
+    const attributes = resource?.attributes ?? {}
+    return { ...attributes }
+  }
+}
 
 function getRegistrySet (registry, key) {
   registry[key] ??= new Set()
@@ -174,12 +234,15 @@ export function collectHttpClientMetrics (registry) {
     delete request[kHttpClientRequestStart]
     delete request[kHttpClientRequestStatusCode]
 
-    requestDurationMetric.observe({
-      method,
-      status_code: statusCode,
-      dispatcher_stats_url: dispatcherStatsUrl,
-      error_type: errorType
-    }, duration)
+    requestDurationMetric.observe(
+      {
+        method,
+        status_code: statusCode,
+        dispatcher_stats_url: dispatcherStatsUrl,
+        error_type: errorType
+      },
+      duration
+    )
   }
 
   subscribe('undici:request:create', onRequestCreate)
@@ -500,13 +563,7 @@ export async function setupOtlpExporter (registry, otlpExporterConfig, applicati
   // Dynamically import PromClientBridge to defer loading until after telemetry is initialized
   const { PromClientBridge } = await import('@platformatic/promotel')
 
-  const {
-    endpoint,
-    headers,
-    interval = 60000,
-    serviceName = applicationId,
-    serviceVersion
-  } = otlpExporterConfig
+  const { endpoint, headers, interval = 60000, serviceName = applicationId, serviceVersion } = otlpExporterConfig
 
   const otlpEndpointOptions = {
     url: endpoint
@@ -529,7 +586,7 @@ export async function setupOtlpExporter (registry, otlpExporterConfig, applicati
     otlpEndpoint: otlpEndpointOptions,
     interval,
     conversionOptions,
-    onError: (error) => {
+    onError: error => {
       // Log error but don't crash the application
       console.error('OTLP metrics export error:', error)
     }

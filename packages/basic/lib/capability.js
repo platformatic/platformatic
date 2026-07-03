@@ -13,6 +13,7 @@ import {
   client,
   collectThreadMetrics,
   ensureMetricsGroup,
+  openTelemetryITCMessage,
   setupOtlpExporter
 } from '@platformatic/metrics'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
@@ -688,6 +689,13 @@ export class BaseCapability extends EventEmitter {
       const itc = getITC({ throwOnMissing: false })
       if (itc) {
         itc.send('sendHealthSignals', { workerId, signals })
+      }
+    })
+
+    childManager.on(openTelemetryITCMessage, resourceMetrics => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify(openTelemetryITCMessage, resourceMetrics)
       }
     })
 
