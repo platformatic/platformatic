@@ -2,7 +2,7 @@ import { match } from '@platformatic/foundation'
 import { deepEqual, equal, ifError, ok, throws } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
-import { clear, connInfo, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isMariaDB, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
@@ -117,7 +117,10 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
         table: 'pages',
         constraints: [
           {
-            constraint_type: isMysql8 ? 'UNIQUE' : 'PRIMARY KEY'
+            // On MySQL the UNIQUE constraint created by SERIAL ("id") sorts before
+            // "PRIMARY", while MariaDB uses a binary collation which sorts the
+            // other way around
+            constraint_type: isMysql && !isMariaDB ? 'UNIQUE' : 'PRIMARY KEY'
           }
         ],
         columns: [
