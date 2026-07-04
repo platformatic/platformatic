@@ -4,6 +4,11 @@ import { printSchema } from './print-schema.js'
 import { seed, helpFooter as seedFooter } from './seed.js'
 import { generateTypes, helpFooter as typesFooter } from './types.js'
 
+const configOption = {
+  usage: '-c, --config <config>',
+  description: 'Name of the runtime configuration file to use'
+}
+
 export function createCommands (id) {
   return {
     commands: {
@@ -17,13 +22,15 @@ export function createCommands (id) {
       [`${id}:migrations:create`]: {
         usage: `${id}:migrations:create`,
         description: 'Create a new migration file',
-        footer: createMigrationsFooter
+        footer: createMigrationsFooter,
+        options: [configOption]
       },
       [`${id}:migrations:apply`]: {
         usage: `${id}:migrations:apply`,
         description: 'Apply all configured migrations to the database',
         footer: applyMigrationsFooter,
         options: [
+          configOption,
           {
             usage: '-r, --rollback',
             description: 'Rollback migrations instead of applying them'
@@ -43,16 +50,19 @@ export function createCommands (id) {
             name: 'file',
             description: 'The seed file to load.'
           }
-        ]
+        ],
+        options: [configOption]
       },
       [`${id}:types`]: {
         usage: `${id}:types`,
         description: 'Generate TypeScript types for your entities from the database',
-        footer: typesFooter
+        footer: typesFooter,
+        options: [configOption]
       },
       [`${id}:schema`]: {
         usage: `${id}:schema [openapi|graphql]`,
-        description: 'Prints the OpenAPI or GraphQL schema for the database'
+        description: 'Prints the OpenAPI or GraphQL schema for the database',
+        options: [configOption]
       }
     }
   }
