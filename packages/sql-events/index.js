@@ -27,12 +27,31 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
       continue
     }
     const primaryKey = camelcase(entity.primaryKeys.values().next().value)
+
+    // The publish topic requires the primary key, so make sure it is always
+    // retrieved even when the caller did not select it
+    function ensurePrimaryKeyField (data) {
+      if (Array.isArray(data.fields) && data.fields.length > 0 && !data.fields.includes(primaryKey)) {
+        return { ...data, fields: data.fields.concat(primaryKey) }
+      }
+      return data
+    }
+
+    // Remove the primary key from the result when the caller did not select it
+    function stripPrimaryKey (res, requestedFields) {
+      if (Array.isArray(requestedFields) && requestedFields.length > 0 && !requestedFields.includes(primaryKey)) {
+        const { [primaryKey]: _, ...rest } = res
+        return rest
+      }
+      return res
+    }
+
     mapper.addEntityHooks(entityName, {
       async save (original, data) {
         const ctx = data.ctx
         /* istanbul ignore next */
         const _log = ctx?.reply?.request?.log || log
-        const res = await original(data)
+        const res = await original(ensurePrimaryKeyField(data))
         const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
         if (topic) {
           const payload = {
@@ -49,7 +68,7 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
             )
           })
         }
-        return res
+        return stripPrimaryKey(res, data.fields)
       },
 
       delete: multiElement('delete'),
@@ -61,7 +80,7 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
         const ctx = data.ctx
         /* istanbul ignore next */
         const _log = ctx?.reply?.request?.log || log
-        const res = await original(data)
+        const res = await original(ensurePrimaryKeyField(data))
 
         await Promise.all(
           res.map(async payload => {
@@ -83,7 +102,7 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
           })
         )
 
-        return res
+        return res.map(r => stripPrimaryKey(r, data.fields))
       }
     }
 

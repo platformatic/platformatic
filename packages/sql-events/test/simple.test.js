@@ -295,3 +295,86 @@ test('more than one element for delete', async t => {
     }
   }
 })
+
+test('emit events when the primary key is not in the requested fields', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1805 */
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    t.after(() => db.dispose())
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+  }
+  const mapper = await connect({
+    log: fakeLogger,
+    ...connInfo,
+    onDatabaseLoad
+  })
+  const pageEntity = mapper.entities.page
+
+  const mq = MQEmitter()
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
+  const queue = await mapper.subscribe(['/entity/page/save/+', '/entity/page/delete/+'])
+
+  const expected = []
+
+  // save - new record, without the primary key in the fields
+  const page = await pageEntity.save({
+    input: { title: 'a page' },
+    fields: ['title']
+  })
+  same(page, { title: 'a page' }, 'save returns only the requested fields')
+
+  const [found] = await pageEntity.find({ fields: ['id'] })
+  expected.push({
+    topic: '/entity/page/save/' + found.id,
+    payload: {
+      id: found.id
+    }
+  })
+
+  // insert - without the primary key in the fields
+  const inserted = await pageEntity.insert({
+    inputs: [{ title: 'another page' }],
+    fields: ['title']
+  })
+  same(inserted, [{ title: 'another page' }], 'insert returns only the requested fields')
+
+  const [found2] = await pageEntity.find({ fields: ['id'], orderBy: [{ field: 'id', direction: 'desc' }], limit: 1 })
+  expected.push({
+    topic: '/entity/page/save/' + found2.id,
+    payload: {
+      id: found2.id
+    }
+  })
+
+  // delete - without the primary key in the fields
+  const deleted = await pageEntity.delete({
+    where: { id: { eq: found2.id } },
+    fields: ['title']
+  })
+  same(deleted, [{ title: 'another page' }], 'delete returns only the requested fields')
+
+  expected.push({
+    topic: '/entity/page/delete/' + found2.id,
+    payload: {
+      id: found2.id
+    }
+  })
+
+  for await (const ev of queue) {
+    same(ev, expected.shift())
+    if (expected.length === 0) {
+      break
+    }
+  }
+})
