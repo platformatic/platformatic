@@ -16,16 +16,16 @@
             "type": "integer",
             "nullable": true
           },
-          "counter": {
-            "type": "integer",
+          "title": {
+            "type": "string",
             "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -39,14 +39,14 @@
           "id": {
             "type": "integer"
           },
-          "counter": {
-            "type": "integer"
+          "title": {
+            "type": "string"
           },
           "longText": {
             "type": "string"
           },
-          "title": {
-            "type": "string"
+          "counter": {
+            "type": "integer"
           }
         },
         "additionalProperties": false,
@@ -247,6 +247,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.counter.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "integer"
             },
             "in": "query",
@@ -347,6 +355,14 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
             "required": false
           },
           {
@@ -455,6 +471,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.longText.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -555,6 +579,14 @@
             },
             "in": "query",
             "name": "where.title.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.title.isNull",
             "required": false
           },
           {
@@ -824,6 +856,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.counter.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "integer"
             },
             "in": "query",
@@ -924,6 +964,14 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
             "required": false
           },
           {
@@ -1032,6 +1080,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.longText.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -1132,6 +1188,14 @@
             },
             "in": "query",
             "name": "where.title.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.title.isNull",
             "required": false
           },
           {

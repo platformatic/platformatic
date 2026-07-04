@@ -238,6 +238,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -342,6 +350,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.name.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "integer"
             },
             "in": "query",
@@ -442,6 +458,14 @@
             },
             "in": "query",
             "name": "where.parentId.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.parentId.isNull",
             "required": false
           },
           {
@@ -710,6 +734,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -814,6 +846,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.name.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "integer"
             },
             "in": "query",
@@ -914,6 +954,14 @@
             },
             "in": "query",
             "name": "where.parentId.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.parentId.isNull",
             "required": false
           },
           {
