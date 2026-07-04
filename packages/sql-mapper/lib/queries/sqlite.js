@@ -6,6 +6,9 @@ function fixValue (value) {
     return value.toISOString()
   } else if (typeof value === 'boolean') {
     return value ? 1 : 0
+  } else if (value && typeof value === 'object' && !Buffer.isBuffer(value)) {
+    // This is a JSON field
+    return JSON.stringify(value)
   }
   return value
 }
