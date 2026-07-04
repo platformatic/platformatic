@@ -8,6 +8,7 @@ export async function listTables (db, sql, schemas) {
       FROM information_schema.tables
       WHERE table_schema in (${schemaList})
       AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   } else {
@@ -16,6 +17,7 @@ export async function listTables (db, sql, schemas) {
       FROM information_schema.tables
       WHERE table_schema = (SELECT DATABASE())
       AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   }
@@ -27,6 +29,7 @@ export async function listColumns (db, sql, table, schema) {
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
+    ORDER BY ordinal_position
   `
   return db.query(query)
 }
@@ -39,6 +42,7 @@ export async function listConstraints (db, sql, table, schema) {
     USING (constraint_name, table_schema, table_name)
     WHERE t.table_name = ${table}
     AND t.table_schema = ${schema}
+    ORDER BY k.constraint_name, k.ordinal_position
     `
   return db.query(query)
 }
@@ -115,6 +119,7 @@ export async function listViews (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.views
       WHERE table_schema in (${schemaList})
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
   } else {
@@ -122,6 +127,7 @@ export async function listViews (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.views
       WHERE table_schema = (SELECT DATABASE())
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
   }
