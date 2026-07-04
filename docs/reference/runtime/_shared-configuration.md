@@ -367,7 +367,8 @@ If the entrypoint has also a `server` configured, then the runtime settings over
 An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections. Provide a number or a string. When `portAssignment` is set to `perWorkerIncrement`, this is the first port assigned to worker 0.
+- **`portAssignment`** (`string`) — Sets how entrypoint server worker ports are assigned. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`. Set it to `perWorkerIncrement` to give each worker its own incremental port, starting from `port`. Use `perWorkerIncrement` only with external load balancing, never on its own.
 - **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
 - **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
   - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
