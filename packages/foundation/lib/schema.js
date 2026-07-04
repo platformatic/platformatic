@@ -626,6 +626,35 @@ export const health = {
 
 export const healthWithoutDefaults = removeDefaults(health)
 
+const healthProbeEndpoint = {
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        endpoint: { type: 'string' },
+        success: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            body: { type: 'string' }
+          },
+          additionalProperties: false
+        },
+        fail: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            body: { type: 'string' }
+          },
+          additionalProperties: false
+        }
+      },
+      additionalProperties: false
+    }
+  ]
+}
+
 export const openTelemetryExporter = {
   type: 'object',
   properties: {
@@ -1070,7 +1099,32 @@ export const runtimeProperties = {
   },
   health,
   healthProbes: {
-    anyOf: [{ type: 'boolean' }, { type: 'string' }],
+    anyOf: [
+      { type: 'boolean' },
+      { type: 'string' },
+      {
+        type: 'object',
+        properties: {
+          enabled: {
+            anyOf: [
+              {
+                type: 'boolean'
+              },
+              {
+                type: 'string'
+              }
+            ]
+          },
+          hostname: { type: 'string' },
+          port: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }]
+          },
+          readiness: healthProbeEndpoint,
+          liveness: healthProbeEndpoint
+        },
+        additionalProperties: false
+      }
+    ],
     default: true
   },
   undici: {
@@ -1261,65 +1315,13 @@ export const runtimeProperties = {
             default: false,
             description: 'Enable outgoing HTTP client request duration metrics'
           },
-          readiness: {
-            anyOf: [
-              { type: 'boolean' },
-              {
-                type: 'object',
-                properties: {
-                  endpoint: { type: 'string' },
-                  success: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  },
-                  fail: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  }
-                },
-                additionalProperties: false
-              }
-            ]
-          },
-          liveness: {
-            anyOf: [
-              { type: 'boolean' },
-              {
-                type: 'object',
-                properties: {
-                  endpoint: { type: 'string' },
-                  success: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  },
-                  fail: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  }
-                },
-                additionalProperties: false
-              }
-            ]
-          },
+          readiness: healthProbeEndpoint,
+          liveness: healthProbeEndpoint,
           healthChecksTimeouts: {
             anyOf: [{ type: 'integer' }, { type: 'string' }],
-            default: 5000
+            default: 5000,
+            deprecated: true,
+            description: 'Deprecated. Health probe timeout configuration is no longer used.'
           },
           plugins: {
             type: 'array',
@@ -1365,6 +1367,32 @@ export const runtimeProperties = {
               serviceVersion: {
                 type: 'string',
                 description: 'Service version for OTLP resource attributes'
+              }
+            },
+            required: ['endpoint'],
+            additionalProperties: false
+          },
+          opentelemetry: {
+            type: 'object',
+            description: 'Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint',
+            properties: {
+              enabled: {
+                anyOf: [{ type: 'boolean' }, { type: 'string' }],
+                description: 'Enable or disable OpenTelemetry metrics forwarding'
+              },
+              endpoint: {
+                type: 'string',
+                description: 'OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)'
+              },
+              interval: {
+                anyOf: [{ type: 'integer' }, { type: 'string' }],
+                default: 60000,
+                description: 'Interval in milliseconds between metric forwards'
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Additional HTTP headers for authentication'
               }
             },
             required: ['endpoint'],

@@ -34,6 +34,29 @@ The same server exposes Kubernetes readiness and liveness probes by default. Set
 }
 ```
 
+Use an object to configure health probes separately from metrics. If the resolved `hostname` and `port` differ from the Prometheus server, health probes are exposed on a standalone server:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091,
+    "readiness": {
+      "endpoint": "/health"
+    },
+    "liveness": {
+      "endpoint": "/live"
+    }
+  }
+}
+```
+
+In this case, `/metrics` is exposed only on port `9090`, while `/health` and `/live` are exposed only on port `9091`.
+
 ## Serving metrics over HTTPS (SSL/TLS)
 
 The metrics server can use HTTPS (TLS, often referred to as SSL). This also applies to the readiness and liveness endpoints exposed by the same server.

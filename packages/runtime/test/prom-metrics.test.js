@@ -394,6 +394,328 @@ The liveness endpoint is available at /status.`
   }
 })
 
+test('health probes use a standalone server when configured as an object', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const metricsPort = await getPort()
+  const healthProbesPort = await getPort()
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      hostname: '127.0.0.1',
+      port: metricsPort,
+      readiness: {
+        endpoint: '/readyz'
+      },
+      liveness: {
+        endpoint: '/livez'
+      }
+    },
+    healthProbes: {
+      hostname: '127.0.0.1',
+      port: healthProbesPort,
+      readiness: {
+        endpoint: '/health'
+      }
+    },
+    workers: 2
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus and health probes servers to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${metricsPort}`, {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.`
+    )
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${metricsPort}`, {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 200)
+    ok((await body.text()).includes('nodejs_version_info'))
+  }
+
+  {
+    const { statusCode } = await request(`http://127.0.0.1:${metricsPort}`, {
+      method: 'GET',
+      path: '/health'
+    })
+    strictEqual(statusCode, 404)
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The readiness endpoint is available at /health.
+The liveness endpoint is available at /livez.`
+    )
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/health'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/livez'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  {
+    const { statusCode } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 404)
+  }
+})
+
+test('health probes object uses the metrics server when the address is the same', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      hostname: '127.0.0.1',
+      port,
+      readiness: {
+        endpoint: '/readyz'
+      },
+      liveness: {
+        endpoint: '/livez'
+      }
+    },
+    healthProbes: {
+      enabled: true,
+      hostname: '127.0.0.1',
+      port,
+      readiness: {
+        endpoint: '/health'
+      }
+    },
+    workers: 2
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.
+The readiness endpoint is available at /health.
+The liveness endpoint is available at /livez.`
+    )
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 200)
+    ok((await body.text()).includes('nodejs_version_info'))
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/health'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/livez'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+})
+
+test('health probes object can disable probes', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      hostname: '127.0.0.1',
+      port
+    },
+    healthProbes: {
+      enabled: false,
+      hostname: '127.0.0.1',
+      port: await getPort()
+    },
+    workers: 2
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.`
+    )
+  }
+
+  {
+    const { statusCode } = await request(`http://127.0.0.1:${port}`, {
+      method: 'GET',
+      path: '/ready'
+    })
+    strictEqual(statusCode, 404)
+  }
+})
+
+test('health probes object starts a standalone server when metrics are disabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const healthProbesPort = await getPort()
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: false,
+    healthProbes: {
+      hostname: '127.0.0.1',
+      port: healthProbesPort
+    },
+    workers: 2
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the health probes server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(
+      await body.text(),
+      `Hello from Platformatic Prometheus Server!
+The readiness endpoint is available at /ready.
+The liveness endpoint is available at /status.`
+    )
+  }
+
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/ready'
+    })
+    strictEqual(statusCode, 200)
+    strictEqual(await body.text(), 'OK')
+  }
+
+  {
+    const { statusCode } = await request(`http://127.0.0.1:${healthProbesPort}`, {
+      method: 'GET',
+      path: '/metrics'
+    })
+    strictEqual(statusCode, 404)
+  }
+})
+
 test('health probes can be disabled while metrics stay enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'health-probes-disabled.json')

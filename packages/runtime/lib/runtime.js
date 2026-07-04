@@ -11,7 +11,11 @@ import {
 } from '@platformatic/foundation'
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
-import { collectProcessMetrics, client as metricsClient } from '@platformatic/metrics'
+import {
+  collectProcessMetrics,
+  client as metricsClient,
+  openTelemetryITCMessage
+} from '@platformatic/metrics'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -45,8 +49,9 @@ import {
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
+import { OpenTelemetryMetricsForwarder } from './opentelemetry-metrics.js'
 import { createChannelCreationHook } from './policies.js'
-import { startPrometheusServer } from './prom-server.js'
+import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
@@ -135,6 +140,8 @@ export class Runtime extends EventEmitter {
 
   #managementApi
   #prometheusServer
+  #healthProbesServer
+  #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
 
@@ -238,11 +245,16 @@ export class Runtime extends EventEmitter {
     if (config.metrics) {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics, config.healthProbes)
     } else {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
     }
+
+    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    }
+
+    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
 
     // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
     // These metrics are the same across all workers and only need to be collected once
@@ -257,6 +269,8 @@ export class Runtime extends EventEmitter {
     this.logger = logger
     this.#loggerDestination = destination
     this.#loggerContext = context
+
+    await this.#startOpenTelemetryMetricsForwarder(config.metrics?.opentelemetry)
 
     this.#createWorkersBroadcastChannel()
 
@@ -405,6 +419,15 @@ export class Runtime extends EventEmitter {
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
+    }
+
+    if (this.#healthProbesServer) {
+      await this.#healthProbesServer.close()
+    }
+
+    if (this.#opentelemetryMetricsForwarder) {
+      await this.#opentelemetryMetricsForwarder.close()
+      this.#opentelemetryMetricsForwarder = null
     }
 
     // Clean up process metrics registry
@@ -864,12 +887,24 @@ export class Runtime extends EventEmitter {
       this.#prometheusServer = null
     }
 
+    if (this.#healthProbesServer) {
+      await this.#healthProbesServer.close()
+      this.#healthProbesServer = null
+    }
+
+    if (this.#opentelemetryMetricsForwarder) {
+      await this.#opentelemetryMetricsForwarder.close()
+      this.#opentelemetryMetricsForwarder = null
+    }
+
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
-    if (metricsConfig.enabled !== false || this.#config.healthProbes !== false) {
-      this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
-    }
+    this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
+
+    this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
+
+    await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
     const promises = []
     for (const worker of this.#workers.values()) {
@@ -887,6 +922,17 @@ export class Runtime extends EventEmitter {
 
     this.logger.info({ metricsConfig }, 'Metrics configuration updated')
     return { success: true, config: metricsConfig }
+  }
+
+  async #startOpenTelemetryMetricsForwarder (config) {
+    if (!config?.endpoint || config.enabled === false || config.enabled === 'false') {
+      return
+    }
+
+    const forwarder = new OpenTelemetryMetricsForwarder(config, this.logger)
+    if (await forwarder.start()) {
+      this.#opentelemetryMetricsForwarder = forwarder
+    }
   }
 
   // TODO: Remove in next major version
@@ -2024,6 +2070,10 @@ export class Runtime extends EventEmitter {
     // handle directly in getWorkerHealth().
     worker[kITC].on('subprocess:started', () => {
       worker[kIsSubprocessHost] = true
+    })
+
+    worker[kITC].on(openTelemetryITCMessage, resourceMetrics => {
+      this.#opentelemetryMetricsForwarder?.collect(resourceMetrics)
     })
 
     worker[kITC].on('request:restart', async () => {

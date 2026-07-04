@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@platformatic/globals": "workspace:*",
     "@platformatic/http-metrics": "^0.3.0",
     "@platformatic/promotel": "^0.2.0",
     "@platformatic/prom-client": "^1.0.0"

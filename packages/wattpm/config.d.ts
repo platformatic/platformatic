@@ -254,7 +254,40 @@ export type PlatformaticRuntimeConfig = {
     bufferPoolSize?: number | string;
     defaultHighWaterMark?: number | string;
   };
-  healthProbes?: boolean | string;
+  healthProbes?:
+    | boolean
+    | string
+    | {
+        enabled?: boolean | string;
+        hostname?: string;
+        port?: number | string;
+        readiness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                statusCode?: number;
+                body?: string;
+              };
+              fail?: {
+                statusCode?: number;
+                body?: string;
+              };
+            };
+        liveness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                statusCode?: number;
+                body?: string;
+              };
+              fail?: {
+                statusCode?: number;
+                body?: string;
+              };
+            };
+      };
   undici?: {
     agentOptions?: {
       [k: string]: unknown;
@@ -413,6 +446,10 @@ export type PlatformaticRuntimeConfig = {
                 body?: string;
               };
             };
+        /**
+         * @deprecated
+         * Deprecated. Health probe timeout configuration is no longer used.
+         */
         healthChecksTimeouts?: number | string;
         plugins?: string[];
         timeout?: number | string;
@@ -446,6 +483,29 @@ export type PlatformaticRuntimeConfig = {
            * Service version for OTLP resource attributes
            */
           serviceVersion?: string;
+        };
+        /**
+         * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
+         */
+        opentelemetry?: {
+          /**
+           * Enable or disable OpenTelemetry metrics forwarding
+           */
+          enabled?: boolean | string;
+          /**
+           * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
+           */
+          endpoint: string;
+          /**
+           * Interval in milliseconds between metric forwards
+           */
+          interval?: number | string;
+          /**
+           * Additional HTTP headers for authentication
+           */
+          headers?: {
+            [k: string]: string;
+          };
         };
         /**
          * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
