@@ -161,6 +161,12 @@ function createMapper (
     const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const inputs = args.inputs
+    if (inputs === undefined || inputs === null) {
+      throw new InputNotProvidedError()
+    }
+    if (inputs.length === 0) {
+      return []
+    }
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
     /* istanbul ignore else */
     if (autoTimestamp) {

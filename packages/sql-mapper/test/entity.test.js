@@ -198,6 +198,35 @@ test('empty save', async () => {
   deepEqual(insertResult, { id: '1', theTitle: null })
 })
 
+test('insert with empty inputs array returns an empty array', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+
+  const res = await pageEntity.insert({ inputs: [] })
+  deepEqual(res, [])
+
+  await rejects(pageEntity.insert({}), {
+    code: 'PLT_SQL_MAPPER_INPUT_NOT_PROVIDED'
+  })
+})
+
 test('insert with explicit integer PK value', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
