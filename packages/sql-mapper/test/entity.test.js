@@ -257,6 +257,44 @@ test('insert with explicit integer PK value', async () => {
   })
 })
 
+test('NUMBER, NUMERIC, BIGINT and TEXT primary keys are accepted on SQLite', { skip: !isSQLite }, async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await db.query(sql`DROP TABLE IF EXISTS numbers`)
+      await db.query(sql`DROP TABLE IF EXISTS numerics`)
+      await db.query(sql`DROP TABLE IF EXISTS bigints`)
+      await db.query(sql`DROP TABLE IF EXISTS texts`)
+      db.dispose()
+    })
+    await db.query(sql`CREATE TABLE numbers (id NUMBER PRIMARY KEY, title VARCHAR(42))`)
+    await db.query(sql`CREATE TABLE numerics (id NUMERIC PRIMARY KEY, title VARCHAR(42))`)
+    await db.query(sql`CREATE TABLE bigints (id BIGINT PRIMARY KEY, title VARCHAR(42))`)
+    await db.query(sql`CREATE TABLE texts (id TEXT PRIMARY KEY, title VARCHAR(42))`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  for (const entity of ['number', 'numeric', 'bigint']) {
+    deepEqual(mapper.entities[entity].primaryKeys, new Set(['id']))
+    const [row] = await mapper.entities[entity].insert({
+      inputs: [{ id: 42, title: 'foo' }]
+    })
+    deepEqual(row, { id: '42', title: 'foo' })
+  }
+
+  deepEqual(mapper.entities.text.primaryKeys, new Set(['id']))
+  const [row] = await mapper.entities.text.insert({
+    inputs: [{ id: 'the-key', title: 'foo' }]
+  })
+  deepEqual(row, { id: 'the-key', title: 'foo' })
+})
+
 test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)

@@ -551,7 +551,9 @@ export function buildEntity (
   /* istanbul ignore next */
   function checkSQLitePrimaryKey (constraint) {
     if (db.isSQLite) {
-      const validTypes = ['varchar', 'integer', 'uuid', 'serial']
+      // SQLite uses flexible typing: NUMBER, NUMERIC and BIGINT have the same
+      // affinity as INTEGER, while TEXT has the same affinity as VARCHAR
+      const validTypes = ['varchar', 'integer', 'uuid', 'serial', 'number', 'numeric', 'bigint', 'text']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
         throw new InvalidPrimaryKeyTypeError(pkType, validTypes.join(', '))
