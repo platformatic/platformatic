@@ -103,7 +103,9 @@ function createMapper (
     for (const key of Object.keys(output)) {
       let value = output[key]
       const newKey = fieldMapToRetrieve[key]
-      if (primaryKeys.has(key) && value !== null && value !== undefined) {
+      // Do not convert Date objects: they are serialized according to the
+      // schema of the field, like non primary key columns
+      if (primaryKeys.has(key) && value !== null && value !== undefined && !(value instanceof Date)) {
         value = value.toString()
       }
       if (newKey && isVectorType(fields[key].sqlType)) {

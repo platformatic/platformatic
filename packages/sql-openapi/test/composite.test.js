@@ -1,6 +1,6 @@
 import sqlMapper from '@platformatic/sql-mapper'
 import fastify from 'fastify'
-import { equal, deepEqual as same } from 'node:assert/strict'
+import { equal, match, deepEqual as same } from 'node:assert/strict'
 import { test } from 'node:test'
 import sqlOpenAPI from '../index.js'
 import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
@@ -499,5 +499,45 @@ test('composite primary keys withour relations', async t => {
       url: '/editors/pageId/1/userId/2'
     })
     equal(res.statusCode, 404, 'DELETE /editors/pageId/1/userId/2 status code')
+  }
+})
+
+test('composite primary keys with a date column are serialized in ISO format', { skip: isSQLite }, async t => {
+  /* https://github.com/platformatic/platformatic/issues/1954 */
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    await db.query(sql`CREATE TABLE dailies (
+      foo_id VARCHAR(42) NOT NULL,
+      day DATE NOT NULL,
+      PRIMARY KEY (foo_id, day)
+    );`)
+  }
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    onDatabaseLoad
+  })
+  app.register(sqlOpenAPI)
+  t.after(() => app.close())
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/dailies',
+      body: { fooId: 'a', day: '2023-06-23' }
+    })
+    equal(res.statusCode, 200, 'POST /dailies status code')
+    const body = res.json()
+    equal(body.fooId, 'a')
+    // The date must be serialized in ISO format, not with Date.prototype.toString()
+    match(body.day, /^\d{4}-\d{2}-\d{2}/, 'POST /dailies day format')
+  }
+
+  {
+    const res = await app.inject({ method: 'GET', url: '/dailies' })
+    equal(res.statusCode, 200, 'GET /dailies status code')
+    match(res.json()[0].day, /^\d{4}-\d{2}-\d{2}/, 'GET /dailies day format')
   }
 })
