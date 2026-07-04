@@ -157,16 +157,16 @@ test("users can save and update their own pages, read everybody's and delete non
         title: 'Hello World2'
       }
     })
-    equal(res.statusCode, 401, 'PUT /pages/1 status code (Unauthorized)')
+    equal(res.statusCode, 403, 'PUT /pages/1 status code (Forbidden)')
     deepEqual(
       res.json(),
       {
         message: 'operation not allowed',
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
-        statusCode: 401
+        error: 'Forbidden',
+        statusCode: 403
       },
-      'PUT/pages/1 response (Unauthorized)'
+      'PUT/pages/1 response (Forbidden)'
     )
   }
 
@@ -195,14 +195,14 @@ test("users can save and update their own pages, read everybody's and delete non
       method: 'GET',
       url: '/pages/1'
     })
-    equal(res.statusCode, 401, 'GET /pages/1 status code (Anonymous)')
+    equal(res.statusCode, 403, 'GET /pages/1 status code (Anonymous)')
     deepEqual(
       res.json(),
       {
         message: 'operation not allowed',
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
-        statusCode: 401
+        error: 'Forbidden',
+        statusCode: 403
       },
       'GET /pages/1 response (Anonymous)'
     )
@@ -216,14 +216,14 @@ test("users can save and update their own pages, read everybody's and delete non
         title: 'Hello World3'
       }
     })
-    equal(res.statusCode, 401, 'PUT /pages/1 status code (Anonymous)')
+    equal(res.statusCode, 403, 'PUT /pages/1 status code (Anonymous)')
     deepEqual(
       res.json(),
       {
         message: 'operation not allowed',
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
-        statusCode: 401
+        error: 'Forbidden',
+        statusCode: 403
       },
       'PUT /pages/1 response (Anonymous)'
     )
@@ -237,16 +237,16 @@ test("users can save and update their own pages, read everybody's and delete non
         Authorization: `Bearer ${token}`
       }
     })
-    equal(res.statusCode, 401, 'DELETE /pages/1 status code (Unauthorized)')
+    equal(res.statusCode, 403, 'DELETE /pages/1 status code (Forbidden)')
     deepEqual(
       res.json(),
       {
         message: 'operation not allowed',
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
-        statusCode: 401
+        error: 'Forbidden',
+        statusCode: 403
       },
-      'DELETE /pages/1 response (Unauthorized)'
+      'DELETE /pages/1 response (Forbidden)'
     )
   }
 })
