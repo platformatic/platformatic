@@ -147,12 +147,16 @@ the same body and headers, except for:
 - `host`
 - `connection`
 
-<!--
-TODO: Is this correct? Code looks like it's getting data from the response body:
-https://github.com/platformatic/platformatic/blob/main/packages/db-authorization/lib/webhook.js#L45-L46
--->
+If the webhook responds with a status code above 299, the request is rejected as unauthorized. Otherwise, the webhook must return the user metadata (including the roles) as a **JSON object in the response body**, e.g.:
 
-In the Webhook case, the HTTP response contains the roles/user information as HTTP headers.
+```json
+{
+  "X-PLATFORMATIC-USER-ID": 42,
+  "X-PLATFORMATIC-ROLE": "user"
+}
+```
+
+The returned object becomes the user metadata for the request, exactly as if it had been extracted from a JWT.
 
 ## HTTP headers (development only)
 
