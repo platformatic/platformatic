@@ -88,6 +88,13 @@ async function registerPostgreSQLExtensionTypes (db) {
   try {
     await db.registerTypeParser('_vector', value => db.parseArray(value, parseVector))
   } catch {}
+
+  // Return DATE columns as 'YYYY-MM-DD' strings: parsing them into local-time
+  // JS Dates shifts the value by the process time zone offset, changing the
+  // day. 1082 is the PostgreSQL oid for the DATE type.
+  try {
+    await db.registerTypeParser(1082, value => value)
+  } catch {}
 }
 
 // Provide a developer friendly error instead of the bare SQLITE_CANTOPEN
