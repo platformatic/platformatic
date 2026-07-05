@@ -1590,7 +1590,7 @@ importers:
         version: 8.3.1
       '@fastify/express':
         specifier: ^4.0.0
-        version: 4.0.6
+        version: 4.0.7
       '@fastify/formbody':
         specifier: ^8.0.0
         version: 8.0.2
@@ -3568,8 +3568,8 @@ packages:
   '@fastify/error@4.2.0':
     resolution: {integrity: sha512-RSo3sVDXfHskiBZKBPRgnQTtIqpi/7zhJOEmAxCiBcM7d0uwdGdxLlsCaLzGs8v8NnxIRlfG0N51p5yFaOentQ==}
 
-  '@fastify/express@4.0.6':
-    resolution: {integrity: sha512-jP0UPsT05npbzEHRmTXoVC9r0ATx/FQ2dTk+M/C666h25KUPtAfjN3yBtMjFOy7SmaMnIzKTVWVZhxvYNHRa8g==}
+  '@fastify/express@4.0.7':
+    resolution: {integrity: sha512-8GvmiFueWEMIgQKxrGfxgb1dyyi2Un3uUgCCaoEH2XEwlPgLzRdTBVZfAIX8Te+EnV+Ntc1D8amN6uNex7J9Ag==}
 
   '@fastify/fast-json-stringify-compiler@5.0.3':
     resolution: {integrity: sha512-uik7yYHkLr6fxd8hJSZ8c+xF4WafPK+XzneQDPU+D10r5X19GW8lJcom2YijX2+qtFF1ENJlHXKFM9ouXNJYgQ==}
@@ -14343,10 +14343,10 @@ snapshots:
 
   '@fastify/error@4.2.0': {}
 
-  '@fastify/express@4.0.6':
+  '@fastify/express@4.0.7':
     dependencies:
       express: 5.2.1
-      fastify-plugin: 5.1.0
+      fastify-plugin: 6.0.0
     transitivePeerDependencies:
       - supports-color
 
