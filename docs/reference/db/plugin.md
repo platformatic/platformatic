@@ -45,6 +45,41 @@ app.post('/', async (req, reply) => {
 })
 ```
 
+## Running Custom SQL Queries
+
+Besides the generated entities, plugins can run any SQL query through `app.platformatic.db` and the `app.platformatic.sql` template tag, which safely interpolates values as query parameters:
+
+```js
+export default async function (app) {
+  app.get('/most-quoted-movies', async (req, reply) => {
+    const { db, sql } = app.platformatic
+    const limit = 10
+
+    return db.query(sql`
+      SELECT movies.title, COUNT(quotes.id) AS quotes
+      FROM movies
+      JOIN quotes ON quotes.movie_id = movies.id
+      GROUP BY movies.title
+      ORDER BY quotes DESC
+      LIMIT ${limit}
+    `)
+  })
+}
+```
+
+Never concatenate user input into the query string: always interpolate values with the `sql` tag (or use `sql.ident` for identifiers) so they are passed as bound parameters.
+
+Queries can also participate in transactions through `app.platformatic.db.tx`:
+
+```js
+await app.platformatic.db.tx(async tx => {
+  await tx.query(sql`UPDATE accounts SET balance = balance - 100 WHERE id = ${from}`)
+  await tx.query(sql`UPDATE accounts SET balance = balance + 100 WHERE id = ${to}`)
+})
+```
+
+For the complete query API, see the [@databases documentation](https://www.atdatabases.org/), which Platformatic DB uses under the hood.
+
 ## Hot Reload
 
 Plugin files are monitored by the [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
