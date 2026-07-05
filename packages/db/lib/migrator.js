@@ -3,6 +3,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { basename } from 'node:path'
 import Postgrator from 'postgrator'
 import { ApplyMigrationError, MigrateMissingMigrationsDirError, MigrateMissingMigrationsError } from './errors.js'
+import { splitSQLiteStatements } from './split-sqlite-statements.js'
 
 export class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
@@ -16,6 +17,7 @@ export class Migrator {
     this.logger = logger
 
     this.db = null
+    this.sqliteDb = null
     this.postgrator = null
     this.appliedMigrationsCount = 0
     this.lastStartedMigration = null
@@ -49,6 +51,15 @@ export class Migrator {
 
     this.db = db
 
+    /* c8 ignore next 6 */
+    if (driver === 'sqlite3') {
+      const { DatabaseSync } = await import('node:sqlite')
+      const connectionString = this.coreConfig.connectionString
+      this.sqliteDb = new DatabaseSync(
+        connectionString === 'sqlite://:memory:' ? ':memory:' : connectionString.replace('sqlite://', '')
+      )
+    }
+
     // Glob patterns should always use / as a path separator, even on Windows systems, as \ is used to escape glob characters.
     const migrationPattern = this.migrationDir + '/*'
     this.logger.debug(`Migrating from ${migrationPattern}`)
@@ -59,6 +70,19 @@ export class Migrator {
       database,
       schemaTable: this.migrationsTable || 'versions',
       execQuery: async query => {
+        // The SQLite pool splits scripts with a generic splitter which
+        // breaks on the semicolons inside CREATE TRIGGER bodies and fails
+        // on scripts only containing comments. Split the script with a
+        // SQLite aware splitter and run each statement on a raw connection,
+        // whose prepare() handles trigger bodies correctly.
+        if (driver === 'sqlite3') {
+          let rows = []
+          for (const statement of splitSQLiteStatements(query)) {
+            rows = this.runSQLiteStatement(statement)
+          }
+          return { rows }
+        }
+
         const res = await db.query(sql`${sql.__dangerous__rawValue(query)}`)
         return { rows: res }
       },
@@ -85,6 +109,10 @@ export class Migrator {
       const migrationName = basename(migration.filename)
       this.logger.debug(`completed ${migrationName}`)
     })
+  }
+
+  runSQLiteStatement (text) {
+    return this.sqliteDb.prepare(text).all()
   }
 
   async checkMigrationsDirectoryExists () {
@@ -189,6 +217,10 @@ export class Migrator {
   }
 
   async close () {
+    if (this.sqliteDb !== null) {
+      this.sqliteDb.close()
+      this.sqliteDb = null
+    }
     if (this.db !== null) {
       await this.db.dispose()
       this.db = null
