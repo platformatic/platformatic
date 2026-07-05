@@ -14,6 +14,14 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { version } from '../lib/version.js'
 import { changeWorkingDirectory, createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.js'
 
+// These tests perform real npm installs: make npm resilient to transient
+// registry network failures (like ECONNRESET) by retrying more aggressively.
+// The variables are inherited by the package manager processes spawned by
+// the import command.
+process.env.npm_config_fetch_retries = '5'
+process.env.npm_config_fetch_retry_factor = '4'
+process.env.npm_config_fetch_retry_mintimeout = '1000'
+
 const autodetect = {
   astro: 'astro',
   node: null,
