@@ -286,6 +286,20 @@ async function main() {
 main()
 ```
 
+#### Client-generated primary keys
+
+The primary key does not have to be database-generated: to build idempotent services, provide the primary key value in the input and it will be used as-is. This works with every supported primary key type, including UUIDs:
+
+```js
+await mapper.entities.page.insert({
+  inputs: [
+    { id: '00000000-0000-0000-0000-000000000042', title: 'Foobar' }
+  ]
+})
+```
+
+The same applies to the generated REST (`POST /pages`) and GraphQL (`savePage`/`insertPages`) APIs. To reject client-provided primary keys in the REST API instead, set `db.openapi.allowPrimaryKeysInInput` to `false`.
+
 ### `save`
 
 Create a new entity row in the database or update an existing one.
