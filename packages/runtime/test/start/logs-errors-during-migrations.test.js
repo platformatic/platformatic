@@ -39,7 +39,7 @@ test('logs errors during db migrations', async t => {
     async () => {
       await runtime.start()
     },
-    { code: 'SQLITE_ERROR' }
+    { code: 'PLT_DB_MIGRATE_ERROR' }
   )
 
   const messages = await readLogs(join(root, 'logs.txt'), 10000)
