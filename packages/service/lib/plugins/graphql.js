@@ -20,6 +20,14 @@ async function setupGraphQLPlugin (app, options) {
     options
   )
 
+  // The graphiql routes do not honor additionalRouteOptions:
+  // hide them from the OpenAPI definition
+  app.addHook('onRoute', routeOptions => {
+    if (routeOptions.url === '/graphiql' || routeOptions.url.startsWith('/graphiql/')) {
+      routeOptions.schema = { ...routeOptions.schema, hide: true }
+    }
+  })
+
   app.register(mercurius, graphqlOptions)
 }
 
