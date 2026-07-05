@@ -3,7 +3,7 @@ import fastify from 'fastify'
 import { equal, deepEqual as same } from 'node:assert/strict'
 import { test } from 'node:test'
 import sqlOpenAPI from '../index.js'
-import { clear, connInfo, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
 test('multiple foreign keys pointing the same table', { skip: isSQLite }, async t => {
   async function onDatabaseLoad (db, sql) {
@@ -241,13 +241,30 @@ test('foreign keys pointing to different tables do not change the route name', a
       );`)
       await db.query(sql`CREATE TABLE text_content (
         id INTEGER PRIMARY KEY,
-        key TEXT NOT NULL
+        content_key TEXT NOT NULL
       );`)
       await db.query(sql`CREATE TABLE translations (
         id INTEGER PRIMARY KEY,
         text TEXT NOT NULL,
         language_id INTEGER NOT NULL,
         text_content_id INTEGER NOT NULL,
+        CONSTRAINT fk_translations_language FOREIGN KEY (language_id) REFERENCES languages(id),
+        CONSTRAINT fk_translations_text_content FOREIGN KEY (text_content_id) REFERENCES text_content(id)
+      );`)
+    } else if (isMysql) {
+      await db.query(sql`CREATE TABLE languages (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL
+      );`)
+      await db.query(sql`CREATE TABLE text_content (
+        id SERIAL PRIMARY KEY,
+        content_key TEXT NOT NULL
+      );`)
+      await db.query(sql`CREATE TABLE translations (
+        id SERIAL PRIMARY KEY,
+        text TEXT NOT NULL,
+        language_id BIGINT UNSIGNED NOT NULL,
+        text_content_id BIGINT UNSIGNED NOT NULL,
         CONSTRAINT fk_translations_language FOREIGN KEY (language_id) REFERENCES languages(id),
         CONSTRAINT fk_translations_text_content FOREIGN KEY (text_content_id) REFERENCES text_content(id)
       );`)
@@ -258,7 +275,7 @@ test('foreign keys pointing to different tables do not change the route name', a
       );`)
       await db.query(sql`CREATE TABLE text_content (
         id SERIAL PRIMARY KEY,
-        key TEXT NOT NULL
+        content_key TEXT NOT NULL
       );`)
       await db.query(sql`CREATE TABLE translations (
         id SERIAL PRIMARY KEY,
