@@ -2306,7 +2306,7 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.61.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
       protobufjs:
         specifier: ^8.0.0
-        version: 8.6.4
+        version: 8.6.6
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
@@ -11316,12 +11316,16 @@ packages:
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
 
-  protobufjs@7.6.4:
-    resolution: {integrity: sha512-RJJPTTpvFfHcWLkIa2JFWK4XvtSzS0yEWDmunqHXli1h3JlkbcQZXDZdcWxv+JK3Xsl5/UFDPZ0iGm7DAengYw==}
+  protobufjs@7.6.5:
+    resolution: {integrity: sha512-/FPD0nUc9jH6rfFjji9IBqOz4pcSE3CsT1m7Ep6Mdb0LxSUMj8hgl6GomOvZzpNpAqqGaXA0P3VSrZLFzIhQrw==}
     engines: {node: '>=12.0.0'}
 
   protobufjs@8.6.4:
     resolution: {integrity: sha512-/+XMv9JalknuncEJSwsyEVlwcxVLKx2iaoSUXFZA86MJkdqyOdfrlB1sB7S6aKyUk9tl20YY+SgQe5J2sJHTcg==}
+    engines: {node: '>=12.0.0'}
+
+  protobufjs@8.6.6:
+    resolution: {integrity: sha512-RkLIhE+Tdc2Kpq1F4Uw6OnpAXPca7B+GSDov/GqGCqNBpVyDskQ9yReZfgM+C7xw9AAix873iQZXbBWXj6NzYQ==}
     engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
@@ -14491,7 +14495,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.6.4
+      protobufjs: 7.6.5
       yargs: 17.7.3
 
   '@hapi/hoek@11.0.7': {}
@@ -23827,7 +23831,7 @@ snapshots:
 
   property-information@7.2.0: {}
 
-  protobufjs@7.6.4:
+  protobufjs@7.6.5:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -23842,6 +23846,10 @@ snapshots:
       long: 5.3.2
 
   protobufjs@8.6.4:
+    dependencies:
+      long: 5.3.2
+
+  protobufjs@8.6.6:
     dependencies:
       long: 5.3.2
 
