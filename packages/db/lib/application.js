@@ -71,6 +71,10 @@ export async function platformaticDatabase (app, capability) {
     await capability.updateContext({ serverConfig })
   }
 
+  await app.register(core, config.db)
+
+  // This must happen after registering the core plugin, which populates
+  // app.platformatic.dbschema
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(config)
@@ -80,8 +84,6 @@ export async function platformaticDatabase (app, capability) {
       app.log.trace({ err }, 'unable to save schema lock')
     }
   }
-
-  await app.register(core, config.db)
 
   if (config.authorization) {
     await app.register(auth, config.authorization)
