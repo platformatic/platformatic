@@ -111,18 +111,27 @@ When a new entity is created, the `userId` field is automatically populated with
 
 ## Programmatic Rules
 
-For advanced use cases involving authorization, Platformatic DB allows rules to be defined programmatically. 
+For advanced use cases, rules can be defined programmatically with JavaScript functions instead of declarative checks. The `find`, `save` and `delete` operations accept an async function receiving `{ user, ctx, where }` which must return the `where` clause to apply, and `defaults` values can be async functions receiving `{ user, ctx, input }`.
 
-```javascript 
+In a Platformatic DB application, register programmatic rules from a plugin using `app.platformatic.addRulesForRoles`, which appends rules to the ones defined in the configuration file:
 
-  app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
-    rules: [{
+```js title="plugin.js"
+/// <reference path="./global.d.ts" />
+
+export default async function (app) {
+  app.platformatic.addRulesForRoles([
+    {
       role: 'user',
       entity: 'page',
       async find ({ user, ctx, where }) {
+        return {
+          ...where,
+          userId: {
+            eq: user['X-PLATFORMATIC-USER-ID']
+          }
+        }
+      },
+      async save ({ user, ctx, where }) {
         return {
           ...where,
           userId: {
@@ -140,53 +149,44 @@ For advanced use cases involving authorization, Platformatic DB allows rules to 
       },
       defaults: {
         userId: async function ({ user, ctx, input }) {
-          match(user, {
-            'X-PLATFORMATIC-USER-ID': generated.shift(),
-            'X-PLATFORMATIC-ROLE': 'user'
-          })
           return user['X-PLATFORMATIC-USER-ID']
         }
-
-      },
-      async save ({ user, ctx, where }) {
-        return {
-          ...where,
-          userId: {
-            eq: user['X-PLATFORMATIC-USER-ID']
-          }
-        }
       }
-    }]
-  })
+    }
+  ])
+}
 ```
 
-In this example, the `user` role can delete all the posts edited before yesterday:
+When building a service manually with `@platformatic/db-core`, the same rules can be passed directly to the `@platformatic/db-authorization` plugin:
 
 ```js
- app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
-    roleKey: 'X-PLATFORMATIC-ROLE',
-    anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      save: true,
-      async delete ({ user, ctx, where }) {
-        return {
-          ...where,
-          editedAt: {
-            lt: yesterday
-          }
+import auth from '@platformatic/db-authorization'
+
+// In this example, the user role can only delete the pages edited before yesterday
+app.register(auth, {
+  jwt: {
+    secret: 'supersecret'
+  },
+  roleKey: 'X-PLATFORMATIC-ROLE',
+  anonymousRole: 'anonymous',
+  rules: [{
+    role: 'user',
+    entity: 'page',
+    find: true,
+    save: true,
+    async delete ({ user, ctx, where }) {
+      return {
+        ...where,
+        editedAt: {
+          lt: yesterday
         }
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
       }
-    }]
-  })
+    },
+    defaults: {
+      userId: 'X-PLATFORMATIC-USER-ID'
+    }
+  }]
+})
 ```
 
 ## Access validation on `entity mapper` for plugins
