@@ -299,3 +299,43 @@ test('do not include /graphql in the OpenAPI schema', async t => {
   const body = await res.body.json()
   assert.strictEqual(body.paths['/graphql'], undefined)
 })
+
+test('do not include the graphiql routes in the OpenAPI schema', async t => {
+  const app = await createFromConfig(
+    t,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        forceCloseConnections: true
+      },
+      service: {
+        graphql: {
+          graphiql: true
+        },
+        openapi: true
+      },
+      plugins: {
+        paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
+      }
+    })
+  )
+
+  t.after(async () => {
+    await app.stop()
+  })
+  await app.start({ listen: true })
+
+  {
+    const res = await request(`${app.url}/graphiql`)
+    assert.strictEqual(res.statusCode, 200, 'graphiql is served')
+  }
+
+  const res = await request(`${app.url}/documentation/json`)
+  assert.strictEqual(res.statusCode, 200, 'status code')
+  const body = await res.body.json()
+  for (const path of Object.keys(body.paths)) {
+    assert.ok(!path.startsWith('/graphiql'), `${path} must not be in the OpenAPI schema`)
+  }
+})
