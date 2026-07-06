@@ -1384,3 +1384,35 @@ test('array support (PG)', { skip: !isPg }, async () => {
     ]
   )
 })
+
+test('date columns are returned as YYYY-MM-DD strings', { skip: !isPg }, async () => {
+  /* https://github.com/platformatic/platformatic/issues/1451 */
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      publish_date DATE
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+
+  const [page] = await pageEntity.insert({
+    inputs: [{ publishDate: '2023-06-01' }]
+  })
+  // No time zone dependent Date parsing: the value must be the exact date
+  equal(page.publishDate, '2023-06-01')
+
+  const [found] = await pageEntity.find({ where: { publishDate: { eq: '2023-06-01' } } })
+  equal(found.publishDate, '2023-06-01')
+})
