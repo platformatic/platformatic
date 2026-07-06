@@ -9,6 +9,10 @@ import Issues from "../../../getting-started/issues.md"
 
 Platformatic DB implements flexible, role-based authorization strategies that integrate seamlessly with external authentication services. This section outlines the available strategies and how to configure them.
 
+## Authentication vs Authorization
+
+Platformatic DB **validates** credentials on incoming requests (a JWT, or any credential your webhook understands) and enforces the configured authorization rules — it does not **issue** credentials. There is no built-in `/login` route or user database: tokens come from an external identity provider (like [Auth0](../jwt-auth0.md) or [Keycloak](../jwt-keycloak.md)), or from a login route you implement yourself in a [plugin](../plugin.md) and sign with the same JWT secret configured in `authorization.jwt`.
+
 <!-- TODO: Update diagrams with the updated versions I created for my API adventure talk -->
 
 ## Supported Authorization Strategies
