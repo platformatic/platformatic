@@ -180,16 +180,22 @@ export async function openApiGenerator (app, opts) {
   app.decorate('openApiSchemas', openApiSchemas)
   app.decorate('composedOpenApiSchema', composedOpenApiSchema)
 
+  const swaggerOpenApi = {
+    info: {
+      title: opts.openapi?.title || 'Platformatic Gateway',
+      version: opts.openapi?.version || '1.0.0'
+    },
+    servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }],
+    components: app.composedOpenApiSchema.components
+  }
+
+  if (app.composedOpenApiSchema.security) {
+    swaggerOpenApi.security = app.composedOpenApiSchema.security
+  }
+
   await app.register(fastifySwagger, {
     exposeRoute: true,
-    openapi: {
-      info: {
-        title: opts.openapi?.title || 'Platformatic Gateway',
-        version: opts.openapi?.version || '1.0.0'
-      },
-      servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }],
-      components: app.composedOpenApiSchema.components
-    },
+    openapi: swaggerOpenApi,
     transform ({ schema, url }) {
       for (const application of opts.applications) {
         if (!application.proxy) continue
