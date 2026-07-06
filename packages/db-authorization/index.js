@@ -97,6 +97,14 @@ async function auth (app, opts) {
         throw new Error(`Missing entity in authorization rule ${i}`)
       }
 
+      // The '*' wildcard applies the rule to all the entities.
+      // Rules are evaluated in order, so more specific rules for the same
+      // role must be defined before the wildcard one.
+      if (ruleEntities.includes('*')) {
+        const allEntities = Object.keys(app.platformatic.entities)
+        ruleEntities = Array.from(new Set([...ruleEntities.filter(e => e !== '*'), ...allEntities]))
+      }
+
       for (const ruleEntity of ruleEntities) {
         const newRule = { ...rule, entity: ruleEntity, entities: undefined }
         if (!app.platformatic.entities[newRule.entity]) {

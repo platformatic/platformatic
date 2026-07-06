@@ -329,7 +329,7 @@ export interface PlatformaticDatabaseConfig {
     rules?: (
       | {
           /**
-           * the DB entity type to which the rule applies
+           * the DB entity type to which the rule applies, use '*' to apply the rule to all entities
            */
           entity?: string;
           /**
@@ -349,7 +349,7 @@ export interface PlatformaticDatabaseConfig {
         }
       | {
           /**
-           * the DB entity types to which the rule applies
+           * the DB entity types to which the rule applies, use '*' to apply the rule to all entities
            */
           entities?: string[];
           /**

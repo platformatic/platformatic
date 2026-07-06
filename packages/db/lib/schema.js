@@ -352,7 +352,7 @@ export const authorization = {
             properties: {
               entity: {
                 type: 'string',
-                description: 'the DB entity type to which the rule applies'
+                description: "the DB entity type to which the rule applies, use '*' to apply the rule to all entities"
               },
               ...sharedAuthorizationRule
             },
@@ -364,7 +364,7 @@ export const authorization = {
             properties: {
               entities: {
                 type: 'array',
-                description: 'the DB entity types to which the rule applies',
+                description: "the DB entity types to which the rule applies, use '*' to apply the rule to all entities",
                 items: {
                   type: 'string'
                 }

@@ -11,7 +11,7 @@ Authorization rules in Platformatic DB define what operations users can perform 
 Every authorization rule must include the following:
 
 - `role` (required) — Specifies the user role name as a string, which must align with roles set by an external authentication service.
-- `entity` or `entities` (optional) — Defines one or more Platformatic DB entities the rule applies to. At least one of `entity` or `entities` must be specified.
+- `entity` or `entities` (optional) — Defines one or more Platformatic DB entities the rule applies to. At least one of `entity` or `entities` must be specified. Use `'*'` to apply the rule to all entities; rules are evaluated in order, so more specific rules for the same role must be defined before the wildcard one.
 - `defaults` (optional) — Sets default values for entity fields from [user metadata](#set-entity-fields-from-user-metadata).
 
 ### Supported Operations
