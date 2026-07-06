@@ -11,8 +11,9 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 
-function createDispatcher (t) {
+function createDispatcher (t, options = {}) {
   const dispatcher = new Agent({
+    ...options,
     connect: {
       rejectUnauthorized: false
     }
@@ -53,7 +54,11 @@ test('supports https server options', async t => {
 })
 
 test('supports reusePort with https server options', async t => {
-  const dispatcher = createDispatcher(t)
+  // The kernel balances SO_REUSEPORT sockets by hashing the connection 4-tuple,
+  // so requests riding a kept-alive connection always hit the same worker.
+  // Disable keep-alive to open a fresh connection (and get a new hash) on
+  // every request.
+  const dispatcher = createDispatcher(t, { pipelining: 0 })
   const port = await getPort()
 
   const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
@@ -76,7 +81,9 @@ test('supports reusePort with https server options', async t => {
   let attempts = 0
   const usedWorkers = new Set(Array.from(Array(workers)).map((_, i) => i.toString()))
 
-  while (usedWorkers.size > 0 && attempts++ < workers * 5) {
+  // The kernel hashing is not a strict round-robin: give it plenty of
+  // attempts to eventually hit every worker at least once.
+  while (usedWorkers.size > 0 && attempts++ < workers * 40) {
     const res = await request(url + '/', { dispatcher })
     const json = await res.body.json()
 
@@ -85,5 +92,5 @@ test('supports reusePort with https server options', async t => {
     usedWorkers.delete(res.headers['x-plt-worker-id'])
   }
 
-  deepStrictEqual(usedWorkers.size, 0)
+  deepStrictEqual(usedWorkers.size, 0, `workers never hit after ${attempts} requests: ${Array.from(usedWorkers).join(', ')}`)
 })
