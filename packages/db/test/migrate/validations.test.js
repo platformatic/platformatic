@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
 import { getFixturesConfigFileLocation } from './helper.js'
-import { createTestContext, createThrowingLogger } from '../cli/test-utilities.js'
+import { createCapturingLogger, createTestContext, createThrowingLogger } from '../cli/test-utilities.js'
 
 test('missing config', async t => {
   const logger = createThrowingLogger()
@@ -66,4 +66,20 @@ test('not applied migrations', async t => {
   await assert.rejects(async () => {
     await applyMigrations(logger, getFixturesConfigFileLocation('bad-migrations.json'), [], context)
   })
+})
+
+test('friendly error when a migration contains invalid SQL', async t => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  t.after(async () => {
+    await dropTestDB()
+  })
+
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, getFixturesConfigFileLocation('bad-migrations.json'), [], context)
+
+  const output = logger.getCaptured()
+  assert.match(output, /Unable to apply migration 002\.do\.sql/)
 })

@@ -43,7 +43,7 @@ export async function applyMigrations (logger, configFile, args, context) {
 
     utimesSync(configFile, now, now)
   } catch (err) {
-    if (err.code === 'PTL_DB_MIGRATE_ERROR') {
+    if (err.code === 'PLT_DB_MIGRATE_ERROR') {
       logFatalError(logger, err.message)
       return
     }
