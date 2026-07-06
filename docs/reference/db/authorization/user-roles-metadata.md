@@ -110,4 +110,25 @@ await request.setupDBAuthorizationUser();
 const userRoles = request.user.roles;
 ```
 
+### Accessing user metadata in custom GraphQL resolvers
+
+In a custom [mercurius](https://mercurius.dev) resolver, the Fastify request is available under `context.reply.request`, so the same pattern applies:
+
+```javascript
+app.graphql.extendSchema(`
+  extend type Query {
+    whoami: String
+  }
+`);
+app.graphql.defineResolvers({
+  Query: {
+    whoami: async (source, args, context) => {
+      const request = context.reply.request;
+      await request.setupDBAuthorizationUser();
+      return request.user?.["X-PLATFORMATIC-USER-ID"];
+    }
+  }
+});
+```
+
 <Issues />
