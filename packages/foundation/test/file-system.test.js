@@ -1,12 +1,13 @@
 import { deepEqual, equal, match, ok, throws } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import { basename, join, sep } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import {
   createDirectory,
+  createSharedTemporaryDirectory,
   createTemporaryDirectory,
   FileWatcher,
   generateDashedName,
@@ -344,4 +345,30 @@ test('FileWatcher - should handle watchIgnore with duplicates', async t => {
   equal(fileWatcher.watchIgnore.length, 2)
   ok(fileWatcher.watchIgnore.includes('ignore.file'))
   ok(fileWatcher.watchIgnore.includes('ignore2.file'))
+})
+
+test('createSharedTemporaryDirectory - creates world-writable segments with the sticky bit', { skip: process.platform === 'win32' }, async t => {
+  const root = `plt-test-shared-${process.pid}-${generateDashedName()}`
+  t.after(() => safeRemove(join(os.tmpdir(), root)))
+
+  const directory = await createSharedTemporaryDirectory(root, 'nested')
+  equal(directory, join(os.tmpdir(), root, 'nested'))
+
+  const rootStat = await stat(join(os.tmpdir(), root))
+  equal(rootStat.mode & 0o7777, 0o1777)
+
+  const nestedStat = await stat(directory)
+  equal(nestedStat.mode & 0o7777, 0o1777)
+})
+
+test('createSharedTemporaryDirectory - fixes the permissions of existing directories', { skip: process.platform === 'win32' }, async t => {
+  const root = `plt-test-shared-${process.pid}-${generateDashedName()}`
+  t.after(() => safeRemove(join(os.tmpdir(), root)))
+
+  await mkdir(join(os.tmpdir(), root), { mode: 0o755 })
+
+  await createSharedTemporaryDirectory(root)
+
+  const rootStat = await stat(join(os.tmpdir(), root))
+  equal(rootStat.mode & 0o7777, 0o1777)
 })

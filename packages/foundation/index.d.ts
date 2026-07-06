@@ -197,6 +197,7 @@ export declare function generateDashedName (): string
 export declare function isFileAccessible (filename: string, directory?: string): Promise<boolean>
 export declare function createDirectory (path: string, empty?: boolean): Promise<string | undefined>
 export declare function createTemporaryDirectory (prefix: string): Promise<string>
+export declare function createSharedTemporaryDirectory (...segments: string[]): Promise<string>
 export declare function safeRemove (path: string): Promise<void>
 export declare function searchFilesWithExtensions (
   root: string,
