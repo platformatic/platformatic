@@ -14,6 +14,32 @@ Every authorization rule must include the following:
 - `entity` or `entities` (optional) — Defines one or more Platformatic DB entities the rule applies to. At least one of `entity` or `entities` must be specified. Use `'*'` to apply the rule to all entities; rules are evaluated in order, so more specific rules for the same role must be defined before the wildcard one.
 - `defaults` (optional) — Sets default values for entity fields from [user metadata](#set-entity-fields-from-user-metadata).
 
+### How Roles Are Matched
+
+The roles of the requesting user are read from the user metadata under the key configured by `authorization.roleKey` (default `X-PLATFORMATIC-ROLE`, a comma-separated list) or from a nested property path configured with `authorization.rolePath` (e.g. `user.roles`). Unauthenticated requests get the single role configured by `authorization.anonymousRole` (default `anonymous`).
+
+For every operation on an entity, the rules of that entity are evaluated **in the order they are defined** and, by default, the first rule whose `role` matches one of the user's roles wins (`first-match`). For example, with:
+
+```json
+{
+  "authorization": {
+    "rules": [
+      { "role": "admin", "entity": "page", "find": true, "save": true, "delete": true },
+      { "role": "user", "entity": "page", "find": true, "save": true, "delete": false },
+      { "role": "anonymous", "entity": "page", "find": true, "save": false, "delete": false }
+    ]
+  }
+}
+```
+
+- a user with roles `admin,user` matches the first rule and can delete pages;
+- a user with role `user` matches the second rule and cannot delete;
+- an unauthenticated request matches the `anonymous` rule and can only read.
+
+If no rule matches the user's roles, the operation is rejected.
+
+With `authorization.roleMergeStrategy` set to `most-permissive` (default `first-match`), all the rules matching any of the user's roles are merged instead, and truthy permissions win over falsy ones.
+
 ### Supported Operations
 
 Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). Here's an example illustrating how these permissions are structured:
