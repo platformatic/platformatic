@@ -20,6 +20,28 @@ import { version } from './lib/schema.js'
 
 export * from './lib/schema.js'
 
+// Extract the -c/--config option from application command arguments, leaving
+// all the other arguments for the application command itself
+function extractConfigOption (args) {
+  const remaining = []
+  let config = null
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+
+    if (arg === '-c' || arg === '--config') {
+      config = args[i + 1]
+      i++
+    } else if (arg.startsWith('--config=')) {
+      config = arg.slice('--config='.length)
+    } else {
+      remaining.push(arg)
+    }
+  }
+
+  return { config, remaining }
+}
+
 export async function main () {
   updateGlobals({ executable: this.executableId })
 
@@ -75,6 +97,7 @@ export async function main () {
   let command
   const requestedCommand = unparsed[0] || 'help'
   let applicationCommandContext
+  let applicationCommandArgs
   switch (requestedCommand) {
     case 'build':
       command = buildCommand
@@ -144,11 +167,14 @@ export async function main () {
       break
     default:
       if (requestedCommand) {
-        const applicationsCommands = await loadApplicationsCommands(this.executableName)
+        // Extract the -c/--config option, which selects the runtime configuration file
+        const { config: runtimeConfigFile, remaining } = extractConfigOption(unparsed.slice(1))
+        const applicationsCommands = await loadApplicationsCommands(this.executableName, runtimeConfigFile)
         const applicationCommand = applicationsCommands.commands[requestedCommand]
 
         if (applicationCommand) {
           applicationCommandContext = applicationsCommands.applications[requestedCommand]
+          applicationCommandArgs = remaining
           command = applicationCommand
         }
       }
@@ -168,7 +194,7 @@ export async function main () {
   if (applicationCommandContext) {
     const invocationCwd = process.cwd()
     process.chdir(applicationCommandContext.path)
-    return command.call(this, logger, applicationCommandContext.config, unparsed.slice(1), {
+    return command.call(this, logger, applicationCommandContext.config, applicationCommandArgs, {
       application: applicationCommandContext,
       cwd: invocationCwd,
       colorette,

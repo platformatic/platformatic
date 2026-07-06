@@ -87,7 +87,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 }
 
-export async function loadApplicationsCommands (executableName = '') {
+export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
   const applications = {}
   const commands = {}
   const help = {}
@@ -97,7 +97,7 @@ export async function loadApplicationsCommands (executableName = '') {
     const file = await findRuntimeConfigurationFile(
       abstractLogger,
       process.cwd(),
-      null,
+      configurationFile,
       false,
       false,
       true,
