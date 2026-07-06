@@ -14,6 +14,7 @@ export async function listTables (db, sql) {
   const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='table'
+    ORDER BY name
   `)
   // sqlite has no schemas
   return res.map(r => ({ schema: null, table: r.name }))
@@ -24,6 +25,7 @@ export async function listColumns (db, sql, table) {
   // therefore it is changed to pragma_table_xinfo
   const columns = await db.query(sql`
     SELECT * FROM pragma_table_xinfo(${table})
+    ORDER BY cid
   `)
   for (const column of columns) {
     column.column_name = column.name
@@ -235,6 +237,7 @@ export async function listViews (db, sql) {
   const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='view'
+    ORDER BY name
   `)
   return res.map(r => ({ schema: null, table: r.name, isView: true }))
 }

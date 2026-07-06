@@ -1,10 +1,13 @@
 import { findNearestString } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
+import { access, constants } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { setupCache } from './lib/cache.js'
 import { buildCleanUp } from './lib/clean-up.js'
 import { getConnectionInfo } from './lib/connection-info.js'
 import { buildEntity } from './lib/entity.js'
 import {
+  CannotAccessDatabaseFileError,
   CannotFindEntityError,
   ConnectionStringRequiredError,
   SpecifyProtocolError,
@@ -87,6 +90,34 @@ async function registerPostgreSQLExtensionTypes (db) {
   } catch {}
 }
 
+// Provide a developer friendly error instead of the bare SQLITE_CANTOPEN
+// emitted when the database file cannot be opened or created.
+async function checkSQLiteFileAccess (path) {
+  const file = resolve(path)
+
+  try {
+    // SQLite falls back to read-only when the file exists but is not writable,
+    // so reading the file is all that is required here.
+    await access(file, constants.R_OK)
+    return
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw new CannotAccessDatabaseFileError(file, 'the file is not readable by the current user')
+    }
+  }
+
+  // The file does not exist, SQLite will create it: the directory must exist and be writable
+  const dir = dirname(file)
+  try {
+    await access(dir, constants.W_OK | constants.X_OK)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw new CannotAccessDatabaseFileError(file, `the directory "${dir}" does not exist`)
+    }
+    throw new CannotAccessDatabaseFileError(file, `the directory "${dir}" is not writable by the current user`)
+  }
+}
+
 export async function createConnectionPool ({
   log,
   connectionString,
@@ -138,6 +169,9 @@ export async function createConnectionPool ({
   } else if (connectionString.indexOf('sqlite') === 0) {
     const { default: sqlite } = await import('@matteo.collina/sqlite-pool')
     const path = connectionString.replace('sqlite://', '')
+    if (connectionString !== 'sqlite://:memory:') {
+      await checkSQLiteFileAccess(path)
+    }
     db = sqlite.default(
       connectionString === 'sqlite://:memory:' ? undefined : path,
       {},

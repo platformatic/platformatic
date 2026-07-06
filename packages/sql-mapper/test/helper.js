@@ -13,6 +13,7 @@ export const connInfo = {
 
 export let isPg = false
 export let isMysql = false
+export let isMariaDB = false
 export let isMysql8 = false
 export let isSQLite = false
 export let expectedTelemetryPrefix = 'pg'
@@ -27,6 +28,7 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
   isMysql = true
+  isMariaDB = true
   expectedTelemetryPrefix = 'mysql'
   expectedPort = 3307
 } else if (process.env.DB === 'mysql') {

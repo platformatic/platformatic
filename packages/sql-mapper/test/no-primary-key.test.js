@@ -1,7 +1,7 @@
 import { deepEqual, equal, notEqual } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
-import { clear, connInfo, isMysql8, isSQLite } from './helper.js'
+import { clear, connInfo } from './helper.js'
 
 const fakeLogger = {
   trace: () => {},
@@ -38,13 +38,10 @@ test('unique key', async t => {
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  if (isMysql8 || isSQLite) {
-    deepEqual(pageEntity.primaryKeys, new Set(['name']))
-    equal(pageEntity.camelCasedFields.name.primaryKey, true)
-  } else {
-    deepEqual(pageEntity.primaryKeys, new Set(['xx']))
-    equal(pageEntity.camelCasedFields.xx.primaryKey, true)
-  }
+  // Constraints are introspected in a deterministic (alphabetical) order,
+  // so the first unique constraint is the same on every database.
+  deepEqual(pageEntity.primaryKeys, new Set(['name']))
+  equal(pageEntity.camelCasedFields.name.primaryKey, true)
   equal(pageEntity.camelCasedFields.xx.unique, true)
   equal(pageEntity.camelCasedFields.name.unique, true)
 })
