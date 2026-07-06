@@ -136,7 +136,11 @@ export interface WhereCondition {
     /**
      * Overlaps with values
      */
-    overlaps?: any[]
+    overlaps?: any[],
+    /**
+     * IS NULL (true) or IS NOT NULL (false)
+     */
+    isNull?: boolean
   }
 }
 

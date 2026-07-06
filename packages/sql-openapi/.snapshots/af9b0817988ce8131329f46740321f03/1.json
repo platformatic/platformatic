@@ -227,6 +227,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -327,6 +335,14 @@
             },
             "in": "query",
             "name": "where.title.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.title.isNull",
             "required": false
           },
           {
@@ -568,6 +584,14 @@
           },
           {
             "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.id.isNull",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -668,6 +692,14 @@
             },
             "in": "query",
             "name": "where.title.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "where.title.isNull",
             "required": false
           },
           {

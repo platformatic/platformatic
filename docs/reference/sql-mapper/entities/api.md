@@ -31,6 +31,8 @@ The `where` object's key is the field you want to check, the value is a key/valu
 | lt                    | `\'<\'`      |
 | lte                   | `\'<=\'`     |
 | like                  | `\'LIKE\'`   |
+| ilike                 | `\'ILIKE\'`  |
+| isNull                | `\'IS NULL\'` (`isNull: false` maps to `IS NOT NULL`) |
 
 
 ### Handling Null Values

@@ -27,6 +27,8 @@ export function generateArgs (entity, ignore) {
         const key = baseKey + modifier
         acc[key] = { type: 'string' }
       }
+
+      acc[baseKey + 'isNull'] = { type: 'boolean' }
     }
 
     return acc

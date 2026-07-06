@@ -51,6 +51,9 @@ You can define many `WHERE` clauses in REST API, each clause includes a **field*
 | gte | `'>='` |
 | lt | `'<'` |
 | lte | `'<='` |
+| like | `'LIKE'` |
+| ilike | `'ILIKE'` |
+| isNull | `'IS NULL'` (use `false` for `IS NOT NULL`) |
 
 - **Value**: The value you want to compare the field to.
 
