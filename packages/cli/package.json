@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "lint": "eslint",
-    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;BlueOak-1.0.0'"
+    "license": "license-checker-rseidelsohn --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;BlueOak-1.0.0'"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -34,7 +34,7 @@
     "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "license-checker": "^25.0.1",
+    "license-checker-rseidelsohn": "^5.0.1",
     "neostandard": "^0.12.0",
     "typescript": "^5.5.3"
   },
