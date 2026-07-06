@@ -61,9 +61,12 @@ export default function root (app) {
             }
           })
 
+          const swaggerPrefix = app.platformatic.config.gateway.openapi?.swaggerPrefix || '/documentation'
+
           return reply.view('index.njk', {
             hasGraphQLServices,
             hasOpenAPIServices,
+            openapiRoute: swaggerPrefix.replace(/^\/+/, ''),
             services: serviceTypes
           })
         }

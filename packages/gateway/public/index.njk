@@ -19,7 +19,7 @@
         <p class="text-desktop-display"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Gateway</span></p>
         <div class="button-container">
           {% if hasOpenAPIServices %}
-          <a id="openapi-link" target="_blank" class="button-link" href="documentation">
+          <a id="openapi-link" target="_blank" class="button-link" href="{{ openapiRoute }}">
             <img src="./images/openapi.svg" />
             OpenAPI Documentation
           </a>

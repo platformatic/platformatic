@@ -215,3 +215,58 @@ test('should have links to composed applications', async t => {
 
   assert.ok(content.includes("const href = window.location.href.replace(/\\/$/, '')"))
 })
+
+test('should honour openapi.swaggerPrefix in the root page and spec routes', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1924 */
+  const api = await createOpenApiApplication(t, ['users'])
+  await api.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json'
+          }
+        }
+      ],
+      openapi: {
+        swaggerPrefix: '/custom-docs'
+      }
+    }
+  })
+
+  {
+    // The root page links to the configured prefix
+    const { statusCode, body } = await gateway.inject({
+      method: 'GET',
+      url: '/',
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+      }
+    })
+    assert.equal(statusCode, 200)
+    assert.ok(body.includes('href="custom-docs"'))
+    assert.ok(!body.includes('href="documentation"'))
+  }
+
+  {
+    // The spec routes follow the configured prefix
+    const { statusCode, body } = await gateway.inject({ method: 'GET', url: '/custom-docs/json' })
+    assert.equal(statusCode, 200)
+    assert.ok(JSON.parse(body).openapi)
+  }
+
+  {
+    const { statusCode } = await gateway.inject({ method: 'GET', url: '/custom-docs/yaml' })
+    assert.equal(statusCode, 200)
+  }
+})
