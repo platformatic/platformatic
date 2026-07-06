@@ -1,5 +1,5 @@
 import { kMetadata, loadConfiguration } from '@platformatic/foundation'
-import { writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { transform } from '../config.js'
 import * as errors from '../errors.js'
@@ -15,6 +15,11 @@ export async function createMigrations (logger, configFile, _, { colorette: { bo
     const migrationsConfig = config.migrations
     if (migrationsConfig === undefined) {
       throw new errors.MigrateMissingMigrationsError()
+    }
+
+    const createdDir = await mkdir(migrationsConfig.dir, { recursive: true })
+    if (createdDir) {
+      logger.info(`Created migrations directory ${bold(relative(root, migrationsConfig.dir))}.`)
     }
 
     migrator = new Migrator(migrationsConfig, config.db, logger)

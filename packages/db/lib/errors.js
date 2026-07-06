@@ -11,6 +11,10 @@ export const MigrateMissingMigrationsDirError = createError(
   `${ERROR_PREFIX}_MIGRATE_ERROR`,
   'Migrations directory %s does not exist'
 )
+export const ApplyMigrationError = createError(
+  `${ERROR_PREFIX}_MIGRATE_ERROR`,
+  'Unable to apply migration %s: %s'
+)
 export const MissingSeedFileError = createError(`${ERROR_PREFIX}_MISSING_SEED_FILE_ERROR`, 'Missing seed file')
 export const MigrationsToApplyError = createError(
   `${ERROR_PREFIX}_MIGRATIONS_TO_APPLY_ERROR`,
