@@ -45,6 +45,27 @@ app.post('/', async (req, reply) => {
 })
 ```
 
+## Accessing the Authenticated User
+
+When [authorization](./authorization/overview.md) is configured (JWT, webhook or the development headers), custom routes can access the authenticated user's metadata by populating it explicitly with `request.setupDBAuthorizationUser()`:
+
+```js
+export default async function (app) {
+  app.get('/whoami', async (req, reply) => {
+    await req.setupDBAuthorizationUser()
+
+    // req.user contains the metadata extracted from the JWT claims
+    // or returned by the webhook
+    return {
+      userId: req.user['X-PLATFORMATIC-USER-ID'],
+      roles: req.user['X-PLATFORMATIC-ROLE']
+    }
+  })
+}
+```
+
+Unauthenticated requests leave `req.user` undefined, so remember to handle that case. When accessing entities on behalf of the user, prefer passing `ctx` (see above): the authorization rules are then enforced automatically.
+
 ## Running Custom SQL Queries
 
 Besides the generated entities, plugins can run any SQL query through `app.platformatic.db` and the `app.platformatic.sql` template tag, which safely interpolates values as query parameters:
