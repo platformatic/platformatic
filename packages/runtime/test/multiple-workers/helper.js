@@ -49,7 +49,34 @@ export async function verifyInject (client, application, expectedWorker, additio
   additionalChecks?.(res, json)
 }
 
+// Right after startup the mesh routes might not be fully registered yet and
+// requests can get a 404: wait for every service to be reachable first. The
+// warm up requests do not affect the round robin verification, which is
+// insensitive to the starting worker.
+async function waitForServices (baseUrl, services, { timeoutMs = WAIT_TIMEOUT, intervalMs = 250 } = {}) {
+  const start = Date.now()
+
+  for (const service of services) {
+    while (true) {
+      try {
+        const res = await request(baseUrl + `/${service.name}/hello`)
+        await res.body.dump()
+        if (res.statusCode === 200) {
+          break
+        }
+      } catch {}
+
+      if (Date.now() - start > timeoutMs) {
+        break
+      }
+      await new Promise(resolve => setTimeout(resolve, intervalMs))
+    }
+  }
+}
+
 export async function testRoundRobin (baseUrl, services) {
+  await waitForServices(baseUrl, services)
+
   // Calculate iterations needed to check all sequences at least twice
   // For a service with N workers, we need at least 2*N requests to verify 2 complete cycles
   const maxWorkerCount = Math.max(...services.map(s => s.workerCount))
