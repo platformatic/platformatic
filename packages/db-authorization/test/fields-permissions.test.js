@@ -208,16 +208,16 @@ test('users can find only the authorized fields', async () => {
         Authorization: `Bearer ${token}`
       }
     })
-    equal(res.statusCode, 401, 'GET /pages status code (Unauthorized)')
+    equal(res.statusCode, 403, 'GET /pages status code (Forbidden)')
     deepEqual(
       res.json(),
       {
-        statusCode: 401,
-        error: 'Unauthorized',
+        statusCode: 403,
+        error: 'Forbidden',
         code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
         message: 'field not allowed: author'
       },
-      'GET /pages status response (Unauthorized)'
+      'GET /pages status response (Forbidden)'
     )
   }
 })
