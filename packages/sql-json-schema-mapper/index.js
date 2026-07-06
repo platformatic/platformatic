@@ -188,6 +188,11 @@ function renderProperties (
       types = [type]
     }
 
+    // The mapper always returns primary keys as strings
+    if (fieldDefinitions[name]?.primaryKey) {
+      types = Array.from(new Set(types.map(t => (t === 'integer' || t === 'number' ? 'string' : t))))
+    }
+
     if (nullable && types.indexOf('null') === -1) {
       types.push('null')
     }

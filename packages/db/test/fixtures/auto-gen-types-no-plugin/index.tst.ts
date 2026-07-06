@@ -10,5 +10,5 @@ const graphs = await app.platformatic.entities.graph.find()
 expect(graphs).type.toBe<Graph[]>()
 
 const graph = graphs[0]
-expect(graph?.id).type.toBe<number | undefined>()
+expect(graph?.id).type.toBe<string | undefined>()
 expect(graph?.name).type.toBe<string | null | undefined>()

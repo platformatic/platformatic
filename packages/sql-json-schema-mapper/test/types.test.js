@@ -11,7 +11,13 @@ if (structuredClone === undefined) {
 function referenceTest (name, obj, opts = {}) {
   const { only } = opts
   test(name, { only }, async t => {
-    const reference = await dtsgenerator.default({ contents: [parseSchema(structuredClone(obj))] })
+    let reference = await dtsgenerator.default({ contents: [parseSchema(structuredClone(obj))] })
+    // Unlike dtsgenerator, numeric primary keys are intentionally rendered as
+    // strings, because that is what the mapper returns at runtime
+    reference = reference.replace(/^(\s*id\??): (.+);$/m, (_, prefix, union) => {
+      const members = Array.from(new Set(union.split(' | ').map(t => (t === 'number' ? 'string' : t))))
+      return `${prefix}: ${members.join(' | ')};`
+    })
     const cloned = structuredClone(obj)
     const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true } })
     notEqual(cloned, obj)
@@ -231,5 +237,40 @@ test('bytea fields are mapped to Buffer type', async t => {
   same(result.includes('content?: Buffer;'), true, 'bytea field should be mapped to Buffer type')
   // Verify that non-bytea fields are mapped normally
   same(result.includes('metadata?: string;'), true, 'non-bytea string field should be mapped to string type')
-  same(result.includes('id: number;'), true, 'id field should be mapped to number type')
+  // The mapper always returns primary keys as strings
+  same(result.includes('id: string;'), true, 'primary key field should be mapped to string type')
+})
+
+test('numeric primary keys are mapped to string type', async t => {
+  /* https://github.com/platformatic/platformatic/issues/3862 */
+  const schema = {
+    id: 'User',
+    title: 'User',
+    description: 'A User',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'integer'
+      },
+      age: {
+        type: 'integer'
+      },
+      name: {
+        type: 'string'
+      }
+    },
+    required: ['id']
+  }
+
+  const fieldDefinitions = {
+    id: { primaryKey: true, sqlType: 'integer' },
+    age: { sqlType: 'integer' },
+    name: { sqlType: 'varchar' }
+  }
+
+  const result = mapOpenAPItoTypes(schema, fieldDefinitions)
+
+  same(result.includes('id: string;'), true, 'the primary key is typed as string, like the mapper returns it')
+  same(result.includes('age?: number;'), true, 'other numeric fields keep the number type')
+  same(result.includes('name?: string;'), true, 'string fields keep the string type')
 })
