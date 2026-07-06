@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "module": "esnext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "lib": ["es2022"],
     "target": "esnext",
@@ -10,6 +11,7 @@
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": ".",
     "skipLibCheck": true
   },
   "watchOptions": {
