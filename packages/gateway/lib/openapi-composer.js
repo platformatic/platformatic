@@ -36,6 +36,7 @@ function namespaceSchemaOperationIds (apiPrefix, schema) {
 
 export function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
+  const mergedPathOwners = {}
   const mergedSchemas = {}
   const mergedSecuritySchemes = {}
 
@@ -62,9 +63,10 @@ export function composeOpenApi (apis, options = {}) {
       const mergedPath = prefix ? prefix + path : path
 
       if (mergedPaths[mergedPath]) {
-        throw new PathAlreadyExistsError(mergedPath)
+        throw new PathAlreadyExistsError(mergedPath, mergedPathOwners[mergedPath], id)
       }
       mergedPaths[mergedPath] = pathSchema
+      mergedPathOwners[mergedPath] = id
     }
 
     if (components) {

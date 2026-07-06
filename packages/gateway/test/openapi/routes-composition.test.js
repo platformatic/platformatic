@@ -750,3 +750,58 @@ test('should proxy custom content types via config in OpenAPI composition', asyn
   assert.equal(response.contentType, 'application/custom-type')
   assert.equal(response.bodyLength, customData.length)
 })
+
+test('should normalize prefixes without leading slash or with trailing slash', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1242 */
+  const api1 = await createOpenApiApplication(t, ['users'])
+  const api2 = await createOpenApiApplication(t, ['posts'])
+
+  await api1.listen({ port: 0 })
+  await api2.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'api1/'
+          }
+        },
+        {
+          id: 'api2',
+          origin: 'http://127.0.0.1:' + api2.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'api2'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  const { statusCode, body } = await gateway.inject({
+    method: 'GET',
+    url: '/documentation/json'
+  })
+  assert.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+  openApiValidator.validate(openApiSchema)
+
+  for (const path of Object.keys(openApiSchema.paths)) {
+    assert.ok(path.startsWith('/api1/') || path.startsWith('/api2/'), `path ${path} is prefixed`)
+    assert.ok(!path.includes('//'), `path ${path} has no double slashes`)
+  }
+
+  await testEntityRoutes(gatewayOrigin, ['/api1/users', '/api2/posts'])
+})
