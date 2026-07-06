@@ -11,6 +11,17 @@ The Database Service supports PostgreSQL, MySQL, MariaDB, and SQLite, automatica
 
 For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
+## Using an Existing Database
+
+Platformatic DB works out of the box with an **existing database**: point `db.connectionString` at it and the schema is introspected automatically — no migrations are required. The `migrations` configuration is entirely optional and only needed if you want Platformatic to manage schema changes for you.
+
+A few conventions to be aware of when mapping an existing schema:
+
+- Table names are mapped to entities: `snake_case` names are converted to camelCase, and the entity gets both a singular (`movie`) and a plural (`movies`) form. A table named `movies` is exposed as `GET /movies` and the `Movie` GraphQL type.
+- Column names are camelCased in the same way (`created_at` → `createdAt`).
+- Relationships are discovered from foreign key constraints; join tables with composite primary keys are treated as many-to-many relationships.
+- Tables can be excluded (or explicitly included) with `db.ignore` / `db.include`, and `created_at`/`updated_at` handling can be disabled or renamed with `db.autoTimestamp`.
+
 ## Features
 
 ### Automatic API Generation
