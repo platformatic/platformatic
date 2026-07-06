@@ -17,6 +17,10 @@ export const TableMustBeAStringError = createError(
 )
 export const UnknownFieldError = createError(`${ERROR_PREFIX}_UNKNOWN_FIELD`, 'Unknown field %s')
 export const InputNotProvidedError = createError(`${ERROR_PREFIX}_INPUT_NOT_PROVIDED`, 'Input not provided.')
+export const CannotAccessDatabaseFileError = createError(
+  `${ERROR_PREFIX}_CANNOT_ACCESS_DATABASE_FILE`,
+  'Cannot open SQLite database file "%s": %s'
+)
 export const UnsupportedWhereClauseError = createError(
   `${ERROR_PREFIX}_UNSUPPORTED_WHERE_CLAUSE`,
   'Unsupported where clause %s'
