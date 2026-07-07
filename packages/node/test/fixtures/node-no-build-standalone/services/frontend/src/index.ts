@@ -1,4 +1,3 @@
-// @ts-expect-error
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import { getBasePath, getWorkerId } from '@platformatic/globals'
 import { createServer } from 'node:http'

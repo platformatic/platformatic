@@ -1,7 +1,13 @@
 import type { ChildProcess } from 'node:child_process'
+import type { Server } from 'node:net'
+import type { URL } from 'node:url'
+import type { JSONSchemaType } from 'ajv'
+import type { PlatformaticBasicConfig } from './config.d.ts'
+
+export type { PlatformaticBasicConfig } from './config.d.ts'
 
 export interface StartOptions {
-  listen?: boolean
+  listen?: boolean | undefined
 }
 
 type HealthCheckResult = {
@@ -29,6 +35,114 @@ export interface BaseOptions<Context = BaseContext> {
 }
 
 export declare const schemaOptions: Partial<Record<string, unknown>>
+
+export declare const packageJson: Record<string, unknown>
+export declare const schema: JSONSchemaType<PlatformaticBasicConfig>
+export declare const schemaComponents: {
+  application: JSONSchemaType<object>
+  buildableApplication: JSONSchemaType<object>
+  watch: JSONSchemaType<object>
+}
+export declare const version: string
+
+export declare function findConfigurationFile (root: string, suffixes?: string | string[]): Promise<string>
+
+export declare function resolve (
+  fileOrDirectory: string,
+  sourceOrConfig?: string | Record<string, unknown>,
+  suffixes?: string | string[]
+): Promise<{ root: string; source: string | Record<string, unknown> }>
+
+export declare function transform<Config extends Record<string, any> | undefined> (config: Config): Promise<Config>
+
+export declare const validationOptions: {
+  useDefaults: true
+  coerceTypes: true
+  allErrors: true
+  strict: false
+}
+
+export declare function create (
+  fileOrDirectory: string,
+  sourceOrConfig?: string | Record<string, unknown>,
+  context?: Record<string, unknown>
+): Promise<unknown>
+
+export declare function isImportFailedError (error: NodeJS.ErrnoException, pkg: string): boolean
+
+export declare function importCapabilityPackage (directory: string, pkg: string): Promise<unknown>
+
+export declare function importCapabilityAndConfig (
+  root: string,
+  config?: string | Record<string, unknown>,
+  context?: Record<string, unknown>
+): Promise<{
+  capability: unknown
+  config: string | Record<string, unknown>
+  autodetectDescription: string
+  moduleName: string
+}>
+
+export declare namespace errors {
+  export const ERROR_PREFIX: 'PLT_BASIC'
+  export const exitCodes: {
+    MANAGER_MESSAGE_HANDLING_FAILED: 11
+    MANAGER_SOCKET_ERROR: 11
+    PROCESS_UNHANDLED_ERROR: 20
+    PROCESS_MESSAGE_HANDLING_FAILED: 21
+    PROCESS_SOCKET_ERROR: 22
+  }
+  export function UnsupportedVersion (...args: any[]): Error
+  export function NonZeroExitCode (...args: any[]): Error
+}
+
+export declare function getServerUrl (server: Server): string
+
+export declare function buildListenOptions (serverConfig?: { port?: number | string; hostname?: string }): {
+  port: number | string
+  host?: string
+}
+
+export declare function buildAdditionalServerOptions (
+  serverConfig?: Record<string, any>,
+  skipHTTPSSanitization?: boolean
+): Promise<Record<string, unknown>>
+
+export declare function buildFastifyOptions (serverConfig?: Record<string, any>): Promise<Record<string, unknown>>
+
+export declare function injectViaRequest (
+  baseUrl: string | URL,
+  injectParams: {
+    method?: string
+    url: string
+    headers?: Record<string, string | string[] | undefined>
+    body?: unknown
+  },
+  onInject?: (error: Error | null, response?: InjectViaRequestResponse) => unknown
+): Promise<InjectViaRequestResponse | unknown | undefined>
+
+export interface InjectViaRequestResponse {
+  statusCode: number
+  headers: Record<string, string | string[] | undefined>
+  body: string
+  payload: string
+  rawPayload: Buffer
+}
+
+export declare function ensureFileUrl<PathOrUrl extends string | URL | undefined | null> (
+  pathOrUrl: PathOrUrl
+): PathOrUrl extends undefined | null ? PathOrUrl : string | URL
+
+export declare function importFile (path: string | URL): Promise<unknown>
+export declare function resolvePackageViaCJS (root: string, pkg: string): string
+export declare function resolvePackageViaESM (root: string, pkg: string): Promise<string>
+export declare function cleanBasePath (basePath?: string): string
+export declare function ensureTrailingSlash (basePath?: string): string
+export declare const resolvePackage: typeof resolvePackageViaCJS
+
+export declare const isWindows: boolean
+export declare function generateChildrenId (): string
+export declare function getSocketPath (id: string): string
 
 export class BaseCapability<Config = Record<string, any>, Options = BaseOptions> {
   status: string
@@ -156,3 +270,41 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   _closeServer (server: object): Promise<void>
   _getEntrypointUrl (raw: string): string
 }
+
+export class ChildManager {
+  constructor (opts: {
+    loader?: string | URL
+    context?: Record<string, any>
+    scripts?: Array<string | URL>
+    handlers?: Record<string, (...args: any[]) => unknown>
+    [key: string]: unknown
+  })
+
+  listen (): Promise<void>
+  close (): Promise<void>
+  inject (): Promise<void>
+  eject (): Promise<void>
+  getSocketPath (): string
+  getClients (): Set<unknown>
+  register (): Promise<void>
+  emit (...args: any[]): void
+  send (client: unknown, name: string, message?: unknown): Promise<unknown>
+  notify (client: unknown, name: string, message?: unknown): void
+
+  _send (message: unknown, stringify?: boolean): void
+  _setupListener (listener: (message: unknown) => void): void
+  _createClosePromise (): Promise<unknown[]>
+  _close (): void
+}
+
+export interface CancellablePromise<T> extends Promise<T> {
+  cancel (): void
+}
+
+export declare function createServerListener (
+  overridePort?: boolean | number,
+  overrideHost?: boolean | string,
+  additionalOptions?: Record<string, unknown>
+): CancellablePromise<Server | null>
+
+export declare function createChildProcessListener (): CancellablePromise<ChildProcess | null>
