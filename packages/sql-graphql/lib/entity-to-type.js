@@ -28,10 +28,23 @@ const limitType = new GraphQLScalarType({
     'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
 })
 
+const RESERVED_TYPE_NAMES = ['Query', 'Mutation', 'Subscription']
+
 export function constructGraph (app, entity, opts, ignore) {
   const primaryKeys = Array.from(entity.primaryKeys).map(key => camelcase(key))
   const relationalFields = entity.relations.map(relation => relation.column_name)
-  const entityName = entity.name
+  let entityName = entity.name
+
+  // Tables like "queries" or "subscriptions" would generate a type with the
+  // same name as a GraphQL root operation type, which is not allowed
+  if (RESERVED_TYPE_NAMES.includes(entityName)) {
+    const renamed = `${entityName}Entity`
+    app.log.warn(
+      `The entity "${entityName}" conflicts with a reserved GraphQL root operation type name: ` +
+        `its GraphQL type has been renamed to "${renamed}"`
+    )
+    entityName = renamed
+  }
   const singular = entity.singularName
   const plural = entity.pluralName
   const { queryTopFields, mutationTopFields, resolvers, federationReplacements, federationMetadata, loaders } = opts
