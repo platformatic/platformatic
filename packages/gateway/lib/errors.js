@@ -11,7 +11,10 @@ export const FailedToFetchOpenAPISchemaError = createError(
   'Failed to fetch OpenAPI schema from %s'
 )
 export const ValidationErrors = createError(`${ERROR_PREFIX}_VALIDATION_ERRORS`, 'Validation errors: %s')
-export const PathAlreadyExistsError = createError(`${ERROR_PREFIX}_PATH_ALREADY_EXISTS`, 'Path "%s" already exists')
+export const PathAlreadyExistsError = createError(
+  `${ERROR_PREFIX}_PATH_ALREADY_EXISTS`,
+  'Path "%s" is exposed by both the "%s" and the "%s" applications. Set a different openapi.prefix on one of them to resolve the conflict.'
+)
 export const CouldNotReadOpenAPIConfigError = createError(
   `${ERROR_PREFIX}_COULD_NOT_READ_OPENAPI_CONFIG`,
   'Could not read openapi config for "%s" application'

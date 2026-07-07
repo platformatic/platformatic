@@ -9,7 +9,7 @@ import { composeOpenApi } from './openapi-composer.js'
 import { loadOpenApiConfig } from './openapi-load-config.js'
 import { modifyOpenApiSchema, originPathSymbol } from './openapi-modifier.js'
 import { openApiScalar } from './openapi-scalar.js'
-import { prefixWithSlash } from './utils.js'
+import { normalizePrefix, prefixWithSlash } from './utils.js'
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -163,7 +163,7 @@ export async function openApiGenerator (app, opts) {
 
     const schema = modifyOpenApiSchema(app, originSchema, openapiConfig)
 
-    const prefix = openapi.prefix ? prefixWithSlash(openapi.prefix) : ''
+    const prefix = normalizePrefix(openapi.prefix)
     for (const path in schema.paths) {
       apiByApiRoutes[prefix + path] = {
         origin,

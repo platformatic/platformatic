@@ -603,7 +603,10 @@ test('should throw an error if there are duplicates paths', async t => {
     ])
     assert.fail('should throw an error')
   } catch (err) {
-    assert.equal(err.message, 'Path "/books" already exists')
+    assert.equal(
+      err.message,
+      'Path "/books" is exposed by both the "api1" and the "api2" applications. Set a different openapi.prefix on one of them to resolve the conflict.'
+    )
   }
 })
 
@@ -647,6 +650,9 @@ test('should throw an error if there are duplicates paths with prefixes', async 
     ])
     assert.fail('should throw an error')
   } catch (err) {
-    assert.equal(err.message, 'Path "/api1/books" already exists')
+    assert.equal(
+      err.message,
+      'Path "/api1/books" is exposed by both the "api1" and the "api2" applications. Set a different openapi.prefix on one of them to resolve the conflict.'
+    )
   }
 })
