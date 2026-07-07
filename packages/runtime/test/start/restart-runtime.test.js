@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { transform } from '../../lib/config.js'
 import { createRuntime, getTempDir } from '../helpers.js'
+import { prepareRuntime } from '../multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -135,4 +136,36 @@ test('will restart applications in parallel', async t => {
     events.findLastIndex(e => e[0] === 'application:restarting') <
       events.findIndex(e => e[0] === 'application:restarted')
   )
+})
+
+test('restartApplication restarts each original worker exactly once', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = join(root, './platformatic.json')
+  const app = await createRuntime(configFile, null, { isProduction: true })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const started = []
+  const stopped = []
+
+  app.on('application:worker:started', ({ application, worker }) => {
+    if (application === 'node') {
+      started.push(worker)
+    }
+  })
+
+  app.on('application:worker:stopped', ({ application, worker }) => {
+    if (application === 'node') {
+      stopped.push(worker)
+    }
+  })
+
+  await app.restartApplication('node')
+
+  deepStrictEqual(started, [5, 6, 7, 8, 9])
+  deepStrictEqual(stopped, [0, 1, 2, 3, 4])
 })

@@ -1,4 +1,4 @@
-import { ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -79,11 +79,11 @@ async function assertPortsRespond (basePort, offsets, expectedFrom = 'node') {
   return workerIds
 }
 
-async function waitForDifferentWorkerOnPort (port, previousWorkerId, expectedFrom = 'node') {
+async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node') {
   for (let attempt = 0; attempt < 50; attempt++) {
     try {
       const workerId = await requestWorkerPort(port, expectedFrom)
-      if (workerId !== previousWorkerId) {
+      if (workerId === expectedWorkerId) {
         return workerId
       }
     } catch {}
@@ -91,7 +91,7 @@ async function waitForDifferentWorkerOnPort (port, previousWorkerId, expectedFro
     await sleep(100)
   }
 
-  throw new Error(`Port ${port} did not switch from worker ${previousWorkerId}`)
+  throw new Error(`Port ${port} did not switch to worker ${expectedWorkerId}`)
 }
 
 async function assertPortClosed (port) {
@@ -127,35 +127,38 @@ test('assigns new incremental ports when scaling up and stops highest ports when
 
   await app.start()
 
-  await assertPortsRespond(basePort, [0, 4])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 
   let report = await app.updateApplicationsResources([{ application: 'node', workers: 7 }])
   strictEqual(report.length, 1)
-  await assertPortsRespond(basePort, [0, 5, 6])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4, 5, 6]), [0, 1, 2, 3, 4, 5, 6])
 
   report = await app.updateApplicationsResources([{ application: 'node', workers: 3 }])
   strictEqual(report.length, 1)
-  await assertPortsRespond(basePort, [0, 2])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 1, 2])
 
   await assertPortClosed(basePort + 3)
+  await assertPortClosed(basePort + 4)
+  await assertPortClosed(basePort + 5)
+  await assertPortClosed(basePort + 6)
 })
 
 test('preserves incremental ports when restarting an application', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
   await app.start()
-  await assertPortsRespond(basePort, [0, 4])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 
   await app.restartApplication('node')
 
-  await assertPortsRespond(basePort, [0, 4])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
 })
 
 test('preserves incremental ports when replacing workers after a health update', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
   await app.start()
-  await assertPortsRespond(basePort, [0, 4])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 
   await app.updateApplicationsResources([
     {
@@ -165,17 +168,14 @@ test('preserves incremental ports when replacing workers after a health update',
     }
   ])
 
-  const workerIds = await assertPortsRespond(basePort, [0, 4])
-  for (const workerId of workerIds) {
-    ok(workerId >= 5)
-  }
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
 })
 
 test('preserves incremental port when restarting a crashed worker', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t, { application: 'service', workerCount: 3 })
 
   await app.start()
-  strictEqual(await requestWorkerPort(basePort, 'service'), 0)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [0, 1, 2])
 
   const eventsPromise = waitForEvents(
     app,
@@ -187,6 +187,6 @@ test('preserves incremental port when restarting a crashed worker', async t => {
   await res.body.text()
   await eventsPromise
 
-  const replacementWorkerId = await waitForDifferentWorkerOnPort(basePort, 0, 'service')
-  ok(replacementWorkerId > 0)
+  await waitForWorkerOnPort(basePort, 3, 'service')
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [3, 1, 2])
 })
