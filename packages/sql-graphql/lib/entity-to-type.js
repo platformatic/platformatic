@@ -1,6 +1,7 @@
 import { findNearestString } from '@platformatic/foundation'
 import camelcase from 'camelcase'
 import {
+  GraphQLBoolean,
   GraphQLEnumType,
   GraphQLID,
   GraphQLInputObjectType,
@@ -138,7 +139,8 @@ export function constructGraph (app, entity, opts, ignore) {
         lte: { type: fields[field].type },
         like: { type: fields[field].type },
         in: { type: new GraphQLList(fields[field].type) },
-        nin: { type: new GraphQLList(fields[field].type) }
+        nin: { type: new GraphQLList(fields[field].type) },
+        isNull: { type: GraphQLBoolean }
       }
     } else {
       graphqlFields = {

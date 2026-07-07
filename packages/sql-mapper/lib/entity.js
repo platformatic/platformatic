@@ -103,7 +103,9 @@ function createMapper (
     for (const key of Object.keys(output)) {
       let value = output[key]
       const newKey = fieldMapToRetrieve[key]
-      if (primaryKeys.has(key) && value !== null && value !== undefined) {
+      // Do not convert Date objects: they are serialized according to the
+      // schema of the field, like non primary key columns
+      if (primaryKeys.has(key) && value !== null && value !== undefined && !(value instanceof Date)) {
         value = value.toString()
       }
       if (newKey && isVectorType(fields[key].sqlType)) {
@@ -288,6 +290,14 @@ function createMapper (
         throw new UnknownFieldError(key)
       }
       for (const key of Object.keys(value)) {
+        if (key === 'isNull') {
+          if (value[key] === true) {
+            criteria.push(sql`${sql.ident(field)} IS NULL`)
+          } else if (value[key] === false) {
+            criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+          }
+          continue
+        }
         const operator = whereMap[key]
         /* istanbul ignore next */
         if (!operator) {

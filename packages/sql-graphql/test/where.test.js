@@ -1272,3 +1272,129 @@ test('like', async t => {
     )
   }
 })
+
+test('isNull', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT
+        );`)
+      }
+    }
+  })
+  app.register(sqlGraphQL)
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'The dog barks'
+    },
+    {
+      title: 'Cat',
+      longText: null
+    }
+  ]
+
+  await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+          mutation batch($inputs : [PostInput]!) {
+            insertPosts(inputs: $inputs) {
+              id
+            }
+          }
+        `,
+      variables: {
+        inputs: posts
+      }
+    }
+  })
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            posts(where: { longText: { isNull: true } }) {
+              id
+              title
+              longText
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'where: { longText: { isNull: true } } status code')
+    same(
+      res.json(),
+      {
+        data: {
+          posts: [
+            {
+              id: '2',
+              title: 'Cat',
+              longText: null
+            }
+          ]
+        }
+      },
+      'where: { longText: { isNull: true } } response'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            posts(where: { longText: { isNull: false } }) {
+              id
+              title
+              longText
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'where: { longText: { isNull: false } } status code')
+    same(
+      res.json(),
+      {
+        data: {
+          posts: [
+            {
+              id: '1',
+              title: 'Dog',
+              longText: 'The dog barks'
+            }
+          ]
+        }
+      },
+      'where: { longText: { isNull: false } } response'
+    )
+  }
+})

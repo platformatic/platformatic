@@ -46,6 +46,7 @@ input PageWhereArgumentsid {
   like: ID
   in: [ID]
   nin: [ID]
+  isNull: Boolean
 }
 
 input PageWhereArgumentstitle {
@@ -58,6 +59,7 @@ input PageWhereArgumentstitle {
   like: String
   in: [String]
   nin: [String]
+  isNull: Boolean
 }
 
 input PageWhereArgumentsOr {

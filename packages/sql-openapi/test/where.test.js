@@ -191,6 +191,45 @@ test('list', async t => {
     )
   }
 
+  // test isNull filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.isNull=true&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.isNull=true status code')
+    same(
+      res.json(),
+      [
+        {
+          id: 5,
+          title: 'Bear',
+          longText: null
+        }
+      ],
+      'GET /posts?where.longText.isNull=true response'
+    )
+  }
+
+  // test isNull=false filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.isNull=false&fields=id,title'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.isNull=false status code')
+    same(
+      res.json(),
+      [
+        { id: 1, title: 'Dog' },
+        { id: 2, title: 'Cat' },
+        { id: 3, title: 'Mouse' },
+        { id: 4, title: 'Duck' }
+      ],
+      'GET /posts?where.longText.isNull=false response'
+    )
+  }
+
   // test NOT NULL filter
   {
     const res = await app.inject({
