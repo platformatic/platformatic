@@ -751,6 +751,7 @@ test('should proxy custom content types via config in OpenAPI composition', asyn
   assert.equal(response.bodyLength, customData.length)
 })
 
+
 test('should normalize prefixes without leading slash or with trailing slash', async t => {
   /* https://github.com/platformatic/platformatic/issues/1242 */
   const api1 = await createOpenApiApplication(t, ['users'])
@@ -804,4 +805,124 @@ test('should normalize prefixes without leading slash or with trailing slash', a
   }
 
   await testEntityRoutes(gatewayOrigin, ['/api1/users', '/api2/posts'])
+})
+
+test('should apply the application document-level security to composed operations', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1495 */
+  const api = await createBasicApplication(t, {
+    openapi: {
+      components: {
+        securitySchemes: {
+          openId: {
+            type: 'openIdConnect',
+            openIdConnectUrl: 'https://example.com/.well-known/openid-configuration'
+          }
+        }
+      },
+      security: [{ openId: [] }]
+    }
+  })
+
+  await api.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api'
+          }
+        }
+      ],
+      addEmptySchema: true
+    }
+  })
+
+  await gateway.start({ listen: true })
+
+  const { statusCode, body } = await gateway.inject({
+    method: 'GET',
+    url: '/documentation/json'
+  })
+  assert.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+  openApiValidator.validate(openApiSchema)
+
+  assert.deepStrictEqual(openApiSchema.components.securitySchemes, {
+    api1_openId: {
+      type: 'openIdConnect',
+      openIdConnectUrl: 'https://example.com/.well-known/openid-configuration'
+    }
+  })
+
+  // Every composed operation inherits the document-level security of its application
+  assert.deepStrictEqual(openApiSchema.paths['/api/text'].get.security, [{ api1_openId: [] }])
+  assert.deepStrictEqual(openApiSchema.paths['/api/error'].get.security, [{ api1_openId: [] }])
+})
+
+test('should include the gateway-level security configuration in the composed spec', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1495 */
+  const api = await createBasicApplication(t)
+
+  await api.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api'
+          }
+        }
+      ],
+      openapi: {
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT'
+            }
+          }
+        },
+        security: [{ bearerAuth: [] }]
+      },
+      addEmptySchema: true
+    }
+  })
+
+  await gateway.start({ listen: true })
+
+  const { statusCode, body } = await gateway.inject({
+    method: 'GET',
+    url: '/documentation/json'
+  })
+  assert.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+  openApiValidator.validate(openApiSchema)
+
+  assert.deepStrictEqual(openApiSchema.components.securitySchemes.bearerAuth, {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT'
+  })
+  assert.deepStrictEqual(openApiSchema.security, [{ bearerAuth: [] }])
 })

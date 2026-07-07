@@ -656,3 +656,41 @@ test('should throw an error if there are duplicates paths with prefixes', async 
     )
   }
 })
+
+test('should apply document-level security only to operations without their own', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1495 */
+  const schema = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    security: [{ defaultAuth: [] }],
+    components: {
+      securitySchemes: {
+        defaultAuth: { type: 'http', scheme: 'bearer' },
+        customAuth: { type: 'http', scheme: 'basic' }
+      }
+    },
+    paths: {
+      '/default': {
+        get: {
+          operationId: 'getDefault',
+          responses: {}
+        }
+      },
+      '/custom': {
+        get: {
+          operationId: 'getCustom',
+          security: [{ customAuth: [] }],
+          responses: {}
+        }
+      }
+    }
+  }
+
+  const composed = composeOpenApi([{ id: 'api1', schema }])
+
+  assert.deepEqual(composed.paths['/default'].get.security, [{ api1_defaultAuth: [] }])
+  assert.deepEqual(composed.paths['/custom'].get.security, [{ api1_customAuth: [] }])
+})

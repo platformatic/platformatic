@@ -34,6 +34,8 @@ function namespaceSchemaOperationIds (apiPrefix, schema) {
   }
 }
 
+const OPENAPI_HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']
+
 export function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
   const mergedPathOwners = {}
@@ -41,10 +43,20 @@ export function composeOpenApi (apis, options = {}) {
   const mergedSecuritySchemes = {}
 
   for (const { id, prefix, schema } of apis) {
-    const { paths, components } = clone(schema)
+    const { paths, components, security: defaultSecurity } = clone(schema)
 
     const apiPrefix = generateOperationIdApiPrefix(id)
     for (const [path, pathSchema] of Object.entries(paths)) {
+      // The document-level security of the application applies to every operation
+      // which does not define its own
+      if (defaultSecurity) {
+        for (const method of OPENAPI_HTTP_METHODS) {
+          if (pathSchema[method] && !pathSchema[method].security) {
+            pathSchema[method].security = clone(defaultSecurity)
+          }
+        }
+      }
+
       namespaceSchemaRefs(apiPrefix, pathSchema)
       namespaceSchemaOperationIds(apiPrefix, pathSchema)
 
@@ -88,7 +100,12 @@ export function composeOpenApi (apis, options = {}) {
     }
   }
 
-  return {
+  // Gateway-level security schemes and requirements from the configuration
+  if (options.components?.securitySchemes) {
+    Object.assign(mergedSecuritySchemes, clone(options.components.securitySchemes))
+  }
+
+  const composed = {
     openapi: '3.0.0',
     info: {
       title: options.title || 'Platformatic Gateway',
@@ -100,4 +117,10 @@ export function composeOpenApi (apis, options = {}) {
     },
     paths: mergedPaths
   }
+
+  if (options.security) {
+    composed.security = clone(options.security)
+  }
+
+  return composed
 }
