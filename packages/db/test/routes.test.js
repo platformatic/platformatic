@@ -149,3 +149,42 @@ test('should not overwrite a plugin which uses @fastify/static on root', async t
   const expected = await readFile(join(import.meta.dirname, 'fixtures', 'hello', 'index.html'), 'utf8')
   assert.equal(body, expected)
 })
+
+test('the root page uses the configured openapi.swaggerPrefix', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1924 */
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const app = await createFromConfig(t, {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      logger: { level: 'fatal' }
+    },
+    db: {
+      ...connectionInfo,
+      openapi: {
+        swaggerPrefix: '/custom-docs'
+      }
+    }
+  })
+
+  t.after(async () => {
+    await app.stop()
+    await dropTestDB()
+  })
+  await app.start({ listen: true })
+
+  const res = await request(`${app.url}/`, {
+    headers: {
+      'user-agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+    }
+  })
+  const html = await res.body.text()
+  assert.equal(res.statusCode, 200)
+  assert.ok(html.includes('window.PLT_OPENAPI_ROUTE = "custom-docs"'))
+
+  // the OpenAPI documentation is actually served under the custom prefix
+  const docs = await request(`${app.url}/custom-docs/json`)
+  assert.equal(docs.statusCode, 200)
+})
