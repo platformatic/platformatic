@@ -180,8 +180,13 @@ export async function entityPlugin (app, opts) {
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
 
+    // Only disambiguate the route name when the target entity has more than
+    // one relation pointing to this entity, not just any relation
+    const relationsToThisEntity = targetEntity.relations.filter(
+      relation => relation.foreignEntityName === entity.singularName
+    )
     let routePathName =
-      targetEntity.relations.length > 1
+      relationsToThisEntity.length > 1
         ? camelcase([reverseRelationship.sourceEntity, targetForeignKeyCamelcase])
         : targetEntity.pluralName
 
