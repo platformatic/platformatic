@@ -1,14 +1,14 @@
 import fastify, {
   type FastifyPluginAsync,
 } from 'fastify'
-import { expectType } from 'tsd'
-import auth, {
+import { expect, test } from 'tstyche'
+import auth, { errors } from '../../index.js'
+import type {
   AddRulesForRoles,
   DBAuthorizationPluginInterface,
   DBAuthorizationPluginOptions,
   SetupDBAuthorizationUserDecorator,
-  errors,
-} from '../..'
+} from '../../index.js'
 import { FastifyError } from '@fastify/error'
 
 declare module 'fastify' {
@@ -17,12 +17,16 @@ declare module 'fastify' {
   }
 }
 
-expectType<FastifyPluginAsync<DBAuthorizationPluginOptions>>(auth)
+test('auth plugin type', () => {
+  expect(auth).type.toBe<FastifyPluginAsync<DBAuthorizationPluginOptions>>()
+})
 
 const app = fastify()
 app.register(auth)
 app.register(async (instance) => {
-  expectType<AddRulesForRoles>(instance.platformatic.addRulesForRoles)
+  test('addRulesForRoles decorator type', () => {
+    expect(instance.platformatic.addRulesForRoles).type.toBe<AddRulesForRoles>()
+  })
 
   interface User {
     email: string
@@ -32,7 +36,9 @@ app.register(async (instance) => {
     role: 'role',
     entity: 'entity',
     find: ({ user, where }) => {
-      expectType<User>(user)
+      test('find rule user type', () => {
+        expect(user).type.toBe<User>()
+      })
       return where
     },
   }])
@@ -66,7 +72,9 @@ app.register(async (instance) => {
   }])
 
   instance.get('/test', (request) => {
-    expectType<SetupDBAuthorizationUserDecorator>(request.setupDBAuthorizationUser)
+    test('setupDBAuthorizationUser decorator type', () => {
+      expect(request.setupDBAuthorizationUser).type.toBe<SetupDBAuthorizationUserDecorator>()
+    })
   })
 })
 
@@ -75,6 +83,8 @@ type ErrorWithNoParams = () => FastifyError
 type ErrorWithOneParam = (param: string) => FastifyError
 type ErrorWithTwoParams = (param1: string, param2: string) => FastifyError
 
-expectType<ErrorWithNoParams>(errors.Unauthorized)
-expectType<ErrorWithOneParam>(errors.UnauthorizedField)
-expectType<ErrorWithTwoParams>(errors.MissingNotNullableError)
+test('error factories', () => {
+  expect(errors.Unauthorized).type.toBe<ErrorWithNoParams>()
+  expect(errors.UnauthorizedField).type.toBe<ErrorWithOneParam>()
+  expect(errors.MissingNotNullableError).type.toBe<ErrorWithTwoParams>()
+})
