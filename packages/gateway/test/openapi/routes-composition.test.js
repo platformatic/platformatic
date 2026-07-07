@@ -751,7 +751,6 @@ test('should proxy custom content types via config in OpenAPI composition', asyn
   assert.equal(response.bodyLength, customData.length)
 })
 
-
 test('should normalize prefixes without leading slash or with trailing slash', async t => {
   /* https://github.com/platformatic/platformatic/issues/1242 */
   const api1 = await createOpenApiApplication(t, ['users'])

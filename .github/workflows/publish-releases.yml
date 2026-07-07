@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'The version number to tag and release'
+        description: "The version number to tag and release"
         required: true
         type: string
       prerelease:
-        description: 'Release as pre-release'
+        description: "Release as pre-release"
         required: false
         type: boolean
         default: false
@@ -28,8 +28,8 @@ jobs:
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
       - run: npm install npm -g
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
@@ -56,7 +56,9 @@ jobs:
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped v${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
+      - name: Verify prepublish status
+        run: git status
       - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
-      - name: 'Create release notes'
+      - name: "Create release notes"
         run: |
           pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}
