@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/nuxt",
-  "version": "3.59.0",
+  "version": "3.60.0",
   "description": "Platformatic Nuxt Capability",
   "main": "index.js",
   "type": "module",
