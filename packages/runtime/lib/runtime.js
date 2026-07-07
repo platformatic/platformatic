@@ -546,12 +546,19 @@ export class Runtime extends EventEmitter {
 
   async addApplications (applications, start = false) {
     const setupInvocations = []
+    // Per-worker ports do not need SO_REUSEPORT because each worker binds a different port.
+    const usesPerWorkerPorts = this.#config.server?.portAssignment === 'perWorkerIncrement'
 
     const toStart = []
     for (const application of applications) {
       const workers = application.workers
 
-      if ((workers.static > 1 || workers.minimum > 1) && application.entrypoint && !features.node.reusePort) {
+      if (
+        (workers.static > 1 || workers.minimum > 1) &&
+        application.entrypoint &&
+        !features.node.reusePort &&
+        !usesPerWorkerPorts
+      ) {
         this.logger.warn(
           `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
         )
