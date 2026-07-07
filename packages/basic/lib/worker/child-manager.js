@@ -1,4 +1,4 @@
-import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { createSharedTemporaryDirectory, ensureLoggableError } from '@platformatic/foundation'
 import { getLogger, updateGlobals } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { randomBytes } from 'node:crypto'
@@ -7,7 +7,7 @@ import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createRequire, register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
@@ -85,7 +85,7 @@ export class ChildManager extends ITC {
     super.listen()
 
     if (!isWindows) {
-      await createDirectory(dirname(this.#socketPath))
+      await createSharedTemporaryDirectory('platformatic', 'runtimes')
     }
 
     this.#websocketServer = new WebSocketServer({ server: this.#server })
@@ -145,9 +145,9 @@ export class ChildManager extends ITC {
 
     // Serialize data into a JSON file for the capability to use
     this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
-    await createDirectory(dirname(this.#dataPath))
+    await createSharedTemporaryDirectory('platformatic', 'runtimes')
 
-    // We write all the data to a JSON file
+    // We write all the data to a JSON file, readable by the current user only
     await writeFile(
       this.#dataPath,
       JSON.stringify(
@@ -159,7 +159,7 @@ export class ChildManager extends ITC {
         null,
         2
       ),
-      'utf-8'
+      { encoding: 'utf-8', mode: 0o600 }
     )
 
     process.env.PLT_MANAGER_ID = this.#id

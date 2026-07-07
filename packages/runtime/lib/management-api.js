@@ -3,11 +3,13 @@ import fastifyWebsocket from '@fastify/websocket'
 import {
   applications as applicationSchema,
   createDirectory,
+  createSharedTemporaryDirectory,
   kMetadata,
   safeRemove,
   validate
 } from '@platformatic/foundation'
 import fastify from 'fastify'
+import { chmod } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -343,7 +345,14 @@ export async function startManagementApi (runtime, config) {
 
   const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
   if (platform() !== 'win32') {
-    await createDirectory(customSocket ? dirname(customSocket) : runtimePIDDir, typeof customSocket !== 'string')
+    if (customSocket) {
+      await createDirectory(dirname(customSocket))
+    } else {
+      await createSharedTemporaryDirectory('platformatic', 'runtimes')
+      await createDirectory(runtimePIDDir, true)
+      // The socket must only be accessible by the current user
+      await chmod(runtimePIDDir, 0o700)
+    }
   }
 
   let socketPath = null
