@@ -229,7 +229,7 @@ export class RuntimeApiClient {
 
       if (
         jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_WORKER_NOT_FOUND'
       ) {
         throw new ApplicationNotFound(error)
       }
@@ -294,7 +294,7 @@ export class RuntimeApiClient {
 
       if (
         jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_WORKER_NOT_FOUND'
       ) {
         throw new ApplicationNotFound(error)
       }
@@ -330,7 +330,7 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
         throw new ApplicationNotFound(message)
       }
 
@@ -368,7 +368,7 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
         throw new ApplicationNotFound(message)
       }
 
@@ -403,7 +403,7 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
         throw new ApplicationNotFound(message)
       }
 

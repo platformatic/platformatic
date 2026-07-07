@@ -147,6 +147,34 @@ test('heap-snapshot - should fail with non-existent application', async t => {
   ok(snapshotProcess.stdout.includes('Application not found'), 'Should report application not found')
 })
 
+test('heap-snapshot - should fail with non-existent worker', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  const snapshotProcess = await wattpm('heap-snapshot', 'main', 'main:999').catch(e => e)
+
+  strictEqual(snapshotProcess.exitCode, 1, 'Should exit with code 1')
+  ok(
+    snapshotProcess.stdout.includes('Worker 999 of application main not found'),
+    'Should report worker not found'
+  )
+  ok(snapshotProcess.stdout.includes('Available workers are: 0'), 'Should report available workers')
+})
+
 test('heap-snapshot - should fail with non-existent runtime', async t => {
   const snapshotProcess = await wattpm('heap-snapshot', '999999').catch(e => e)
 

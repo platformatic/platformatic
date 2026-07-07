@@ -25,7 +25,8 @@ export async function heapSnapshotCommand (logger, args) {
     const outputDir = values.dir || process.cwd()
 
     if (applicationId) {
-      const application = runtimeApplications.find(s => s.id === applicationId)
+      const applicationIdWithoutWorker = applicationId.match(/^(.+):\d+$/)?.[1] ?? applicationId
+      const application = runtimeApplications.find(s => s.id === applicationIdWithoutWorker)
       if (!application) {
         return logFatalError(logger, `Application not found: ${applicationId}`)
       }
@@ -53,7 +54,7 @@ export async function heapSnapshotCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-    } else if (error.message && error.message.includes('Application not found')) {
+    } else if (error.code === 'PLT_CTR_APPLICATION_NOT_FOUND' || error.message?.includes('Application not found')) {
       return logFatalError(logger, error.message)
     } else {
       return logFatalError(
