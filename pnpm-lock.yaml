@@ -2487,9 +2487,6 @@ importers:
       create-wattpm:
         specifier: workspace:*
         version: link:../create-wattpm
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
       execa:
         specifier: ^9.4.0
         version: 9.6.1
