@@ -170,7 +170,7 @@
 
 ### PLT_RUNTIME_WORKER_NOT_FOUND
 
-**Message:** Worker %s of service %s not found. Available services are: %s
+**Message:** Worker %s of application %s not found. Available workers are: %s
 
 ### PLT_RUNTIME_SERVICE_NOT_STARTED
 

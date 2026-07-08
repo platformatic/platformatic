@@ -118,7 +118,7 @@ export async function injectCommand (logger, args) {
       /* c8 ignore next 4 - else */
       if (
         json?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
-        json?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+        json?.code === 'PLT_RUNTIME_WORKER_NOT_FOUND'
       ) {
         const error = new Error('Cannot find an application.')
         error.code = 'PLT_CTR_APPLICATION_NOT_FOUND'

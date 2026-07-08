@@ -39,7 +39,7 @@ export const ApplicationNotFoundError = createError(
 )
 export const WorkerNotFoundError = createError(
   `${ERROR_PREFIX}_WORKER_NOT_FOUND`,
-  'Worker %s of application %s not found. Available applications are: %s'
+  'Worker %s of application %s not found. Available workers are: %s'
 )
 export const ApplicationNotStartedError = createError(
   `${ERROR_PREFIX}_APPLICATION_NOT_STARTED`,
