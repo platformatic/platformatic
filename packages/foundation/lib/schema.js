@@ -362,6 +362,11 @@ export const server = {
     port: {
       anyOf: [{ type: 'integer' }, { type: 'string' }]
     },
+    portAssignment: {
+      type: 'string',
+      enum: ['shared', 'perWorkerIncrement'],
+      description: 'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
+    },
     backlog: {
       type: 'integer',
       description: 'The maximum length of the queue of pending connections'

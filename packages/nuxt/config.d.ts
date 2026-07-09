@@ -66,6 +66,10 @@ export interface PlatformaticNuxtConfig {
     hostname?: string;
     port?: number | string;
     /**
+     * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
+     */
+    portAssignment?: "shared" | "perWorkerIncrement";
+    /**
      * The maximum length of the queue of pending connections
      */
     backlog?: number;
@@ -204,6 +208,10 @@ export interface PlatformaticNuxtConfig {
     server?: {
       hostname?: string;
       port?: number | string;
+      /**
+       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
+       */
+      portAssignment?: "shared" | "perWorkerIncrement";
       /**
        * The maximum length of the queue of pending connections
        */

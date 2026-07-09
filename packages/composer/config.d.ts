@@ -257,6 +257,10 @@ export interface PlatformaticComposerConfig {
       hostname?: string;
       port?: number | string;
       /**
+       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
+       */
+      portAssignment?: "shared" | "perWorkerIncrement";
+      /**
        * The maximum length of the queue of pending connections
        */
       backlog?: number;
@@ -314,6 +318,40 @@ export interface PlatformaticComposerConfig {
       bufferPoolSize?: number | string;
       defaultHighWaterMark?: number | string;
     };
+    healthProbes?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean | string;
+          hostname?: string;
+          port?: number | string;
+          readiness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          liveness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+        };
     undici?: {
       agentOptions?: {
         [k: string]: unknown;
@@ -472,6 +510,10 @@ export interface PlatformaticComposerConfig {
                   body?: string;
                 };
               };
+          /**
+           * @deprecated
+           * Deprecated. Health probe timeout configuration is no longer used.
+           */
           healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
@@ -505,6 +547,29 @@ export interface PlatformaticComposerConfig {
              * Service version for OTLP resource attributes
              */
             serviceVersion?: string;
+          };
+          /**
+           * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
+           */
+          opentelemetry?: {
+            /**
+             * Enable or disable OpenTelemetry metrics forwarding
+             */
+            enabled?: boolean | string;
+            /**
+             * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
+             */
+            endpoint: string;
+            /**
+             * Interval in milliseconds between metric forwards
+             */
+            interval?: number | string;
+            /**
+             * Additional HTTP headers for authentication
+             */
+            headers?: {
+              [k: string]: string;
+            };
           };
           /**
            * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
@@ -973,6 +1038,28 @@ export interface PlatformaticComposerConfig {
             custom?: {
               path: string;
             };
+            deduplication?: {
+              enabled?: boolean | string;
+              storage?:
+                | {
+                    adapter?: "memory";
+                  }
+                | {
+                    adapter: "valkey";
+                    url: string;
+                    prefix?: string;
+                  };
+              methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+              headers?: string[];
+              routes?: {
+                [k: string]: unknown;
+              }[];
+              key?: string;
+              timeout?: number;
+              retries?: number;
+              ttl?: number;
+              lockTtl?: number;
+            };
             ws?: {
               upstream?: string;
               reconnect?: {
@@ -992,6 +1079,28 @@ export interface PlatformaticComposerConfig {
           };
     }[];
     handler?: string;
+    deduplication?: {
+      enabled?: boolean | string;
+      storage?:
+        | {
+            adapter?: "memory";
+          }
+        | {
+            adapter: "valkey";
+            url: string;
+            prefix?: string;
+          };
+      methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+      headers?: string[];
+      routes?: {
+        [k: string]: unknown;
+      }[];
+      key?: string;
+      timeout?: number;
+      retries?: number;
+      ttl?: number;
+      lockTtl?: number;
+    };
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;
