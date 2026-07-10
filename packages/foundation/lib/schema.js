@@ -873,6 +873,17 @@ export const application = {
       ]
     },
     health: { ...healthWithoutDefaults },
+    restartOnError: {
+      description:
+        'Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.',
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'number',
+          minimum: 0
+        }
+      ]
+    },
     dependencies: {
       type: 'array',
       items: {
