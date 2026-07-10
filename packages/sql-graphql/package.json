@@ -37,7 +37,7 @@
     "fastify-tsconfig": "^3.0.0",
     "neostandard": "^0.12.0",
     "tstyche": "^6.2.0",
-    "typescript": "^5.5.4",
+    "typescript": "^5.9.3",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"
   },

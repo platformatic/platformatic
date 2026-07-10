@@ -43,7 +43,7 @@
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "typescript": "^5.5.4",
+    "typescript": "^5.9.3",
     "tstyche": "^6.2.0",
     "vite": "^7.0.0",
     "ws": "^8.18.0"
