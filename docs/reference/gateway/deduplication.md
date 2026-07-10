@@ -71,7 +71,7 @@ The default deduplication key is computed from:
 The default headers are:
 
 ```json
-["authorization", "cookie", "accept", "accept-language"]
+["authorization", "cookie", "accept", "accept-encoding", "accept-language"]
 ```
 
 Customize the headers included in the key with `headers`:

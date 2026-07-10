@@ -9,7 +9,7 @@ import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
 const require = createRequire(import.meta.url)
-const defaultDeduplicationHeaders = ['authorization', 'cookie', 'accept', 'accept-language']
+const defaultDeduplicationHeaders = ['authorization', 'cookie', 'accept', 'accept-encoding', 'accept-language']
 const defaultDeduplicationMethods = ['GET', 'HEAD']
 
 async function publishError ({ storage, key, token, responseId, config, metrics }) {

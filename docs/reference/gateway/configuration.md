@@ -268,7 +268,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
   - **`methods`** (`array of string`, default: `['GET', 'HEAD']`) - Methods eligible for deduplication when `routes` is not specified.
-  - **`headers`** (`array of string`, default: `['authorization', 'cookie', 'accept', 'accept-language']`) - Request headers included in the default deduplication key.
+  - **`headers`** (`array of string`, default: `['authorization', 'cookie', 'accept', 'accept-encoding', 'accept-language']`) - Request headers included in the default deduplication key.
   - **`routes`** (`array`) - Optional route whitelist. When specified, routes decide whether deduplication applies instead of `methods` alone. Routes use `find-my-way` syntax and accept either `method` or `methods` plus `path`.
   - **`key`** (`string`) - Path to a JavaScript or TypeScript module exporting a synchronous `computeDeduplicationKey(request, context)` function to customize key computation.
   - **`timeout`** (`number`, default: `1000`) - Milliseconds a duplicate request waits for the leader response before retrying lock acquisition.
