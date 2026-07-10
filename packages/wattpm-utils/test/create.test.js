@@ -9,7 +9,10 @@ import { createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.
 
 const createEnv = {
   NO_COLOR: 'true',
-  PLT_MODULES_PATHS: JSON.stringify({ '@platformatic/vite': resolve(import.meta.dirname, '../../vite') })
+  PLT_MODULES_PATHS: JSON.stringify({
+    '@platformatic/next': resolve(import.meta.dirname, '../../next'),
+    '@platformatic/vite': resolve(import.meta.dirname, '../../vite')
+  })
 }
 
 test('create - should create a new project using watt.json by default', async t => {

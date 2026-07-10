@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      - run: npm install npm -g
+      - run: npm install npm@11.18.0 -g
       - name: pnpm install
         uses: nick-fields/retry@v3.0.2
         with:
