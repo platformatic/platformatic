@@ -1,22 +1,56 @@
-import { deepStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, notStrictEqual, strictEqual } from 'node:assert'
+import { once } from 'node:events'
+import { createServer } from 'node:net'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createRuntime, updateConfigFile } from '../helpers.js'
-import { prepareRuntime, waitForEvents } from './helper.js'
+import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.js'
 
 const HOST = '127.0.0.1'
 
-async function getBasePort () {
-  const getPort = await import('get-port')
-  return getPort.default({ host: HOST })
+async function listen (server, port = 0) {
+  server.listen({ host: HOST, port, exclusive: true })
+  await once(server, 'listening')
 }
 
-async function preparePerWorkerPortRuntime (t, { application = 'node', workerCount = 5 } = {}) {
+function closeServer (server) {
+  if (!server.listening) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve, reject) => {
+    server.close(error => (error ? reject(error) : resolve()))
+  })
+}
+
+async function getOccupiedPortWithAvailablePreviousPort () {
+  while (true) {
+    const occupiedServer = createServer()
+    await listen(occupiedServer)
+    const occupiedPort = occupiedServer.address().port
+    const candidatePort = occupiedPort - 1
+    const probeServer = createServer()
+
+    try {
+      await listen(probeServer, candidatePort)
+      return { candidatePort, occupiedPort, occupiedServer }
+    } catch {
+      await closeServer(occupiedServer)
+    } finally {
+      await closeServer(probeServer)
+    }
+  }
+}
+
+async function preparePerWorkerPortRuntime (
+  t,
+  { application = 'node', workerCount = 5, maxWorkerCount = workerCount } = {}
+) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const basePort = await getBasePort()
+  const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
   await updateConfigFile(configFile, contents => {
     contents.server = {
@@ -112,6 +146,32 @@ async function assertPortClosed (port) {
   throw new Error(`Port ${port} is still accepting requests`)
 }
 
+test('findAvailablePortRange retries when a port inside the candidate range is unavailable', async t => {
+  const { candidatePort, occupiedServer } = await getOccupiedPortWithAvailablePreviousPort()
+  t.after(() => closeServer(occupiedServer))
+
+  const basePort = await findAvailablePortRange({ host: HOST, size: 2, startPort: candidatePort })
+  notStrictEqual(basePort, candidatePort)
+
+  const probeServers = []
+  try {
+    for (let offset = 0; offset < 2; offset++) {
+      const server = createServer()
+      probeServers.push(server)
+      await listen(server, basePort + offset)
+    }
+  } finally {
+    await Promise.all(probeServers.map(closeServer))
+  }
+
+  const candidateServer = createServer()
+  try {
+    await listen(candidateServer, candidatePort)
+  } finally {
+    await closeServer(candidateServer)
+  }
+})
+
 test('assigns one incremental port per entrypoint worker', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
@@ -123,7 +183,7 @@ test('assigns one incremental port per entrypoint worker', async t => {
 })
 
 test('assigns new incremental ports when scaling up and stops highest ports when scaling down', async t => {
-  const { app, basePort } = await preparePerWorkerPortRuntime(t)
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, { maxWorkerCount: 7 })
 
   await app.start()
 

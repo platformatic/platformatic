@@ -1,6 +1,7 @@
 import { createDirectory, features, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual } from 'node:assert'
 import { cp, symlink } from 'node:fs/promises'
+import { createServer } from 'node:net'
 import { join, resolve } from 'node:path'
 import { request } from 'undici'
 
@@ -8,6 +9,79 @@ export const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 export const tmpDir = resolve(import.meta.dirname, '../../tmp')
 
 const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
+const MAX_PORT = 65_535
+
+function listen (server, host, port) {
+  return new Promise((resolve, reject) => {
+    function onError (error) {
+      server.off('listening', onListening)
+      reject(error)
+    }
+
+    function onListening () {
+      server.off('error', onError)
+      resolve()
+    }
+
+    server.once('error', onError)
+    server.once('listening', onListening)
+    server.listen({ host, port, exclusive: true })
+  })
+}
+
+function closeServer (server) {
+  if (!server.listening) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve, reject) => {
+    server.close(error => (error ? reject(error) : resolve()))
+  })
+}
+
+export async function findAvailablePortRange ({ host, size, startPort }) {
+  if (!Number.isInteger(size) || size < 1 || size > MAX_PORT) {
+    throw new RangeError('size must be an integer between 1 and 65535')
+  }
+
+  if (startPort !== undefined && (!Number.isInteger(startPort) || startPort < 1 || startPort > MAX_PORT)) {
+    throw new RangeError('startPort must be an integer between 1 and 65535')
+  }
+
+  while (true) {
+    const servers = []
+
+    try {
+      const firstServer = createServer()
+      servers.push(firstServer)
+      await listen(firstServer, host, startPort ?? 0)
+      startPort = undefined
+
+      const address = firstServer.address()
+      const basePort = address.port
+
+      if (basePort + size - 1 > MAX_PORT) {
+        continue
+      }
+
+      for (let offset = 1; offset < size; offset++) {
+        const server = createServer()
+        servers.push(server)
+        await listen(server, host, basePort + offset)
+      }
+
+      return basePort
+    } catch (error) {
+      startPort = undefined
+
+      if (error.code !== 'EACCES' && error.code !== 'EADDRINUSE') {
+        throw error
+      }
+    } finally {
+      await Promise.all(servers.map(closeServer))
+    }
+  }
+}
 
 export async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
