@@ -59,7 +59,15 @@ async function resolveApplicationProxyParameters (application, root) {
   const require = createRequire(import.meta.filename)
 
   if (application.proxy?.custom) {
-    const custom = await loadModule(require, resolve(root, application.proxy.custom.path))
+    const { path, options } = application.proxy.custom
+    let custom = await loadModule(require, resolve(root, path))
+
+    // When the module exports a function, it is used as a factory which receives
+    // the options defined in the configuration and returns the hooks object.
+    if (typeof custom === 'function') {
+      custom = await custom(options ?? {})
+    }
+
     application.proxy.custom = custom
   }
 
@@ -199,6 +207,8 @@ async function proxyPlugin (app, opts) {
     }
 
     const getUpstream = application.proxy?.custom?.getUpstream
+    const customRewriteHeaders = application.proxy?.custom?.rewriteHeaders
+    const customOnError = application.proxy?.custom?.onError
     // When getUpstream is provided, upstream ust be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
 
@@ -224,7 +234,9 @@ async function proxyPlugin (app, opts) {
       preValidation: application.proxy?.custom?.preValidation,
 
       websocket: true,
-      wsUpstream: ws?.upstream ?? url ?? origin,
+      // When getUpstream is provided and no explicit WebSocket upstream is configured,
+      // leave wsUpstream undefined so that getUpstream is used to select the upstream per-connection
+      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : (url ?? origin)),
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {
@@ -251,7 +263,7 @@ async function proxyPlugin (app, opts) {
       routes,
       internalRewriteLocationHeader: false,
       replyOptions: {
-        rewriteHeaders: headers => {
+        rewriteHeaders: (headers, request) => {
           let location = headers.location
           if (location) {
             if (toReplace) {
@@ -262,6 +274,11 @@ async function proxyPlugin (app, opts) {
             }
             headers.location = location
           }
+
+          if (customRewriteHeaders) {
+            headers = customRewriteHeaders(headers, request) ?? headers
+          }
+
           return headers
         },
         rewriteRequestHeaders: (request, headers) => {
@@ -300,6 +317,11 @@ async function proxyPlugin (app, opts) {
         },
         onError: (reply, { error }) => {
           app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')
+
+          if (customOnError) {
+            return customOnError(reply, { error })
+          }
+
           return reply.send(error)
         },
         getUpstream
