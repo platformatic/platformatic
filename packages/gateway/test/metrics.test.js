@@ -37,6 +37,7 @@ test('initMetrics should return metrics object when prometheus is properly confi
   ok(metrics.deduplicationReplay, 'deduplicationReplay metric should exist')
   ok(metrics.deduplicationFallback, 'deduplicationFallback metric should exist')
   ok(metrics.deduplicationError, 'deduplicationError metric should exist')
+  ok(metrics.deduplicationSkip, 'deduplicationSkip metric should exist')
 })
 
 test('activeWsConnections should be configured as Gauge with correct properties', async () => {
@@ -59,4 +60,5 @@ test('deduplication metrics should be configured as counters with correct names'
   strictEqual(metrics.deduplicationReplay.name, 'gateway_deduplication_replay_count')
   strictEqual(metrics.deduplicationFallback.name, 'gateway_deduplication_fallback_count')
   strictEqual(metrics.deduplicationError.name, 'gateway_deduplication_error_count')
+  strictEqual(metrics.deduplicationSkip.name, 'gateway_deduplication_skip_count')
 })

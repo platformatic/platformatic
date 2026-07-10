@@ -3760,10 +3760,18 @@
                             },
                             "default": [
                               "authorization",
-                              "cookie",
                               "accept",
                               "accept-encoding",
                               "accept-language"
+                            ]
+                          },
+                          "skipHeaders": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": [
+                              "cookie"
                             ]
                           },
                           "routes": {
@@ -3985,10 +3993,18 @@
               },
               "default": [
                 "authorization",
-                "cookie",
                 "accept",
                 "accept-encoding",
                 "accept-language"
+              ]
+            },
+            "skipHeaders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "cookie"
               ]
             },
             "routes": {

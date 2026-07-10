@@ -71,7 +71,7 @@ The default deduplication key is computed from:
 The default headers are:
 
 ```json
-["authorization", "cookie", "accept", "accept-encoding", "accept-language"]
+["authorization", "accept", "accept-encoding", "accept-language"]
 ```
 
 Customize the headers included in the key with `headers`:
@@ -81,11 +81,32 @@ Customize the headers included in the key with `headers`:
   "gateway": {
     "deduplication": {
       "enabled": true,
-      "headers": ["authorization", "cookie", "x-tenant-id"]
+      "headers": ["authorization", "x-tenant-id"]
     }
   }
 }
 ```
+
+## Skipping Requests
+
+Some request headers make the deduplication key effectively unique per user, so acquiring and releasing the lock is pure overhead: the request will never coalesce with another one. The `skipHeaders` option lists headers whose presence bypasses deduplication entirely:
+
+```json
+{
+  "gateway": {
+    "deduplication": {
+      "enabled": true,
+      "skipHeaders": ["cookie"]
+    }
+  }
+}
+```
+
+The default is `["cookie"]`: real browsers carry per-user cookies (sessions, analytics), so cookie-bearing requests are proxied directly without touching the deduplication storage. Set `skipHeaders` to `[]` to restore deduplication for them (useful when concurrent same-cookie requests are common).
+
+The `skipHeaders` option is evaluated independently from `headers`: skipped headers do not need to participate in the deduplication key.
+
+Skipped requests are counted by the `gateway_deduplication_skip_count` metric.
 
 ## Custom Key Function
 
@@ -108,7 +129,7 @@ export function computeDeduplicationKey (request, context) {
 }
 ```
 
-The function must return the key directly and must not be async. The `context` object contains:
+The function must return the key directly and must not be async. Returning a falsy value (for example `null`) bypasses deduplication for that request, which is counted by the `gateway_deduplication_skip_count` metric. The `context` object contains:
 
 - `origin`: the configured application origin.
 - `method`: the request method.

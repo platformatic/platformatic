@@ -108,7 +108,8 @@ function createDeduplicationMetrics () {
     deduplicationWaiter: createCounter(),
     deduplicationReplay: createCounter(),
     deduplicationFallback: createCounter(),
-    deduplicationError: createCounter()
+    deduplicationError: createCounter(),
+    deduplicationSkip: createCounter()
   }
 }
 
@@ -259,6 +260,7 @@ test('should include configured headers in the deduplication key', async t => {
   const gatewayOrigin = await createGateway(t, origin, {
     enabled: true,
     headers: ['cookie'],
+    skipHeaders: [],
     lockTtl: 2000,
     ttl: 1000
   })
@@ -342,6 +344,131 @@ test('should deduplicate concurrent requests with the same accept-encoding heade
   await Promise.all([handler(firstRequest, createReply(), '/value', {}), handler(secondRequest, createReply(), '/value', {})])
 
   assert.equal(upstreamCalls, 1)
+})
+
+test('should skip deduplication for requests carrying skip headers', async () => {
+  const metrics = createDeduplicationMetrics()
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+
+      if (options.onResponse) {
+        await sleep(100)
+        return options.onResponse(createRequest(), reply, {
+          statusCode: 200,
+          headers: {},
+          stream: ReadableStream.from([Buffer.from('ok')])
+        })
+      }
+
+      return reply.send('ok')
+    },
+    metrics
+  )
+
+  const requests = Array.from({ length: 2 }, () => ({ ...createRequest(), headers: { cookie: 'a=1' } }))
+  await Promise.all(requests.map(request => handler(request, createReply(), '/value', {})))
+
+  assert.equal(upstreamCalls, 2)
+  assert.equal(metrics.deduplicationSkip.value, 2)
+  assert.equal(metrics.deduplicationLeader.value, 0)
+})
+
+test('should skip when the skip header does not participate in the key', async () => {
+  const metrics = createDeduplicationMetrics()
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, headers: ['accept'], lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+
+      if (options.onResponse) {
+        await sleep(100)
+        return options.onResponse(createRequest(), reply, {
+          statusCode: 200,
+          headers: {},
+          stream: ReadableStream.from([Buffer.from('ok')])
+        })
+      }
+
+      return reply.send('ok')
+    },
+    metrics
+  )
+
+  const requests = [
+    { ...createRequest(), headers: { cookie: 'a=1' } },
+    { ...createRequest(), headers: { cookie: 'a=2' } }
+  ]
+  await Promise.all(requests.map(request => handler(request, createReply(), '/value', {})))
+
+  assert.equal(upstreamCalls, 2)
+  assert.equal(metrics.deduplicationSkip.value, 2)
+  assert.equal(metrics.deduplicationLeader.value, 0)
+})
+
+test('should deduplicate requests with identical skip headers when skipping is disabled', async () => {
+  const metrics = createDeduplicationMetrics()
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, skipHeaders: [], lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      await sleep(100)
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from([Buffer.from('ok')])
+      })
+    },
+    metrics
+  )
+
+  const requests = Array.from({ length: 2 }, () => ({ ...createRequest(), headers: { cookie: 'a=1' } }))
+  await Promise.all(requests.map(request => handler(request, createReply(), '/value', {})))
+
+  assert.equal(upstreamCalls, 1)
+  assert.equal(metrics.deduplicationSkip.value, 0)
+  assert.equal(metrics.deduplicationLeader.value, 1)
+})
+
+test('should skip deduplication when the custom key function returns null', async () => {
+  const metrics = createDeduplicationMetrics()
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    {
+      enabled: true,
+      key: resolve(import.meta.dirname, './proxy/fixtures/deduplication-key-optional.js'),
+      lockTtl: 2000,
+      ttl: 1000
+    },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+
+      if (options.onResponse) {
+        await sleep(100)
+        return options.onResponse(createRequest(), reply, {
+          statusCode: 200,
+          headers: {},
+          stream: ReadableStream.from([Buffer.from('ok')])
+        })
+      }
+
+      return reply.send('ok')
+    },
+    metrics
+  )
+
+  const requests = Array.from({ length: 2 }, () => ({ ...createRequest(), headers: { 'x-no-dedup': '1' } }))
+  await Promise.all(requests.map(request => handler(request, createReply(), '/value', {})))
+  assert.equal(upstreamCalls, 2)
+  assert.equal(metrics.deduplicationSkip.value, 2)
+
+  await Promise.all(Array.from({ length: 2 }, () => handler(createRequest(), createReply(), '/value', {})))
+  assert.equal(upstreamCalls, 3)
+  assert.equal(metrics.deduplicationLeader.value, 1)
 })
 
 test('should not deduplicate methods outside of the configured methods', async t => {

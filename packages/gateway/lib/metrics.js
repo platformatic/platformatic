@@ -32,6 +32,11 @@ export function initMetrics (prometheus) {
       name: 'gateway_deduplication_error_count',
       help: 'Number of gateway deduplication errors',
       registers: [registry]
+    }),
+    deduplicationSkip: new client.Counter({
+      name: 'gateway_deduplication_skip_count',
+      help: 'Number of gateway requests that skipped deduplication',
+      registers: [registry]
     })
   }
 }

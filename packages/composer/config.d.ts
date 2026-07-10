@@ -1051,6 +1051,7 @@ export interface PlatformaticComposerConfig {
                   };
               methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
               headers?: string[];
+              skipHeaders?: string[];
               routes?: {
                 [k: string]: unknown;
               }[];
@@ -1092,6 +1093,7 @@ export interface PlatformaticComposerConfig {
           };
       methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
       headers?: string[];
+      skipHeaders?: string[];
       routes?: {
         [k: string]: unknown;
       }[];

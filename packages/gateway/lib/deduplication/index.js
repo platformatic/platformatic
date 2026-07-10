@@ -10,8 +10,9 @@ import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
 const require = createRequire(import.meta.url)
-const defaultDeduplicationHeaders = ['authorization', 'cookie', 'accept', 'accept-encoding', 'accept-language']
+const defaultDeduplicationHeaders = ['authorization', 'accept', 'accept-encoding', 'accept-language']
 const defaultDeduplicationMethods = ['GET', 'HEAD']
+const defaultDeduplicationSkipHeaders = ['cookie']
 
 async function publishError ({ storage, key, token, responseId, config, metrics }) {
   metrics?.deduplicationError?.inc()
@@ -37,6 +38,7 @@ export async function createDeduplicationHandler ({
     enabled: false,
     methods: defaultDeduplicationMethods,
     headers: defaultDeduplicationHeaders,
+    skipHeaders: defaultDeduplicationSkipHeaders,
     timeout: 1000,
     retries: 3,
     ttl: 10000,
@@ -63,6 +65,8 @@ export async function createDeduplicationHandler ({
       ? new ValkeyDeduplicationStorage(config.storage)
       : new MemoryDeduplicationStorage(config.storage)
   const methods = new Set((config.methods ?? []).map(method => method.toUpperCase()))
+  const keyHeaders = Array.from(new Set((config.headers ?? []).map(header => header.toLowerCase()))).sort()
+  const skipHeaders = Array.from(new Set((config.skipHeaders ?? []).map(header => header.toLowerCase()))).sort()
   let router
   let computeDeduplicationKey
 
@@ -99,8 +103,15 @@ export async function createDeduplicationHandler ({
       return handler(request, reply, dest, options)
     }
 
+    for (const header of skipHeaders) {
+      if (request.headers[header] !== undefined) {
+        metrics?.deduplicationSkip?.inc()
+        return handler(request, reply, dest, options)
+      }
+    }
+
     const headers = {}
-    for (const header of config.headers.map(header => header.toLowerCase()).sort()) {
+    for (const header of keyHeaders) {
       const value = request.headers[header]
       if (value !== undefined) {
         headers[header] = Array.isArray(value) ? value.join(',') : String(value)
@@ -118,6 +129,12 @@ export async function createDeduplicationHandler ({
     const key = computeDeduplicationKey
       ? computeDeduplicationKey(request, context)
       : stringify({ origin: context.origin, method: context.method, url: context.url, headers: context.headers })
+
+    // A custom key function can return a falsy value to opt the request out.
+    if (!key) {
+      metrics?.deduplicationSkip?.inc()
+      return handler(request, reply, dest, options)
+    }
 
     for (let attempt = 0; attempt <= config.retries; attempt++) {
       const token = randomUUID()
