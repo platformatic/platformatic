@@ -298,6 +298,52 @@ test('should deduplicate configured headers regardless of insertion order', asyn
   assert.equal(upstreamCalls, 1)
 })
 
+test('should not deduplicate concurrent requests with different accept-encoding headers', async () => {
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      await sleep(100)
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from([Buffer.from('ok')])
+      })
+    }
+  )
+
+  const gzipRequest = { ...createRequest(), headers: { 'accept-encoding': 'gzip' } }
+  const brotliRequest = { ...createRequest(), headers: { 'accept-encoding': 'br' } }
+
+  await Promise.all([handler(gzipRequest, createReply(), '/value', {}), handler(brotliRequest, createReply(), '/value', {})])
+
+  assert.equal(upstreamCalls, 2)
+})
+
+test('should deduplicate concurrent requests with the same accept-encoding header', async () => {
+  let upstreamCalls = 0
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      await sleep(100)
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from([Buffer.from('ok')])
+      })
+    }
+  )
+
+  const firstRequest = { ...createRequest(), headers: { 'accept-encoding': 'gzip' } }
+  const secondRequest = { ...createRequest(), headers: { 'accept-encoding': 'gzip' } }
+
+  await Promise.all([handler(firstRequest, createReply(), '/value', {}), handler(secondRequest, createReply(), '/value', {})])
+
+  assert.equal(upstreamCalls, 1)
+})
+
 test('should not deduplicate methods outside of the configured methods', async t => {
   const upstream = await createCountingApplication(t)
   const origin = await upstream.application.listen({ port: 0 })

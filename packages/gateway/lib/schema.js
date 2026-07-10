@@ -170,7 +170,7 @@ export const deduplication = {
     headers: {
       type: 'array',
       items: { type: 'string' },
-      default: ['authorization', 'cookie', 'accept', 'accept-language']
+      default: ['authorization', 'cookie', 'accept', 'accept-encoding', 'accept-language']
     },
     routes: {
       type: 'array',

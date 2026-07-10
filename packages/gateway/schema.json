@@ -934,6 +934,7 @@
                               "authorization",
                               "cookie",
                               "accept",
+                              "accept-encoding",
                               "accept-language"
                             ]
                           },
@@ -1158,6 +1159,7 @@
                 "authorization",
                 "cookie",
                 "accept",
+                "accept-encoding",
                 "accept-language"
               ]
             },
