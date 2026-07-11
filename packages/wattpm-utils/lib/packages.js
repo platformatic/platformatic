@@ -15,6 +15,7 @@ export const packages = [
   '@platformatic/metrics',
   '@platformatic/nest',
   '@platformatic/next',
+  '@platformatic/nitro',
   '@platformatic/node',
   '@platformatic/nuxt',
   '@platformatic/react-router',

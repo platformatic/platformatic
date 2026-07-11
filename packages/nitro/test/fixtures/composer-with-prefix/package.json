@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "@platformatic/nitro": "^3.61.1",
+    "nitropack": "^2.13.4"
+  }
+}

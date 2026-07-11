@@ -263,6 +263,23 @@ test('detectApplicationType - should detect Vite', async t => {
   equal(result.label, 'Vite')
 })
 
+test('detectApplicationType - should detect standalone Nitro', async t => {
+  const packageJson = { dependencies: { nitropack: '^2.10.0' } }
+  const result = await detectApplicationType('/tmp', packageJson)
+  equal(result.name, '@platformatic/nitro')
+  equal(result.label, 'Nitro')
+})
+
+test('detectApplicationType - should detect Nitro before Vite for Lovable applications', async t => {
+  const packageJson = {
+    dependencies: { nitro: '^3.0.0', react: '^19.0.0', 'react-dom': '^19.0.0' },
+    devDependencies: { vite: '^7.0.0', 'lovable-tagger': '^1.0.0' }
+  }
+  const result = await detectApplicationType('/tmp', packageJson)
+  equal(result.name, '@platformatic/nitro')
+  equal(result.label, 'Nitro')
+})
+
 test('detectApplicationType - should detect Node.js when has JS files', async t => {
   const tempDir = join(tmpdir(), 'test-' + Math.random().toString(36).substr(2, 9))
   await mkdir(tempDir, { recursive: true })
