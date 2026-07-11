@@ -1,7 +1,7 @@
 {
   "name": "@platformatic/db",
   "version": "3.61.1",
-  "description": "",
+  "description": "Platformatic DB",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",

@@ -1,7 +1,7 @@
 {
   "name": "@platformatic/basic",
   "version": "3.61.1",
-  "description": "",
+  "description": "Platformatic Basic",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
