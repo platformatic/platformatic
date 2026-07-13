@@ -1,6 +1,6 @@
 import { expect, test } from 'tstyche'
 import type { Configuration } from '@platformatic/foundation'
-import { create, loadConfiguration, type Runtime, type RuntimeConfiguration, type ApplicationDetails, type InjectParams, type InjectResponse, type RuntimeMetadata } from '../../index.js'
+import { create, loadConfiguration, type Runtime, type RuntimeConfiguration, type ApplicationDetails, type InjectParams, type InjectResponse, type RuntimeExtension, type RuntimeExtensionContext, type RuntimeExtensionInstance, type RuntimeMetadata } from '../../index.js'
 
 const context = {} as Configuration
 
@@ -108,4 +108,37 @@ test('Runtime.addApplications', () => {
 test('Runtime.removeApplications', () => {
   expect(runtime.removeApplications(['api'])).type.toBe<Promise<ApplicationDetails[]>>()
   expect(runtime.removeApplications(['api'], true)).type.toBe<Promise<ApplicationDetails[]>>()
+})
+
+test('Runtime.startApplicationProfiling', () => {
+  expect(runtime.startApplicationProfiling('api')).type.toBe<Promise<void>>()
+  expect(runtime.startApplicationProfiling('api', { type: 'cpu' }, true)).type.toBe<Promise<void>>()
+})
+
+test('Runtime.stopApplicationProfiling', () => {
+  expect(runtime.stopApplicationProfiling('api')).type.toBe<Promise<Buffer>>()
+  expect(runtime.stopApplicationProfiling('api', { type: 'cpu' }, true)).type.toBe<Promise<Buffer>>()
+})
+
+test('RuntimeExtension', () => {
+  const extension: RuntimeExtension = async ({ runtime, itc, logger, options, root }: RuntimeExtensionContext) => {
+    expect(runtime).type.toBe<Runtime>()
+    expect(options).type.toBe<Record<string, unknown>>()
+    expect(root).type.toBe<string>()
+
+    logger.info('loaded')
+
+    itc.handle('custom:command', payload => payload)
+    expect(itc.send<number>('api', 'custom:command', { value: 42 })).type.toBe<Promise<number>>()
+    expect(itc.notify('api', 'custom:event', { value: 42 })).type.toBe<Promise<void>>()
+
+    return {
+      async close () {}
+    }
+  }
+
+  expect(extension).type.toBe<RuntimeExtension>()
+
+  const instance: RuntimeExtensionInstance = {}
+  expect(instance.close).type.toBe<(() => void | Promise<void>) | undefined>()
 })

@@ -4,6 +4,7 @@ import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticGlobal } from '@platformatic/globals'
 import { JSONSchemaType } from 'ajv'
 import * as colorette from 'colorette'
+import { EventEmitter } from 'node:events'
 import { Logger } from 'pino'
 import { PlatformaticRuntimeConfig } from './config.js'
 
@@ -52,6 +53,10 @@ export namespace errors {
   export const InspectorHostError: () => FastifyError
   export const CannotMapSpecifierToAbsolutePathError: (specifier: string) => FastifyError
   export const NodeInspectorFlagsNotSupportedError: () => FastifyError
+  export const FailedToLoadExtensionError: (path: string, error: string) => FastifyError
+  export const InvalidExtensionError: (path: string) => FastifyError
+  export const ReservedITCHandlerNameError: (name: string) => FastifyError
+  export const DuplicateITCHandlerNameError: (name: string) => FastifyError
 }
 
 export namespace symbols {
@@ -148,7 +153,29 @@ export class WrappedGenerator extends BaseGenerator {}
 
 export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 
-export declare class Runtime {
+export interface RuntimeExtensionITC {
+  handle (name: string, handler: (payload: any) => any): void
+  send<Response = unknown> (target: string, name: string, payload?: unknown): Promise<Response>
+  notify (target: string, name: string, payload?: unknown): Promise<void>
+}
+
+export interface RuntimeExtensionContext {
+  runtime: Runtime
+  itc: RuntimeExtensionITC
+  logger: Logger
+  options: Record<string, unknown>
+  root: string
+}
+
+export interface RuntimeExtensionInstance {
+  close?: () => void | Promise<void>
+}
+
+export type RuntimeExtension = (
+  context: RuntimeExtensionContext
+) => void | RuntimeExtensionInstance | Promise<void | RuntimeExtensionInstance>
+
+export declare class Runtime extends EventEmitter {
   init (): Promise<void>
   start (silent?: boolean): Promise<string | undefined>
   stop (silent?: boolean): Promise<void>
@@ -167,6 +194,8 @@ export declare class Runtime {
   restartApplication (id: string): Promise<void>
   addApplications (applications: unknown[], start?: boolean): Promise<ApplicationDetails[]>
   removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
+  startApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<void>
+  stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
 }
 
 export function wrapInRuntimeConfig (

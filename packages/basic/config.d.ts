@@ -10,6 +10,23 @@ export interface PlatformaticBasicConfig {
   module?: string;
   runtime?: {
     preload?: string | string[];
+    extensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
     basePath?: string;
     services?: {
       [k: string]: unknown;

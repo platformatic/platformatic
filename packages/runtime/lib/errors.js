@@ -145,6 +145,26 @@ export const MissingPprofCapture = createError(
   'Please install @platformatic/wattpm-pprof-capture'
 )
 
+export const FailedToLoadExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_LOAD_EXTENSION`,
+  'Failed to load the extension "%s": %s'
+)
+
+export const InvalidExtensionError = createError(
+  `${ERROR_PREFIX}_INVALID_EXTENSION`,
+  'The extension "%s" must export a setup function as its default export'
+)
+
+export const ReservedITCHandlerNameError = createError(
+  `${ERROR_PREFIX}_RESERVED_ITC_HANDLER_NAME`,
+  'The ITC command name "%s" is reserved by the runtime'
+)
+
+export const DuplicateITCHandlerNameError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_ITC_HANDLER_NAME`,
+  'The ITC command "%s" has already been registered'
+)
+
 export const FailedToSendHealthSignalsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_SEND_HEALTH_SIGNALS`,
   'Cannot send health signals from application "%s": %s'

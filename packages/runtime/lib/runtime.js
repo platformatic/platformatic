@@ -23,7 +23,7 @@ import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
-import { dirname, isAbsolute, join } from 'node:path'
+import { basename, dirname, isAbsolute, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
@@ -39,9 +39,13 @@ import {
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
   CannotRemoveEntrypointError,
+  DuplicateITCHandlerNameError,
+  FailedToLoadExtensionError,
   InvalidArgumentError,
+  InvalidExtensionError,
   MessagingError,
   MissingPprofCapture,
+  ReservedITCHandlerNameError,
   RuntimeAbortedError,
   WorkerInterceptorJoinTimeoutError,
   WorkerNotFoundError
@@ -161,6 +165,9 @@ export class Runtime extends EventEmitter {
   #workers
   #workersBroadcastChannel
   #workerITCHandlers
+  #reservedITCHandlerNames
+  #extensions
+  #extensionsWantHealthMetrics
   #restartingApplications
   #restartingWorkers
   #dynamicWorkersScaler
@@ -232,6 +239,9 @@ export class Runtime extends EventEmitter {
       getSharedContext: this.getSharedContext.bind(this),
       sendHealthSignals: this.#processHealthSignals.bind(this)
     }
+    this.#reservedITCHandlerNames = new Set(Object.keys(this.#workerITCHandlers))
+    this.#extensions = []
+    this.#extensionsWantHealthMetrics = false
     this.#sharedContext = {}
 
     if (this.#isProduction) {
@@ -295,6 +305,10 @@ export class Runtime extends EventEmitter {
         this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
       }
     }
+
+    // Load extensions before creating any worker so that custom ITC handlers
+    // registered by the extensions are available to all workers.
+    await this.#loadExtensions()
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
@@ -425,6 +439,8 @@ export class Runtime extends EventEmitter {
 
     await this.stop(silent)
     this.#updateStatus('closing')
+
+    await this.#closeExtensions()
 
     // The management API autocloses by itself via event in management-api.js.
     // This is needed to let management API stop endpoint to reply.
@@ -2176,9 +2192,9 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollectionIfNeeded () {
-    // Need health metrics if dynamic workers scaler exists (for vertical scaling)
-    // or if any worker has health checks enabled
-    let needsHealthMetrics = !!this.#dynamicWorkersScaler
+    // Need health metrics if dynamic workers scaler exists (for vertical scaling),
+    // if an extension subscribed to them or if any worker has health checks enabled
+    let needsHealthMetrics = !!this.#dynamicWorkersScaler || this.#extensionsWantHealthMetrics
 
     if (!needsHealthMetrics) {
       // Check if any worker has health checks enabled
@@ -3458,6 +3474,115 @@ export class Runtime extends EventEmitter {
 
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
+  }
+
+  async #loadExtensions () {
+    let extensions = this.#config.extensions
+
+    // Do not load extensions when building applications
+    if (!extensions || this.#context.build) {
+      return
+    }
+
+    if (!Array.isArray(extensions)) {
+      extensions = [extensions]
+    }
+
+    for (const extension of extensions) {
+      const { path, options } = typeof extension === 'string' ? { path: extension } : extension
+
+      let setup
+      try {
+        setup = (await import(pathToFileURL(path))).default
+      } catch (e) {
+        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
+      }
+
+      if (typeof setup !== 'function') {
+        throw new InvalidExtensionError(path)
+      }
+
+      const logger = this.logger.child({ name: `extension:${basename(path)}` })
+
+      try {
+        const instance = await setup({
+          runtime: this,
+          itc: this.#createExtensionITC(),
+          logger,
+          options: options ?? {},
+          root: this.#root
+        })
+
+        this.#extensions.push({ path, instance })
+      } catch (e) {
+        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
+      }
+    }
+
+    // If any extension subscribed to health metrics during its setup, make sure
+    // the health metrics collection is started even if no health check or
+    // dynamic workers scaler is enabled. Note that this is evaluated here on
+    // purpose, before any worker health check listener is registered.
+    this.#extensionsWantHealthMetrics = this.listenerCount('application:worker:health:metrics') > 0
+  }
+
+  async #closeExtensions () {
+    // Close in reverse order, so that extensions loaded later, which might depend
+    // on earlier ones, are closed first.
+    const extensions = this.#extensions.splice(0).reverse()
+
+    for (const { path, instance } of extensions) {
+      try {
+        await instance?.close?.()
+      } catch (e) {
+        this.logger.error({ err: ensureLoggableError(e) }, `Failed to close the extension "${path}".`)
+      }
+    }
+  }
+
+  #createExtensionITC () {
+    return {
+      handle: (name, handler) => {
+        if (this.#reservedITCHandlerNames.has(name)) {
+          throw new ReservedITCHandlerNameError(name)
+        }
+
+        if (name in this.#workerITCHandlers) {
+          throw new DuplicateITCHandlerNameError(name)
+        }
+
+        this.#workerITCHandlers[name] = handler
+
+        // Workers copy the handlers when their ITC is created, so also register
+        // the handler on all running workers.
+        for (const worker of this.#workers.values()) {
+          worker[kITC]?.handle(name, handler)
+        }
+      },
+      send: async (target, name, payload) => {
+        const worker = await this.#getApplicationById(target)
+        return sendViaITC(worker, name, payload)
+      },
+      notify: async (target, name, payload) => {
+        const matched = target.match(/^(.+):(\d+)$/)
+
+        if (matched) {
+          const worker = await this.#getWorkerByIdOrNext(matched[1], matched[2])
+          worker[kITC].notify(name, payload)
+          return
+        }
+
+        if (!this.#applications.has(target)) {
+          throw new ApplicationNotFoundError(target, this.getApplicationsIds().join(', '))
+        }
+
+        for (const worker of this.#workers.values()) {
+          if (worker[kApplicationId] === target && worker[kWorkerStatus] === 'started') {
+            worker[kITC].notify(name, payload)
+          }
+        }
+      }
+    }
   }
 
   #updateLoggingPrefixes () {

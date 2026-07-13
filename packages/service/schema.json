@@ -1070,6 +1070,59 @@
             }
           ]
         },
+        "extensions": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolvePath": true
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "resolvePath": true
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "basePath": {
           "type": "string"
         },

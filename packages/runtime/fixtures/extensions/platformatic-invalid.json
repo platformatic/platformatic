@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "entrypoint": "a",
+  "extensions": "extension-invalid.js",
+  "autoload": {
+    "path": "./services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{{PORT}}"
+  },
+  "logger": {
+    "level": "error"
+  }
+}
