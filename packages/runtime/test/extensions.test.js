@@ -164,11 +164,13 @@ test('extensions subscribed to health metrics receive them even without health c
   throw new Error('The extension never received health metrics')
 })
 
-test('extensions receive the profiles captured by the continuous profiler', async t => {
+test('extensions receive the profiles captured by the continuous profiler, also after a restart', async t => {
   cleanExtensionGlobals()
   globalThis.__pltExtensionProfileEvents = []
   process.env.PORT = 0
 
+  // The fixture extension enables continuous profiling on every worker via
+  // the application:worker:started event, as shown in the documentation
   const configFile = join(fixturesDir, 'extensions', 'platformatic-profiles.json')
   const app = await createRuntime(configFile)
   await app.start()
@@ -177,38 +179,44 @@ test('extensions receive the profiles captured by the continuous profiler', asyn
     return app.close()
   })
 
-  // Enable continuous profiling with a short rotation window
-  await app.startApplicationProfiling('a', { type: 'cpu', intervalMicros: 1000, durationMillis: 300 })
-
-  try {
+  async function waitForCapturedProfiles () {
     // Wait for at least two rotations
     for (let i = 0; i < 100; i++) {
       const events = globalThis.__pltExtensionProfileEvents
 
       if (events.length > 1) {
-        const event = events[0]
-        strictEqual(event.id, 'a:0')
-        strictEqual(event.application, 'a')
-        strictEqual(event.worker, 0)
-        strictEqual(event.type, 'cpu')
-        strictEqual(typeof event.timestamp, 'number')
-
-        // The event only carries metadata, the profile is retrieved on demand
-        strictEqual(event.profile, undefined)
-
-        const profile = await app.getApplicationLastProfile(event.id, { type: event.type })
-        ok(profile instanceof Uint8Array || Buffer.isBuffer(profile))
-        ok(profile.length > 0)
-        return
+        return events[0]
       }
 
       await new Promise(resolve => setTimeout(resolve, 100))
     }
 
     throw new Error('The extension never received the captured profiles')
-  } finally {
-    await app.stopApplicationProfiling('a')
   }
+
+  const event = await waitForCapturedProfiles()
+  strictEqual(event.id, 'a:0')
+  strictEqual(event.application, 'a')
+  strictEqual(event.worker, 0)
+  strictEqual(event.type, 'cpu')
+  strictEqual(typeof event.timestamp, 'number')
+
+  // The event only carries metadata, the profile is retrieved on demand
+  strictEqual(event.profile, undefined)
+
+  const profile = await app.getApplicationLastProfile(event.id, { type: event.type })
+  ok(profile instanceof Uint8Array || Buffer.isBuffer(profile))
+  ok(profile.length > 0)
+
+  // Profiling must be re-enabled on the replacement worker after a restart.
+  // Truncate the array in place since the extension captured its reference.
+  await app.restartApplication('a')
+  globalThis.__pltExtensionProfileEvents.length = 0
+
+  const eventAfterRestart = await waitForCapturedProfiles()
+  strictEqual(eventAfterRestart.application, 'a')
+
+  await app.stopApplicationProfiling(eventAfterRestart.id, { type: 'cpu' })
 })
 
 test('extensions cannot register reserved ITC commands', async t => {

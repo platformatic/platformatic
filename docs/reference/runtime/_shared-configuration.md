@@ -109,6 +109,10 @@ in reverse order.
 
 Extensions are not loaded when building the applications (for example via `wattpm build`).
 
+For a complete worked example — enabling continuous profiling on every worker when it starts (or is
+restarted) and shipping the captured profiles — see the
+[Capture Flamegraphs on Health Events](../../guides/capture-flamegraphs-on-health-events.md) guide.
+
 ### `applications`
 
 `applications` is an array of objects that defines the applications managed by the

@@ -139,8 +139,13 @@ await itc.send('flamegraph:capture', {
 
 Instead of capturing a profile only when something goes wrong, you can keep the profiler always on. When profiling is started with the `durationMillis` option, the profiler rotates the profile window at that interval and the runtime emits [`application:worker:profile:captured`](../reference/runtime/programmatic.md#applicationworkerprofilecaptured) every time a window completes. The event only carries metadata — profiles can be big, so the runtime never moves them around unless someone asks. Retrieve the profile on demand with `getApplicationLastProfile()`:
 
+Profiling state lives inside each worker thread, so it must be enabled per worker and re-enabled whenever a worker is replaced. Subscribing to `application:worker:started` covers all the cases with a single handler: it fires for every worker after it has fully started, both on the initial runtime startup and every time a worker is restarted (after a crash, a reload or a scaling event).
+
 ```js
 export default async function setup ({ runtime, logger, options }) {
+  const { applications = ['api'], durationMillis = 60000 } = options
+
+  // Ship each completed profile window
   runtime.on('application:worker:profile:captured', async ({ id, application, worker, type }) => {
     try {
       const profile = await runtime.getApplicationLastProfile(id, { type })
@@ -153,9 +158,21 @@ export default async function setup ({ runtime, logger, options }) {
     }
   })
 
-  // Rotate a CPU profile window every minute for every worker of "api"
-  runtime.on('started', () => {
-    runtime.startApplicationProfiling('api', { type: 'cpu', durationMillis: 60000 })
+  // Enable continuous profiling on every worker as soon as it starts.
+  // This also covers replacement workers, which start with a fresh profiler.
+  runtime.on('application:worker:started', async ({ application, worker }) => {
+    if (!applications.includes(application)) {
+      return
+    }
+
+    try {
+      await runtime.startApplicationProfiling(`${application}:${worker}`, {
+        type: 'cpu',
+        durationMillis
+      })
+    } catch (err) {
+      logger.error({ err, application, worker }, 'failed to start continuous profiling')
+    }
   })
 }
 ```

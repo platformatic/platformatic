@@ -2779,6 +2779,11 @@ export class Runtime extends EventEmitter {
         return this.#discardWorker(newWorker)
       }
 
+      // Register the worker before starting it, like in the regular startup flow,
+      // so that it is addressable when the application:worker:started event is emitted.
+      // The discard paths below remove it from the map via #cleanupWorker.
+      this.#workers.set(newWorkerId, newWorker)
+
       // Add the worker to the mesh
       await this.#startWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false, 0, newWorker, true)
 
@@ -2786,10 +2791,13 @@ export class Runtime extends EventEmitter {
       if (this.#status !== 'started') {
         return this.#discardWorker(newWorker)
       }
-
-      this.#workers.set(newWorkerId, newWorker)
     } catch (e) {
       this.#workerPortOffsets.delete(newWorkerId)
+
+      if (this.#workers.get(newWorkerId) === newWorker) {
+        this.#workers.delete(newWorkerId)
+      }
+
       newWorker?.terminate?.()
       throw e
     }
