@@ -79,6 +79,23 @@ export async function managementApiPlugin (app, opts) {
     await runtime.restart(applications)
   })
 
+  app.get('/scheduler', async () => {
+    const jobs = await runtime.getScheduler()
+    return { jobs }
+  })
+
+  app.post('/scheduler/:name/pause', async request => {
+    return runtime.pauseSchedulerJob(request.params.name)
+  })
+
+  app.post('/scheduler/:name/resume', async request => {
+    return runtime.resumeSchedulerJob(request.params.name)
+  })
+
+  app.post('/scheduler/:name/run', async request => {
+    return runtime.runSchedulerJob(request.params.name)
+  })
+
   app.get('/applications', async () => {
     return runtime.getApplications()
   })

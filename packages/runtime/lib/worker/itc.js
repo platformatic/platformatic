@@ -305,6 +305,22 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
       },
 
+      async getApplicationScheduledTasks () {
+        if (typeof controller.capability.getScheduledTasks !== 'function') {
+          return []
+        }
+
+        return controller.capability.getScheduledTasks()
+      },
+
+      async runApplicationScheduledTasks ({ scheduleId, scheduledTime }) {
+        if (typeof controller.capability.runScheduledTasks !== 'function') {
+          throw new Error(`Application "${application.id}" does not support scheduled task execution`)
+        }
+
+        return controller.capability.runScheduledTasks(scheduleId, scheduledTime)
+      },
+
       async getApplicationMeta () {
         try {
           return await controller.capability.getMeta()

@@ -5,13 +5,17 @@ import {
   FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
-  FailedToGetRuntimeOpenapi
+  FailedToGetRuntimeOpenapi,
+  FailedToGetRuntimeScheduler,
+  FailedToUpdateRuntimeScheduler
 } from '../../lib/errors.js';
 import type {
   Metric,
   ReadableBody,
   Runtime,
-  RuntimeApplications
+  RuntimeApplications,
+  RuntimeSchedulerJob,
+  RuntimeSchedulerRunResult
 } from '../../lib/index.js';
 import { RuntimeApiClient } from '../../lib/index.js';
 
@@ -32,6 +36,18 @@ test('RuntimeApiClient methods', () => {
     Promise<string>
   >();
   expect(api.getRuntimes()).type.toBe<Promise<Runtime[]>>();
+  expect(api.getRuntimeScheduler(runtime.pid)).type.toBe<
+    Promise<{ jobs: RuntimeSchedulerJob[] }>
+  >();
+  expect(api.pauseRuntimeSchedulerJob(runtime.pid, 'job')).type.toBe<
+    Promise<RuntimeSchedulerJob>
+  >();
+  expect(api.resumeRuntimeSchedulerJob(runtime.pid, 'job')).type.toBe<
+    Promise<RuntimeSchedulerJob>
+  >();
+  expect(api.runRuntimeSchedulerJob(runtime.pid, 'job')).type.toBe<
+    Promise<RuntimeSchedulerRunResult>
+  >();
 });
 
 async function unused() {
@@ -106,6 +122,10 @@ test('error factories', () => {
   expect(FailedToGetRuntimeConfig).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeEnv).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeOpenapi).type.toBe<(arg: string) => FastifyError>();
+  expect(FailedToGetRuntimeScheduler).type.toBe<(arg: string) => FastifyError>();
+  expect(FailedToUpdateRuntimeScheduler).type.toBe<
+    (arg: string) => FastifyError
+  >();
   expect(FailedToGetRuntimeHistoryLogs).type.toBe<
     (arg: string) => FastifyError
   >();

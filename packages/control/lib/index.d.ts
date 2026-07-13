@@ -94,11 +94,37 @@ export interface LogIndexes {
   indexes: number[]
 }
 
+export interface RuntimeSchedulerJob {
+  name: string
+  cron: string
+  source: 'config' | 'application'
+  paused: boolean
+  maxRetries: number
+  lastExecutedAt: string | null
+  lastStatus: 'success' | 'failed' | null
+  nextRunAt: string | null
+  callbackUrl?: string
+  method?: string
+  applicationId?: string
+  scheduleId?: string
+  tasks?: string[]
+}
+
+export interface RuntimeSchedulerRunResult {
+  name: string
+  success: boolean
+  executedAt: string
+}
+
 export class RuntimeApiClient {
   getMatchingRuntime (options?: { pid?: string; name?: string }): Promise<Runtime>
   getRuntimes (): Promise<Runtime[]>
   getRuntimeMetadata (pid: number): Promise<Runtime>
   getRuntimeApplications (pid: number): Promise<RuntimeApplications>
+  getRuntimeScheduler (pid: number): Promise<{ jobs: RuntimeSchedulerJob[] }>
+  pauseRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
+  resumeRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
+  runRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerRunResult>
   getRuntimeConfig (
     pid: number
   ): Promise<
