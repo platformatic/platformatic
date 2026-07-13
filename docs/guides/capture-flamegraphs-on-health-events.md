@@ -120,7 +120,7 @@ export default async function setup ({ runtime, itc, logger, options }) {
 
 The extension reacts to two triggers:
 
-- **Health metrics** - Once an extension subscribes to `application:worker:health:metrics` during its setup, the runtime collects health data (event loop utilization, heap usage and custom health signals) for every worker each second and emits this event, even when health checks are not configured.
+- **Health metrics** - Once an extension subscribes to [`application:worker:health:metrics`](../reference/runtime/programmatic.md#applicationworkerhealthmetrics) during its setup, the runtime collects health data (event loop utilization, heap usage and custom health signals) for every worker each second and emits this event, even when health checks are not configured.
 - **Custom commands** - Applications can request a capture themselves through the custom `flamegraph:capture` command. For example, from any application:
 
 ```js

@@ -89,7 +89,7 @@ export default async function setup ({ runtime, itc, logger, options, root }) {
 The setup function receives a context object with the following properties:
 
 - **`runtime`** - The [Runtime](./programmatic.md) instance. It is an `EventEmitter`, so extensions can
-  subscribe to all runtime events and invoke any public method.
+  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method.
 - **`itc`** - A facade over the runtime ITC:
   - **`handle(name, handler)`** - Registers a custom command invocable from any application via
     `globalThis.platformatic.itc.send(name, payload)`. The name must not clash with the commands
