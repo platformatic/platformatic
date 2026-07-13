@@ -103,6 +103,16 @@ function parseOrigins (origins) {
   })
 }
 
+function formatMetricValue (value) {
+  if (Number.isNaN(value)) {
+    return 'NaN'
+  } else if (!Number.isFinite(value)) {
+    return value < 0 ? '-Inf' : '+Inf'
+  }
+
+  return `${value}`
+}
+
 // Always run operations in parallel to avoid deadlocks when services have dependencies
 const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
@@ -1251,9 +1261,7 @@ export class Runtime extends EventEmitter {
 
     let metrics = null
 
-    const applicationRestartMetrics = format === 'json'
-      ? this.#getApplicationRestartMetricsJson()
-      : this.#formatApplicationRestartMetricsText()
+    const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
 
     // Get process-level metrics once from main thread registry (if available)
     let processMetricsJson = null
@@ -1268,16 +1276,16 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        // Get thread-specific metrics from worker
+        // Get thread-specific metrics from worker. Always collect JSON so that
+        // the text format can be serialized once with a single HELP/TYPE block
+        // per metric family, as required by the Prometheus exposition format.
         const applicationMetrics = await executeWithTimeout(
-          sendViaITC(worker, 'getMetrics', format),
+          sendViaITC(worker, 'getMetrics', 'json'),
           this.#config.metrics?.timeout ?? 10000
         )
 
         if (applicationMetrics && applicationMetrics !== kTimeout) {
-          if (metrics === null) {
-            metrics = format === 'json' ? [] : ''
-          }
+          metrics ??= []
 
           // Build worker labels including custom labels from metrics config
           const workerLabels = {
@@ -1289,21 +1297,13 @@ export class Runtime extends EventEmitter {
             workerLabels.workerId = workerId
           }
 
-          if (format === 'json') {
-            // Duplicate process metrics with worker labels and add to output
-            if (processMetricsJson) {
-              this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
-            }
-            // Add worker's thread-specific metrics
-            for (let i = 0; i < applicationMetrics.length; i++) {
-              metrics.push(applicationMetrics[i])
-            }
-          } else {
-            // Text format: format process metrics with worker labels
-            if (processMetricsJson) {
-              metrics += this.#formatProcessMetricsText(processMetricsJson, workerLabels)
-            }
-            metrics += applicationMetrics
+          // Duplicate process metrics with worker labels and add to output
+          if (processMetricsJson) {
+            this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
+          }
+          // Add worker's thread-specific metrics
+          for (let i = 0; i < applicationMetrics.length; i++) {
+            metrics.push(applicationMetrics[i])
           }
         }
       } catch (e) {
@@ -1321,9 +1321,11 @@ export class Runtime extends EventEmitter {
     }
 
     if (metrics !== null && applicationRestartMetrics.length > 0) {
-      metrics = format === 'json'
-        ? [...applicationRestartMetrics, ...metrics]
-        : applicationRestartMetrics + metrics
+      metrics = [...applicationRestartMetrics, ...metrics]
+    }
+
+    if (metrics !== null && format !== 'json') {
+      metrics = this.#formatMetricsAsText(metrics)
     }
 
     return { metrics }
@@ -1360,28 +1362,6 @@ export class Runtime extends EventEmitter {
     return metrics
   }
 
-  #formatApplicationRestartMetricsText () {
-    let output = ''
-
-    for (const applicationId of this.#applications.keys()) {
-      const labelParts = []
-      const labels = this.#getApplicationRestartMetricLabels(applicationId)
-
-      for (const [key, val] of Object.entries(labels)) {
-        const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
-        labelParts.push(`${key}="${escapedVal}"`)
-      }
-
-      const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
-
-      output += `# HELP ${kApplicationRestartsMetricName} ${kApplicationRestartsMetricHelp}\n`
-      output += `# TYPE ${kApplicationRestartsMetricName} counter\n`
-      output += `${kApplicationRestartsMetricName}${labelStr} ${this.#applicationRestartCounts.get(applicationId) ?? 0}\n`
-    }
-
-    return output
-  }
-
   // Apply labels to process metrics and push to output array (for JSON format)
   #applyLabelsToMetrics (processMetrics, labels, outputArray) {
     for (let i = 0; i < processMetrics.length; i++) {
@@ -1406,27 +1386,33 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  // Format process metrics as Prometheus text format with labels
-  #formatProcessMetricsText (processMetricsJson, labels) {
+  // Serialize JSON metrics to the Prometheus text exposition format.
+  // Samples are grouped by metric family so each family is emitted as a single
+  // block with one HELP/TYPE header: the format forbids repeating them, and
+  // strict parsers (e.g. OpenMetrics-based ones like Dynatrace) would otherwise
+  // only ingest the first block for each metric name.
+  #formatMetricsAsText (metricsJson) {
+    const families = new Map()
+
+    for (const metric of metricsJson) {
+      let family = families.get(metric.name)
+      if (!family) {
+        family = { help: metric.help, type: metric.type, values: [] }
+        families.set(metric.name, family)
+      }
+      family.values.push(...metric.values)
+    }
+
     let output = ''
+    for (const [name, family] of families) {
+      const escapedHelp = String(family.help).replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
+      output += `# HELP ${name} ${escapedHelp}\n`
+      output += `# TYPE ${name} ${family.type}\n`
 
-    for (let i = 0; i < processMetricsJson.length; i++) {
-      const metric = processMetricsJson[i]
-      const name = metric.name
-      const help = metric.help
-      const type = metric.type
-
-      // Add HELP and TYPE lines
-      output += `# HELP ${name} ${help}\n`
-      output += `# TYPE ${name} ${type}\n`
-
-      const values = metric.values
-      for (let j = 0; j < values.length; j++) {
-        const v = values[j]
-        const combinedLabels = { ...labels, ...v.labels }
+      for (const v of family.values) {
         const labelParts = []
 
-        for (const [key, val] of Object.entries(combinedLabels)) {
+        for (const [key, val] of Object.entries(v.labels ?? {})) {
           // Escape label values for Prometheus format
           const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
           labelParts.push(`${key}="${escapedVal}"`)
@@ -1434,7 +1420,7 @@ export class Runtime extends EventEmitter {
 
         const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
         const metricName = v.metricName || name
-        output += `${metricName}${labelStr} ${v.value}\n`
+        output += `${metricName}${labelStr} ${formatMetricValue(v.value)}\n`
       }
     }
 
