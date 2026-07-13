@@ -352,8 +352,8 @@ export class Runtime extends EventEmitter {
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
-    if (config.scheduler && !this.#context.build) {
-      this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
+    if (!this.#context.build) {
+      this.#scheduler = startScheduler(config.scheduler ?? [], this.#dispatcher, logger)
     }
 
     this.#updateStatus('init')
@@ -708,6 +708,7 @@ export class Runtime extends EventEmitter {
 
     for (const application of applications) {
       this.#dynamicWorkersScaler?.remove(application)
+      await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
     }
@@ -816,6 +817,8 @@ export class Runtime extends EventEmitter {
       await this.#startWorker(config, applicationConfig, workers, id, i, silent)
     }
 
+    await this.#registerApplicationSchedulerJobs(id)
+
     this.emitAndNotify('application:started', id)
     await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
   }
@@ -829,6 +832,7 @@ export class Runtime extends EventEmitter {
     const workersCount = workersIds.length
 
     this.emitAndNotify('application:stopping', id)
+    await this.#scheduler?.stopApplicationJobs(id)
 
     if (typeof workersCount === 'number') {
       const stopInvocations = []
@@ -1971,6 +1975,78 @@ export class Runtime extends EventEmitter {
     const application = await this.#getApplicationById(id, true)
 
     return sendViaITC(application, 'getApplicationGraphQLSchema')
+  }
+
+  async getApplicationScheduledTasks (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationScheduledTasks')
+  }
+
+  async runApplicationScheduledTasks (id, scheduleId, scheduledTime) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'runApplicationScheduledTasks', { scheduleId, scheduledTime })
+  }
+
+  getScheduler () {
+    return this.#scheduler?.getJobs() ?? []
+  }
+
+  pauseSchedulerJob (name) {
+    return this.#schedulerOrThrow().pauseJob(name)
+  }
+
+  resumeSchedulerJob (name) {
+    return this.#schedulerOrThrow().resumeJob(name)
+  }
+
+  runSchedulerJob (name) {
+    return this.#schedulerOrThrow().runJob(name)
+  }
+
+  #schedulerOrThrow () {
+    if (!this.#scheduler) {
+      throw new Error('The scheduler is not configured')
+    }
+
+    return this.#scheduler
+  }
+
+  async #registerApplicationSchedulerJobs (id) {
+    if (!this.#scheduler) {
+      return
+    }
+
+    const pausedJobs = new Set(
+      this.#scheduler
+        .getJobs()
+        .filter(job => job.applicationId === id && job.paused)
+        .map(job => job.name)
+    )
+
+    await this.#scheduler.removeApplicationJobs(id)
+
+    const schedules = await this.getApplicationScheduledTasks(id)
+    for (const schedule of schedules) {
+      const name = `${id}:${schedule.id}`
+      this.#scheduler.addJob(
+        {
+          name,
+          cron: schedule.cron,
+          source: 'application',
+          applicationId: id,
+          scheduleId: schedule.id,
+          tasks: schedule.tasks,
+          maxRetries: 3
+        },
+        ({ scheduledTime }) => this.runApplicationScheduledTasks(id, schedule.id, scheduledTime)
+      )
+
+      if (pausedJobs.has(name)) {
+        await this.#scheduler.pauseJob(name)
+      }
+    }
   }
 
   async getWorkers (includeRaw = false) {
@@ -3358,6 +3434,8 @@ export class Runtime extends EventEmitter {
     if (!stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
+
+    await this.#registerApplicationSchedulerJobs(applicationId)
   }
 
   async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
