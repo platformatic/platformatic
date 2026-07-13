@@ -204,7 +204,7 @@ The optional `prefix` value is prepended to all gateway deduplication keys so mu
 
 ## Timeouts
 
-Deduplication buffers the leader response so it can be replayed to waiting requests.
+Deduplication retains a copy of the leader response so it can be replayed to waiting requests. The leader client receives the response streamed as it arrives from the upstream; waiting requests receive the complete response once the leader response has finished.
 
 Important options:
 
@@ -233,7 +233,7 @@ Example:
 
 If all retry attempts are exhausted, the request bypasses deduplication and is proxied normally. This keeps deduplication as an optimization instead of a source of request hangs.
 
-Gateway deduplication buffers the leader response before replaying it to waiters. For streamed or chunked responses, the final response size might not be known before the response has been read. Enforcing a hard size limit after the response starts would make duplicate requests wait and then receive no replayable result, so deduplication does not impose a response size cutoff.
+Gateway deduplication streams the leader response to its client while retaining all chunks in memory, and replays the complete response to waiters. For streamed or chunked responses, the final response size might not be known before the response has been read. Enforcing a hard size limit after the response starts would make duplicate requests wait and then receive no replayable result, so deduplication does not impose a response size cutoff.
 
 Enable deduplication only on controlled routes whose response sizes are bounded or roughly predictable. Large responses increase gateway memory usage and, when using Valkey storage, serialization and storage cost.
 

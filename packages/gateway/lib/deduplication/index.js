@@ -4,6 +4,7 @@ import Router from 'find-my-way'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
+import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
@@ -130,10 +131,34 @@ export async function createDeduplicationHandler ({
         async function deduplicateResponse (proxiedRequest, proxiedReply, res) {
           const body = new DynamicBuffer()
 
+          // The client receives the body as it arrives from the upstream, while
+          // the same chunks accumulate for storage. Backpressure from the client
+          // is deliberately ignored: publication to the waiters must never depend
+          // on how fast the leader client consumes the response, and the chunks
+          // are retained in full for storage anyway, so this costs no extra
+          // memory. If the client goes away mid-response, the upstream is still
+          // consumed to completion so that the waiters can be served.
+          const stream = new PassThrough()
+          stream.on('error', () => {})
+
+          const sent = Promise.resolve(
+            baseOnResponse ? baseOnResponse(proxiedRequest, proxiedReply, { ...res, stream }) : proxiedReply.send(stream)
+          )
+          // The rejection is rethrown by the return below; this only prevents it
+          // from being reported as unhandled while the body is still streaming.
+          sent.catch(() => {})
+
           try {
             for await (const chunk of res.stream) {
-              body.append(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+              const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+              body.append(buffer)
+
+              if (!stream.destroyed) {
+                stream.write(buffer)
+              }
             }
+
+            stream.end()
 
             await storage.setResponse(
               responseId,
@@ -148,17 +173,19 @@ export async function createDeduplicationHandler ({
             await storage.unlock(key, token)
           } catch (error) {
             app.log.error({ err: ensureLoggableError(error) }, 'Error while deduplicating gateway response')
+
+            // Only sever the client when the body was actually truncated: a
+            // storage failure after the body completed should not abort a
+            // client which is still draining a valid response.
+            if (!stream.writableEnded) {
+              stream.destroy(error)
+            }
+
             await publishError({ storage, key, token, responseId, config, metrics })
             throw error
           }
 
-          const stream = body.asReadable()
-
-          if (baseOnResponse) {
-            return baseOnResponse(proxiedRequest, proxiedReply, { ...res, stream })
-          }
-
-          return proxiedReply.send(stream)
+          return sent
         }
 
         async function deduplicateError (proxiedReply, error) {

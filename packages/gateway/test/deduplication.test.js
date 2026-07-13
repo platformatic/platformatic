@@ -571,6 +571,95 @@ test('should replay binary chunks without concatenating before storage', async (
   )
 })
 
+test('should stream the leader response while buffering it for the waiters', async () => {
+  let upstreamProducedLastChunk = false
+  let firstChunkSeenBeforeUpstreamEnd = false
+
+  async function * slowBody () {
+    yield Buffer.from('he')
+    await sleep(200)
+    upstreamProducedLastChunk = true
+    yield Buffer.from('llo')
+  }
+
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from(slowBody())
+      })
+    }
+  )
+
+  const reply = createReply()
+  reply.send = async function (payload) {
+    const chunks = []
+
+    for await (const chunk of payload) {
+      if (chunks.length === 0 && !upstreamProducedLastChunk) {
+        firstChunkSeenBeforeUpstreamEnd = true
+      }
+
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    }
+
+    this.payload = Buffer.concat(chunks)
+  }
+
+  await handler(createRequest(), reply, '/value', {})
+
+  assert.equal(reply.payload.toString(), 'hello')
+  assert.equal(firstChunkSeenBeforeUpstreamEnd, true)
+})
+
+test('should not delay waiters when the leader client consumes slowly', async () => {
+  const order = []
+  let upstreamCalls = 0
+
+  async function * upstreamBody () {
+    yield Buffer.from('he')
+    await sleep(150)
+    yield Buffer.from('llo')
+  }
+
+  const handler = await createDeduplicationTestHandler(
+    { enabled: true, lockTtl: 2000, ttl: 1000 },
+    async (_request, reply, _dest, options) => {
+      upstreamCalls++
+      return options.onResponse(createRequest(), reply, {
+        statusCode: 200,
+        headers: {},
+        stream: ReadableStream.from(upstreamBody())
+      })
+    }
+  )
+
+  const slowReply = createReply()
+  slowReply.send = async function (payload) {
+    const chunks = []
+
+    for await (const chunk of payload) {
+      await sleep(300)
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    }
+
+    this.payload = Buffer.concat(chunks)
+  }
+
+  const leader = handler(createRequest(), slowReply, '/value', {}).then(() => order.push('leader'))
+  await sleep(50)
+  const waiterReply = createReply()
+  await handler(createRequest(), waiterReply, '/value', {}).then(() => order.push('waiter'))
+  await leader
+
+  assert.equal(upstreamCalls, 1)
+  assert.deepEqual(order, ['waiter', 'leader'])
+  assert.equal(waiterReply.payload.toString(), 'hello')
+  assert.equal(slowReply.payload.toString(), 'hello')
+})
+
 test('should increment fallback metric', async () => {
   const metrics = createDeduplicationMetrics()
   let upstreamCalls = 0
