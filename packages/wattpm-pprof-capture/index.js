@@ -197,7 +197,30 @@ function rotateProfile (type) {
   const wasRunning = state.profilerStarted
 
   stopProfiler(type, state)
+
+  if (wasRunning && state.latestProfile) {
+    notifyProfileCaptured(type, state)
+  }
+
   maybeStartProfiler(type, state, wasRunning)
+}
+
+// Notify the main thread that the continuous profiler completed a profile
+// window. The profile itself is purposely not included as it can be big and
+// there might be no consumer: interested code can retrieve it on demand via
+// the getLastProfile command.
+function notifyProfileCaptured (type, state) {
+  const itc = getITC({ throwOnMissing: false })
+
+  if (!itc) {
+    return
+  }
+
+  try {
+    itc.notify('profile:captured', { type, timestamp: state.latestProfileTimestamp })
+  } catch (err) {
+    getLogger({ throwOnMissing: false })?.error({ err }, 'Failed to notify the captured profile')
+  }
 }
 
 function maybeStartProfiler (type, state, wasRunning) {

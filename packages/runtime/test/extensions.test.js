@@ -164,6 +164,53 @@ test('extensions subscribed to health metrics receive them even without health c
   throw new Error('The extension never received health metrics')
 })
 
+test('extensions receive the profiles captured by the continuous profiler', async t => {
+  cleanExtensionGlobals()
+  globalThis.__pltExtensionProfileEvents = []
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-profiles.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  t.after(() => {
+    return app.close()
+  })
+
+  // Enable continuous profiling with a short rotation window
+  await app.startApplicationProfiling('a', { type: 'cpu', intervalMicros: 1000, durationMillis: 300 })
+
+  try {
+    // Wait for at least two rotations
+    for (let i = 0; i < 100; i++) {
+      const events = globalThis.__pltExtensionProfileEvents
+
+      if (events.length > 1) {
+        const event = events[0]
+        strictEqual(event.id, 'a:0')
+        strictEqual(event.application, 'a')
+        strictEqual(event.worker, 0)
+        strictEqual(event.type, 'cpu')
+        strictEqual(typeof event.timestamp, 'number')
+
+        // The event only carries metadata, the profile is retrieved on demand
+        strictEqual(event.profile, undefined)
+
+        const profile = await app.getApplicationLastProfile(event.id, { type: event.type })
+        ok(profile instanceof Uint8Array || Buffer.isBuffer(profile))
+        ok(profile.length > 0)
+        return
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
+    throw new Error('The extension never received the captured profiles')
+  } finally {
+    await app.stopApplicationProfiling('a')
+  }
+})
+
 test('extensions cannot register reserved ITC commands', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0

@@ -120,6 +120,11 @@ test('Runtime.stopApplicationProfiling', () => {
   expect(runtime.stopApplicationProfiling('api', { type: 'cpu' }, true)).type.toBe<Promise<Buffer>>()
 })
 
+test('Runtime.getApplicationLastProfile', () => {
+  expect(runtime.getApplicationLastProfile('api')).type.toBe<Promise<Buffer>>()
+  expect(runtime.getApplicationLastProfile('api:0', { type: 'cpu' }, true)).type.toBe<Promise<Buffer>>()
+})
+
 test('RuntimeExtension', () => {
   const extension: RuntimeExtension = async ({ runtime, itc, logger, options, root }: RuntimeExtensionContext) => {
     expect(runtime).type.toBe<Runtime>()

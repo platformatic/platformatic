@@ -187,6 +187,14 @@ test('handles ping messages', async t => {
 
 These act on a single application by `id`. If an entrypoint exists, it can be restarted but cannot be removed (see below).
 
+### Profiling
+
+These methods require [`@platformatic/wattpm-pprof-capture`](../../guides/profiling-with-watt.md) to be installed. The `id` can be an application ID (a worker is chosen in round-robin) or `application:worker-index` for a specific worker.
+
+- **`runtime.startApplicationProfiling(id, options?): Promise<void>`** — Starts profiling a worker. `options.type` is `cpu` (default) or `heap`. Passing `options.durationMillis` enables continuous profiling: the profile window is rotated at that interval and each completed window emits the [`application:worker:profile:captured`](#applicationworkerprofilecaptured) event.
+- **`runtime.stopApplicationProfiling(id, options?): Promise<Buffer>`** — Stops profiling and returns the last captured profile in pprof format.
+- **`runtime.getApplicationLastProfile(id, options?): Promise<Buffer>`** — Returns the last profile window captured by the continuous profiler without stopping it.
+
 ### Events
 
 The `Runtime` instance is an `EventEmitter`. Programmatic users and [extensions](./configuration.md#extensions) can subscribe to the following events with `runtime.on(event, listener)`.
@@ -219,6 +227,18 @@ The payload is an object with the following properties:
 - **`healthSignals`** (`array`) - The custom health signals sent by the worker via `sendHealthSignals` since the last collection, if any.
 
 A related event, `application:worker:unhealthy` (with a `{ application, worker }` payload), is emitted when a worker with health checks enabled exceeds the configured thresholds and is about to be restarted.
+
+#### `application:worker:profile:captured`
+
+Emitted when the continuous profiler completes a profile window in a worker, that is when profiling was started with the `durationMillis` option and a rotation happened. The payload is an object with the following properties:
+
+- **`id`** (`string`) - The full worker ID (`application:index`).
+- **`application`** (`string`) - The application ID.
+- **`worker`** (`number`) - The zero-based worker index.
+- **`type`** (`string`) - The profile type, either `cpu` or `heap`.
+- **`timestamp`** (`number`) - When the profile window was completed, in milliseconds since the epoch.
+
+The event purposely does not carry the profile, since it can be big and there might be no consumer. Retrieve it on demand with `runtime.getApplicationLastProfile(id, { type })`, before the next window completes.
 
 #### Custom worker events
 

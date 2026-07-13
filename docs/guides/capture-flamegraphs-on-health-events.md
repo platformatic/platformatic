@@ -135,6 +135,33 @@ await itc.send('flamegraph:capture', {
 })
 ```
 
+## Continuous profiling
+
+Instead of capturing a profile only when something goes wrong, you can keep the profiler always on. When profiling is started with the `durationMillis` option, the profiler rotates the profile window at that interval and the runtime emits [`application:worker:profile:captured`](../reference/runtime/programmatic.md#applicationworkerprofilecaptured) every time a window completes. The event only carries metadata — profiles can be big, so the runtime never moves them around unless someone asks. Retrieve the profile on demand with `getApplicationLastProfile()`:
+
+```js
+export default async function setup ({ runtime, logger, options }) {
+  runtime.on('application:worker:profile:captured', async ({ id, application, worker, type }) => {
+    try {
+      const profile = await runtime.getApplicationLastProfile(id, { type })
+
+      // Upload the profile, as shown above, or hand it to a continuous
+      // profiling backend of your choice.
+      await upload(`flamegraphs/${application}/${worker}/${new Date().toISOString()}.pb`, profile)
+    } catch (err) {
+      logger.error({ err, id }, 'failed to collect the captured profile')
+    }
+  })
+
+  // Rotate a CPU profile window every minute for every worker of "api"
+  runtime.on('started', () => {
+    runtime.startApplicationProfiling('api', { type: 'cpu', durationMillis: 60000 })
+  })
+}
+```
+
+To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event.
+
 ## Analyze the flamegraphs
 
 The uploaded files are standard [pprof](https://github.com/google/pprof) profiles. Download one and turn it into a flamegraph:

@@ -844,6 +844,13 @@ export class Runtime extends EventEmitter {
     return sendViaITC(service, 'stopProfiling', options)
   }
 
+  async getApplicationLastProfile (id, options = {}, ensureStarted = true) {
+    const service = await this.#getApplicationById(id, ensureStarted)
+    this.#validatePprofCapturePreload()
+
+    return sendViaITC(service, 'getLastProfile', options)
+  }
+
   async takeApplicationHeapSnapshot (id, ensureStarted = true) {
     const service = await this.#getApplicationById(id, ensureStarted)
 
@@ -2102,6 +2109,20 @@ export class Runtime extends EventEmitter {
 
     worker[kITC].on(openTelemetryITCMessage, resourceMetrics => {
       this.#opentelemetryMetricsForwarder?.collect(resourceMetrics)
+    })
+
+    // The continuous profiler notifies us when a profile window is completed.
+    // The event only carries metadata: the profile can be retrieved on demand
+    // via getApplicationLastProfile. We use emit instead of emitAndNotify since
+    // other workers are not interested in this event.
+    worker[kITC].on('profile:captured', ({ type, timestamp }) => {
+      this.emit('application:worker:profile:captured', {
+        id: workerId,
+        application: applicationId,
+        worker: index,
+        type,
+        timestamp
+      })
     })
 
     worker[kITC].on('request:restart', async () => {
