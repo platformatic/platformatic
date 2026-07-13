@@ -4,6 +4,19 @@
   "description": "Platformatic Nuxt Capability",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./scheduler": {
+      "types": "./lib/scheduler/module.d.ts",
+      "import": "./lib/scheduler/module.js",
+      "default": "./lib/scheduler/module.js"
+    },
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
@@ -26,6 +39,7 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "light-my-request": "^6.6.0",
     "semver": "^7.6.3"

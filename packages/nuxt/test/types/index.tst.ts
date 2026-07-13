@@ -1,6 +1,7 @@
 import type { Configuration } from '@platformatic/foundation'
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
+import schedulerModule from '@platformatic/nuxt/scheduler'
 import {
   NuxtCapability,
   type PlatformaticNuxtConfig,
@@ -30,5 +31,9 @@ test('Nuxt types', () => {
   expect(packageJson).type.toBe<Record<string, unknown>>()
   expect(version).type.toBe<string>()
   expect(supportedVersions).type.toBe<string>()
-  expect(new NuxtCapability('/tmp', config)).type.toBe<NuxtCapability>()
+  const capability = new NuxtCapability('/tmp', config)
+  expect(capability).type.toBe<NuxtCapability>()
+  expect(capability.getScheduledTasks()).type.toBe<Promise<Array<{ id: string; cron: string; tasks: string[] }>>>()
+  expect(capability.runScheduledTasks('0', Date.now())).type.toBe<Promise<unknown>>()
+  expect(schedulerModule).type.toBeCallableWith({}, { hook () {} })
 })

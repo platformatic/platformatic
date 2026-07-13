@@ -14,10 +14,12 @@ import {
   sanitizeHTTPSArgument,
   sanitizeHTTPSOptions,
 } from '@platformatic/foundation'
+import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
+import { readSchedulerManifest } from './scheduled-tasks.js'
 import { version } from './schema.js'
 
 export const supportedVersions = '^4.0.0'
@@ -27,6 +29,8 @@ export class NuxtCapability extends BaseCapability {
   #basePath
   #server
   #dispatcher
+  #scheduledTasks
+  #schedulerManifest
 
   constructor (root, config, context) {
     super('nuxt', version, root, config, context)
@@ -145,6 +149,47 @@ export class NuxtCapability extends BaseCapability {
         needsRootTrailingSlash: false,
       },
     }
+  }
+
+  async getScheduledTasks () {
+    if (!this.isProduction) {
+      return this.#scheduledTasks ?? []
+    }
+
+    this.#schedulerManifest ??= readSchedulerManifest(
+      resolve(this.root, this.config.nuxt?.outputDirectory ?? '.output')
+    )
+    this.#scheduledTasks ??= await this.#schedulerManifest
+    return this.#scheduledTasks
+  }
+
+  async runScheduledTasks (scheduleId, scheduledTime) {
+    if (this.childManager) {
+      if (!this.clientWs) {
+        throw new Error('The application has not started yet')
+      }
+
+      return this.childManager.send(this.clientWs, 'platformatic:nuxt:run-scheduled-tasks', {
+        scheduleId,
+        scheduledTime,
+      })
+    }
+
+    const events = getEvents({ throwOnMissing: false })
+    const { promise, resolve, reject } = Promise.withResolvers()
+
+    if (!events?.emit('platformatic:nuxt:run-scheduled-tasks', { scheduleId, scheduledTime, resolve, reject })) {
+      throw new Error('The application does not use the @platformatic/nuxt/scheduler module')
+    }
+
+    return promise
+  }
+
+  setupChildManagerEventsForwarding (childManager) {
+    super.setupChildManagerEventsForwarding(childManager)
+    childManager.on('platformatic:nuxt:scheduled-tasks', scheduledTasks => {
+      this.#scheduledTasks = scheduledTasks
+    })
   }
 
   /* c8 ignore next 5 */
