@@ -227,7 +227,11 @@ export const gateway = {
                   custom: {
                     type: 'object',
                     properties: {
-                      path: { type: 'string' }
+                      path: { type: 'string' },
+                      options: {
+                        type: 'object',
+                        additionalProperties: true
+                      }
                     },
                     required: ['path'],
                     additionalProperties: false

@@ -60,14 +60,26 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - **`logs`** (`boolean`) - Enable logging for WebSocket reconnection events.
       - **`hooks`** (`object`) - WebSocket hooks configuration:
         - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
-    - **`custom`** (`object`) - Custom proxy logic configuration:
-      - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
-        - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
-        - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
-          - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
-          - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
-            See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
-        - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
+    - **`custom`** (`object`) - Custom proxy logic configuration. This is a supported public API: external modules and addons can rely on this contract to implement per-request routing, for example to route requests to different versions of the same application based on a header or a cookie. Supports the following options:
+      - **`path`** (**required**, `string`) - Path to a JavaScript/TypeScript file that exports the custom proxy hooks. The module can either export the hooks object directly (as the default export) or export a factory function `(options) => hooks` (synchronous or asynchronous) which receives the `options` value below and returns the hooks object.
+      - **`options`** (`object`) - An arbitrary JSON object which is passed to the factory function exported by the module referenced in `path`. It is ignored when the module exports the hooks object directly.
+
+      The hooks object supports the following properties, all optional:
+
+      - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
+      - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
+        - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
+        - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
+          See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
+      - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL for each request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
+
+        When `getUpstream` is provided, the following guarantees apply:
+
+        - The `upstream` setting is ignored and `base` may be `undefined`, so the function must always return a full origin (for example `http://127.0.0.1:3042` or `http://my-application.plt.local`).
+        - When running inside Platformatic Runtime or Watt, the returned origin can be the internal mesh address `http://<application-id>.plt.local` of **any** application in the runtime, including applications which are **not** listed in the gateway `applications` configuration. Such requests are routed through the runtime mesh network. This makes it possible to keep a single logical entry in the gateway configuration and dispatch each request to one of several runtime applications (for example several versions of the same application) at runtime.
+        - When no `ws.upstream` is configured, `getUpstream` also selects the upstream for WebSocket connections. It is invoked once per connection with the upgrade request at upgrade time.
+      - **`rewriteHeaders`** (`function`) - A function `(headers, request) => headers` invoked with the response headers received from the upstream (after the gateway performed its internal `Location` header rewriting) and the original request. It must return the headers object to send back to the client. Use it, for example, to add a `Set-Cookie` header which pins a client to the upstream selected by `getUpstream`. Since both hooks receive the same request object, `getUpstream` can attach data to it (e.g. `request.selectedUpstream = ...`) and `rewriteHeaders` can read it back.
+      - **`onError`** (`function`) - A function `(reply, { error }) => void` invoked when proxying a request fails. The gateway first logs the error, then invokes this hook instead of its default handler (which forwards the error to the client). Use `reply` to send a custom response. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#onerrorreply-error) for further information.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
@@ -137,7 +149,6 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       "id": "dynamic-router",
       "proxy": {
         "prefix": "/",
-        "upstream": "http://default-service.com",
         "custom": {
           "path": "./custom-proxy.js"
         }
@@ -165,7 +176,78 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         if (request.url.startsWith('/v2')) {
           return 'http://api-v2.example.com'
         }
-        return base
+        return 'http://api-v1.example.com'
+      }
+    }
+    ```
+
+    **Example: Per-Request Version Routing (header or cookie based)**
+
+    A single logical application is listed in the gateway configuration, while the requests
+    are dispatched at runtime to several applications running in the same runtime
+    (for example several versions of the same application). The target applications
+    do not need to be listed in the gateway configuration: any `http://<application-id>.plt.local`
+    origin is routed through the runtime mesh network.
+
+    ```json
+    {
+      "id": "main",
+      "proxy": {
+        "prefix": "/",
+        "custom": {
+          "path": "./version-router.js",
+          "options": {
+            "header": "x-app-version",
+            "cookie": "app-version",
+            "fallback": "main"
+          }
+        }
+      }
+    }
+    ```
+
+    Where `version-router.js` exports a factory function receiving `custom.options`:
+
+    ```javascript
+    function parseCookies (header) {
+      const cookies = {}
+
+      for (const part of (header ?? '').split(';')) {
+        const index = part.indexOf('=')
+
+        if (index !== -1) {
+          cookies[part.slice(0, index).trim()] = decodeURIComponent(part.slice(index + 1).trim())
+        }
+      }
+
+      return cookies
+    }
+
+    export default function createVersionRouter (options) {
+      return {
+        getUpstream (request) {
+          // Select the version via a request header or a cookie
+          const version =
+            request.headers[options.header] ?? parseCookies(request.headers.cookie)[options.cookie]
+
+          if (version) {
+            request.selectedVersion = version
+            return `http://${version}.plt.local`
+          }
+
+          return `http://${options.fallback}.plt.local`
+        },
+        rewriteHeaders (headers, request) {
+          // Pin the client to the selected version on subsequent requests
+          if (request.selectedVersion) {
+            headers['set-cookie'] = `${options.cookie}=${request.selectedVersion}; Path=/`
+          }
+
+          return headers
+        },
+        onError (reply, { error }) {
+          reply.code(503).send({ error: 'Selected version is unavailable' })
+        }
       }
     }
     ```

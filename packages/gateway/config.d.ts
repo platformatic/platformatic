@@ -257,6 +257,9 @@ export interface PlatformaticGatewayConfig {
             hostname?: string;
             custom?: {
               path: string;
+              options?: {
+                [k: string]: unknown;
+              };
             };
             deduplication?: {
               enabled?: boolean | string;

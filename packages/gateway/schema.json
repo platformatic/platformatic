@@ -851,6 +851,10 @@
                         "properties": {
                           "path": {
                             "type": "string"
+                          },
+                          "options": {
+                            "type": "object",
+                            "additionalProperties": true
                           }
                         },
                         "required": [

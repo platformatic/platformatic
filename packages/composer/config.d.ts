@@ -1037,6 +1037,9 @@ export interface PlatformaticComposerConfig {
             hostname?: string;
             custom?: {
               path: string;
+              options?: {
+                [k: string]: unknown;
+              };
             };
             deduplication?: {
               enabled?: boolean | string;
