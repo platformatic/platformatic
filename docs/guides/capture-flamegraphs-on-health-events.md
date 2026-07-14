@@ -166,6 +166,8 @@ export default async function setup ({ runtime, logger, options }) {
 
 To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. The runtime measures each worker's ELU from the main thread as part of its health metrics cycle — a reading that stays accurate even when the worker's event loop is saturated — and resumes or pauses the in-worker profiler with hysteresis to avoid rapid toggling. Prefer this option over starting and stopping captures yourself based on ELU readings.
 
+Continuous profiling also backs off automatically when a worker is overloaded: if the ELU rises above the worker's `health.maxELU` (0.99 by default), the runtime captures one last profile — announced via the usual event, so your extension still ships the window that shows what saturated the worker — and pauses profiling until the ELU recovers. Pass `maxELU` in the profiling options to change the cutoff, or `maxELU: false` to disable it.
+
 ## Analyze the flamegraphs
 
 The uploaded files are standard [pprof](https://github.com/google/pprof) profiles. Download one and turn it into a flamegraph:

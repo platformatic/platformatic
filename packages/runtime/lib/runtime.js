@@ -2130,18 +2130,45 @@ export class Runtime extends EventEmitter {
       })
     })
 
-    // The continuous profiler reports when profiling starts or stops. When an
-    // ELU threshold is set the profiler starts paused and the main thread
-    // drives it: the health metrics cycle measures the worker ELU and
-    // resumes/pauses the in-worker profiler (see #applyProfilingELUGates).
-    worker[kITC].on('profiling:started', ({ type, eluThreshold }) => {
-      if (eluThreshold == null) {
+    // The continuous profiler reports when profiling starts or stops. The main
+    // thread drives it based on the ELU measured by the health metrics cycle
+    // (see #applyProfilingELUGates): when an ELU threshold is set the profiler
+    // starts paused and only runs while the ELU is above it, and continuous
+    // profiling is paused while the worker ELU is above the maxELU cutoff so
+    // that profiling does not add overhead to an already overloaded worker.
+    worker[kITC].on('profiling:started', ({ type, eluThreshold, maxELU, continuous }) => {
+      // Resolve the overload cutoff: the maxELU profiling option overrides it
+      // (false disables it), otherwise continuous profiling defaults to the
+      // worker health.maxELU.
+      let overloadELU = null
+      if (typeof maxELU === 'number') {
+        overloadELU = maxELU
+      } else if (maxELU !== false && continuous) {
+        const healthConfig = worker[kConfig]?.health
+        const configMaxELU = Number(healthConfig?.maxELU)
+
+        if (healthConfig?.enabled !== false && Number.isFinite(configMaxELU)) {
+          overloadELU = configMaxELU
+        }
+      }
+
+      if (eluThreshold == null && overloadELU == null) {
         worker[kProfilingELUGates]?.delete(type)
         return
       }
 
       worker[kProfilingELUGates] ??= new Map()
-      worker[kProfilingELUGates].set(type, { eluThreshold, running: false })
+      worker[kProfilingELUGates].set(type, {
+        eluThreshold: eluThreshold ?? null,
+        maxELU: overloadELU,
+        // Hysteresis memories: `wanted` tracks the eluThreshold demand,
+        // `overloaded` tracks the maxELU cutoff. `running` is the last state
+        // commanded to the worker: the profiler starts paused when an ELU
+        // threshold is set and running otherwise.
+        wanted: eluThreshold == null,
+        overloaded: false,
+        running: eluThreshold == null
+      })
       this.#startHealthMetricsCollectionIfNeeded()
     })
 
@@ -2332,10 +2359,13 @@ export class Runtime extends EventEmitter {
   }
 
   // Drive the ELU gating of the continuous profiler from the main thread.
-  // The worker profiler starts paused when an ELU threshold is set: the health
-  // metrics cycle measures the worker ELU (without depending on the worker's
-  // event loop being responsive, and consistently with health checks) and
-  // resumes/pauses the in-worker profiler accordingly.
+  // The health metrics cycle measures the worker ELU (without depending on the
+  // worker's event loop being responsive, and consistently with health checks)
+  // and resumes/pauses the in-worker profiler accordingly. The profiler runs
+  // while the ELU is above the eluThreshold demand (if one is set) and below
+  // the maxELU overload cutoff (if one is set): crossing the cutoff captures
+  // one last profile and pauses profiling until the worker recovers, so that
+  // profiling does not add overhead to an already overloaded worker.
   #applyProfilingELUGates (worker, elu) {
     const gates = worker[kProfilingELUGates]
 
@@ -2344,10 +2374,17 @@ export class Runtime extends EventEmitter {
     }
 
     for (const [type, gate] of gates) {
-      // Hysteresis: resume when the ELU rises above the threshold, pause only
-      // when it drops below threshold - kProfilingELUHysteresis, to prevent
-      // rapid toggling.
-      const shouldRun = gate.running ? elu >= gate.eluThreshold - kProfilingELUHysteresis : elu > gate.eluThreshold
+      // Hysteresis on both bounds to prevent rapid toggling: each state only
+      // flips back once the ELU moves kProfilingELUHysteresis past the bound.
+      if (gate.eluThreshold != null) {
+        gate.wanted = gate.wanted ? elu >= gate.eluThreshold - kProfilingELUHysteresis : elu > gate.eluThreshold
+      }
+
+      if (gate.maxELU != null) {
+        gate.overloaded = gate.overloaded ? elu >= gate.maxELU - kProfilingELUHysteresis : elu > gate.maxELU
+      }
+
+      const shouldRun = gate.wanted && !gate.overloaded
 
       if (shouldRun === gate.running) {
         continue

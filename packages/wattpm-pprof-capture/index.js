@@ -350,7 +350,16 @@ export async function startProfiling (options = {}) {
 
   maybeStartProfiler(type, state)
 
-  notifyMainThread('profiling:started', { type, eluThreshold: options.eluThreshold ?? null })
+  // The main thread uses this to set up the ELU gating: continuous profiling
+  // is also paused while the worker ELU is above the maxELU cutoff (which
+  // defaults to the worker health.maxELU and can be overridden or disabled
+  // via the maxELU option).
+  notifyMainThread('profiling:started', {
+    type,
+    eluThreshold: options.eluThreshold ?? null,
+    maxELU: options.maxELU ?? null,
+    continuous: options.durationMillis != null
+  })
 }
 
 export function stopProfiling (options = {}) {
@@ -423,6 +432,7 @@ export function getProfilingState (options = {}) {
     isCapturing: state.isCapturing,
     hasProfile: state.latestProfile != null,
     isProfilerRunning: state.profilerStarted,
+    isPaused: state.paused,
     isPausedBelowThreshold: state.eluThreshold != null && state.paused,
     eluThreshold: state.eluThreshold,
     latestProfileTimestamp: state.latestProfileTimestamp
