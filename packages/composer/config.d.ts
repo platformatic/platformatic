@@ -178,6 +178,23 @@ export interface PlatformaticComposerConfig {
   application?: {};
   runtime?: {
     preload?: string | string[];
+    extensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
     basePath?: string;
     services?: {
       [k: string]: unknown;

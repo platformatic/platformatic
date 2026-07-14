@@ -187,6 +187,63 @@ test('handles ping messages', async t => {
 
 These act on a single application by `id`. If an entrypoint exists, it can be restarted but cannot be removed (see below).
 
+### Profiling
+
+These methods require [`@platformatic/wattpm-pprof-capture`](../../guides/profiling-with-watt.md) to be installed. The `id` can be an application ID (a worker is chosen in round-robin) or `application:worker-index` for a specific worker.
+
+- **`runtime.startApplicationProfiling(id, options?): Promise<void>`** — Starts profiling a worker. `options.type` is `cpu` (default) or `heap`. Passing `options.durationMillis` enables continuous profiling: the profile window is rotated at that interval and each completed window emits the [`application:worker:profile:captured`](#applicationworkerprofilecaptured) event.
+- **`runtime.stopApplicationProfiling(id, options?): Promise<Buffer>`** — Stops profiling and returns the last captured profile in pprof format.
+- **`runtime.getApplicationLastProfile(id, options?): Promise<Buffer>`** — Returns the last profile window captured by the continuous profiler without stopping it.
+
+### Events
+
+The `Runtime` instance is an `EventEmitter`. Programmatic users and [extensions](./configuration.md#extensions) can subscribe to the following events with `runtime.on(event, listener)`.
+
+#### Runtime status events
+
+Emitted when the runtime changes status, with no payload: `init`, `starting`, `started`, `stopping`, `stopped`, `closing`, `closed`, `errored` (receives the error), `restarting`, `restarted`.
+
+#### Application lifecycle events
+
+All these events receive the application ID as payload: `application:init`, `application:starting`, `application:started`, `application:stopping`, `application:stopped`, `application:restarting`, `application:restarted`, `application:building`, `application:built`. `application:added` and `application:removed` receive the application details object instead.
+
+#### Worker lifecycle events
+
+All these events receive a `{ application, worker, workersCount }` payload, where `worker` is the zero-based worker index: `application:worker:init`, `application:worker:starting`, `application:worker:started`, `application:worker:stopping`, `application:worker:stopped`, `application:worker:changed`, `application:worker:reloaded`, `application:worker:exited`, `application:worker:unvailable`. Failure variants carry additional context: `application:worker:error` (adds `code`), `application:worker:start:error`, `application:worker:start:failed`, `application:worker:stop:error`, `application:worker:startTimeout` and `application:worker:exit:timeout`.
+
+#### `application:worker:health:metrics`
+
+Emitted every second for each running worker while health metrics collection is active. Collection is active when at least one of the following is true: a worker has health checks enabled (with `restartOnError` greater than `0`), the dynamic workers scaler is enabled, or an extension subscribed to this event during its setup.
+
+The payload is an object with the following properties:
+
+- **`id`** (`string`) - The full worker ID (`application:index`).
+- **`application`** (`string`) - The application ID.
+- **`worker`** (`number`) - The zero-based worker index.
+- **`currentHealth`** (`object` or `null`) - `null` when the health collection failed. Otherwise:
+  - **`elu`** (`number`) - The worker event loop utilization since the previous collection, between `0` and `1`.
+  - **`heapUsed`** (`number`) - The worker used heap size, in bytes.
+  - **`heapTotal`** (`number`) - The worker total heap size, in bytes. Heap statistics are refreshed once per minute.
+- **`healthSignals`** (`array`) - The custom health signals sent by the worker via `sendHealthSignals` since the last collection, if any.
+
+A related event, `application:worker:unhealthy` (with a `{ application, worker }` payload), is emitted when a worker with health checks enabled exceeds the configured thresholds and is about to be restarted.
+
+#### `application:worker:profile:captured`
+
+Emitted when the continuous profiler completes a profile window in a worker, that is when profiling was started with the `durationMillis` option and a rotation happened. The payload is an object with the following properties:
+
+- **`id`** (`string`) - The full worker ID (`application:index`).
+- **`application`** (`string`) - The application ID.
+- **`worker`** (`number`) - The zero-based worker index.
+- **`type`** (`string`) - The profile type, either `cpu` or `heap`.
+- **`timestamp`** (`number`) - When the profile window was completed, in milliseconds since the epoch.
+
+The event purposely does not carry the profile, since it can be big and there might be no consumer. Retrieve it on demand with `runtime.getApplicationLastProfile(id, { type })`, before the next window completes.
+
+#### Custom worker events
+
+Events emitted by application workers via the events API returned by `getEvents()` (using `emitAndNotify(name, ...args)`) are re-emitted by the runtime as `application:worker:event:<name>`, receiving the event arguments followed by the worker ID, the application ID and the worker index.
+
 ## Adding and removing applications at runtime
 
 The runtime supports adding and removing applications after `start()` has been called.

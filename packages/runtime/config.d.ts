@@ -10,6 +10,23 @@ export type PlatformaticRuntimeConfig = {
 } & {
   $schema?: string;
   preload?: string | string[];
+  extensions?:
+    | string
+    | {
+        path: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | (
+        | string
+        | {
+            path: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          }
+      )[];
   entrypoint?: string;
   basePath?: string;
   autoload?: {

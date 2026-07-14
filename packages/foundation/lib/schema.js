@@ -96,6 +96,37 @@ export const preload = {
   ]
 }
 
+const extension = {
+  anyOf: [
+    { type: 'string', resolvePath: true },
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['path'],
+      properties: {
+        path: {
+          type: 'string',
+          resolvePath: true
+        },
+        options: {
+          type: 'object',
+          additionalProperties: true
+        }
+      }
+    }
+  ]
+}
+
+export const extensions = {
+  anyOf: [
+    ...extension.anyOf,
+    {
+      type: 'array',
+      items: extension
+    }
+  ]
+}
+
 export const watch = {
   type: 'object',
   properties: {
@@ -1008,6 +1039,7 @@ export const runtimeProperties = {
     type: 'string'
   },
   preload,
+  extensions,
   entrypoint: {
     type: 'string'
   },
@@ -1605,6 +1637,7 @@ export const schemaComponents = {
   env,
   workers,
   preload,
+  extensions,
   watch,
   cors,
   logger,

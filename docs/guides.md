@@ -13,6 +13,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 ### Caching & Performance
 - **[Cache with Platformatic Watt](./guides/cache-with-platformatic-watt.md)** - Implement caching strategies to improve application performance
 - **[Profiling with Watt](./guides/profiling-with-watt.md)** - Profile and optimize your Watt applications for better performance
+- **[Capture Flamegraphs on Health Events](./guides/capture-flamegraphs-on-health-events.md)** - Automatically capture CPU profiles when workers become unhealthy and upload them to S3
 - **[Debugging with REPL](./guides/debugging-with-repl.md)** - Debug applications interactively using the built-in REPL
 
 ### Multi-Repository & Scaling

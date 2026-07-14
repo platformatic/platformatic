@@ -177,6 +177,25 @@ const { port1 } = new MessageChannel()
 await messaging.send('service', 'connect', { port: port1 }, { transferList: [port1] })
 ```
 
+### Communicating with runtime extensions
+
+When the runtime is configured with [`extensions`](./configuration.md#extensions), applications can invoke
+the custom commands registered by the extensions in the main thread using the ITC API returned by `getITC()`:
+
+```js
+import { getITC } from '@platformatic/globals'
+
+const itc = getITC()
+
+// Invoke a custom command registered by an extension via itc.handle()
+const response = await itc.send('acme:hello', { name: 'world' })
+
+// Receive notifications sent by an extension via itc.notify()
+itc.on('acme:ping', payload => {
+  console.log('received', payload)
+})
+```
+
 ### Shared context API
 
 The shared context API stores context that is shared between all runtime applications:
