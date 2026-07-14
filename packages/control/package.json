@@ -29,7 +29,7 @@
     "neostandard": "^0.12.0",
     "split2": "^4.2.0",
     "tstyche": "^6.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",

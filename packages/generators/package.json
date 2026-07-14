@@ -37,7 +37,7 @@
     "eslint": "9",
     "neostandard": "^0.12.0",
     "tstyche": "^6.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.19.0"
