@@ -10,6 +10,24 @@ export const tmpDir = resolve(import.meta.dirname, '../../tmp')
 
 const WAIT_TIMEOUT = process.env.CI ? 20_000 : 10_000
 const MAX_PORT = 65_535
+const MIN_WINDOWS_TEST_PORT = 1_024
+const WINDOWS_DYNAMIC_PORT_START = 49_152
+
+function getCandidatePort (size) {
+  if (process.platform !== 'win32') {
+    return 0
+  }
+
+  // Windows can add excluded ranges while the runner is active. Those ranges
+  // normally live in the dynamic port range and fail with EACCES when bound.
+  // Pick a random non-dynamic port so the range remains usable after probing.
+  const maxBasePort = WINDOWS_DYNAMIC_PORT_START - size
+  if (maxBasePort < MIN_WINDOWS_TEST_PORT) {
+    return 0
+  }
+
+  return MIN_WINDOWS_TEST_PORT + Math.floor(Math.random() * (maxBasePort - MIN_WINDOWS_TEST_PORT + 1))
+}
 
 function listen (server, host, port) {
   return new Promise((resolve, reject) => {
@@ -54,7 +72,7 @@ export async function findAvailablePortRange ({ host, size, startPort }) {
     try {
       const firstServer = createServer()
       servers.push(firstServer)
-      await listen(firstServer, host, startPort ?? 0)
+      await listen(firstServer, host, startPort ?? getCandidatePort(size))
       startPort = undefined
 
       const address = firstServer.address()
