@@ -9,6 +9,7 @@ import { createRuntime, updateConfigFile } from '../helpers.js'
 import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.js'
 
 const HOST = '127.0.0.1'
+const WINDOWS_DYNAMIC_PORT_START = 49_152
 
 async function listen (server, port = 0) {
   server.listen({ host: HOST, port, exclusive: true })
@@ -171,6 +172,17 @@ test('findAvailablePortRange retries when a port inside the candidate range is u
     await closeServer(candidateServer)
   }
 })
+
+test(
+  'findAvailablePortRange avoids the Windows dynamic port range',
+  { skip: process.platform !== 'win32' },
+  async () => {
+    const size = 2
+    const basePort = await findAvailablePortRange({ host: HOST, size })
+
+    strictEqual(basePort + size <= WINDOWS_DYNAMIC_PORT_START, true)
+  }
+)
 
 test('assigns one incremental port per entrypoint worker', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
