@@ -86,7 +86,9 @@ const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
+const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
 const kHealthITCTimeoutMs = 5000
+const kProfilingELUHysteresis = 0.1
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
@@ -149,6 +151,7 @@ export class Runtime extends EventEmitter {
   #entrypointPort
 
   #healthMetricsTimer
+  #healthMetricsCollectionActive
 
   #meshInterceptor
   #dispatcher
@@ -437,6 +440,7 @@ export class Runtime extends EventEmitter {
 
   async close (silent = false) {
     clearTimeout(this.#healthMetricsTimer)
+    this.#healthMetricsCollectionActive = false
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -2126,6 +2130,25 @@ export class Runtime extends EventEmitter {
       })
     })
 
+    // The continuous profiler reports when profiling starts or stops. When an
+    // ELU threshold is set the profiler starts paused and the main thread
+    // drives it: the health metrics cycle measures the worker ELU and
+    // resumes/pauses the in-worker profiler (see #applyProfilingELUGates).
+    worker[kITC].on('profiling:started', ({ type, eluThreshold }) => {
+      if (eluThreshold == null) {
+        worker[kProfilingELUGates]?.delete(type)
+        return
+      }
+
+      worker[kProfilingELUGates] ??= new Map()
+      worker[kProfilingELUGates].set(type, { eluThreshold, running: false })
+      this.#startHealthMetricsCollectionIfNeeded()
+    })
+
+    worker[kITC].on('profiling:stopped', ({ type }) => {
+      worker[kProfilingELUGates]?.delete(type)
+    })
+
     worker[kITC].on('request:restart', async () => {
       // Do not restart applications that are not fully started yet or when the runtime is still starting.
       // The gateway sends request:restart when it receives application:added events,
@@ -2214,15 +2237,24 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollectionIfNeeded () {
+    if (this.#healthMetricsCollectionActive || this.#status !== 'started') {
+      return
+    }
+
     // Need health metrics if dynamic workers scaler exists (for vertical scaling),
-    // if an extension subscribed to them or if any worker has health checks enabled
+    // if an extension subscribed to them, if any worker has health checks enabled
+    // or if any worker runs ELU-gated continuous profiling
     let needsHealthMetrics = !!this.#dynamicWorkersScaler || this.#extensionsWantHealthMetrics
 
     if (!needsHealthMetrics) {
-      // Check if any worker has health checks enabled
       for (const worker of this.#workers.values()) {
         const healthConfig = worker[kConfig]?.health
         if (healthConfig?.enabled && this.#getApplicationRestartOnError(this.#config, worker[kConfig]) > 0) {
+          needsHealthMetrics = true
+          break
+        }
+
+        if (worker[kProfilingELUGates]?.size > 0) {
           needsHealthMetrics = true
           break
         }
@@ -2235,8 +2267,11 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollection () {
+    this.#healthMetricsCollectionActive = true
+
     const collectHealthMetrics = async () => {
       if (this.#status !== 'started') {
+        this.#healthMetricsCollectionActive = false
         return
       }
 
@@ -2252,12 +2287,11 @@ export class Runtime extends EventEmitter {
           const id = worker[kApplicationId]
           const index = worker[kWorkerId]
           const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
+          const previousELU = worker[kLastHealthCheckELU]
 
           let health = null
           try {
-            health = await this.getWorkerHealth(worker, {
-              previousELU: worker[kLastHealthCheckELU]
-            })
+            health = await this.getWorkerHealth(worker, { previousELU })
           } catch (err) {
             this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
           } finally {
@@ -2276,6 +2310,13 @@ export class Runtime extends EventEmitter {
             currentHealth: health,
             healthSignals
           })
+
+          // Drive the ELU gating of the continuous profiler. The first sample
+          // is skipped as it reports the utilization since the thread started
+          // rather than over the last collection interval.
+          if (health && previousELU != null) {
+            this.#applyProfilingELUGates(worker, health.elu)
+          }
         })())
       }
 
@@ -2288,6 +2329,38 @@ export class Runtime extends EventEmitter {
 
     // Start the collection
     this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
+  }
+
+  // Drive the ELU gating of the continuous profiler from the main thread.
+  // The worker profiler starts paused when an ELU threshold is set: the health
+  // metrics cycle measures the worker ELU (without depending on the worker's
+  // event loop being responsive, and consistently with health checks) and
+  // resumes/pauses the in-worker profiler accordingly.
+  #applyProfilingELUGates (worker, elu) {
+    const gates = worker[kProfilingELUGates]
+
+    if (!gates?.size || typeof elu !== 'number') {
+      return
+    }
+
+    for (const [type, gate] of gates) {
+      // Hysteresis: resume when the ELU rises above the threshold, pause only
+      // when it drops below threshold - kProfilingELUHysteresis, to prevent
+      // rapid toggling.
+      const shouldRun = gate.running ? elu >= gate.eluThreshold - kProfilingELUHysteresis : elu > gate.eluThreshold
+
+      if (shouldRun === gate.running) {
+        continue
+      }
+
+      gate.running = shouldRun
+
+      try {
+        worker[kITC].notify(shouldRun ? 'resumeProfiling' : 'pauseProfiling', { type })
+      } catch (err) {
+        this.logger.error({ err }, 'Failed to toggle the continuous profiler')
+      }
+    }
   }
 
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {

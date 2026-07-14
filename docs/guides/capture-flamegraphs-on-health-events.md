@@ -164,7 +164,7 @@ export default async function setup ({ runtime, logger, options }) {
 }
 ```
 
-To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. This check runs inside the worker itself and uses hysteresis to avoid rapid toggling, so prefer it over starting and stopping captures from the main thread based on external ELU readings.
+To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. The runtime measures each worker's ELU from the main thread as part of its health metrics cycle — a reading that stays accurate even when the worker's event loop is saturated — and resumes or pauses the in-worker profiler with hysteresis to avoid rapid toggling. Prefer this option over starting and stopping captures yourself based on ELU readings.
 
 ## Analyze the flamegraphs
 
