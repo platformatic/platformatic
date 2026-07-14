@@ -73,7 +73,7 @@ export default async function setup ({ runtime, itc, logger, options, root }) {
   })
 
   // Register a custom command that applications can invoke via
-  // globalThis.platformatic.itc.send('acme:hello', payload)
+  // getITC().send('acme:hello', payload)
   itc.handle('acme:hello', async payload => {
     return { hello: payload.name }
   })
@@ -92,13 +92,14 @@ The setup function receives a context object with the following properties:
   subscribe to all [runtime events](./programmatic.md#events) and invoke any public method.
 - **`itc`** - A facade over the runtime ITC:
   - **`handle(name, handler)`** - Registers a custom command invocable from any application via
-    `globalThis.platformatic.itc.send(name, payload)`. The name must not clash with the commands
-    reserved by the runtime or with a command registered by another extension.
+    the [ITC API](./globals.md#communicating-with-runtime-extensions) returned by `getITC()` from
+    `@platformatic/globals`. The name must not clash with the commands reserved by the runtime or
+    with a command registered by another extension.
   - **`send(target, name, payload)`** - Sends a request to a worker and awaits its response. `target` is
     an application ID (a worker is chosen in round-robin) or `application:worker-index` for a specific worker.
   - **`notify(target, name, payload)`** - Sends a fire-and-forget notification. When `target` is an
     application ID, all its running workers are notified; use `application:worker-index` to target a
-    specific worker. Workers receive notifications via `globalThis.platformatic.itc.on(name, handler)`.
+    specific worker. Workers receive notifications via `getITC().on(name, handler)`.
 - **`logger`** - A child of the runtime logger.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`root`** - The runtime project root directory.

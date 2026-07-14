@@ -1,5 +1,7 @@
+import { getITC } from '@platformatic/globals'
+
 export default async function (fastify) {
-  const itc = globalThis.platformatic.itc
+  const itc = getITC()
   const pings = []
 
   itc.on('extension:ping', payload => {
