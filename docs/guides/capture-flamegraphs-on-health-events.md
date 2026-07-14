@@ -1,8 +1,8 @@
 # Capture Flamegraphs on Health Events
 
-When a production application misbehaves — event loop utilization spikes, memory grows, latency climbs — the profile you need is the one you did not capture. This guide shows how to use a [runtime extension](../reference/runtime/configuration.md#extensions) to automatically capture a CPU profile when a worker becomes unhealthy and upload it to Amazon S3, so a flamegraph of the incident is always waiting for you.
+When a production application misbehaves — event loop utilization spikes, memory grows, latency climbs — the profile you need is the one you did not capture. This guide shows how to use a [runtime extension](../reference/runtime/configuration.md#extensions) to capture a CPU profile when an application detects a problem and upload it to Amazon S3, so a flamegraph of the incident is always waiting for you.
 
-Everything runs in the runtime main thread: the extension observes health metrics for all workers, triggers the built-in pprof profiler, and ships the resulting profile with the AWS SDK from your own `node_modules`.
+Everything runs in the runtime main thread: the extension triggers the built-in pprof profiler and ships the resulting profile with the AWS SDK from your own `node_modules`. For fully automatic captures based on event loop utilization, use [continuous profiling](#continuous-profiling) below: the profiler has its own built-in ELU gating.
 
 ## Prerequisites
 
@@ -27,7 +27,6 @@ Register the extension in your `watt.json` (or `platformatic.json`) and pass its
       "options": {
         "bucket": "{PLT_FLAMEGRAPHS_BUCKET}",
         "region": "{PLT_AWS_REGION}",
-        "maxELU": 0.9,
         "profileDurationMillis": 10000,
         "cooldownMillis": 300000
       }
@@ -49,7 +48,6 @@ export default async function setup ({ runtime, itc, logger, options }) {
   const {
     bucket,
     region,
-    maxELU = 0.9,
     profileDurationMillis = 10000,
     cooldownMillis = 300000
   } = options
@@ -95,14 +93,6 @@ export default async function setup ({ runtime, itc, logger, options }) {
     }
   }
 
-  // Triggered by the runtime: health metrics are collected every second
-  // for every worker as soon as an extension subscribes to this event.
-  runtime.on('application:worker:health:metrics', ({ application, worker, currentHealth }) => {
-    if (currentHealth?.elu > maxELU) {
-      captureAndUpload(application, worker, `elu above ${maxELU}`)
-    }
-  })
-
   // Triggered by the applications: workers can explicitly request a capture,
   // for example when they detect slow requests.
   itc.handle('flamegraph:capture', async ({ application, worker, reason }) => {
@@ -118,10 +108,7 @@ export default async function setup ({ runtime, itc, logger, options }) {
 }
 ```
 
-The extension reacts to two triggers:
-
-- **Health metrics** - Once an extension subscribes to [`application:worker:health:metrics`](../reference/runtime/programmatic.md#applicationworkerhealthmetrics) during its setup, the runtime collects health data (event loop utilization, heap usage and custom health signals) for every worker each second and emits this event, even when health checks are not configured.
-- **Custom commands** - Applications can request a capture themselves through the custom `flamegraph:capture` command. For example, from any application:
+Applications request a capture through the custom `flamegraph:capture` command whenever they detect a problem — a slow request, a saturated queue, a failed health signal. For example, from any application:
 
 ```js
 import { getApplicationId, getITC, getWorkerId } from '@platformatic/globals'
@@ -177,7 +164,7 @@ export default async function setup ({ runtime, logger, options }) {
 }
 ```
 
-To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event.
+To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. This check runs inside the worker itself and uses hysteresis to avoid rapid toggling, so prefer it over starting and stopping captures from the main thread based on external ELU readings.
 
 ## Analyze the flamegraphs
 
