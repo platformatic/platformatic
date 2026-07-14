@@ -51,6 +51,10 @@ export type PlatformaticRuntimeConfig = {
           bufferPoolSize?: number | string;
           defaultHighWaterMark?: number | string;
         };
+        /**
+         * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+         */
+        restartOnError?: boolean | number;
         dependencies?: string[];
         arguments?: string[];
         env?: {

@@ -118,6 +118,7 @@ const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
+const DEFAULT_RESTART_ON_ERROR_DELAY = 5000
 
 export class Runtime extends EventEmitter {
   logger
@@ -1842,7 +1843,7 @@ export class Runtime extends EventEmitter {
   }
 
   async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true, attempt = 0) {
-    const { restartOnError } = config
+    const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
     const workerId = `${applicationId}:${index}`
 
     // Handle inspector
@@ -2184,7 +2185,7 @@ export class Runtime extends EventEmitter {
       // Check if any worker has health checks enabled
       for (const worker of this.#workers.values()) {
         const healthConfig = worker[kConfig]?.health
-        if (healthConfig?.enabled && this.#config.restartOnError > 0) {
+        if (healthConfig?.enabled && this.#getApplicationRestartOnError(this.#config, worker[kConfig]) > 0) {
           needsHealthMetrics = true
           break
         }
@@ -2485,7 +2486,7 @@ export class Runtime extends EventEmitter {
       }
 
       const { enabled, gracePeriod } = worker[kConfig].health
-      if (enabled && config.restartOnError > 0) {
+      if (enabled && this.#getApplicationRestartOnError(config, applicationConfig) > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
         setTimeout(
@@ -2523,7 +2524,7 @@ export class Runtime extends EventEmitter {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}: ${error.message}`)
       }
 
-      const restartOnError = config.restartOnError
+      const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
       if (disableRestartAttempts || !restartOnError) {
         throw error
@@ -2643,7 +2644,25 @@ export class Runtime extends EventEmitter {
     return index
   }
 
+  // Returns the effective restartOnError value for an application: the application-level
+  // value, when defined, takes precedence over the runtime-level one.
+  // The value is normalized to a number: false becomes 0 (never restart),
+  // true becomes the default delay.
+  #getApplicationRestartOnError (config, applicationConfig) {
+    let restartOnError = applicationConfig?.restartOnError ?? config.restartOnError
+
+    if (restartOnError === true) {
+      restartOnError = DEFAULT_RESTART_ON_ERROR_DELAY
+    } else if (restartOnError === false || restartOnError < 0) {
+      restartOnError = 0
+    }
+
+    return restartOnError
+  }
+
   async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt, portOffset) {
+    const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
+
     // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
     const restartKey = `${id}:${oldIndex}`
 
@@ -2689,10 +2708,10 @@ export class Runtime extends EventEmitter {
         }
       }
 
-      if (config.restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+      if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
         process.nextTick(restart.bind(this))
       } else {
-        setTimeout(restart.bind(this), config.restartOnError)
+        setTimeout(restart.bind(this), restartOnError)
       }
     })
 
