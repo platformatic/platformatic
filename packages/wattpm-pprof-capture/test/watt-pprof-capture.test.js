@@ -728,9 +728,41 @@ test('the final overload profile should survive a worker restart', async t => {
   assert.ok(profile.length > 0, 'Preserved profile should have content')
   assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
 
-  // The application-level id resolves to the most recent preserved profile
+  // Restart profiling on the replacement worker: until its first window
+  // completes the live worker reports "no profile available yet", and the
+  // preserved overload profile must still be served (also via the
+  // application-level id)
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000 })
+
   const { profile: profileByApp } = await app.getApplicationLastProfile('service')
   assert.ok(profileByApp.length > 0, 'Preserved profile should be returned for the application id')
+})
+
+test('the preserved overload profile should be served while the replacement worker is paused below threshold', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  const { profile: preserved } = await app.getApplicationLastProfile('service:0')
+  assert.ok(preserved instanceof Uint8Array && preserved.length > 0)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker and restart profiling gated on a threshold the idle
+  // worker will not reach: the live worker reports "not enough ELU", and the
+  // preserved overload profile must still be served
+  await app.restartApplication('service')
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, eluThreshold: 0.9 })
+
+  const { profile } = await app.getApplicationLastProfile('service')
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
+  assert.ok(arraysEqual(profile, preserved), 'Should return the preserved overload profile, not a fresh one')
 })
 
 test('getApplicationLastProfile should fall back to the preserved profile when the worker is blocked', async t => {

@@ -92,15 +92,19 @@ const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
 const kLastProfileTimeoutMs = 10000
 
-// getApplicationLastProfile only falls back to the preserved overload profile
-// when the worker cannot possibly serve one: it is gone, not started, or its
-// profiling was not (re)started. Live errors such as "no profile available
-// yet" are authoritative and rethrown.
+// getApplicationLastProfile falls back to the preserved overload profile
+// whenever the worker cannot currently provide one: it is gone, profiling was
+// not (re)started, no window has completed yet (e.g. profiling was just
+// restarted on a replacement worker) or the profiler is paused with no recent
+// window. The returned timestamp lets consumers judge freshness. Any other
+// error is rethrown.
 const kLastProfileFallbackCodes = new Set([
   'PLT_RUNTIME_APPLICATION_NOT_FOUND',
   'PLT_RUNTIME_WORKER_NOT_FOUND',
   'PLT_RUNTIME_APPLICATION_NOT_STARTED',
-  'PLT_PPROF_PROFILING_NOT_STARTED'
+  'PLT_PPROF_PROFILING_NOT_STARTED',
+  'PLT_PPROF_NO_PROFILE_AVAILABLE',
+  'PLT_PPROF_NOT_ENOUGH_ELU'
 ])
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
@@ -885,7 +889,21 @@ export class Runtime extends EventEmitter {
       if (result !== kTimeout) {
         // An older capture module which does not support includeTimestamp
         // returns the raw profile.
-        return result instanceof Uint8Array ? { profile: result, timestamp: null } : result
+        const value = result instanceof Uint8Array ? { profile: result, timestamp: null } : result
+
+        // A strictly newer live window supersedes the preserved overload
+        // profile: prune it so the preserved copy naturally expires once the
+        // worker is healthy again and its profiles are being consumed.
+        if (value.timestamp != null) {
+          const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
+          const preserved = this.#lastOverloadProfiles.get(key)
+
+          if (preserved && preserved.timestamp < value.timestamp) {
+            this.#lastOverloadProfiles.delete(key)
+          }
+        }
+
+        return value
       }
 
       // The worker event loop is not responding (e.g. it is hard-blocked).
