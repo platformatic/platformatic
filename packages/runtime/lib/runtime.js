@@ -43,6 +43,7 @@ import {
   FailedToLoadExtensionError,
   InvalidArgumentError,
   InvalidExtensionError,
+  LastProfileTimeoutError,
   MessagingError,
   MissingPprofCapture,
   ReservedITCHandlerNameError,
@@ -89,6 +90,18 @@ const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
 const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
+const kLastProfileTimeoutMs = 10000
+
+// getApplicationLastProfile only falls back to the preserved overload profile
+// when the worker cannot possibly serve one: it is gone, not started, or its
+// profiling was not (re)started. Live errors such as "no profile available
+// yet" are authoritative and rethrown.
+const kLastProfileFallbackCodes = new Set([
+  'PLT_RUNTIME_APPLICATION_NOT_FOUND',
+  'PLT_RUNTIME_WORKER_NOT_FOUND',
+  'PLT_RUNTIME_APPLICATION_NOT_STARTED',
+  'PLT_PPROF_PROFILING_NOT_STARTED'
+])
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
@@ -172,6 +185,7 @@ export class Runtime extends EventEmitter {
   #reservedITCHandlerNames
   #extensions
   #extensionsWantHealthMetrics
+  #lastOverloadProfiles
   #restartingApplications
   #restartingWorkers
   #dynamicWorkersScaler
@@ -246,6 +260,7 @@ export class Runtime extends EventEmitter {
     this.#reservedITCHandlerNames = new Set(Object.keys(this.#workerITCHandlers))
     this.#extensions = []
     this.#extensionsWantHealthMetrics = false
+    this.#lastOverloadProfiles = new Map()
     this.#sharedContext = {}
 
     if (this.#isProduction) {
@@ -441,6 +456,7 @@ export class Runtime extends EventEmitter {
   async close (silent = false) {
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
+    this.#lastOverloadProfiles.clear()
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -850,10 +866,63 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationLastProfile (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'getLastProfile', options)
+    const type = options.type ?? 'cpu'
+    const timeout = options.timeout ?? kLastProfileTimeoutMs
+    let error
+
+    try {
+      const service = await this.#getApplicationById(id, ensureStarted)
+
+      // Attach a noop handler so that a late settlement after the timeout
+      // does not surface as an unhandled rejection.
+      const pull = sendViaITC(service, 'getLastProfile', options)
+      pull.catch(() => {})
+
+      const profile = await executeWithTimeout(pull, timeout, kTimeout)
+
+      if (profile !== kTimeout) {
+        return profile
+      }
+
+      // The worker event loop is not responding (e.g. it is hard-blocked).
+      error = new LastProfileTimeoutError(id)
+    } catch (e) {
+      if (!kLastProfileFallbackCodes.has(e.code)) {
+        throw e
+      }
+
+      error = e
+    }
+
+    const preserved = this.#getPreservedOverloadProfile(id, type)
+
+    if (preserved) {
+      return preserved.profile
+    }
+
+    throw error
+  }
+
+  // The final profile of an overload pause is pushed by the worker and
+  // preserved in the main thread (see the profile:overload listener), so that
+  // the evidence of what saturated a worker survives the worker being blocked
+  // or replaced.
+  #getPreservedOverloadProfile (id, type) {
+    if (id.includes(':')) {
+      return this.#lastOverloadProfiles.get(`${id}:${type}`)
+    }
+
+    // Application-level id: return the most recent profile among its workers
+    let latest = null
+    for (const [key, entry] of this.#lastOverloadProfiles) {
+      if (key.startsWith(`${id}:`) && key.endsWith(`:${type}`) && (!latest || entry.timestamp > latest.timestamp)) {
+        latest = entry
+      }
+    }
+
+    return latest
   }
 
   async takeApplicationHeapSnapshot (id, ensureStarted = true) {
@@ -2174,6 +2243,16 @@ export class Runtime extends EventEmitter {
 
     worker[kITC].on('profiling:stopped', ({ type }) => {
       worker[kProfilingELUGates]?.delete(type)
+      this.#lastOverloadProfiles.delete(`${workerId}:${type}`)
+    })
+
+    // When an overload pause is applied, the worker pushes the encoded final
+    // profile. It is preserved here so that the evidence of what saturated
+    // the worker can be retrieved (see getApplicationLastProfile) even while
+    // the worker event loop is blocked, and it survives the worker being
+    // replaced by the health checks.
+    worker[kITC].on('profile:overload', ({ type, timestamp, profile }) => {
+      this.#lastOverloadProfiles.set(`${workerId}:${type}`, { profile, timestamp })
     })
 
     worker[kITC].on('request:restart', async () => {

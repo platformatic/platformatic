@@ -196,7 +196,7 @@ function rotateProfile (type) {
   // A pending pause takes effect here: the completed window was captured and
   // announced above, and maybeStartProfiler leaves the profiler stopped.
   maybeStartProfiler(type, state)
-  keepLastProfileOnOverloadPause(state)
+  handleOverloadPause(type, state)
 }
 
 function notifyMainThread (name, payload) {
@@ -227,14 +227,34 @@ function maybeStartProfiler (type, state) {
   }
 }
 
-// When the pause is due to the worker being overloaded, keep the final
-// profile available for the whole pause: it is the evidence of what saturated
-// the worker and consumers may retrieve it at any point during the overload.
-// Below-threshold pauses keep the regular expiry so that a stale profile is
-// not mistaken for a recent one.
-function keepLastProfileOnOverloadPause (state) {
-  if (state.paused && state.pauseReason === 'overload') {
-    unscheduleLastProfileCleanup(state)
+// When the pause is due to the worker being overloaded, the final profile is
+// the evidence of what saturated the worker: keep it available for the whole
+// pause (consumers may retrieve it at any point during the overload) and push
+// an encoded copy to the main thread, so that it survives even if this worker
+// becomes unresponsive or is replaced by the health checks before anyone
+// pulls it. This is the only case where the profile payload crosses the
+// thread boundary unrequested, and it is bounded to one profile per overload
+// episode. Below-threshold pauses keep the regular expiry so that a stale
+// profile is not mistaken for a recent one.
+function handleOverloadPause (type, state) {
+  if (!state.paused || state.pauseReason !== 'overload') {
+    return
+  }
+
+  unscheduleLastProfileCleanup(state)
+
+  if (!state.latestProfile) {
+    return
+  }
+
+  try {
+    notifyMainThread('profile:overload', {
+      type,
+      timestamp: state.latestProfileTimestamp,
+      profile: state.latestProfile.encode()
+    })
+  } catch (err) {
+    getLogger({ throwOnMissing: false })?.error({ err, type }, 'Failed to preserve the overload profile')
   }
 }
 
@@ -282,7 +302,7 @@ export function pauseProfiling (options = {}) {
       notifyProfileCaptured(type, state)
     }
 
-    keepLastProfileOnOverloadPause(state)
+    handleOverloadPause(type, state)
   }
 }
 

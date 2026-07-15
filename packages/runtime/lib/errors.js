@@ -145,6 +145,11 @@ export const MissingPprofCapture = createError(
   'Please install @platformatic/wattpm-pprof-capture'
 )
 
+export const LastProfileTimeoutError = createError(
+  `${ERROR_PREFIX}_LAST_PROFILE_TIMEOUT`,
+  'Timed out while retrieving the last profile from the application "%s"'
+)
+
 export const FailedToLoadExtensionError = createError(
   `${ERROR_PREFIX}_FAILED_TO_LOAD_EXTENSION`,
   'Failed to load the extension "%s": %s'

@@ -57,6 +57,7 @@ export namespace errors {
   export const InvalidExtensionError: (path: string) => FastifyError
   export const ReservedITCHandlerNameError: (name: string) => FastifyError
   export const DuplicateITCHandlerNameError: (name: string) => FastifyError
+  export const LastProfileTimeoutError: (id: string) => FastifyError
 }
 
 export namespace symbols {

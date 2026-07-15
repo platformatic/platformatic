@@ -704,6 +704,57 @@ test('continuous profiling should pause by default when ELU exceeds the worker h
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
 
+test('the final overload profile should survive a worker restart', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  // Wait for the overload pause: the worker pushes the encoded final profile
+  // to the main thread when the pause is applied
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker: profiling is not restarted on the new worker, but the
+  // preserved overload profile is still retrievable from the main thread
+  await app.restartApplication('service')
+
+  const profile = await app.getApplicationLastProfile('service:0')
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
+  assert.ok(profile.length > 0, 'Preserved profile should have content')
+
+  // The application-level id resolves to the most recent preserved profile
+  const profileByApp = await app.getApplicationLastProfile('service')
+  assert.ok(profileByApp.length > 0, 'Preserved profile should be returned for the application id')
+})
+
+test('getApplicationLastProfile should fall back to the preserved profile when the worker is blocked', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Hard-block the worker event loop, then retrieve the profile with a short
+  // pull timeout: the live pull cannot be served, so the preserved overload
+  // profile is returned instead
+  await request(`${url}/block?ms=4000`, { method: 'POST' })
+
+  const profile = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned while the worker is blocked')
+  assert.ok(profile.length > 0, 'Preserved profile should have content')
+})
+
 test('maxELU: false should disable the overload cutoff', async t => {
   const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-low-maxelu.json')
 
