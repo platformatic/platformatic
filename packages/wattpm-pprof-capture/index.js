@@ -38,6 +38,7 @@ const profilingState = {
     durationMillis: null,
     eluThreshold: null,
     paused: false,
+    pauseReason: null,
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
@@ -51,6 +52,7 @@ const profilingState = {
     durationMillis: null,
     eluThreshold: null,
     paused: false,
+    pauseReason: null,
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
@@ -191,7 +193,10 @@ function rotateProfile (type) {
     notifyProfileCaptured(type, state)
   }
 
+  // A pending pause takes effect here: the completed window was captured and
+  // announced above, and maybeStartProfiler leaves the profiler stopped.
   maybeStartProfiler(type, state)
+  keepLastProfileOnOverloadPause(state)
 }
 
 function notifyMainThread (name, payload) {
@@ -222,8 +227,20 @@ function maybeStartProfiler (type, state) {
   }
 }
 
+// When the pause is due to the worker being overloaded, keep the final
+// profile available for the whole pause: it is the evidence of what saturated
+// the worker and consumers may retrieve it at any point during the overload.
+// Below-threshold pauses keep the regular expiry so that a stale profile is
+// not mistaken for a recent one.
+function keepLastProfileOnOverloadPause (state) {
+  if (state.paused && state.pauseReason === 'overload') {
+    unscheduleLastProfileCleanup(state)
+  }
+}
+
 // Invoked by the runtime main thread when the worker ELU rises above the
-// configured threshold.
+// configured threshold. If a pending pause had not been applied yet (the
+// current window is still recording), it is simply cancelled.
 export function resumeProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
@@ -233,13 +250,16 @@ export function resumeProfiling (options = {}) {
   }
 
   state.paused = false
+  state.pauseReason = null
   getLogger({ throwOnMissing: false })?.debug({ type, eluThreshold: state.eluThreshold }, 'Resuming profiler')
   startProfiler(type, state, state.options)
 }
 
 // Invoked by the runtime main thread when the worker ELU drops below the
-// configured threshold or exceeds the maxELU overload cutoff. The window
-// recorded so far is captured and announced like a regular rotation.
+// configured threshold or exceeds the maxELU overload cutoff. The pause takes
+// effect at the next rotation boundary, so that the current window completes
+// its full duration before being captured and announced like any other
+// rotation. Without rotation the profiler is stopped immediately.
 export function pauseProfiling (options = {}) {
   const type = options.type || 'cpu'
   const state = profilingState[type]
@@ -249,26 +269,20 @@ export function pauseProfiling (options = {}) {
   }
 
   state.paused = true
+  state.pauseReason = options.reason ?? null
   getLogger({ throwOnMissing: false })?.debug(
     { type, eluThreshold: state.eluThreshold, reason: options.reason },
     'Pausing profiler'
   )
 
-  if (state.profilerStarted) {
+  if (state.profilerStarted && !state.captureInterval) {
     stopProfiler(type, state)
 
     if (state.latestProfile) {
       notifyProfileCaptured(type, state)
     }
-  }
 
-  // When pausing because the worker is overloaded, keep the final profile
-  // available for the whole pause: it is the evidence of what saturated the
-  // worker and consumers may retrieve it at any point during the overload.
-  // Below-threshold pauses keep the regular expiry so that a stale profile
-  // is not mistaken for a recent one.
-  if (options.reason === 'overload') {
-    unscheduleLastProfileCleanup(state)
+    keepLastProfileOnOverloadPause(state)
   }
 }
 

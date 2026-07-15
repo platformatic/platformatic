@@ -639,17 +639,25 @@ test('continuous profiling should capture a final profile and pause when ELU exc
 
   // No eluThreshold: the profiler starts running immediately. The maxELU
   // cutoff is overridden to a value the workload exceeds.
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+  const startedAt = Date.now()
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 3000, maxELU: 0.5 })
 
   const stateAfterStart = await app.sendCommandToApplication('service', 'getProfilingState')
   assert.ok(stateAfterStart.isProfilerRunning, 'Profiler should start running')
 
-  // The runtime health cycle observes the ELU above the cutoff: it captures
-  // one last profile and pauses the profiler
+  // The runtime health cycle observes the ELU above the cutoff: the pause is
+  // applied at the next rotation boundary, capturing one last full window
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isPaused && !state.isProfilerRunning
-  }, 10000)
+  }, 15000)
+
+  // The window is never cut short: the pause could only be applied at a
+  // rotation boundary, so at least one full durationMillis elapsed
+  assert.ok(
+    Date.now() - startedAt >= 2900,
+    'The profile window should have completed its full duration before pausing'
+  )
 
   const pausedState = await app.sendCommandToApplication('service', 'getProfilingState')
   assert.ok(pausedState.hasProfile, 'A final profile should have been captured before pausing')
@@ -657,7 +665,7 @@ test('continuous profiling should capture a final profile and pause when ELU exc
   // The final profile of an overload pause does not expire: it must still be
   // retrievable well past durationMillis, for the whole duration of the
   // overload
-  await new Promise(resolve => setTimeout(resolve, 2500))
+  await new Promise(resolve => setTimeout(resolve, 3500))
 
   const profile = await app.sendCommandToApplication('service', 'getLastProfile')
   assert.ok(profile instanceof Uint8Array, 'Final profile should be available')
@@ -680,8 +688,9 @@ test('continuous profiling should pause by default when ELU exceeds the worker h
 
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // No maxELU option: the cutoff defaults to health.maxELU (0.5 here)
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000 })
+  // No maxELU option: the cutoff defaults to health.maxELU (0.5 here). The
+  // pause is applied at a rotation boundary, so use a short window.
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000 })
 
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
