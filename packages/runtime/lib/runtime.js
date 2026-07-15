@@ -91,7 +91,6 @@ const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
 const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
 const kLastProfileTimeoutMs = 10000
-const kPreservedProfileGraceMs = 5 * 60_000
 
 // getApplicationLastProfile falls back to the preserved overload profile
 // whenever the worker cannot currently provide one: it is gone, profiling was
@@ -2296,10 +2295,11 @@ export class Runtime extends EventEmitter {
     })
 
     // Preserved overload profiles outlive their worker only for a grace
-    // period: post-mortem collectors (alert or health-event driven) have time
-    // to fetch the evidence, but a long-dead worker's profile is not served
-    // forever and entries cannot pile up across replacements (replacement
-    // workers get fresh indices, so their keys are never reused).
+    // period of twice the runtime graceful shutdown timeout: post-mortem
+    // collectors (alert or health-event driven) have time to fetch the
+    // evidence, but a long-dead worker's profile is not served forever and
+    // entries cannot pile up across replacements (replacement workers get
+    // fresh indices, so their keys are never reused).
     worker.on('exit', () => {
       for (const type of ['cpu', 'heap']) {
         const key = `${workerId}:${type}`
@@ -2309,18 +2309,16 @@ export class Runtime extends EventEmitter {
           continue
         }
 
-        const grace = Number.parseInt(process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE ?? '', 10)
+        const gracefulShutdown = Number(this.#config?.gracefulShutdown?.runtime)
+        const grace = Number.isFinite(gracefulShutdown) && gracefulShutdown > 0 ? gracefulShutdown * 2 : 20_000
 
-        setTimeout(
-          () => {
-            // Only delete the exact entry scheduled here: a successor worker
-            // reusing the index (restart) may have preserved a newer profile.
-            if (this.#lastOverloadProfiles.get(key) === entry) {
-              this.#lastOverloadProfiles.delete(key)
-            }
-          },
-          Number.isFinite(grace) && grace > 0 ? grace : kPreservedProfileGraceMs
-        ).unref()
+        setTimeout(() => {
+          // Only delete the exact entry scheduled here: a successor worker
+          // reusing the index may have preserved a newer profile meanwhile.
+          if (this.#lastOverloadProfiles.get(key) === entry) {
+            this.#lastOverloadProfiles.delete(key)
+          }
+        }, grace).unref()
       }
     })
 

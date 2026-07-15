@@ -741,12 +741,10 @@ test('the final overload profile should survive a worker restart', async t => {
 })
 
 test('the preserved overload profile should expire after the grace period once its worker is gone', async t => {
-  process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE = '3000'
-  t.after(() => {
-    delete process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE
-  })
-
-  const { app, url } = await createApp(t)
+  // The grace period is twice the runtime graceful shutdown timeout: the
+  // fixture sets it to 1500ms, so preserved profiles expire 3s after the
+  // worker exits
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-short-shutdown.json')
 
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
