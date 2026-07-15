@@ -390,22 +390,62 @@ export async function startProfiling (options = {}) {
   state.eluThreshold = options.eluThreshold
   state.durationMillis = options.durationMillis
 
-  // When an ELU threshold is set the profiler starts paused: the runtime main
-  // thread resumes it once it measures an ELU above the threshold.
-  state.paused = options.eluThreshold != null
+  // Register the gating needs with the runtime main thread, which measures
+  // the worker ELU as part of its health metrics cycle: profiling only runs
+  // while the ELU is above the eluThreshold demand (if set) and below the
+  // maxELU overload cutoff (which defaults to the worker health.maxELU and
+  // can be overridden or disabled via the maxELU option).
+  const wantsGating =
+    options.eluThreshold != null ||
+    typeof options.maxELU === 'number' ||
+    (options.durationMillis != null && options.maxELU !== false)
+
+  const driven = wantsGating && (await registerProfilingGate(type, options))
+
+  // When an ELU threshold is set and the main thread drives the gating, the
+  // profiler starts paused: the runtime resumes it once it measures an ELU
+  // above the threshold. Without a driver the profiler runs ungated.
+  state.paused = driven && options.eluThreshold != null
 
   maybeStartProfiler(type, state)
+}
 
-  // The main thread uses this to set up the ELU gating: continuous profiling
-  // is also paused while the worker ELU is above the maxELU cutoff (which
-  // defaults to the worker health.maxELU and can be overridden or disabled
-  // via the maxELU option).
-  notifyMainThread('profiling:started', {
-    type,
-    eluThreshold: options.eluThreshold ?? null,
-    maxELU: options.maxELU ?? null,
-    continuous: options.durationMillis != null
-  })
+// Gate registration is a request on purpose: a runtime without the
+// main-thread driver rejects it with PLT_ITC_HANDLER_NOT_FOUND, and the
+// profiler falls back to running ungated — with more overhead than the
+// caller asked for, but working, instead of starting paused forever waiting
+// for a resume that would never come. The same applies when the module is
+// used outside a Platformatic runtime.
+async function registerProfilingGate (type, options) {
+  const itc = getITC({ throwOnMissing: false })
+
+  if (!itc) {
+    return false
+  }
+
+  try {
+    await itc.send('profiling:started', {
+      type,
+      eluThreshold: options.eluThreshold ?? null,
+      maxELU: options.maxELU ?? null,
+      continuous: options.durationMillis != null
+    })
+
+    return true
+  } catch (err) {
+    const logger = getLogger({ throwOnMissing: false })
+
+    if (err?.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+      logger?.warn(
+        { type },
+        'The runtime does not support main-thread profiler gating: eluThreshold and maxELU are ignored and the profiler runs ungated. Upgrade @platformatic/runtime.'
+      )
+    } else {
+      logger?.error({ err, type }, 'Failed to register the profiler gate, the profiler runs ungated')
+    }
+
+    return false
+  }
 }
 
 export function stopProfiling (options = {}) {

@@ -262,6 +262,8 @@ export class Runtime extends EventEmitter {
       sendHealthSignals: this.#processHealthSignals.bind(this)
     }
     this.#reservedITCHandlerNames = new Set(Object.keys(this.#workerITCHandlers))
+    // Registered per-worker in #setupWorker, reserved so extensions cannot clobber it
+    this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
     this.#extensionsWantHealthMetrics = false
     this.#lastOverloadProfiles = new Map()
@@ -2238,13 +2240,17 @@ export class Runtime extends EventEmitter {
       })
     })
 
-    // The continuous profiler reports when profiling starts or stops. The main
-    // thread drives it based on the ELU measured by the health metrics cycle
-    // (see #applyProfilingELUGates): when an ELU threshold is set the profiler
-    // starts paused and only runs while the ELU is above it, and continuous
-    // profiling is paused while the worker ELU is above the maxELU cutoff so
-    // that profiling does not add overhead to an already overloaded worker.
-    worker[kITC].on('profiling:started', ({ type, eluThreshold, maxELU, continuous }) => {
+    // The continuous profiler registers its gating needs when profiling starts.
+    // The main thread drives it based on the ELU measured by the health
+    // metrics cycle (see #applyProfilingELUGates): when an ELU threshold is
+    // set the profiler starts paused and only runs while the ELU is above it,
+    // and continuous profiling is paused while the worker ELU is above the
+    // maxELU cutoff so that profiling does not add overhead to an already
+    // overloaded worker. This is a request handler rather than a notification
+    // listener on purpose: the capture module can detect a runtime without
+    // the driver (PLT_ITC_HANDLER_NOT_FOUND) and fall back to ungated
+    // profiling instead of starting paused forever.
+    worker[kITC].handle('profiling:started', ({ type, eluThreshold, maxELU, continuous }) => {
       // Resolve the overload cutoff: the maxELU profiling option overrides it
       // (false disables it), otherwise continuous profiling defaults to the
       // worker health.maxELU.
@@ -2262,7 +2268,7 @@ export class Runtime extends EventEmitter {
 
       if (eluThreshold == null && overloadELU == null) {
         worker[kProfilingELUGates]?.delete(type)
-        return
+        return true
       }
 
       worker[kProfilingELUGates] ??= new Map()
@@ -2278,6 +2284,8 @@ export class Runtime extends EventEmitter {
         running: eluThreshold == null
       })
       this.#startHealthMetricsCollectionIfNeeded()
+
+      return true
     })
 
     worker[kITC].on('profiling:stopped', ({ type }) => {
