@@ -224,9 +224,9 @@ The payload is an object with the following properties:
   - **`elu`** (`number`) - The worker event loop utilization since the previous collection, between `0` and `1`.
   - **`heapUsed`** (`number`) - The worker used heap size, in bytes.
   - **`heapTotal`** (`number`) - The worker total heap size, in bytes. Heap statistics are refreshed once per minute.
-- **`healthSignals`** (`array`) - The custom health signals sent by the worker via `sendHealthSignals` since the last collection, if any.
+- **`healthSignals`** (`array`) - The custom health signals sent by the worker via `sendHealthSignals` since the last collection, if any. When `health.maxEventLoopDelay` is configured, the worker also reports a built-in `eventLoopDelay` signal once per second, with `max` and `mean` in milliseconds measured via `perf_hooks.monitorEventLoopDelay`.
 
-A related event, `application:worker:unhealthy` (with a `{ application, worker }` payload), is emitted when a worker with health checks enabled exceeds the configured thresholds and is about to be restarted.
+A related event, `application:worker:unhealthy` (with a `{ application, worker }` payload), is emitted when a worker with health checks enabled exceeds the configured thresholds (`maxELU`, `maxHeapUsed` or `maxEventLoopDelay`) and is about to be restarted.
 
 #### `application:worker:profile:captured`
 

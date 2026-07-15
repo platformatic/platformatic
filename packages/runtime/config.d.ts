@@ -61,6 +61,7 @@ export type PlatformaticRuntimeConfig = {
           gracePeriod?: number | string;
           maxUnhealthyChecks?: number | string;
           maxELU?: number | string;
+          maxEventLoopDelay?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
           maxYoungGeneration?: number | string;
@@ -272,6 +273,7 @@ export type PlatformaticRuntimeConfig = {
     gracePeriod?: number | string;
     maxUnhealthyChecks?: number | string;
     maxELU?: number | string;
+    maxEventLoopDelay?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
     maxYoungGeneration?: number | string;
