@@ -467,7 +467,17 @@ export function getLastProfile (options = {}) {
     }
   }
 
-  return state.latestProfile.encode()
+  const profile = state.latestProfile.encode()
+
+  // Return the timestamp alongside the profile when requested: pairing them
+  // in a single command avoids the race of combining getProfilingState with
+  // a separate getLastProfile call across a rotation. The raw profile remains
+  // the default for backward compatibility with direct ITC callers.
+  if (options.includeTimestamp) {
+    return { profile, timestamp: state.latestProfileTimestamp }
+  }
+
+  return profile
 }
 
 export function getProfilingState (options = {}) {

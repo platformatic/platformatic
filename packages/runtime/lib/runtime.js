@@ -877,13 +877,15 @@ export class Runtime extends EventEmitter {
 
       // Attach a noop handler so that a late settlement after the timeout
       // does not surface as an unhandled rejection.
-      const pull = sendViaITC(service, 'getLastProfile', options)
+      const pull = sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
       pull.catch(() => {})
 
-      const profile = await executeWithTimeout(pull, timeout, kTimeout)
+      const result = await executeWithTimeout(pull, timeout, kTimeout)
 
-      if (profile !== kTimeout) {
-        return profile
+      if (result !== kTimeout) {
+        // An older capture module which does not support includeTimestamp
+        // returns the raw profile.
+        return result instanceof Uint8Array ? { profile: result, timestamp: null } : result
       }
 
       // The worker event loop is not responding (e.g. it is hard-blocked).
@@ -899,7 +901,7 @@ export class Runtime extends EventEmitter {
     const preserved = this.#getPreservedOverloadProfile(id, type)
 
     if (preserved) {
-      return preserved.profile
+      return { profile: preserved.profile, timestamp: preserved.timestamp }
     }
 
     throw error

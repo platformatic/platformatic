@@ -135,11 +135,11 @@ export default async function setup ({ runtime, logger, options }) {
   // Ship each completed profile window
   runtime.on('application:worker:profile:captured', async ({ id, application, worker, type }) => {
     try {
-      const profile = await runtime.getApplicationLastProfile(id, { type })
+      const { profile, timestamp } = await runtime.getApplicationLastProfile(id, { type })
 
       // Upload the profile, as shown above, or hand it to a continuous
       // profiling backend of your choice.
-      await upload(`flamegraphs/${application}/${worker}/${new Date().toISOString()}.pb`, profile)
+      await upload(`flamegraphs/${application}/${worker}/${new Date(timestamp).toISOString()}.pb`, profile)
     } catch (err) {
       logger.error({ err, id }, 'failed to collect the captured profile')
     }

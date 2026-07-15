@@ -197,7 +197,7 @@ export declare class Runtime extends EventEmitter {
   removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
   startApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<void>
   stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
-  getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
+  getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<{ profile: Buffer, timestamp: number | null }>
 }
 
 export function wrapInRuntimeConfig (

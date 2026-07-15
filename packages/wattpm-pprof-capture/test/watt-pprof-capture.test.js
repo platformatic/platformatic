@@ -723,12 +723,13 @@ test('the final overload profile should survive a worker restart', async t => {
   // preserved overload profile is still retrievable from the main thread
   await app.restartApplication('service')
 
-  const profile = await app.getApplicationLastProfile('service:0')
+  const { profile, timestamp } = await app.getApplicationLastProfile('service:0')
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
   assert.ok(profile.length > 0, 'Preserved profile should have content')
+  assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
 
   // The application-level id resolves to the most recent preserved profile
-  const profileByApp = await app.getApplicationLastProfile('service')
+  const { profile: profileByApp } = await app.getApplicationLastProfile('service')
   assert.ok(profileByApp.length > 0, 'Preserved profile should be returned for the application id')
 })
 
@@ -750,9 +751,10 @@ test('getApplicationLastProfile should fall back to the preserved profile when t
   // profile is returned instead
   await request(`${url}/block?ms=4000`, { method: 'POST' })
 
-  const profile = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
+  const { profile, timestamp } = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned while the worker is blocked')
   assert.ok(profile.length > 0, 'Preserved profile should have content')
+  assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
 })
 
 test('maxELU: false should disable the overload cutoff', async t => {
