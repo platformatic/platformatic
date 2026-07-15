@@ -639,7 +639,7 @@ test('continuous profiling should capture a final profile and pause when ELU exc
 
   // No eluThreshold: the profiler starts running immediately. The maxELU
   // cutoff is overridden to a value the workload exceeds.
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000, maxELU: 0.5 })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
 
   const stateAfterStart = await app.sendCommandToApplication('service', 'getProfilingState')
   assert.ok(stateAfterStart.isProfilerRunning, 'Profiler should start running')
@@ -653,6 +653,11 @@ test('continuous profiling should capture a final profile and pause when ELU exc
 
   const pausedState = await app.sendCommandToApplication('service', 'getProfilingState')
   assert.ok(pausedState.hasProfile, 'A final profile should have been captured before pausing')
+
+  // The final profile of an overload pause does not expire: it must still be
+  // retrievable well past durationMillis, for the whole duration of the
+  // overload
+  await new Promise(resolve => setTimeout(resolve, 2500))
 
   const profile = await app.sendCommandToApplication('service', 'getLastProfile')
   assert.ok(profile instanceof Uint8Array, 'Final profile should be available')

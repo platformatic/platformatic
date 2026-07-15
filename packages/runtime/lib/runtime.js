@@ -2393,7 +2393,15 @@ export class Runtime extends EventEmitter {
       gate.running = shouldRun
 
       try {
-        worker[kITC].notify(shouldRun ? 'resumeProfiling' : 'pauseProfiling', { type })
+        if (shouldRun) {
+          worker[kITC].notify('resumeProfiling', { type })
+        } else {
+          // The reason matters to the worker: when pausing for overload it
+          // keeps the final profile available for the whole pause, so that
+          // consumers can still retrieve the evidence of what saturated the
+          // worker.
+          worker[kITC].notify('pauseProfiling', { type, reason: gate.overloaded ? 'overload' : 'threshold' })
+        }
       } catch (err) {
         this.logger.error({ err }, 'Failed to toggle the continuous profiler')
       }
