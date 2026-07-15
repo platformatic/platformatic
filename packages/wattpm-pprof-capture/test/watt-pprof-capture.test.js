@@ -100,8 +100,10 @@ test('error types should be distinguishable throughout lifecycle', async t => {
   // Start CPU intensive task to generate load for profiler
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Start profiling with profile rotation (no threshold)
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500 })
+  // Start profiling with profile rotation (no threshold). The maxELU cutoff
+  // is disabled since the workload may fully saturate the loop on slow CI
+  // machines and this test is about rotation, not the cutoff.
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500, maxELU: false })
 
   // Wait for profiler to actually start running
   await waitForCondition(async () => {
@@ -395,7 +397,7 @@ test('profiling with eluThreshold should start when utilization exceeds threshol
   const { app, url } = await createApp(t)
 
   // Start profiling with a low threshold
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500, maxELU: false })
 
   // Start CPU intensive task to increase ELU
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
@@ -482,7 +484,7 @@ test('profiling with eluThreshold should start when threshold is reached', async
   const { app, url } = await createApp(t)
 
   // Start profiling while ELU is low
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300, maxELU: false })
 
   // Start CPU intensive task to raise ELU above threshold
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
@@ -516,7 +518,7 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
   // Start profiling with threshold and rotation interval
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500, maxELU: false })
 
   // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
@@ -561,7 +563,7 @@ test('profiling with eluThreshold should start when already above threshold', as
 
   // Now start profiling - the profiler starts paused and the runtime health
   // cycle resumes it as soon as it observes the ELU above the threshold
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300, maxELU: false })
 
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
@@ -591,7 +593,7 @@ test('profiling with eluThreshold should continue rotating while above threshold
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
   // Start profiling with rotation interval
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 400 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 400, maxELU: false })
 
   // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
