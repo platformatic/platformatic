@@ -135,11 +135,11 @@ export default async function setup ({ runtime, logger, options }) {
   // Ship each completed profile window
   runtime.on('application:worker:profile:captured', async ({ id, application, worker, type }) => {
     try {
-      const profile = await runtime.getApplicationLastProfile(id, { type })
+      const { profile, timestamp } = await runtime.getApplicationLastProfile(id, { type })
 
       // Upload the profile, as shown above, or hand it to a continuous
       // profiling backend of your choice.
-      await upload(`flamegraphs/${application}/${worker}/${new Date().toISOString()}.pb`, profile)
+      await upload(`flamegraphs/${application}/${worker}/${new Date(timestamp).toISOString()}.pb`, profile)
     } catch (err) {
       logger.error({ err, id }, 'failed to collect the captured profile')
     }
@@ -164,7 +164,9 @@ export default async function setup ({ runtime, logger, options }) {
 }
 ```
 
-To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. This check runs inside the worker itself and uses hysteresis to avoid rapid toggling, so prefer it over starting and stopping captures from the main thread based on external ELU readings.
+To keep the overhead down when nothing is wrong, combine `durationMillis` with the `eluThreshold` option: the profiler only records while the worker's event loop utilization is above the threshold, and completed windows are still announced via the same event. The runtime measures each worker's ELU from the main thread as part of its health metrics cycle — a reading that stays accurate even when the worker's event loop is saturated — and resumes or pauses the in-worker profiler with hysteresis to avoid rapid toggling. Prefer this option over starting and stopping captures yourself based on ELU readings.
+
+Continuous profiling also backs off automatically when a worker is overloaded: if the ELU rises above the worker's `health.maxELU` (0.99 by default), the current window still completes its full duration and is announced via the usual event — so your extension still ships the window that shows what saturated the worker — and then profiling pauses until the ELU recovers. The final profile stays available until profiling resumes, and an encoded copy is preserved in the runtime main thread — so `getApplicationLastProfile` can return it (flagged with `preserved: true`) even while the worker's event loop is blocked, and it survives the worker being replaced by the health checks for a grace period of twice the `gracefulShutdown.runtime` timeout (20s by default), until a newer window supersedes it. Pass `maxELU` in the profiling options to change the cutoff, or `maxELU: false` to disable it.
 
 ## Analyze the flamegraphs
 

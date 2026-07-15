@@ -43,6 +43,7 @@ import {
   FailedToLoadExtensionError,
   InvalidArgumentError,
   InvalidExtensionError,
+  LastProfileTimeoutError,
   MessagingError,
   MissingPprofCapture,
   ReservedITCHandlerNameError,
@@ -86,7 +87,25 @@ const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
 const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
+const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
 const kHealthITCTimeoutMs = 5000
+const kProfilingELUHysteresis = 0.1
+const kLastProfileTimeoutMs = 10000
+
+// getApplicationLastProfile falls back to the preserved overload profile
+// whenever the worker cannot currently provide one: it is gone, profiling was
+// not (re)started, no window has completed yet (e.g. profiling was just
+// restarted on a replacement worker) or the profiler is paused with no recent
+// window. The returned timestamp lets consumers judge freshness. Any other
+// error is rethrown.
+const kLastProfileFallbackCodes = new Set([
+  'PLT_RUNTIME_APPLICATION_NOT_FOUND',
+  'PLT_RUNTIME_WORKER_NOT_FOUND',
+  'PLT_RUNTIME_APPLICATION_NOT_STARTED',
+  'PLT_PPROF_PROFILING_NOT_STARTED',
+  'PLT_PPROF_NO_PROFILE_AVAILABLE',
+  'PLT_PPROF_NOT_ENOUGH_ELU'
+])
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
@@ -149,6 +168,7 @@ export class Runtime extends EventEmitter {
   #entrypointPort
 
   #healthMetricsTimer
+  #healthMetricsCollectionActive
 
   #meshInterceptor
   #dispatcher
@@ -169,6 +189,7 @@ export class Runtime extends EventEmitter {
   #reservedITCHandlerNames
   #extensions
   #extensionsWantHealthMetrics
+  #lastOverloadProfiles
   #restartingApplications
   #restartingWorkers
   #dynamicWorkersScaler
@@ -241,8 +262,11 @@ export class Runtime extends EventEmitter {
       sendHealthSignals: this.#processHealthSignals.bind(this)
     }
     this.#reservedITCHandlerNames = new Set(Object.keys(this.#workerITCHandlers))
+    // Registered per-worker in #setupWorker, reserved so extensions cannot clobber it
+    this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
     this.#extensionsWantHealthMetrics = false
+    this.#lastOverloadProfiles = new Map()
     this.#sharedContext = {}
 
     if (this.#isProduction) {
@@ -437,6 +461,8 @@ export class Runtime extends EventEmitter {
 
   async close (silent = false) {
     clearTimeout(this.#healthMetricsTimer)
+    this.#healthMetricsCollectionActive = false
+    this.#lastOverloadProfiles.clear()
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -846,10 +872,88 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationLastProfile (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'getLastProfile', options)
+    const type = options.type ?? 'cpu'
+    const timeout = options.timeout ?? kLastProfileTimeoutMs
+    let error
+
+    try {
+      // Bound the whole retrieval with a single timeout budget: resolving the
+      // worker round-trips to it when ensureStarted is set, and the profile
+      // pull does too — both hang if the worker event loop is blocked. Attach
+      // a noop handler so that a late settlement after the timeout does not
+      // surface as an unhandled rejection.
+      const pull = (async () => {
+        const service = await this.#getApplicationById(id, ensureStarted)
+        const result = await sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
+        return { service, result }
+      })()
+      pull.catch(() => {})
+
+      const outcome = await executeWithTimeout(pull, timeout, kTimeout)
+
+      if (outcome !== kTimeout) {
+        const { service, result } = outcome
+
+        // An older capture module which does not support includeTimestamp
+        // returns the raw profile.
+        const value = result instanceof Uint8Array ? { profile: result, timestamp: null } : result
+
+        // A strictly newer live window supersedes the preserved overload
+        // profile: prune it so the preserved copy naturally expires once the
+        // worker is healthy again and its profiles are being consumed.
+        if (value.timestamp != null) {
+          const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
+          const preserved = this.#lastOverloadProfiles.get(key)
+
+          if (preserved && preserved.timestamp < value.timestamp) {
+            this.#lastOverloadProfiles.delete(key)
+          }
+        }
+
+        return { ...value, preserved: false }
+      }
+
+      // The worker event loop is not responding (e.g. it is hard-blocked).
+      error = new LastProfileTimeoutError(id)
+    } catch (e) {
+      if (!kLastProfileFallbackCodes.has(e.code)) {
+        throw e
+      }
+
+      error = e
+    }
+
+    const preserved = this.#getPreservedOverloadProfile(id, type)
+
+    if (preserved) {
+      // The preserved flag lets consumers distinguish post-mortem evidence
+      // from a live window and judge it together with the timestamp.
+      return { profile: preserved.profile, timestamp: preserved.timestamp, preserved: true }
+    }
+
+    throw error
+  }
+
+  // The final profile of an overload pause is pushed by the worker and
+  // preserved in the main thread (see the profile:overload listener), so that
+  // the evidence of what saturated a worker survives the worker being blocked
+  // or replaced.
+  #getPreservedOverloadProfile (id, type) {
+    if (id.includes(':')) {
+      return this.#lastOverloadProfiles.get(`${id}:${type}`)
+    }
+
+    // Application-level id: return the most recent profile among its workers
+    let latest = null
+    for (const [key, entry] of this.#lastOverloadProfiles) {
+      if (key.startsWith(`${id}:`) && key.endsWith(`:${type}`) && (!latest || entry.timestamp > latest.timestamp)) {
+        latest = entry
+      }
+    }
+
+    return latest
   }
 
   async takeApplicationHeapSnapshot (id, ensureStarted = true) {
@@ -2117,6 +2221,16 @@ export class Runtime extends EventEmitter {
     // via getApplicationLastProfile. We use emit instead of emitAndNotify since
     // other workers are not interested in this event.
     worker[kITC].on('profile:captured', ({ type, timestamp }) => {
+      // A strictly newer completed window supersedes the preserved overload
+      // profile: once the worker is past the overload and producing windows
+      // again, its old evidence must not be served anymore.
+      const preservedKey = `${workerId}:${type}`
+      const preservedEntry = this.#lastOverloadProfiles.get(preservedKey)
+
+      if (preservedEntry && preservedEntry.timestamp < timestamp) {
+        this.#lastOverloadProfiles.delete(preservedKey)
+      }
+
       this.emit('application:worker:profile:captured', {
         id: workerId,
         application: applicationId,
@@ -2124,6 +2238,96 @@ export class Runtime extends EventEmitter {
         type,
         timestamp
       })
+    })
+
+    // The continuous profiler registers its gating needs when profiling starts.
+    // The main thread drives it based on the ELU measured by the health
+    // metrics cycle (see #applyProfilingELUGates): when an ELU threshold is
+    // set the profiler starts paused and only runs while the ELU is above it,
+    // and continuous profiling is paused while the worker ELU is above the
+    // maxELU cutoff so that profiling does not add overhead to an already
+    // overloaded worker. This is a request handler rather than a notification
+    // listener on purpose: the capture module can detect a runtime without
+    // the driver (PLT_ITC_HANDLER_NOT_FOUND) and fall back to ungated
+    // profiling instead of starting paused forever.
+    worker[kITC].handle('profiling:started', ({ type, eluThreshold, maxELU, continuous }) => {
+      // Resolve the overload cutoff: the maxELU profiling option overrides it
+      // (false disables it), otherwise continuous profiling defaults to the
+      // worker health.maxELU.
+      let overloadELU = null
+      if (typeof maxELU === 'number') {
+        overloadELU = maxELU
+      } else if (maxELU !== false && continuous) {
+        const healthConfig = worker[kConfig]?.health
+        const configMaxELU = Number(healthConfig?.maxELU)
+
+        if (healthConfig?.enabled !== false && Number.isFinite(configMaxELU)) {
+          overloadELU = configMaxELU
+        }
+      }
+
+      if (eluThreshold == null && overloadELU == null) {
+        worker[kProfilingELUGates]?.delete(type)
+        return true
+      }
+
+      worker[kProfilingELUGates] ??= new Map()
+      worker[kProfilingELUGates].set(type, {
+        eluThreshold: eluThreshold ?? null,
+        maxELU: overloadELU,
+        // Hysteresis memories: `wanted` tracks the eluThreshold demand,
+        // `overloaded` tracks the maxELU cutoff. `running` is the last state
+        // commanded to the worker: the profiler starts paused when an ELU
+        // threshold is set and running otherwise.
+        wanted: eluThreshold == null,
+        overloaded: false,
+        running: eluThreshold == null
+      })
+      this.#startHealthMetricsCollectionIfNeeded()
+
+      return true
+    })
+
+    worker[kITC].on('profiling:stopped', ({ type }) => {
+      worker[kProfilingELUGates]?.delete(type)
+      this.#lastOverloadProfiles.delete(`${workerId}:${type}`)
+    })
+
+    // When an overload pause is applied, the worker pushes the encoded final
+    // profile. It is preserved here so that the evidence of what saturated
+    // the worker can be retrieved (see getApplicationLastProfile) even while
+    // the worker event loop is blocked, and it survives the worker being
+    // replaced by the health checks.
+    worker[kITC].on('profile:overload', ({ type, timestamp, profile }) => {
+      this.#lastOverloadProfiles.set(`${workerId}:${type}`, { profile, timestamp })
+    })
+
+    // Preserved overload profiles outlive their worker only for a grace
+    // period of twice the runtime graceful shutdown timeout: post-mortem
+    // collectors (alert or health-event driven) have time to fetch the
+    // evidence, but a long-dead worker's profile is not served forever and
+    // entries cannot pile up across replacements (replacement workers get
+    // fresh indices, so their keys are never reused).
+    worker.on('exit', () => {
+      for (const type of ['cpu', 'heap']) {
+        const key = `${workerId}:${type}`
+        const entry = this.#lastOverloadProfiles.get(key)
+
+        if (!entry) {
+          continue
+        }
+
+        const gracefulShutdown = Number(this.#config?.gracefulShutdown?.runtime)
+        const grace = Number.isFinite(gracefulShutdown) && gracefulShutdown > 0 ? gracefulShutdown * 2 : 20_000
+
+        setTimeout(() => {
+          // Only delete the exact entry scheduled here: a successor worker
+          // reusing the index may have preserved a newer profile meanwhile.
+          if (this.#lastOverloadProfiles.get(key) === entry) {
+            this.#lastOverloadProfiles.delete(key)
+          }
+        }, grace).unref()
+      }
     })
 
     worker[kITC].on('request:restart', async () => {
@@ -2214,15 +2418,24 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollectionIfNeeded () {
+    if (this.#healthMetricsCollectionActive || this.#status !== 'started') {
+      return
+    }
+
     // Need health metrics if dynamic workers scaler exists (for vertical scaling),
-    // if an extension subscribed to them or if any worker has health checks enabled
+    // if an extension subscribed to them, if any worker has health checks enabled
+    // or if any worker runs ELU-gated continuous profiling
     let needsHealthMetrics = !!this.#dynamicWorkersScaler || this.#extensionsWantHealthMetrics
 
     if (!needsHealthMetrics) {
-      // Check if any worker has health checks enabled
       for (const worker of this.#workers.values()) {
         const healthConfig = worker[kConfig]?.health
         if (healthConfig?.enabled && this.#getApplicationRestartOnError(this.#config, worker[kConfig]) > 0) {
+          needsHealthMetrics = true
+          break
+        }
+
+        if (worker[kProfilingELUGates]?.size > 0) {
           needsHealthMetrics = true
           break
         }
@@ -2235,8 +2448,11 @@ export class Runtime extends EventEmitter {
   }
 
   #startHealthMetricsCollection () {
+    this.#healthMetricsCollectionActive = true
+
     const collectHealthMetrics = async () => {
       if (this.#status !== 'started') {
+        this.#healthMetricsCollectionActive = false
         return
       }
 
@@ -2252,12 +2468,11 @@ export class Runtime extends EventEmitter {
           const id = worker[kApplicationId]
           const index = worker[kWorkerId]
           const errorLabel = this.#workerExtendedLabel(id, index, worker[kConfig].workers)
+          const previousELU = worker[kLastHealthCheckELU]
 
           let health = null
           try {
-            health = await this.getWorkerHealth(worker, {
-              previousELU: worker[kLastHealthCheckELU]
-            })
+            health = await this.getWorkerHealth(worker, { previousELU })
           } catch (err) {
             this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
           } finally {
@@ -2276,6 +2491,13 @@ export class Runtime extends EventEmitter {
             currentHealth: health,
             healthSignals
           })
+
+          // Drive the ELU gating of the continuous profiler. The first sample
+          // is skipped as it reports the utilization since the thread started
+          // rather than over the last collection interval.
+          if (health && previousELU != null) {
+            this.#applyProfilingELUGates(worker, health.elu)
+          }
         })())
       }
 
@@ -2288,6 +2510,56 @@ export class Runtime extends EventEmitter {
 
     // Start the collection
     this.#healthMetricsTimer = setTimeout(collectHealthMetrics, 1000).unref()
+  }
+
+  // Drive the ELU gating of the continuous profiler from the main thread.
+  // The health metrics cycle measures the worker ELU (without depending on the
+  // worker's event loop being responsive, and consistently with health checks)
+  // and resumes/pauses the in-worker profiler accordingly. The profiler runs
+  // while the ELU is above the eluThreshold demand (if one is set) and below
+  // the maxELU overload cutoff (if one is set): crossing the cutoff captures
+  // one last profile and pauses profiling until the worker recovers, so that
+  // profiling does not add overhead to an already overloaded worker.
+  #applyProfilingELUGates (worker, elu) {
+    const gates = worker[kProfilingELUGates]
+
+    if (!gates?.size || typeof elu !== 'number') {
+      return
+    }
+
+    for (const [type, gate] of gates) {
+      // Hysteresis on both bounds to prevent rapid toggling: each state only
+      // flips back once the ELU moves kProfilingELUHysteresis past the bound.
+      if (gate.eluThreshold != null) {
+        gate.wanted = gate.wanted ? elu >= gate.eluThreshold - kProfilingELUHysteresis : elu > gate.eluThreshold
+      }
+
+      if (gate.maxELU != null) {
+        gate.overloaded = gate.overloaded ? elu >= gate.maxELU - kProfilingELUHysteresis : elu > gate.maxELU
+      }
+
+      const shouldRun = gate.wanted && !gate.overloaded
+
+      if (shouldRun === gate.running) {
+        continue
+      }
+
+      gate.running = shouldRun
+
+      try {
+        if (shouldRun) {
+          worker[kITC].notify('resumeProfiling', { type })
+        } else {
+          // The reason matters to the worker: when pausing for overload it
+          // keeps the final profile available for the whole pause, so that
+          // consumers can still retrieve the evidence of what saturated the
+          // worker.
+          worker[kITC].notify('pauseProfiling', { type, reason: gate.overloaded ? 'overload' : 'threshold' })
+        }
+      } catch (err) {
+        this.logger.error({ err }, 'Failed to toggle the continuous profiler')
+      }
+    }
   }
 
   #setupHealthCheck (config, applicationConfig, workersCount, id, index, worker, errorLabel) {

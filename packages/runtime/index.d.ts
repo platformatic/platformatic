@@ -57,6 +57,7 @@ export namespace errors {
   export const InvalidExtensionError: (path: string) => FastifyError
   export const ReservedITCHandlerNameError: (name: string) => FastifyError
   export const DuplicateITCHandlerNameError: (name: string) => FastifyError
+  export const LastProfileTimeoutError: (id: string) => FastifyError
 }
 
 export namespace symbols {
@@ -196,7 +197,7 @@ export declare class Runtime extends EventEmitter {
   removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
   startApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<void>
   stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
-  getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
+  getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<{ profile: Buffer, timestamp: number | null, preserved: boolean }>
 }
 
 export function wrapInRuntimeConfig (

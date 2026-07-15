@@ -4,8 +4,8 @@ import test from 'node:test'
 import { request } from 'undici'
 import { createRuntime } from '../../runtime/test/helpers.js'
 
-async function createApp (t) {
-  const configFile = resolve(import.meta.dirname, 'fixtures/runtime-test/platformatic.json')
+async function createApp (t, config = 'fixtures/runtime-test/platformatic.json') {
+  const configFile = resolve(import.meta.dirname, config)
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -100,8 +100,10 @@ test('error types should be distinguishable throughout lifecycle', async t => {
   // Start CPU intensive task to generate load for profiler
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Start profiling with profile rotation (no threshold)
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500 })
+  // Start profiling with profile rotation (no threshold). The maxELU cutoff
+  // is disabled since the workload may fully saturate the loop on slow CI
+  // machines and this test is about rotation, not the cutoff.
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500, maxELU: false })
 
   // Wait for profiler to actually start running
   await waitForCondition(async () => {
@@ -395,16 +397,16 @@ test('profiling with eluThreshold should start when utilization exceeds threshol
   const { app, url } = await createApp(t)
 
   // Start profiling with a low threshold
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500, maxELU: false })
 
   // Start CPU intensive task to increase ELU
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Wait for profiler to actually start running
+  // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning
-  }, 3000)
+  }, 10000)
 
   // Wait for a profile to be captured
   await waitForCondition(async () => {
@@ -482,16 +484,16 @@ test('profiling with eluThreshold should start when threshold is reached', async
   const { app, url } = await createApp(t)
 
   // Start profiling while ELU is low
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300, maxELU: false })
 
   // Start CPU intensive task to raise ELU above threshold
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Wait for profiler to actually start running
+  // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning
-  }, 3000)
+  }, 10000)
 
   // Wait for a profile to be captured
   await waitForCondition(async () => {
@@ -515,20 +517,14 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   // Start CPU intensive task first
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Wait for ELU to rise above threshold
-  await waitForCondition(async () => {
-    const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.lastELU != null && state.lastELU > 0.5
-  }, 3000)
-
   // Start profiling with threshold and rotation interval
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500, maxELU: false })
 
-  // Wait for profiler to start
+  // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning
-  }, 2000)
+  }, 10000)
 
   // Wait for a profile to be captured
   await waitForCondition(async () => {
@@ -544,9 +540,7 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   // Stop CPU intensive task - ELU should drop below stop threshold (0.4)
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
 
-  // Wait for profiler to detect low ELU and pause
-  // This waits for both ELU to drop AND for the next rotation to detect it
-  // ELU drops slowly as the rolling average window moves past the high-ELU period
+  // Wait for the runtime health cycle to observe the low ELU and pause the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return !state.isProfilerRunning && state.isPausedBelowThreshold
@@ -561,25 +555,20 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
 
-test('profiling with eluThreshold should start immediately when already above threshold', async t => {
+test('profiling with eluThreshold should start when already above threshold', async t => {
   const { app, url } = await createApp(t)
 
   // Start CPU intensive task BEFORE starting profiling
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Wait for ELU to actually rise above threshold
+  // Now start profiling - the profiler starts paused and the runtime health
+  // cycle resumes it as soon as it observes the ELU above the threshold
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300, maxELU: false })
+
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.lastELU != null && state.lastELU > 0.5
-  }, 5000)
-
-  // Now start profiling - should start immediately since ELU is already high
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 300 })
-
-  // Profiler should start immediately without being paused
-  const stateAfterStart = await app.sendCommandToApplication('service', 'getProfilingState')
-  assert.ok(stateAfterStart.isProfilerRunning, 'Profiler should start immediately when ELU is already high')
-  assert.ok(!stateAfterStart.isPausedBelowThreshold, 'Should not be paused below threshold')
+    return state.isProfilerRunning && !state.isPausedBelowThreshold
+  }, 10000)
 
   // Wait for a profile to be captured
   await waitForCondition(async () => {
@@ -603,20 +592,14 @@ test('profiling with eluThreshold should continue rotating while above threshold
   // Start CPU intensive task
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Wait for ELU to rise above threshold
-  await waitForCondition(async () => {
-    const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.lastELU != null && state.lastELU > 0.5
-  }, 3000)
-
   // Start profiling with rotation interval
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 400 })
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 400, maxELU: false })
 
-  // Wait for profiler to start
+  // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning
-  }, 2000)
+  }, 10000)
 
   // Wait for first profile
   await waitForCondition(async () => {
@@ -644,6 +627,223 @@ test('profiling with eluThreshold should continue rotating while above threshold
   assert.ok(!arraysEqual(profile1, profile2), 'Profiles should be different after rotation')
 
   // Clean up
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('continuous profiling should capture a final profile and pause when ELU exceeds maxELU', async t => {
+  const { app, url } = await createApp(t)
+
+  // Start CPU intensive task (blocks the event loop ~90% of each second)
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  // No eluThreshold: the profiler starts running immediately. The maxELU
+  // cutoff is overridden to a value the workload exceeds.
+  const startedAt = Date.now()
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 3000, maxELU: 0.5 })
+
+  const stateAfterStart = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(stateAfterStart.isProfilerRunning, 'Profiler should start running')
+
+  // The runtime health cycle observes the ELU above the cutoff: the pause is
+  // applied at the next rotation boundary, capturing one last full window
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  // The window is never cut short: the pause could only be applied at a
+  // rotation boundary, so at least one full durationMillis elapsed
+  assert.ok(
+    Date.now() - startedAt >= 2900,
+    'The profile window should have completed its full duration before pausing'
+  )
+
+  const pausedState = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(pausedState.hasProfile, 'A final profile should have been captured before pausing')
+
+  // The final profile of an overload pause does not expire: it must still be
+  // retrievable well past durationMillis, for the whole duration of the
+  // overload
+  await new Promise(resolve => setTimeout(resolve, 3500))
+
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Final profile should be available')
+  assert.ok(profile.length > 0, 'Final profile should have content')
+
+  // Stop the load: once the ELU drops below the cutoff (minus hysteresis)
+  // profiling resumes
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isProfilerRunning && !state.isPaused
+  }, 15000)
+
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('continuous profiling should pause by default when ELU exceeds the worker health.maxELU', async t => {
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-low-maxelu.json')
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  // No maxELU option: the cutoff defaults to health.maxELU (0.5 here). The
+  // pause is applied at a rotation boundary, so use a short window.
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 10000)
+
+  const state = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(state.hasProfile, 'A final profile should have been captured before pausing')
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'stopProfiling')
+})
+
+test('the final overload profile should survive a worker restart', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  // Wait for the overload pause: the worker pushes the encoded final profile
+  // to the main thread when the pause is applied
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker: profiling is not restarted on the new worker, but the
+  // preserved overload profile is still retrievable from the main thread
+  await app.restartApplication('service')
+
+  const { profile, timestamp, preserved } = await app.getApplicationLastProfile('service:0')
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
+  assert.ok(profile.length > 0, 'Preserved profile should have content')
+  assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
+
+  // Restart profiling on the replacement worker: until its first window
+  // completes the live worker reports "no profile available yet", and the
+  // preserved overload profile must still be served (also via the
+  // application-level id)
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000 })
+
+  const { profile: profileByApp, preserved: preservedByApp } = await app.getApplicationLastProfile('service')
+  assert.ok(profileByApp.length > 0, 'Preserved profile should be returned for the application id')
+  assert.strictEqual(preservedByApp, true, 'The result should be flagged as preserved')
+})
+
+test('the preserved overload profile should expire after the grace period once its worker is gone', async t => {
+  // The grace period is twice the runtime graceful shutdown timeout: the
+  // fixture sets it to 1500ms, so preserved profiles expire 3s after the
+  // worker exits
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-short-shutdown.json')
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker: the grace timer starts when the old worker exits
+  await app.restartApplication('service')
+
+  // Right after the restart the preserved profile is still served
+  const { profile, preserved } = await app.getApplicationLastProfile('service:0')
+  assert.ok(profile.length > 0, 'Preserved profile should be served within the grace period')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
+
+  // After the grace period the evidence of the dead worker is gone
+  await new Promise(resolve => setTimeout(resolve, 3500))
+
+  await assert.rejects(
+    () => app.getApplicationLastProfile('service:0'),
+    err => err.code === 'PLT_RUNTIME_WORKER_NOT_FOUND' || err.code === 'PLT_PPROF_PROFILING_NOT_STARTED',
+    'The preserved profile should have expired after the grace period'
+  )
+})
+
+test('the preserved overload profile should be served while the replacement worker is paused below threshold', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  const { profile: preserved } = await app.getApplicationLastProfile('service:0')
+  assert.ok(preserved instanceof Uint8Array && preserved.length > 0)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker and restart profiling gated on a threshold the idle
+  // worker will not reach: the live worker reports "not enough ELU", and the
+  // preserved overload profile must still be served
+  await app.restartApplication('service')
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, eluThreshold: 0.9 })
+
+  const { profile, preserved: isPreserved } = await app.getApplicationLastProfile('service')
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
+  assert.ok(arraysEqual(profile, preserved), 'Should return the preserved overload profile, not a fresh one')
+  assert.strictEqual(isPreserved, true, 'The result should be flagged as preserved')
+})
+
+test('getApplicationLastProfile should fall back to the preserved profile when the worker is blocked', async t => {
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Hard-block the worker event loop, then retrieve the profile with a short
+  // pull timeout: the live pull cannot be served, so the preserved overload
+  // profile is returned instead. The endpoint engages the block 100ms after
+  // replying, so wait for it to be active before pulling.
+  await request(`${url}/block?ms=4000`, { method: 'POST' })
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  const { profile, timestamp, preserved } = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
+  assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned while the worker is blocked')
+  assert.ok(profile.length > 0, 'Preserved profile should have content')
+  assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
+})
+
+test('maxELU: false should disable the overload cutoff', async t => {
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-low-maxelu.json')
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000, maxELU: false })
+
+  // Give the health cycle a few ticks: the profiler must keep running even
+  // though the ELU is above the worker health.maxELU
+  await new Promise(resolve => setTimeout(resolve, 4000))
+
+  const state = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(state.isProfilerRunning, 'Profiler should keep running')
+  assert.ok(!state.isPaused, 'Profiler should not be paused')
+
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
