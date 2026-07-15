@@ -91,6 +91,7 @@ const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
 const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
 const kLastProfileTimeoutMs = 10000
+const kPreservedProfileGraceMs = 5 * 60_000
 
 // getApplicationLastProfile falls back to the preserved overload profile
 // whenever the worker cannot currently provide one: it is gone, profiling was
@@ -877,16 +878,23 @@ export class Runtime extends EventEmitter {
     let error
 
     try {
-      const service = await this.#getApplicationById(id, ensureStarted)
-
-      // Attach a noop handler so that a late settlement after the timeout
-      // does not surface as an unhandled rejection.
-      const pull = sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
+      // Bound the whole retrieval with a single timeout budget: resolving the
+      // worker round-trips to it when ensureStarted is set, and the profile
+      // pull does too — both hang if the worker event loop is blocked. Attach
+      // a noop handler so that a late settlement after the timeout does not
+      // surface as an unhandled rejection.
+      const pull = (async () => {
+        const service = await this.#getApplicationById(id, ensureStarted)
+        const result = await sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
+        return { service, result }
+      })()
       pull.catch(() => {})
 
-      const result = await executeWithTimeout(pull, timeout, kTimeout)
+      const outcome = await executeWithTimeout(pull, timeout, kTimeout)
 
-      if (result !== kTimeout) {
+      if (outcome !== kTimeout) {
+        const { service, result } = outcome
+
         // An older capture module which does not support includeTimestamp
         // returns the raw profile.
         const value = result instanceof Uint8Array ? { profile: result, timestamp: null } : result
@@ -903,7 +911,7 @@ export class Runtime extends EventEmitter {
           }
         }
 
-        return value
+        return { ...value, preserved: false }
       }
 
       // The worker event loop is not responding (e.g. it is hard-blocked).
@@ -919,7 +927,9 @@ export class Runtime extends EventEmitter {
     const preserved = this.#getPreservedOverloadProfile(id, type)
 
     if (preserved) {
-      return { profile: preserved.profile, timestamp: preserved.timestamp }
+      // The preserved flag lets consumers distinguish post-mortem evidence
+      // from a live window and judge it together with the timestamp.
+      return { profile: preserved.profile, timestamp: preserved.timestamp, preserved: true }
     }
 
     throw error
@@ -2210,6 +2220,16 @@ export class Runtime extends EventEmitter {
     // via getApplicationLastProfile. We use emit instead of emitAndNotify since
     // other workers are not interested in this event.
     worker[kITC].on('profile:captured', ({ type, timestamp }) => {
+      // A strictly newer completed window supersedes the preserved overload
+      // profile: once the worker is past the overload and producing windows
+      // again, its old evidence must not be served anymore.
+      const preservedKey = `${workerId}:${type}`
+      const preservedEntry = this.#lastOverloadProfiles.get(preservedKey)
+
+      if (preservedEntry && preservedEntry.timestamp < timestamp) {
+        this.#lastOverloadProfiles.delete(preservedKey)
+      }
+
       this.emit('application:worker:profile:captured', {
         id: workerId,
         application: applicationId,
@@ -2273,6 +2293,35 @@ export class Runtime extends EventEmitter {
     // replaced by the health checks.
     worker[kITC].on('profile:overload', ({ type, timestamp, profile }) => {
       this.#lastOverloadProfiles.set(`${workerId}:${type}`, { profile, timestamp })
+    })
+
+    // Preserved overload profiles outlive their worker only for a grace
+    // period: post-mortem collectors (alert or health-event driven) have time
+    // to fetch the evidence, but a long-dead worker's profile is not served
+    // forever and entries cannot pile up across replacements (replacement
+    // workers get fresh indices, so their keys are never reused).
+    worker.on('exit', () => {
+      for (const type of ['cpu', 'heap']) {
+        const key = `${workerId}:${type}`
+        const entry = this.#lastOverloadProfiles.get(key)
+
+        if (!entry) {
+          continue
+        }
+
+        const grace = Number.parseInt(process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE ?? '', 10)
+
+        setTimeout(
+          () => {
+            // Only delete the exact entry scheduled here: a successor worker
+            // reusing the index (restart) may have preserved a newer profile.
+            if (this.#lastOverloadProfiles.get(key) === entry) {
+              this.#lastOverloadProfiles.delete(key)
+            }
+          },
+          Number.isFinite(grace) && grace > 0 ? grace : kPreservedProfileGraceMs
+        ).unref()
+      }
     })
 
     worker[kITC].on('request:restart', async () => {

@@ -121,9 +121,11 @@ test('Runtime.stopApplicationProfiling', () => {
 })
 
 test('Runtime.getApplicationLastProfile', () => {
-  expect(runtime.getApplicationLastProfile('api')).type.toBe<Promise<{ profile: Buffer, timestamp: number | null }>>()
+  expect(runtime.getApplicationLastProfile('api')).type.toBe<
+    Promise<{ profile: Buffer, timestamp: number | null, preserved: boolean }>
+  >()
   expect(runtime.getApplicationLastProfile('api:0', { type: 'cpu' }, true)).type.toBe<
-    Promise<{ profile: Buffer, timestamp: number | null }>
+    Promise<{ profile: Buffer, timestamp: number | null, preserved: boolean }>
   >()
 })
 

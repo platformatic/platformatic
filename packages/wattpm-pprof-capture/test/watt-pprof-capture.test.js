@@ -723,10 +723,11 @@ test('the final overload profile should survive a worker restart', async t => {
   // preserved overload profile is still retrievable from the main thread
   await app.restartApplication('service')
 
-  const { profile, timestamp } = await app.getApplicationLastProfile('service:0')
+  const { profile, timestamp, preserved } = await app.getApplicationLastProfile('service:0')
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
   assert.ok(profile.length > 0, 'Preserved profile should have content')
   assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
 
   // Restart profiling on the replacement worker: until its first window
   // completes the live worker reports "no profile available yet", and the
@@ -734,8 +735,45 @@ test('the final overload profile should survive a worker restart', async t => {
   // application-level id)
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 60000 })
 
-  const { profile: profileByApp } = await app.getApplicationLastProfile('service')
+  const { profile: profileByApp, preserved: preservedByApp } = await app.getApplicationLastProfile('service')
   assert.ok(profileByApp.length > 0, 'Preserved profile should be returned for the application id')
+  assert.strictEqual(preservedByApp, true, 'The result should be flagged as preserved')
+})
+
+test('the preserved overload profile should expire after the grace period once its worker is gone', async t => {
+  process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE = '3000'
+  t.after(() => {
+    delete process.env.PLT_RUNTIME_PRESERVED_PROFILE_GRACE
+  })
+
+  const { app, url } = await createApp(t)
+
+  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
+
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.isPaused && !state.isProfilerRunning
+  }, 15000)
+
+  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
+
+  // Replace the worker: the grace timer starts when the old worker exits
+  await app.restartApplication('service')
+
+  // Right after the restart the preserved profile is still served
+  const { profile, preserved } = await app.getApplicationLastProfile('service:0')
+  assert.ok(profile.length > 0, 'Preserved profile should be served within the grace period')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
+
+  // After the grace period the evidence of the dead worker is gone
+  await new Promise(resolve => setTimeout(resolve, 3500))
+
+  await assert.rejects(
+    () => app.getApplicationLastProfile('service:0'),
+    err => err.code === 'PLT_RUNTIME_WORKER_NOT_FOUND' || err.code === 'PLT_PPROF_PROFILING_NOT_STARTED',
+    'The preserved profile should have expired after the grace period'
+  )
 })
 
 test('the preserved overload profile should be served while the replacement worker is paused below threshold', async t => {
@@ -760,9 +798,10 @@ test('the preserved overload profile should be served while the replacement work
   await app.restartApplication('service')
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, eluThreshold: 0.9 })
 
-  const { profile } = await app.getApplicationLastProfile('service')
+  const { profile, preserved: isPreserved } = await app.getApplicationLastProfile('service')
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
   assert.ok(arraysEqual(profile, preserved), 'Should return the preserved overload profile, not a fresh one')
+  assert.strictEqual(isPreserved, true, 'The result should be flagged as preserved')
 })
 
 test('getApplicationLastProfile should fall back to the preserved profile when the worker is blocked', async t => {
@@ -780,13 +819,16 @@ test('getApplicationLastProfile should fall back to the preserved profile when t
 
   // Hard-block the worker event loop, then retrieve the profile with a short
   // pull timeout: the live pull cannot be served, so the preserved overload
-  // profile is returned instead
+  // profile is returned instead. The endpoint engages the block 100ms after
+  // replying, so wait for it to be active before pulling.
   await request(`${url}/block?ms=4000`, { method: 'POST' })
+  await new Promise(resolve => setTimeout(resolve, 300))
 
-  const { profile, timestamp } = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
+  const { profile, timestamp, preserved } = await app.getApplicationLastProfile('service:0', { timeout: 1500 })
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned while the worker is blocked')
   assert.ok(profile.length > 0, 'Preserved profile should have content')
   assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
+  assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
 })
 
 test('maxELU: false should disable the overload cutoff', async t => {

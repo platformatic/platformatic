@@ -204,10 +204,11 @@ test('extensions receive the profiles captured by the continuous profiler, also 
   // The event only carries metadata, the profile is retrieved on demand
   strictEqual(event.profile, undefined)
 
-  const { profile, timestamp } = await app.getApplicationLastProfile(event.id, { type: event.type })
+  const { profile, timestamp, preserved } = await app.getApplicationLastProfile(event.id, { type: event.type })
   ok(profile instanceof Uint8Array || Buffer.isBuffer(profile))
   ok(profile.length > 0)
   strictEqual(typeof timestamp, 'number')
+  strictEqual(preserved, false)
 
   // Profiling must be re-enabled on the replacement worker after a restart.
   // Truncate the array in place since the extension captured its reference.
