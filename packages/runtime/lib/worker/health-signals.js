@@ -1,4 +1,5 @@
 import { getITC, updateGlobals } from '@platformatic/globals'
+import { monitorEventLoopDelay } from 'node:perf_hooks'
 import {
   HealthSignalMustBeObjectError,
   HealthSignalTypeMustBeStringError
@@ -79,4 +80,37 @@ export function initHealthSignalsApi (options = {}) {
   }
 
   updateGlobals({ sendHealthSignal })
+
+  return sendHealthSignal
+}
+
+// Samples the event loop delay and reports it as an eventLoopDelay health
+// signal once per second, in milliseconds. The measurement must run inside
+// the worker (monitorEventLoopDelay is per-isolate, there is no cross-thread
+// equivalent): during a hard block nothing is reported and a sample with a
+// large max arrives once the loop unblocks — full blocks are already caught
+// by the main-thread measured ELU, this signal catches long individual
+// stalls at low average utilization, which are invisible to any ELU
+// threshold.
+export function startEventLoopDelayMonitor (sendHealthSignal, options = {}) {
+  const histogram = monitorEventLoopDelay({ resolution: options.resolution ?? 20 })
+  histogram.enable()
+
+  const interval = setInterval(() => {
+    // With one-second windows the p99 is close to the max (few dozen samples
+    // per window), but it smooths single outliers on consumers that prefer it
+    const max = histogram.max / 1e6
+    const mean = histogram.mean / 1e6
+    const p99 = histogram.percentile(99) / 1e6
+    histogram.reset()
+
+    // Signals are delivered on a best-effort basis
+    sendHealthSignal({ type: 'eventLoopDelay', max, mean, p99 }).catch(() => {})
+  }, options.interval ?? 1000)
+  interval.unref()
+
+  return function stopEventLoopDelayMonitor () {
+    clearInterval(interval)
+    histogram.disable()
+  }
 }

@@ -1283,6 +1283,28 @@
                       }
                     ]
                   },
+                  "maxEventLoopDelay": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxEventLoopDelayP99": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
                   "maxHeapUsed": {
                     "anyOf": [
                       {
@@ -2036,6 +2058,28 @@
                 }
               ],
               "default": 0.99
+            },
+            "maxEventLoopDelay": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "maxEventLoopDelayP99": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "maxHeapUsed": {
               "anyOf": [
@@ -3375,6 +3419,28 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 1
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxEventLoopDelay": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxEventLoopDelayP99": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
                     },
                     {
                       "type": "string"

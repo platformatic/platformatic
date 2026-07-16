@@ -22,7 +22,7 @@ import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
 import { exitCodes } from '../errors.js'
 import { Controller } from './controller.js'
-import { initHealthSignalsApi } from './health-signals.js'
+import { initHealthSignalsApi, startEventLoopDelayMonitor } from './health-signals.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
@@ -338,10 +338,26 @@ async function main () {
     }
   }
 
-  initHealthSignalsApi({
+  const sendHealthSignal = initHealthSignalsApi({
     workerId: workerData.worker.id,
     applicationId: applicationConfig.id
   })
+
+  // When health.maxEventLoopDelay or health.maxEventLoopDelayP99 are
+  // configured, sample the event loop delay and report it as a health
+  // signal: the main thread evaluates it as part of the health checks and it
+  // is exposed on the health metrics event.
+  const maxEventLoopDelay = Number(applicationConfig.health?.maxEventLoopDelay ?? runtimeConfig.health?.maxEventLoopDelay)
+  const maxEventLoopDelayP99 = Number(
+    applicationConfig.health?.maxEventLoopDelayP99 ?? runtimeConfig.health?.maxEventLoopDelayP99
+  )
+
+  if (
+    (Number.isFinite(maxEventLoopDelay) && maxEventLoopDelay > 0) ||
+    (Number.isFinite(maxEventLoopDelayP99) && maxEventLoopDelayP99 > 0)
+  ) {
+    startEventLoopDelayMonitor(sendHealthSignal)
+  }
 
   itc.notify('init')
 }
