@@ -46,8 +46,10 @@ test(
     const signal = metric.healthSignals.find(s => s.type === 'eventLoopDelay' && s.max >= 100)
     strictEqual(typeof signal.max, 'number')
     strictEqual(typeof signal.mean, 'number')
+    strictEqual(typeof signal.p99, 'number')
     strictEqual(typeof signal.timestamp, 'number')
     ok(signal.max < 60000, 'The reported delay should be plausible')
+    ok(signal.p99 <= signal.max, 'The p99 cannot exceed the max')
 
     // The health event exposes the maximum delay observed over the check window
     while (true) {

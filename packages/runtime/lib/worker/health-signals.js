@@ -97,12 +97,15 @@ export function startEventLoopDelayMonitor (sendHealthSignal, options = {}) {
   histogram.enable()
 
   const interval = setInterval(() => {
+    // With one-second windows the p99 is close to the max (few dozen samples
+    // per window), but it smooths single outliers on consumers that prefer it
     const max = histogram.max / 1e6
     const mean = histogram.mean / 1e6
+    const p99 = histogram.percentile(99) / 1e6
     histogram.reset()
 
     // Signals are delivered on a best-effort basis
-    sendHealthSignal({ type: 'eventLoopDelay', max, mean }).catch(() => {})
+    sendHealthSignal({ type: 'eventLoopDelay', max, mean, p99 }).catch(() => {})
   }, options.interval ?? 1000)
   interval.unref()
 
