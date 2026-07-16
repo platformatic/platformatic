@@ -11,12 +11,12 @@
   "logger": {
     "level": "error"
   },
-  "restartOnError": 1000,
+  "restartOnError": 100,
   "health": {
     "enabled": true,
     "interval": 1000,
     "gracePeriod": 1,
-    "maxEventLoopDelay": 60000,
-    "maxEventLoopDelayP99": 60000
+    "maxUnhealthyChecks": 2,
+    "maxEventLoopDelayP99": 100
   }
 }

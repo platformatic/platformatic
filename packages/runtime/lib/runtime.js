@@ -2575,14 +2575,18 @@ export class Runtime extends EventEmitter {
 
     const healthConfig = worker[kConfig].health
 
-    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, maxEventLoopDelay } = worker[kConfig].health
+    let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, maxEventLoopDelay, maxEventLoopDelayP99 } =
+      worker[kConfig].health
 
     if (typeof maxHeapTotal === 'string') {
       maxHeapTotal = parseMemorySize(maxHeapTotal)
     }
 
     maxEventLoopDelay = Number(maxEventLoopDelay)
+    maxEventLoopDelayP99 = Number(maxEventLoopDelayP99)
     const eventLoopDelayEnabled = Number.isFinite(maxEventLoopDelay) && maxEventLoopDelay > 0
+    const eventLoopDelayP99Enabled = Number.isFinite(maxEventLoopDelayP99) && maxEventLoopDelayP99 > 0
+    const eventLoopDelayMonitored = eventLoopDelayEnabled || eventLoopDelayP99Enabled
 
     if (interval < 1000) {
       interval = 1000
@@ -2595,19 +2599,28 @@ export class Runtime extends EventEmitter {
     let lastHealthMetrics = null
 
     // Health metrics arrive every second while the check runs every
-    // `interval`: track the maximum event loop delay reported by the worker
-    // across the whole check window, so that stalls between checks are not
-    // missed.
+    // `interval`: track the maximum event loop delay (and the worst reported
+    // per-second p99) across the whole check window, so that stalls between
+    // checks are not missed.
     let maxObservedEventLoopDelay = 0
+    let maxObservedEventLoopDelayP99 = 0
 
     healthMetricsListener = healthCheck => {
       if (healthCheck.id === worker[kId]) {
         lastHealthMetrics = healthCheck
 
-        if (eventLoopDelayEnabled) {
+        if (eventLoopDelayMonitored) {
           for (const signal of healthCheck.healthSignals) {
-            if (signal.type === 'eventLoopDelay' && signal.max > maxObservedEventLoopDelay) {
+            if (signal.type !== 'eventLoopDelay') {
+              continue
+            }
+
+            if (signal.max > maxObservedEventLoopDelay) {
               maxObservedEventLoopDelay = signal.max
+            }
+
+            if (signal.p99 > maxObservedEventLoopDelayP99) {
+              maxObservedEventLoopDelayP99 = signal.p99
             }
           }
         }
@@ -2674,16 +2687,21 @@ export class Runtime extends EventEmitter {
 
       const memoryUsage = health.heapUsed != null ? health.heapUsed / maxHeapTotal : 0
       const eventLoopDelay = maxObservedEventLoopDelay
+      const eventLoopDelayP99 = maxObservedEventLoopDelayP99
       maxObservedEventLoopDelay = 0
+      maxObservedEventLoopDelayP99 = 0
       const eventLoopDelayExceeded = eventLoopDelayEnabled && eventLoopDelay > maxEventLoopDelay
-      const unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed || eventLoopDelayExceeded
+      const eventLoopDelayP99Exceeded = eventLoopDelayP99Enabled && eventLoopDelayP99 > maxEventLoopDelayP99
+      const unhealthy =
+        health.elu > maxELU || memoryUsage > maxHeapUsed || eventLoopDelayExceeded || eventLoopDelayP99Exceeded
 
       this.emit('application:worker:health', {
         id: worker[kId],
         application: id,
         worker: index,
         currentHealth: health,
-        eventLoopDelay: eventLoopDelayEnabled ? eventLoopDelay : undefined,
+        eventLoopDelay: eventLoopDelayMonitored ? eventLoopDelay : undefined,
+        eventLoopDelayP99: eventLoopDelayMonitored ? eventLoopDelayP99 : undefined,
         unhealthy,
         healthConfig
       })
@@ -2709,6 +2727,13 @@ export class Runtime extends EventEmitter {
         )
       }
 
+      if (eventLoopDelayP99Exceeded) {
+        this.logger.error(
+          `The ${errorLabel} had a p99 event loop delay of ${eventLoopDelayP99.toFixed(2)} ms, ` +
+            `above the maximum allowed p99 delay of ${maxEventLoopDelayP99} ms.`
+        )
+      }
+
       if (unhealthy) {
         unhealthyChecks++
       } else {
@@ -2720,7 +2745,16 @@ export class Runtime extends EventEmitter {
           this.emitAndNotify('application:worker:unhealthy', { application: id, worker: index })
 
           this.logger.error(
-            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed, eventLoopDelay, maxEventLoopDelay },
+            {
+              elu: health.elu,
+              maxELU,
+              memoryUsage: health.heapUsed,
+              maxMemoryUsage: maxHeapUsed,
+              eventLoopDelay,
+              maxEventLoopDelay,
+              eventLoopDelayP99,
+              maxEventLoopDelayP99
+            },
             `The ${errorLabel} is unhealthy. Replacing it ...`
           )
 

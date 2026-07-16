@@ -343,12 +343,19 @@ async function main () {
     applicationId: applicationConfig.id
   })
 
-  // When health.maxEventLoopDelay is configured, sample the event loop delay
-  // and report it as a health signal: the main thread evaluates it as part
-  // of the health checks and it is exposed on the health metrics event.
+  // When health.maxEventLoopDelay or health.maxEventLoopDelayP99 are
+  // configured, sample the event loop delay and report it as a health
+  // signal: the main thread evaluates it as part of the health checks and it
+  // is exposed on the health metrics event.
   const maxEventLoopDelay = Number(applicationConfig.health?.maxEventLoopDelay ?? runtimeConfig.health?.maxEventLoopDelay)
+  const maxEventLoopDelayP99 = Number(
+    applicationConfig.health?.maxEventLoopDelayP99 ?? runtimeConfig.health?.maxEventLoopDelayP99
+  )
 
-  if (Number.isFinite(maxEventLoopDelay) && maxEventLoopDelay > 0) {
+  if (
+    (Number.isFinite(maxEventLoopDelay) && maxEventLoopDelay > 0) ||
+    (Number.isFinite(maxEventLoopDelayP99) && maxEventLoopDelayP99 > 0)
+  ) {
     startEventLoopDelayMonitor(sendHealthSignal)
   }
 

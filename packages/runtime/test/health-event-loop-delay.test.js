@@ -51,11 +51,14 @@ test(
     ok(signal.max < 60000, 'The reported delay should be plausible')
     ok(signal.p99 <= signal.max, 'The p99 cannot exceed the max')
 
-    // The health event exposes the maximum delay observed over the check window
+    // The health event exposes the maximum delay (and the worst per-second
+    // p99) observed over the check window
     while (true) {
       const [health] = await once(app, 'application:worker:health')
 
       if (health.application === 'main' && health.eventLoopDelay >= 100) {
+        strictEqual(typeof health.eventLoopDelayP99, 'number')
+        ok(health.eventLoopDelayP99 <= health.eventLoopDelay, 'The p99 cannot exceed the max')
         strictEqual(health.unhealthy, false, 'The worker should stay healthy below maxEventLoopDelay')
         break
       }
@@ -87,6 +90,38 @@ test(
 
     // The stalling worker is replaced: the interval dies with it, so the
     // replacement stays healthy
+    while (true) {
+      const [started] = await once(app, 'application:worker:started')
+
+      if (started.application === 'main') {
+        ok(started.worker !== 0, 'The replacement worker should have a fresh index')
+        break
+      }
+    }
+  }
+)
+
+test(
+  'a worker exceeding maxEventLoopDelayP99 is marked unhealthy and replaced',
+  { skip: isWindows && 'Skipping on Windows' },
+  async t => {
+    const configFile = join(fixturesDir, 'event-loop-delay', 'platformatic-restart-p99.json')
+    const app = await createRuntime(configFile)
+
+    t.after(async () => {
+      await app.close()
+    })
+
+    const url = await app.start()
+
+    // The p99-only threshold also activates the in-worker sampler. 300ms
+    // blocks every 500ms make the per-second p99 track the stall magnitude,
+    // well above the configured 100ms.
+    await request(`${url}/stall/start?block=300&period=500`, { method: 'POST' })
+
+    const [unhealthy] = await once(app, 'application:worker:unhealthy')
+    strictEqual(unhealthy.application, 'main')
+
     while (true) {
       const [started] = await once(app, 'application:worker:started')
 

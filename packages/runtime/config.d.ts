@@ -62,6 +62,7 @@ export type PlatformaticRuntimeConfig = {
           maxUnhealthyChecks?: number | string;
           maxELU?: number | string;
           maxEventLoopDelay?: number | string;
+          maxEventLoopDelayP99?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
           maxYoungGeneration?: number | string;
@@ -274,6 +275,7 @@ export type PlatformaticRuntimeConfig = {
     maxUnhealthyChecks?: number | string;
     maxELU?: number | string;
     maxEventLoopDelay?: number | string;
+    maxEventLoopDelayP99?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
     maxYoungGeneration?: number | string;
