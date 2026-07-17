@@ -195,7 +195,16 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
 
         dispatcher.replaceServer(await controller.capability.getDispatchTarget())
-        return application.entrypoint ? controller.capability.getUrl() : null
+
+        const scheduledTasks =
+          typeof controller.capability.getScheduledTasks === 'function'
+            ? await controller.capability.getScheduledTasks()
+            : []
+
+        return {
+          url: application.entrypoint ? controller.capability.getUrl() : null,
+          scheduledTasks
+        }
       },
 
       async stop ({ force, dependents }) {

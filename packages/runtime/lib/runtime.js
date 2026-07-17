@@ -88,6 +88,7 @@ const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
+const kWorkerScheduledTasks = Symbol('plt.runtime.worker.scheduledTasks')
 const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
 const kLastProfileTimeoutMs = 10000
@@ -837,6 +838,7 @@ export class Runtime extends EventEmitter {
         await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
       }
 
+      await this.#registerApplicationSchedulerJobs(id)
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
@@ -1833,7 +1835,8 @@ export class Runtime extends EventEmitter {
 
     await this.#scheduler.removeApplicationJobs(id)
 
-    const schedules = await this.getApplicationScheduledTasks(id)
+    const workerId = this.#workers.getKeys(id)[0]
+    const schedules = this.#workers.get(workerId)?.[kWorkerScheduledTasks] ?? []
     for (const schedule of schedules) {
       const name = `${id}:${schedule.id}`
       this.#scheduler.addJob(
@@ -2882,22 +2885,24 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:worker:starting', eventPayload)
 
     try {
-      let workerUrl
+      let workerStartResult
       if (config.startTimeout > 0) {
-        workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
+        workerStartResult = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
-        if (workerUrl === kTimeout) {
+        if (workerStartResult === kTimeout) {
           this.emitAndNotify('application:worker:startTimeout', eventPayload)
           this.logger.error(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
           throw new ApplicationStartTimeoutError(id, config.startTimeout)
         }
       } else {
-        workerUrl = await sendViaITC(worker, 'start')
+        workerStartResult = await sendViaITC(worker, 'start')
       }
 
       await this.#avoidOutOfOrderThreadLogs()
 
+      const { url: workerUrl, scheduledTasks } = workerStartResult
+      worker[kWorkerScheduledTasks] = scheduledTasks
       if (workerUrl) {
         this.#url = workerUrl
 
@@ -3214,7 +3219,17 @@ export class Runtime extends EventEmitter {
       this.#workers.set(newWorkerId, newWorker)
 
       // Add the worker to the mesh
-      await this.#startWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false, 0, newWorker, true)
+      await this.#startWorker(
+        configForNewWorker,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        false,
+        0,
+        newWorker,
+        true
+      )
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -3234,8 +3249,6 @@ export class Runtime extends EventEmitter {
     if (!stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
-
-    await this.#registerApplicationSchedulerJobs(applicationId)
   }
 
   async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
