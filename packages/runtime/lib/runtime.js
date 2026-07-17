@@ -651,7 +651,13 @@ export class Runtime extends EventEmitter {
 
     const removed = []
     for (const application of applications) {
-      const details = await this.getApplicationDetails(application)
+      if (!this.#applications.has(application)) {
+        throw new ApplicationNotFoundError(application, this.getApplicationsIds().join(', '))
+      }
+
+      // Use allowUnloaded so that applications without a live worker
+      // (stopped or crashed with restartOnError: 0) can still be removed.
+      const details = await this.getApplicationDetails(application, true)
       details.status = 'removed'
       removed.push(details)
     }

@@ -366,3 +366,64 @@ test('vertical autoscaler should work properly when adding and removing applicat
   // Wait for few cycles of vertical autoscaler
   await sleep(10000)
 })
+
+test('should be able to remove a stopped application', async t => {
+  const configFile = join(fixturesDir, 'dynamic-applications')
+  const runtime = await createRuntime(configFile, null)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+
+  await runtime.stopApplication('application-1')
+
+  const removed = await runtime.removeApplications(['application-1'])
+  deepStrictEqual(removed[0].id, 'application-1')
+  deepStrictEqual(removed[0].status, 'removed')
+  ok(!runtime.getApplicationsIds().includes('application-1'))
+
+  await rejects(
+    () => runtime.removeApplications(['application-1']),
+    /Application application-1 not found./
+  )
+})
+
+test('should be able to remove an application whose worker crashed and was not restarted', async t => {
+  const configFile = join(fixturesDir, 'dynamic-applications')
+  const runtime = await createRuntime(configFile, null)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.start()
+
+  // Add application-2 with restartOnError disabled so that it stays down after crashing
+  const restartPromise = once(runtime, 'application:restarted')
+  await runtime.addApplications(
+    [
+      await prepareApplication(runtime.getRuntimeConfig(true), {
+        id: 'application-2',
+        path: './application-2',
+        restartOnError: 0
+      })
+    ],
+    true
+  )
+  await restartPromise
+
+  const url = runtime.getUrl()
+
+  // Crash the application and wait for the runtime to mark it as unavailable
+  const unavailablePromise = once(runtime, 'application:worker:unvailable')
+  await request(url + '/application-2/crash')
+  await unavailablePromise
+
+  // Removing the application must succeed even though it has no live worker
+  const removed = await runtime.removeApplications(['application-2'])
+  deepStrictEqual(removed[0].id, 'application-2')
+  deepStrictEqual(removed[0].status, 'removed')
+  ok(!runtime.getApplicationsIds().includes('application-2'))
+})
