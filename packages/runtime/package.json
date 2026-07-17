@@ -90,7 +90,7 @@
     "help-me": "^5.0.0",
     "minimist": "^1.2.8",
     "pino": "^10.1.0",
-    "pino-opentelemetry-transport": "^3.0.0",
+    "pino-opentelemetry-transport": "^4.0.2",
     "pino-pretty": "^13.0.0",
     "semgrator": "^0.3.0",
     "sonic-boom": "^4.2.0",
