@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/nitro/3.61.1.json",
+  "application": {
+    "commands": {
+      "build": "nitro build",
+      "development": "nitro dev",
+      "production": "node build/server/index.mjs"
+    },
+    "outputDirectory": "build",
+    "include": ["build"]
+  }
+}

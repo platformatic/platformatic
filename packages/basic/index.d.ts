@@ -237,7 +237,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
       disableChildManager?: boolean
     }
   ): Promise<void>
-  startWithCommand (command: string, loader?: string | URL, scripts?: unknown[]): Promise<void>
+  startWithCommand (command: string | string[], loader?: string | URL, scripts?: unknown[]): Promise<void>
   stopCommand (): Promise<void>
   getChildManager (): object | null
   getChildManagerContext (basePath: string): Promise<object>

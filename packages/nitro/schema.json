@@ -208,9 +208,6 @@
           "type": "integer",
           "description": "The maximum length of the queue of pending connections"
         },
-        "http2": {
-          "type": "boolean"
-        },
         "https": {
           "type": "object",
           "properties": {
@@ -359,16 +356,13 @@
         },
         "outputDirectory": {
           "type": "string",
-          "default": "dist"
+          "default": ".output"
         },
         "include": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "default": [
-            "dist"
-          ]
+          }
         },
         "commands": {
           "type": "object",
@@ -423,6 +417,59 @@
               "items": {
                 "type": "string",
                 "resolvePath": true
+              }
+            }
+          ]
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolvePath": true
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "resolvePath": true
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                ]
               }
             }
           ]
@@ -656,6 +703,18 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "restartOnError": {
+                "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                ]
               },
               "dependencies": {
                 "type": "array",
@@ -2743,6 +2802,18 @@
               },
               "additionalProperties": false
             },
+            "restartOnError": {
+              "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0
+                }
+              ]
+            },
             "arguments": {
               "type": "array",
               "items": {
@@ -2908,70 +2979,6 @@
           },
           "additionalProperties": false,
           "default": {}
-        },
-        "ssr": {
-          "anyOf": [
-            {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "entrypoint": {
-                  "type": "string",
-                  "default": "server.js"
-                },
-                "clientDirectory": {
-                  "type": "string",
-                  "default": "client"
-                },
-                "serverDirectory": {
-                  "type": "string",
-                  "default": "server"
-                }
-              },
-              "required": [
-                "entrypoint"
-              ],
-              "additionalProperties": false
-            },
-            {
-              "type": "boolean"
-            }
-          ],
-          "default": false
-        },
-        "notFoundHandler": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "path": {
-                  "type": "string",
-                  "default": "index.html"
-                },
-                "contentType": {
-                  "type": "string",
-                  "default": "text/html; charset=utf-8"
-                },
-                "statusCode": {
-                  "type": "number",
-                  "default": 200
-                }
-              },
-              "additionalProperties": false
-            }
-          ],
-          "default": false
         }
       },
       "default": {},
@@ -2981,8 +2988,11 @@
       "type": "object",
       "properties": {
         "outputDirectory": {
+          "type": "string"
+        },
+        "entrypoint": {
           "type": "string",
-          "default": ".output"
+          "default": "server/index.mjs"
         }
       },
       "default": {},

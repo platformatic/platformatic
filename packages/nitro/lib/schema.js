@@ -11,15 +11,29 @@ export const nitro = {
   type: 'object',
   properties: {
     outputDirectory: {
+      type: 'string'
+    },
+    entrypoint: {
       type: 'string',
-      default: '.output'
+      default: 'server/index.mjs'
     }
   },
   default: {},
   additionalProperties: false
 }
 
-export const schemaComponents = { nitro }
+const application = structuredClone(basicSchemaComponents.buildableApplication)
+application.properties.outputDirectory.default = '.output'
+delete application.properties.include.default
+
+const server = structuredClone(utilsSchemaComponents.server)
+delete server.properties.http2
+
+const vite = structuredClone(viteSchemaComponents.vite)
+delete vite.properties.ssr
+delete vite.properties.notFoundHandler
+
+export const schemaComponents = { nitro, vite }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/nitro/${packageJson.version}.json`,
@@ -27,18 +41,14 @@ export const schema = {
   title: 'Platformatic Nitro Config',
   type: 'object',
   properties: {
-    $schema: {
-      type: 'string'
-    },
-    module: {
-      type: 'string'
-    },
+    $schema: { type: 'string' },
+    module: { type: 'string' },
     logger: utilsSchemaComponents.logger,
-    server: utilsSchemaComponents.server,
+    server,
     watch: basicSchemaComponents.watch,
-    application: basicSchemaComponents.buildableApplication,
+    application,
     runtime: utilsSchemaComponents.wrappedRuntime,
-    vite: viteSchemaComponents.vite,
+    vite,
     nitro
   },
   additionalProperties: false

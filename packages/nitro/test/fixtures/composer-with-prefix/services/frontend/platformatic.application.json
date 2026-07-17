@@ -1,6 +1,4 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nitro/2.0.0.json",
-  "application": {
-    "basePath": "/frontend"
-  }
+  "$schema": "https://schemas.platformatic.dev/@platformatic/nitro/3.61.1.json",
+  "application": { "basePath": "/frontend" }
 }

@@ -8,8 +8,6 @@
       "path": "./services/frontend"
     }
   ],
-  "logger": {
-    "level": "error"
-  },
+  "logger": { "level": "info" },
   "restartOnError": false
 }

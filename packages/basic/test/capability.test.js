@@ -193,6 +193,19 @@ test('BaseCapability - buildWithCommand - should execute the requested command',
   deepStrictEqual(capability.stderr.messages[0], temporaryFolder)
 })
 
+test('BaseCapability - buildWithCommand - should preserve command array arguments without a shell', async t => {
+  const capability = await create(t, { isProduction: true })
+  const argument = 'value with spaces && shell syntax'
+
+  await capability.buildWithCommand(
+    ['node', '--input-type=module', '--eval', 'process.stdout.write(process.argv[1])', argument],
+    import.meta.dirname,
+    { disableChildManager: true }
+  )
+
+  deepStrictEqual(capability.stdout.messages[1], argument)
+})
+
 test('BaseCapability - buildWithCommand - should handle exceptions', async t => {
   const capability = await create(t, {})
 

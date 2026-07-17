@@ -1,7 +1,7 @@
 {
   "private": true,
+  "type": "module",
   "dependencies": {
-    "@platformatic/nitro": "^3.61.1",
-    "nitropack": "^2.13.4"
+    "@platformatic/runtime": "workspace:*"
   }
 }

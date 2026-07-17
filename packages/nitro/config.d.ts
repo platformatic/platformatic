@@ -73,7 +73,6 @@ export interface PlatformaticNitroConfig {
      * The maximum length of the queue of pending connections
      */
     backlog?: number;
-    http2?: boolean;
     https?: {
       allowHTTP1?: boolean;
       key:
@@ -130,6 +129,23 @@ export interface PlatformaticNitroConfig {
   };
   runtime?: {
     preload?: string | string[];
+    extensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
     basePath?: string;
     services?: {
       [k: string]: unknown;
@@ -740,6 +756,10 @@ export interface PlatformaticNitroConfig {
         bufferPoolSize?: number | string;
         defaultHighWaterMark?: number | string;
       };
+      /**
+       * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+       */
+      restartOnError?: boolean | number;
       arguments?: string[];
       env?: {
         [k: string]: string;
@@ -793,25 +813,9 @@ export interface PlatformaticNitroConfig {
     devServer?: {
       strict?: boolean;
     };
-    ssr?:
-      | {
-          enabled?: boolean;
-          entrypoint: string;
-          clientDirectory?: string;
-          serverDirectory?: string;
-        }
-      | boolean;
-    notFoundHandler?:
-      | boolean
-      | string
-      | {
-          enabled?: boolean;
-          path?: string;
-          contentType?: string;
-          statusCode?: number;
-        };
   };
   nitro?: {
     outputDirectory?: string;
+    entrypoint?: string;
   };
 }

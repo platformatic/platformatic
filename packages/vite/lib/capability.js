@@ -63,9 +63,9 @@ export class ViteCapability extends BaseCapability {
     await super._start({ listen })
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this._startProduction(listen)
     } else {
-      await this.#startDevelopment(listen)
+      await this._startDevelopment(listen)
     }
 
     await this._collectMetrics()
@@ -86,7 +86,9 @@ export class ViteCapability extends BaseCapability {
     super.setClosing()
 
     const closeConnections = this.runtimeConfig?.gracefulShutdown?.closeConnections !== false
-    if (!closeConnections) return
+    if (!closeConnections) {
+      return
+    }
 
     // In production mode with Fastify, close HTTP/2 sessions
     if (this.isProduction && this.#app?.server?.closeHttp2Sessions) {
@@ -149,7 +151,8 @@ export class ViteCapability extends BaseCapability {
       updateGlobals({ isBuilding: false })
     }
 
-    await writeFile(resolve(outDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')
+    const buildInfoPath = this.buildInfoPath ?? resolve(outDir, '.platformatic-build.json')
+    await writeFile(buildInfoPath, JSON.stringify({ basePath }), 'utf-8')
   }
 
   /* c8 ignore next 5 */
@@ -203,7 +206,7 @@ export class ViteCapability extends BaseCapability {
     this.#vite = vitePath
   }
 
-  async #startDevelopment () {
+  async _startDevelopment () {
     const config = this.config
     const command = this.config.application.commands.development
 
@@ -259,7 +262,7 @@ export class ViteCapability extends BaseCapability {
     this.url = getServerUrl(this.#server)
   }
 
-  async #startProduction (listen) {
+  async _startProduction (listen) {
     const config = this.config
     const command = this.config.application.commands.production
 

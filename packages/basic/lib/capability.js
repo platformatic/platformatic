@@ -482,12 +482,9 @@ export class BaseCapability extends EventEmitter {
 
   async buildWithCommand (command, basePath, opts = {}) {
     const { loader, scripts, context, disableChildManager } = opts
+    const displayCommand = Array.isArray(command) ? command.join(' ') : command
 
-    if (Array.isArray(command)) {
-      command = command.join(' ')
-    }
-
-    this.logger.debug(`Executing "${command}" ...`)
+    this.logger.debug(`Executing "${displayCommand}" ...`)
 
     const baseContext = await this.getChildManagerContext(basePath)
     this.childManager = disableChildManager
@@ -545,7 +542,8 @@ export class BaseCapability extends EventEmitter {
       this.childManager.close()
 
       if (e.code === 'ENOENT') {
-        throw new Error(`Cannot execute command "${command}": executable not found`)
+        const displayCommand = Array.isArray(command) ? command.join(' ') : command
+        throw new Error(`Cannot execute command "${displayCommand}": executable not found`)
       } else {
         throw e
       }
@@ -708,8 +706,10 @@ export class BaseCapability extends EventEmitter {
   }
 
   async spawn (command) {
-    let [executable, ...args] = parseCommandString(command)
-    const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
+    const isArrayCommand = Array.isArray(command)
+    let [executable, ...args] = isArrayCommand ? command : parseCommandString(command)
+    const hasChainedCommands = !isArrayCommand &&
+      (command.includes('&&') || command.includes('||') || command.includes(';'))
 
     // Use the current Node.js executable instead of relying on PATH lookup
     // This ensures subprocess uses the same Node.js version as the parent
@@ -729,13 +729,13 @@ export class BaseCapability extends EventEmitter {
 
     const spawnOptions = { cwd: this.root }
 
-    if (platform() === 'win32') {
+    if (platform() === 'win32' && !isArrayCommand) {
       executable = command.replace(/^node\b/, process.execPath)
       args = []
 
       spawnOptions.shell = true
       spawnOptions.windowsVerbatimArguments = true
-    } else {
+    } else if (!isArrayCommand) {
       spawnOptions.shell = hasChainedCommands
     }
 

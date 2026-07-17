@@ -1,11 +1,16 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
+import { resolve, transform as basicTransform, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { hasViteConfigFile, NitroCapability, NitroViteCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
 
-/* c8 ignore next 5 */
+/* c8 ignore next 6 */
 export async function transform (config, schema, options) {
   config = await basicTransform(config, schema, options)
+
+  if (config.application.include === undefined) {
+    config.application.include = [config.nitro.outputDirectory ?? config.application.outputDirectory]
+  }
+
   config.watch = { enabled: false }
   return config
 }
@@ -25,10 +30,8 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 export async function create (configOrRoot, sourceOrConfig, context) {
   const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
   const root = config[kMetadata].root
-
-  // When Nitro is used as a Vite plugin (like in Lovable applications), we drive
-  // the application via Vite, otherwise we use the Nitro CLI directly.
   const Capability = hasViteConfigFile(root, config) ? NitroViteCapability : NitroCapability
+
   return new Capability(root, config, context)
 }
 

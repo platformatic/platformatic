@@ -1,3 +1,1 @@
-export default defineEventHandler(() => {
-  return { hello: 'nitro' }
-})
+export default defineEventHandler(() => ({ hello: 'prefixed-nitro' }))

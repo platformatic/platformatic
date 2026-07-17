@@ -90,6 +90,12 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Full-stack Vue applications with server-side rendering and static generation
 - **Features**: Nuxt development server, Nitro production output, Vite-powered development
 
+##### [`@platformatic/nitro`](../reference/nitro/overview.md)
+
+- **Description**: Nitro application integration
+- **Use Case**: Standalone Nitro applications and Vite applications using the Nitro plugin
+- **Features**: Nitro development server, Vite-powered development, Nitro production output
+
 ##### [`@platformatic/vite`](../reference/vite/overview.md)
 
 - **Description**: Vite-based application support
@@ -243,6 +249,7 @@ The tool can automatically detect and wrap:
 
 - React applications
 - Next.js applications
+- Nitro applications using `nitro` or `nitropack`
 - Vite-based projects
 - Other JavaScript/TypeScript applications
 

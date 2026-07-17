@@ -1,6 +1,7 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "frontend",
+  "metrics": true,
   "services": [
     {
       "id": "frontend",
@@ -9,7 +10,7 @@
     }
   ],
   "logger": {
-    "level": "error"
+    "level": "info"
   },
   "restartOnError": false
 }

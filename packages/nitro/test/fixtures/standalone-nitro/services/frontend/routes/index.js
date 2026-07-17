@@ -1,3 +1,4 @@
 export default defineEventHandler(() => {
-  return '<html><head><title>Nitro</title></head><body><div id="app">Hello from Nitro</div></body></html>'
+  console.log('Log from Nitro route')
+  return '<html><head><title>Nitro</title></head><body>Hello from Nitro</body></html>'
 })

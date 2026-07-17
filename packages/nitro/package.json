@@ -3,6 +3,7 @@
   "version": "3.61.1",
   "description": "Platformatic Nitro Capability",
   "main": "index.js",
+  "types": "index.d.ts",
   "type": "module",
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
@@ -39,9 +40,11 @@
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
     "nitro": "^3.0.260610-beta",
+    "nitropack": "^2.12.9",
     "tstyche": "^6.2.0",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "ws": "^8.18.0"
   },
   "engines": {
     "node": ">=22.19.0"

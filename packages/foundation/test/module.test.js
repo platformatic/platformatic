@@ -256,6 +256,19 @@ test('detectApplicationType - should detect Astro', async t => {
   equal(result.label, 'Astro')
 })
 
+for (const [dependency, version, name, label] of [
+  ['nuxt', '^4.0.0', '@platformatic/nuxt', 'Nuxt'],
+  ['@react-router/dev', '^7.0.0', '@platformatic/react-router', 'React Router'],
+  ['@tanstack/react-start', '^1.0.0', '@platformatic/tanstack', 'TanStack Start']
+]) {
+  test(`detectApplicationType - should detect ${label} before Nitro`, async () => {
+    const packageJson = { dependencies: { [dependency]: version, nitro: '^3.0.0', vite: '^7.0.0' } }
+    const result = await detectApplicationType('/tmp', packageJson)
+    equal(result.name, name)
+    equal(result.label, label)
+  })
+}
+
 test('detectApplicationType - should detect Vite', async t => {
   const packageJson = { devDependencies: { vite: '^3.0.0' } }
   const result = await detectApplicationType('/tmp', packageJson)
@@ -263,23 +276,24 @@ test('detectApplicationType - should detect Vite', async t => {
   equal(result.label, 'Vite')
 })
 
-test('detectApplicationType - should detect standalone Nitro', async t => {
-  const packageJson = { dependencies: { nitropack: '^2.10.0' } }
-  const result = await detectApplicationType('/tmp', packageJson)
-  equal(result.name, '@platformatic/nitro')
-  equal(result.label, 'Nitro')
-})
-
-test('detectApplicationType - should detect Nitro before Vite for Lovable applications', async t => {
-  const packageJson = {
-    dependencies: { nitro: '^3.0.0', react: '^19.0.0', 'react-dom': '^19.0.0' },
-    devDependencies: { vite: '^7.0.0', 'lovable-tagger': '^1.0.0' }
+for (const dependencyType of ['dependencies', 'devDependencies']) {
+  for (const [dependency, version] of [
+    ['nitro', '^3.0.0'],
+    ['nitropack', '^2.0.0']
+  ]) {
+    test(`detectApplicationType - should detect ${dependency} in ${dependencyType} before Vite`, async () => {
+      const packageJson = {
+        [dependencyType]: {
+          [dependency]: version,
+          vite: '^7.0.0'
+        }
+      }
+      const result = await detectApplicationType('/tmp', packageJson)
+      equal(result.name, '@platformatic/nitro')
+      equal(result.label, 'Nitro')
+    })
   }
-  const result = await detectApplicationType('/tmp', packageJson)
-  equal(result.name, '@platformatic/nitro')
-  equal(result.label, 'Nitro')
-})
-
+}
 test('detectApplicationType - should detect Node.js when has JS files', async t => {
   const tempDir = join(tmpdir(), 'test-' + Math.random().toString(36).substr(2, 9))
   await mkdir(tempDir, { recursive: true })
