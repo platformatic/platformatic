@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/vite",
-  "version": "3.62.2",
+  "version": "3.63.0-alpha.1",
   "description": "Platformatic Vite Capability",
   "main": "index.js",
   "type": "module",
