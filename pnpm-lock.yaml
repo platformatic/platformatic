@@ -33,8 +33,8 @@ importers:
         specifier: workspace:*
         version: link:../globals
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       semver:
         specifier: ^7.6.3
         version: 7.8.5
@@ -137,8 +137,8 @@ importers:
         specifier: ^4.19.2
         version: 4.22.2
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       get-port:
         specifier: ^7.1.0
         version: 7.2.0
@@ -358,8 +358,8 @@ importers:
         specifier: ^2.6.4
         version: 2.7.6
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -448,14 +448,14 @@ importers:
         specifier: ^9.0.0
         version: 9.6.1
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       fastify-metrics:
         specifier: ^12.0.0
-        version: 12.1.0(fastify@5.8.5)
+        version: 12.1.0(fastify@5.10.0)
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       fastify-print-routes:
         specifier: ^5.0.0
         version: 5.0.1
@@ -557,8 +557,8 @@ importers:
         specifier: ^10.0.0
         version: 10.2.0
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       fastify-user:
         specifier: ^1.0.2
         version: 1.4.0
@@ -591,8 +591,8 @@ importers:
         specifier: ^6.0.0
         version: 6.2.4
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       get-jwks:
         specifier: ^11.0.0
         version: 11.0.3
@@ -637,8 +637,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -710,8 +710,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -788,11 +788,11 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
-      fastify-plugin:
         specifier: ^5.0.0
-        version: 5.1.0
+        version: 5.10.0
+      fastify-plugin:
+        specifier: ^6.0.0
+        version: 6.0.0
       find-my-way:
         specifier: ^9.0.0
         version: 9.6.0
@@ -915,8 +915,8 @@ importers:
         specifier: ^9.6.0
         version: 9.6.1
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       pino:
         specifier: ^9.9.0
         version: 9.14.0
@@ -1231,8 +1231,8 @@ importers:
         specifier: ^4.19.2
         version: 4.22.2
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.4
@@ -1331,8 +1331,8 @@ importers:
         specifier: workspace:*
         version: link:../vite
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       semver:
         specifier: ^7.6.3
         version: 7.8.5
@@ -1413,8 +1413,8 @@ importers:
         specifier: workspace:*
         version: link:../vite
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       semver:
         specifier: ^7.6.3
         version: 7.8.5
@@ -1769,11 +1769,11 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
-      fastify-plugin:
         specifier: ^5.0.0
-        version: 5.1.0
+        version: 5.10.0
+      fastify-plugin:
+        specifier: ^6.0.0
+        version: 6.0.0
       graphql:
         specifier: ^16.9.0
         version: 16.14.2
@@ -1863,8 +1863,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       mqemitter:
         specifier: ^7.0.0
         version: 7.1.0
@@ -1882,8 +1882,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       ioredis:
         specifier: ^5.3.2
         version: 5.11.1
@@ -1912,8 +1912,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       graphql:
         specifier: ^16.8.1
         version: 16.14.2
@@ -1952,8 +1952,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       fastify-tsconfig:
         specifier: ^3.0.0
         version: 3.0.0
@@ -1995,8 +1995,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -2040,8 +2040,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
@@ -2056,8 +2056,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -2107,8 +2107,8 @@ importers:
         specifier: ^3.0.6
         version: 3.1.3
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
@@ -2129,8 +2129,8 @@ importers:
         specifier: ^9.4.0
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -2190,8 +2190,8 @@ importers:
         specifier: '9'
         version: 9.39.5(jiti@2.7.0)
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.4
@@ -2296,8 +2296,8 @@ importers:
         specifier: ^5.1.0
         version: 5.2.1
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       neostandard:
         specifier: ^0.12.2
         version: 0.12.2(@typescript-eslint/utils@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -2326,8 +2326,8 @@ importers:
         specifier: workspace:*
         version: link:../node
       fastify:
-        specifier: ^5.7.0
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       semver:
         specifier: ^7.6.3
         version: 7.8.5
@@ -2412,8 +2412,8 @@ importers:
         specifier: ^9.4.0
         version: 9.6.1
       fastify:
-        specifier: 5.8.5
-        version: 5.8.5
+        specifier: ^5.0.0
+        version: 5.10.0
       inspector-client:
         specifier: ^0.2.0
         version: 0.2.0
@@ -16484,7 +16484,7 @@ snapshots:
   '@platformatic/graphql-composer@0.11.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 5.8.5
+      fastify: 5.10.0
       graphql: 16.14.2
       mercurius: 16.9.0(graphql@16.14.2)
       metaline: 1.1.0
@@ -19973,9 +19973,9 @@ snapshots:
     dependencies:
       reusify: 1.1.0
 
-  fastify-metrics@12.1.0(fastify@5.8.5):
+  fastify-metrics@12.1.0(fastify@5.10.0):
     dependencies:
-      fastify: 5.8.5
+      fastify: 5.10.0
       fastify-plugin: 5.1.0
       prom-client: 15.1.3
 
@@ -19998,7 +19998,7 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       '@fastify/jwt': 9.1.0
-      fastify: 5.8.5
+      fastify: 5.10.0
       fastify-plugin: 5.1.0
       get-jwks: 11.0.3
 

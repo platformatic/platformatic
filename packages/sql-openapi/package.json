@@ -30,7 +30,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.4.0",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
     "openapi-types": "^12.1.3",
     "tstyche": "^6.2.0",
@@ -51,7 +51,7 @@
     "camelcase": "^6.3.0",
     "fast-json-stringify": "^6.3.0",
     "fast-uri": "^3.0.6",
-    "fastify-plugin": "^5.0.0",
+    "fastify-plugin": "^6.0.0",
     "inflected": "^2.1.0",
     "secure-json-parse": "^4.1.0"
   },
