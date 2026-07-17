@@ -121,7 +121,7 @@ export class RuntimeApiClient {
   getRuntimes (): Promise<Runtime[]>
   getRuntimeMetadata (pid: number): Promise<Runtime>
   getRuntimeApplications (pid: number): Promise<RuntimeApplications>
-  getRuntimeScheduler (pid: number): Promise<{ jobs: RuntimeSchedulerJob[] }>
+  getRuntimeSchedulerJobs (pid: number): Promise<{ jobs: RuntimeSchedulerJob[] }>
   pauseRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   resumeRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   runRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerRunResult>

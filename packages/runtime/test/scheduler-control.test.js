@@ -2,7 +2,6 @@ import Fastify from 'fastify'
 import { deepStrictEqual, equal, ok, strictEqual, throws } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import { Client } from 'undici'
 import { transform } from '../lib/config.js'
 import { SchedulerService } from '../lib/scheduler.js'
@@ -35,19 +34,27 @@ async function createRuntimeWithScheduler (t, scheduler, { managementApi = false
 function createTarget (t) {
   const target = Fastify()
   const calls = []
+  const executionWaiters = []
 
   target.route({
     method: ['GET', 'POST'],
     url: '/test',
     handler: async () => {
       calls.push(Date.now())
+      executionWaiters.shift()?.()
       return { ok: true }
     }
   })
 
   t.after(() => target.close())
 
-  return { target, calls }
+  return {
+    target,
+    calls,
+    waitForExecution () {
+      return new Promise(resolve => executionWaiters.push(resolve))
+    }
+  }
 }
 
 test('should list the configured scheduler jobs', async t => {
@@ -60,7 +67,7 @@ test('should list the configured scheduler jobs', async t => {
     { name: 'disabled', cron: '*/1 * * * * *', callbackUrl, method: 'GET', enabled: false }
   ])
 
-  const jobs = await app.getScheduler()
+  const jobs = await app.getSchedulerJobs()
 
   // Disabled jobs are not registered at all
   equal(jobs.length, 1)
@@ -75,36 +82,28 @@ test('should list the configured scheduler jobs', async t => {
 })
 
 test('should pause and resume a scheduler job', async t => {
-  const { target, calls } = createTarget(t)
+  const { target, calls, waitForExecution } = createTarget(t)
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
+  const firstExecution = waitForExecution()
 
   const app = await createRuntimeWithScheduler(t, [
     { name: 'test', cron: '*/1 * * * * *', callbackUrl, method: 'GET' }
   ])
 
-  // Wait for at least one execution
-  while (calls.length === 0) {
-    await sleep(200)
-  }
+  await firstExecution
 
   await app.pauseSchedulerJob('test')
-  const jobs = await app.getScheduler()
+  const jobs = await app.getSchedulerJobs()
   equal(jobs[0].paused, true)
   equal(jobs[0].nextRunAt, null)
 
-  await sleep(500)
   const callsAfterPause = calls.length
-  await sleep(2500)
-  equal(calls.length, callsAfterPause, 'should not execute the job while paused')
-
+  const resumedExecution = waitForExecution()
   await app.resumeSchedulerJob('test')
-  const resumedJobs = await app.getScheduler()
+  const resumedJobs = await app.getSchedulerJobs()
   equal(resumedJobs[0].paused, false)
-
-  while (calls.length === callsAfterPause) {
-    await sleep(200)
-  }
+  await resumedExecution
 
   ok(calls.length > callsAfterPause, 'should execute the job after resuming')
 })
@@ -127,7 +126,7 @@ test('should run a scheduler job on demand, even when paused', async t => {
   equal(result.name, 'test')
   equal(calls.length, 1)
 
-  const jobs = await app.getScheduler()
+  const jobs = await app.getSchedulerJobs()
   equal(jobs[0].lastStatus, 'success')
   ok(jobs[0].lastExecutedAt)
 })

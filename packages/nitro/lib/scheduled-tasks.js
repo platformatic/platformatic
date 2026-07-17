@@ -1,9 +1,15 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { UnsupportedSchedulerManifestVersionError } from './errors.js'
 
 export const SCHEDULER_MANIFEST_FILENAME = 'platformatic-scheduler.json'
 export const SCHEDULER_MANIFEST_VERSION = 1
+
+export class UnsupportedSchedulerManifestVersionError extends Error {
+  constructor (version) {
+    super(`Unsupported Nitro scheduler manifest version "${version}"`)
+    this.code = 'PLT_NITRO_UNSUPPORTED_SCHEDULER_MANIFEST_VERSION'
+  }
+}
 
 export function normalizeScheduledTasks (scheduledTasks) {
   let schedules = []

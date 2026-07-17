@@ -1,8 +1,8 @@
 import { getCapability, getITC } from '@platformatic/globals'
-import { defineNitroPlugin, runTask, useRuntimeConfig } from '#imports'
+import { defineNitroPlugin, runTask, useRuntimeConfig } from 'nitropack/runtime'
 
-const RUN_HANDLER = 'platformatic:nuxt:run-scheduled-tasks'
-const METADATA_NOTIFICATION = 'platformatic:nuxt:scheduled-tasks'
+const RUN_HANDLER = 'platformatic:nitro:run-scheduled-tasks'
+const METADATA_NOTIFICATION = 'platformatic:nitro:scheduled-tasks'
 
 export default defineNitroPlugin(nitroApp => {
   const scheduledTasks = useRuntimeConfig().platformaticScheduler?.scheduledTasks ?? []

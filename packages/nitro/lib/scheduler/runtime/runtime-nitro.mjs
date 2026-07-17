@@ -1,10 +1,13 @@
 import { getCapability, getITC } from '@platformatic/globals'
-import { defineNitroPlugin, runTask, useRuntimeConfig } from '#imports'
+import { definePlugin } from 'nitro'
+import { useNitroApp } from 'nitro/app'
+import { runTask } from 'nitro/task'
+import { useRuntimeConfig } from 'nitro/runtime-config'
 
-const RUN_HANDLER = 'platformatic:nuxt:run-scheduled-tasks'
-const METADATA_NOTIFICATION = 'platformatic:nuxt:scheduled-tasks'
+const RUN_HANDLER = 'platformatic:nitro:run-scheduled-tasks'
+const METADATA_NOTIFICATION = 'platformatic:nitro:scheduled-tasks'
 
-export default defineNitroPlugin(nitroApp => {
+export default definePlugin(() => {
   const scheduledTasks = useRuntimeConfig().platformaticScheduler?.scheduledTasks ?? []
 
   async function runScheduledTasks ({ scheduleId, scheduledTime }) {
@@ -48,5 +51,5 @@ export default defineNitroPlugin(nitroApp => {
   }
 
   capability.setScheduledTasksRunner(runScheduledTasks)
-  nitroApp.hooks.hook('close', () => capability.setScheduledTasksRunner(null))
+  useNitroApp().hooks.hook('close', () => capability.setScheduledTasksRunner(null))
 })

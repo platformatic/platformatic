@@ -25,7 +25,7 @@ export default function schedulerModule (_options, nuxt) {
     nitroConfig.runtimeConfig.platformaticScheduler = { scheduledTasks }
 
     nitroConfig.plugins ??= []
-    nitroConfig.plugins.push(join(runtimeDirectory, 'runtime.mjs'))
+    nitroConfig.plugins.push(join(runtimeDirectory, 'runtime.mjs').replaceAll('\\', '/'))
   })
 
   nuxt.hook('nitro:init', nitro => {
