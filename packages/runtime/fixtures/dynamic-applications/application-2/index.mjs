@@ -26,5 +26,13 @@ export function create () {
     return { ok: true }
   })
 
+  app.get('/crash', () => {
+    setImmediate(() => {
+      process.exit(1)
+    })
+
+    return { ok: true }
+  })
+
   return app
 }
