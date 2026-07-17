@@ -26,7 +26,13 @@ import {
   updateGlobals
 } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
-import { clearRegistry, client, collectThreadMetrics, setupOtlpExporter } from '@platformatic/metrics'
+import {
+  clearRegistry,
+  client,
+  collectProcessMetrics,
+  collectThreadMetrics,
+  setupOtlpExporter
+} from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -285,9 +291,17 @@ export class ChildProcess extends ITC {
   }
 
   async #collectMetrics ({ applicationId, workerId, metricsConfig }) {
-    // Use thread-specific metrics collection - process-level metrics are collected
-    // by the main runtime thread and duplicated with worker labels
     await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
+
+    // This application runs as a separate OS process, so process-level metrics
+    // (e.g. process_resident_memory_bytes) are specific to this application and
+    // are reported with its labels. Applications running in worker threads share
+    // the process-level metrics reported once by the main runtime thread.
+    // See https://github.com/platformatic/platformatic/issues/3332.
+    if (metricsConfig.defaultMetrics) {
+      collectProcessMetrics(this.#metricsRegistry)
+    }
+
     this.#setHttpCacheMetrics()
     await this.#setupOtlpExporter(applicationId, metricsConfig)
   }
@@ -301,9 +315,14 @@ export class ChildProcess extends ITC {
     }
 
     if (metricsConfig.enabled !== false) {
-      // Use thread-specific metrics collection - process-level metrics are collected
-      // by the main runtime thread and duplicated with worker labels
       await collectThreadMetrics(applicationId, workerId, metricsConfig, this.#metricsRegistry)
+
+      // See the comment in #collectMetrics: this is a separate OS process, so
+      // process-level metrics are reported here with the application labels.
+      if (metricsConfig.defaultMetrics) {
+        collectProcessMetrics(this.#metricsRegistry)
+      }
+
       this.#setHttpCacheMetrics()
       await this.#setupOtlpExporter(applicationId, metricsConfig)
     }

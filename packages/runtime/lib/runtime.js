@@ -1421,20 +1421,6 @@ export class Runtime extends EventEmitter {
         if (applicationMetrics && applicationMetrics !== kTimeout) {
           metrics ??= []
 
-          // Build worker labels including custom labels from metrics config
-          const workerLabels = {
-            ...this.#config.metrics?.labels,
-            [this.#metricsLabelName]: worker[kApplicationId]
-          }
-          const workerId = worker[kWorkerId]
-          if (workerId >= 0) {
-            workerLabels.workerId = workerId
-          }
-
-          // Duplicate process metrics with worker labels and add to output
-          if (processMetricsJson) {
-            this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
-          }
           // Add worker's thread-specific metrics
           for (let i = 0; i < applicationMetrics.length; i++) {
             metrics.push(applicationMetrics[i])
@@ -1452,6 +1438,18 @@ export class Runtime extends EventEmitter {
 
         throw e
       }
+    }
+
+    // Report process-level metrics (e.g. process_resident_memory_bytes) only once:
+    // they describe the whole runtime process, so replicating them for each
+    // application running in a worker thread would just duplicate the same value.
+    // Applications running as separate OS processes report their own process-level
+    // metrics, with their own labels, as part of their thread metrics above.
+    // See https://github.com/platformatic/platformatic/issues/3332.
+    if (metrics !== null && processMetricsJson) {
+      const processMetrics = []
+      this.#applyLabelsToMetrics(processMetricsJson, { ...this.#config.metrics?.labels }, processMetrics)
+      metrics = [...processMetrics, ...metrics]
     }
 
     if (metrics !== null && applicationRestartMetrics.length > 0) {
@@ -1581,6 +1579,13 @@ export class Runtime extends EventEmitter {
 
       const applicationsMetrics = {}
 
+      // Process-level metrics are reported only once for the whole runtime, without
+      // an application label, since they are shared by all the applications running
+      // in worker threads (see issue #3332). Applications running as separate OS
+      // processes report their own labeled values, which take precedence below.
+      const runtimeProcessMetrics = {}
+      const applicationProcessMetrics = new Set()
+
       for (const metric of metrics) {
         const { name, values } = metric
 
@@ -1592,7 +1597,20 @@ export class Runtime extends EventEmitter {
         const applicationId = labels?.[this.#metricsLabelName]
 
         if (!applicationId) {
+          if (name === 'process_cpu_percent_usage') {
+            runtimeProcessMetrics.cpu = values[0].value
+            continue
+          }
+          if (name === 'process_resident_memory_bytes') {
+            runtimeProcessMetrics.rss = values[0].value
+            continue
+          }
+
           throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
+        }
+
+        if (name === 'process_cpu_percent_usage' || name === 'process_resident_memory_bytes') {
+          applicationProcessMetrics.add(`${applicationId}:${name}`)
         }
 
         let applicationMetrics = applicationsMetrics[applicationId]
@@ -1616,6 +1634,24 @@ export class Runtime extends EventEmitter {
         }
 
         parsePromMetric(applicationMetrics, metric)
+      }
+
+      // Apply the runtime-wide process-level values to every application that did
+      // not report its own (i.e. every application running in a worker thread).
+      for (const [applicationId, applicationMetrics] of Object.entries(applicationsMetrics)) {
+        if (
+          runtimeProcessMetrics.cpu !== undefined &&
+          !applicationProcessMetrics.has(`${applicationId}:process_cpu_percent_usage`)
+        ) {
+          applicationMetrics.cpu = runtimeProcessMetrics.cpu
+        }
+
+        if (
+          runtimeProcessMetrics.rss !== undefined &&
+          !applicationProcessMetrics.has(`${applicationId}:process_resident_memory_bytes`)
+        ) {
+          applicationMetrics.rss = runtimeProcessMetrics.rss
+        }
       }
 
       function parsePromMetric (applicationMetrics, promMetric) {
