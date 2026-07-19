@@ -6,7 +6,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { execute as applyMigrations } from './migrator.js'
 import { root } from './root.js'
 import { execute as generateTypes } from './types.js'
-import { locateSchemaLock, updateSchemaLock, validateSchemaLockFormat } from './utils.js'
+import { isSchemaLockReadOnly, locateSchemaLock, serializeDbschema, updateSchemaLock, validateSchemaLockFormat } from './utils.js'
 
 async function healthCheck (app) {
   const { db, sql } = app.platformatic
@@ -38,8 +38,13 @@ export async function platformaticDatabase (app, capability) {
         createSchemaLock = false
       } catch (err) {
         app.log.trace({ err }, 'failed to load schema lock')
-        app.log.info('no schema lock found, will create one')
-        createSchemaLock = true
+
+        if (isSchemaLockReadOnly(config)) {
+          app.log.warn('no schema lock found, the schema lock is read-only so it will not be created')
+        } else {
+          app.log.info('no schema lock found, will create one')
+          createSchemaLock = true
+        }
       }
     }
   }
@@ -78,7 +83,7 @@ export async function platformaticDatabase (app, capability) {
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(config)
-      await writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+      await writeFile(path, serializeDbschema(app.platformatic.dbschema))
       app.log.info({ path }, 'created schema lock')
     } catch (err) {
       app.log.trace({ err }, 'unable to save schema lock')

@@ -24,11 +24,23 @@ export function locateSchemaLock (config) {
   return config.db.schemalock.path ?? join(config[kMetadata].root, 'schema.lock')
 }
 
+export function isSchemaLockReadOnly (config) {
+  return config.db.schemalock?.readOnly === true
+}
+
+// The information_schema queries used for introspection include *_catalog
+// columns, which contain the name of the database the schema was introspected
+// against. They are not used to build the entities, so they are stripped to
+// keep the lock file deterministic across database names.
+export function serializeDbschema (dbschema) {
+  return JSON.stringify(dbschema, (key, value) => (/_catalog$/i.test(key) ? undefined : value), 2)
+}
+
 export async function updateSchemaLock (logger, config) {
-  if (config.db.schemalock) {
+  if (config.db.schemalock && !isSchemaLockReadOnly(config)) {
     const conn = await setupDB(logger, { ...config.db, dbschema: null })
     const schemaLockPath = locateSchemaLock(config)
-    await fs.writeFile(schemaLockPath, JSON.stringify(conn.dbschema, null, 2))
+    await fs.writeFile(schemaLockPath, serializeDbschema(conn.dbschema))
 
     await conn.db.dispose()
   }
@@ -41,7 +53,10 @@ export function validateSchemaLockFormat (schemaLock) {
   if (!isBoolean && !isObject) {
     throw new InvalidSchemaLockError()
   }
-  if (isObject && typeof schemaLock.path !== 'string') {
+  if (isObject && typeof schemaLock.path !== 'string' && typeof schemaLock.readOnly !== 'boolean') {
+    throw new InvalidSchemaLockError()
+  }
+  if (isObject && schemaLock.path !== undefined && typeof schemaLock.path !== 'string') {
     throw new InvalidSchemaLockError()
   }
 }

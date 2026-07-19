@@ -40,6 +40,11 @@ export const db = {
             path: {
               type: 'string',
               resolvePath: true
+            },
+            readOnly: {
+              type: 'boolean',
+              default: false,
+              description: 'Never write the schema lock file at runtime, only read it.'
             }
           }
         }
