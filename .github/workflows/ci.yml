@@ -321,6 +321,8 @@ jobs:
           max_attempts: 2
           timeout_minutes: 25
           retry_on: error
+          # The default shell on Windows is PowerShell 5.1, which does not support &&
+          shell: bash
           command: cd packages/runtime && pnpm run test:${{ matrix.suite }}
 
   service:
