@@ -85,6 +85,7 @@ export type ConfigurationOptions<T = {}> = Partial<{
   replaceEnv: boolean
   replaceEnvIgnore: string[]
   onMissingEnv: (key: string) => string | undefined
+  strictEnv: boolean | 'warn'
   fixPaths: boolean
   logger: Logger
   root: string
@@ -181,6 +182,7 @@ export declare const SourceMissingError: FastifyError
 export declare const RootMissingError: FastifyError
 export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
+export declare const MissingEnvVariablesError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>

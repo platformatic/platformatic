@@ -95,7 +95,8 @@ export class Controller extends EventEmitter {
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig)
+      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig),
+      strictEnv: runtimeConfig.strictEnv
     }
   }
 
@@ -141,7 +142,8 @@ export class Controller extends EventEmitter {
       if (appConfig.config) {
         // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl
+          onMissingEnv: this.#context.fetchApplicationUrl,
+          strictEnv: this.#context.strictEnv
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)

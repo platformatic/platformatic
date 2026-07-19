@@ -229,6 +229,22 @@ application, with application-level environment variables taking precedence.
 
 The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
 
+### `strictEnv`
+
+Controls what happens when a `{PLT_*}` environment variable placeholder references a variable which is not set:
+
+- `false` (the default): the placeholder is silently replaced with an empty string.
+- `true`: loading the configuration fails at startup with an error listing all the missing variables.
+- `"warn"`: a warning listing the missing variables is logged, but the placeholders are still replaced with an empty string.
+
+The value is also applied when loading the configuration files of the applications in the runtime.
+
+```json
+{
+  "strictEnv": true
+}
+```
+
 ### `sourceMaps`
 
 If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.

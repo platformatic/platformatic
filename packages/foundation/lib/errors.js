@@ -56,3 +56,7 @@ export const ConfigurationDoesNotValidateAgainstSchemaError = createError(
   `${ERROR_PREFIX}_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA`,
   'The configuration does not validate against the configuration schema'
 )
+export const MissingEnvVariablesError = createError(
+  `${ERROR_PREFIX}_MISSING_ENV_VARIABLES`,
+  'The configuration references the following environment variables which are not set: %s'
+)

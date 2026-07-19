@@ -12,6 +12,7 @@ import {
   CannotParseConfigFileError,
   ConfigurationDoesNotValidateAgainstSchemaError,
   InvalidConfigFileExtensionError,
+  MissingEnvVariablesError,
   RootMissingError,
   SourceMissingError
 } from './errors.js'
@@ -442,6 +443,16 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
   return config
 }
 
+function normalizeStrictEnv (value) {
+  if (value === 'warn') {
+    return 'warn'
+  } else if (value === 'false' || value === '') {
+    return false
+  }
+
+  return Boolean(value)
+}
+
 export async function loadConfiguration (source, schema, options = {}) {
   const {
     validate: shouldValidate,
@@ -453,6 +464,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     replaceEnv: shouldReplaceEnv,
     replaceEnvIgnore,
     onMissingEnv,
+    strictEnv: strictEnvOption,
     fixPaths,
     logger,
     skipMetadata,
@@ -487,7 +499,42 @@ export async function loadConfiguration (source, schema, options = {}) {
   env.PLT_ROOT = root
 
   if (shouldReplaceEnv) {
-    config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
+    const missingEnv = new Set()
+
+    config = replaceEnv(
+      config,
+      env,
+      key => {
+        const value = onMissingEnv?.(key)
+
+        if (typeof value === 'undefined' || value === null) {
+          missingEnv.add(key)
+        }
+
+        return value
+      },
+      replaceEnvIgnore
+    )
+
+    // strictEnv can be set programmatically or in the configuration file itself, either at the top level
+    // (runtime configurations) or in the runtime property (capabilities configurations).
+    const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)
+
+    if (strictEnv && missingEnv.size > 0) {
+      const keys = Array.from(missingEnv).sort().join(', ')
+
+      if (strictEnv === 'warn') {
+        const message = `The configuration references the following environment variables which are not set: ${keys}`
+
+        if (logger) {
+          logger.warn(message)
+        } else {
+          process.emitWarning(message)
+        }
+      } else {
+        throw new MissingEnvVariablesError(keys)
+      }
+    }
   }
 
   const moduleInfo = extractModuleFromSchemaUrl(config)
