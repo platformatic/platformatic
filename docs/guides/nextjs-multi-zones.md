@@ -1,6 +1,6 @@
 # Run Next.js Multi-Zones with Watt
 
-Next.js Multi-Zones split a site into independently built applications that serve different paths on the same domain. Watt can run each zone in a separate worker while Platformatic Gateway routes requests to the correct application.
+Next.js Multi-Zones split a site into independently built applications that serve different paths on the same domain. They let unrelated page sets use smaller builds with only the code they need. Watt can run each zone in a separate worker while Platformatic Gateway routes requests to the correct application. Zones can be built and released independently, and other applications on the same domain can use a different framework. See the [Next.js Multi-Zones guide](https://nextjs.org/docs/pages/guides/multi-zones) for the framework-level pattern.
 
 In this guide, you will configure two Next.js applications:
 
@@ -32,7 +32,7 @@ Create a Watt runtime with Gateway as its entrypoint:
 }
 ```
 
-Each application runs independently. Gateway is the only public entrypoint.
+Each application runs independently. Gateway is the only public entrypoint and routes every request for a zone, including its pages and assets.
 
 ## Configure Gateway
 
@@ -56,7 +56,13 @@ List both Next.js applications in the Gateway configuration:
 
 Gateway obtains each public prefix from the application. The more specific `/blog` zone is listed before the root zone.
 
-## Configure the root zone
+## Define the zones
+
+The Next.js guide uses `assetPrefix` when an HTTP proxy routes the pages and static assets for each zone separately. With Watt, configure `application.basePath` instead. Platformatic Next applies it as the Next.js `basePath`, and Gateway uses the same prefix to route the zone's pages, public files, generated assets, image optimization requests, and development traffic.
+
+Do not configure a separate Next.js `assetPrefix` for this layout. A base path makes generated assets available below the zone, such as `/blog/_next`, so they cannot collide with the root zone's `/_next` assets. Use `assetPrefix` only when serving assets from a CDN or when Gateway is explicitly configured to route the additional asset path.
+
+### Configure the root zone
 
 The root application does not need a base path:
 
@@ -68,7 +74,7 @@ The root application does not need a base path:
 
 It serves its pages and Next.js assets from `/` and `/_next`.
 
-## Configure the blog zone
+### Configure the blog zone
 
 Set the blog application's public path with `application.basePath`:
 
@@ -81,7 +87,7 @@ Set the blog application's public path with `application.basePath`:
 }
 ```
 
-Platformatic Next applies this value to the Next.js `basePath` and advertises the same prefix to Gateway. Pages are served below `/blog`, and generated assets use `/blog/_next`.
+Pages are served below `/blog`, and generated assets use `/blog/_next`.
 
 The default Platformatic Next integration applies the base path while loading `next.config.js` or `next.config.mjs`. If a zone does not already have one of these files, add an empty configuration:
 
@@ -90,8 +96,6 @@ module.exports = {}
 ```
 
 For Next.js 16 applications using `next.config.ts`, use the [experimental adapter path integration](../reference/next/experimental-adapter-path.md) instead.
-
-Do not configure a separate Next.js `assetPrefix` for this layout. The base path already isolates each zone's generated assets. Use `assetPrefix` only when assets are served from a CDN or when the additional asset path is explicitly routed through Gateway.
 
 ## Link between zones
 
@@ -134,11 +138,12 @@ The zones are available through one server:
 
 Gateway forwards page requests, generated assets, public files, image optimization requests, and development traffic such as hot module replacement under the same zone prefix.
 
-## Limitations
+## Considerations
 
 - Every URL path must belong to one zone.
 - Gateway does not rewrite links, HTML, React Server Component payloads, or generated asset URLs. The Gateway prefix and the Next.js base path must match.
 - Cross-zone navigation reloads the page.
-- Shared UI and utilities should live in workspace packages or other npm packages rather than being imported from another zone's build output.
+- Zones can live in separate repositories. Share UI and utilities through workspace packages or published npm packages rather than importing another zone's build output.
+- Since zones can be released at different times, use feature flags when functionality must be enabled together across zones.
 
 For more information about the underlying Next.js pattern, see the [Next.js Multi-Zones guide](https://nextjs.org/docs/pages/guides/multi-zones).
