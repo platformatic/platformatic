@@ -61,6 +61,7 @@ const sidebars = {
             'guides/use-watt-with-ai-agents',
             'guides/scheduler',
             'guides/dynamic-workers',
+            'guides/nextjs-multi-zones',
             'guides/next-image-optimizer'
           ]
         },
