@@ -295,6 +295,17 @@ variables of the same name.
 If no environment variable is found, then the placeholder will be replaced with an empty string.
 Note that this can lead to a schema validation error.
 
+To fail at startup (or log a warning) when a placeholder references an environment variable which
+is not set, use the [`strictEnv`](../runtime/configuration.md#strictenv) runtime option:
+
+```json title="platformatic.json"
+{
+  "runtime": {
+    "strictEnv": true
+  }
+}
+```
+
 ### Setting Environment Variables
 
 If a `.env` file exists it will automatically be loaded by Platformatic using

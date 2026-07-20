@@ -1593,3 +1593,196 @@ test('validate - should fail resolveModule validation for invalid module', () =>
     name: 'FastifyError'
   })
 })
+
+test('loadConfiguration - strictEnv should throw when environment variables are missing', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{TEST_HOST}', url: '{MISSING_ONE}', flag: '{MISSING_TWO}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  await rejects(
+    async () => {
+      await loadConfiguration(configFile, null, {
+        ignoreProcessEnv: true,
+        env: { TEST_HOST: 'custom-host' },
+        strictEnv: true
+      })
+    },
+    {
+      code: 'PLT_MISSING_ENV_VARIABLES',
+      message:
+        'The configuration references the following environment variables which are not set: MISSING_ONE, MISSING_TWO'
+    }
+  )
+})
+
+test('loadConfiguration - strictEnv should be read from the configuration file', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { strictEnv: true, host: '{MISSING_VAR}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  await rejects(
+    async () => {
+      await loadConfiguration(configFile, null, { ignoreProcessEnv: true })
+    },
+    {
+      code: 'PLT_MISSING_ENV_VARIABLES',
+      message: 'The configuration references the following environment variables which are not set: MISSING_VAR'
+    }
+  )
+})
+
+test('loadConfiguration - strictEnv should be read from the runtime property of the configuration file', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { runtime: { strictEnv: true }, host: '{MISSING_VAR}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  await rejects(
+    async () => {
+      await loadConfiguration(configFile, null, { ignoreProcessEnv: true })
+    },
+    { code: 'PLT_MISSING_ENV_VARIABLES' }
+  )
+})
+
+test('loadConfiguration - strictEnv=warn should log a warning and keep the empty string behavior', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{MISSING_VAR}' }
+  const warnings = []
+  const logger = {
+    warn (message) {
+      warnings.push(message)
+    }
+  }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    strictEnv: 'warn',
+    logger
+  })
+
+  equal(result.host, '')
+  deepEqual(warnings, [
+    'The configuration references the following environment variables which are not set: MISSING_VAR'
+  ])
+})
+
+test('loadConfiguration - strictEnv=warn should use process.emitWarning when no logger is provided', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{MISSING_VAR}' }
+  const warnings = []
+
+  function onWarning (warning) {
+    warnings.push(warning.message)
+  }
+
+  process.on('warning', onWarning)
+
+  t.after(async () => {
+    process.removeListener('warning', onWarning)
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, { ignoreProcessEnv: true, strictEnv: 'warn' })
+  equal(result.host, '')
+
+  // Warnings are emitted asynchronously
+  await new Promise(resolve => setImmediate(resolve))
+  deepEqual(warnings, [
+    'The configuration references the following environment variables which are not set: MISSING_VAR'
+  ])
+})
+
+test('loadConfiguration - strictEnv should not throw when onMissingEnv provides a value', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{MISSING_VAR}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    strictEnv: true,
+    onMissingEnv: key => `default_${key}`
+  })
+
+  equal(result.host, 'default_MISSING_VAR')
+})
+
+test('loadConfiguration - strictEnv should not throw when all variables are set', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{TEST_HOST}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    env: { TEST_HOST: 'custom-host' },
+    strictEnv: true
+  })
+
+  equal(result.host, 'custom-host')
+})
+
+test('loadConfiguration - strictEnv should support placeholders and string values', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { strictEnv: '{PLT_STRICT_ENV}', host: '{MISSING_VAR}' }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  // Resolved to "false", strict mode is disabled
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    env: { PLT_STRICT_ENV: 'false' }
+  })
+  equal(result.host, '')
+
+  // Resolved to "true", strict mode is enabled
+  await rejects(
+    async () => {
+      await loadConfiguration(configFile, null, { ignoreProcessEnv: true, env: { PLT_STRICT_ENV: 'true' } })
+    },
+    { code: 'PLT_MISSING_ENV_VARIABLES' }
+  )
+})

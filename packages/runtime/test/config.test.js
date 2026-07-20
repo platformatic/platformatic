@@ -132,6 +132,34 @@ test('correctly loads the watch value from a string', async () => {
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
+test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  delete process.env.PLT_STRICT_ENV_WATCH
+
+  await rejects(
+    async () => {
+      await createRuntime(configFile)
+    },
+    {
+      code: 'PLT_MISSING_ENV_VARIABLES',
+      message:
+        'The configuration references the following environment variables which are not set: PLT_STRICT_ENV_WATCH'
+    }
+  )
+})
+
+test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  process.env.PLT_STRICT_ENV_WATCH = 'false'
+
+  t.after(() => {
+    delete process.env.PLT_STRICT_ENV_WATCH
+  })
+
+  const runtime = await createRuntime(configFile)
+  strictEqual((await runtime.getRuntimeConfig()).watch, false)
+})
+
 test('defaults the application name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
   const config = await databaseLoadConfiguration(configFile)
