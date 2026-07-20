@@ -29,7 +29,7 @@
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/vite": "workspace:*",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
@@ -41,7 +41,7 @@
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "isbot": "^5.1.17",
     "json-schema-to-typescript": "^15.0.1",
     "tstyche": "^6.2.0",
