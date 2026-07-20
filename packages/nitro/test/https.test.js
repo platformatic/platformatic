@@ -1,6 +1,7 @@
 import { ok, rejects } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import {
   buildRuntime,
   configureHTTPS,
@@ -16,6 +17,22 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 setAdditionalDependencies(['nitro', 'nitropack', 'vite'])
 
+async function verifyNitropackDevelopmentHTTPS (url, dispatcher) {
+  const deadline = Date.now() + 20000
+
+  while (true) {
+    try {
+      return await verifyHTMLViaHTTPS(url, '/', ['Hello from Nitro'], dispatcher)
+    } catch (error) {
+      if (!['ECONNREFUSED', 'ECONNRESET'].includes(error.code) || Date.now() >= deadline) {
+        throw error
+      }
+
+      await sleep(200)
+    }
+  }
+}
+
 for (const fixture of ['standalone', 'standalone-nitro']) {
   for (const production of [false, true]) {
     test(`${fixture} supports HTTPS in ${production ? 'production' : 'development'}`, async t => {
@@ -26,7 +43,13 @@ for (const fixture of ['standalone', 'standalone-nitro']) {
 
       const url = await startRuntime(t, runtime)
       ok(url.startsWith('https://'))
-      await verifyHTMLViaHTTPS(url, '/', fixture === 'standalone' ? ['Nitro Vite'] : ['Hello from Nitro'], createHTTPSDispatcher(t))
+      const dispatcher = createHTTPSDispatcher(t)
+
+      if (fixture === 'standalone-nitro' && !production) {
+        await verifyNitropackDevelopmentHTTPS(url, dispatcher)
+      } else {
+        await verifyHTMLViaHTTPS(url, '/', fixture === 'standalone' ? ['Nitro Vite'] : ['Hello from Nitro'], dispatcher)
+      }
     })
   }
 }
