@@ -91,7 +91,7 @@ test('cursor pagination basics', async t => {
     })
     equal(res2.statusCode, 200, 'GET next page status code')
     same(res2.json().length, 3, 'Next page has 3 items')
-    same(res2.json()[0].id, 4, 'Next page starts with correct item')
+    same(res2.json()[0].id, '4', 'Next page starts with correct item')
 
     const res3 = await app.inject({
       method: 'GET',
@@ -153,7 +153,7 @@ test('cursor pagination basics', async t => {
     })
     equal(res2.statusCode, 200, 'GET next page with where condition status code')
     same(res2.json().length, 2, 'Next page has 2 items')
-    same(res2.json()[0].id, 3, 'Next page starts with correct item')
+    same(res2.json()[0].id, '3', 'Next page starts with correct item')
   }
 })
 
@@ -231,8 +231,8 @@ test('cursor pagination edge cases', async t => {
 
     equal(res1.json()[0].category, 'A', 'First item is category A')
     equal(res1.json()[1].category, 'A', 'Second item is category A')
-    equal(res1.json()[0].id, 2, 'First item ID is 2')
-    equal(res1.json()[1].id, 1, 'Second item ID is 1')
+    equal(res1.json()[0].id, '2', 'First item ID is 2')
+    equal(res1.json()[1].id, '1', 'Second item ID is 1')
 
     const startAfter = res1.headers['x-start-after']
     const res2 = await app.inject({
@@ -242,8 +242,8 @@ test('cursor pagination edge cases', async t => {
     equal(res2.statusCode, 200, 'Second page with category ordering')
     equal(res2.json()[0].category, 'B', 'First item is category B')
     equal(res2.json()[1].category, 'B', 'Second item is category B')
-    equal(res2.json()[0].id, 4, 'First item ID is 4')
-    equal(res2.json()[1].id, 3, 'Second item ID is 3')
+    equal(res2.json()[0].id, '4', 'First item ID is 4')
+    equal(res2.json()[1].id, '3', 'Second item ID is 3')
   }
 
   {
@@ -346,14 +346,14 @@ test('cursor pagination edge cases', async t => {
       url: `/items?limit=1&startAfter=${encodedCursor}&orderby.id=asc&&orderby.name=asc&orderby.category=asc`
     })
     equal(res.statusCode, 200, 'Valid cursor should return 200')
-    same(res.json()[0].id, wierdCursor.id + 1, 'Returned correct item')
+    same(res.json()[0].id, String(Number(wierdCursor.id) + 1), 'Returned correct item')
 
     const res1 = await app.inject({
       method: 'GET',
       url: `/items?limit=1&endBefore=${encodedCursor}&orderby.id=asc&&orderby.name=asc&orderby.category=asc`
     })
     equal(res1.statusCode, 200, 'Valid cursor should return 200')
-    same(res1.json()[0].id, wierdCursor.id - 1, 'Returned correct item')
+    same(res1.json()[0].id, String(Number(wierdCursor.id) - 1), 'Returned correct item')
   }
 
   // Both startAfter and endBefore provided. (startAfter should be used)
@@ -372,6 +372,6 @@ test('cursor pagination edge cases', async t => {
       url: `/items?limit=1&startAfter=${startAfter}&endBefore=${endBefore}&orderby.id=asc`
     })
     equal(res1.statusCode, 200)
-    same(res1.json()[0].id, lastItem.id + 1, 'Returned correct item')
+    same(res1.json()[0].id, String(Number(lastItem.id) + 1), 'Returned correct item')
   }
 })

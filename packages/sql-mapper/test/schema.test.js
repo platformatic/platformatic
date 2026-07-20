@@ -476,6 +476,7 @@ test('uses tables from different schemas with FK', { skip: isSQLite }, async () 
   equal(userEntity.pluralName, 'test2Users')
   equal(userEntity.schema, 'test2')
   equal(userEntity.relations.length, 1)
+  equal(userEntity.fields.page_id.stringifyOutput, true)
   const userRelation = userEntity.relations[0]
   equal(userRelation.foreignEntityName, 'test1Page')
   equal(userRelation.entityName, 'test2User')

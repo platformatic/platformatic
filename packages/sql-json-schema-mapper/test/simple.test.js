@@ -121,6 +121,43 @@ test('simple db, simple rest API', async t => {
   }
 })
 
+test('output schemas stringify numeric primary and referencing foreign keys', () => {
+  const entity = {
+    name: 'Registration',
+    camelCasedFields: {
+      id: {
+        camelcase: 'id',
+        sqlType: 'integer',
+        isNullable: false,
+        primaryKey: true
+      },
+      contactId: {
+        camelcase: 'contactId',
+        sqlType: 'integer',
+        isNullable: false,
+        foreignKey: true,
+        stringifyOutput: true
+      },
+      externalCode: {
+        camelcase: 'externalCode',
+        sqlType: 'integer',
+        isNullable: false,
+        foreignKey: true
+      }
+    }
+  }
+
+  const inputSchema = mapSQLEntityToJSONSchema(entity)
+  same(inputSchema.properties.id, { type: 'integer' })
+  same(inputSchema.properties.contactId, { type: 'integer' })
+  same(inputSchema.properties.externalCode, { type: 'integer' })
+
+  const outputSchema = mapSQLEntityToJSONSchema(entity, {}, true, { output: true })
+  same(outputSchema.properties.id, { type: 'string', nullable: true })
+  same(outputSchema.properties.contactId, { type: 'string', nullable: true })
+  same(outputSchema.properties.externalCode, { type: 'integer', nullable: true })
+})
+
 test('noRequired = true', async t => {
   const app = fastify()
   app.register(sqlMapper, {

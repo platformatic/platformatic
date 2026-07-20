@@ -13,7 +13,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
             "nullable": true
           },
           "name": {

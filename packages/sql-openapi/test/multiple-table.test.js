@@ -59,7 +59,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 1
+        id: '1'
       },
       'POST /owners response'
     )
@@ -77,7 +77,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 2
+        id: '2'
       },
       'POST /owners response'
     )
@@ -95,7 +95,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 3
+        id: '3'
       },
       'POST /owners response'
     )
@@ -115,9 +115,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 10,
-        field1: 1,
-        field2: 2
+        id: '10',
+        field1: '1',
+        field2: '2'
       },
       'POST /editors response'
     )
@@ -137,9 +137,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 20,
-        field1: 2,
-        field2: 3
+        id: '20',
+        field1: '2',
+        field2: '3'
       },
       'POST /editors response'
     )
@@ -159,9 +159,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 30,
-        field1: 3,
-        field2: 1
+        id: '30',
+        field1: '3',
+        field2: '1'
       },
       'POST /editors response'
     )
@@ -194,9 +194,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 1000,
-        field1: 1,
-        field2: 2
+        id: '1000',
+        field1: '1',
+        field2: '2'
       },
       'POST /posts response'
     )
@@ -216,9 +216,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 2000,
-        field1: 2,
-        field2: 3
+        id: '2000',
+        field1: '2',
+        field2: '3'
       },
       'POST /posts response'
     )
@@ -238,9 +238,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     same(
       res.json(),
       {
-        id: 3000,
-        field1: 3,
-        field2: 1
+        id: '3000',
+        field1: '3',
+        field2: '1'
       },
       'POST /posts response'
     )
@@ -265,7 +265,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       url: '/owners'
     })
     equal(res.statusCode, 200)
-    same(res.json(), [{ id: 1 }, { id: 2 }, { id: 3 }])
+    same(res.json(), [{ id: '1' }, { id: '2' }, { id: '3' }])
   }
 
   {
@@ -275,7 +275,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -287,9 +287,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 10,
-        field1: 1,
-        field2: 2
+        id: '10',
+        field1: '1',
+        field2: '2'
       }
     ])
   }
@@ -302,9 +302,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 1000,
-        field1: 1,
-        field2: 2
+        id: '1000',
+        field1: '1',
+        field2: '2'
       }
     ])
   }
@@ -317,19 +317,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 10,
-        field1: 1,
-        field2: 2
+        id: '10',
+        field1: '1',
+        field2: '2'
       },
       {
-        id: 20,
-        field1: 2,
-        field2: 3
+        id: '20',
+        field1: '2',
+        field2: '3'
       },
       {
-        id: 30,
-        field1: 3,
-        field2: 1
+        id: '30',
+        field1: '3',
+        field2: '1'
       }
     ])
   }
@@ -341,9 +341,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 20,
-      field1: 2,
-      field2: 3
+      id: '20',
+      field1: '2',
+      field2: '3'
     })
   }
 
@@ -354,7 +354,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -365,7 +365,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 3
+      id: '3'
     })
   }
 
@@ -377,19 +377,19 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 1000,
-        field1: 1,
-        field2: 2
+        id: '1000',
+        field1: '1',
+        field2: '2'
       },
       {
-        id: 2000,
-        field1: 2,
-        field2: 3
+        id: '2000',
+        field1: '2',
+        field2: '3'
       },
       {
-        id: 3000,
-        field1: 3,
-        field2: 1
+        id: '3000',
+        field1: '3',
+        field2: '1'
       }
     ])
   }
@@ -401,9 +401,9 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 3000,
-      field1: 3,
-      field2: 1
+      id: '3000',
+      field1: '3',
+      field2: '1'
     })
   }
 
@@ -414,7 +414,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 2
+      id: '2'
     })
   }
 
@@ -425,7 +425,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 3
+      id: '3'
     })
   }
 })

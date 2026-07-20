@@ -50,7 +50,7 @@ test('expose arrays', { skip: !isPg }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello',
         tags: ['foo', 'bar']
       },
@@ -67,7 +67,7 @@ test('expose arrays', { skip: !isPg }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello',
         tags: ['foo', 'bar']
       },
@@ -85,7 +85,7 @@ test('expose arrays', { skip: !isPg }, async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Hello',
           tags: ['foo', 'bar']
         }
@@ -122,7 +122,7 @@ test('expose arrays', { skip: !isPg }, async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Hello',
           tags: ['foo', 'bar']
         }
@@ -141,7 +141,7 @@ test('expose arrays', { skip: !isPg }, async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Hello',
           tags: ['foo', 'bar']
         }
@@ -160,7 +160,7 @@ test('expose arrays', { skip: !isPg }, async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Hello',
           tags: ['foo', 'bar']
         }
@@ -182,7 +182,7 @@ test('expose arrays', { skip: !isPg }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World',
         tags: ['foo', 'bar', 'baz']
       },
@@ -199,7 +199,7 @@ test('expose arrays', { skip: !isPg }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World',
         tags: ['foo', 'bar', 'baz']
       },

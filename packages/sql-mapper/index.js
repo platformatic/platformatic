@@ -80,6 +80,29 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
+function physicalEntityKey (schema, table) {
+  return `${schema ?? ''}\0${table}`
+}
+
+function markForeignKeysReferencingPrimaryKeys (entities) {
+  const entitiesByTable = new Map()
+
+  for (const entity of Object.values(entities)) {
+    entitiesByTable.set(physicalEntityKey(entity.schema, entity.table), entity)
+  }
+
+  for (const entity of Object.values(entities)) {
+    for (const relation of entity.relations) {
+      const foreignSchema = relation.foreign_table_schema ?? entity.schema
+      const foreignEntity = entitiesByTable.get(physicalEntityKey(foreignSchema, relation.foreign_table_name))
+
+      if (foreignEntity?.primaryKeys.has(relation.foreign_column_name)) {
+        entity.fields[relation.column_name].stringifyOutput = true
+      }
+    }
+  }
+}
+
 async function registerPostgreSQLExtensionTypes (db) {
   try {
     await db.registerTypeParser('vector', parseVector)
@@ -374,6 +397,8 @@ export async function connect ({
         addEntityHooks(entity.singularName, hooks[entity.singularName])
       }
     }
+
+    markForeignKeysReferencingPrimaryKeys(entities)
 
     const res = {
       db,

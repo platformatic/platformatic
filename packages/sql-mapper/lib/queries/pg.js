@@ -80,16 +80,27 @@ export async function listColumns (db, sql, table, schema) {
 
 export async function listConstraints (db, sql, table, schema) {
   const query = sql`
-    SELECT constraints.*, usage.*, usage2.table_name AS foreign_table_name, usage2.column_name AS foreign_column_name, usage2.table_schema AS foreign_table_schema
+    SELECT constraints.*, usage.*, foreign_usage.table_name AS foreign_table_name,
+      foreign_usage.column_name AS foreign_column_name, foreign_usage.table_schema AS foreign_table_schema
     FROM information_schema.table_constraints constraints
       JOIN information_schema.key_column_usage usage
-        ON constraints.constraint_name = usage.constraint_name
-        AND constraints.table_name = ${table}
-      JOIN information_schema.constraint_column_usage usage2
-        ON usage.constraint_name = usage2.constraint_name
-        AND ( usage.table_name = ${table}
-        AND usage.table_schema = ${schema} )
-    ORDER BY usage.constraint_name, usage.ordinal_position, usage2.table_name, usage2.column_name
+        ON constraints.constraint_catalog = usage.constraint_catalog
+        AND constraints.constraint_schema = usage.constraint_schema
+        AND constraints.constraint_name = usage.constraint_name
+        AND constraints.table_schema = usage.table_schema
+        AND constraints.table_name = usage.table_name
+      LEFT JOIN information_schema.referential_constraints referential
+        ON constraints.constraint_catalog = referential.constraint_catalog
+        AND constraints.constraint_schema = referential.constraint_schema
+        AND constraints.constraint_name = referential.constraint_name
+      LEFT JOIN information_schema.key_column_usage foreign_usage
+        ON referential.unique_constraint_catalog = foreign_usage.constraint_catalog
+        AND referential.unique_constraint_schema = foreign_usage.constraint_schema
+        AND referential.unique_constraint_name = foreign_usage.constraint_name
+        AND usage.position_in_unique_constraint = foreign_usage.ordinal_position
+    WHERE constraints.table_name = ${table}
+      AND constraints.table_schema = ${schema}
+    ORDER BY usage.constraint_name, usage.ordinal_position
   `
   const constraintsList = await db.query(query)
   return constraintsList

@@ -97,8 +97,8 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 2, title: 'Cat', longText: 'Bar' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '2', title: 'Cat', longText: 'Bar' }
       ],
       'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText response'
     )
@@ -116,7 +116,7 @@ test('list', async t => {
     )
     same(
       res.json(),
-      [{ id: 1, title: 'Dog', longText: 'Foo' }],
+      [{ id: '1', title: 'Dog', longText: 'Foo' }],
       'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText response'
     )
   }
@@ -134,9 +134,9 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 3, title: 'Mouse', longText: 'Baz' },
-        { id: 4, title: 'Duck', longText: 'A duck tale' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '3', title: 'Mouse', longText: 'Baz' },
+        { id: '4', title: 'Duck', longText: 'A duck tale' }
       ],
       'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText response'
     )
@@ -151,8 +151,8 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 4, title: 'Duck', longText: 'A duck tale' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '4', title: 'Duck', longText: 'A duck tale' }
       ],
       'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText response'
     )
@@ -171,8 +171,8 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 3, title: 'Mouse', longText: 'Baz' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '3', title: 'Mouse', longText: 'Baz' }
       ],
       'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText response'
     )
@@ -190,7 +190,7 @@ test('list', async t => {
     )
     same(
       res.json(),
-      [{ id: 1, title: 'Dog', longText: 'Foo' }],
+      [{ id: '1', title: 'Dog', longText: 'Foo' }],
       'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText response'
     )
   }
@@ -208,9 +208,9 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 2, title: 'Cat', longText: 'Bar' },
-        { id: 3, title: 'Mouse', longText: 'Baz' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '2', title: 'Cat', longText: 'Bar' },
+        { id: '3', title: 'Mouse', longText: 'Baz' }
       ],
       'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText response'
     )
@@ -229,9 +229,9 @@ test('list', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Dog', longText: 'Foo' },
-        { id: 2, title: 'Cat', longText: 'Bar' },
-        { id: 3, title: 'Mouse', longText: 'Baz' }
+        { id: '1', title: 'Dog', longText: 'Foo' },
+        { id: '2', title: 'Cat', longText: 'Bar' },
+        { id: '3', title: 'Mouse', longText: 'Baz' }
       ],
       'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText response'
     )

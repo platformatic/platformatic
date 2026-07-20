@@ -58,7 +58,7 @@ export function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLTypeToOpenAPISchema (field) {
+function mapSQLTypeToOpenAPISchema (field, output) {
   if (field.sqlType === 'vector') {
     const schema = {
       type: 'array',
@@ -75,10 +75,16 @@ function mapSQLTypeToOpenAPISchema (field) {
     return schema
   }
 
-  return { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+  let type = mapSQLTypeToOpenAPIType(field.sqlType)
+  if (output && (field.primaryKey || field.stringifyOutput) && (type === 'integer' || type === 'number')) {
+    type = 'string'
+  }
+
+  return { type }
 }
 
-export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
+export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false, options = {}) {
+  const { output = false } = options
   const fields = entity.camelCasedFields
   const properties = {}
   const required = []
@@ -103,7 +109,7 @@ export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = fals
         additionalProperties: true
       }
     } else {
-      properties[field.camelcase] = mapSQLTypeToOpenAPISchema(field)
+      properties[field.camelcase] = mapSQLTypeToOpenAPISchema(field, output)
     }
     if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
@@ -188,8 +194,8 @@ function renderProperties (
       types = [type]
     }
 
-    // The mapper always returns primary keys as strings
-    if (fieldDefinitions[name]?.primaryKey) {
+    // The mapper returns primary keys and marked foreign keys as strings
+    if (fieldDefinitions[name]?.primaryKey || fieldDefinitions[name]?.stringifyOutput) {
       types = Array.from(new Set(types.map(t => (t === 'integer' || t === 'number' ? 'string' : t))))
     }
 
