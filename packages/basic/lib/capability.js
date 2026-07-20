@@ -304,14 +304,13 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    const pending = new Set(dependents)
-
-    // Ask the runtime the status of the dependencies and don't wait if they are already stopped
+    // Ask the runtime the status of the dependents and wait only for those that are not stopped
     const workers = await itc.send('getWorkers')
+    const pending = new Set()
 
     for (const worker of Object.values(workers)) {
-      if (this.dependencies.includes(worker.application) && worker.status === 'started') {
-        pending.delete(worker.application)
+      if (dependents.includes(worker.application) && worker.status !== 'stopped') {
+        pending.add(worker.application)
       }
     }
 
