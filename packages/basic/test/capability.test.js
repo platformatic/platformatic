@@ -1,6 +1,7 @@
 /* globals platformatic */
 
 import { kMetadata } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { EventEmitter } from 'node:events'
@@ -8,6 +9,7 @@ import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { ensureTrailingSlash } from '../lib/utils.js'
@@ -132,6 +134,24 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getEnv(), { key2: 'value2' })
   deepStrictEqual(await capability.getInfo(), { dependencies: [], type: 'base', version: '1.0.0' })
   deepStrictEqual(await capability.getDispatchFunc(), capability)
+})
+
+test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {
+  const itc = new EventEmitter()
+  itc.send = async () => ({
+    'dependency:0': { application: 'dependency', status: 'started' }
+  })
+
+  updateGlobals({ itc })
+  t.after(() => updateGlobals({ itc: undefined }))
+
+  const capability = await create(t, { dependencies: ['dependency'] })
+  const result = await Promise.race([
+    capability.waitForDependentsStop(['dependent']).then(() => 'resolved'),
+    sleep(50, 'timeout')
+  ])
+
+  deepStrictEqual(result, 'resolved')
 })
 
 test('BaseCapability - getWatchConfig - disabled', async t => {
