@@ -124,7 +124,7 @@ test('schema.lock is deterministic across database names', { skip: isMysql }, as
   assert.equal(firstLock, secondLock, 'the same schema produces the same schema.lock on different databases')
 })
 
-test('does not create schema.lock at boot when the schema lock is read-only', async t => {
+test('does not create schema.lock at boot when the schema lock is read-only string', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const directory = await mkdtemp(join(tmpdir(), 'schemalock-boot-'))
   const schemaLockPath = join(directory, 'schema.lock')
@@ -139,7 +139,7 @@ test('does not create schema.lock at boot when the schema lock is read-only', as
       ...connectionInfo,
       schemalock: {
         path: schemaLockPath,
-        readOnly: true
+        readOnly: 'true'
       },
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)

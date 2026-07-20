@@ -42,7 +42,7 @@ export const db = {
               resolvePath: true
             },
             readOnly: {
-              type: 'boolean',
+              anyOf: [{ type: 'boolean' }, { type: 'string' }],
               default: false,
               description: 'Never write the schema lock file at runtime, only read it.'
             }

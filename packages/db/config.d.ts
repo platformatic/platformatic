@@ -192,7 +192,7 @@ export interface PlatformaticDatabaseConfig {
           /**
            * Never write the schema lock file at runtime, only read it.
            */
-          readOnly?: boolean;
+          readOnly?: boolean | string;
           [k: string]: unknown;
         };
     poolSize?: number;
