@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { UnsupportedSchedulerManifestVersionError } from './errors.js'
 
 export const SCHEDULER_MANIFEST_FILENAME = 'platformatic-scheduler.json'
 export const SCHEDULER_MANIFEST_VERSION = 1
@@ -36,7 +37,7 @@ export async function readSchedulerManifest (outputDirectory) {
   }
 
   if (manifest.version !== SCHEDULER_MANIFEST_VERSION || !Array.isArray(manifest.scheduledTasks)) {
-    throw new Error(`Unsupported Nuxt scheduler manifest version "${manifest.version}"`)
+    throw new UnsupportedSchedulerManifestVersionError(manifest.version)
   }
 
   return manifest.scheduledTasks

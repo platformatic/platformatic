@@ -14,7 +14,6 @@ import {
   sanitizeHTTPSArgument,
   sanitizeHTTPSOptions,
 } from '@platformatic/foundation'
-import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -31,6 +30,7 @@ export class NuxtCapability extends BaseCapability {
   #dispatcher
   #scheduledTasks
   #schedulerManifest
+  #scheduledTasksRunner
 
   constructor (root, config, context) {
     super('nuxt', version, root, config, context)
@@ -175,14 +175,15 @@ export class NuxtCapability extends BaseCapability {
       })
     }
 
-    const events = getEvents({ throwOnMissing: false })
-    const { promise, resolve, reject } = Promise.withResolvers()
-
-    if (!events?.emit('platformatic:nuxt:run-scheduled-tasks', { scheduleId, scheduledTime, resolve, reject })) {
+    if (!this.#scheduledTasksRunner) {
       throw new Error('The application does not use the @platformatic/nuxt/scheduler module')
     }
 
-    return promise
+    return this.#scheduledTasksRunner({ scheduleId, scheduledTime })
+  }
+
+  setScheduledTasksRunner (runner) {
+    this.#scheduledTasksRunner = runner
   }
 
   setupChildManagerEventsForwarding (childManager) {
