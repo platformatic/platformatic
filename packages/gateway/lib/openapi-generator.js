@@ -140,26 +140,43 @@ export async function openApiGenerator (app, opts) {
   const openApiSchemas = []
   const apiByApiRoutes = {}
 
-  for (const { id, origin, openapi } of applications) {
-    if (!openapi) continue
+  // Fetch all the schemas in parallel, then process the results in the
+  // original applications order so that composition stays deterministic.
+  const fetchResults = await Promise.allSettled(
+    applications.map(async ({ id, origin, openapi }) => {
+      if (!openapi) return null
 
-    let openapiConfig = null
-    if (openapi.config) {
-      try {
-        openapiConfig = await loadOpenApiConfig(openapi.config)
-      } catch (error) {
-        app.log.error(error)
-        throw new CouldNotReadOpenAPIConfigError(id)
+      let openapiConfig = null
+      if (openapi.config) {
+        try {
+          openapiConfig = await loadOpenApiConfig(openapi.config)
+        } catch (error) {
+          app.log.error(error)
+          throw new CouldNotReadOpenAPIConfigError(id)
+        }
       }
-    }
 
-    let originSchema = null
-    try {
-      originSchema = await getOpenApiSchema(origin, openapi)
-    } catch (error) {
-      app.log.error(error, `failed to fetch schema for "${id} application"`)
-      continue
+      let originSchema = null
+      try {
+        originSchema = await getOpenApiSchema(origin, openapi)
+      } catch (error) {
+        app.log.error(error, `failed to fetch schema for "${id} application"`)
+        return null
+      }
+
+      return { openapiConfig, originSchema }
+    })
+  )
+
+  for (let i = 0; i < applications.length; i++) {
+    const result = fetchResults[i]
+    if (result.status === 'rejected') {
+      throw result.reason
     }
+    if (result.value === null) continue
+
+    const { id, origin, openapi } = applications[i]
+    const { openapiConfig, originSchema } = result.value
 
     const schema = modifyOpenApiSchema(app, originSchema, openapiConfig)
 
