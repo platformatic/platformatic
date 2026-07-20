@@ -9,4 +9,8 @@ module.exports = async function (app) {
   app.get('/redirect', async (req, reply) => {
     reply.redirect('/hello')
   })
+
+  app.get('/redirect-external', async (req, reply) => {
+    reply.redirect('https://example.com/oauth/authorize?client_id=123')
+  })
 }

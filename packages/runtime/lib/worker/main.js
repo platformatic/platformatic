@@ -364,6 +364,16 @@ async function main () {
 
 function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
+  const absoluteUrlPattern = /^https?:\/\//i
+
+  function prependBasePath (value) {
+    // Absolute and protocol-relative URLs (RFC 7231 Location) must not be rewritten
+    if (typeof value !== 'string' || absoluteUrlPattern.test(value) || value.startsWith('//') || value.startsWith(basePath)) {
+      return value
+    }
+
+    return basePath + value
+  }
 
   subscribe('http.server.request.start', ({ request, response }) => {
     if (request.url.startsWith(basePath)) {
@@ -389,8 +399,8 @@ function stripBasePath (basePath) {
 
       if (headers) {
         for (const key in headers) {
-          if (key.toLowerCase() === 'location' && !headers[key].startsWith(basePath)) {
-            headers[key] = basePath + headers[key]
+          if (key.toLowerCase() === 'location') {
+            headers[key] = prependBasePath(headers[key])
           }
         }
       }
@@ -401,8 +411,8 @@ function stripBasePath (basePath) {
 
   ServerResponse.prototype.setHeader = function (name, value) {
     if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location' && !value.startsWith(basePath)) {
-        value = basePath + value
+      if (name.toLowerCase() === 'location') {
+        value = prependBasePath(value)
       }
     }
     originSetHeader.call(this, name, value)
