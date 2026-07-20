@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/error": "^4.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",

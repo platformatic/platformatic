@@ -1,7 +1,6 @@
-import { getEvents, getITC } from '@platformatic/globals'
+import { getCapability, getITC } from '@platformatic/globals'
 import { defineNitroPlugin, runTask, useRuntimeConfig } from '#imports'
 
-const RUN_EVENT = 'platformatic:nuxt:run-scheduled-tasks'
 const RUN_HANDLER = 'platformatic:nuxt:run-scheduled-tasks'
 const METADATA_NOTIFICATION = 'platformatic:nuxt:scheduled-tasks'
 
@@ -15,7 +14,7 @@ export default defineNitroPlugin(nitroApp => {
       throw new Error(`Scheduled task group "${scheduleId}" not found`)
     }
 
-    return Promise.all(
+    const results = await Promise.allSettled(
       schedule.tasks.map(async name => {
         const { result } = await runTask(name, {
           payload: { scheduledTime },
@@ -25,6 +24,13 @@ export default defineNitroPlugin(nitroApp => {
         return { name, result: result ?? null }
       })
     )
+
+    const errors = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (errors.length > 0) {
+      throw new AggregateError(errors, `Scheduled task group "${scheduleId}" failed`)
+    }
+
+    return results.map(result => result.value)
   }
 
   const itc = getITC({ throwOnMissing: false })
@@ -32,18 +38,15 @@ export default defineNitroPlugin(nitroApp => {
   if (itc && process.env.PLT_MANAGER_ID) {
     itc.handle(RUN_HANDLER, runScheduledTasks)
     itc.notify(METADATA_NOTIFICATION, scheduledTasks)
-  }
-
-  const events = getEvents({ throwOnMissing: false })
-
-  if (!events || process.env.PLT_MANAGER_ID) {
     return
   }
 
-  function runHandler ({ scheduleId, scheduledTime, resolve, reject }) {
-    runScheduledTasks({ scheduleId, scheduledTime }).then(resolve, reject)
+  const capability = getCapability({ throwOnMissing: false })
+
+  if (!capability) {
+    return
   }
 
-  events.on(RUN_EVENT, runHandler)
-  nitroApp.hooks.hook('close', () => events.removeListener(RUN_EVENT, runHandler))
+  capability.setScheduledTasksRunner(runScheduledTasks)
+  nitroApp.hooks.hook('close', () => capability.setScheduledTasksRunner(null))
 })

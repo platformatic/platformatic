@@ -52,5 +52,8 @@ test('readSchedulerManifest rejects unsupported manifests', async () => {
     JSON.stringify({ version: 2, scheduledTasks: [] })
   )
 
-  await rejects(readSchedulerManifest(outputDirectory), /Unsupported Nuxt scheduler manifest version/)
+  await rejects(readSchedulerManifest(outputDirectory), {
+    code: 'PLT_NUXT_UNSUPPORTED_SCHEDULER_MANIFEST_VERSION',
+    message: 'Unsupported Nuxt scheduler manifest version "2"'
+  })
 })
