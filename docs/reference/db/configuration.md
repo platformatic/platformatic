@@ -360,6 +360,22 @@ postgres://user:password@my-database:5432/db-name
 
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
 
+  Set `readOnly` to `true` to load the schema lock without ever writing it back, e.g. when the file is checked into version control and must not be rewritten at runtime:
+
+  ```json title="Example Read-Only Object"
+  {
+    "db": {
+      ...
+      "schemalock": {
+        "path": "./schema.lock",
+        "readOnly": true
+      }
+    }
+  }
+  ```
+
+  In read-only mode the file is never created or updated, not even when migrations are applied automatically.
+
 ### `migrations`
 
 Configures [Postgrator](https://github.com/rickbergfalk/postgrator) to run migrations against the database.
