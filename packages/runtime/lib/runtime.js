@@ -1448,7 +1448,13 @@ export class Runtime extends EventEmitter {
     // See https://github.com/platformatic/platformatic/issues/3332.
     if (metrics !== null && processMetricsJson) {
       const processMetrics = []
-      this.#applyLabelsToMetrics(processMetricsJson, { ...this.#config.metrics?.labels }, processMetrics)
+      // Drop any configured custom label that shares the name of the application
+      // label (a config can set both `applicationLabel: 'serviceId'` and a static
+      // `serviceId` label): keeping it would make these runtime-wide metrics look
+      // like they belong to an application, both here and in getFormattedMetrics().
+      const processLabels = { ...this.#config.metrics?.labels }
+      delete processLabels[this.#metricsLabelName]
+      this.#applyLabelsToMetrics(processMetricsJson, processLabels, processMetrics)
       metrics = [...processMetrics, ...metrics]
     }
 
