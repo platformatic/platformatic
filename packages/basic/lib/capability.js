@@ -893,7 +893,8 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Use thread-specific metrics collection - process-level metrics are collected
-    // by the main runtime thread and duplicated with worker labels
+    // and reported only once by the main runtime thread, without application labels.
+    // See https://github.com/platformatic/platformatic/issues/3332.
     await collectThreadMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 

@@ -43,7 +43,7 @@ test('should get runtime metrics in a json format', async t => {
 
   const { metrics } = await app.getMetrics()
 
-  const expectedMetricNames = [
+  const perApplicationMetricNames = [
     'nodejs_active_handles',
     'nodejs_active_handles_total',
     'nodejs_active_requests',
@@ -66,13 +66,6 @@ test('should get runtime metrics in a json format', async t => {
     'nodejs_heap_space_size_available_bytes',
     'nodejs_heap_space_size_total_bytes',
     'nodejs_heap_space_size_used_bytes',
-    'nodejs_version_info',
-    'process_cpu_percent_usage',
-    'process_cpu_seconds_total',
-    'process_cpu_system_seconds_total',
-    'process_cpu_user_seconds_total',
-    'process_resident_memory_bytes',
-    'process_start_time_seconds',
     'http_request_all_summary_seconds',
     'http_client_request_duration_seconds',
     'http_client_stats_free',
@@ -85,9 +78,21 @@ test('should get runtime metrics in a json format', async t => {
     'platformatic_application_restarts_total'
   ]
 
+  // These describe the whole runtime process and are reported only once,
+  // without application labels. See issue #3332.
+  const processLevelMetricNames = [
+    'nodejs_version_info',
+    'process_cpu_percent_usage',
+    'process_cpu_seconds_total',
+    'process_cpu_system_seconds_total',
+    'process_cpu_user_seconds_total',
+    'process_resident_memory_bytes',
+    'process_start_time_seconds'
+  ]
+
   const applications = ['service-1', 'service-2', 'service-db']
 
-  for (const metricName of expectedMetricNames) {
+  for (const metricName of perApplicationMetricNames) {
     const foundMetrics = metrics.filter(m => m.name === metricName)
     ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
     strictEqual(foundMetrics.length, applications.length)
@@ -107,6 +112,17 @@ test('should get runtime metrics in a json format', async t => {
         strictEqual(labels.applicationId, applicationId)
         strictEqual(labels.custom_label, 'custom-value')
       }
+    }
+  }
+
+  for (const metricName of processLevelMetricNames) {
+    const foundMetrics = metrics.filter(m => m.name === metricName)
+    strictEqual(foundMetrics.length, 1, `Expected metric ${metricName} to be reported only once`)
+
+    for (const { labels } of foundMetrics[0].values) {
+      strictEqual(labels.applicationId, undefined, `Expected metric ${metricName} to have no applicationId label`)
+      strictEqual(labels.workerId, undefined, `Expected metric ${metricName} to have no workerId label`)
+      strictEqual(labels.custom_label, 'custom-value')
     }
   }
 })
@@ -229,6 +245,42 @@ test('should get runtime metrics in a text format', async t => {
 
   // We call service-1 and service-2, so we expect metrcis for these
   deepEqual(applicationIds, ['service-1', 'service-2'])
+
+  // Process-level metrics describe the whole runtime process, so they must be
+  // reported only once and without application labels. See issue #3332.
+  const rssLines = findPrometheusLinesForMetric('process_resident_memory_bytes', metrics.metrics)
+  strictEqual(rssLines.length, 1, 'Expected process_resident_memory_bytes to be reported only once')
+  ok(!rssLines[0].includes('applicationId='), 'Expected process_resident_memory_bytes to have no applicationId label')
+  ok(!rssLines[0].includes('workerId='), 'Expected process_resident_memory_bytes to have no workerId label')
+})
+
+test('should report process-level metrics for applications running as separate processes', async t => {
+  const projectDir = join(fixturesDir, 'metrics-command')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { metrics } = await app.getMetrics()
+
+  const rssMetrics = metrics.filter(m => m.name === 'process_resident_memory_bytes')
+
+  // The runtime process reports its own RSS once, without application labels ...
+  const runtimeRss = rssMetrics.filter(m => m.values.every(v => v.labels.applicationId === undefined))
+  strictEqual(runtimeRss.length, 1, 'Expected a single runtime-wide process_resident_memory_bytes metric')
+  ok(runtimeRss[0].values[0].value > 0)
+
+  // ... while the application running as a separate OS process reports its own RSS,
+  // with its own labels. See issue #3332.
+  const applicationRss = rssMetrics.filter(m => m.values.every(v => v.labels.applicationId === 'main'))
+  strictEqual(applicationRss.length, 1, 'Expected a process_resident_memory_bytes metric for the "main" application')
+  ok(applicationRss[0].values[0].value > 0)
+
+  strictEqual(rssMetrics.length, 2)
 })
 
 function getMetricsLines (metrics) {
