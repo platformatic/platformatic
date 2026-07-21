@@ -49,7 +49,7 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 1
+        id: '1'
       },
       'POST /owners response'
     )
@@ -67,7 +67,7 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 2
+        id: '2'
       },
       'POST /owners response'
     )
@@ -85,7 +85,7 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 3
+        id: '3'
       },
       'POST /owners response'
     )
@@ -104,8 +104,8 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 10,
-        field: 1
+        id: '10',
+        field: '1'
       },
       'POST /editors response'
     )
@@ -124,8 +124,8 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 20,
-        field: 2
+        id: '20',
+        field: '2'
       },
       'POST /editors response'
     )
@@ -144,8 +144,8 @@ test('same foreign keys with different names', async t => {
     same(
       res.json(),
       {
-        id: 30,
-        field: 3
+        id: '30',
+        field: '3'
       },
       'POST /editors response'
     )
@@ -169,7 +169,7 @@ test('same foreign keys with different names', async t => {
       url: '/owners'
     })
     equal(res.statusCode, 200)
-    same(res.json(), [{ id: 1 }, { id: 2 }, { id: 3 }])
+    same(res.json(), [{ id: '1' }, { id: '2' }, { id: '3' }])
   }
 
   {
@@ -179,7 +179,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -191,16 +191,16 @@ test('same foreign keys with different names', async t => {
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 10,
-        field: 1
+        id: '10',
+        field: '1'
       },
       {
-        id: 20,
-        field: 2
+        id: '20',
+        field: '2'
       },
       {
-        id: 30,
-        field: 3
+        id: '30',
+        field: '3'
       }
     ])
   }
@@ -212,8 +212,8 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 20,
-      field: 2
+      id: '20',
+      field: '2'
     })
   }
 
@@ -224,7 +224,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -235,7 +235,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -246,7 +246,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200, 'the foreign key is duplicated, so an index has been automatically added')
     same(res.json(), {
-      id: 1
+      id: '1'
     })
   }
 
@@ -257,7 +257,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 2
+      id: '2'
     })
   }
 
@@ -268,7 +268,7 @@ test('same foreign keys with different names', async t => {
     })
     equal(res.statusCode, 200, 'as in the test above, same fk, same result')
     same(res.json(), {
-      id: 2
+      id: '2'
     })
   }
 
@@ -280,8 +280,8 @@ test('same foreign keys with different names', async t => {
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 20,
-        field: 2
+        id: '20',
+        field: '2'
       }
     ])
   }
@@ -294,8 +294,8 @@ test('same foreign keys with different names', async t => {
     equal(res.statusCode, 200)
     same(res.json(), [
       {
-        id: 10,
-        field: 1
+        id: '10',
+        field: '1'
       }
     ])
   }

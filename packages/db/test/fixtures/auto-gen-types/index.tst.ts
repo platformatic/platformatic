@@ -13,7 +13,7 @@ expect(aggregateRatings).type.toBe<Partial<AggregateRating>[]>()
 const aggregateRating = aggregateRatings[0] as AggregateRating
 expect(aggregateRating).type.toBe<{
   id?: string
-  movieId: number
+  movieId: string
   rating: number
   ratingType: string
 }>()

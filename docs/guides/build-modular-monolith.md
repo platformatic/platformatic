@@ -201,12 +201,12 @@ We should receive a response like this:
 
 ```json
 [
-  { "id": 1, "name": "Stephen King", "createdAt": "1687827965773", "updatedAt": "1687827965773" },
-  { "id": 2, "name": "Miranda July", "createdAt": "1687827965778", "updatedAt": "1687827965778" },
-  { "id": 3, "name": "Lewis Carroll", "createdAt": "1687827965780", "updatedAt": "1687827965780" },
-  { "id": 4, "name": "Martha Schumacher", "createdAt": "1687827965782", "updatedAt": "1687827965782" },
-  { "id": 5, "name": "Mick Garris", "createdAt": "1687827965784", "updatedAt": "1687827965784" },
-  { "id": 6, "name": "Dede Gardner", "createdAt": "1687827965786", "updatedAt": "1687827965786" }
+  { "id": "1", "name": "Stephen King", "createdAt": "1687827965773", "updatedAt": "1687827965773" },
+  { "id": "2", "name": "Miranda July", "createdAt": "1687827965778", "updatedAt": "1687827965778" },
+  { "id": "3", "name": "Lewis Carroll", "createdAt": "1687827965780", "updatedAt": "1687827965780" },
+  { "id": "4", "name": "Martha Schumacher", "createdAt": "1687827965782", "updatedAt": "1687827965782" },
+  { "id": "5", "name": "Mick Garris", "createdAt": "1687827965784", "updatedAt": "1687827965784" },
+  { "id": "6", "name": "Dede Gardner", "createdAt": "1687827965786", "updatedAt": "1687827965786" }
 ]
 ```
 
@@ -360,25 +360,25 @@ The response should look like this:
 ```json
 [
   {
-    "id": 1,
+    "id": "1",
     "title": "Fairy Tale",
-    "authorId": 1,
+    "authorId": "1",
     "publishedYear": 2022,
     "createdAt": "1687893211326",
     "updatedAt": "1687893211326"
   },
   {
-    "id": 2,
+    "id": "2",
     "title": "No One Belongs Here More Than You",
-    "authorId": 2,
+    "authorId": "2",
     "publishedYear": 2007,
     "createdAt": "1687893211333",
     "updatedAt": "1687893211333"
   },
   {
-    "id": 3,
+    "id": "3",
     "title": "Alice's Adventures in Wonderland",
-    "authorId": 3,
+    "authorId": "3",
     "publishedYear": 1865,
     "createdAt": "1687893211336",
     "updatedAt": "1687893211336"
@@ -546,28 +546,28 @@ And we should then receive a response like this:
 ```json
 [
   {
-    "id": 1,
+    "id": "1",
     "title": "Maximum Overdrive",
-    "directorId": 1,
-    "producerId": 4,
+    "directorId": "1",
+    "producerId": "4",
     "releasedYear": 1986,
     "createdAt": "1687895004362",
     "updatedAt": "1687895004362"
   },
   {
-    "id": 2,
+    "id": "2",
     "title": "The Shining",
-    "directorId": 5,
-    "producerId": 1,
+    "directorId": "5",
+    "producerId": "1",
     "releasedYear": 1980,
     "createdAt": "1687895004369",
     "updatedAt": "1687895004369"
   },
   {
-    "id": 3,
+    "id": "3",
     "title": "Kajillionaire",
-    "directorId": 2,
-    "producerId": 6,
+    "directorId": "2",
+    "producerId": "6",
     "releasedYear": 2020,
     "createdAt": "1687895004372",
     "updatedAt": "1687895004372"
@@ -686,25 +686,25 @@ We should receive a response like this:
 ```json
 [
   {
-    "id": 1,
+    "id": "1",
     "title": "Fairy Tale",
-    "authorId": 1,
+    "authorId": "1",
     "publishedYear": 2022,
     "createdAt": "1687893211326",
     "updatedAt": "1687893211326"
   },
   {
-    "id": 2,
+    "id": "2",
     "title": "No One Belongs Here More Than You",
-    "authorId": 2,
+    "authorId": "2",
     "publishedYear": 2007,
     "createdAt": "1687893211333",
     "updatedAt": "1687893211333"
   },
   {
-    "id": 3,
+    "id": "3",
     "title": "Alice's Adventures in Wonderland",
-    "authorId": 3,
+    "authorId": "3",
     "publishedYear": 1865,
     "createdAt": "1687893211336",
     "updatedAt": "1687893211336"
@@ -723,28 +723,28 @@ We should receive a response like this:
 ```json
 [
   {
-    "id": 1,
+    "id": "1",
     "title": "Maximum Overdrive",
-    "directorId": 1,
-    "producerId": 4,
+    "directorId": "1",
+    "producerId": "4",
     "releasedYear": 1986,
     "createdAt": "1687895004362",
     "updatedAt": "1687895004362"
   },
   {
-    "id": 2,
+    "id": "2",
     "title": "The Shining",
-    "directorId": 5,
-    "producerId": 1,
+    "directorId": "5",
+    "producerId": "1",
     "releasedYear": 1980,
     "createdAt": "1687895004369",
     "updatedAt": "1687895004369"
   },
   {
-    "id": 3,
+    "id": "3",
     "title": "Kajillionaire",
-    "directorId": 2,
-    "producerId": 6,
+    "directorId": "2",
+    "producerId": "6",
     "releasedYear": 2020,
     "createdAt": "1687895004372",
     "updatedAt": "1687895004372"
@@ -1102,12 +1102,12 @@ We should receive a response like this from the People application's `/people` r
 
 ```json
 [
-  { "id": 1, "name": "Stephen King", "createdAt": "1687891503369", "updatedAt": "1687891503369" },
-  { "id": 2, "name": "Miranda July", "createdAt": "1687891503375", "updatedAt": "1687891503375" },
-  { "id": 3, "name": "Lewis Carroll", "createdAt": "1687891503377", "updatedAt": "1687891503377" },
-  { "id": 4, "name": "Martha Schumacher", "createdAt": "1687891503379", "updatedAt": "1687891503379" },
-  { "id": 5, "name": "Mick Garris", "createdAt": "1687891503381", "updatedAt": "1687891503381" },
-  { "id": 6, "name": "Dede Gardner", "createdAt": "1687891503383", "updatedAt": "1687891503383" }
+  { "id": "1", "name": "Stephen King", "createdAt": "1687891503369", "updatedAt": "1687891503369" },
+  { "id": "2", "name": "Miranda July", "createdAt": "1687891503375", "updatedAt": "1687891503375" },
+  { "id": "3", "name": "Lewis Carroll", "createdAt": "1687891503377", "updatedAt": "1687891503377" },
+  { "id": "4", "name": "Martha Schumacher", "createdAt": "1687891503379", "updatedAt": "1687891503379" },
+  { "id": "5", "name": "Mick Garris", "createdAt": "1687891503381", "updatedAt": "1687891503381" },
+  { "id": "6", "name": "Dede Gardner", "createdAt": "1687891503383", "updatedAt": "1687891503383" }
 ]
 ```
 

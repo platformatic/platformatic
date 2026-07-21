@@ -13,7 +13,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
             "nullable": true
           },
           "name": {
@@ -44,7 +44,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
             "nullable": true
           },
           "title": {
@@ -60,7 +60,7 @@
             "nullable": true
           },
           "ownerId": {
-            "type": "integer",
+            "type": "string",
             "nullable": true
           }
         },

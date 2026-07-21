@@ -422,14 +422,14 @@ test('nested routes with recursive FK', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           name: 'Dad',
           parentId: null
         },
         {
-          id: 2,
+          id: '2',
           name: 'Child',
-          parentId: 1
+          parentId: '1'
         }
       ],
       'GET /people response'
@@ -445,7 +445,7 @@ test('nested routes with recursive FK', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         name: 'Dad',
         parentId: null
       },
