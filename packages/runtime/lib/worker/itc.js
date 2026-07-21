@@ -183,7 +183,12 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
             // Reply to the runtime that the start failed, so it can cleanup
             once(itc, 'application:worker:start:processed').then(() => {
-              closeITC(dispatcher, itc, messaging).catch(() => {})
+              closeITC(dispatcher, itc, messaging).catch(err => {
+                logger.error(
+                  { err: ensureLoggableError(err) },
+                  'Failed to close the worker ITC after a failed start.'
+                )
+              })
             })
 
             throw ensureLoggableError(e)
@@ -199,23 +204,32 @@ export async function setupITC (controller, application, dispatcher, sharedConte
       },
 
       async stop ({ force, dependents }) {
-        const status = controller.getStatus()
+        try {
+          const status = controller.getStatus()
 
-        if (!force && status === 'starting') {
-          await once(controller, 'start')
+          if (!force && status === 'starting') {
+            await once(controller, 'start')
+          }
+
+          if (force || status.startsWith('start')) {
+            // This gives a chance to a capability to perform custom logic
+            const events = getEvents()
+            events.emit('stop')
+
+            await controller.stop(force, dependents)
+          }
+        } finally {
+          // Always schedule cleanup, even when stop throws. Otherwise the worker
+          // keeps open handles and runtime shutdown hangs until the grace timeout.
+          once(itc, 'application:worker:stop:processed').then(() => {
+            closeITC(dispatcher, itc, messaging).catch(err => {
+              logger.error(
+                { err: ensureLoggableError(err) },
+                'Failed to close the worker ITC after stop.'
+              )
+            })
+          })
         }
-
-        if (force || status.startsWith('start')) {
-          // This gives a chance to a capability to perform custom logic
-          const events = getEvents()
-          events.emit('stop')
-
-          await controller.stop(force, dependents)
-        }
-
-        once(itc, 'application:worker:stop:processed').then(() => {
-          closeITC(dispatcher, itc, messaging).catch(() => {})
-        })
       },
 
       async getDependencies () {
