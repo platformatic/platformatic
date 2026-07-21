@@ -221,7 +221,7 @@ const currentContext = sharedContext.get()
 | `setCustomHealthCheck(healthCheck)` | Sets a custom health check. |
 | `setCustomReadinessCheck(readinessCheck)` | Sets a custom readiness check. |
 
-`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `close` event is emitted when the process is closing. A listener should finish graceful shutdown within the configured shutdown timeout.
+`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `close` event is emitted when the application is stopping and gives listeners a chance to release resources. A `close` listener should finish graceful shutdown within the configured shutdown timeout. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
 
 ```js
 import { getEvents } from '@platformatic/globals'
@@ -230,6 +230,10 @@ const events = getEvents()
 
 events.on('close', async () => {
   // Close application resources.
+})
+
+events.on('exit', () => {
+  // Perform final synchronous cleanup.
 })
 ```
 

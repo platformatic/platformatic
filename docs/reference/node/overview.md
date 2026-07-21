@@ -262,6 +262,10 @@ events.on('close', () => {
 })
 ```
 
+### `closeServer`
+
+When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
+
 ### `Symbol.asyncDispose`
 
 If your `create` or `build` factory returns an object with a `Symbol.asyncDispose` method, Platformatic will automatically call it during shutdown:

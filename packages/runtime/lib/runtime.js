@@ -3000,7 +3000,12 @@ export class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+      const res = await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+
+      if (res === kTimeout) {
+        this.emitAndNotify('application:worker:stop:timeout', eventPayload)
+        this.logger.error(`Timeout while stopping ${label}. Killing a worker thread.`)
+      }
     } catch (error) {
       this.emitAndNotify('application:worker:stop:error', eventPayload)
       this.logger.error({ err: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
@@ -3022,6 +3027,7 @@ export class Runtime extends EventEmitter {
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
       this.emitAndNotify('application:worker:exit:timeout', eventPayload)
+      this.logger.error(`Timeout while waiting for ${label} to exit. Killing a worker thread.`)
       await worker.terminate()
     }
 

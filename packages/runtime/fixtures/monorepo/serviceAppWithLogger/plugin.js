@@ -11,6 +11,10 @@ module.exports = async function (app) {
     crashOnClose = true
   })
 
+  app.get('/keep-alive-on-close', { schema: { hide: true } }, async () => {
+    setInterval(() => {}, 1_000)
+  })
+
   app.addHook('onClose', async () => {
     if (crashOnClose) {
       app.log.info('Crashing process on purpose')

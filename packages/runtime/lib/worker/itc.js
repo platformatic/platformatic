@@ -1,6 +1,6 @@
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
-import { initializeITCTelemetry, ITC } from '@platformatic/itc'
+import { ITC, initializeITCTelemetry } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
@@ -112,9 +112,14 @@ async function safeHandleInITC (worker, fn) {
 }
 
 async function closeITC (dispatcher, itc, messaging) {
-  await dispatcher.interceptor.close()
-  itc.close()
-  messaging.close()
+  try {
+    await dispatcher.interceptor.close()
+    itc.close()
+    messaging.close()
+  } finally {
+    const events = getEvents()
+    events.emit('exit')
+  }
 }
 
 export async function sendViaITC (worker, name, message, transferList) {

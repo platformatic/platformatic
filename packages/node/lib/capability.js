@@ -322,6 +322,10 @@ export class NodeCapability extends BaseCapability {
       return this.#app[Symbol.asyncDispose]()
     }
 
+    return this.closeServer()
+  }
+
+  closeServer () {
     /* c8 ignore next 3 */
     if (!this.#server?.listening) {
       return
