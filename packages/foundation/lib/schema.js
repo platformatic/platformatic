@@ -595,6 +595,18 @@ export const fastifyServer = {
         }
       }
     },
+    ajv: {
+      type: 'object',
+      description:
+        'Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.',
+      properties: {
+        customOptions: {
+          type: 'object',
+          additionalProperties: true
+        }
+      },
+      additionalProperties: false
+    },
     caseSensitive: {
       type: 'boolean'
     },
