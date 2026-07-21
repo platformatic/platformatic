@@ -85,11 +85,11 @@ test('validate migration checksums', async t => {
   assert.equal(secondFound, true)
 })
 
-test('do not validate migration checksums if not configured', async t => {
+test('do not validate migration checksums if disabled', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply-no-checksums.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -100,7 +100,7 @@ test('do not validate migration checksums if not configured', async t => {
   const [message] = await once(firstOutput, 'data')
   assert.match(message, /(.*)running(.*)(001\.do\.sql)/)
 
-  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply-no-checksums.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
