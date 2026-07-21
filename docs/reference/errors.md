@@ -24,6 +24,10 @@
 
 **Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!
 
+### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
+
+**Message:** Failed to compose OpenAPI schemas: %s
+
 ### PLT_GATEWAY_PATH_ALREADY_EXISTS
 
 **Message:** Path "%s" already exists
