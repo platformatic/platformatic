@@ -3003,7 +3003,7 @@ export class Runtime extends EventEmitter {
       await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
     } catch (error) {
       this.emitAndNotify('application:worker:stop:error', eventPayload)
-      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.logger.error({ err: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].notify('application:worker:stop:processed')
       // Wait for the processed message to be received

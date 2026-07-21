@@ -71,6 +71,38 @@ test('should invoke Symbol.asyncDispose on the app if defined', async t => {
   await checkWarningEmitted(root, false)
 })
 
+test('should close a non-listening raw HTTP server', async t => {
+  const { runtime } = await prepareRuntime(t, 'close-non-listening-server')
+  const eventsPromise = collectEvents(runtime)
+
+  await startRuntime(t, runtime)
+  await runtime.close()
+
+  const events = await eventsPromise
+  ok(!events.find(m => m.event === 'application:worker:stop:error'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+})
+
+test('should log stop errors without hanging runtime close', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-throws')
+  const eventsPromise = collectEvents(runtime)
+
+  await startRuntime(t, runtime)
+  await runtime.close()
+
+  const events = await eventsPromise
+  ok(events.find(m => m.event === 'application:worker:stop:error'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+
+  const logs = await getLogsFromFile(root)
+  const stopErrorLog = logs.find(
+    m => m.level === 50 && m.msg?.includes('Failed to stop worker 0 of the application "frontend"')
+  )
+  ok(stopErrorLog)
+  strictEqual(stopErrorLog.err?.code, 'TEST_CLOSE_FAILED')
+  strictEqual(stopErrorLog.err?.message, 'boom while closing')
+})
+
 test('should invoke Symbol.asyncDispose for custom objects returned by create', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-standalone-with-custom-object-async-dispose')
   const url = await startRuntime(t, runtime)
