@@ -313,6 +313,12 @@ export class NodeCapability extends BaseCapability {
     }
 
     if (this.#app?.[Symbol.asyncDispose]) {
+      // node:http.Server implements Symbol.asyncDispose(), but rejects with
+      // ERR_SERVER_NOT_RUNNING when a non-entrypoint server was never bound.
+      if (this.#app instanceof Server && !this.#server.listening) {
+        return
+      }
+
       return this.#app[Symbol.asyncDispose]()
     }
 
