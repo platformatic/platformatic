@@ -926,7 +926,7 @@
                   "type": "string"
                 }
               ],
-              "default": 10000
+              "default": 30000
             },
             "application": {
               "anyOf": [
