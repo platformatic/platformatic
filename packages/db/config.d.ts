@@ -382,6 +382,9 @@ export interface PlatformaticDatabaseConfig {
      * Table created to track schema version.
      */
     table?: string;
+    /**
+     * Validate the checksums of already-applied migrations before running new ones. Matches the default of the underlying Postgrator library.
+     */
     validateChecksums?: boolean;
     /**
      * Whether to automatically apply migrations when running the migrate command.
