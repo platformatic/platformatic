@@ -19,3 +19,7 @@ export const CouldNotReadOpenAPIConfigError = createError(
   `${ERROR_PREFIX}_COULD_NOT_READ_OPENAPI_CONFIG`,
   'Could not read openapi config for "%s" application'
 )
+export const InvalidOpenAPISchemaError = createError(
+  `${ERROR_PREFIX}_INVALID_OPENAPI_SCHEMA`,
+  'Failed to compose OpenAPI schemas: %s'
+)

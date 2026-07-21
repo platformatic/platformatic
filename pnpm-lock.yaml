@@ -763,6 +763,9 @@ importers:
       '@platformatic/graphql-composer':
         specifier: ^0.11.0
         version: 0.11.0
+      '@platformatic/openapi-schema-validator':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
