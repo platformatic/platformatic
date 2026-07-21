@@ -31,6 +31,8 @@ minimumReleaseAgeExclude:
   - vite@7.3.5
   # Renovate security update: undici@7.28.0
   - undici@7.28.0
+  # Renovate security update: @astrojs/node@11.0.2
+  - "@astrojs/node@11.0.2"
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
