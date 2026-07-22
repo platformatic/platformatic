@@ -315,7 +315,7 @@ async function main () {
   const sharedContext = new SharedContext()
 
   if (applicationConfig.entrypoint) {
-    const skewConfig = resolveSkewConfig(process.env)
+    const skewConfig = resolveSkewConfig(runtimeConfig.skewProtection)
     if (skewConfig) {
       const getVersion = createVersionResolver(sharedContext, process.env)
       installSkewProtection({ ...skewConfig, getVersion, basePath: runtimeConfig.basePath })

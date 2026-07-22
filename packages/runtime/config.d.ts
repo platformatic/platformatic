@@ -29,6 +29,11 @@ export type PlatformaticRuntimeConfig = {
       )[];
   entrypoint?: string;
   basePath?: string;
+  skewProtection?: {
+    enabled?: boolean;
+    cookieName?: string;
+    maxAge?: number;
+  };
   autoload?: {
     path: string;
     exclude?: string[];

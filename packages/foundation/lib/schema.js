@@ -1048,6 +1048,28 @@ export const runtimeProperties = {
   basePath: {
     type: 'string'
   },
+  skewProtection: {
+    type: 'object',
+    default: {},
+    properties: {
+      // Pin a browser session to the deployment version that served it, by
+      // setting a cookie on the entrypoint's responses.
+      enabled: {
+        type: 'boolean',
+        default: false
+      },
+      cookieName: {
+        type: 'string',
+        default: '__plt_dpl'
+      },
+      maxAge: {
+        type: 'number',
+        minimum: 1,
+        default: 43200
+      }
+    },
+    additionalProperties: false
+  },
   autoload: {
     type: 'object',
     additionalProperties: false,

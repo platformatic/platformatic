@@ -148,6 +148,11 @@ export interface PlatformaticNestJSConfig {
             }
         )[];
     basePath?: string;
+    skewProtection?: {
+      enabled?: boolean;
+      cookieName?: string;
+      maxAge?: number;
+    };
     services?: {
       [k: string]: unknown;
     }[];

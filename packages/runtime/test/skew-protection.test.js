@@ -1,5 +1,7 @@
 import assert from 'node:assert'
+import { join } from 'node:path'
 import { test } from 'node:test'
+import { loadConfiguration } from '../index.js'
 import { SharedContext } from '../lib/worker/shared-context.js'
 import {
   DEFAULT_COOKIE_MAX_AGE,
@@ -10,15 +12,26 @@ import {
   shouldIssueCookie
 } from '../lib/worker/skew-protection.js'
 
-test('skew protection stays off unless the flag is set', () => {
+test('the schema supplies the defaults, so a config that says nothing leaves it off', async () => {
+  const config = await loadConfiguration(join(import.meta.dirname, '..', 'fixtures', 'configs', 'monorepo.json'))
+
+  assert.deepStrictEqual(config.skewProtection, {
+    enabled: false,
+    cookieName: DEFAULT_COOKIE_NAME,
+    maxAge: DEFAULT_COOKIE_MAX_AGE
+  })
+  assert.strictEqual(resolveSkewConfig(config.skewProtection), null)
+})
+
+test('skew protection stays off unless it is enabled', () => {
+  assert.strictEqual(resolveSkewConfig(undefined), null)
   assert.strictEqual(resolveSkewConfig({}), null)
-  assert.strictEqual(resolveSkewConfig({ PLT_DEPLOYMENT_VERSION: 'v1' }), null)
-  // Anything other than the exact string is off, so a stray value cannot enable it.
-  assert.strictEqual(resolveSkewConfig({ PLT_SKEW_PROTECTION: '1' }), null)
+  assert.strictEqual(resolveSkewConfig({ enabled: false }), null)
+  assert.strictEqual(resolveSkewConfig({ cookieName: '__custom' }), null)
 })
 
 test('skew protection defaults the cookie name and lifetime', () => {
-  assert.deepStrictEqual(resolveSkewConfig({ PLT_SKEW_PROTECTION: 'true' }), {
+  assert.deepStrictEqual(resolveSkewConfig({ enabled: true }), {
     cookieName: DEFAULT_COOKIE_NAME,
     maxAge: DEFAULT_COOKIE_MAX_AGE
   })
@@ -53,12 +66,12 @@ test('a pending shared context read is not mistaken for a version', () => {
 })
 
 test('the cookie name and max age can be overridden, and bad values fall back', () => {
-  const base = { PLT_SKEW_PROTECTION: 'true' }
+  const base = { enabled: true }
 
-  assert.strictEqual(resolveSkewConfig({ ...base, PLT_SKEW_COOKIE_NAME: '__custom' }).cookieName, '__custom')
-  assert.strictEqual(resolveSkewConfig({ ...base, PLT_SKEW_COOKIE_MAX_AGE: '60' }).maxAge, 60)
-  assert.strictEqual(resolveSkewConfig({ ...base, PLT_SKEW_COOKIE_MAX_AGE: 'nope' }).maxAge, DEFAULT_COOKIE_MAX_AGE)
-  assert.strictEqual(resolveSkewConfig({ ...base, PLT_SKEW_COOKIE_MAX_AGE: '0' }).maxAge, DEFAULT_COOKIE_MAX_AGE)
+  assert.strictEqual(resolveSkewConfig({ ...base, cookieName: '__custom' }).cookieName, '__custom')
+  assert.strictEqual(resolveSkewConfig({ ...base, maxAge: 60 }).maxAge, 60)
+  assert.strictEqual(resolveSkewConfig({ ...base, maxAge: 0 }).maxAge, DEFAULT_COOKIE_MAX_AGE)
+  assert.strictEqual(resolveSkewConfig({ ...base, maxAge: undefined }).maxAge, DEFAULT_COOKIE_MAX_AGE)
 })
 
 test('the cookie matches the attributes the Kubernetes gateway sets', () => {

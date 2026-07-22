@@ -757,6 +757,26 @@
         "basePath": {
           "type": "string"
         },
+        "skewProtection": {
+          "type": "object",
+          "default": {},
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "cookieName": {
+              "type": "string",
+              "default": "__plt_dpl"
+            },
+            "maxAge": {
+              "type": "number",
+              "minimum": 1,
+              "default": 43200
+            }
+          },
+          "additionalProperties": false
+        },
         "services": {
           "type": "array",
           "items": {

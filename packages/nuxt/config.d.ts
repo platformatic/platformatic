@@ -148,6 +148,11 @@ export interface PlatformaticNuxtConfig {
             }
         )[];
     basePath?: string;
+    skewProtection?: {
+      enabled?: boolean;
+      cookieName?: string;
+      maxAge?: number;
+    };
     services?: {
       [k: string]: unknown;
     }[];

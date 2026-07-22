@@ -6,12 +6,12 @@ export const DEFAULT_COOKIE_NAME = '__plt_dpl'
 export const DEFAULT_COOKIE_MAX_AGE = 43200
 const PREVIEW_HEADER = 'x-deployment-id'
 
-export function resolveSkewConfig (env) {
-  if (env.PLT_SKEW_PROTECTION !== 'true') return null
+export function resolveSkewConfig (config) {
+  if (!config?.enabled) return null
 
-  const maxAge = Number(env.PLT_SKEW_COOKIE_MAX_AGE)
+  const maxAge = Number(config.maxAge)
   return {
-    cookieName: env.PLT_SKEW_COOKIE_NAME || DEFAULT_COOKIE_NAME,
+    cookieName: config.cookieName || DEFAULT_COOKIE_NAME,
     maxAge: maxAge > 0 ? maxAge : DEFAULT_COOKIE_MAX_AGE
   }
 }
