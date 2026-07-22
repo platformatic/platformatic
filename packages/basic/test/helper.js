@@ -340,7 +340,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
 
     try {
-      await mkdir(candidate, { recursive: true })
+      await mkdir(candidate)
       root = candidate
     } catch (error) {
       if (error.code !== 'EEXIST') {
