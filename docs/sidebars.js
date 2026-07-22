@@ -217,6 +217,12 @@ const sidebars = {
             },
             {
               type: 'category',
+              label: 'Nitro',
+              collapsed: true,
+              items: ['reference/nitro/overview', 'reference/nitro/configuration']
+            },
+            {
+              type: 'category',
               label: 'Nuxt',
               collapsed: true,
               items: ['reference/nuxt/overview', 'reference/nuxt/configuration']

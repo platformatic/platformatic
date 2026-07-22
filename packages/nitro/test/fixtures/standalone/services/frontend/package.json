@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@platformatic/nitro": "^3.61.1",
+    "nitro": "^3.0.260610-beta",
+    "vite": "^7.2.4"
+  }
+}

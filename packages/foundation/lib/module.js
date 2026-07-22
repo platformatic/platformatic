@@ -17,6 +17,11 @@ export const applicationTypes = [
   { name: '@platformatic/next', label: 'Next.js', dependencies: ['next'] },
   { name: '@platformatic/remix', label: 'Remix', dependencies: ['@remix-run/dev'] },
   { name: '@platformatic/astro', label: 'Astro', dependencies: ['astro'] },
+  { name: '@platformatic/react-router', label: 'React Router', dependencies: ['@react-router/dev'] },
+  { name: '@platformatic/nuxt', label: 'Nuxt', dependencies: ['nuxt'] },
+  { name: '@platformatic/tanstack', label: 'TanStack Start', dependencies: ['@tanstack/react-start'] },
+  // Nitro applications often use Vite, so Nitro must be checked first.
+  { name: '@platformatic/nitro', label: 'Nitro', dependencies: ['nitro', 'nitropack'] },
   // Since Vite is often used with other frameworks, we must check for Vite last amongst frontend frameworks
   { name: '@platformatic/vite', label: 'Vite', dependencies: ['vite'] },
   {

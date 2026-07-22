@@ -28,6 +28,7 @@ Applications that run within Watt to handle different aspects of your applicatio
 Framework integrations that let you run frontend applications alongside your APIs:
 
 - **Next.js** - React applications with SSR/SSG
+- **Nitro** - Standalone Nitro and Nitro-powered Vite applications
 - **Astro** - Multi-framework static sites
 - **Remix** - Full-stack React applications
 - **Vite** - Modern build tooling for any framework

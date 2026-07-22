@@ -254,11 +254,11 @@ extend this package.
 
 ### Frontend Framework Integrations
 
-**Packages:** `next`, `astro`, `vite`, `remix`, `react-router`,
+**Packages:** `next`, `astro`, `vite`, `nitro`, `remix`, `react-router`,
 `tanstack`, `nest`, `node`
 
 These packages integrate frontend frameworks (Next.js, Astro, Vite,
-Remix, React Router, TanStack Start, NestJS) and generic Node.js
+Nitro, Remix, React Router, TanStack Start, NestJS) and generic Node.js
 applications as Platformatic capabilities within the runtime.
 
 **Trusted:**

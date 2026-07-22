@@ -30,6 +30,7 @@ const internalCapabilities = [
   '@platformatic/next',
   '@platformatic/vite',
   '@platformatic/astro',
+  '@platformatic/nitro',
   '@platformatic/remix',
   '@platformatic/nest',
   '@platformatic/tanstack',

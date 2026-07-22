@@ -32,6 +32,9 @@ export declare class ViteCapability extends BaseCapability<PlatformaticViteConfi
   buildInfoPath?: string
 
   constructor (root: string, config: PlatformaticViteConfig, context?: object)
+
+  _startDevelopment (): Promise<string | void>
+  _startProduction (listen: boolean): Promise<string | void>
 }
 
 export declare class ViteSSRCapability extends ViteCapability {
