@@ -25,6 +25,7 @@ import { Controller } from './controller.js'
 import { initHealthSignalsApi, startEventLoopDelayMonitor } from './health-signals.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
+import { createVersionResolver, installSkewProtection, resolveSkewConfig } from './skew-protection.js'
 import { SharedContext } from './shared-context.js'
 import { kStderrMarker } from './symbols.js'
 
@@ -312,6 +313,15 @@ async function main () {
   }
 
   const sharedContext = new SharedContext()
+
+  if (applicationConfig.entrypoint) {
+    const skewConfig = resolveSkewConfig(process.env)
+    if (skewConfig) {
+      const getVersion = createVersionResolver(sharedContext, process.env)
+      installSkewProtection({ ...skewConfig, getVersion, basePath: runtimeConfig.basePath })
+      logger.info({ deploymentVersion: getVersion() }, 'Skew protection enabled: pinning sessions to this deployment version')
+    }
+  }
   // Limit the amount of methods a user can call
   updateGlobals({
     sharedContext: {
