@@ -37,7 +37,9 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
-export const httpsFixtureRoot = fileURLToPath(new URL('../../node/test/fixtures/node-https-standalone', import.meta.url))
+export const httpsFixtureRoot = fileURLToPath(
+  new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
+)
 
 export function configureHTTPS (_root, config) {
   config.server ??= {}
@@ -102,10 +104,17 @@ export async function create (t, context = {}, config = {}, name = 'base', versi
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseCapability(name, version, base, config, { applicationId: 'test', ...context }, {
-    stdout: new MockedWritable(),
-    stderr: new MockedWritable()
-  })
+  return new BaseCapability(
+    name,
+    version,
+    base,
+    config,
+    { applicationId: 'test', ...context },
+    {
+      stdout: new MockedWritable(),
+      stderr: new MockedWritable()
+    }
+  )
 }
 
 export function getExecutedCommandLogMessage (command) {
@@ -325,11 +334,13 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   let root
   let index = 0
 
+  await createDirectory(temporaryFolder)
+
   while (!root) {
     const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
 
     try {
-      await mkdir(candidate)
+      await mkdir(candidate, { recursive: true })
       root = candidate
     } catch (error) {
       if (error.code !== 'EEXIST') {
