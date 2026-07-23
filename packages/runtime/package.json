@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "3.62.4",
+  "version": "3.62.5",
   "description": "Platformatic runtime",
   "main": "index.js",
   "type": "module",
