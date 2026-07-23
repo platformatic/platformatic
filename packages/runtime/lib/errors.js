@@ -185,6 +185,21 @@ export const MetricFamilyCollisionError = createError(
   'Extension "%s" registered metric family "%s" which collides with %s'
 )
 
+export const DuplicateExtensionHealthCheckError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_EXTENSION_HEALTH_CHECK`,
+  'The extension health %s check "%s" has already been registered by "%s"'
+)
+
+export const DuplicateExtensionHealthRouteError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_EXTENSION_HEALTH_ROUTE`,
+  'The extension "%s" failed to register health route %s %s: %s'
+)
+
+export const ExtensionHealthRoutesUnavailableError = createError(
+  `${ERROR_PREFIX}_EXTENSION_HEALTH_ROUTES_UNAVAILABLE`,
+  'Extensions registered health routes but no health probes server is available'
+)
+
 export const FailedToSendHealthSignalsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_SEND_HEALTH_SIGNALS`,
   'Cannot send health signals from application "%s": %s'

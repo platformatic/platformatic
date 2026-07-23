@@ -63,6 +63,14 @@ export namespace errors {
     metricFamily: string,
     otherSource: string
   ) => FastifyError
+  export const DuplicateExtensionHealthCheckError: (kind: string, name: string, extension: string) => FastifyError
+  export const DuplicateExtensionHealthRouteError: (
+    extension: string,
+    method: string,
+    url: string,
+    error: string
+  ) => FastifyError
+  export const ExtensionHealthRoutesUnavailableError: () => FastifyError
   export const LastProfileTimeoutError: (id: string) => FastifyError
 }
 
@@ -209,6 +217,36 @@ export interface RuntimeExtensionMetrics {
   registry: PromClient.Registry
 }
 
+export type ExtensionHealthCheckResult =
+  | boolean
+  | {
+    status: boolean
+    statusCode?: number
+    body?: string | object
+  }
+
+export type ExtensionHealthCheck = () => ExtensionHealthCheckResult | Promise<ExtensionHealthCheckResult>
+
+export interface RuntimeExtensionHealth {
+  /**
+   * Registers a readiness check that participates in `/ready`.
+   * Readiness-only failures do not fail `/status` (liveness).
+   * Returns an unregister function.
+   */
+  registerReadinessCheck (name: string, check: ExtensionHealthCheck): () => void
+  /**
+   * Registers a liveness check that participates in `/status`.
+   * Returns an unregister function.
+   */
+  registerLivenessCheck (name: string, check: ExtensionHealthCheck): () => void
+  /**
+   * Registers a Fastify plugin on the health probes server (shared with metrics
+   * when they use the same address). Routes are registered before the server
+   * starts listening. Returns an unregister function that disables the routes.
+   */
+  registerRoutes (plugin: (instance: any, opts: any) => unknown | Promise<unknown>): () => void
+}
+
 export interface RuntimeExtensionContext {
   runtime: Runtime
   itc: RuntimeExtensionITC
@@ -224,6 +262,7 @@ export interface RuntimeExtensionContext {
    * `metrics.labels` (excluding the application label name) are applied.
    */
   metrics: RuntimeExtensionMetrics
+  health: RuntimeExtensionHealth
 }
 
 export interface RuntimeExtensionInstance {

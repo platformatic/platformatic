@@ -66,7 +66,7 @@ before any application is started. TypeScript files are supported out of the box
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
 ```js
-export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics }) {
+export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics, health }) {
   // React to runtime events
   runtime.on('application:worker:started', payload => {
     logger.info({ payload }, 'worker started')
@@ -89,6 +89,17 @@ export default async function setup ({ runtime, itc, sharedContext, logger, opti
     registers: [registry]
   })
   jobs.set(0)
+
+  // Contribute readiness/liveness checks and diagnostic routes on the health probes server
+  health.registerReadinessCheck('dispatchable', async () => {
+    return { status: true }
+  })
+
+  health.registerLivenessCheck('control-plane', async () => true)
+
+  health.registerRoutes(async app => {
+    app.get('/inventory', async () => ({ ok: true }))
+  })
 
   return {
     async start () {
@@ -145,6 +156,21 @@ The setup function receives a context object with the following properties:
   restart metrics, or application worker metrics. Collisions fail with
   `PLT_RUNTIME_METRIC_FAMILY_COLLISION`, identifying the extension and metric family. The registry is
   cleared when the extension closes (including partial startup failures).
+- **`health`** - API for contributing readiness/liveness checks and diagnostic routes on Watt's health
+  probes server (the metrics server when probes are shared with it, or the dedicated health probes
+  server when configured separately):
+  - **`registerReadinessCheck(name, check)`** - Registers a named check that participates in `/ready`.
+    Check names must be unique across extensions. The check may return a boolean or
+    `{ status, statusCode?, body? }`. Rejected, timed-out, or malformed checks fail closed. Timeouts
+    use the configured health checks timeout. **Readiness-only failures do not fail `/status`**
+    (liveness), so a temporary control-plane condition can stop traffic without triggering a pod
+    restart loop. Returns an unregister function.
+  - **`registerLivenessCheck(name, check)`** - Same contract as readiness, but the check participates
+    in `/status`. Returns an unregister function.
+  - **`registerRoutes(plugin)`** - Registers a Fastify plugin on the health probes server before it
+    starts listening. Works for shared and separate probe servers. Route collisions fail startup with
+    a coded error identifying the extension and route. Returns an unregister function that disables
+    the routes. Closing the extension removes its checks and routes.
 
 The setup function can optionally return an object with awaited lifecycle hooks:
 
@@ -163,7 +189,8 @@ The setup function can optionally return an object with awaited lifecycle hooks:
 When multiple extensions are configured, they are set up and started in registration order. `stop` and
 `close` run in reverse registration order. Each of `stop` and `close` is invoked at most once per
 Runtime life, including repeated `stop`/`close` calls and failed-start cleanup paths. Existing
-extensions that only return `close()` keep their previous behavior.
+extensions that only return `close()` keep their previous behavior. Health checks and routes registered
+by an extension are cleaned up with it.
 
 Listening to Runtime `EventEmitter` events is not a substitute for these hooks: `emit()` does not await
 asynchronous listeners. Lifecycle ordering is enforced by Runtime itself so it covers signal handling,
