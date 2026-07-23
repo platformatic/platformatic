@@ -33,6 +33,8 @@ minimumReleaseAgeExclude:
   - undici@7.28.0
   # Renovate security update: @astrojs/node@11.0.2
   - "@astrojs/node@11.0.2"
+  # Renovate security update: find-my-way@9.7.0
+  - find-my-way@9.7.0
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
