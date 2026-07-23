@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "3.62.5",
+  "version": "3.63.0",
   "description": "Platformatic DB core",
   "main": "index.js",
   "type": "module",
