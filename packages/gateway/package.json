@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/gateway",
-  "version": "3.62.3",
+  "version": "3.62.4",
   "description": "Platformatic Gateway",
   "main": "index.js",
   "types": "index.d.ts",
