@@ -37,4 +37,5 @@ export declare const version: string
 
 export declare class NodeCapability extends BaseCapability<PlatformaticNodeJsConfig, BaseOptions<NodeContext>> {
   constructor (root: string, config: PlatformaticNodeJsConfig, context?: object)
+  closeServer (): Promise<void> | undefined
 }

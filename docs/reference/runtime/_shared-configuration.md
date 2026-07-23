@@ -381,10 +381,8 @@ Configures the amount of milliseconds to wait before forcefully killing an appli
 
 The object supports the following settings:
 
-- **`application`** (`number`) - The graceful shutdown timeout for an application.
-- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime.
-
-For both the settings the default is `10000` (ten seconds).
+- **`application`** (`number`) - The graceful shutdown timeout for an application. Default: `10000` (ten seconds).
+- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime. Default: `30000` (thirty seconds).
 
 ### `watch`
 

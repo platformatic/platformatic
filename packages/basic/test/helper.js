@@ -3,7 +3,7 @@ import { execa } from 'execa'
 import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
@@ -37,7 +37,9 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
-export const httpsFixtureRoot = fileURLToPath(new URL('../../node/test/fixtures/node-https-standalone', import.meta.url))
+export const httpsFixtureRoot = fileURLToPath(
+  new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
+)
 
 export function configureHTTPS (_root, config) {
   config.server ??= {}
@@ -102,10 +104,17 @@ export async function create (t, context = {}, config = {}, name = 'base', versi
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseCapability(name, version, base, config, { applicationId: 'test', ...context }, {
-    stdout: new MockedWritable(),
-    stderr: new MockedWritable()
-  })
+  return new BaseCapability(
+    name,
+    version,
+    base,
+    config,
+    { applicationId: 'test', ...context },
+    {
+      stdout: new MockedWritable(),
+      stderr: new MockedWritable()
+    }
+  )
 }
 
 export function getExecutedCommandLogMessage (command) {
@@ -322,15 +331,29 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   }
 
   const originalCwd = process.cwd()
-  const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
+  let root
+  let index = 0
+
+  await createDirectory(temporaryFolder)
+
+  while (!root) {
+    const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
+
+    try {
+      await mkdir(candidate)
+      root = candidate
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error
+      }
+    }
+  }
 
   if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
     process._rawDebug(`Runtime root: ${root}`)
   }
 
   currentWorkingDirectory = root
-
-  await createDirectory(root)
 
   // Copy the fixtures
   await cp(source, root, { recursive: true })

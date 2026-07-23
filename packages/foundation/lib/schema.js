@@ -396,7 +396,8 @@ export const server = {
     portAssignment: {
       type: 'string',
       enum: ['shared', 'perWorkerIncrement'],
-      description: 'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
+      description:
+        'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
     },
     backlog: {
       type: 'integer',
@@ -791,7 +792,8 @@ export const telemetry = {
           type: 'string'
         }
       ],
-      description: 'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
+      description:
+        'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
     }
   },
   required: ['applicationName'],
@@ -1125,7 +1127,7 @@ export const runtimeProperties = {
           },
           { type: 'string' }
         ],
-        default: 10000
+        default: 30000
       },
       application: {
         anyOf: [

@@ -132,6 +132,15 @@ test('correctly loads the watch value from a string', async () => {
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
+test('defaults graceful shutdown timeouts', async () => {
+  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults.json')
+  const runtime = await createRuntime(configFile)
+  const { gracefulShutdown } = await runtime.getRuntimeConfig()
+
+  strictEqual(gracefulShutdown.runtime, 30000)
+  strictEqual(gracefulShutdown.application, 10000)
+})
+
 test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
   delete process.env.PLT_STRICT_ENV_WATCH
