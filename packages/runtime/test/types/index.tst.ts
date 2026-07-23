@@ -1,6 +1,21 @@
 import { expect, test } from 'tstyche'
 import type { Configuration } from '@platformatic/foundation'
-import { create, loadConfiguration, type Runtime, type RuntimeConfiguration, type ApplicationDetails, type InjectParams, type InjectResponse, type RuntimeExtension, type RuntimeExtensionContext, type RuntimeExtensionInstance, type RuntimeMetadata } from '../../index.js'
+import {
+  create,
+  loadConfiguration,
+  type ApplicationsTopology,
+  type Runtime,
+  type RuntimeConfiguration,
+  type ApplicationDetails,
+  type InjectParams,
+  type InjectResponse,
+  type RuntimeExtension,
+  type RuntimeExtensionContext,
+  type RuntimeExtensionInstance,
+  type RuntimeExtensionSharedContext,
+  type RuntimeMetadata,
+  type WorkerDetails
+} from '../../index.js'
 
 const context = {} as Configuration
 
@@ -81,9 +96,52 @@ test('Runtime.getApplicationsIds', () => {
   expect(runtime.getApplicationsIds()).type.toBe<string[]>()
 })
 
+test('Runtime.getApplications', () => {
+  expect(runtime.getApplications()).type.toBe<Promise<ApplicationsTopology>>()
+  expect(runtime.getApplications(true)).type.toBe<Promise<ApplicationsTopology>>()
+})
+
+test('Runtime.getWorkers', () => {
+  expect(runtime.getWorkers()).type.toBe<Promise<Record<string, WorkerDetails>>>()
+  expect(runtime.getWorkers(true)).type.toBe<Promise<Record<string, WorkerDetails>>>()
+})
+
 test('Runtime.getApplicationDetails', () => {
   expect(runtime.getApplicationDetails('api')).type.toBe<Promise<ApplicationDetails>>()
   expect(runtime.getApplicationDetails('api', true)).type.toBe<Promise<ApplicationDetails>>()
+})
+
+test('Runtime.getApplicationConfig', () => {
+  expect(runtime.getApplicationConfig('api')).type.toBe<Promise<Record<string, unknown>>>()
+  expect(runtime.getApplicationConfig('api', false)).type.toBe<Promise<Record<string, unknown>>>()
+})
+
+test('Runtime.getApplicationEnv', () => {
+  expect(runtime.getApplicationEnv('api')).type.toBe<Promise<Record<string, string>>>()
+  expect(runtime.getApplicationEnv('api', false)).type.toBe<Promise<Record<string, string>>>()
+})
+
+test('Runtime.getApplicationOpenapiSchema', () => {
+  expect(runtime.getApplicationOpenapiSchema('api')).type.toBe<Promise<unknown>>()
+})
+
+test('Runtime.getApplicationGraphqlSchema', () => {
+  expect(runtime.getApplicationGraphqlSchema('api')).type.toBe<Promise<unknown>>()
+})
+
+test('Runtime.getMetrics', () => {
+  expect(runtime.getMetrics()).type.toBe<Promise<{ metrics: unknown }>>()
+  expect(runtime.getMetrics('text')).type.toBe<Promise<{ metrics: unknown }>>()
+})
+
+test('Runtime.getSharedContext', () => {
+  expect(runtime.getSharedContext()).type.toBe<object>()
+})
+
+test('Runtime.updateSharedContext', () => {
+  expect(runtime.updateSharedContext()).type.toBe<Promise<object>>()
+  expect(runtime.updateSharedContext({ context: { foo: 'bar' } })).type.toBe<Promise<object>>()
+  expect(runtime.updateSharedContext({ context: { foo: 'bar' }, overwrite: true })).type.toBe<Promise<object>>()
 })
 
 test('Runtime.startApplication', () => {
@@ -130,16 +188,37 @@ test('Runtime.getApplicationLastProfile', () => {
 })
 
 test('RuntimeExtension', () => {
-  const extension: RuntimeExtension = async ({ runtime, itc, logger, options, root }: RuntimeExtensionContext) => {
+  const extension: RuntimeExtension = async ({
+    runtime,
+    itc,
+    logger,
+    options,
+    root,
+    sharedContext
+  }: RuntimeExtensionContext) => {
     expect(runtime).type.toBe<Runtime>()
     expect(options).type.toBe<Record<string, unknown>>()
     expect(root).type.toBe<string>()
+    expect(sharedContext).type.toBe<RuntimeExtensionSharedContext>()
 
     logger.info('loaded')
 
     itc.handle('custom:command', payload => payload)
     expect(itc.send<number>('api', 'custom:command', { value: 42 })).type.toBe<Promise<number>>()
     expect(itc.notify('api', 'custom:event', { value: 42 })).type.toBe<Promise<void>>()
+
+    expect(sharedContext.get()).type.toBe<object | Promise<object>>()
+    expect(sharedContext.update({ feature: true })).type.toBe<Promise<void>>()
+    expect(sharedContext.update({ feature: false }, { overwrite: true })).type.toBe<Promise<void>>()
+
+    // Newly public control-plane methods are callable from extensions
+    expect(runtime.getApplications()).type.toBe<Promise<ApplicationsTopology>>()
+    expect(runtime.getWorkers()).type.toBe<Promise<Record<string, WorkerDetails>>>()
+    expect(runtime.getApplicationConfig('api')).type.toBe<Promise<Record<string, unknown>>>()
+    expect(runtime.getApplicationEnv('api')).type.toBe<Promise<Record<string, string>>>()
+    expect(runtime.getMetrics()).type.toBe<Promise<{ metrics: unknown }>>()
+    expect(runtime.getSharedContext()).type.toBe<object>()
+    expect(runtime.updateSharedContext({ context: { fromExtension: true } })).type.toBe<Promise<object>>()
 
     return {
       async close () {}

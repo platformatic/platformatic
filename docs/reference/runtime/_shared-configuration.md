@@ -66,11 +66,14 @@ before any application is started. TypeScript files are supported out of the box
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
 ```js
-export default async function setup ({ runtime, itc, logger, options, root }) {
+export default async function setup ({ runtime, itc, sharedContext, logger, options, root }) {
   // React to runtime events
   runtime.on('application:worker:started', payload => {
     logger.info({ payload }, 'worker started')
   })
+
+  // Publish state to every application worker
+  await sharedContext.update({ reconciler: { ready: true } })
 
   // Register a custom command that applications can invoke via
   // getITC().send('acme:hello', payload)
@@ -89,7 +92,9 @@ export default async function setup ({ runtime, itc, logger, options, root }) {
 The setup function receives a context object with the following properties:
 
 - **`runtime`** - The [Runtime](./programmatic.md) instance. It is an `EventEmitter`, so extensions can
-  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method.
+  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method, including
+  application and worker introspection (`getApplications()`, `getWorkers()`), application configuration and
+  environment (`getApplicationConfig(id)`, `getApplicationEnv(id)`), and metrics (`getMetrics()`).
 - **`itc`** - A facade over the runtime ITC:
   - **`handle(name, handler)`** - Registers a custom command invocable from any application via
     the [ITC API](./globals.md#communicating-with-runtime-extensions) returned by `getITC()` from
@@ -100,6 +105,11 @@ The setup function receives a context object with the following properties:
   - **`notify(target, name, payload)`** - Sends a fire-and-forget notification. When `target` is an
     application ID, all its running workers are notified; use `application:worker-index` to target a
     specific worker. Workers receive notifications via `getITC().on(name, handler)`.
+- **`sharedContext`** - The shared context API used by application workers. `get()` synchronously returns a
+  snapshot of the current context in main-thread extensions. `update(update, options?)` merges `update` into
+  the context and broadcasts the result to every running worker; pass `{ overwrite: true }` to replace the
+  context instead. Newly started workers receive the latest context. Use `update()` rather than mutating the
+  object returned by `get()`.
 - **`logger`** - A child of the runtime logger.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`root`** - The runtime project root directory.

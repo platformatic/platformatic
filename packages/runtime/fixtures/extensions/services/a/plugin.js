@@ -1,4 +1,4 @@
-import { getITC } from '@platformatic/globals'
+import { getITC, getSharedContext } from '@platformatic/globals'
 
 export default async function (fastify) {
   const itc = getITC()
@@ -24,5 +24,9 @@ export default async function (fastify) {
 
   fastify.get('/pings', async () => {
     return pings
+  })
+
+  fastify.get('/shared-context', async () => {
+    return getSharedContext().get()
   })
 }
