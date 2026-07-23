@@ -142,8 +142,10 @@ export class DynamicWorkersScaler {
     this.#initialUpdates = this.#initialUpdates.filter(pending => pending !== update)
   }
 
-  remove (application) {
-    this.#algorithm.removeApplication(application.id)
+  remove (applicationId) {
+    delete this.#appsConfigs[applicationId]
+    this.#initialUpdates = this.#initialUpdates.filter(update => update.application !== applicationId)
+    this.#algorithm.removeApplication(applicationId)
   }
 
   async #chechHealth () {
