@@ -2,6 +2,7 @@ import { FastifyError } from '@fastify/error'
 import { Configuration, ConfigurationOptions, logFatalError, parseArgs } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticGlobal } from '@platformatic/globals'
+import * as PromClient from '@platformatic/prom-client'
 import { JSONSchemaType } from 'ajv'
 import * as colorette from 'colorette'
 import { EventEmitter } from 'node:events'
@@ -57,6 +58,11 @@ export namespace errors {
   export const InvalidExtensionError: (path: string) => FastifyError
   export const ReservedITCHandlerNameError: (name: string) => FastifyError
   export const DuplicateITCHandlerNameError: (name: string) => FastifyError
+  export const MetricFamilyCollisionError: (
+    extension: string,
+    metricFamily: string,
+    otherSource: string
+  ) => FastifyError
   export const LastProfileTimeoutError: (id: string) => FastifyError
 }
 
@@ -198,6 +204,11 @@ export interface RuntimeExtensionSharedContext {
   update (update: object, options?: SharedContextUpdateOptions): Promise<void>
 }
 
+export interface RuntimeExtensionMetrics {
+  client: typeof PromClient
+  registry: PromClient.Registry
+}
+
 export interface RuntimeExtensionContext {
   runtime: Runtime
   itc: RuntimeExtensionITC
@@ -205,6 +216,14 @@ export interface RuntimeExtensionContext {
   options: Record<string, unknown>
   root: string
   sharedContext: RuntimeExtensionSharedContext
+  /**
+   * Per-extension Prometheus client and registry. Metrics registered here are
+   * collected once by `Runtime.getMetrics()`, the management metrics API, and
+   * the existing `/metrics` endpoint. Runtime does not invent a worker ID or
+   * application ID for these main-thread metrics; only configured static
+   * `metrics.labels` (excluding the application label name) are applied.
+   */
+  metrics: RuntimeExtensionMetrics
 }
 
 export interface RuntimeExtensionInstance {

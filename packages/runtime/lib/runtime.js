@@ -45,6 +45,7 @@ import {
   InvalidExtensionError,
   LastProfileTimeoutError,
   MessagingError,
+  MetricFamilyCollisionError,
   MissingPprofCapture,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
@@ -1403,6 +1404,15 @@ export class Runtime extends EventEmitter {
       processMetricsJson = await this.#processMetricsRegistry.getMetricsAsJSON()
     }
 
+    // Collect main-thread extension metrics once. Each extension has its own
+    // registry so metric registration and cleanup stay isolated. Collisions
+    // with other extensions, process metrics, restart metrics, or worker
+    // metrics fail with a coded error identifying the extension and family.
+    const extensionMetrics = await this.#getExtensionMetricsJson({
+      processMetricsJson,
+      applicationRestartMetrics
+    })
+
     for (const worker of this.#workers.values()) {
       try {
         // The application might be temporarily unavailable
@@ -1440,6 +1450,31 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    // Extension metrics must not share a family name with any worker metric.
+    if (metrics !== null && extensionMetrics.length > 0) {
+      const workerMetricNames = new Set()
+      for (let i = 0; i < metrics.length; i++) {
+        workerMetricNames.add(metrics[i].name)
+      }
+
+      for (const { path, metricNames } of extensionMetrics) {
+        for (const name of metricNames) {
+          if (workerMetricNames.has(name)) {
+            throw new MetricFamilyCollisionError(path, name, 'application worker metrics')
+          }
+        }
+      }
+    }
+
+    if (extensionMetrics.length > 0) {
+      metrics ??= []
+      const extensionMetricsJson = []
+      for (const { metrics: extensionMetricList } of extensionMetrics) {
+        extensionMetricsJson.push(...extensionMetricList)
+      }
+      metrics = [...extensionMetricsJson, ...metrics]
+    }
+
     // Report process-level metrics (e.g. process_resident_memory_bytes) only once:
     // they describe the whole runtime process, so replicating them for each
     // application running in a worker thread would just duplicate the same value.
@@ -1467,6 +1502,57 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  async #getExtensionMetricsJson ({ processMetricsJson, applicationRestartMetrics }) {
+    const results = []
+    const metricSources = new Map()
+
+    // Static labels from metrics config apply, but Runtime never invents a
+    // worker ID or application ID for main-thread extension metrics.
+    const extensionLabels = typeof this.#config.metrics === 'object' && this.#config.metrics
+      ? { ...this.#config.metrics.labels }
+      : {}
+    delete extensionLabels[this.#metricsLabelName]
+
+    const processMetricNames = new Set((processMetricsJson ?? []).map(metric => metric.name))
+    const restartMetricNames = new Set((applicationRestartMetrics ?? []).map(metric => metric.name))
+
+    for (const { path, registry } of this.#extensions) {
+      if (!registry) {
+        continue
+      }
+
+      const registryMetrics = await registry.getMetricsAsJSON()
+      if (!registryMetrics || registryMetrics.length === 0) {
+        continue
+      }
+
+      const metricNames = []
+      for (const metric of registryMetrics) {
+        const existing = metricSources.get(metric.name)
+        if (existing) {
+          throw new MetricFamilyCollisionError(path, metric.name, `extension "${existing}"`)
+        }
+
+        if (processMetricNames.has(metric.name)) {
+          throw new MetricFamilyCollisionError(path, metric.name, 'runtime process metrics')
+        }
+
+        if (restartMetricNames.has(metric.name)) {
+          throw new MetricFamilyCollisionError(path, metric.name, 'runtime restart metrics')
+        }
+
+        metricSources.set(metric.name, path)
+        metricNames.push(metric.name)
+      }
+
+      const labeledMetrics = []
+      this.#applyLabelsToMetrics(registryMetrics, extensionLabels, labeledMetrics)
+      results.push({ path, metrics: labeledMetrics, metricNames })
+    }
+
+    return results
   }
 
   #incrementApplicationRestartCount (applicationId) {
@@ -3934,6 +4020,11 @@ export class Runtime extends EventEmitter {
 
       const logger = this.logger.child({ name: `extension:${basename(path)}` })
 
+      // One registry per extension so metric conflicts and cleanup are isolated.
+      // Extension metrics are main-thread only: Runtime never invents a worker ID.
+      const registry = new metricsClient.Registry()
+      const metrics = { client: metricsClient, registry }
+
       try {
         const instance = await setup({
           runtime: this,
@@ -3941,11 +4032,13 @@ export class Runtime extends EventEmitter {
           sharedContext: this.#createExtensionSharedContext(),
           logger,
           options: options ?? {},
-          root: this.#root
+          root: this.#root,
+          metrics
         })
 
-        this.#extensions.push({ path, instance })
+        this.#extensions.push({ path, instance, registry })
       } catch (e) {
+        registry.clear()
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
       }
     }
@@ -3962,11 +4055,22 @@ export class Runtime extends EventEmitter {
     // on earlier ones, are closed first.
     const extensions = this.#extensions.splice(0).reverse()
 
-    for (const { path, instance } of extensions) {
+    for (const { path, instance, registry } of extensions) {
       try {
         await instance?.close?.()
       } catch (e) {
         this.logger.error({ err: ensureLoggableError(e) }, `Failed to close the extension "${path}".`)
+      }
+
+      // Drop the extension registry after close so its metrics stop appearing in
+      // getMetrics()/exporters and collectors cannot keep running in the background.
+      try {
+        registry?.clear()
+      } catch (e) {
+        this.logger.error(
+          { err: ensureLoggableError(e) },
+          `Failed to clear metrics registry for extension "${path}".`
+        )
       }
     }
   }

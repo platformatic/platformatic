@@ -1,4 +1,4 @@
-export default async function setup ({ runtime, itc, logger, options, root, sharedContext }) {
+export default async function setup ({ runtime, itc, logger, options, root, sharedContext, metrics }) {
   const events = (globalThis.__pltExtensionEvents ??= [])
   events.push({ event: 'setup', extension: 'first' })
 
@@ -13,6 +13,7 @@ export default async function setup ({ runtime, itc, logger, options, root, shar
       hasRuntime: typeof runtime.getApplicationsIds === 'function',
       hasLogger: typeof logger.info === 'function',
       hasSharedContext: typeof sharedContext?.get === 'function' && typeof sharedContext?.update === 'function',
+      hasMetrics: typeof metrics?.client?.Registry === 'function' && metrics?.registry != null,
       applications: runtime.getApplicationsIds()
     }
   })

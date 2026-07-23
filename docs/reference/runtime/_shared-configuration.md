@@ -66,7 +66,7 @@ before any application is started. TypeScript files are supported out of the box
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
 ```js
-export default async function setup ({ runtime, itc, sharedContext, logger, options, root }) {
+export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics }) {
   // React to runtime events
   runtime.on('application:worker:started', payload => {
     logger.info({ payload }, 'worker started')
@@ -80,6 +80,15 @@ export default async function setup ({ runtime, itc, sharedContext, logger, opti
   itc.handle('acme:hello', async payload => {
     return { hello: payload.name }
   })
+
+  // Register main-thread metrics with the shared Runtime metrics pipeline
+  const { client, registry } = metrics
+  const jobs = new client.Gauge({
+    name: 'acme_extension_jobs',
+    help: 'Number of jobs tracked by the extension',
+    registers: [registry]
+  })
+  jobs.set(0)
 
   return {
     async close () {
@@ -113,10 +122,25 @@ The setup function receives a context object with the following properties:
 - **`logger`** - A child of the runtime logger.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`root`** - The runtime project root directory.
+- **`metrics`** - A per-extension Prometheus client and registry:
+  - **`client`** - The `@platformatic/prom-client` module (same client used by application workers).
+  - **`registry`** - A dedicated `Registry` for this extension. Metrics registered here appear once in
+    `Runtime.getMetrics()`, the management metrics API, and the existing `/metrics` endpoint. They are
+    **not** duplicated per application worker.
+
+  **Label behavior:** extension metrics are main-thread metrics. Runtime never invents a `workerId` or
+  application ID label for them. Only static labels from the runtime `metrics.labels` configuration are
+  applied (the configured application label name is omitted, same as process-level metrics). Extensions
+  that need application- or worker-specific labels must set them explicitly when creating metrics.
+
+  Metric family names must be unique across extensions and must not collide with runtime process metrics,
+  restart metrics, or application worker metrics. Collisions fail with
+  `PLT_RUNTIME_METRIC_FAMILY_COLLISION`, identifying the extension and metric family. The registry is
+  cleared when the extension closes (including partial startup failures).
 
 The setup function can optionally return an object with a `close` method, which is invoked when the
 runtime is being closed. When multiple extensions are configured, they are loaded in order and closed
-in reverse order.
+in reverse order. The extension metrics registry is cleared after `close`.
 
 Extensions are not loaded when building the applications (for example via `wattpm build`).
 

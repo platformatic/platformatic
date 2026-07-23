@@ -12,6 +12,7 @@ import {
   type RuntimeExtension,
   type RuntimeExtensionContext,
   type RuntimeExtensionInstance,
+  type RuntimeExtensionMetrics,
   type RuntimeExtensionSharedContext,
   type RuntimeMetadata,
   type WorkerDetails
@@ -194,12 +195,15 @@ test('RuntimeExtension', () => {
     logger,
     options,
     root,
-    sharedContext
+    sharedContext,
+    metrics
   }: RuntimeExtensionContext) => {
     expect(runtime).type.toBe<Runtime>()
     expect(options).type.toBe<Record<string, unknown>>()
     expect(root).type.toBe<string>()
     expect(sharedContext).type.toBe<RuntimeExtensionSharedContext>()
+    expect(metrics).type.toBe<RuntimeExtensionMetrics>()
+    expect(metrics.registry).type.toBe<RuntimeExtensionMetrics['registry']>()
 
     logger.info('loaded')
 
