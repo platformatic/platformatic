@@ -121,16 +121,25 @@ export class DynamicWorkersScaler {
 
     if (config.minWorkers > 1) {
       const update = { application: application.id, workers: config.minWorkers }
-
-      if (!this.#status === 'started') {
-        await this.#runtime.updateApplicationsResources([update])
-      } else {
-        this.#initialUpdates.push(update)
-      }
+      this.#initialUpdates.push(update)
     }
 
     this.#appsConfigs[application.id] = config
     this.#algorithm.addApplication(application.id, config)
+  }
+
+  async applyPendingUpdate (applicationId) {
+    if (this.#status !== 'started') {
+      return
+    }
+
+    const update = this.#initialUpdates.find(update => update.application === applicationId)
+    if (!update) {
+      return
+    }
+
+    await this.#runtime.updateApplicationsResources([update])
+    this.#initialUpdates = this.#initialUpdates.filter(pending => pending !== update)
   }
 
   remove (application) {

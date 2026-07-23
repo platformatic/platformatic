@@ -390,6 +390,30 @@ test('should apply application scaleUpELU and scaleDownELU', async t => {
   assert.strictEqual(service2Workers.length, 2)
 })
 
+test('applies the minimum workers after a dynamically added application starts', async t => {
+  const updates = []
+  const runtime = {
+    async updateApplicationsResources (applications) {
+      updates.push(applications)
+    }
+  }
+  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1 })
+
+  await scaler.start()
+  t.after(() => scaler.stop())
+
+  await scaler.add({
+    id: 'application',
+    workers: { dynamic: true, minimum: 3, maximum: 4 }
+  })
+
+  assert.deepStrictEqual(updates, [])
+
+  await scaler.applyPendingUpdate('application')
+
+  assert.deepStrictEqual(updates, [[{ application: 'application', workers: 3 }]])
+})
+
 test('logs worker health errors and refreshes the health check timeout', async t => {
   const error = new Error('health check failed')
   const errors = []
