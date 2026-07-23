@@ -1,13 +1,12 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "a",
-  "extensions": "missing.js",
+  "extensions": [
+    "extension-lifecycle-tracker.js"
+  ],
   "autoload": {
     "path": "./services",
-    "exclude": [
-      "b",
-      "crash-on-start"
-    ]
+    "exclude": ["crash-on-start"]
   },
   "server": {
     "hostname": "127.0.0.1",

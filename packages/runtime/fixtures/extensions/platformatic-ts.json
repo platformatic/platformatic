@@ -3,7 +3,11 @@
   "entrypoint": "a",
   "extensions": "extension-ts.ts",
   "autoload": {
-    "path": "./services"
+    "path": "./services",
+    "exclude": [
+      "b",
+      "crash-on-start"
+    ]
   },
   "server": {
     "hostname": "127.0.0.1",

@@ -97,7 +97,7 @@ test('extensions can notify workers', async t => {
   throw new Error('The worker never received the notification')
 })
 
-test('extensions are closed in reverse order when the runtime is closed', async t => {
+test('extensions start, stop and close in registration and reverse order', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
@@ -107,7 +107,9 @@ test('extensions are closed in reverse order when the runtime is closed', async 
 
   deepStrictEqual(globalThis.__pltExtensionEvents, [
     { event: 'setup', extension: 'first' },
-    { event: 'setup', extension: 'second' }
+    { event: 'setup', extension: 'second' },
+    { event: 'start', extension: 'first' },
+    { event: 'start', extension: 'second' }
   ])
 
   await app.close()
@@ -115,6 +117,165 @@ test('extensions are closed in reverse order when the runtime is closed', async 
   deepStrictEqual(globalThis.__pltExtensionEvents, [
     { event: 'setup', extension: 'first' },
     { event: 'setup', extension: 'second' },
+    { event: 'start', extension: 'first' },
+    { event: 'start', extension: 'second' },
+    { event: 'stop', extension: 'second' },
+    { event: 'stop', extension: 'first' },
+    { event: 'close', extension: 'second' },
+    { event: 'close', extension: 'first' }
+  ])
+})
+
+test('close-only extensions keep their current behavior', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-close-only.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'close-only' }
+  ])
+
+  await app.close()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'close-only' },
+    { event: 'close', extension: 'close-only' }
+  ])
+})
+
+test('entrypoint stops before extension stop, remaining applications stop after', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-lifecycle.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  await app.close()
+
+  const events = globalThis.__pltExtensionEvents
+  const entrypointStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'a')
+  const extensionStop = events.findIndex(e => e.event === 'stop' && e.extension === 'tracker')
+  const remainingStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'b')
+
+  ok(entrypointStopped !== -1)
+  ok(extensionStop !== -1)
+  ok(remainingStopped !== -1)
+  ok(entrypointStopped < extensionStop)
+  ok(extensionStop < remainingStopped)
+})
+
+test('dynamic application started by an extension is not started twice', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-dynamic.json')
+  const app = await createRuntime(configFile)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const startedB = globalThis.__pltExtensionEvents.filter(
+    e => e.event === 'application:started' && e.application === 'b'
+  )
+  strictEqual(startedB.length, 1)
+
+  deepStrictEqual(app.getApplicationsIds().toSorted(), ['a', 'b'])
+
+  const details = await app.getApplicationDetails('b')
+  strictEqual(details.status, 'started')
+  ok(entryUrl)
+})
+
+test('configured application started by an extension is not started twice', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-start-configured.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  t.after(() => app.close())
+
+  const startedA = globalThis.__pltExtensionEvents.filter(
+    e => e.event === 'application:started' && e.application === 'a'
+  )
+  strictEqual(startedA.length, 1)
+  ok(globalThis.__pltExtensionEvents.some(e => e.event === 'started-configured' && e.application === 'a'))
+})
+
+test('start-hook rejection performs partial cleanup', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-start-fail.json')
+  const app = await createRuntime(configFile)
+
+  await rejects(
+    () => app.start(),
+    err => {
+      strictEqual(err.code, 'PLT_RUNTIME_FAILED_TO_START_EXTENSION')
+      ok(err.message.includes('start intentionally failed'))
+      strictEqual(err.cause.message, 'start intentionally failed')
+      return true
+    }
+  )
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'first' },
+    { event: 'setup', extension: 'start-fail' },
+    { event: 'start', extension: 'first' },
+    { event: 'start', extension: 'start-fail' },
+    { event: 'stop', extension: 'first' },
+    { event: 'close', extension: 'start-fail' },
+    { event: 'close', extension: 'first' }
+  ])
+})
+
+test('application startup rejection performs extension cleanup', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-app-fail.json')
+  const app = await createRuntime(configFile)
+
+  await rejects(() => app.start())
+
+  ok(globalThis.__pltExtensionEvents.some(e => e.event === 'start' && e.extension === 'first'))
+  ok(globalThis.__pltExtensionEvents.some(e => e.event === 'stop' && e.extension === 'first'))
+  ok(globalThis.__pltExtensionEvents.some(e => e.event === 'close' && e.extension === 'first'))
+
+  const startIdx = globalThis.__pltExtensionEvents.findIndex(e => e.event === 'start' && e.extension === 'first')
+  const stopIdx = globalThis.__pltExtensionEvents.findIndex(e => e.event === 'stop' && e.extension === 'first')
+  const closeIdx = globalThis.__pltExtensionEvents.findIndex(e => e.event === 'close' && e.extension === 'first')
+  ok(startIdx < stopIdx)
+  ok(stopIdx < closeIdx)
+})
+
+test('repeated stop and close are idempotent for extension hooks', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  await app.stop()
+  await app.stop()
+  await app.close()
+  await app.close()
+
+  const stops = globalThis.__pltExtensionEvents.filter(e => e.event === 'stop')
+  const closes = globalThis.__pltExtensionEvents.filter(e => e.event === 'close')
+
+  deepStrictEqual(stops, [
+    { event: 'stop', extension: 'second' },
+    { event: 'stop', extension: 'first' }
+  ])
+  deepStrictEqual(closes, [
     { event: 'close', extension: 'second' },
     { event: 'close', extension: 'first' }
   ])

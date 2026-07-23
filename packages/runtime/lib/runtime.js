@@ -41,6 +41,8 @@ import {
   CannotRemoveEntrypointError,
   DuplicateITCHandlerNameError,
   FailedToLoadExtensionError,
+  FailedToStartExtensionError,
+  FailedToStopExtensionError,
   InvalidArgumentError,
   InvalidExtensionError,
   LastProfileTimeoutError,
@@ -355,10 +357,16 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     try {
-      const applications = this.getApplicationsIds()
-      await this.startApplications(applications, silent)
+      // Snapshot originally configured application IDs before extension start hooks.
+      // Dynamic applications started by an extension are excluded from the normal startup pass.
+      const configuredApplications = this.getApplicationsIds()
 
-      if (applications.length === 0) {
+      await this.#startExtensions()
+
+      const applicationsToStart = configuredApplications.filter(id => !this.#isApplicationStarted(id))
+      await this.startApplications(applicationsToStart, silent)
+
+      if (this.getApplicationsIds().length === 0) {
         this.#updateStatus('started')
         await this.close(silent)
         return
@@ -419,6 +427,15 @@ export class Runtime extends EventEmitter {
       await once(this, 'started')
     }
 
+    if (this.#status === 'stopping') {
+      await once(this, 'stopped')
+      return
+    }
+
+    if (this.#status === 'stopped' || this.#status === 'closing' || this.#status === 'closed') {
+      return
+    }
+
     this.#updateStatus('stopping')
 
     if (this.#scheduler) {
@@ -435,6 +452,10 @@ export class Runtime extends EventEmitter {
     if (this.#entrypointId) {
       await this.stopApplication(this.#entrypointId, silent)
     }
+
+    // Await extension stop hooks before stopping remaining applications so that
+    // control-plane extensions can settle work and hand off state first.
+    await this.#stopExtensions()
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
@@ -461,6 +482,15 @@ export class Runtime extends EventEmitter {
   }
 
   async close (silent = false) {
+    if (this.#status === 'closing') {
+      await once(this, 'closed')
+      return
+    }
+
+    if (this.#status === 'closed') {
+      return
+    }
+
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
     this.#lastOverloadProfiles.clear()
@@ -4036,7 +4066,7 @@ export class Runtime extends EventEmitter {
           metrics
         })
 
-        this.#extensions.push({ path, instance, registry })
+        this.#extensions.push({ path, instance, registry, started: false, stopped: false, closed: false })
       } catch (e) {
         registry.clear()
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
@@ -4050,26 +4080,91 @@ export class Runtime extends EventEmitter {
     this.#extensionsWantHealthMetrics = this.listenerCount('application:worker:health:metrics') > 0
   }
 
+  #isApplicationStarted (id) {
+    const applicationConfig = this.#applications.get(id)
+    if (!applicationConfig) {
+      return false
+    }
+
+    const workers = applicationConfig.workers.static
+    for (let i = 0; i < workers; i++) {
+      const worker = this.#workers.get(`${id}:${i}`)
+      const status = worker?.[kWorkerStatus]
+
+      // Match startApplication(): anything past boot/init means already started.
+      if (status && status !== 'boot' && status !== 'init') {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  async #startExtensions () {
+    for (const extension of this.#extensions) {
+      if (extension.started) {
+        continue
+      }
+
+      try {
+        await extension.instance?.start?.()
+        extension.started = true
+      } catch (e) {
+        throw new FailedToStartExtensionError(extension.path, e.message, { cause: e })
+      }
+    }
+  }
+
+  async #stopExtensions () {
+    // Stop in reverse order, so that extensions loaded later, which might depend
+    // on earlier ones, are stopped first. Only extensions that completed start
+    // (including those without a start hook) are stopped, and at most once.
+    for (const extension of [...this.#extensions].reverse()) {
+      if (!extension.started || extension.stopped) {
+        continue
+      }
+
+      // Mark before invoking so repeated stop is idempotent even if stop throws.
+      extension.stopped = true
+
+      try {
+        await extension.instance?.stop?.()
+      } catch (e) {
+        const err = new FailedToStopExtensionError(extension.path, e.message, { cause: e })
+        this.logger.error({ err: ensureLoggableError(err) }, `Failed to stop the extension "${extension.path}".`)
+      }
+    }
+  }
+
   async #closeExtensions () {
     // Close in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are closed first.
+    // on earlier ones, are closed first. Close is invoked at most once per extension.
     const extensions = this.#extensions.splice(0).reverse()
 
-    for (const { path, instance, registry } of extensions) {
+    for (const extension of extensions) {
+      if (extension.closed) {
+        continue
+      }
+
+      extension.closed = true
+
       try {
-        await instance?.close?.()
+        await extension.instance?.close?.()
       } catch (e) {
-        this.logger.error({ err: ensureLoggableError(e) }, `Failed to close the extension "${path}".`)
+        this.logger.error(
+          { err: ensureLoggableError(e) },
+          `Failed to close the extension "${extension.path}".`
+        )
       }
 
       // Drop the extension registry after close so its metrics stop appearing in
       // getMetrics()/exporters and collectors cannot keep running in the background.
       try {
-        registry?.clear()
+        extension.registry?.clear()
       } catch (e) {
         this.logger.error(
           { err: ensureLoggableError(e) },
-          `Failed to clear metrics registry for extension "${path}".`
+          `Failed to clear metrics registry for extension "${extension.path}".`
         )
       }
     }

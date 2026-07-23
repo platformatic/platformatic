@@ -227,6 +227,8 @@ export interface RuntimeExtensionContext {
 }
 
 export interface RuntimeExtensionInstance {
+  start?: () => void | Promise<void>
+  stop?: () => void | Promise<void>
   close?: () => void | Promise<void>
 }
 

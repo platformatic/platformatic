@@ -1,7 +1,9 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "a",
-  "extensions": "missing.js",
+  "extensions": [
+    "extension-start-configured.js"
+  ],
   "autoload": {
     "path": "./services",
     "exclude": [
