@@ -109,6 +109,28 @@ export interface ApplicationDetails {
   url?: string | null
 }
 
+export interface ApplicationsTopology {
+  entrypoint: string
+  production: boolean
+  applications: ApplicationDetails[]
+}
+
+export interface WorkerDetails {
+  application: string
+  worker: string
+  status: string
+  thread: number
+  raw?: unknown
+}
+
+export interface SharedContextUpdateOptions {
+  overwrite?: boolean
+}
+
+export interface RuntimeSharedContextUpdateOptions extends SharedContextUpdateOptions {
+  context?: object
+}
+
 export interface RuntimeMetadata {
   pid: number
   cwd: string
@@ -131,8 +153,8 @@ export declare class ManagementClient {
   getRuntimeConfig (): Promise<Record<string, unknown>>
   getRuntimeEnv (): Promise<Record<string, string>>
   getApplicationsIds (): Promise<string[]>
-  getApplications (): Promise<{ entrypoint: string; production: boolean; applications: ApplicationDetails[] }>
-  getWorkers (): Promise<Record<string, unknown>>
+  getApplications (): Promise<ApplicationsTopology>
+  getWorkers (): Promise<Record<string, WorkerDetails>>
   getApplicationDetails (id: string): Promise<ApplicationDetails>
   getApplicationConfig (id: string): Promise<Record<string, unknown>>
   getApplicationEnv (id: string): Promise<Record<string, string>>
@@ -160,12 +182,29 @@ export interface RuntimeExtensionITC {
   notify (target: string, name: string, payload?: unknown): Promise<void>
 }
 
+/**
+ * Shared context facade exposed to main-thread runtime extensions.
+ *
+ * Mirrors the worker-side `sharedContext` API from `@platformatic/globals`:
+ * - `get()` returns the current snapshot (a plain object). On the main thread
+ *   this is always synchronous; the `Promise` variant exists for parity with
+ *   workers where the first read may be asynchronous.
+ * - `update(update, options?)` merges `update` into the current context by
+ *   default. Pass `{ overwrite: true }` to replace it. Updates are broadcast
+ *   to all running workers exactly like worker-originated updates.
+ */
+export interface RuntimeExtensionSharedContext {
+  get (): object | Promise<object>
+  update (update: object, options?: SharedContextUpdateOptions): Promise<void>
+}
+
 export interface RuntimeExtensionContext {
   runtime: Runtime
   itc: RuntimeExtensionITC
   logger: Logger
   options: Record<string, unknown>
   root: string
+  sharedContext: RuntimeExtensionSharedContext
 }
 
 export interface RuntimeExtensionInstance {
@@ -189,7 +228,52 @@ export declare class Runtime extends EventEmitter {
   getRuntimeEnv (): Record<string, string>
   getRuntimeConfig (includeMeta?: boolean): Record<string, unknown>
   getApplicationsIds (): string[]
+  /**
+   * Returns topology for every configured application.
+   * When `allowUnloaded` is `true`, applications without running workers are
+   * reported as `{ id, status: 'stopped' }` instead of throwing.
+   */
+  getApplications (allowUnloaded?: boolean): Promise<ApplicationsTopology>
+  getWorkers (includeRaw?: boolean): Promise<Record<string, WorkerDetails>>
+  /**
+   * Returns details for a single application.
+   * When `allowUnloaded` is `true` and the application has no running workers,
+   * returns `{ id, status: 'stopped' }` instead of throwing.
+   */
   getApplicationDetails (id: string, allowUnloaded?: boolean): Promise<ApplicationDetails>
+  /**
+   * Returns the resolved configuration of an application worker.
+   * When `ensureStarted` is `true` (default), throws `PLT_RUNTIME_APPLICATION_NOT_STARTED`
+   * if the application is not running. When no worker exists for a known application,
+   * throws `PLT_RUNTIME_WORKER_NOT_FOUND`. Unknown applications throw
+   * `PLT_RUNTIME_APPLICATION_NOT_FOUND`.
+   */
+  getApplicationConfig (id: string, ensureStarted?: boolean): Promise<Record<string, unknown>>
+  /**
+   * Returns the effective environment of an application worker (`process.env`
+   * merged with the capability env).
+   * When `ensureStarted` is `true` (default), throws `PLT_RUNTIME_APPLICATION_NOT_STARTED`
+   * if the application is not running. When no worker exists for a known application
+   * (stopped/unloaded), throws `PLT_RUNTIME_WORKER_NOT_FOUND`. Unknown applications
+   * throw `PLT_RUNTIME_APPLICATION_NOT_FOUND`.
+   */
+  getApplicationEnv (id: string, ensureStarted?: boolean): Promise<Record<string, string>>
+  getApplicationOpenapiSchema (id: string): Promise<unknown>
+  getApplicationGraphqlSchema (id: string): Promise<unknown>
+  getMetrics (format?: string): Promise<{ metrics: unknown }>
+  /**
+   * Returns the current shared context. Synchronous on the main thread.
+   * Do not mutate it in place — use `updateSharedContext()` so changes are
+   * broadcast to workers.
+   */
+  getSharedContext (): object
+  /**
+   * Merges `options.context` into the shared context (or replaces it when
+   * `options.overwrite` is `true`) and broadcasts the result to every running
+   * worker. Returns the updated snapshot. Broadcast failures are logged and do
+   * not reject the promise.
+   */
+  updateSharedContext (options?: RuntimeSharedContextUpdateOptions): Promise<object>
   startApplication (id: string, silent?: boolean): Promise<void>
   stopApplication (id: string, silent?: boolean): Promise<void>
   restartApplication (id: string): Promise<void>

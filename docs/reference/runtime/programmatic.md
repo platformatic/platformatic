@@ -177,7 +177,15 @@ test('handles ping messages', async t => {
 - **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareApplication()`).
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.
-- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `entrypoint`, `workers`, `url`.
+- **`runtime.getApplications(allowUnloaded = false): Promise<{ entrypoint, production, applications }>`** — Runtime topology and per-application details. With `allowUnloaded: true`, applications without a worker are returned as `{ id, status: 'stopped' }`.
+- **`runtime.getWorkers(includeRaw = false): Promise<Record<string, WorkerDetails>>`** — Status, worker index and thread ID for each worker. `includeRaw` is for internal diagnostics and exposes the underlying worker in the direct Runtime API only.
+- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `entrypoint`, `workers`, `url`. With `allowUnloaded: true`, returns `{ id, status: 'stopped' }` when no worker is loaded.
+- **`runtime.getApplicationConfig(id, ensureStarted = true): Promise<object>`** — The resolved application configuration.
+- **`runtime.getApplicationEnv(id, ensureStarted = true): Promise<Record<string, string>>`** — The effective worker environment, including capability-provided variables. It requires a loaded worker: it throws `PLT_RUNTIME_APPLICATION_NOT_STARTED` if the worker exists but is stopped, `PLT_RUNTIME_WORKER_NOT_FOUND` after an application has been unloaded/stopped, and `PLT_RUNTIME_APPLICATION_NOT_FOUND` for an unknown ID.
+- **`runtime.getApplicationOpenapiSchema(id): Promise<unknown>`** and **`runtime.getApplicationGraphqlSchema(id): Promise<unknown>`** — The application's generated API schemas.
+- **`runtime.getMetrics(format = 'json'): Promise<{ metrics }>`** — Runtime metrics in JSON or the requested text format.
+- **`runtime.getSharedContext(): object`** — The current main-thread shared context. Do not mutate it directly; use `updateSharedContext()` so workers are notified.
+- **`runtime.updateSharedContext({ context, overwrite = false }): Promise<object>`** — Merges `context` into the shared context and broadcasts the new state to all running workers. Set `overwrite` to replace it instead. Broadcast failures are logged without rejecting the update.
 
 ### Per-application control
 

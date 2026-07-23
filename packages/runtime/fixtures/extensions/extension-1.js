@@ -1,9 +1,10 @@
-export default async function setup ({ runtime, itc, logger, options, root }) {
+export default async function setup ({ runtime, itc, logger, options, root, sharedContext }) {
   const events = (globalThis.__pltExtensionEvents ??= [])
   events.push({ event: 'setup', extension: 'first' })
 
-  // Expose the facade so that tests can drive it from the outside
+  // Expose the facades so that tests can drive them from the outside
   globalThis.__pltExtensionItc = itc
+  globalThis.__pltExtensionSharedContext = sharedContext
 
   itc.handle('extension:context', () => {
     return {
@@ -11,6 +12,7 @@ export default async function setup ({ runtime, itc, logger, options, root }) {
       root,
       hasRuntime: typeof runtime.getApplicationsIds === 'function',
       hasLogger: typeof logger.info === 'function',
+      hasSharedContext: typeof sharedContext?.get === 'function' && typeof sharedContext?.update === 'function',
       applications: runtime.getApplicationsIds()
     }
   })

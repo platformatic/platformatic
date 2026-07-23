@@ -3938,6 +3938,7 @@ export class Runtime extends EventEmitter {
         const instance = await setup({
           runtime: this,
           itc: this.#createExtensionITC(),
+          sharedContext: this.#createExtensionSharedContext(),
           logger,
           options: options ?? {},
           root: this.#root
@@ -3966,6 +3967,19 @@ export class Runtime extends EventEmitter {
         await instance?.close?.()
       } catch (e) {
         this.logger.error({ err: ensureLoggableError(e) }, `Failed to close the extension "${path}".`)
+      }
+    }
+  }
+
+  #createExtensionSharedContext () {
+    return {
+      // Synchronous on the main thread. Return an isolated snapshot so an
+      // extension cannot mutate the store without going through update(),
+      // which broadcasts changes to workers.
+      get: () => structuredClone(this.getSharedContext()),
+      update: async (update, options = {}) => {
+        // Keep the positional update authoritative, matching the worker API.
+        await this.updateSharedContext({ ...options, context: update })
       }
     }
   }

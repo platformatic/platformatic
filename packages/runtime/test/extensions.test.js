@@ -9,6 +9,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 function cleanExtensionGlobals () {
   globalThis.__pltExtensionEvents = []
   globalThis.__pltExtensionItc = undefined
+  globalThis.__pltExtensionSharedContext = undefined
 }
 
 test('extensions receive the runtime, the ITC facade, the logger, the options and the root', async t => {
@@ -31,6 +32,7 @@ test('extensions receive the runtime, the ITC facade, the logger, the options an
   strictEqual(context.root, join(fixturesDir, 'extensions'))
   strictEqual(context.hasRuntime, true)
   strictEqual(context.hasLogger, true)
+  strictEqual(context.hasSharedContext, true)
   deepStrictEqual(context.applications, ['a'])
 })
 
@@ -219,6 +221,103 @@ test('extensions receive the profiles captured by the continuous profiler, also 
   strictEqual(eventAfterRestart.application, 'a')
 
   await app.stopApplicationProfiling(eventAfterRestart.id, { type: 'cpu' })
+})
+
+test('extensions can read and update the shared context, including newly started workers', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
+  const app = await createRuntime(configFile)
+  const entryUrl = await app.start()
+
+  t.after(() => {
+    return app.close()
+  })
+
+  const sharedContext = globalThis.__pltExtensionSharedContext
+  ok(sharedContext)
+
+  // Initial snapshot is empty
+  deepStrictEqual(sharedContext.get(), {})
+  deepStrictEqual(app.getSharedContext(), {})
+
+  // Merge update is visible to the runtime and existing workers
+  await sharedContext.update({ foo: 'bar' })
+  deepStrictEqual(sharedContext.get(), { foo: 'bar' })
+  deepStrictEqual(app.getSharedContext(), { foo: 'bar' })
+
+  {
+    const res = await request(entryUrl + '/shared-context')
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { foo: 'bar' })
+  }
+
+  // Second merge keeps previous keys
+  await sharedContext.update({ bar: 'baz' })
+  deepStrictEqual(sharedContext.get(), { foo: 'bar', bar: 'baz' })
+
+  {
+    const res = await request(app.getUrl() + '/shared-context')
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { foo: 'bar', bar: 'baz' })
+  }
+
+  // Overwrite replaces the snapshot. The positional update wins over a
+  // same-named untyped options property, as it does in the worker API.
+  await sharedContext.update({ only: true }, { context: { ignored: true }, overwrite: true })
+  deepStrictEqual(sharedContext.get(), { only: true })
+  deepStrictEqual(app.getSharedContext(), { only: true })
+
+  {
+    const res = await request(app.getUrl() + '/shared-context')
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { only: true })
+  }
+
+  // get() returns an isolated deep snapshot, so nested mutations do not
+  // silently change the main-thread context without a worker broadcast.
+  await sharedContext.update({ nested: { value: 1 } }, { overwrite: true })
+  const snapshot = sharedContext.get()
+  snapshot.nested.value = 2
+  deepStrictEqual(sharedContext.get(), { nested: { value: 1 } })
+  deepStrictEqual(app.getSharedContext(), { nested: { value: 1 } })
+
+  {
+    const res = await request(app.getUrl() + '/shared-context')
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { nested: { value: 1 } })
+  }
+
+  // Concurrent updates are applied in invocation order and reach workers.
+  await sharedContext.update({ order: 0 }, { overwrite: true })
+  await Promise.all([
+    sharedContext.update({ order: 1, first: true }),
+    sharedContext.update({ order: 2, second: true })
+  ])
+  deepStrictEqual(sharedContext.get(), { order: 2, first: true, second: true })
+
+  // Newly started (restarted) workers observe the latest snapshot
+  await app.restartApplication('a')
+
+  {
+    const res = await request(app.getUrl() + '/shared-context')
+    strictEqual(res.statusCode, 200)
+    deepStrictEqual(await res.body.json(), { order: 2, first: true, second: true })
+  }
+
+  // After stop, get/update still work on the main-thread snapshot
+  await app.stop()
+  deepStrictEqual(sharedContext.get(), { order: 2, first: true, second: true })
+  await sharedContext.update({ afterStop: true })
+  deepStrictEqual(sharedContext.get(), { order: 2, first: true, second: true, afterStop: true })
+  deepStrictEqual(app.getSharedContext(), { order: 2, first: true, second: true, afterStop: true })
+
+  // The facade retains the main-thread snapshot after close; with no workers,
+  // updates remain local and do not attempt an ITC broadcast.
+  await app.close()
+  await sharedContext.update({ afterClose: true })
+  deepStrictEqual(sharedContext.get(), { order: 2, first: true, second: true, afterStop: true, afterClose: true })
 })
 
 test('extensions cannot register reserved ITC commands', async t => {
