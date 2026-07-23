@@ -279,6 +279,8 @@ export interface PlatformaticNitroConfig {
       gracePeriod?: number | string;
       maxUnhealthyChecks?: number | string;
       maxELU?: number | string;
+      maxEventLoopDelay?: number | string;
+      maxEventLoopDelayP99?: number | string;
       maxHeapUsed?: number | string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
@@ -690,6 +692,10 @@ export interface PlatformaticNitroConfig {
       [k: string]: string;
     };
     envfile?: string;
+    /**
+     * When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to "warn", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false.
+     */
+    strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {
@@ -749,6 +755,8 @@ export interface PlatformaticNitroConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxEventLoopDelay?: number | string;
+        maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;

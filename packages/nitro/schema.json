@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/nitro/3.61.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/nitro/3.62.3.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Nitro Config",
   "type": "object",
@@ -628,6 +628,28 @@
                         "type": "number",
                         "minimum": 0,
                         "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxEventLoopDelay": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxEventLoopDelayP99": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
                       },
                       {
                         "type": "string"
@@ -1387,6 +1409,28 @@
                 }
               ],
               "default": 0.99
+            },
+            "maxEventLoopDelay": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "maxEventLoopDelayP99": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "maxHeapUsed": {
               "anyOf": [
@@ -2502,6 +2546,17 @@
         "envfile": {
           "type": "string"
         },
+        "strictEnv": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to \"warn\", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false."
+        },
         "sourceMaps": {
           "type": "boolean",
           "default": false
@@ -2726,6 +2781,28 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 1
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxEventLoopDelay": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxEventLoopDelayP99": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
                     },
                     {
                       "type": "string"
