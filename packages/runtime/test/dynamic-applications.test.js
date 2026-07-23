@@ -314,7 +314,9 @@ test('vertical autoscaler should work properly when adding and removing applicat
             id: 'application-2',
             path: './application-2',
             workers: {
-              dynamic: true
+              dynamic: true,
+              minimum: 2,
+              maximum: 3
             }
           },
           config.workers
@@ -325,6 +327,10 @@ test('vertical autoscaler should work properly when adding and removing applicat
 
     await addPromise
     await restartPromise
+
+    const workers = await runtime.getWorkers()
+    const applicationWorkers = Object.values(workers).filter(worker => worker.application === 'application-2')
+    deepStrictEqual(applicationWorkers.length, 2)
   }
 
   // Stress applications and wait for both of them to be upscaled
