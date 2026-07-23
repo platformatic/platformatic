@@ -383,10 +383,13 @@ export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {
   const baseEnv = ignoreProcessEnv ? {} : process.env
   const envFromFile = envFile ? parseEnv(await readFile(envFile, 'utf-8')) : {}
 
+  // The env file provides fallback defaults: variables already set in the real
+  // environment (and explicit programmatic values) take precedence over it,
+  // matching the dotenv/docker-compose/Vite convention.
   return {
+    ...envFromFile,
     ...baseEnv,
-    ...additionalEnv,
-    ...envFromFile
+    ...additionalEnv
   }
 }
 

@@ -637,6 +637,41 @@ test('loadEnv - should load environment variables from .env file', async t => {
   })
 })
 
+test('loadEnv - process.env should take precedence over .env file values', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const envFile = join(tmpDir, '.env')
+
+  process.env.PLT_PRECEDENCE_TEST = 'from-process'
+
+  t.after(async () => {
+    delete process.env.PLT_PRECEDENCE_TEST
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(envFile, 'PLT_PRECEDENCE_TEST=from-file\nPLT_FILE_ONLY_TEST=from-file')
+
+  const result = await loadEnv(tmpDir)
+  equal(result.PLT_PRECEDENCE_TEST, 'from-process')
+  equal(result.PLT_FILE_ONLY_TEST, 'from-file')
+})
+
+test('loadEnv - additionalEnv should take precedence over both process.env and the .env file', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const envFile = join(tmpDir, '.env')
+
+  process.env.PLT_PRECEDENCE_TEST = 'from-process'
+
+  t.after(async () => {
+    delete process.env.PLT_PRECEDENCE_TEST
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(envFile, 'PLT_PRECEDENCE_TEST=from-file')
+
+  const result = await loadEnv(tmpDir, false, { PLT_PRECEDENCE_TEST: 'from-additional' })
+  equal(result.PLT_PRECEDENCE_TEST, 'from-additional')
+})
+
 test('loadEnv - should return process.env when no .env file exists', async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
 
