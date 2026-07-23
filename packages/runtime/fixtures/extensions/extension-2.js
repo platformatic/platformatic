@@ -3,6 +3,12 @@ export default function setup () {
   events.push({ event: 'setup', extension: 'second' })
 
   return {
+    start () {
+      events.push({ event: 'start', extension: 'second' })
+    },
+    stop () {
+      events.push({ event: 'stop', extension: 'second' })
+    },
     close () {
       events.push({ event: 'close', extension: 'second' })
     }

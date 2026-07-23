@@ -155,6 +155,16 @@ export const FailedToLoadExtensionError = createError(
   'Failed to load the extension "%s": %s'
 )
 
+export const FailedToStartExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_START_EXTENSION`,
+  'Failed to start the extension "%s": %s'
+)
+
+export const FailedToStopExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_STOP_EXTENSION`,
+  'Failed to stop the extension "%s": %s'
+)
+
 export const InvalidExtensionError = createError(
   `${ERROR_PREFIX}_INVALID_EXTENSION`,
   'The extension "%s" must export a setup function as its default export'

@@ -11,7 +11,8 @@
     "extension-2.js"
   ],
   "autoload": {
-    "path": "./services"
+    "path": "./services",
+    "exclude": ["b", "crash-on-start"]
   },
   "server": {
     "hostname": "127.0.0.1",

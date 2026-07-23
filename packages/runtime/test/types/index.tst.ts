@@ -225,6 +225,8 @@ test('RuntimeExtension', () => {
     expect(runtime.updateSharedContext({ context: { fromExtension: true } })).type.toBe<Promise<object>>()
 
     return {
+      async start () {},
+      async stop () {},
       async close () {}
     }
   }
@@ -232,5 +234,7 @@ test('RuntimeExtension', () => {
   expect(extension).type.toBe<RuntimeExtension>()
 
   const instance: RuntimeExtensionInstance = {}
+  expect(instance.start).type.toBe<(() => void | Promise<void>) | undefined>()
+  expect(instance.stop).type.toBe<(() => void | Promise<void>) | undefined>()
   expect(instance.close).type.toBe<(() => void | Promise<void>) | undefined>()
 })

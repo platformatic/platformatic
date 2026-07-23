@@ -91,8 +91,16 @@ export default async function setup ({ runtime, itc, sharedContext, logger, opti
   jobs.set(0)
 
   return {
+    async start () {
+      // Invoked after applications are prepared, before they accept traffic.
+      // Can add/start dynamic applications; Runtime will not start them again.
+    },
+    async stop () {
+      // Invoked during shutdown after the entrypoint stops and before remaining
+      // applications stop. Useful for control-plane handoff.
+    },
     async close () {
-      // Invoked when the runtime is closed
+      // Invoked when the runtime is closed, after all applications have stopped.
     }
   }
 }
@@ -138,9 +146,28 @@ The setup function receives a context object with the following properties:
   `PLT_RUNTIME_METRIC_FAMILY_COLLISION`, identifying the extension and metric family. The registry is
   cleared when the extension closes (including partial startup failures).
 
-The setup function can optionally return an object with a `close` method, which is invoked when the
-runtime is being closed. When multiple extensions are configured, they are loaded in order and closed
-in reverse order. The extension metrics registry is cleared after `close`.
+The setup function can optionally return an object with awaited lifecycle hooks:
+
+- **`start()`** - Called once applications have been prepared and registered, and **before** the
+  originally configured applications start accepting traffic. Runtime awaits every extension `start`
+  hook. An extension may add and start dynamic applications here; those applications are excluded from
+  the normal startup pass so they are not started twice. Runtime does not report `started` until
+  extension and application startup complete. If a later extension or application fails, Runtime stops
+  and closes already-started extensions during cleanup.
+- **`stop()`** - Called during shutdown **after** the entrypoint has been stopped and **before** the
+  remaining applications stop. Runtime awaits every extension `stop` hook so control-plane extensions
+  can settle work and hand off state.
+- **`close()`** - Called when the runtime is being closed, after applications have stopped. The
+  extension metrics registry is cleared after `close`.
+
+When multiple extensions are configured, they are set up and started in registration order. `stop` and
+`close` run in reverse registration order. Each of `stop` and `close` is invoked at most once per
+Runtime life, including repeated `stop`/`close` calls and failed-start cleanup paths. Existing
+extensions that only return `close()` keep their previous behavior.
+
+Listening to Runtime `EventEmitter` events is not a substitute for these hooks: `emit()` does not await
+asynchronous listeners. Lifecycle ordering is enforced by Runtime itself so it covers signal handling,
+internal failure cleanup, and future lifecycle entry points.
 
 Extensions are not loaded when building the applications (for example via `wattpm build`).
 

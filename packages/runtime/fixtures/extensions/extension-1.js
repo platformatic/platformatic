@@ -21,6 +21,12 @@ export default async function setup ({ runtime, itc, logger, options, root, shar
   itc.handle('extension:sum', ({ x, y }) => x + y)
 
   return {
+    start () {
+      events.push({ event: 'start', extension: 'first' })
+    },
+    stop () {
+      events.push({ event: 'stop', extension: 'first' })
+    },
     close () {
       events.push({ event: 'close', extension: 'first' })
     }
