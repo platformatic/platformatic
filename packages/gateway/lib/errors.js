@@ -23,3 +23,8 @@ export const InvalidOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_INVALID_OPENAPI_SCHEMA`,
   'Failed to compose OpenAPI schemas: %s'
 )
+export const WsNoTcpUpstreamError = createError(
+  `${ERROR_PREFIX}_WS_NO_TCP_UPSTREAM`,
+  'Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Make the application listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".',
+  502
+)
