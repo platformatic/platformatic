@@ -39,7 +39,9 @@ import {
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
   CannotRemoveEntrypointError,
+  DuplicateExtensionHealthCheckError,
   DuplicateITCHandlerNameError,
+  ExtensionHealthRoutesUnavailableError,
   FailedToLoadExtensionError,
   FailedToStartExtensionError,
   FailedToStopExtensionError,
@@ -192,6 +194,9 @@ export class Runtime extends EventEmitter {
   #reservedITCHandlerNames
   #extensions
   #extensionsWantHealthMetrics
+  #extensionReadinessChecks
+  #extensionLivenessChecks
+  #extensionHealthRoutes
   #lastOverloadProfiles
   #restartingApplications
   #restartingWorkers
@@ -269,6 +274,9 @@ export class Runtime extends EventEmitter {
     this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
     this.#extensionsWantHealthMetrics = false
+    this.#extensionReadinessChecks = new Map()
+    this.#extensionLivenessChecks = new Map()
+    this.#extensionHealthRoutes = []
     this.#lastOverloadProfiles = new Map()
     this.#sharedContext = {}
 
@@ -300,12 +308,6 @@ export class Runtime extends EventEmitter {
       this.#metricsLabelName = 'applicationId'
     }
 
-    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
-    }
-
-    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
-
     // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
     // These metrics are the same across all workers and only need to be collected once
     // We need this for management API as it can request metrics even without explicit metrics config
@@ -314,7 +316,7 @@ export class Runtime extends EventEmitter {
       collectProcessMetrics(this.#processMetricsRegistry)
     }
 
-    // Create the logger
+    // Create the logger before extensions and health/metrics servers so that both can use it.
     const [logger, destination, context] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
@@ -335,8 +337,17 @@ export class Runtime extends EventEmitter {
     }
 
     // Load extensions before creating any worker so that custom ITC handlers
-    // registered by the extensions are available to all workers.
+    // registered by the extensions are available to all workers. Also load them
+    // before starting the health/metrics servers so extensions can register
+    // readiness/liveness checks and probe routes before Fastify starts listening.
     await this.#loadExtensions()
+
+    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    }
+
+    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
+    this.#assertExtensionHealthRoutesApplied()
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
@@ -1085,9 +1096,15 @@ export class Runtime extends EventEmitter {
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
+    // Allow extension health routes to be re-applied on the restarted servers.
+    for (const entry of this.#extensionHealthRoutes) {
+      entry.applied = false
+    }
+
     this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
 
     this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
+    this.#assertExtensionHealthRoutesApplied()
 
     await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
@@ -1394,7 +1411,7 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.healthChecksTimeout,
+      this.#getHealthChecksTimeout(),
       {}
     )
   }
@@ -1415,9 +1432,21 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.healthChecksTimeout,
+      this.#getHealthChecksTimeout(),
       {}
     )
+  }
+
+  getExtensionHealthRoutes () {
+    return this.#extensionHealthRoutes
+  }
+
+  async runExtensionReadinessChecks () {
+    return this.#runExtensionHealthChecks(this.#extensionReadinessChecks, 'readiness')
+  }
+
+  async runExtensionLivenessChecks () {
+    return this.#runExtensionHealthChecks(this.#extensionLivenessChecks, 'liveness')
   }
 
   async getMetrics (format = 'json') {
@@ -4050,6 +4079,7 @@ export class Runtime extends EventEmitter {
       }
 
       const logger = this.logger.child({ name: `extension:${basename(path)}` })
+      const health = this.#createExtensionHealth(path, logger)
 
       // One registry per extension so metric conflicts and cleanup are isolated.
       // Extension metrics are main-thread only: Runtime never invents a worker ID.
@@ -4064,12 +4094,15 @@ export class Runtime extends EventEmitter {
           logger,
           options: options ?? {},
           root: this.#root,
-          metrics
+          metrics,
+          health
         })
 
-        this.#extensions.push({ path, instance, registry, started: false, stopped: false, closed: false })
+        this.#extensions.push({ path, instance, registry, health, started: false, stopped: false, closed: false })
       } catch (e) {
         registry.clear()
+        // Drop any health contributions from a failed extension setup.
+        health.cleanup()
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
       }
     }
@@ -4156,6 +4189,9 @@ export class Runtime extends EventEmitter {
           { err: ensureLoggableError(e) },
           `Failed to close the extension "${extension.path}".`
         )
+      } finally {
+        // Always drop health contributions with the extension, even if close fails.
+        extension.health?.cleanup?.()
       }
 
       // Drop the extension registry after close so its metrics stop appearing in
@@ -4182,6 +4218,197 @@ export class Runtime extends EventEmitter {
         await this.updateSharedContext({ ...options, context: update })
       }
     }
+  }
+
+  #getHealthChecksTimeout () {
+    const metrics = this.#config.metrics
+    if (typeof metrics !== 'object' || metrics === null) {
+      return 5000
+    }
+
+    // Prefer the schema property; keep the historical misspelled key as a fallback.
+    return metrics.healthChecksTimeouts ?? metrics.healthChecksTimeout ?? 5000
+  }
+
+  #assertExtensionHealthRoutesApplied () {
+    const pending = this.#extensionHealthRoutes.filter(entry => entry.active && !entry.applied)
+    if (pending.length > 0) {
+      throw new ExtensionHealthRoutesUnavailableError()
+    }
+  }
+
+  async #runExtensionHealthChecks (checks, kind) {
+    if (checks.size === 0) {
+      return { status: true }
+    }
+
+    const timeout = this.#getHealthChecksTimeout()
+    let response
+
+    for (const [name, entry] of checks) {
+      const result = await this.#runExtensionHealthCheck(name, entry, kind, timeout)
+
+      if (typeof result === 'object' && result !== null) {
+        response = result
+      }
+
+      if (!this.#isExtensionHealthCheckSuccessful(result)) {
+        this.logger.error(
+          { extension: entry.extensionPath, check: name, kind },
+          `Extension ${kind} check "${name}" failed.`
+        )
+        return { status: false, response }
+      }
+    }
+
+    return { status: true, response }
+  }
+
+  async #runExtensionHealthCheck (name, entry, kind, timeout) {
+    try {
+      const result = await executeWithTimeout(
+        Promise.resolve().then(() => entry.check()),
+        timeout,
+        kTimeout
+      )
+
+      if (result === kTimeout) {
+        this.logger.error(
+          { extension: entry.extensionPath, check: name, kind, timeout },
+          `Extension ${kind} check "${name}" timed out.`
+        )
+        return false
+      }
+
+      if (typeof result === 'boolean') {
+        return result
+      }
+
+      if (typeof result === 'object' && result !== null && typeof result.status === 'boolean') {
+        return result
+      }
+
+      this.logger.error(
+        { extension: entry.extensionPath, check: name, kind, result },
+        `Extension ${kind} check "${name}" returned a malformed result.`
+      )
+      return false
+    } catch (err) {
+      this.logger.error(
+        { err: ensureLoggableError(err), extension: entry.extensionPath, check: name, kind },
+        `Extension ${kind} check "${name}" rejected.`
+      )
+      return false
+    }
+  }
+
+  #isExtensionHealthCheckSuccessful (result) {
+    if (typeof result === 'boolean') {
+      return result
+    }
+
+    if (typeof result === 'object' && result !== null) {
+      return !!result.status
+    }
+
+    return false
+  }
+
+  #createExtensionHealth (extensionPath, logger) {
+    const readinessNames = new Set()
+    const livenessNames = new Set()
+    const routeEntries = []
+
+    const registerCheck = (map, names, kind, name, check) => {
+      if (typeof name !== 'string' || name.length === 0) {
+        throw new InvalidArgumentError(`${kind} check name must be a non-empty string`)
+      }
+
+      if (typeof check !== 'function') {
+        throw new InvalidArgumentError(`${kind} check "${name}" must be a function`)
+      }
+
+      const existing = map.get(name)
+      if (existing) {
+        throw new DuplicateExtensionHealthCheckError(kind, name, existing.extensionPath)
+      }
+
+      const entry = { extensionPath, check }
+      map.set(name, entry)
+      names.add(name)
+
+      logger.debug({ check: name, kind }, `Registered extension ${kind} check "${name}"`)
+
+      return () => {
+        const current = map.get(name)
+        if (current === entry) {
+          map.delete(name)
+        }
+        names.delete(name)
+      }
+    }
+
+    const api = {
+      registerReadinessCheck: (name, check) => {
+        return registerCheck(this.#extensionReadinessChecks, readinessNames, 'readiness', name, check)
+      },
+      registerLivenessCheck: (name, check) => {
+        return registerCheck(this.#extensionLivenessChecks, livenessNames, 'liveness', name, check)
+      },
+      registerRoutes: plugin => {
+        if (typeof plugin !== 'function') {
+          throw new InvalidArgumentError('health route plugin must be a function')
+        }
+
+        const entry = {
+          extensionPath,
+          plugin,
+          active: true,
+          applied: false
+        }
+
+        this.#extensionHealthRoutes.push(entry)
+        routeEntries.push(entry)
+
+        logger.debug('Registered extension health routes plugin')
+
+        return () => {
+          entry.active = false
+          const index = this.#extensionHealthRoutes.indexOf(entry)
+          if (index !== -1) {
+            this.#extensionHealthRoutes.splice(index, 1)
+          }
+        }
+      },
+      cleanup: () => {
+        for (const name of readinessNames) {
+          const current = this.#extensionReadinessChecks.get(name)
+          if (current?.extensionPath === extensionPath) {
+            this.#extensionReadinessChecks.delete(name)
+          }
+        }
+        readinessNames.clear()
+
+        for (const name of livenessNames) {
+          const current = this.#extensionLivenessChecks.get(name)
+          if (current?.extensionPath === extensionPath) {
+            this.#extensionLivenessChecks.delete(name)
+          }
+        }
+        livenessNames.clear()
+
+        for (const entry of routeEntries) {
+          entry.active = false
+          const index = this.#extensionHealthRoutes.indexOf(entry)
+          if (index !== -1) {
+            this.#extensionHealthRoutes.splice(index, 1)
+          }
+        }
+        routeEntries.length = 0
+      }
+    }
+
+    return api
   }
 
   #createExtensionITC () {
