@@ -881,6 +881,9 @@ export const application = {
     useHttp: {
       type: 'boolean'
     },
+    websocket: {
+      type: 'boolean'
+    },
     reuseTcpPorts: {
       type: 'boolean',
       default: true
@@ -1619,6 +1622,7 @@ export const applicationsUnwrappablePropertiesList = [
   'gitBranch',
   'dependencies',
   'useHttp',
+  'websocket',
   'management'
 ]
 

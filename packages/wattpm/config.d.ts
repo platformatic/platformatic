@@ -43,6 +43,7 @@ export type PlatformaticRuntimeConfig = {
             };
         config?: string;
         useHttp?: boolean;
+        websocket?: boolean;
         reuseTcpPorts?: boolean;
         workers?:
           | number

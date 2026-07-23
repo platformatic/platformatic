@@ -195,6 +195,7 @@ runtime. Each application object supports the following settings:
   the application.
 - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`websocket`** (`boolean`) - The application will be started on a random HTTP port on `127.0.0.1` so that the gateway can proxy WebSocket connections to it, but, unlike `useHttp`, HTTP traffic between applications keeps using the in-memory mesh network when the capability supports in-thread dispatching (for example the service family); for the other capabilities it flows through the bound TCP port, as under `useHttp`. Set it to `true` when a non-entrypoint application behind the gateway needs to accept WebSocket connections. Default: `false`.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
