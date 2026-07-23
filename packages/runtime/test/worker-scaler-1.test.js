@@ -7,8 +7,9 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
+import { ScalingAlgorithm } from '../lib/scaling-algorithm.js'
 import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
-import { kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
+import { kApplicationId, kId, kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
 import { createRuntime, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -412,6 +413,64 @@ test('applies the minimum workers after a dynamically added application starts',
   await scaler.applyPendingUpdate('application')
 
   assert.deepStrictEqual(updates, [[{ application: 'application', workers: 3 }]])
+})
+
+test('removes application state from the scaler', async t => {
+  let healthCheck
+  const updates = []
+
+  t.mock.method(globalThis, 'setTimeout', callback => {
+    healthCheck = callback
+    return { refresh () {} }
+  })
+
+  const removeApplication = t.mock.method(ScalingAlgorithm.prototype, 'removeApplication')
+  const addWorkerHealthInfo = t.mock.method(ScalingAlgorithm.prototype, 'addWorkerHealthInfo')
+
+  const runtime = {
+    logger: {
+      error () {}
+    },
+    async updateApplicationsResources (applications) {
+      updates.push(applications)
+    },
+    async getWorkers () {
+      return {
+        worker: {
+          raw: {
+            [kApplicationId]: 'application',
+            [kId]: 'worker',
+            [kWorkerStartTime]: 0,
+            [kWorkerStatus]: 'started'
+          }
+        }
+      }
+    },
+    async getWorkerHealth () {
+      return {
+        currentELU: 1,
+        elu: 1,
+        heapUsed: 1,
+        heapTotal: 1
+      }
+    }
+  }
+  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1, gracePeriod: 0 })
+
+  await scaler.add({
+    id: 'application',
+    workers: { dynamic: true, minimum: 2, maximum: 3 }
+  })
+
+  scaler.remove('application')
+
+  await scaler.start()
+  t.after(() => scaler.stop())
+  await healthCheck()
+
+  assert.deepStrictEqual(updates, [])
+  assert.deepStrictEqual(removeApplication.mock.calls[0].arguments, ['application'])
+  assert.strictEqual(addWorkerHealthInfo.mock.calls.length, 0)
 })
 
 test('logs worker health errors and refreshes the health check timeout', async t => {
