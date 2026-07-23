@@ -1,4 +1,4 @@
-import { deepStrictEqual, fail, ifError, throws } from 'node:assert'
+import { deepStrictEqual, fail, ifError, rejects, throws } from 'node:assert'
 import { once } from 'node:events'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -31,6 +31,40 @@ test('should send a request between threads', async t => {
   const response = await itc1.send(requestName, testRequest)
   deepStrictEqual(response, testResponse)
   deepStrictEqual(requests, [testRequest])
+})
+
+test('should abort a pending request', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+  const handlerStarted = Promise.withResolvers()
+  const handlerRelease = Promise.withResolvers()
+
+  itc2.handle('test-command', async () => {
+    handlerStarted.resolve()
+    return handlerRelease.promise
+  })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  const abortController = new AbortController()
+  const abortReason = new Error('Request aborted')
+  const response = itc1.send('test-command', 'test-request', { signal: abortController.signal })
+
+  await handlerStarted.promise
+  abortController.abort(abortReason)
+
+  await rejects(response, error => {
+    deepStrictEqual(error, abortReason)
+    return true
+  })
+
+  handlerRelease.resolve('late-response')
 })
 
 test('should support close while replying to a message', async t => {
