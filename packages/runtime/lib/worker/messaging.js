@@ -114,14 +114,21 @@ export class MessagingITC extends ITC {
         context.meta = { ...options?.meta, ...telemetry?.meta }
       }
 
-      const send = () => executeWithTimeout(super.send(name, message, context), this.#timeout)
-      const response = telemetry ? await telemetry.run(send) : await send()
+      const abortController = new AbortController()
+      const timeout = setTimeout(() => abortController.abort(), this.#timeout).unref()
+      context.signal = abortController.signal
 
-      if (response === kTimeout) {
-        throw new MessagingError(application, 'Timeout while waiting for a response.')
+      try {
+        const send = () => super.send(name, message, context)
+        return telemetry ? await telemetry.run(send) : await send()
+      } catch (err) {
+        if (abortController.signal.aborted) {
+          throw new MessagingError(application, 'Timeout while waiting for a response.')
+        }
+        throw err
+      } finally {
+        clearTimeout(timeout)
       }
-
-      return response
     } catch (err) {
       error = err
       throw err
@@ -179,6 +186,12 @@ export class MessagingITC extends ITC {
     }
 
     channel.postMessage(sanitize(request, transferList), transferList)
+  }
+
+  _onRequestSettled (reqId, context) {
+    if (context.trackResponse) {
+      context.channel[kPendingResponses].delete(reqId)
+    }
   }
 
   _createClosePromise () {

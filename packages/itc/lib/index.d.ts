@@ -11,6 +11,10 @@ export interface ITCConstructorOptions {
   throwOnMissingHandler?: boolean
 }
 
+export interface ITCSendOptions extends Record<string, any> {
+  signal?: AbortSignal
+}
+
 export interface OutgoingMessagingSpanOptions {
   telemetryContext?: Context
   telemetryMetadata?: Record<string, string>
@@ -30,7 +34,7 @@ export interface OutgoingMessagingSpan {
 export class ITC extends EventEmitter {
   constructor (options: ITCConstructorOptions)
 
-  send (name: string, message: any, options?: Record<string, any>): Promise<any>
+  send (name: string, message: any, options?: ITCSendOptions): Promise<any>
   notify (name: string, message: any, options?: Record<string, any>): void
   process (name: string, message: any, context?: Record<string, any>): Promise<any>
   handle (message: string, handler: Handler): void
