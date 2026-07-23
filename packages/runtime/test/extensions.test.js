@@ -33,6 +33,7 @@ test('extensions receive the runtime, the ITC facade, the logger, the options an
   strictEqual(context.hasRuntime, true)
   strictEqual(context.hasLogger, true)
   strictEqual(context.hasSharedContext, true)
+  strictEqual(context.hasMetrics, true)
   deepStrictEqual(context.applications, ['a'])
 })
 

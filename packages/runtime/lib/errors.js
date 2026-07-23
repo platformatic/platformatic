@@ -170,6 +170,11 @@ export const DuplicateITCHandlerNameError = createError(
   'The ITC command "%s" has already been registered'
 )
 
+export const MetricFamilyCollisionError = createError(
+  `${ERROR_PREFIX}_METRIC_FAMILY_COLLISION`,
+  'Extension "%s" registered metric family "%s" which collides with %s'
+)
+
 export const FailedToSendHealthSignalsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_SEND_HEALTH_SIGNALS`,
   'Cannot send health signals from application "%s": %s'
