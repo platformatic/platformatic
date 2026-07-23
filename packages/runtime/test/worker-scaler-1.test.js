@@ -7,6 +7,8 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
+import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
+import { kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
 import { createRuntime, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -386,6 +388,52 @@ test('should apply application scaleUpELU and scaleDownELU', async t => {
 
   assert.strictEqual(service1Workers.length, 1)
   assert.strictEqual(service2Workers.length, 2)
+})
+
+test('logs worker health errors and refreshes the health check timeout', async t => {
+  const error = new Error('health check failed')
+  const errors = []
+  let healthCheck
+  let refreshes = 0
+
+  t.mock.method(globalThis, 'setTimeout', callback => {
+    healthCheck = callback
+    return {
+      refresh () {
+        refreshes++
+      }
+    }
+  })
+
+  const runtime = {
+    logger: {
+      error (details, message) {
+        errors.push({ details, message })
+      }
+    },
+    async getWorkers () {
+      return {
+        worker: {
+          raw: {
+            [kWorkerStartTime]: 0,
+            [kWorkerStatus]: 'started'
+          }
+        }
+      }
+    },
+    async getWorkerHealth () {
+      throw error
+    }
+  }
+  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1, gracePeriod: 0 })
+
+  await scaler.start()
+  t.after(() => scaler.stop())
+
+  await healthCheck()
+
+  assert.deepStrictEqual(errors, [{ details: { err: error }, message: 'Failed to get health for worker' }])
+  assert.strictEqual(refreshes, 1)
 })
 
 test('should apply application scaleUpELU and scaleDownELU (vertical scaler))', async t => {

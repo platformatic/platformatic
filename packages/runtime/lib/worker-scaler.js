@@ -175,7 +175,7 @@ export class DynamicWorkersScaler {
           shouldCheckForScaling = true
         }
       } catch (err) {
-        this.logger.error({ err }, 'Failed to get health for worker')
+        this.#runtime.logger.error({ err }, 'Failed to get health for worker')
       }
     }
 
