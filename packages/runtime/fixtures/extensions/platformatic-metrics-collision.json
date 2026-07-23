@@ -6,7 +6,8 @@
     "extension-metrics-collision.js"
   ],
   "autoload": {
-    "path": "./services"
+    "path": "./services",
+    "exclude": ["crash-on-start"]
   },
   "server": {
     "hostname": "127.0.0.1",
