@@ -2262,6 +2262,7 @@ export class Runtime extends EventEmitter {
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config: workerConfig,
+        build: this.#context.build,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,

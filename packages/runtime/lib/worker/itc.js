@@ -1,3 +1,4 @@
+import { installWorkerExtensions } from '@platformatic/basic'
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
 import { ITC, initializeITCTelemetry } from '@platformatic/itc'
@@ -159,6 +160,11 @@ export async function setupITC (controller, application, dispatcher, sharedConte
   const logger = getLogger()
   const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 
+  // Worker extensions for an in-thread entrypoint. Installed and closed here so
+  // they can run after the capability has started (to tell an in-thread server
+  // from a child process) and before it listens.
+  let workerExtensions
+
   updateGlobals({
     messaging: {
       handle: messaging.handle.bind(messaging),
@@ -201,6 +207,25 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
 
         if (application.entrypoint) {
+          // Install before listening, but only when the entrypoint serves in
+          // this thread. A child-process capability installs in its own
+          // bootstrap, where its server runs; installing here too would run
+          // every extension's setup a second time.
+          if (!workerData.build && !controller.capability.childManager) {
+            const capabilityConfig = controller.capability.config ?? {}
+            workerExtensions = await installWorkerExtensions({
+              applicationId: controller.applicationConfig.id,
+              entrypoint: true,
+              config: capabilityConfig,
+              // Available only for an in-thread entrypoint; a child-process
+              // capability runs elsewhere, so its extensions do not get it.
+              capability: controller.capability,
+              root: workerData.applicationConfig?.path,
+              logger,
+              workerExtensions: capabilityConfig.application?.workerExtensions
+            })
+          }
+
           await controller.listen()
         }
 
@@ -221,6 +246,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
             const events = getEvents()
             events.emit('stop')
 
+            await workerExtensions?.close()
             await controller.stop(force, dependents)
           }
         } finally {
