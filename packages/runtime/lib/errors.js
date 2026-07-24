@@ -13,7 +13,7 @@ export const ERROR_PREFIX = 'PLT_RUNTIME'
 
 export const AddressInUseError = createError(
   `${ERROR_PREFIX}_EADDR_IN_USE`,
-  'The current port is in use by another application'
+  'Port %d is already in use by applications "%s" and "%s"'
 )
 export const RuntimeExitedError = createError(
   `${ERROR_PREFIX}_RUNTIME_EXIT`,
@@ -98,14 +98,6 @@ export const NoConfigFileFoundError = createError(
   `${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`,
   "No config file found for application '%s'"
 )
-export const InvalidEntrypointError = createError(
-  `${ERROR_PREFIX}_INVALID_ENTRYPOINT`,
-  "Invalid entrypoint: '%s' does not exist"
-)
-export const MissingEntrypointError = createError(
-  `${ERROR_PREFIX}_MISSING_ENTRYPOINT`,
-  'Missing application entrypoint.'
-)
 export const MissingDependencyError = createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"')
 export const InspectAndInspectBrkError = createError(
   `${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`,
@@ -181,10 +173,6 @@ export const HealthSignalMustBeObjectError = createError(
 export const HealthSignalTypeMustBeStringError = createError(
   `${ERROR_PREFIX}_HEALTH_SIGNAL_TYPE_MUST_BE_STRING`,
   'Health signal type must be a string, received "%s"'
-)
-export const CannotRemoveEntrypointError = createError(
-  `${ERROR_PREFIX}_CANNOT_REMOVE_ENTRYPOINT`,
-  'Cannot remove the entrypoint application.'
 )
 export const WorkerInterceptorNotReadyError = createError(
   `${ERROR_PREFIX}_WORKER_INTERCEPTOR_NOT_READY`,

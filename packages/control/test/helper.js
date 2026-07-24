@@ -45,7 +45,7 @@ export async function startRuntime (configPath, env = {}, additionalArgs = []) {
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
-        const url = message.url ?? message.msg.match(/listening at (.+)/i)?.[1]
+        const url = message.msg.match(/listening at (\S+) for worker/i)?.[1]
 
         if (url !== undefined) {
           clearTimeout(errorTimeout)

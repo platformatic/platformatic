@@ -81,13 +81,13 @@ If you do not set `storage`, Platformatic uses in-memory queue storage by defaul
 
 ### Exposing Image Optimizer through Gateway (`proxy.routes`)
 
-A common production setup is to keep Gateway as runtime entrypoint and route only `/_next/image` traffic to the optimizer service.
+A common production setup is to expose Gateway publicly and route only `/_next/image` traffic to the optimizer service.
 
 `services/gateway/platformatic.json`:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {

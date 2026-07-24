@@ -31,7 +31,7 @@ test('should handle application mesh timeouts', async t => {
     await app.close()
   })
 
-  const url = await app.start()
+  const { 'service-1:0': url } = await app.start()
   const response = await fetch(url + '/')
 
   deepStrictEqual(response.status, 500)

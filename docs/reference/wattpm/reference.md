@@ -163,14 +163,13 @@ Arguments:
 
 Injects a request to a running application.
 
-The command sends a request to the runtime application and prints the
-response to the standard output. If the application is not specified and the runtime has an
-entrypoint, the request is sent to the runtime entrypoint.
+The command sends a request to the runtime application and prints the response to the standard output.
+The application can be omitted only when the runtime has a single application.
 
 Arguments:
 
 - `id`: The process ID or the name of the application (it can be omitted only if there is a single application running)
-- `application`: The application name (the default is the entrypoint, when one exists)
+- `application`: The application name (optional when the runtime has a single application)
 
 Options:
 

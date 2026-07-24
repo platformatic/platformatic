@@ -15,7 +15,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 test('should cache http requests', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -65,7 +65,7 @@ test('should cache http requests', async t => {
 test('should get response cached by another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -144,7 +144,7 @@ test('should use a custom cache storage', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -181,7 +181,7 @@ test('should use a custom cache storage', async t => {
 test('should remove a url from an http cache', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -245,7 +245,7 @@ test('should remove a url from an http cache', async t => {
 test('should invalidate cache from another application', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -327,7 +327,7 @@ test('should invalidate cache by cache tags', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -425,7 +425,7 @@ test('should set an opentelemetry attribute', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -449,8 +449,8 @@ test('should set an opentelemetry attribute', async t => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    strictEqual(serverTraces.length, 4)
-    strictEqual(clientTraces.length, 3)
+    strictEqual(serverTraces.length, 3)
+    strictEqual(clientTraces.length, 2)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
@@ -519,7 +519,7 @@ test('should set an opentelemetry attribute', async t => {
 test('should cache http requests gzipped', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -585,7 +585,7 @@ test('should accept origins configuration with string values', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -622,7 +622,7 @@ test('should cache requests to origins matching regex pattern', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -673,7 +673,7 @@ test('should use cacheByDefault for responses without explicit expiration', asyn
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -704,7 +704,7 @@ test('should not cache responses without explicit expiration when cacheByDefault
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -735,7 +735,7 @@ test('should respect cache type configuration with private cache', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 

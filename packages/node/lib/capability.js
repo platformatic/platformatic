@@ -10,9 +10,7 @@ import {
   injectViaRequest
 } from '@platformatic/basic'
 import { getEvents } from '@platformatic/globals'
-import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
-import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
@@ -117,22 +115,8 @@ export class NodeCapability extends BaseCapability {
     super('nodejs', version, root, config, context)
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
-    if (this.#app) {
-      // Listen if entrypoint
-      if (this.#hasServer() && listen) {
-        await this._listen()
-      }
-
-      return this.url
-    }
+  async _start () {
+    await super._start()
 
     const config = this.config
 
@@ -221,7 +205,7 @@ export class NodeCapability extends BaseCapability {
           this.#dispatcher = this.#server.listeners('request')[0]
         }
 
-        if (listen) {
+        if (this.applicationConfig.exposed !== false) {
           await this._listen()
         }
       }
@@ -272,8 +256,8 @@ export class NodeCapability extends BaseCapability {
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     // Emit the close event so that an application can handle it
     const events = getEvents()
@@ -283,10 +267,6 @@ export class NodeCapability extends BaseCapability {
       this.logger.warn(
         `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
       )
-    }
-
-    if (this.status === 'starting') {
-      await Unpromise.race([once(this, 'started'), once(this, 'start:error')])
     }
 
     if (this.childManager) {
@@ -410,12 +390,6 @@ export class NodeCapability extends BaseCapability {
   }
 
   async _listen () {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 

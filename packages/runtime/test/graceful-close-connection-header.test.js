@@ -11,7 +11,11 @@ test('should add Connection: close header during graceful shutdown', async t => 
   const configFile = join(fixturesDir, 'graceful-close-header', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { 'service:0': url } = await app.start()
 
   // Normal request should NOT have Connection: close
   {
@@ -45,7 +49,11 @@ test('should respect gracefulShutdown.closeConnections config when disabled', as
   const configFile = join(fixturesDir, 'graceful-close-header-disabled', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { 'service:0': url } = await app.start()
 
   // Start shutdown (don't await)
   const closePromise = app.close()
@@ -71,7 +79,11 @@ test('should work with NodeCapability raw HTTP server', async t => {
   const configFile = join(fixturesDir, 'graceful-close-header-node', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { 'node-service:0': url } = await app.start()
 
   // Normal request should NOT have Connection: close
   {

@@ -36,10 +36,14 @@ async function waitForMessages (child, last) {
   return matches
 }
 
-test('restart in case of a crash with a delay in development', async () => {
+test('restart in case of a crash with a delay in development', async t => {
   process.env.PORT = await getPort()
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGINT')
+    await child.catch(() => {})
+  })
 
   {
     const res = await request(url + '/crash', {
@@ -57,19 +61,18 @@ test('restart in case of a crash with a delay in development', async () => {
   assert.ok(!matches.unavailable)
   assert.ok(matches.listening)
 
-  {
-    const res = await request(url + '/')
-    assert.strictEqual(res.statusCode, 200)
-  }
-
-  child.kill('SIGINT')
-  await child.catch(() => {})
+  const res = await request(url + '/')
+  assert.strictEqual(res.statusCode, 200)
 })
 
-test('restart in case of a crash without any delay in production', async () => {
+test('restart in case of a crash without any delay in production', async t => {
   process.env.PORT = await getPort()
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
   const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGINT')
+    await child.catch(() => {})
+  })
 
   {
     const res = await request(url + '/crash', {
@@ -87,16 +90,11 @@ test('restart in case of a crash without any delay in production', async () => {
   assert.ok(!matches.unavailable)
   assert.ok(matches.listening)
 
-  {
-    const res = await request(url + '/')
-    assert.strictEqual(res.statusCode, 200)
-  }
-
-  child.kill('SIGINT')
-  await child.catch(() => {})
+  const res = await request(url + '/')
+  assert.strictEqual(res.statusCode, 200)
 })
 
-test("do not restart in case of a crash in case it's so specified in development", async () => {
+test("do not restart in case of a crash in case it's so specified in development", async t => {
   process.env.PORT = await getPort()
   const config = join(
     import.meta.dirname,
@@ -107,6 +105,10 @@ test("do not restart in case of a crash in case it's so specified in development
     'platformatic.runtime.json'
   )
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGINT')
+    await child.catch(() => {})
+  })
 
   {
     const res = await request(url + '/crash', {
@@ -123,12 +125,9 @@ test("do not restart in case of a crash in case it's so specified in development
   assert.ok(!matches.restartImmediate)
   assert.ok(matches.unavailable)
   assert.ok(!matches.listening)
-
-  child.kill('SIGINT')
-  await child.catch(() => {})
 })
 
-test('should restart in production even if restartOnError is false', async () => {
+test('should restart in production even if restartOnError is false', async t => {
   process.env.PORT = await getPort()
   const config = join(
     import.meta.dirname,
@@ -139,6 +138,10 @@ test('should restart in production even if restartOnError is false', async () =>
     'platformatic.runtime.json'
   )
   const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGINT')
+    await child.catch(() => {})
+  })
 
   {
     const res = await request(url + '/crash', {
@@ -156,11 +159,6 @@ test('should restart in production even if restartOnError is false', async () =>
   assert.ok(!matches.unavailable)
   assert.ok(matches.listening)
 
-  {
-    const res = await request(url + '/')
-    assert.strictEqual(res.statusCode, 200)
-  }
-
-  child.kill('SIGINT')
-  await child.catch(() => {})
+  const res = await request(url + '/')
+  assert.strictEqual(res.statusCode, 200)
 })

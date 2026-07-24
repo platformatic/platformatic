@@ -396,7 +396,7 @@ export const server = {
     portAssignment: {
       type: 'string',
       enum: ['shared', 'perWorkerIncrement'],
-      description: 'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
+      description: 'Configures how server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker uses its own port, starting from port (worker 0).'
     },
     backlog: {
       type: 'integer',
@@ -507,6 +507,7 @@ export const fastifyServer = {
       type: 'string'
     },
     port: server.properties.port,
+    backlog: server.properties.backlog,
     pluginTimeout: {
       type: 'integer'
     },
@@ -878,8 +879,13 @@ export const application = {
       type: 'string',
       default: 'main'
     },
-    useHttp: {
-      type: 'boolean'
+    exposed: {
+      type: 'boolean',
+      default: true
+    },
+    portEnv: {
+      type: 'string',
+      default: 'PORT'
     },
     reuseTcpPorts: {
       type: 'boolean',
@@ -1042,9 +1048,6 @@ export const runtimeProperties = {
   },
   preload,
   extensions,
-  entrypoint: {
-    type: 'string'
-  },
   basePath: {
     type: 'string'
   },
@@ -1090,7 +1093,6 @@ export const runtimeProperties = {
     default: 0
   },
   logger,
-  server,
   reuseTcpPorts: {
     type: 'boolean',
     default: true
@@ -1602,6 +1604,7 @@ export const runtimeProperties = {
 export const runtimeUnwrappablePropertiesList = [
   '$schema',
   'entrypoint',
+  'server',
   'applications',
   'application',
   'autoload',
@@ -1618,7 +1621,6 @@ export const applicationsUnwrappablePropertiesList = [
   'url',
   'gitBranch',
   'dependencies',
-  'useHttp',
   'management'
 ]
 

@@ -129,7 +129,6 @@ Using existing configuration ...
 ? What is the name of the application? gateway
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
-? Which application should be exposed? gateway
 ```
 
 Start your Watt server again:
@@ -161,7 +160,7 @@ Here is the equivalent of the default configuration when exposing a Node.js appl
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -219,7 +218,7 @@ Then, we need to tell Watt to expose our `next` server on `/next` by modifying `
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
   "application": {
     "basePath": "/next"
   }

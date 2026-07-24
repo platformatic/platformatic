@@ -3,7 +3,7 @@ import type { AsyncLocalStorage } from 'node:async_hooks'
 import type Pino from 'pino'
 import { expect, test } from 'tstyche'
 import * as globals from '../../lib/index.js'
-import { type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
+import { type Management, type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
 
 test("PlatformaticGlobal", () => {
   const platformatic = {} as PlatformaticGlobal
@@ -28,7 +28,6 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.applicationId).type.toBe<string>()
   expect(platformatic.workerId).type.toBe<number | string>()
   expect(platformatic.root).type.toBe<string>()
-  expect(platformatic.isEntrypoint).type.toBe<boolean>()
   expect(platformatic.basePath).type.toBe<string | null>()
   expect(platformatic.runtimeBasePath).type.toBe<string | null>()
   expect(platformatic.wantsAbsoluteUrls).type.toBe<boolean>()
@@ -69,7 +68,6 @@ test("getters", () => {
   expect(globals.getApplicationId()).type.toBe<PlatformaticGlobal['applicationId']>()
   expect(globals.getWorkerId()).type.toBe<PlatformaticGlobal['workerId']>()
   expect(globals.getRoot()).type.toBe<PlatformaticGlobal['root']>()
-  expect(globals.isEntrypoint()).type.toBe<PlatformaticGlobal['isEntrypoint']>()
   expect(globals.getBasePath()).type.toBe<PlatformaticGlobal['basePath']>()
   expect(globals.getRuntimeBasePath()).type.toBe<PlatformaticGlobal['runtimeBasePath']>()
   expect(globals.getWantsAbsoluteUrls()).type.toBe<PlatformaticGlobal['wantsAbsoluteUrls']>()
@@ -107,7 +105,7 @@ test("getters", () => {
   expect(globals.getCapability()).type.toBe<PlatformaticGlobal['capability']>()
   expect(globals.getClosing()).type.toBe<PlatformaticGlobal['closing']>()
   expect(globals.getSharedContext()).type.toBe<PlatformaticGlobal['sharedContext']>()
-  expect(globals.getManagement()).type.toBe<PlatformaticGlobal['management']>()
+  expect(globals.getManagement()).type.toBe<Management>()
   expect(globals.getSendHealthSignal()).type.toBe<PlatformaticGlobal['sendHealthSignal']>()
   expect(globals.getTelemetryReady()).type.toBe<PlatformaticGlobal['telemetryReady']>()
   expect(globals.getTracerProvider()).type.toBe<PlatformaticGlobal['tracerProvider']>()

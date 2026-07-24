@@ -72,17 +72,27 @@ export class NextImageOptimizerCapability extends BaseCapability {
     this.#queue = await this.#createQueue(imageOptimizerConfig)
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
+  async _start () {
     const config = this.config
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
-    await super._start({ listen })
+    await super._start()
 
-    if (this.#app && listen) {
+    const { ImageOptimizerCache } = await importFile(resolvePath(this.#next, './dist/server/image-optimizer.js'))
+    this.#validateParams = ImageOptimizerCache.validateParams.bind(ImageOptimizerCache)
+
+    try {
+      const { default: loadConfigAPI } = await importFile(resolvePath(this.#next, './dist/server/config.js'))
+      this.#nextConfig = await loadConfigAPI.default('production', this.root)
+    } catch (error) {
+      this.logger.error({ err: ensureLoggableError(error) }, 'Error loading Next.js configuration.')
+      throw new Error('Failed to load Next.js configuration.', { cause: error })
+    }
+
+    this.#app = createServer(this.#handleRequest.bind(this))
+    this.#dispatcher = this.#app.listeners('request')[0]
+    await this.#queue.start()
+
+    if (this.applicationConfig.exposed !== false) {
       const serverOptions = this.serverConfig
       const listenOptions = buildListenOptions(serverOptions)
 
@@ -100,28 +110,11 @@ export class NextImageOptimizerCapability extends BaseCapability {
       })
 
       this.url = getServerUrl(this.#server)
-
-      return this.url
     }
-
-    const { ImageOptimizerCache } = await importFile(resolvePath(this.#next, './dist/server/image-optimizer.js'))
-    this.#validateParams = ImageOptimizerCache.validateParams.bind(ImageOptimizerCache)
-
-    try {
-      const { default: loadConfigAPI } = await importFile(resolvePath(this.#next, './dist/server/config.js'))
-      this.#nextConfig = await loadConfigAPI.default('production', this.root)
-    } catch (error) {
-      this.logger.error({ err: ensureLoggableError(error) }, 'Error loading Next.js configuration.')
-      throw new Error('Failed to load Next.js configuration.', { cause: error })
-    }
-
-    this.#app = createServer(this.#handleRequest.bind(this))
-    this.#dispatcher = this.#app.listeners('request')[0]
-    await this.#queue.start()
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
     await this.#queue?.stop()
 
     const events = getEvents()

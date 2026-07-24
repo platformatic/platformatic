@@ -36,11 +36,11 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Architecture
 
-When starting NestJS in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
+Runtime-managed NestJS capabilities are exposed by default. Set `applications[].exposed` to `false` to keep the capability ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured. An application that uses the `commands` property is responsible for starting its own server.
 
 ## HTTPS
 
-When a NestJS application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this NestJS capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 ```json
 {
@@ -52,10 +52,6 @@ When a NestJS application is the Watt entrypoint, configure HTTPS in the runtime
   }
 }
 ```
-
-In production mode, Platformatic passes the HTTPS options to the configured NestJS adapter. Both the Fastify and Express adapters are supported.
-
-In development mode, Platformatic runs the Nest CLI. If the application uses the CLI or `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ## Configuration
 

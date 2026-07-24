@@ -1,20 +1,13 @@
 import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
+import { writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { wrapInRuntimeConfig } from '../index.js'
+import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
 import { parseInspectorOptions } from '../lib/config.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, createTemporaryDirectory } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
-
-test('throws if no entrypoint is found', async t => {
-  const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
-
-  await rejects(async () => {
-    await createRuntime(configFile)
-  }, /Invalid entrypoint: 'invalid' does not exist/)
-})
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   throws(() => {
@@ -118,6 +111,53 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   strictEqual(cm.inspectorOptions.port, 65535)
 })
 
+test('rejects root server configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], server: { port: 3042 } })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
+test('rejects root entrypoint configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], entrypoint: 'main' })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
+test('does not use application useHttp configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.', useHttp: true }] })
+  )
+
+  const config = await loadConfiguration(configFile)
+  strictEqual(config.applications[0].exposed, true)
+})
+
+test('defaults application exposed to true', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
+
+  const config = await loadConfiguration(configFile)
+  strictEqual(config.applications[0].exposed, true)
+})
+
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
@@ -195,19 +235,13 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
-test('wrapInRuntimeConfig does not synthesize a server hostname when none is configured', async t => {
+test('wrapInRuntimeConfig does not copy server configuration to the runtime', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
   const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  // Simulate a project where neither the top-level nor the runtime config
-  // declare a server section. The wrapped runtime must not end up with a
-  // hardcoded hostname.
-  delete config.server
-  delete config.runtime.server
-
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  strictEqual(runtimeConfig.server?.hostname, undefined)
+  strictEqual(runtimeConfig.server, undefined)
 })
 
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
@@ -219,20 +253,19 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   ok(typeof runtimeConfig.web, 'undefined')
   ok(typeof runtimeConfig.autoload, 'undefined')
   ok(runtimeConfig.watch === false)
-  // When the user only sets server.port (no hostname), we must not silently
-  // inject a hostname — the underlying framework's default should apply.
-  deepStrictEqual(runtimeConfig.server, { port: 1234 })
+  strictEqual(runtimeConfig.server, undefined)
   deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
       enabled: true,
-      entrypoint: true,
+      exposed: true,
       gitBranch: 'main',
       health: {},
       id: 'main',
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
+      portEnv: 'PORT',
       reuseTcpPorts: true,
       type: '@platformatic/db',
       watch: false,
@@ -245,12 +278,13 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     {
       dependencies: [],
       enabled: true,
-      entrypoint: false,
+      exposed: true,
       gitBranch: 'main',
       health: {},
       id: 'another',
       localUrl: 'http://another.plt.local',
       path: resolve(dirname(configFile), 'another'),
+      portEnv: 'PORT',
       reuseTcpPorts: true,
       type: 'unknown',
       watch: false,
@@ -421,7 +455,6 @@ test('prepareApplication should not perform slow glob for services with url but 
       path: null,
       module: '@platformatic/runtime'
     },
-    entrypoint: 'service-with-url',
     watch: false
   }
 
@@ -446,7 +479,6 @@ test('prepareApplication should not perform slow glob for services with url but 
   strictEqual(result.type, 'unknown', 'Application type should be "unknown" when path is missing')
 
   // Verify other expected properties are set
-  strictEqual(result.entrypoint, true, 'Should be marked as entrypoint')
   deepStrictEqual(result.dependencies, [], 'Dependencies should default to empty array')
   strictEqual(result.localUrl, 'http://service-with-url.plt.local', 'localUrl should be set')
   strictEqual(result.watch, false, 'watch should inherit from config')
@@ -488,7 +520,6 @@ test('prepareApplication should handle multiple services with url but no path ef
       path: null,
       module: '@platformatic/runtime'
     },
-    entrypoint: 'service-1',
     watch: false
   }
 

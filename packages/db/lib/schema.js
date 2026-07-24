@@ -3,6 +3,7 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
   fastifyServer as server,
+  server as genericServer,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
@@ -473,6 +474,7 @@ export const schema = {
       ...server,
       properties: {
         ...server.properties,
+        portAssignment: genericServer.properties.portAssignment,
         pluginTimeout: {
           ...server.properties.pluginTimeout,
           default: 60 * 1000

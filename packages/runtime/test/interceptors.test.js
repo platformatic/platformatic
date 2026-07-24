@@ -21,7 +21,7 @@ test('interceptors as undici options', async t => {
 
   const configFile = join(fixturesDir, 'interceptors', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await Promise.all([idpServer.close(), externalServer.close(), app.close()])
@@ -48,7 +48,7 @@ test('composable interceptors', async t => {
 
   const configFile = join(fixturesDir, 'interceptors-2', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await Promise.all([idpServer.close(), externalServer.close(), app.close()])
@@ -65,7 +65,7 @@ test('composable interceptors', async t => {
 test('mesh network works from external processes via ChildManager', async t => {
   const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'composer:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -104,7 +104,7 @@ test('mesh network works from external processes via ChildManager', async t => {
 test('use client interceptors for internal requests', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -121,7 +121,7 @@ test('use client interceptors for internal requests', async t => {
 test('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 

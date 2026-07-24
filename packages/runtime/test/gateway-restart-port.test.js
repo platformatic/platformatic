@@ -8,7 +8,7 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('gateway entrypoint should keep the same port after restart triggered by addApplications', async t => {
+test('gateway should keep the same port after restart triggered by addApplications', async t => {
   const configFile = join(fixturesDir, 'gateway-restart-port')
   const runtime = await createRuntime(configFile, null)
 
@@ -16,7 +16,7 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'gateway:0': url } = await runtime.start()
   const originalUrl = new URL(url)
   const originalPort = originalUrl.port
 
@@ -51,7 +51,7 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
   await restartPromise
 
   // The gateway should have restarted on the SAME port
-  const newUrl = runtime.getUrl()
+  const { url: newUrl } = await runtime.getApplicationDetails('gateway')
   const newParsed = new URL(newUrl)
 
   strictEqual(
@@ -80,7 +80,7 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
   }
 })
 
-test('gateway entrypoint should not exit prematurely when restartApplication is called during startup', async t => {
+test('gateway should not exit prematurely when restartApplication is called during startup', async t => {
   const configFile = join(fixturesDir, 'gateway-restart-port')
   const runtime = await createRuntime(configFile, null)
 
@@ -113,8 +113,7 @@ test('gateway entrypoint should not exit prematurely when restartApplication is 
     }
   })
 
-  const url = await runtime.start()
-  ok(url, 'runtime should start successfully')
+  await runtime.start()
 
   // Give time for any concurrent restart to settle
   await new Promise(resolve => setTimeout(resolve, 3000))
@@ -126,7 +125,7 @@ test('gateway entrypoint should not exit prematurely when restartApplication is 
   )
 
   // The runtime should be functional - gateway routes should work
-  const currentUrl = runtime.getUrl()
+  const { url: currentUrl } = await runtime.getApplicationDetails('gateway')
   ok(currentUrl, 'runtime should have a valid URL')
 
   {

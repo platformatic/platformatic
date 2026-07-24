@@ -22,7 +22,6 @@ import {
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
-  isEntrypoint,
   updateGlobals
 } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
@@ -597,7 +596,6 @@ export class ChildProcess extends ITC {
 
         let port = getPort()
         const host = getHost()
-        const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
         const additionalOptions = getAdditionalServerOptions()
 
         if (typeof port !== 'number' && port !== false) {
@@ -606,8 +604,7 @@ export class ChildProcess extends ITC {
 
         // Check if we need to override the port only if a static port is being requested
         if (port !== false && port !== 0) {
-          // The user application has requested a specific port, which is not the entrypoint one. Override it.
-          if (options.port !== port && isEntrypointApplication) {
+          if (options.port !== port) {
             options.port = port
           }
         }
@@ -647,11 +644,10 @@ export class ChildProcess extends ITC {
 
     tracingChannel('net.server.listen').subscribe(subscribers)
 
-    const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
     const runtimeBasePath = getRuntimeBasePath({ throwOnMissing: false }) ?? ''
     const wantsAbsoluteUrls = getWantsAbsoluteUrls({ throwOnMissing: false })
 
-    if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
+    if (runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
   }

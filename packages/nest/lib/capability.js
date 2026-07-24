@@ -60,13 +60,8 @@ export class NestCapability extends BaseCapability {
     this.subprocessForceClose = true
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
@@ -85,12 +80,12 @@ export class NestCapability extends BaseCapability {
         events.emitAndNotify('url', this.url)
       })
     } else {
-      return this.#startProduction(listen)
+      return this.#startProduction()
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -197,13 +192,7 @@ export class NestCapability extends BaseCapability {
     return context
   }
 
-  async #startProduction (listen) {
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      await this.#listen()
-      return this.url
-    }
-
+  async #startProduction () {
     const outputDirectory = this.config.application.outputDirectory
     const { path, name } = this.config.nest.appModule
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
@@ -241,7 +230,7 @@ export class NestCapability extends BaseCapability {
       this.#dispatcher = this.#server.listeners('request')[0]
     }
 
-    if (listen) {
+    if (this.applicationConfig.exposed !== false) {
       await this.#listen()
     }
 

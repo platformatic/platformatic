@@ -44,13 +44,6 @@ export async function devCommand (logger, args) {
   try {
     runtime = await create(root, configurationFile, { start: true, envFile: env })
   } catch (err) {
-    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
-      return logFatalError(
-        logger,
-        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
-      )
-    }
-
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
     return
   }
@@ -117,13 +110,6 @@ export async function startCommand (logger, args) {
   try {
     return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
   } catch (err) {
-    if (err.cause?.code === 'PLT_RUNTIME_MISSING_ENTRYPOINT') {
-      return logFatalError(
-        logger,
-        'Cannot determine the application entrypoint. Please define it via the "entrypoint" key in your configuration file.'
-      )
-    }
-
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
   }
 }

@@ -11,7 +11,6 @@ The following runtime properties can be configured at the application level:
 - [**`preload`**](./runtime/configuration.md#preload): Files to load before the application code.
 - [**`workers`**](./runtime/configuration.md#workers): Worker configuration for this application.
 - [**`logger`**](./runtime/configuration.md#logger): Logger configuration.
-- [**`server`**](./runtime/configuration.md#server): Server configuration (hostname, port, HTTPS, HTTP/2).
 - [**`watch`**](./runtime/configuration.md#watch): Enable/disable file watching.
 - [**`health`**](./runtime/configuration.md#health): Health check configuration.
 - [**`telemetry`**](./runtime/configuration.md#telemetry): OpenTelemetry configuration.

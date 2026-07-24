@@ -11,7 +11,7 @@ test('node-options on worker threads', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'composer:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -42,7 +42,7 @@ test('node-options on separate processes', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'composer:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -63,7 +63,7 @@ test('supports execArgv', async t => {
   const configFile = join(fixturesDir, 'exec-argv', 'platformatic.json')
   const app = await createRuntime(configFile)
   const promise = once(app, 'application:worker:event:argv')
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -90,7 +90,7 @@ test('supports execArgv when not using a runtime configuration file', async t =>
   const configFile = join(fixturesDir, 'exec-argv', 'applications', 'main', 'platformatic.json')
   const app = await createRuntime(configFile)
   const promise = once(app, 'application:worker:event:argv')
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()

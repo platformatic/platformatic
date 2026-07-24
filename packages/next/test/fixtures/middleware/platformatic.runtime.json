@@ -9,7 +9,7 @@
     {
       "id": "service-1",
       "path": "./services/service-1",
-      "useHttp": true
+      "exposed": true
     }
   ],
   "logger": {

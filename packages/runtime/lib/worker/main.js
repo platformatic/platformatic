@@ -255,15 +255,13 @@ async function main () {
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
 
-  // If the application is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
-  if (runtimeConfig.server && applicationConfig.entrypoint) {
-    serverConfig = runtimeConfig.server
-  } else if (applicationConfig.useHttp) {
+  if (applicationConfig.exposed !== false) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
-      keepAliveTimeout: 5000
+      keepAliveTimeout: 5000,
+      ...applicationConfig.server
     }
   }
 
@@ -304,9 +302,10 @@ async function main () {
 
   await controller.init(cleanup)
 
-  if (applicationConfig.entrypoint && runtimeConfig.basePath) {
+  const listen = applicationConfig.exposed !== false
+  if (listen && runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
-    if (!meta.gateway.wantsAbsoluteUrls) {
+    if (!meta.gateway?.wantsAbsoluteUrls) {
       stripBasePath(runtimeConfig.basePath)
     }
   }
@@ -410,10 +409,8 @@ function stripBasePath (basePath) {
   }
 
   ServerResponse.prototype.setHeader = function (name, value) {
-    if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location') {
-        value = prependBasePath(value)
-      }
+    if (this[kBasePath] && name.toLowerCase() === 'location') {
+      value = prependBasePath(value)
     }
     originSetHeader.call(this, name, value)
   }

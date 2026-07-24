@@ -4,9 +4,14 @@
   "managementApi": true,
   "metrics": false,
   "restartOnError": 500,
-  "entrypoint": "service-1",
   "autoload": {
-    "path": "."
+    "path": ".",
+    "mappings": {
+      "service-2": {
+        "id": "service-2",
+        "exposed": false
+      }
+    }
   },
   "logger": {
     "level": "info"

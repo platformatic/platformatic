@@ -83,24 +83,25 @@ test('should post updated workers list via broadcast channel', async t => {
   expected.composer = [{ id: 'composer:0', application: 'composer', thread: threads['composer:0'], worker: 0 }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
-  delete expected.composer
+  expected.first.shift()
   deepStrictEqual(events[7], new Map(Object.entries(expected)))
 
   expected.first.shift()
   deepStrictEqual(events[8], new Map(Object.entries(expected)))
 
-  expected.first.shift()
+  delete expected.first
   deepStrictEqual(events[9], new Map(Object.entries(expected)))
 
-  delete expected.first
+  expected.second.shift()
   deepStrictEqual(events[10], new Map(Object.entries(expected)))
 
   expected.second.shift()
   deepStrictEqual(events[11], new Map(Object.entries(expected)))
 
-  expected.second.shift()
+  delete expected.second
   deepStrictEqual(events[12], new Map(Object.entries(expected)))
 
+  delete expected.composer
   deepStrictEqual(events[13], new Map())
 })
 
@@ -114,7 +115,7 @@ test('should post updated workers when something crashed', async t => {
     await app.close()
   })
 
-  const url = await app.start()
+  const { 'first:0': firstUrl } = await app.start()
 
   // Worker 0 will crash, but restarted worker gets a new unique index (1)
   // since there's 1 worker initially (0), nextWorkerIndex starts at 1
@@ -124,9 +125,9 @@ test('should post updated workers when something crashed', async t => {
     { event: 'application:worker:started', application: 'first', worker: 1 }
   )
 
-  // Fetch the entrypoint to induce the crash
+  // Fetch the application to induce the crash
   {
-    const res = await request(`${url}/crash`)
+    const res = await request(`${firstUrl}/crash`)
     deepStrictEqual(res.statusCode, 200)
   }
 
@@ -204,12 +205,12 @@ test('should get information from other workers via ITC using a round robin appr
     broadcast.close()
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   let firstWorker
   const responses = []
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
 
     deepStrictEqual(res.statusCode, 200)
     const response = await res.body.json()
@@ -220,21 +221,21 @@ test('should get information from other workers via ITC using a round robin appr
   }
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 200)
     const response = await res.body.json()
     responses.push(threads[response.thread])
   }
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 200)
     const response = await res.body.json()
     responses.push(threads[response.thread])
   }
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 200)
     const response = await res.body.json()
     responses.push(threads[response.thread])
@@ -263,10 +264,10 @@ test('should return an error if the target worker throws an error', async t => {
     return contents.replace('async thread () {', "async thread () {\nthrow new Error('Handler Kaboom!')")
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
@@ -293,10 +294,10 @@ test('should return an error if the target worker times out', async t => {
     )
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
@@ -320,10 +321,10 @@ test('should return an error if the target worker exits before returning a respo
     return contents.replace('async thread () {', 'async thread () {\nprocess.exit(1)')
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
@@ -358,10 +359,10 @@ test('should return an error if the target worker throws an error while saving t
     )
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
@@ -396,10 +397,10 @@ test('should return an error if the target worker times out while saving the cha
     )
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 500)
     const error = await res.body.json()
 
@@ -422,11 +423,11 @@ test('should reuse channels when the worker are restarted', async t => {
   let createdChannels = 0
   app.on('application:worker:messagingChannel', () => createdChannels++)
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
-  // Fetch the entrypoint to create the channels. Let's do four times to have one reused
+  // Fetch the gateway to create the channels. Let's do four times to have one reused
   for (let i = 0; i < 4; i++) {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 200)
   }
 
@@ -444,9 +445,9 @@ test('should reuse channels when the worker are restarted', async t => {
   // Wait for the application to restart
   await waitPromise
 
-  // Fetch the entrypoint again, no new channels should be created
+  // Fetch the gateway again, no new channels should be created
   for (let i = 0; i < 4; i++) {
-    const res = await request(`${url}/first/thread/12345`)
+    const res = await request(`${ingressUrl}/first/thread/12345`)
     deepStrictEqual(res.statusCode, 200)
   }
 
@@ -482,10 +483,10 @@ test('should notify all the workers', async t => {
     )
   })
 
-  const url = await app.start()
+  const { 'composer:0': ingressUrl } = await app.start()
 
   {
-    const res = await request(`${url}/first/thread/12345`, {
+    const res = await request(`${ingressUrl}/first/thread/12345`, {
       query: { notify: true }
     })
     deepStrictEqual(res.statusCode, 200)

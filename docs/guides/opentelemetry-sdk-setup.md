@@ -34,7 +34,7 @@ Use the `execArgv` option on each application to configure OpenTelemetry:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "applications": [
     {
       "id": "api",
@@ -42,14 +42,14 @@ Use the `execArgv` option on each application to configure OpenTelemetry:
       "execArgv": [
         "--import", "@opentelemetry/instrumentation/hook.mjs",
         "--import", "./telemetry-init.mjs"
-      ]
+      ],
+      "env": { "PORT": 3000 }
     }
-  ],
-  "server": {
-    "port": 3000
-  }
+  ]
 }
 ```
+
+Platformatic Service, Gateway, and DB applications declare their listener in the application's own `server` object, commonly with `"port": "{PORT}"`. An `applications[].env.PORT` value such as the one above overrides the runtime-wide environment for that application only.
 
 ### Multiple Applications
 
@@ -57,7 +57,7 @@ When you have multiple applications, each needs its own `execArgv` configuration
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "applications": [
     {
       "id": "api",
@@ -221,8 +221,7 @@ Common issues:
 **watt.json:**
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "api",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "applications": [
     {
       "id": "api",
@@ -230,14 +229,12 @@ Common issues:
       "execArgv": [
         "--import", "@opentelemetry/instrumentation/hook.mjs",
         "--import", "./telemetry.mjs"
-      ]
+      ],
+      "env": { "PORT": 3000 }
     }
   ],
   "env": {
     "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318/v1/traces"
-  },
-  "server": {
-    "port": 3000
   }
 }
 ```

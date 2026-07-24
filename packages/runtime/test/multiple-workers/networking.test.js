@@ -5,18 +5,28 @@ import { Client } from 'undici'
 import { createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, testRoundRobin, verifyInject } from './helper.js'
 
-test('the mesh network works with the internal dispatcher', async t => {
+function addIngress (contents) {
+  contents.services.push({
+    id: 'ingress',
+    path: './node',
+    config: 'platformatic.json',
+    workers: 1
+  })
+}
+
+test('the mesh network works with default exposure', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
+  await updateConfigFile(configFile, addIngress)
   const app = await createRuntime(configFile, null, { isProduction: true })
-  const entryUrl = await app.start()
+  const { 'ingress:0': ingressUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
-  await testRoundRobin(entryUrl, [
-    { name: 'service', workerCount: 3, expectedSocket: 'MockSocket' },
+  await testRoundRobin(ingressUrl, [
+    { name: 'service', workerCount: 3, expectedSocket: 'Socket' },
     { name: 'node', workerCount: 5, expectedSocket: 'MockSocket' }
   ])
 })
@@ -26,18 +36,19 @@ test('the mesh network works with the HTTP applications when using ITC', async t
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
-    contents.services[0].useHttp = true
+    addIngress(contents)
+    contents.services[0].exposed = true
     contents.services.push({
       id: 'service',
       path: './service',
       config: 'platformatic.json',
-      useHttp: true,
+      exposed: true,
       workers: 3
     })
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
-  const entryUrl = await app.start()
+  const { 'ingress:0': ingressUrl } = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
       const meta = await app.getApplicationMeta(`service:${worker}`)
@@ -49,7 +60,7 @@ test('the mesh network works with the HTTP applications when using ITC', async t
     await app.close()
   })
 
-  await testRoundRobin(entryUrl, [
+  await testRoundRobin(ingressUrl, [
     {
       name: 'service',
       workerCount: 3,
@@ -67,12 +78,13 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
-    contents.services[0].useHttp = true
+    addIngress(contents)
+    contents.services[0].exposed = true
     contents.services.push({
       id: 'service',
       path: './service',
       config: 'platformatic.json',
-      useHttp: true,
+      exposed: true,
       workers: 3
     })
   })
@@ -82,7 +94,7 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
-  const entryUrl = await app.start()
+  const { 'ingress:0': ingressUrl } = await app.start()
   const ports = await Promise.all(
     [0, 1, 2].map(async worker => {
       const meta = await app.getApplicationMeta(`service:${worker}`)
@@ -94,7 +106,7 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
     await app.close()
   })
 
-  await testRoundRobin(entryUrl, [
+  await testRoundRobin(ingressUrl, [
     {
       name: 'service',
       workerCount: 3,

@@ -36,5 +36,5 @@ test('fails when starting a runtime with a port already allocated', async t => {
   })
 
   const configFile = join(fixturesDir, 'configs', 'service-with-env-port.json')
-  await rejects(() => createRuntime(configFile, null, { start: true }), { code: 'EADDRINUSE' })
+  await rejects(() => createRuntime(configFile, null, { start: true }), { code: 'PLT_RUNTIME_EADDR_IN_USE' })
 })

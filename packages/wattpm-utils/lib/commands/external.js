@@ -725,7 +725,6 @@ Example of the runtime \`watt.json\` configuration file:
 \`\`\`json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/wattpm/2.0.0.json",
-  "entrypoint": "application-1",
   "applications": [
     {
       "id": "application-1",

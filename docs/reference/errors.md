@@ -224,14 +224,6 @@
 
 **Message:** No config file found for service '%s'
 
-### PLT_RUNTIME_INVALID_ENTRYPOINT
-
-**Message:** Invalid entrypoint: '%s' does not exist
-
-### PLT_RUNTIME_MISSING_ENTRYPOINT
-
-**Message:** Missing application entrypoint.
-
 ### PLT_RUNTIME_INVALID_SERVICES_WITH_WEB
 
 **Message:** The "services" property cannot be used when the "web" property is also defined

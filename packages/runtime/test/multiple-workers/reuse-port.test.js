@@ -38,7 +38,7 @@ async function waitForPortRelease (port, attempts = 50, interval = 100) {
   throw new Error(`Port ${port} was not released in time`)
 }
 
-test('applications are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
+test('applications are started with multiple workers when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
@@ -46,11 +46,13 @@ test('applications are started with multiple workers even for the entrypoint whe
 
   await waitForPortRelease(port)
 
-  await updateConfigFile(configFile, contents => {
+  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
     contents.server = {
       hostname: '127.0.0.1',
       port
     }
+  })
+  await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
   })
 
@@ -86,13 +88,13 @@ test('applications are started with multiple workers even for the entrypoint whe
 
   const startMessagesPromise = waitForEvents(app, startMessages)
 
-  const entryUrl = await app.start()
+  const { 'node:0': nodeUrl } = await app.start()
   await startMessagesPromise
 
   const usedWorkers = new Set()
   // Check that we get the response from different workers
   const promises = Array.from(Array(workers)).map(async () => {
-    const res = await request(entryUrl + '/hello')
+    const res = await request(nodeUrl + '/hello')
     const json = await res.body.json()
 
     deepStrictEqual(res.statusCode, 200)

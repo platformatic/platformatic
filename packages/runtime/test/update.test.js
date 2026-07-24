@@ -120,8 +120,7 @@ test('should add a new application with new env variables', async t => {
     ]
   }
   await rg.update({
-    applications: [applicationData, newApplication], // the original application was removed
-    entrypoint: 'foobar' // update the entrypoint with the new application
+    applications: [applicationData, newApplication] // the original application was removed
   })
 
   // the new application has been generated
@@ -146,16 +145,11 @@ test('should add a new application with new env variables', async t => {
 
   assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
   assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getValue('PLT_FOOBAR_PORT'), '3043')
 
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
   assert.ok(runtimePackageJson.dependencies['@fastify/foo-plugin'])
-
-  // the entrypoint should be updated
-  assert.equal(rg.entryPoint.name, 'foobar')
-
-  const runtimePlatformaticJson = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf-8'))
-  assert.equal(runtimePlatformaticJson.entrypoint, 'foobar')
 })
 
 test("should update existing application's plugin options", async t => {

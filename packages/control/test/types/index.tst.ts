@@ -60,9 +60,9 @@ test('RuntimeApiClient / RuntimeApplications types', () => {
   expect(runtime.argv).type.toBe<string[]>();
   expect(runtime.uptimeSeconds).type.toBe<number>();
   expect(runtime.packageVersion).type.toBe<string | null>();
+  expect(runtime.urls).type.toBe<Record<string, string>>();
   expect(api.getRuntimeApplications(45)).type.toBe<
     Promise<{
-      entrypoint: string;
       production: boolean;
       applications: RuntimeApplications['applications'];
     }>
@@ -72,8 +72,10 @@ test('RuntimeApiClient / RuntimeApplications types', () => {
 });
 
 if ('url' in application1) {
-  test('application1 optional url/workers', () => {
-    expect(application1.url).type.toBe<string | undefined>();
+  test('application1 url/workers', () => {
+    expect(application1.url).type.toBe<string | null>();
+    expect(application1.urls).type.toBe<string[]>();
+    expect(application1.dependencies).type.toBe<string[]>();
     expect(application1.workers).type.toBe<number | undefined>();
   });
 }

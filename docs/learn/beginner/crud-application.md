@@ -317,7 +317,7 @@ Open your project root `.env` file and add:
 PLT_SERVER_CORS_ORIGIN=http://localhost:3000
 ```
 
-Now add the CORS configuration to your `watt.json` file. Add the `cors` property inside the `server` section:
+Now add the CORS configuration to your database application's `web/db/platformatic.json` file. Add the `cors` property inside the `server` section:
 
 ```json
 {

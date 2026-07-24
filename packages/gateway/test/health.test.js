@@ -119,7 +119,7 @@ test('should properly report as failed on the health check route when all depend
     broadcaster.close()
   })
 
-  const url = await runtime.start()
+  const { 'composer:0': url } = await runtime.start()
 
   // Right away, the health check and all applications should be successful.
   {

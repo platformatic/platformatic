@@ -62,14 +62,8 @@ export class NuxtCapability extends BaseCapability {
     this.registerGlobals({ basePath: this.#basePath })
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     const command =
       this.config.application.commands[
@@ -90,8 +84,8 @@ export class NuxtCapability extends BaseCapability {
     await this._collectMetrics()
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()

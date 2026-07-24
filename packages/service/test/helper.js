@@ -26,7 +26,6 @@ export async function createFromConfig (t, options, applicationFactory, creation
   const context = {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   }
 

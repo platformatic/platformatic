@@ -36,7 +36,7 @@ test('should access files when access is not restricted', async t => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.text(), value)
@@ -51,7 +51,7 @@ test('should access files when access is granted by permissions', async t => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.text(), value)
@@ -66,7 +66,7 @@ test('should not access files when access is not granted by permissions', async 
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.json(), {

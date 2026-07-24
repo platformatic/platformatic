@@ -1,4 +1,4 @@
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { version } from '../../lib/version.js'
@@ -16,13 +16,14 @@ test('should get application details', async t => {
     await app.close()
   })
 
-  const applicationDetails = await app.getApplicationDetails('with-logger')
+  const { url, urls, ...applicationDetails } = await app.getApplicationDetails('with-logger')
+  deepStrictEqual(urls, [url])
+  strictEqual(new URL(url).protocol, 'http:')
   deepStrictEqual(applicationDetails, {
     id: 'with-logger',
     type: 'service',
     status: 'started',
     version,
-    entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
     config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
     path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),

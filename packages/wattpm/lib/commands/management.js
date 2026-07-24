@@ -71,14 +71,14 @@ export async function psCommand (logger) {
     }
 
     const rows = runtimes.map(runtime => {
-      const { pid, packageName, platformaticVersion, uptimeSeconds, url, projectDir } = runtime
+      const { pid, packageName, platformaticVersion, uptimeSeconds, projectDir } = runtime
 
-      return [pid, packageName, platformaticVersion, formatDuration(uptimeSeconds), url, formatPath(projectDir)]
+      return [pid, packageName, platformaticVersion, formatDuration(uptimeSeconds), formatPath(projectDir)]
     })
     console.log(
       '\n' +
         table(
-          [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('URL'), bold('Directory')], ...rows],
+          [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('Directory')], ...rows],
           tableConfig
         )
     )
@@ -99,14 +99,14 @@ export async function applicationsCommand (logger, args) {
     const { production, applications } = await client.getRuntimeApplications(runtime.pid)
 
     const headers = production
-      ? [bold('Name'), bold('Workers'), bold('Type'), bold('Entrypoint')]
-      : [bold('Name'), bold('Type'), bold('Entrypoint')]
+      ? [bold('Name'), bold('Workers'), bold('Type')]
+      : [bold('Name'), bold('Type')]
 
     const rows = applications.map(runtime => {
-      const { id, workers, type, entrypoint } = runtime
+      const { id, workers, type } = runtime
 
       /* c8 ignore next */
-      return [id, workers, type, entrypoint ? 'Yes' : 'No'].filter(t => t)
+      return [id, workers, type].filter(t => t)
     })
 
     console.log('\n' + table([headers, ...rows], tableConfig))

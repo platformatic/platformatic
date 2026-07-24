@@ -11,7 +11,7 @@ test('logs stdio from the application thread', async t => {
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
-  const url = await app.start()
+  const { 'stdio:0': url } = await app.start()
   const pid = process.pid
   const hostname = getHostname()
 
@@ -161,7 +161,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Added application "stdio" (entrypoint).',
+        msg: 'Added application "stdio".',
         payload: undefined,
         stdout: undefined
       },
@@ -188,7 +188,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: `Platformatic is now listening at ${url}`,
+        msg: `Platformatic is now listening at ${url} for worker 0 of the application "stdio"`,
         payload: undefined,
         stdout: undefined
       },

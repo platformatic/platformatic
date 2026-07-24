@@ -138,8 +138,8 @@ test('REPL should handle .exit command', async t => {
   ok(exitReceived, 'REPL should send exit message when .exit is entered')
 })
 
-// Tests for subprocess mode (useHttp: true)
-test('should start a REPL session for a subprocess application (useHttp: true)', async t => {
+// Tests for subprocess mode (exposed: true)
+test('should start a REPL session for a subprocess application (exposed: true)', async t => {
   const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
 
@@ -149,7 +149,7 @@ test('should start a REPL session for a subprocess application (useHttp: true)',
     await app.close()
   })
 
-  // Service 'a' is configured with useHttp: true in express fixture
+  // Service 'a' is configured with exposed: true in express fixture
   const port = await app.startApplicationRepl('a')
 
   ok(port, 'startApplicationRepl should return a MessagePort for subprocess')

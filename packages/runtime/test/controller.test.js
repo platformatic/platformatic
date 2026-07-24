@@ -17,7 +17,6 @@ test('errors when starting an already started application (no logging)', async t
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -38,7 +37,6 @@ test('errors when stopping an already stopped application', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -56,7 +54,6 @@ test('logs errors if an env variable is missing', async t => {
     id: 'no-env',
     config: configFile,
     path: fixturesDir,
-    entrypoint: true,
     watch: true
   }
   const app = new Controller({}, config)
@@ -76,7 +73,6 @@ test('Uses the server config if passed', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -111,7 +107,6 @@ test('Uses the server config if passed', async t => {
 
   await app.init()
   await app.start()
-  await app.listen()
 
   await utimes(configFile, new Date(), new Date())
   await promise
@@ -124,7 +119,6 @@ test('logs errors during startup', async t => {
     id: 'serviceAppThrowsOnStart',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true
   }
   const app = new Controller({}, config)
@@ -149,7 +143,6 @@ test('returns application statuses', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -184,7 +177,6 @@ test('supports configuration overrides', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -212,7 +204,6 @@ test('supports backlog configuration override', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -240,14 +231,13 @@ test('can update status of a capability with updateStatus support', async t => {
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
 
   const app = new Controller({}, config)
   app.capability = new BaseCapability('base', '0.1', appPath, {})
-  app.capability.start = async function () {}
+  app.capability._start = async function () {}
 
   await app.start()
 
@@ -262,14 +252,13 @@ test('can update status of a capability without updateStatus support', async t =
     id: 'serviceApp',
     config: configFile,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
 
   const app = new Controller({}, config)
   app.capability = new BaseCapability('base', '0.1', appPath, {})
-  app.capability.start = async function () {}
+  app.capability._start = async function () {}
   delete app.capability.updateStatus
 
   await app.start()

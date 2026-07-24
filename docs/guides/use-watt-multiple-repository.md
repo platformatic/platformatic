@@ -88,7 +88,7 @@ Configure your `watt.json` to include applications from multiple repositories:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
   "web": [
     {
       "id": "gateway",

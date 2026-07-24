@@ -550,7 +550,7 @@ A `platformatic.json` configuration file contains the following logger options w
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "logger": {
     "level": "debug",
     "formatters": {
@@ -621,28 +621,38 @@ The main `watt` application has a shared logger configuration that is used by al
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
-  },
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "logger": {
     "level": "info",
     "timestamp": "isoTime"
   },
-  "autoload": {
-    "path": "services"
-  }
+  "applications": [
+    { "id": "composer", "path": "./services/composer" },
+    { "id": "backend", "path": "./services/backend", "exposed": false },
+    { "id": "next", "path": "./services/next", "exposed": false }
+  ]
 }
 ```
 
-The other applications have their own logger configuration, for example the `backend` application has a redaction configuration
+The applications have their own configuration. The `composer` application owns the public server; `backend` and `next` are ITC-only, while `backend` has a redaction configuration:
+
+`composer/platformatic.json`
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
+  }
+}
+```
 
 `backend/platformatic.json`
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "logger": {
     "level": "debug",
     "redact": {
@@ -672,7 +682,7 @@ The `next` application has a custom formatter that adds the `application` proper
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
   "application": {
     "basePath": "/next"
   },

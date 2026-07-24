@@ -112,7 +112,7 @@ my-cache-app/
 ├── watt.json
 ├── package.json
 └── web/
-    ├── composer/           # API gateway (entrypoint)
+    ├── composer/           # Public API gateway
     ├── api/                # Your main API service
     └── data-service/       # Backend data service
 ```
@@ -234,7 +234,7 @@ The composer acts as your API gateway, routing external requests to internal ser
 ```js
 // web/composer/watt.json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json",
   "composer": {
     "services": [
       {
@@ -246,6 +246,9 @@ The composer acts as your API gateway, routing external requests to internal ser
         "prefix": "/data"
       }
     ]
+  },
+  "server": {
+    "port": 3042
   }
 }
 ```
@@ -265,14 +268,13 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
   },
   "autoload": {
     "path": "web"
-  },
-  "entrypoint": "api"
+  }
 }
 ```
 
@@ -280,8 +282,8 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 
 - `httpCache`: Enables Watt's built-in HTTP caching layer
 - `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
-- `services`: Array of services that Watt will load and manage
-- `entrypoint`: The service that handles external traffic (other services are internal only)
+- `autoload`: Directory containing the applications that Watt loads and manages
+- The composer's application-local `server` configuration exposes the gateway on port `3042`
 
 **What this does:**
 
@@ -295,7 +297,7 @@ You can fine-tune the cache behavior with additional options:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags",
     "origins": [
@@ -310,8 +312,7 @@ You can fine-tune the cache behavior with additional options:
   },
   "autoload": {
     "path": "web"
-  },
-  "entrypoint": "api"
+  }
 }
 ```
 

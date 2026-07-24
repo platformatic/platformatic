@@ -1,4 +1,10 @@
-import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import {
+  BaseCapability,
+  buildListenOptions,
+  cleanBasePath,
+  ensureTrailingSlash,
+  getServerUrl
+} from '@platformatic/basic'
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
@@ -35,10 +41,11 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
+    const { portAssignment: _, ...serverConfig } = this.serverConfig
 
     // Create the application
     this.#app = fastify({
-      ...this.serverConfig,
+      ...serverConfig,
       ...this.fastifyOptions,
       genReqId () {
         return randomUUID()
@@ -86,14 +93,8 @@ export class ServiceCapability extends BaseCapability {
     }
   }
 
-  async start (startOptions) {
-    // Compatibility with v2 service
-    const { listen } = startOptions ?? { listen: true }
-
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
+  async _start () {
+    const listen = this.applicationConfig.exposed !== false
 
     await super._start({ listen })
 
@@ -111,8 +112,8 @@ export class ServiceCapability extends BaseCapability {
     return this.url
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
     await this.#app?.close()
   }
 
@@ -209,7 +210,7 @@ export class ServiceCapability extends BaseCapability {
       return
     }
 
-    const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
+    const { telemetryConfig, serverConfig, isProduction, logger } = this.context
 
     const config = { ...this.config }
 
@@ -232,10 +233,7 @@ export class ServiceCapability extends BaseCapability {
       config.watch = { enabled: false }
     }
 
-    // Adjust server options
-    if (!isEntrypoint) {
-      config.server.trustProxy = true
-    }
+    config.server.trustProxy ??= true
 
     if (config.server.https) {
       config.server.https = await sanitizeHTTPSOptions(config.server.https)

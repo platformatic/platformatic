@@ -8,6 +8,7 @@ export const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer
 export const kWorkerStatus = Symbol('plt.runtime.worker.status')
 export const kWorkerHealthSignals = Symbol.for('plt.runtime.worker.healthSignals')
 export const kWorkerStartTime = Symbol.for('plt.runtime.worker.startTime')
+export const kWorkerUrl = Symbol.for('plt.runtime.worker.url')
 export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
 export const kLastWorkerScalerELU = Symbol.for('plt.runtime.worker.lastWorkerScalerELU')
 export const kInterceptorReadyPromise = Symbol.for('plt.runtime.worker.interceptorReadyPromise')

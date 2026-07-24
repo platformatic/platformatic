@@ -1,8 +1,14 @@
-import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
+import { features } from '@platformatic/foundation'
 import { getMemoryInfo } from './metrics.js'
 import { ScalingAlgorithm } from './scaling-algorithm.js'
-import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
+import {
+  kApplicationId,
+  kId,
+  kLastWorkerScalerELU,
+  kWorkerStartTime,
+  kWorkerStatus
+} from './worker/symbols.js'
 
 const healthCheckInterval = 1000
 export const kOriginalWorkers = Symbol('plt.runtime.application.dynamicWorkersScalerOriginalWorkers')
@@ -93,9 +99,13 @@ export class DynamicWorkersScaler {
   async add (application) {
     const config = {}
 
-    if (application.entrypoint && !features.node.reusePort) {
+    if (
+      application.exposed !== false &&
+      application.server?.portAssignment !== 'perWorkerIncrement' &&
+      !features.node.reusePort
+    ) {
       this.#runtime.logger.warn(
-        `The "${application.id}" application cannot be scaled because it is an entrypoint and the "reusePort" feature is not available in your OS.`
+        `The "${application.id}" application cannot be scaled because it listens on a shared port and the "reusePort" feature is not available in your OS.`
       )
 
       config.minWorkers = 1
@@ -122,7 +132,7 @@ export class DynamicWorkersScaler {
     if (config.minWorkers > 1) {
       const update = { application: application.id, workers: config.minWorkers }
 
-      if (!this.#status === 'started') {
+      if (this.#status === 'started') {
         await this.#runtime.updateApplicationsResources([update])
       } else {
         this.#initialUpdates.push(update)
@@ -133,8 +143,10 @@ export class DynamicWorkersScaler {
     this.#algorithm.addApplication(application.id, config)
   }
 
-  remove (application) {
-    this.#algorithm.removeApplication(application.id)
+  remove (applicationId) {
+    this.#algorithm.removeApplication(applicationId)
+    delete this.#appsConfigs[applicationId]
+    this.#initialUpdates = this.#initialUpdates.filter(update => update.application !== applicationId)
   }
 
   async #chechHealth () {
