@@ -1,5 +1,6 @@
 import assert from 'node:assert'
 import test from 'node:test'
+import { heap } from '@datadog/pprof'
 import { updateGlobals } from '@platformatic/globals'
 
 // Simulates a runtime without the main-thread gating driver: the pprof
@@ -74,30 +75,39 @@ test('sample-free profiles expose their sample count without changing capture no
   })
 
   const { getLastProfile, getProfilingState, startProfiling, stopProfiling } = await import('../index.js')
+  const sampleFreeProfile = {
+    sample: [],
+    encode () {
+      return Uint8Array.of(1)
+    }
+  }
   let rotate
 
+  t.mock.method(heap, 'start', () => {})
+  t.mock.method(heap, 'profile', () => sampleFreeProfile)
+  t.mock.method(heap, 'stop', () => {})
   t.mock.method(globalThis, 'setInterval', callback => {
     rotate = callback
     return { unref () {} }
   })
 
   await startProfiling({
+    type: 'heap',
     durationMillis: 1000,
-    intervalMicros: 1_000_000,
     maxELU: false
   })
 
   rotate()
 
-  const state = getProfilingState()
+  const state = getProfilingState({ type: 'heap' })
   assert.notStrictEqual(state.latestProfileTimestamp, null, 'A profile rotation should have completed')
   assert.strictEqual(state.hasProfile, true, 'The metadata-only profile should remain available')
 
-  const rawProfile = getLastProfile()
+  const rawProfile = getLastProfile({ type: 'heap' })
   assert.ok(rawProfile instanceof Uint8Array)
   assert.ok(rawProfile.length > 0, 'Raw profile callers should retain the existing response')
 
-  const rotatedProfile = getLastProfile({ includeSampleCount: true, includeTimestamp: true })
+  const rotatedProfile = getLastProfile({ type: 'heap', includeSampleCount: true, includeTimestamp: true })
   assert.ok(rotatedProfile.profile instanceof Uint8Array)
   assert.ok(rotatedProfile.profile.length > 0, 'The encoded metadata should remain available')
   assert.strictEqual(rotatedProfile.sampleCount, 0)
@@ -106,7 +116,7 @@ test('sample-free profiles expose their sample count without changing capture no
   assert.ok(captured, 'A sample-free rotation should retain the existing capture notification')
   assert.strictEqual(captured.payload.sampleCount, 0)
 
-  const finalProfile = stopProfiling({ includeSampleCount: true })
+  const finalProfile = stopProfiling({ type: 'heap', includeSampleCount: true })
   assert.ok(finalProfile.profile instanceof Uint8Array)
   assert.ok(finalProfile.profile.length > 0, 'The encoded metadata should remain available')
   assert.strictEqual(finalProfile.sampleCount, 0)
