@@ -72,7 +72,8 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
       },
 
       delete: multiElement('delete'),
-      insert: multiElement('save')
+      insert: multiElement('save'),
+      updateMany: multiElement('save')
     })
 
     function multiElement (action) {
