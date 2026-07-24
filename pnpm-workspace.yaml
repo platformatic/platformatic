@@ -23,8 +23,8 @@ minimumReleaseAgeExclude:
   - fast-uri@3.1.2 || 4.1.1
   # Renovate security update: next@16.2.5 || 16.2.6
   - next@16.2.5 || 16.2.6
-  # Renovate security update: astro@6.4.6
-  - astro@6.4.6
+  # Renovate security update: astro@6.4.6 || 7.1.0
+  - astro@6.4.6 || 7.1.0
   # Renovate security update: tar@7.5.16
   - tar@7.5.16
   # Renovate security update: vite@7.3.5
