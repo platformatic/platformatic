@@ -259,7 +259,7 @@ async function main () {
   let serverConfig = null
   if (runtimeConfig.server && applicationConfig.entrypoint) {
     serverConfig = runtimeConfig.server
-  } else if (applicationConfig.useHttp) {
+  } else if (applicationConfig.useHttp || applicationConfig.websocket) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',

@@ -215,7 +215,7 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.applicationConfig.useHttp
+    const listen = !!(this.applicationConfig.useHttp || this.applicationConfig.websocket)
 
     try {
       await this.capability.start({ listen })
@@ -264,7 +264,12 @@ export class Controller extends EventEmitter {
 
   async listen () {
     // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
+    if (
+      !this.applicationConfig.entrypoint ||
+      this.applicationConfig.useHttp ||
+      this.applicationConfig.websocket ||
+      this.#listening
+    ) {
       return
     }
 
