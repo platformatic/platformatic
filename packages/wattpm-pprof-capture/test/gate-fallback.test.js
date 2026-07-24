@@ -50,3 +50,64 @@ test('startProfiling should run ungated when the runtime does not support gating
   const stoppedState = getProfilingState()
   assert.strictEqual(stoppedState.isCapturing, false)
 })
+
+test('sample-free profiles expose their sample count without changing capture notifications', async t => {
+  const notifications = []
+  const fakeItc = {
+    handle () {},
+    on () {},
+    notify (name, payload) {
+      notifications.push({ name, payload })
+    },
+    async send () {
+      return true
+    }
+  }
+
+  updateGlobals({
+    itc: fakeItc,
+    logger: {
+      warn () {},
+      error () {},
+      debug () {}
+    }
+  })
+
+  const { getLastProfile, getProfilingState, startProfiling, stopProfiling } = await import('../index.js')
+  let rotate
+
+  t.mock.method(globalThis, 'setInterval', callback => {
+    rotate = callback
+    return { unref () {} }
+  })
+
+  await startProfiling({
+    durationMillis: 1000,
+    intervalMicros: 1_000_000,
+    maxELU: false
+  })
+
+  rotate()
+
+  const state = getProfilingState()
+  assert.notStrictEqual(state.latestProfileTimestamp, null, 'A profile rotation should have completed')
+  assert.strictEqual(state.hasProfile, true, 'The metadata-only profile should remain available')
+
+  const rawProfile = getLastProfile()
+  assert.ok(rawProfile instanceof Uint8Array)
+  assert.ok(rawProfile.length > 0, 'Raw profile callers should retain the existing response')
+
+  const rotatedProfile = getLastProfile({ includeSampleCount: true, includeTimestamp: true })
+  assert.ok(rotatedProfile.profile instanceof Uint8Array)
+  assert.ok(rotatedProfile.profile.length > 0, 'The encoded metadata should remain available')
+  assert.strictEqual(rotatedProfile.sampleCount, 0)
+  assert.strictEqual(typeof rotatedProfile.timestamp, 'number')
+  const captured = notifications.find(notification => notification.name === 'profile:captured')
+  assert.ok(captured, 'A sample-free rotation should retain the existing capture notification')
+  assert.strictEqual(captured.payload.sampleCount, 0)
+
+  const finalProfile = stopProfiling({ includeSampleCount: true })
+  assert.ok(finalProfile.profile instanceof Uint8Array)
+  assert.ok(finalProfile.profile.length > 0, 'The encoded metadata should remain available')
+  assert.strictEqual(finalProfile.sampleCount, 0)
+})
