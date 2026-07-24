@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
+import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -15,6 +16,30 @@ const configurations = {
   default: 'platformatic.json',
   'worker-scaler': 'platformatic.worker-scaler.json'
 }
+
+test('should remove pending initial updates by application ID', async t => {
+  let resourcesUpdates = 0
+  const scaler = new DynamicWorkersScaler(
+    {
+      async updateApplicationsResources (updates) {
+        resourcesUpdates += updates.length
+      }
+    },
+    {}
+  )
+
+  t.after(() => scaler.stop())
+
+  await scaler.add({
+    id: 'application-1',
+    exposed: false,
+    workers: { minimum: 2, maximum: 2 }
+  })
+  scaler.remove('application-1')
+  await scaler.start()
+
+  assert.strictEqual(resourcesUpdates, 0)
+})
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
@@ -36,11 +61,11 @@ for (const [name, file] of Object.entries(configurations)) {
       logsPath
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -94,11 +119,11 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-1:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -181,11 +206,11 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

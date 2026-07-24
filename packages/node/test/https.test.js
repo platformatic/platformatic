@@ -38,7 +38,7 @@ test('supports https server options', async t => {
 
   const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
     config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
-    config.server.https = {
+    config.applications[0].server.https = {
       key: { path: resolve(root, 'https.key') },
       cert: { path: resolve(root, 'https.crt') }
     }
@@ -62,8 +62,8 @@ test('supports reusePort with https server options', async t => {
   const port = await getPort()
 
   const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
-    config.server = {
-      ...config.server,
+    config.applications[0].server = {
+      ...config.applications[0].server,
       port,
       https: {
         key: { path: resolve(root, 'https.key') },

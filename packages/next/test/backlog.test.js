@@ -82,7 +82,7 @@ for (const [env, options] of Object.entries(envs)) {
         })
 
         // Make sure we start an HTTP server in the service
-        config.applications[0].useHttp = true
+        config.applications[0].exposed = true
       }
     })
 

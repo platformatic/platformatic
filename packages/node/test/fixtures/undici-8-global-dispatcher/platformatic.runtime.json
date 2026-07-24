@@ -15,7 +15,7 @@
     {
       "id": "internal",
       "path": "./services/internal",
-      "useHttp": false
+      "exposed": false
     }
   ]
 }

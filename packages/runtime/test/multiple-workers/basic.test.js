@@ -14,7 +14,7 @@ test('applications are started with multiple workers according to the configurat
     await app.close()
   })
 
-  const expectedEvents = getExpectedEvents('composer', { composer: 3, service: 3, node: 5 })
+  const expectedEvents = getExpectedEvents({ composer: 3, service: 3, node: 5 })
   const startEventsPromise = waitForEvents(app, expectedEvents.start)
 
   await app.start()
@@ -129,9 +129,17 @@ test('can collect metrics with worker label', async t => {
           }
 
         case 'application':
-          return typeof workerId === 'number' && workerId >= 0 && workerId < 3
+          if (features.node.reusePort) {
+            return typeof workerId === 'number' && workerId >= 0 && workerId < 3
+          } else {
+            return workerId === 0 || typeof workerId === 'undefined'
+          }
         case 'node':
-          return typeof workerId === 'number' && workerId >= 0 && workerId < 5
+          if (features.node.reusePort) {
+            return typeof workerId === 'number' && workerId >= 0 && workerId < 5
+          } else {
+            return workerId === 0 || typeof workerId === 'undefined'
+          }
         default:
           // No applicationId, all good
           return true
@@ -186,7 +194,9 @@ test('text metrics contain a single HELP/TYPE block per metric family across all
   for (const match of metrics.matchAll(/applicationId="node",workerId="(\d+)"/g)) {
     nodeWorkerIds.add(match[1])
   }
-  ok(nodeWorkerIds.size > 1, `Expected metrics from multiple node workers, found ${nodeWorkerIds.size}`)
+  if (features.node.reusePort) {
+    ok(nodeWorkerIds.size > 1, `Expected metrics from multiple node workers, found ${nodeWorkerIds.size}`)
+  }
 })
 
 test('worker threads have correct threadName property set', async t => {

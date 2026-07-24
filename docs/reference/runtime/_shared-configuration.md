@@ -132,10 +132,10 @@ runtime. Each application object supports the following settings:
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`string`) - The configuration file used to start
   the application.
-- **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`exposed`** (`boolean`) - Controls whether a runtime-managed capability starts an HTTP listener. The default is `true`. Set it to `false` to keep the capability ITC-only; runtime injection and `.plt.local` communication remain available. This setting cannot prevent a black-box Node.js application that calls `listen()` itself from opening a port.
+- **`portEnv`** (`string`) - The environment variable that provides the fallback listening port when the capability's own `server.port` is not configured. The default is `PORT`.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
-- **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
+- **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
     - **`static`** (`number`) - A fixed number of workers
@@ -253,16 +253,11 @@ If `true`, source maps are enabled for all applications. Default: `false`. This 
 
 The base path, relative to the configuration file to store resolved applications. Each application will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
 
-### `entrypoint`
+### Capability `server` configuration
 
-The Platformatic Runtime's entrypoint is an application that is exposed
-publicly. This optional value must be the `ID` of an application defined via the `autoload` or
-`applications` configuration.
+The Runtime and Watt root configuration no longer provide `entrypoint` or `server` settings. Configure listeners in each capability's own configuration file instead. A capability-local `server` object controls its hostname, port, HTTPS, backlog, and port assignment; it is not an `applications[]` descriptor option.
 
-If `entrypoint` is omitted, the runtime automatically selects one when there is a single
-application or exactly one Gateway application. If it cannot select a single entrypoint,
-the runtime starts without a public entrypoint; applications remain reachable through their
-internal `.plt.local` URLs and APIs such as `runtime.inject()`.
+When a capability omits `server.port`, Runtime uses the port from its `portEnv` descriptor option. `server.portAssignment` is capability-local: `shared` (the default) shares the configured port, while `perWorkerIncrement` assigns each worker a separate port through its per-worker environment. `perWorkerIncrement` requires a positive base port from `server.port` or `portEnv`; a missing or zero base port is invalid. Use it only with an external load balancer.
 
 ### `workers`
 
@@ -281,7 +276,7 @@ This can be specified as:
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
 
-This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
+This value is hardcoded to `1` if the runtime is running in development mode.
 
 ### `workersRestartDelay`
 
@@ -454,23 +449,6 @@ It can be a boolean or an object with the following settings:
 - **`origins`** (`array`) - Whitelist of origins to cache. Only requests to these origins will be cached. Supports exact string matches and regex patterns. To use a regex, wrap the pattern in forward slashes (e.g., `"/https:\\/\\/.*\\.example\\.com/"`).
 - **`cacheByDefault`** (`integer`) - Default cache duration in milliseconds for responses that don't have explicit expiration headers (like `Cache-Control` or `Expires`). If not set, responses without explicit expiration will not be cached.
 - **`type`** (`string`) - The type of cache. Can be `"shared"` (default) or `"private"`. A shared cache may store responses that can be shared between users, while a private cache is dedicated to a single user. Note that `s-maxage` directive only applies to shared caches, while `max-age` applies to both.
-
-### `server`
-
-This configures the Platformatic Runtime entrypoint `server`.
-
-If the entrypoint has also a `server` configured, then the runtime settings override the application settings.
-
-An object with the following settings:
-
-- **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections. Provide a number or a string. When `portAssignment` is set to `perWorkerIncrement`, this is the first port assigned to worker 0.
-- **`portAssignment`** (`string`) — Sets how entrypoint server worker ports are assigned. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`. Set it to `perWorkerIncrement` to give each worker its own incremental port, starting from `port`. Use `perWorkerIncrement` only with external load balancing, never on its own.
-- **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
-- **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
-  - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
-  - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
-  - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
 
 ### `reuseTcpPorts`
 
@@ -781,7 +759,7 @@ Configuration options:
 
 **Notes:**
 
-- Applications with a fixed `workers` configuration or entrypoint applications on systems without `reusePort` support will have their min/max workers automatically set to their current value to prevent scaling.
+- Applications with a fixed `workers` configuration will have their min/max workers automatically set to their current value to prevent scaling.
 - The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
 - By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
 

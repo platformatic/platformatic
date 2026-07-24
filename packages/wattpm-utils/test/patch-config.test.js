@@ -28,7 +28,7 @@ test('patch-config - should patch requested runtime and applications config', as
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
-  deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true, entrypoint: 'alternate' })
+  deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true })
   deepStrictEqual(mainApplicationConfigPatched, {
     $schema: mainApplicationConfigOriginal.$schema,
     application: { basePath: '/' }
@@ -74,7 +74,6 @@ test('patch-config - should work when executed from an application file', async 
     runtime: {
       watch: false,
       restartOnError: true,
-      entrypoint: 'alternate',
       logger: {
         level: 'error'
       }
@@ -113,7 +112,7 @@ test('patch-config - should apply patch when the config is not set in the main c
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
-  deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true, entrypoint: 'alternate' })
+  deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true })
   deepStrictEqual(mainApplicationConfigPatched, {
     $schema: mainApplicationConfigOriginal.$schema,
     application: { basePath: '/' }

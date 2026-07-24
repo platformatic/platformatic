@@ -238,12 +238,11 @@ const cached = await fetch('https://api.slow-application.com/data')
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "httpCache": true,
   "autoload": {
     "path": "web"
-  },
-  "entrypoint": "api"
+  }
 }
 ```
 
@@ -307,7 +306,7 @@ const cached = await fetch('https://api.slow-application.com/data')
 ### Network Security
 
 - **Internal Mesh**: All internal communication happens in-process (no network exposure)
-- **External Boundaries**: Only designated entrypoint applications accept external traffic
+- **External Boundaries**: Each application controls its external listener through its own server configuration
 - **Request Validation**: Automatic schema validation for all API endpoints
 
 ### Authentication & Authorization

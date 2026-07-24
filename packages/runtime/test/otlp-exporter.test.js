@@ -45,7 +45,7 @@ test('should export metrics to OTLP endpoint', async t => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -170,7 +170,7 @@ test('should handle OTLP endpoint errors gracefully', async t => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -231,7 +231,7 @@ test('should export standard and custom metrics to OTLP', async t => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -348,7 +348,7 @@ test('should export non-empty metrics for command-based (childManager) services'
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()

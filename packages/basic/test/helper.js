@@ -39,9 +39,21 @@ export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
 export const httpsFixtureRoot = fileURLToPath(new URL('../../node/test/fixtures/node-https-standalone', import.meta.url))
 
+function getTargetApplication (applications) {
+  return applications.find(application => application.id === 'external-proxy') ??
+    applications.find(application => application.id === 'composer') ??
+    applications.find(application => application.id === 'frontend') ??
+    applications.find(application => application.exposed !== false)
+}
+
 export function configureHTTPS (_root, config) {
-  config.server ??= {}
-  config.server.https = {
+  const application = getTargetApplication(config.applications ?? [])
+  if (!application) {
+    return
+  }
+
+  application.server ??= {}
+  application.server.https = {
     key: { path: resolve(httpsFixtureRoot, 'https.key') },
     cert: { path: resolve(httpsFixtureRoot, 'https.crt') }
   }
@@ -347,15 +359,18 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.logger ??= {}
-      config.server ??= {}
-      // Pin hostname to IPv4 loopback for deterministic test URLs. Without
-      // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
-      // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
-      config.server.hostname ??= '127.0.0.1'
+      const application = getTargetApplication(config.applications)
+      if (application) {
+        application.server ??= {}
+        // Pin hostname to IPv4 loopback for deterministic test URLs. Without
+        // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
+        // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
+        application.server.hostname ??= '127.0.0.1'
 
-      // Assign the port
-      if (typeof port === 'number') {
-        config.server.port = port
+        // Assign the port
+        if (typeof port === 'number') {
+          application.server.port = port
+        }
       }
 
       const debug = process.env.PLT_TESTS_DEBUG === 'true'
@@ -414,7 +429,8 @@ export async function startRuntime (t, runtime, pauseAfterCreation = false, appl
     }
   }
 
-  const url = await runtime.start()
+  const application = getTargetApplication(runtime.getRuntimeConfig(true).applications)
+  const { [`${application.id}:0`]: url } = await runtime.start()
 
   if (pauseAfterCreation) {
     await pause(t, runtime, url, pauseAfterCreation)
@@ -890,7 +906,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           await additionalSetup?.(root, config, args)
         }
 
-        const { hostname: runtimeHost, port: runtimePort } = config.server ?? {}
+        const { hostname: runtimeHost, port: runtimePort } = getTargetApplication(config.applications)?.server ?? {}
 
         // Build
         await buildRuntime(root)
@@ -927,9 +943,8 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
 
   // Create the runtime
   const { runtime, root, config } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
-    // Preserve the hostname already set by prepareRuntime's transform
-    // (127.0.0.1) — only override the port here.
-    config.server = { ...config.server, port }
+    const application = getTargetApplication(config.applications)
+    application.server.port = port
     config.applications[0].workers = { static: 5, dynamic: false }
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
@@ -942,7 +957,7 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Start the runtime
   const url = await startRuntime(t, runtime)
 
-  const protocol = config.server?.https ? 'https' : 'http'
+  const protocol = getTargetApplication(config.applications)?.server?.https ? 'https' : 'http'
   deepStrictEqual(url, `${protocol}://127.0.0.1:${port}`)
 
   // Check that we get the response from different workers

@@ -21,14 +21,14 @@ test('compileCache - runtime starts with compile cache enabled', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
   // Verify the runtime works correctly
-  const res = await request(entryUrl + '/hello')
+  const res = await request(url + '/hello')
   strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   strictEqual(body.hello, 'world')
@@ -48,14 +48,14 @@ test('compileCache - cache directory is created on Node.js 22.1.0+', async t => 
   const cacheDir = join(serviceDir, '.plt', 'compile-cache')
 
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
   // Make a request to ensure the app is running and modules have been loaded
-  const res = await request(entryUrl + '/hello')
+  const res = await request(url + '/hello')
   strictEqual(res.statusCode, 200)
 
   // Note: The compile cache directory may not exist if:

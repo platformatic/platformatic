@@ -55,12 +55,7 @@ export class ReactRouterCapability extends ViteCapability {
     this.subprocessTerminationSignal = 'SIGKILL'
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
+  async _start () {
     const config = this.config
     const reactRouterConfig = await this.#getReactRouterConfig()
 
@@ -75,13 +70,11 @@ export class ReactRouterCapability extends ViteCapability {
       }
 
       if (reactRouterConfig.ssr) {
-        await super._start({ listen })
-
-        return this.#startSSRProduction(listen)
+        return this.#startSSRProduction()
       }
     }
 
-    return super.start({ listen })
+    return super._start()
   }
 
   async build () {
@@ -122,21 +115,7 @@ export class ReactRouterCapability extends ViteCapability {
     return reactRouterConfig ?? {}
   }
 
-  async #startSSRProduction (listen) {
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
-    }
-
+  async #startSSRProduction () {
     const config = this.config
 
     const clientRoot = resolve(this.root, config.reactRouter.outputDirectory, 'client')
@@ -213,6 +192,18 @@ export class ReactRouterCapability extends ViteCapability {
 
     await this.#app.ready()
     await this._collectMetrics()
+
+    if (this.applicationConfig.exposed !== false) {
+      const serverOptions = this.serverConfig
+      const listenOptions = buildListenOptions(serverOptions)
+
+      if (typeof serverOptions?.backlog === 'number') {
+        createServerListener(false, false, { backlog: serverOptions.backlog })
+      }
+
+      await this.#app.listen(listenOptions)
+      this.url = getServerUrl(this.#app.server)
+    }
   }
 
   #handleRequest (handle, req) {

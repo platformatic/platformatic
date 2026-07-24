@@ -38,7 +38,6 @@ test('root workers: missing PLT_WORKERS fails fast', async () => {
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
-    entrypoint: 'svc',
     services: [{ id: 'svc', path: '.' }]
   })
 
@@ -64,7 +63,6 @@ test('root workers: invalid PLT_WORKERS fails fast', async () => {
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
-    entrypoint: 'svc',
     services: [{ id: 'svc', path: '.' }]
   })
 
@@ -89,7 +87,6 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
-    entrypoint: 'svc',
     services: [{ id: 'svc', path: '.' }]
   })
 
@@ -104,7 +101,6 @@ test('service workers: missing PLT_WORKERS fails fast with service context', asy
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
     $schema: schema.$id,
-    entrypoint: 'svc',
     services: [
       {
         id: 'svc',
@@ -124,7 +120,6 @@ test('service workers: valid PLT_WORKERS coerces to number', async () => {
   const cfgPath = join(dir, 'platformatic.runtime.json')
   await writeJSON(cfgPath, {
     $schema: schema.$id,
-    entrypoint: 'svc',
     services: [
       {
         id: 'svc',

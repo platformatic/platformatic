@@ -17,7 +17,7 @@ For instance, to use the `@platformatic/next`, you set the `watt.json` (or `plat
 
 ```js
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
   // ...
 }
 ```
@@ -181,9 +181,8 @@ When you run `npm create wattpm`, you'll be guided through:
 2. **Service Type**: Select the type of service you want to create
 3. **Service Configuration**: Configure service-specific options
 4. **Multi-Service Setup**: Optionally add additional services
-5. **Entry Point**: Choose which service should be exposed (for multi-service projects)
-6. **Package Manager**: Select npm, yarn, or pnpm
-7. **Git Initialization**: Optionally initialize a Git repository
+5. **Package Manager**: Select npm, yarn, or pnpm
+6. **Git Initialization**: Optionally initialize a Git repository
 
 ## Examples
 
@@ -226,7 +225,6 @@ During the interactive setup, you can choose to create multiple services:
 
 - First service: `@platformatic/db` (database API)
 - Second service: `@platformatic/next` (frontend)
-- Choose which service to expose as the main entry point
 
 ## Wrapping Existing Applications
 

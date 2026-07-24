@@ -15,7 +15,7 @@ test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  const { url } = await waitForStart(startProcess)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -29,9 +29,9 @@ test('ps - should show running applications', async t => {
       .map(t => t.trim())
       .filter(t => t))
 
-  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'Directory'])
 
-  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  const main = lines.find(l => l[1] === 'main')
   deepStrictEqual(main[0], startProcess.pid.toString())
   deepStrictEqual(main[2], version)
   ok(main[3].match(/now|(\d+s)/))
@@ -40,7 +40,7 @@ test('ps - should show running applications', async t => {
 test('ps - should support custom sockets', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const socketPath =
-    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(rootDir, 'custom.sock')
+    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
   await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
     config.managementApi = { socket: socketPath }
@@ -49,7 +49,7 @@ test('ps - should support custom sockets', async t => {
   })
 
   const startProcess = wattpm('start', rootDir)
-  const { url } = await waitForStart(startProcess)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -63,9 +63,9 @@ test('ps - should support custom sockets', async t => {
       .map(t => t.trim())
       .filter(t => t))
 
-  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'Directory'])
 
-  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  const main = lines.find(l => l[1] === 'main')
   deepStrictEqual(main[0], startProcess.pid.toString())
   deepStrictEqual(main[2], version)
   ok(main[3].match(/now|(\d+s)/))
@@ -82,7 +82,7 @@ test('ps - should warn when some runtimes error during metadata retrieval', asyn
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  const { url } = await waitForStart(startProcess)
+  await waitForStart(startProcess)
 
   // Create a dummy socket that will reply with an error
   const runtimePID = Math.floor(1e6 + Math.random() * 1e9).toString()
@@ -120,13 +120,13 @@ test('ps - should warn when some runtimes error during metadata retrieval', asyn
         .map(t => t.trim())
         .filter(t => t))
 
-  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
+  deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'Directory'])
 
   ok(psProcess.stdout.includes('Failed to retrieve metadata for runtime with PID ' + runtimePID))
   ok(psProcess.stdout.includes('"code": "PLT_CTR_FAILED_TO_GET_RUNTIME_METADATA"'))
   ok(psProcess.stdout.includes('KABOOM!'))
 
-  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  const main = lines.find(l => l[1] === 'main')
   deepStrictEqual(main[0], startProcess.pid.toString())
   deepStrictEqual(main[2], version)
   ok(main[3].match(/now|(\d+s)/))
@@ -150,9 +150,9 @@ test('applications - should list applications for an application with no workers
       .map(t => t.trim())
       .filter(t => t))
 
-  deepStrictEqual(lines[2], ['Name', 'Type', 'Entrypoint'])
-  deepStrictEqual(lines[4], ['alternative', 'nodejs', 'No'])
-  deepStrictEqual(lines[5], ['main', 'nodejs', 'Yes'])
+  deepStrictEqual(lines[2], ['Name', 'Type'])
+  deepStrictEqual(lines[4], ['alternative', 'nodejs'])
+  deepStrictEqual(lines[5], ['main', 'nodejs'])
 })
 
 test('applications - should list applications for an application with workers information in production mode', async t => {
@@ -173,9 +173,9 @@ test('applications - should list applications for an application with workers in
       .map(t => t.trim())
       .filter(t => t))
 
-  deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
-  deepStrictEqual(lines[4], ['alternative', '1', 'nodejs', 'No'])
-  deepStrictEqual(lines[5], ['main', '1', 'nodejs', 'Yes'])
+  deepStrictEqual(lines[2], ['Name', 'Workers', 'Type'])
+  deepStrictEqual(lines[4], ['alternative', '1', 'nodejs'])
+  deepStrictEqual(lines[5], ['main', '1', 'nodejs'])
 })
 
 test('applications - should complain when a runtime is not found', async t => {
@@ -271,9 +271,6 @@ test('config - should list configuration for the runtime', async t => {
 
   deepStrictEqual(JSON.parse(configProcess.stdout), {
     $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0.json',
-    server: {
-      hostname: '127.0.0.1'
-    },
     logger: {
       captureStdio: true,
       level: 'trace',
@@ -283,7 +280,6 @@ test('config - should list configuration for the runtime', async t => {
         time: 'time'
       }
     },
-    entrypoint: 'main',
     autoload: {
       path: `${resolve(rootDir, 'web')}`,
       exclude: []
@@ -303,7 +299,6 @@ test('config - should list configuration for the runtime', async t => {
         type: '@platformatic/node',
         path: alternativeApplicationDir,
         config: resolve(alternativeApplicationDir, 'watt.json'),
-        entrypoint: false,
         watch: false,
         workers: {
           dynamic: false,
@@ -317,7 +312,6 @@ test('config - should list configuration for the runtime', async t => {
         type: '@platformatic/node',
         path: mainApplicationDir,
         config: resolve(mainApplicationDir, 'watt.json'),
-        entrypoint: true,
         watch: false,
         workers: {
           dynamic: false,

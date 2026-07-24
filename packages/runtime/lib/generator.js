@@ -1,4 +1,3 @@
-import createError from '@fastify/error'
 import {
   createEnvFileTool,
   defaultPackageManager,
@@ -23,44 +22,20 @@ const engines = {
   node: '>=22.19.0'
 }
 
-export const ERROR_PREFIX = 'PLT_RUNTIME_GEN'
-
-const NoApplicationNamedError = createError(
-  `${ERROR_PREFIX}_NO_APPLICATION_FOUND`,
-  "No application named '%s' has been added to this runtime."
-)
-const NoEntryPointError = createError(`${ERROR_PREFIX}_NO_ENTRYPOINT`, 'No entrypoint had been defined.')
-
-function getRuntimeWrappableProperties (skipServer) {
-  const wrappableProperties = {
+function getRuntimeWrappableProperties () {
+  return {
     logger: {
       level: '{PLT_SERVER_LOGGER_LEVEL}'
     },
     managementApi: '{PLT_MANAGEMENT_API}'
   }
-
-  if (!skipServer) {
-    wrappableProperties.server = {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    }
-  }
-
-  return wrappableProperties
 }
 
 function getRuntimeBaseEnvVars (config) {
-  const env = {}
-
-  if (!config.skipServer) {
-    env.PLT_SERVER_HOSTNAME = '127.0.0.1'
-    env.PORT = config.port || 3042
+  return {
+    PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
+    PLT_MANAGEMENT_API: true
   }
-
-  env.PLT_SERVER_LOGGER_LEVEL = config.logLevel || 'info'
-  env.PLT_MANAGEMENT_API = true
-
-  return env
 }
 
 export class RuntimeGenerator extends BaseGenerator {
@@ -73,7 +48,6 @@ export class RuntimeGenerator extends BaseGenerator {
     this.applicationsFolder = opts.applicationsFolder ?? 'applications'
     this.applications = []
     this.existingApplications = []
-    this.entryPoint = null
     this.packageManager = opts.packageManager ?? defaultPackageManager
   }
 
@@ -95,15 +69,6 @@ export class RuntimeGenerator extends BaseGenerator {
     })
 
     application.setRuntime(this)
-  }
-
-  setEntryPoint (entryPoint) {
-    const application =
-      this.existingApplications.includes(entryPoint) || this.applications.find(svc => svc.name === entryPoint)
-    if (!application) {
-      throw new NoApplicationNamedError(entryPoint)
-    }
-    this.entryPoint = application
   }
 
   async generatePackageJson () {
@@ -165,8 +130,6 @@ export class RuntimeGenerator extends BaseGenerator {
 
       const { PLT_ROOT, ...existingEnvironment } = this.existingConfig[kMetadata].env
       this.config.env = existingEnvironment
-      this.config.port = this.config.env.PORT
-      this.entryPoint = this.existingConfig.applications.find(svc => svc.entrypoint)
       this.existingApplications = this.existingConfig.applications.map(s => s.id)
 
       this.updateRuntimeConfig(this.existingConfigRaw)
@@ -190,37 +153,42 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   setApplicationsConfigValues () {
-    this.applications.forEach(({ application }) => {
+    let newApplicationOrdinal = 0
+    this.applications.forEach(({ name, application }) => {
       if (!application.config) {
         // set default config
         application.setConfig()
       }
+      const existingOrdinal = this.existingApplications.indexOf(name)
+      const ordinal = existingOrdinal === -1 ? this.existingApplications.length + newApplicationOrdinal++ : existingOrdinal
+      this.setApplicationPort(application, ordinal)
     })
+  }
+
+  setApplicationPort (application, ordinal) {
+    if (application.config.port === 3042) {
+      application.setConfig({ port: 3042 + ordinal })
+    }
   }
 
   async _getConfigFileContents () {
     const config = {
       $schema: `https://schemas.platformatic.dev/wattpm/${this.platformaticVersion}.json`,
-      entrypoint: this.entryPoint.name,
       watch: true,
       autoload: {
         path: this.config.autoload || this.applicationsFolder,
         exclude: ['docs']
       },
-      ...getRuntimeWrappableProperties(this.config.skipServer)
+      ...getRuntimeWrappableProperties()
     }
 
     return config
   }
 
   async _afterPrepare () {
-    if (!this.entryPoint) {
-      throw new NoEntryPointError()
-    }
     const applicationsEnv = await this.prepareApplicationFiles()
     this.addEnvVars({
       ...this.config.env,
-      ...this.getRuntimeEnv(),
       ...applicationsEnv
     })
 
@@ -258,21 +226,6 @@ export class RuntimeGenerator extends BaseGenerator {
 
   async prepareQuestions () {
     await this.populateFromExistingConfig()
-
-    if (this.existingConfig) {
-      return
-    }
-
-    if (!this.config.skipServer) {
-      // port
-      this.questions.push({
-        type: 'input',
-        name: 'port',
-        default: '3042',
-        message: 'What port do you want to use?',
-        filter: Number
-      })
-    }
   }
 
   setApplicationsDirectory () {
@@ -320,12 +273,6 @@ export class RuntimeGenerator extends BaseGenerator {
 
   setConfigFields () {
     // do nothing, makes no sense
-  }
-
-  getRuntimeEnv () {
-    return {
-      PORT: this.config.port
-    }
   }
 
   async postInstallActions () {
@@ -451,6 +398,7 @@ export class RuntimeGenerator extends BaseGenerator {
         })
       }
       applicationInstance.setConfig(baseConfig)
+      this.setApplicationPort(applicationInstance, allNewApplicationsNames.indexOf(newApplication.name))
       applicationInstance.setConfigFields(newApplication.fields)
 
       const applicationEnvPrefix = `PLT_${applicationInstance.config.envPrefix}`
@@ -494,18 +442,6 @@ export class RuntimeGenerator extends BaseGenerator {
       contents: JSON.stringify(currrentPackageJson, null, 2)
     })
 
-    // set new entrypoint if specified
-    const newEntrypoint = newConfig.entrypoint
-    if (newEntrypoint) {
-      // load platformatic.json runtime config
-      const runtimePkgConfigFileData = JSON.parse(
-        await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8')
-      )
-
-      this.setEntryPoint(newEntrypoint)
-      runtimePkgConfigFileData.entrypoint = newEntrypoint
-      this.updateRuntimeConfig(runtimePkgConfigFileData)
-    }
     await this.writeFiles()
     // save new env
     await envTool.save()
@@ -547,15 +483,6 @@ export class RuntimeGenerator extends BaseGenerator {
       contents,
       tags: ['runtime-env']
     })
-  }
-
-  updateConfigEntryPoint (entrypoint) {
-    // This can return null if the generator was not supposed to modify the config
-    const configObject = this.getRuntimeConfigFileObject()
-    const config = JSON.parse(configObject.contents)
-    config.entrypoint = entrypoint
-
-    this.updateRuntimeConfig(config)
   }
 }
 
@@ -626,7 +553,7 @@ export class WrappedGenerator extends BaseGenerator {
   async #createConfigFile () {
     const config = {
       $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
-      runtime: getRuntimeWrappableProperties(this.config.skipServer)
+      runtime: getRuntimeWrappableProperties()
     }
 
     this.addFile({

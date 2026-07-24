@@ -47,7 +47,7 @@ test('should restart gateway if api has been changed', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -122,7 +122,7 @@ test('should watch api only if it has a url', async t => {
     }
   })
 
-  const gatewayOrigin = await runtime.start()
+  const { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -200,7 +200,7 @@ test('should compose schema after application restart', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {

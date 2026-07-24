@@ -1,4 +1,4 @@
-import { getEvents, isEntrypoint } from '@platformatic/globals'
+import { getEvents } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
 export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
@@ -22,8 +22,7 @@ export function createServerListener (overridePort = true, overrideHost = false,
 
       // Check if we need to override the port only if a static port is being requested
       if (overridePort !== false && overridePort !== 0) {
-        // The user application has requested a specific port, which is not the entrypoint one. Override it.
-        if (options.port !== overridePort && isEntrypoint({ throwOnMissing: false })) {
+        if (options.port !== overridePort) {
           options.port = overridePort
         }
       }

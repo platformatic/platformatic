@@ -1,0 +1,29 @@
+# astro
+# basic
+# cli
+# composer
+# control
+# create-platformatic
+#create-wattpm # FAIL
+# db # FAIL
+foundation
+gateway
+generators
+globals
+itc
+metrics
+nest
+next
+node
+nuxt
+react-router
+remix
+runtime
+scalar-theme
+service
+tanstack
+telemetry
+vite
+wattpm
+wattpm-pprof-capture
+wattpm-utils

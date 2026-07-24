@@ -29,7 +29,7 @@ Before starting, make sure you have:
 
 You will create a runtime with three applications:
 
-1. **gateway** (entrypoint)
+1. **gateway** (public listener)
    - runs `@platformatic/gateway`
    - routes only `GET /_next/image` to `optimizer` using `proxy.routes`; everything else goes to `frontend`
 2. **frontend**
@@ -75,7 +75,7 @@ my-runtime/
 
 In this setup:
 
-- `gateway` is the external-facing entrypoint
+- `gateway` exposes the external-facing server
 - `frontend` is where relative assets are fetched from
 - `optimizer` handles only `/_next/image`
 
@@ -85,8 +85,7 @@ Create `my-runtime/watt.json`:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "gateway",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
   "applications": [
     {
       "id": "gateway",
@@ -94,11 +93,13 @@ Create `my-runtime/watt.json`:
     },
     {
       "id": "frontend",
-      "path": "./web/frontend"
+      "path": "./web/frontend",
+      "exposed": false
     },
     {
       "id": "optimizer",
-      "path": "./web/optimizer"
+      "path": "./web/optimizer",
+      "exposed": false
     }
   ]
 }
@@ -106,9 +107,10 @@ Create `my-runtime/watt.json`:
 
 ### Why this configuration?
 
-- `entrypoint: "gateway"` means incoming runtime traffic goes first to Gateway.
+- Gateway's application-local `server` configuration accepts incoming traffic.
 - Gateway routes by method + path (via `proxy.methods` and `proxy.routes`).
 - `frontend` and `optimizer` are in the same runtime, so service discovery works automatically.
+- `frontend` and `optimizer` are ITC-only; Gateway is the only public listener.
 - `frontend` is reachable from `optimizer` as `http://frontend.plt.local`.
 
 ## 3) Configure Gateway with route-based proxying
@@ -117,7 +119,10 @@ Create `my-runtime/web/gateway/watt.json`:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
+  "server": {
+    "port": 3042
+  },
   "gateway": {
     "applications": [
       {
@@ -276,7 +281,7 @@ From `my-runtime/`, run:
 npx wattpm start
 ```
 
-By default, Runtime listens on `http://127.0.0.1:3042` unless you configure a different host/port.
+The Gateway application listens on `http://127.0.0.1:3042` as configured in its `server` object.
 
 ## 8) Test the optimizer endpoint
 
@@ -318,7 +323,7 @@ A common production setup is:
 
 - one **frontend** Next.js application for pages and APIs
 - one dedicated **optimizer** application
-- one **gateway** entrypoint routing traffic between them
+- one public **gateway** routing traffic between them
 
 Example Gateway routing:
 
@@ -329,7 +334,10 @@ Example Gateway routing:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
+  "server": {
+    "port": 3042
+  },
   "gateway": {
     "applications": [
       {

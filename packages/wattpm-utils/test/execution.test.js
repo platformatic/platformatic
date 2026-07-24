@@ -57,7 +57,7 @@ test('start - should use default folders for resolved applications', async t => 
       started = true
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "resolved"/)
     if (mo) {
       url = mo[1]
       break

@@ -34,7 +34,7 @@ async function testOpenTelemetryMetricsForwarding (t, fixture) {
   process.env.PLT_OTLP_PORT = otlpServer.address().port.toString()
 
   const app = await createRuntime(join(fixturesDir, fixture, 'platformatic.json'))
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()

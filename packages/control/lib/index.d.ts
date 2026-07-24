@@ -29,10 +29,10 @@ export interface RuntimeApplication {
   status: string
   version: string
   localUrl: string
-  entrypoint: boolean
-  url?: string
+  url: string | null
+  urls: string[]
   workers?: number
-  dependencies: Runtime
+  dependencies: string[]
 }
 
 export interface Runtime {
@@ -45,13 +45,12 @@ export interface Runtime {
   projectDir: string
   packageName: string | null
   packageVersion: string | null
-  url: string | null
   platformaticVersion: string
+  urls: Record<string, string>
   startTime?: number
 }
 
 export interface RuntimeApplications {
-  entrypoint: string
   production: boolean
   applications: (RuntimeApplication | RuntimeApplicationBase)[]
 }

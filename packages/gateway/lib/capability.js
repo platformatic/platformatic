@@ -33,16 +33,10 @@ export class GatewayCapability extends ServiceCapability {
     return this.dependencies
   }
 
-  async start () {
-    if (this.url) {
-      return this.url
-    }
+  async _start () {
+    const url = await super._start()
 
-    const url = await super.start()
-
-    // Only register the runtime event handler once. start() can be called
-    // multiple times (first with listen:false, then listen:true) so guard
-    // against duplicate registrations.
+    // Only register the runtime event handler once.
     const itc = getITC({ throwOnMissing: false })
     if (!this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
@@ -52,13 +46,13 @@ export class GatewayCapability extends ServiceCapability {
     return url
   }
 
-  stop () {
+  _stop () {
     const itc = getITC({ throwOnMissing: false })
     if (this.#runtimeEventHandler && itc) {
       itc.removeListener('runtime:event', this.#runtimeEventHandler)
     }
 
-    return super.stop()
+    return super._stop()
   }
 
   registerMeta (meta) {

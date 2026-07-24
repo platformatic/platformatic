@@ -1,6 +1,4 @@
-import { safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, strictEqual } from 'node:assert'
-import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -8,25 +6,20 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
-  const configFile = join(fixturesDir, fixture, 'platformatic-with-entrypoint.json')
-  const config = JSON.parse(await readFile(join(fixturesDir, fixture, 'platformatic.json'), 'utf8'))
-  config.entrypoint = entrypoint
-  await writeFile(configFile, JSON.stringify(config, null, 2))
-
+async function startApplication (t, fixture, applicationId) {
+  const configFile = join(fixturesDir, fixture, 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
-    await safeRemove(configFile)
     await app.close()
   })
 
-  await app.init()
-  return app.start()
+  const { [`${applicationId}:0`]: entryUrl } = await app.start()
+  return entryUrl
 }
 
-test('should strip the runtime base path for an application as an entrypoint', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'service')
+test('should strip the runtime base path for a service application', async t => {
+  const entryUrl = await startApplication(t, 'base-path', 'service')
 
   {
     // Send a request without the base path
@@ -93,8 +86,8 @@ test('should strip the runtime base path for an application as an entrypoint', a
   }
 })
 
-test('should strip the runtime base path for a gateway as an entrypoint', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'composer')
+test('should strip the runtime base path for a gateway application', async t => {
+  const entryUrl = await startApplication(t, 'base-path', 'composer')
 
   {
     // Send a request without the base path
@@ -161,8 +154,8 @@ test('should strip the runtime base path for a gateway as an entrypoint', async 
   }
 })
 
-test('should strip the runtime base path for a node as an entrypoint', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node')
+test('should strip the runtime base path for a node application', async t => {
+  const entryUrl = await startApplication(t, 'base-path', 'node')
 
   {
     // Send a request without the base path
@@ -218,8 +211,8 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
   }
 })
 
-test('should strip the runtime base path for an express as an entrypoint', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'express')
+test('should strip the runtime base path for an express application', async t => {
+  const entryUrl = await startApplication(t, 'base-path', 'express')
 
   {
     // Send a request without the base path
@@ -275,8 +268,8 @@ test('should strip the runtime base path for an express as an entrypoint', async
   }
 })
 
-test('should strip the runtime base path for a nodejs in a child process as an entrypoint', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-child')
+test('should strip the runtime base path for a nodejs application in a child process', async t => {
+  const entryUrl = await startApplication(t, 'base-path', 'node-child')
 
   {
     // Send a request without the base path
@@ -333,7 +326,7 @@ test('should strip the runtime base path for a nodejs in a child process as an e
 })
 
 test('should not strip the runtime base path for a capability that opted-out', async t => {
-  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-no-strip')
+  const entryUrl = await startApplication(t, 'base-path', 'node-no-strip')
 
   {
     const { statusCode, body } = await request(entryUrl, {

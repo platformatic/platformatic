@@ -230,17 +230,19 @@ export function formatEvent (event) {
     .join(', ')
 }
 
-export function getExpectedEvents (entrypoint, workers) {
+export function getExpectedEvents (workers) {
   const start = []
   const stop = []
 
   if (!features.node.reusePort) {
-    start.push({ event: 'application:started', application: entrypoint })
-    stop.push({ event: 'application:stopped', application: entrypoint })
+    for (const application of Object.keys(workers)) {
+      start.push({ event: 'application:started', application })
+      stop.push({ event: 'application:stopped', application })
+    }
   }
 
   for (const [application, count] of Object.entries(workers)) {
-    if (application === entrypoint && !features.node.reusePort) {
+    if (!features.node.reusePort) {
       continue
     }
 

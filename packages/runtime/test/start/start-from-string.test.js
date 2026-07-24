@@ -9,23 +9,23 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 test('can start applications programmatically from string', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'serviceApp:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
   {
-    // Basic URL on the entrypoint.
-    const res = await request(entryUrl)
+    // Basic URL on the application.
+    const res = await request(url)
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'hello123' })
   }
 
   {
-    // URL on the entrypoint that uses internal message passing.
-    const res = await request(entryUrl + '/upstream')
+    // URL on the application that uses internal message passing.
+    const res = await request(url + '/upstream')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'world' })

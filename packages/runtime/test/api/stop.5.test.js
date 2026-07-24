@@ -15,7 +15,7 @@ test('should stop accepting new request immediately under high load', async t =>
     app.close()
   })
 
-  const url = await app.start()
+  const { 'composerApp:0': url } = await app.start()
   let active = true
   const errors = []
 

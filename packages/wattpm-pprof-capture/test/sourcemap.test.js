@@ -109,7 +109,7 @@ async function createApp (t, config = 'fixtures/sourcemap-test/platformatic.json
     await app.close()
   })
 
-  const url = await app.start()
+  const { 'service:0': url } = await app.start()
 
   // Wait for services and handlers to register
   await new Promise(resolve => setTimeout(resolve, 200))

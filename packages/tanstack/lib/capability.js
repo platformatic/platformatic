@@ -53,25 +53,17 @@ export class TanstackCapability extends ViteCapability {
     this.subprocessTerminationSignal = 'SIGKILL'
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
+  async _start () {
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
     if (command) {
       return this.startWithCommand(command)
     } else if (!this.isProduction) {
-      return super.start({ listen })
+      return super._start()
     }
 
-    await this.#startProduction({ listen })
+    await this.#startProduction()
   }
 
   async #startProduction () {
@@ -114,9 +106,9 @@ export class TanstackCapability extends ViteCapability {
     return this.url
   }
 
-  async stop () {
+  async _stop () {
     const hasChildrenManager = !!this.childManager
-    await super.stop()
+    await super._stop()
 
     // ViteCapability.stop already stops child processs
     if (hasChildrenManager || !this.isProduction) {

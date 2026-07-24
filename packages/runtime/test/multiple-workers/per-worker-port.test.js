@@ -47,20 +47,14 @@ async function getOccupiedPortWithAvailablePreviousPort () {
 
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount } = {}
+  { application = 'service', workerCount = 5, maxWorkerCount = workerCount } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
   await updateConfigFile(configFile, contents => {
-    contents.server = {
-      hostname: HOST,
-      port: basePort,
-      portAssignment: 'perWorkerIncrement'
-    }
     contents.autoload = undefined
-    contents.entrypoint = application
 
     let applicationConfig = contents.services.find(service => service.id === application)
     if (!applicationConfig) {
@@ -73,10 +67,16 @@ async function preparePerWorkerPortRuntime (
     }
 
     applicationConfig.workers = workerCount
+    applicationConfig.portEnv = 'SERVICE_PORT'
+    applicationConfig.env = { SERVICE_PORT: String(basePort) }
   })
 
   if (application === 'service') {
     await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
+      contents.server = {
+        hostname: HOST,
+        portAssignment: 'perWorkerIncrement'
+      }
       contents.plugins.paths.push('./crash-plugin.js')
     })
   }
@@ -90,7 +90,7 @@ async function preparePerWorkerPortRuntime (
   return { app, basePort }
 }
 
-async function requestWorkerPort (port, expectedFrom = 'node') {
+async function requestWorkerPort (port, expectedFrom = 'service') {
   const res = await request(`http://${HOST}:${port}/hello`, {
     headersTimeout: 2000,
     bodyTimeout: 2000
@@ -100,11 +100,12 @@ async function requestWorkerPort (port, expectedFrom = 'node') {
   strictEqual(res.statusCode, 200)
   strictEqual(json.from, expectedFrom)
   strictEqual(res.headers['x-plt-port'], port.toString())
+  strictEqual(res.headers['x-plt-port-env'], port.toString())
 
   return Number(res.headers['x-plt-worker-id'])
 }
 
-async function assertPortsRespond (basePort, offsets, expectedFrom = 'node') {
+async function assertPortsRespond (basePort, offsets, expectedFrom = 'service') {
   const workerIds = []
 
   for (const offset of offsets) {
@@ -114,7 +115,7 @@ async function assertPortsRespond (basePort, offsets, expectedFrom = 'node') {
   return workerIds
 }
 
-async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node') {
+async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'service') {
   for (let attempt = 0; attempt < 50; attempt++) {
     try {
       const workerId = await requestWorkerPort(port, expectedFrom)
@@ -184,7 +185,7 @@ test(
   }
 )
 
-test('assigns one incremental port per entrypoint worker', async t => {
+test('assigns one incremental port per application worker', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
   await app.start()
@@ -201,11 +202,11 @@ test('assigns new incremental ports when scaling up and stops highest ports when
 
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 
-  let report = await app.updateApplicationsResources([{ application: 'node', workers: 7 }])
+  let report = await app.updateApplicationsResources([{ application: 'service', workers: 7 }])
   strictEqual(report.length, 1)
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4, 5, 6]), [0, 1, 2, 3, 4, 5, 6])
 
-  report = await app.updateApplicationsResources([{ application: 'node', workers: 3 }])
+  report = await app.updateApplicationsResources([{ application: 'service', workers: 3 }])
   strictEqual(report.length, 1)
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 1, 2])
 
@@ -221,7 +222,7 @@ test('preserves incremental ports when restarting an application', async t => {
   await app.start()
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 
-  await app.restartApplication('node')
+  await app.restartApplication('service')
 
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
 })
@@ -234,7 +235,7 @@ test('preserves incremental ports when replacing workers after a health update',
 
   await app.updateApplicationsResources([
     {
-      application: 'node',
+      application: 'service',
       workers: 5,
       health: { maxHeapTotal: '512MB' }
     }

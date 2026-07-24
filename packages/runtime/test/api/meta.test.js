@@ -1,4 +1,4 @@
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from '../helpers.js'
@@ -17,14 +17,13 @@ test('should get meta for db applications in runtime schema', async t => {
 
   const dbMeta = await app.getApplicationMeta('db-app')
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
-  deepStrictEqual(dbMeta, {
-    gateway: {
-      needsRootTrailingSlash: false,
-      prefix: '/db-app/',
-      wantsAbsoluteUrls: false,
-      tcp: false,
-      url: undefined
-    },
-    connectionStrings: [`sqlite://${database}`]
+  deepStrictEqual(dbMeta.connectionStrings, [`sqlite://${database}`])
+  deepStrictEqual(dbMeta.gateway, {
+    needsRootTrailingSlash: false,
+    prefix: '/db-app/',
+    wantsAbsoluteUrls: false,
+    tcp: true,
+    url: dbMeta.gateway.url
   })
+  strictEqual(new URL(dbMeta.gateway.url).hostname, '127.0.0.1')
 })

@@ -75,9 +75,6 @@
         }
       ]
     },
-    "entrypoint": {
-      "type": "string"
-    },
     "basePath": {
       "type": "string"
     },
@@ -131,8 +128,13 @@
               "config": {
                 "type": "string"
               },
-              "useHttp": {
-                "type": "boolean"
+              "exposed": {
+                "type": "boolean",
+                "default": true
+              },
+              "portEnv": {
+                "type": "string",
+                "default": "PORT"
               },
               "reuseTcpPorts": {
                 "type": "boolean",
@@ -563,8 +565,13 @@
             "type": "string",
             "default": "main"
           },
-          "useHttp": {
-            "type": "boolean"
+          "exposed": {
+            "type": "boolean",
+            "default": true
+          },
+          "portEnv": {
+            "type": "string",
+            "default": "PORT"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -993,8 +1000,13 @@
             "type": "string",
             "default": "main"
           },
-          "useHttp": {
-            "type": "boolean"
+          "exposed": {
+            "type": "boolean",
+            "default": true
+          },
+          "portEnv": {
+            "type": "string",
+            "default": "PORT"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -1423,8 +1435,13 @@
             "type": "string",
             "default": "main"
           },
-          "useHttp": {
-            "type": "boolean"
+          "exposed": {
+            "type": "boolean",
+            "default": true
+          },
+          "portEnv": {
+            "type": "string",
+            "default": "PORT"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -2061,133 +2078,6 @@
       },
       "default": {},
       "additionalProperties": true
-    },
-    "server": {
-      "type": "object",
-      "properties": {
-        "hostname": {
-          "type": "string"
-        },
-        "port": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "portAssignment": {
-          "type": "string",
-          "enum": [
-            "shared",
-            "perWorkerIncrement"
-          ],
-          "description": "Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0)."
-        },
-        "backlog": {
-          "type": "integer",
-          "description": "The maximum length of the queue of pending connections"
-        },
-        "http2": {
-          "type": "boolean"
-        },
-        "https": {
-          "type": "object",
-          "properties": {
-            "allowHTTP1": {
-              "type": "boolean"
-            },
-            "key": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "resolvePath": true
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "path": {
-                            "type": "string",
-                            "resolvePath": true
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            "cert": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "resolvePath": true
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "path": {
-                            "type": "string",
-                            "resolvePath": true
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            "requestCert": {
-              "type": "boolean"
-            },
-            "rejectUnauthorized": {
-              "type": "boolean"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "key",
-            "cert"
-          ]
-        }
-      },
-      "additionalProperties": false
     },
     "reuseTcpPorts": {
       "type": "boolean",

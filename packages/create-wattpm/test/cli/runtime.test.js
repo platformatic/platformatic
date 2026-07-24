@@ -1,4 +1,5 @@
 import { deepStrictEqual, equal } from 'node:assert'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
@@ -24,8 +25,6 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'application2' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'select', question: 'Which application should be exposed?', reply: 'application1' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -43,6 +42,9 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   // Here check the generated applications
   const applications = await getApplications(join(root, 'web'))
   deepStrictEqual(applications, ['application1', 'application2'])
+  const env = await readFile(join(root, '.env'), 'utf-8')
+  equal(env.includes('PLT_APPLICATION1_PORT=3042'), true)
+  equal(env.includes('PLT_APPLICATION2_PORT=3043'), true)
   const baseApplication0Dir = join(root, 'web', applications[0])
   equal(await isFileAccessible(join(baseApplication0Dir, 'watt.json')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'README.md')), true)
@@ -69,7 +71,6 @@ test('Add another application to an existing application', async t => {
       { type: 'input', question: 'What is the name of the application?', reply: 'application1' },
       { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
       { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-      { type: 'input', question: 'What port do you want to use?', reply: '3042' },
       { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
     ])
 
@@ -102,8 +103,7 @@ test('Add another application to an existing application', async t => {
       { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
       { type: 'input', question: 'What is the name of the application?', reply: 'application2' },
       { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
-      { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-      { type: 'select', question: 'Which application should be exposed?', reply: 'application1' }
+      { type: 'select', question: 'Do you want to create another application?', reply: 'no' }
     ])
 
     // The actions must match IN ORDER
@@ -112,6 +112,9 @@ test('Add another application to an existing application', async t => {
     // Here check the generated applications
     const applications = await getApplications(join(root, 'web'))
     deepStrictEqual(applications, ['application1', 'application2'])
+    const env = await readFile(join(root, '.env'), 'utf-8')
+    equal(env.includes('PLT_APPLICATION1_PORT=3042'), true)
+    equal(env.includes('PLT_APPLICATION2_PORT=3043'), true)
     const applicationRoot = join(root, 'web', applications[1])
     equal(await isFileAccessible(join(applicationRoot, 'watt.json')), true)
     equal(await isFileAccessible(join(applicationRoot, 'README.md')), true)

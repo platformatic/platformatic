@@ -24,7 +24,7 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
+import { ApplicationAlreadyStartedError, InvalidArgumentError, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
 import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
@@ -86,7 +86,6 @@ export class Controller extends EventEmitter {
       workerId: this.workerId,
       directory: this.applicationConfig.path,
       dependencies: this.applicationConfig.dependencies,
-      isEntrypoint: this.applicationConfig.entrypoint,
       isProduction: this.applicationConfig.isProduction,
       telemetryConfig: this.applicationConfig.telemetry,
       loggerConfig: runtimeConfig.logger,
@@ -145,10 +144,12 @@ export class Controller extends EventEmitter {
           onMissingEnv: this.#context.fetchApplicationUrl,
           strictEnv: this.#context.strictEnv
         })
+        this.#configurePort(unvalidatedConfig.server)
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
         // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
+        this.#configurePort()
         const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
@@ -189,6 +190,11 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.init?.()
+
+      if (this.applicationConfig.exposed !== false && this.#context.serverConfig) {
+        this.capability.serverConfig.port = this.#context.serverConfig.port
+      }
+
       this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
@@ -198,7 +204,6 @@ export class Controller extends EventEmitter {
       return
     }
 
-    this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
     if (this.#watch) {
@@ -215,17 +220,14 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.applicationConfig.useHttp
-
     try {
-      await this.capability.start({ listen })
+      await this.capability.start()
       if (refreshGlobalDispatcher()) {
         this.#updateDispatcher()
       }
-      this.#listening = listen
+      this.#listening = this.applicationConfig.exposed !== false
       /* c8 ignore next 5 */
     } catch (err) {
-      this.#updateCapabilityStatus('start:error')
       this.emit('start:error', err)
 
       this.capability.log({ message: err.message, level: 'debug' })
@@ -236,8 +238,11 @@ export class Controller extends EventEmitter {
     this.#started = true
     this.#starting = false
 
-    this.#updateCapabilityStatus('started')
     this.emit('started')
+  }
+
+  getUrl () {
+    return this.capability.getUrl()
   }
 
   async stop (force = false, dependents = []) {
@@ -246,9 +251,6 @@ export class Controller extends EventEmitter {
     }
 
     this.emit('stopping')
-    // Do not update status of the capability to "stopping" here otherwise
-    // if stop is called before start is finished, the capability will not
-    // be able to wait for start to finish and it will create a race condition.
 
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
@@ -258,17 +260,7 @@ export class Controller extends EventEmitter {
     this.#starting = false
     this.#listening = false
 
-    this.#updateCapabilityStatus('stopped')
     this.emit('stopped')
-  }
-
-  async listen () {
-    // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
-      return
-    }
-
-    await this.capability.start({ listen: true })
   }
 
   async getMetrics ({ format }) {
@@ -397,13 +389,36 @@ export class Controller extends EventEmitter {
     })
   }
 
-  #updateCapabilityStatus (status) {
-    if (typeof this.capability.updateStatus === 'function') {
-      this.capability.updateStatus(status)
-    } else {
-      // This is horrible but needed for backward compatibility
-      this.capability.status = status
-      this.capability.emit(status)
+  #configurePort (serverConfig) {
+    if (this.applicationConfig.exposed === false || !workerData?.worker || !this.#context.serverConfig) {
+      return
     }
+
+    const effectiveServerConfig = { ...this.#context.serverConfig, ...serverConfig }
+    const portEnv = this.applicationConfig.portEnv ?? 'PORT'
+    const configuredPort = Number(workerData.worker.portOverride ?? effectiveServerConfig.port)
+    const environmentPort = Number(process.env[portEnv])
+    const basePort =
+      Number.isInteger(configuredPort) && configuredPort > 0
+        ? configuredPort
+        : Number.isInteger(environmentPort) && environmentPort >= 0
+          ? environmentPort
+          : Number.isInteger(configuredPort) && configuredPort >= 0
+            ? configuredPort
+            : 0
+    if (effectiveServerConfig.portAssignment === 'perWorkerIncrement' && basePort <= 0) {
+      throw new InvalidArgumentError(
+        `server.port or ${portEnv} must be a positive port when server.portAssignment is "perWorkerIncrement"`
+      )
+    }
+
+    const port = effectiveServerConfig.portAssignment === 'perWorkerIncrement' ? basePort + workerData.worker.portOffset : basePort
+
+    if (port > 65535) {
+      throw new InvalidArgumentError('server.portAssignment "perWorkerIncrement" exceeds the maximum TCP port')
+    }
+
+    process.env[portEnv] = String(port)
+    this.#context.serverConfig = { ...effectiveServerConfig, port }
   }
 }

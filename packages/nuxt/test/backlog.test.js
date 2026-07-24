@@ -75,7 +75,7 @@ for (const [env, options] of Object.entries(envs)) {
           config.server.backlog = 100
         })
 
-        config.applications[0].useHttp = true
+        config.applications[0].exposed = true
       }
     })
 

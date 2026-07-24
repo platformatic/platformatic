@@ -25,7 +25,6 @@ test('create - should create a new project using watt.json by default', async t 
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -44,10 +43,6 @@ test('create - should create a new project using watt.json by default', async t 
       level: '{PLT_SERVER_LOGGER_LEVEL}'
     },
     managementApi: '{PLT_MANAGEMENT_API}',
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    },
     watch: true
   })
 })
@@ -66,8 +61,6 @@ test('create - should create a new project with two applications', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'select', question: 'Which application should be exposed?', reply: 'alternate' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -86,12 +79,7 @@ test('create - should create a new project with two applications', async t => {
       level: '{PLT_SERVER_LOGGER_LEVEL}'
     },
     managementApi: '{PLT_MANAGEMENT_API}',
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    },
-    watch: true,
-    entrypoint: 'alternate'
+    watch: true
   })
 })
 
@@ -105,7 +93,6 @@ test('create - should not install wattpm as it is already available', async t =>
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -127,7 +114,6 @@ test('create - should use a custom configuration file', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -146,67 +132,8 @@ test('create - should use a custom configuration file', async t => {
       level: '{PLT_SERVER_LOGGER_LEVEL}'
     },
     managementApi: '{PLT_MANAGEMENT_API}',
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    },
     watch: true
   })
-})
-
-test('create - should correctly set the chosen user entrypoint', async t => {
-  const temporaryFolder = await createTemporaryDirectory(t, 'create')
-
-  const userInputHandler1 = await setupUserInputHandler(t, [
-    { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
-  ])
-
-  await wattpmUtils('create', '-s', {
-    cwd: temporaryFolder,
-    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler1 }
-  })
-
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    autoload: {
-      exclude: ['docs'],
-      path: 'web'
-    },
-    logger: {
-      level: '{PLT_SERVER_LOGGER_LEVEL}'
-    },
-    managementApi: '{PLT_MANAGEMENT_API}',
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    },
-    watch: true
-  })
-
-  const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
-    { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
-    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'select', question: 'Which application should be exposed?', reply: 'alternate' }
-  ])
-
-  await wattpmUtils('create', '-P', 'pnpm', '-s', {
-    cwd: temporaryFolder,
-    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler2 }
-  })
-
-  deepStrictEqual(
-    JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')).entrypoint,
-    'alternate'
-  )
 })
 
 test('create - should create a new project using a different package manager', async t => {
@@ -218,7 +145,6 @@ test('create - should create a new project using a different package manager', a
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -242,7 +168,6 @@ test('create - should support providing capability via command line', async t =>
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -329,7 +254,7 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
       logger: {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       },
-      managementApi: '{PLT_MANAGEMENT_API}',
+      managementApi: '{PLT_MANAGEMENT_API}'
     }
   })
 })
@@ -481,7 +406,6 @@ test('create - correctly write package.json and watt.json when importing a local
     { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
     { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -516,7 +440,6 @@ test('create - should not use a URL when importing a local application within th
     { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
     { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -535,10 +458,6 @@ test('create - should not use a URL when importing a local application within th
       level: '{PLT_SERVER_LOGGER_LEVEL}'
     },
     managementApi: '{PLT_MANAGEMENT_API}',
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}'
-    },
     web: [
       {
         id: 'main',

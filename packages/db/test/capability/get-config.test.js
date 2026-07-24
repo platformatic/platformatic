@@ -43,10 +43,11 @@ test('get application config via capability api', async t => {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
-      logger: {
-        level: 'fatal'
-      },
-      pluginTimeout: 60000
+        logger: {
+          level: 'fatal'
+        },
+        pluginTimeout: 60000,
+        trustProxy: true
     },
     watch: {
       enabled: false

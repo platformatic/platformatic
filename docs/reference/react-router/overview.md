@@ -34,9 +34,9 @@ Create a `watt.json` in the root folder of your application with the following c
 }
 ```
 
-## Using when the entrypoint is a Platformatic Gateway
+## Using behind a Platformatic Gateway
 
-To properly work when using with in application where the entrypoint is a Platformatic Gateway, you need to adjust your `react-router.config.ts` file to use the Platformatic base path:
+When exposing the application through a Platformatic Gateway, adjust your `react-router.config.ts` file to use the Platformatic base path:
 
 ```typescript
 import type { Config } from '@react-router/dev/config'
@@ -99,11 +99,11 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
 ## Architecture
 
-When starting React Router in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
+Runtime-managed React Router capabilities are exposed by default. Set `applications[].exposed` to `false` to keep the capability ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured. An application that uses the `commands` property is responsible for starting its own server.
 
 ## HTTPS
 
-When a React Router application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this React Router capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 ```json
 {
@@ -115,10 +115,6 @@ When a React Router application is the Watt entrypoint, configure HTTPS in the r
   }
 }
 ```
-
-In development mode, Platformatic forwards the HTTPS options to the Vite development server used by React Router. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves SSR applications, or for the static server used by non-SSR builds.
-
-If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ## Configuration
 

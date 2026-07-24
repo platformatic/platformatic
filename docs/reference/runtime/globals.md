@@ -72,7 +72,6 @@ The default export is `getGlobal`.
 | `getApplicationId(options?)` | Returns the application id as a string. |
 | `getWorkerId(options?)` | Returns the current application worker id as a number or string. |
 | `getRoot(options?)` | Returns the application root directory as a string. |
-| `isEntrypoint(options?)` | Returns a boolean indicating whether the application is the runtime entrypoint. |
 | `getHost(options?)` | Returns the application host as a string. |
 | `getPort(options?)` | Returns the application port as a number. |
 | `getBasePath(options?)` | Returns the application base path in the gateway as a string, or `null` when no base path is configured. |
@@ -146,7 +145,7 @@ messaging.handle('time', async ({ offset }) => {
 ```
 
 ```js
-// web/entrypoint/index.js
+// web/api/index.js
 import { getMessaging } from '@platformatic/globals'
 
 const messaging = getMessaging()

@@ -60,7 +60,6 @@ test('BaseContext interface', () => {
   expect({}).type.toBeAssignableTo<BaseContext>();
   expect({
     applicationId: 'test-app',
-    isEntrypoint: true,
     isProduction: false,
     isStandalone: true,
     directory: '/path/to/dir',

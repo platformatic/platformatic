@@ -17,8 +17,7 @@ import {
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
-  InvalidArgumentError,
-  InvalidEntrypointError
+  InvalidArgumentError
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
@@ -141,17 +140,6 @@ export async function wrapInRuntimeConfig (config, context) {
     // on purpose, the package.json might be missing
   }
 
-  // Carry over only the server properties that the user actually set, so
-  // we do not end up with a `{ hostname: undefined, ... }` object that then
-  // gets populated by schema defaults or trips truthy checks downstream.
-  const server = {}
-  if (config.server) {
-    for (const key of ['hostname', 'port', 'http2', 'https']) {
-      if (config.server[key] !== undefined) {
-        server[key] = config.server[key]
-      }
-    }
-  }
   const production = context?.isProduction ?? context?.production
 
   const runtimeConfig = config.runtime ?? {}
@@ -160,10 +148,8 @@ export async function wrapInRuntimeConfig (config, context) {
   /* c8 ignore next */
   const wrapped = {
     $schema: schema.$id,
-    ...(Object.keys(server).length > 0 ? { server } : {}),
     watch: !production,
     ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
-    entrypoint: applicationId,
     applications: [
       {
         id: applicationId,
@@ -247,10 +233,13 @@ export async function prepareApplication (config, application, defaultWorkers) {
       let pkg
 
       if (application.config) {
-        const config = await loadConfiguration(application.config)
-        pkg = await loadConfigurationModule(application.path, config)
+        const applicationConfig = await loadConfiguration(application.config)
+        pkg = await loadConfigurationModule(application.path, applicationConfig)
 
-        application.type = extractModuleFromSchemaUrl(config, true).module
+        application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
+        if (applicationConfig.server) {
+          application.server = applicationConfig.server
+        }
         application.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
         const { moduleName, capability } = await importCapabilityAndConfig(application.path)
@@ -280,7 +269,6 @@ export async function prepareApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
   parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
-  application.entrypoint = application.id === config.entrypoint
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
 
@@ -419,51 +407,12 @@ export async function transform (config, _, context) {
   config.inspectorOptions = undefined
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
-  let hasValidEntrypoint = false
-
   // Root-level workers
   parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
-    const application = await prepareApplication(config, applications[i], defaultWorkers)
-
-    if (application.entrypoint) {
-      hasValidEntrypoint = true
-    }
-  }
-
-  // If there is no entrypoint, autodetect one
-  if (!config.entrypoint) {
-    // If there is only one application, it becomes the entrypoint
-    if (applications.length === 1) {
-      applications[0].entrypoint = true
-      config.entrypoint = applications[0].id
-      hasValidEntrypoint = true
-    } else {
-      // Search if exactly application uses @platformatic/gateway
-      const gateways = []
-
-      for (const application of applications) {
-        if (!application.config) {
-          continue
-        }
-
-        if (application.type === '@platformatic/gateway') {
-          gateways.push(application.id)
-        }
-      }
-
-      if (gateways.length === 1) {
-        applications.find(s => s.id === gateways[0]).entrypoint = true
-        config.entrypoint = gateways[0]
-        hasValidEntrypoint = true
-      }
-    }
-  }
-
-  if (!hasValidEntrypoint && config.entrypoint && !context.allowMissingEntrypoint) {
-    throw new InvalidEntrypointError(config.entrypoint)
+    await prepareApplication(config, applications[i], defaultWorkers)
   }
 
   if (typeof config.metrics === 'boolean') {

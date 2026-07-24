@@ -1,13 +1,50 @@
 import { loadConfigurationFile } from '@platformatic/foundation'
+import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { deepStrictEqual, ok } from 'node:assert'
-import { on } from 'node:events'
 import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import split2 from 'split2'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { ensureDependencies, isWindows, prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, waitForStart, wattpm } from './helper.js'
+
+async function waitForStatus (url, statusCode) {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      const res = await request(url)
+      if (res.statusCode === statusCode) {
+        return res
+      }
+
+      await res.body.dump()
+    } catch {
+      // The composer listener is briefly unavailable while it reloads.
+    }
+    await sleep(100)
+  }
+
+  throw new Error(`Expected ${url} to return ${statusCode}`)
+}
+
+async function getApplicationUrl () {
+  const client = new RuntimeApiClient()
+  try {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const [runtime] = await getMatchingRuntime(client, [])
+      const url = Object.entries(runtime.urls).find(([workerId]) => workerId.startsWith('composer:'))?.[1]
+      if (url) {
+        return url
+      }
+
+      await sleep(100)
+    }
+  } finally {
+    await client.close()
+  }
+
+  throw new Error('Composer URL was not published after restart')
+}
 
 test('applications:add - should add application to an existing app', { skip: isWindows }, async t => {
   const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, 'watt-1-only.json')
@@ -32,7 +69,7 @@ test('applications:add - should add application to an existing app', { skip: isW
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-1-only.json', rootDir)
-  let { url } = await waitForStart(startProcess)
+  let { url } = await waitForStart(startProcess, 'composer')
 
   // Verify that the routes work properly
   {
@@ -49,17 +86,8 @@ test('applications:add - should add application to an existing app', { skip: isW
   // Now add the application
   const addProcess = await wattpm('applications:add', 'add.json')
   ok(addProcess.stdout.includes('Successfully added 1 application to the application.'))
-
-  // Wait for the entrypoint to restart
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
-
-    const mo = parsed.msg?.match(/ listening at (.+)/)
-    if (mo) {
-      url = mo[1]
-      break
-    }
-  }
+  await sleep(1000)
+  url = await getApplicationUrl()
 
   // Verify that the new application is running
   {
@@ -69,7 +97,7 @@ test('applications:add - should add application to an existing app', { skip: isW
   }
 
   {
-    const res = await request(url + '/application-2/hello')
+    const res = await waitForStatus(url + '/application-2/hello', 200)
     deepStrictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { from: 'application-2' })
   }
@@ -98,7 +126,7 @@ test('applications:add - should add application to an existing app and save chan
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-1-only.json', rootDir)
-  await waitForStart(startProcess)
+  await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json')
@@ -106,6 +134,14 @@ test('applications:add - should add application to an existing app and save chan
 
   const config = await loadConfigurationFile(resolve(rootDir, 'watt-1-only.json'))
   deepStrictEqual(config.applications, [
+    {
+      id: 'composer',
+      path: './services/composer',
+      config: 'platformatic.json',
+      server: {
+        hostname: '127.0.0.1'
+      }
+    },
     {
       id: 'application-2',
       path: './services/application-2'
@@ -138,7 +174,7 @@ test('applications:add - supports both JSON file and paths', async t => {
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-1-only.json', rootDir)
-  await waitForStart(startProcess)
+  await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json', './services/application-3')
@@ -146,6 +182,14 @@ test('applications:add - supports both JSON file and paths', async t => {
 
   const config = await loadConfigurationFile(resolve(rootDir, 'watt-1-only.json'))
   deepStrictEqual(config.applications, [
+    {
+      id: 'composer',
+      path: './services/composer',
+      config: 'platformatic.json',
+      server: {
+        hostname: '127.0.0.1'
+      }
+    },
     {
       id: 'application-2',
       path: './services/application-2',
@@ -170,7 +214,7 @@ test('applications:add - fails if a path is not valid', async t => {
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-1-only.json', rootDir)
-  await waitForStart(startProcess)
+  await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json', { reject: false })
@@ -194,7 +238,7 @@ test('applications:add - fails if a path contains invalid JSON', async t => {
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-1-only.json', rootDir)
-  await waitForStart(startProcess)
+  await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json', { reject: false })
@@ -222,7 +266,7 @@ test('applications:remove - should remove applications from an existing app', { 
 
   // Start the application
   const startProcess = wattpm('start', '-c', 'watt-all.json', rootDir)
-  let { url } = await waitForStart(startProcess)
+  let { url } = await waitForStart(startProcess, 'composer')
 
   // Verify that the routes work properly
   {
@@ -246,18 +290,8 @@ test('applications:remove - should remove applications from an existing app', { 
   // Now add the application
   const removeProcess = await wattpm('applications:remove', 'application-2', 'application-3')
   ok(removeProcess.stdout.includes('Successfully removed 2 applications from the application.'))
-
-  // Wait for the entrypoint to restart
-
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
-
-    const mo = parsed.msg?.match(/ listening at (.+)/)
-    if (mo) {
-      url = mo[1]
-      break
-    }
-  }
+  await sleep(1000)
+  url = await getApplicationUrl()
 
   // Verify that the application-1 not running anymore
   {
@@ -267,12 +301,12 @@ test('applications:remove - should remove applications from an existing app', { 
   }
 
   {
-    const res = await request(url + '/application-2/hello')
+    const res = await waitForStatus(url + '/application-2/hello', 404)
     deepStrictEqual(res.statusCode, 404)
   }
 
   {
-    const res = await request(url + '/application-3/hello')
+    const res = await waitForStatus(url + '/application-3/hello', 404)
     deepStrictEqual(res.statusCode, 404)
   }
 })
@@ -291,7 +325,7 @@ for (const section of ['applications', 'services', 'web']) {
 
     // Start the application
     const startProcess = wattpm('start', '-c', configFile, rootDir)
-    await waitForStart(startProcess)
+    await waitForStart(startProcess, 'composer')
 
     // Now add the application
     const removeProcess = await wattpm('applications:remove', '-s', 'application-2')

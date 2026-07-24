@@ -1,7 +1,7 @@
+import type { JSONSchemaType } from 'ajv'
 import type { ChildProcess } from 'node:child_process'
 import type { Server } from 'node:net'
 import type { URL } from 'node:url'
-import type { JSONSchemaType } from 'ajv'
 import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
@@ -20,7 +20,6 @@ type HealthCheck = () => boolean | Promise<boolean> | HealthCheckResult | Promis
 
 export type BaseContext = Partial<{
   applicationId: string
-  isEntrypoint: boolean
   isProduction: boolean
   isStandalone: boolean
   directory: string
@@ -151,6 +150,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   root: string
   config: Config
   context: Options
+  applicationConfig: Record<string, unknown>
   standardStreams: Record<string, NodeJS.WritableStream>
   applicationId?: string
   workerId: number
@@ -160,7 +160,6 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   graphqlSchema: unknown
   connectionString: string | null
   basePath: string | null
-  isEntrypoint?: boolean
   isProduction?: boolean
   dependencies: string[]
   customHealthCheck: HealthCheck | null

@@ -22,7 +22,6 @@ test('Creates a Platformatic DB application with no migrations', async t => {
     { type: 'select', question: 'Do you want to create default migrations?', reply: 'no' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 

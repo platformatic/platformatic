@@ -25,12 +25,11 @@ The following configuration file can be used to start a new Platformatic Runtime
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
   "autoload": {
     "path": "./packages",
     "exclude": ["docs"]
-  },
-  "entrypoint": "entrypointApp"
+  }
 }
 ```
 
@@ -41,11 +40,40 @@ or as a Platformatic Runtime application. Runtime application enables certain co
 
 ## Inter-application communication
 
-Platformatic Runtime allows multiple microservice applications to run
-within a single process. When an entrypoint is configured or automatically detected,
-only the entrypoint binds to an operating system port and can be reached from outside
-the runtime. If no entrypoint is configured or detected, the runtime starts without an
-external application URL.
+Platformatic Runtime allows multiple microservice applications to run within a single process. A
+runtime-managed capability is exposed by default and binds to an operating system port. Set an
+application's `exposed` option to `false` to keep it ITC-only while retaining runtime injection and
+`.plt.local` communication.
+
+Each capability configures its listener in its own `server` object. When that object omits `port`, the
+runtime uses the fallback environment variable named by `portEnv`, which defaults to `PORT`.
+Applications that use the same fallback port environment variable must override it with a distinct value:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
+  "applications": [
+    {
+      "id": "api",
+      "path": "./applications/api",
+      "exposed": false
+    },
+    {
+      "id": "gateway",
+      "path": "./applications/gateway",
+      "env": { "PORT": 3043 }
+    }
+  ]
+}
+```
+
+The Gateway configuration can continue to use `"port": "{PORT}"`. Generated Watt Service, Gateway,
+and DB applications use an application-specific `PORT` variable. Set `portEnv` to another name, such
+as `HTTP_PORT`, when an application uses a different fallback environment variable.
+
+The runtime can control listeners created by managed capabilities. It cannot enforce `exposed: false`
+for a black-box Node.js application that calls `listen()` itself; that application remains responsible
+for whether and where it listens.
 
 Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
@@ -113,9 +141,5 @@ This means that `worker.isMainThread` will return `false` and there are some lim
 The application runtime configuration is accessible via `workerData` and the typed getters from [`@platformatic/globals`](./globals.md), which allows bypassing such limitations.
 
 If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting the runtime APIs and the interapplication communication automatically.
-
-# TrustProxy
-
-For each application in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name.This is useful for applications behind a proxy, ensuring the original client's IP address is preserved. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details.
 
 <Issues />

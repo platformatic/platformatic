@@ -23,7 +23,26 @@ export interface SharedContext {
   update (contextUpdate: object, options?: { overwrite?: boolean }): any
 }
 
-export type Management = Record<string, (...args: any[]) => any>
+export interface Management {
+  getRuntimeConfig (): Promise<Record<string, unknown>>
+  getRuntimeEnv (): Promise<Record<string, string>>
+  getApplicationsIds (): Promise<string[]>
+  getApplications (): Promise<{ production: boolean; applications: unknown[] }>
+  getWorkers (): Promise<Record<string, unknown>>
+  getApplicationDetails (id: string): Promise<unknown>
+  getApplicationConfig (id: string): Promise<Record<string, unknown>>
+  getApplicationEnv (id: string): Promise<Record<string, string>>
+  getApplicationOpenapiSchema (id: string): Promise<unknown>
+  getApplicationGraphqlSchema (id: string): Promise<unknown>
+  getMetrics (format?: string): Promise<{ metrics: unknown }>
+  startApplication (id: string): Promise<void>
+  stopApplication (id: string): Promise<void>
+  restartApplication (id: string): Promise<void>
+  restart (applications?: string[]): Promise<void>
+  addApplications (applications: unknown[], start?: boolean): Promise<unknown[]>
+  removeApplications (ids: string[]): Promise<unknown[]>
+  inject (id: string, injectParams: unknown): Promise<unknown>
+}
 
 export interface GlobalGetterOptions {
   throwOnMissing?: boolean
@@ -79,7 +98,6 @@ export interface PlatformaticGlobal {
   applicationId: string
   workerId: number | string
   root: string
-  isEntrypoint: boolean
   basePath: string | null
   runtimeBasePath: string | null
   wantsAbsoluteUrls: boolean
@@ -199,9 +217,6 @@ export declare function getWorkerId (options: GlobalGetterOptions): Platformatic
 export declare function getRoot (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['root']
 export declare function getRoot (options: OptionalGlobalGetterOptions): PlatformaticGlobal['root'] | undefined
 export declare function getRoot (options: GlobalGetterOptions): PlatformaticGlobal['root'] | undefined
-export declare function isEntrypoint (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['isEntrypoint']
-export declare function isEntrypoint (options: OptionalGlobalGetterOptions): PlatformaticGlobal['isEntrypoint'] | undefined
-export declare function isEntrypoint (options: GlobalGetterOptions): PlatformaticGlobal['isEntrypoint'] | undefined
 export declare function getBasePath (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['basePath']
 export declare function getBasePath (options: OptionalGlobalGetterOptions): PlatformaticGlobal['basePath'] | undefined
 export declare function getBasePath (options: GlobalGetterOptions): PlatformaticGlobal['basePath'] | undefined

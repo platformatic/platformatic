@@ -191,11 +191,14 @@ test('runtime context should have env prefix', async t => {
   assert.deepEqual(svc.config.env, {
     PLT_MY_SERVICE_FOO: 'bar',
     PLT_MY_SERVICE_BAZ: 'baz',
+    PLT_MY_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_MY_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_MY_SERVICE_PORT: 3042,
     PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
   })
 })
 
-test('runtime context should not have server.config', async t => {
+test('runtime context should have server config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
@@ -206,7 +209,11 @@ test('runtime context should not have server.config', async t => {
 
   const configFile = svc.getFileObject('platformatic.json')
   const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(configFileContents.server, undefined)
+  assert.deepStrictEqual(configFileContents.server, {
+    hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
+    port: '{PLT_MY_SERVICE_PORT}',
+    logger: { level: '{PLT_MY_SERVICE_SERVER_LOGGER_LEVEL}' }
+  })
 })
 
 test('runtime context do not generate .env file', async t => {
@@ -220,5 +227,9 @@ test('runtime context do not generate .env file', async t => {
 
   const configFile = svc.getFileObject('platformatic.json')
   const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(configFileContents.server, undefined)
+  assert.deepStrictEqual(configFileContents.server, {
+    hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
+    port: '{PLT_MY_SERVICE_PORT}',
+    logger: { level: '{PLT_MY_SERVICE_SERVER_LOGGER_LEVEL}' }
+  })
 })

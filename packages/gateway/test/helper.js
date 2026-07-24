@@ -445,7 +445,6 @@ export async function createFromConfig (t, options, applicationFactory, creation
   const gateway = await create(directory, mergedConfig, {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   })
   t.after(() => gateway.stop())
@@ -479,7 +478,6 @@ export async function createGatewayInRuntime (
     runtimeConfigPath,
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      entrypoint: 'composer',
       watch: false,
       services: (applications ?? []).concat([
         {
@@ -568,8 +566,8 @@ export async function waitForRestart (runtime) {
     return Promise.reject(new Error('Timeout while waiting for application to restart'))
   }
 
-  const entrypoint = await runtime.getEntrypointDetails()
-  return entrypoint.url
+  const application = await runtime.getApplicationDetails('composer')
+  return application.url
 }
 
 export async function checkSchema (runtime, schema) {

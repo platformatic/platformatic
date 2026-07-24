@@ -75,13 +75,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     this.on('config', config => {
       this.#configModified = true
@@ -89,9 +84,9 @@ export class NextCapability extends BaseCapability {
     })
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this.#startProduction()
     } else {
-      await this.#startDevelopment(listen)
+      await this.#startDevelopment()
     }
 
     await this._collectMetrics()
@@ -109,8 +104,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.subprocess) {
       return this.stopCommand()
@@ -353,8 +348,8 @@ export class NextCapability extends BaseCapability {
       await this.childManager.register()
 
       const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+        serverOptions.port,
+        serverOptions.hostname,
         typeof backlog === 'number' ? { backlog } : {}
       )
 
@@ -410,8 +405,8 @@ export class NextCapability extends BaseCapability {
       }
 
       const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
+        serverOptions.port,
+        serverOptions.hostname,
         typeof backlog === 'number' ? { backlog } : {}
       )
 

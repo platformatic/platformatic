@@ -36,7 +36,7 @@ const contextManager = new AsyncLocalStorageContextManager()
 contextManager.enable()
 context.setGlobalContextManager(contextManager)
 
-const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+const setupNodeHTTPTelemetry = async (opts, applicationDir, usesPlatformaticDispatcher) => {
   setupDiagLogger(opts)
 
   const { applicationName, instrumentations = [] } = opts
@@ -55,9 +55,9 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   updateGlobals({ clientSpansAls, tracerProvider })
 
   // Register instrumentations with our TracerProvider
-  registerInstrumentations({
-    tracerProvider,
-    instrumentations: [
+  const defaultInstrumentations = [new HttpInstrumentation(), ...additionalInstrumentations]
+  if (!usesPlatformaticDispatcher) {
+    defaultInstrumentations.unshift(
       new UndiciInstrumentation({
         responseHook: span => {
           const store = clientSpansAls.getStore()
@@ -65,10 +65,13 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
             store.span = span
           }
         }
-      }),
-      new HttpInstrumentation(),
-      ...additionalInstrumentations
-    ]
+      })
+    )
+  }
+
+  registerInstrumentations({
+    tracerProvider,
+    instrumentations: defaultInstrumentations
   })
 
   process.on('SIGTERM', async () => {
@@ -110,7 +113,7 @@ async function main () {
     const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir)
+      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir, data.applicationConfig?.type === '@platformatic/next')
       resolveTelemetryReady()
     } else {
       resolveTelemetryReady()

@@ -22,8 +22,11 @@ export const startPath = join(import.meta.dirname, './start.js')
 
 export async function start (...args) {
   let execaOptions = {}
+  let applicationId
   if (typeof args.at(-1) === 'object') {
-    execaOptions = args.pop()
+    const { applicationId: requestedApplicationId, ...options } = args.pop()
+    applicationId = requestedApplicationId
+    execaOptions = options
   }
   const child = execa(process.execPath, [startPath, ...args], execaOptions)
   child.catch(() => {})
@@ -46,7 +49,11 @@ export async function start (...args) {
 
           const message = JSON.parse(line)
 
-          const mo = message.msg?.match(/server listening at (.+)/i)
+          const mo = applicationId
+            ? message.msg?.match(
+              new RegExp(`Platformatic is now listening at (.+) for worker \\d+ of the application "${applicationId}"`)
+            )
+            : message.msg?.match(/server listening at (.+)/i)
 
           if (!serverStarted && mo) {
             clearTimeout(errorTimeout)

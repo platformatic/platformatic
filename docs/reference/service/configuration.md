@@ -31,6 +31,8 @@ An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
 - **`port`** — Port where Platformatic Service server will listen for connections.
+- **`backlog`** (`number`) — Maximum length of the pending connection queue.
+- **`portAssignment`** (`string`) — Controls how worker ports are assigned for this capability. The default, `shared`, makes all workers listen on `port`. Set `perWorkerIncrement` to assign an incrementing port to each worker through its per-worker environment. It requires a positive base port from `server.port` or the application's `portEnv`; a missing or zero base port is invalid. Use `perWorkerIncrement` only with an external load balancer.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)

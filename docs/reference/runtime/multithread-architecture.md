@@ -38,7 +38,7 @@ Runtime Manager
 - **Global Workers**: Default worker count for all applications (`config.workers`)
 - **Service-Specific**: Override via `service.workers` property
 - **Production Mode**: Multiple workers enabled only in production
-- **Entrypoint Services**: Always use single worker for entrypoints (unless `reusePort` supported)
+- **Development Mode**: Uses a single worker for each application
 
 ### Worker Thread Structure
 
@@ -329,7 +329,7 @@ const itc = new ITC({
   handlers: {
     async start() {
       await app.start()
-      return application.entrypoint ? app.getUrl() : null
+      return app.getUrl()
     },
     
     async stop() {

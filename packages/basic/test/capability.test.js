@@ -60,7 +60,6 @@ test('BaseCapability - should properly setup globals', async t => {
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
-  deepStrictEqual(platformatic.isEntrypoint, undefined)
   deepStrictEqual(platformatic.reuseTcpPorts, undefined)
 })
 
@@ -69,7 +68,6 @@ test('BaseCapability - startCommand - should expose the configured entrypoint po
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -280,7 +278,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -340,7 +337,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -358,7 +354,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -419,7 +414,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -436,7 +430,6 @@ test('BaseCapability - startCommand - should override the port set for the entry
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port
@@ -496,7 +489,6 @@ test('BaseCapability - startCommand - should override the port set for the entry
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -512,7 +504,6 @@ test('BaseCapability - startCommand - should not override the port when unset fo
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1'
       },
@@ -571,7 +562,6 @@ test('BaseCapability - startCommand - should not override the port when unset fo
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -587,7 +577,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
     t,
     {
       applicationId: 'test-application-id',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -663,7 +652,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           }
         }
       },
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -805,7 +793,6 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -866,7 +853,6 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       events: undefined,
@@ -883,7 +869,6 @@ test('BaseCapability - stopCommand - should not throw if subprocess was never as
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0

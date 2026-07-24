@@ -36,7 +36,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ### Example with Image Optimizer mode (behind Gateway route matching)
 
-Use this mode when you only need the `/_next/image` endpoint and want to expose it through a Gateway entrypoint.
+Use this mode when you only need the `/_next/image` endpoint and want to expose it through a public Gateway.
 
 In this setup:
 
@@ -48,7 +48,7 @@ In this setup:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -86,11 +86,11 @@ In this setup:
 
 ## Architecture
 
-When starting Next.js in development mode, production mode, or by using the `commands` property, Platformatic selects a random internal port for the Next.js HTTP server and overrides any user or application setting.
+Runtime-managed Next.js capabilities are exposed by default. Set `applications[].exposed` to `false` to keep the capability ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured. An application that uses the `commands` property is responsible for starting its own server.
 
 ## HTTPS
 
-When a Next.js application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+For development, configure HTTPS in this Next.js capability's `server.https` object:
 
 ```json
 {
@@ -103,7 +103,7 @@ When a Next.js application is the Watt entrypoint, configure HTTPS in the runtim
 }
 ```
 
-In development mode, Platformatic maps `server.https` to Next.js' experimental HTTPS development server options.
+The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 Next.js does not support HTTPS in production mode with `next start`. To run a production Next.js application over HTTPS, terminate TLS before Watt or use a custom command/server that creates its own HTTPS server.
 

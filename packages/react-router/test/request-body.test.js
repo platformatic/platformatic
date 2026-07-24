@@ -7,7 +7,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 test('React Router application should properly process request body in development', async t => {
   const { runtime } = await prepareRuntime({ t, root: path.resolve(import.meta.dirname, './fixtures/request-body') })
 
-  const url = await runtime.start()
+  const { 'frontend:0': url } = await runtime.start()
 
   const now = Date.now()
   const { statusCode, body } = await request(url + '/api', {
@@ -30,7 +30,7 @@ test('React Router application should properly process request body in productio
     production: true
   })
 
-  const url = await runtime.start()
+  const { 'frontend:0': url } = await runtime.start()
 
   const now = Date.now()
   const { statusCode, body } = await request(url + '/api', {

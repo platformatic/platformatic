@@ -28,6 +28,7 @@ test('should have default config', async () => {
     isRuntimeContext: false,
     applicationName: '',
     envPrefix: '',
+    portEnv: 'PORT',
     env: {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PLT_APPLY_MIGRATIONS: 'true',
@@ -417,7 +418,7 @@ test('runtime context should have env prefix', async t => {
   assert.equal(null, svc.getFileObject('.env'))
 })
 
-test('runtime context should not have server.config', async t => {
+test('runtime context should have server config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
@@ -432,6 +433,10 @@ test('runtime context should not have server.config', async t => {
 
   const configFile = svc.getFileObject('platformatic.json')
   const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(undefined, configFileContents.server)
+  assert.deepStrictEqual(configFileContents.server, {
+    hostname: '{PLT_MY_DB_SERVER_HOSTNAME}',
+    port: '{PLT_MY_DB_PORT}',
+    logger: { level: '{PLT_MY_DB_SERVER_LOGGER_LEVEL}' }
+  })
   assert.ok(configFile.contents.match(/"connectionString": "{PLT_MY_DB_DATABASE_URL}"/))
 })

@@ -49,7 +49,6 @@ export class BaseCapability extends EventEmitter {
   graphqlSchema
   connectionString
   basePath
-  isEntrypoint
   isProduction
   dependencies
   customHealthCheck
@@ -80,6 +79,7 @@ export class BaseCapability extends EventEmitter {
     this.root = root
     this.config = config
     this.context = context ?? {}
+    this.applicationConfig = this.context.applicationConfig ?? this.config.runtime?.application ?? {}
     this.context.worker ??= { count: 1, index: 0 }
     this.standardStreams = standardStreams
 
@@ -91,7 +91,6 @@ export class BaseCapability extends EventEmitter {
     this.graphqlSchema = null
     this.connectionString = null
     this.basePath = null
-    this.isEntrypoint = this.context.isEntrypoint
     this.isProduction = this.context.isProduction
     this.dependencies = this.context.dependencies ?? []
     this.customHealthCheck = null
@@ -137,7 +136,6 @@ export class BaseCapability extends EventEmitter {
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts
     })
 
@@ -216,13 +214,42 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  start () {
-    throw new Error('BaseCapability.start must be overriden by the subclasses')
+  async start () {
+    if (this.status !== '' && this.status !== 'init') {
+      return
+    }
+
+    this.updateStatus('starting')
+
+    try {
+      await this.#setupSharedStartResources()
+      const result = await this._start()
+      this.updateStatus('started')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
-  // This is to allow grand-children to access the method without calling super.stop()
   async stop () {
-    return this._stop()
+    if (this.status !== 'started') {
+      return
+    }
+
+    this.updateStatus('stopping')
+
+    try {
+      await this.#cleanupSharedResources()
+      const result = await this._stop()
+      this.updateStatus('stopped')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
   build () {
@@ -639,12 +666,11 @@ export class BaseCapability extends EventEmitter {
       root: pathToFileURL(this.root).toString(),
       basePath,
       logLevel: this.logger.level,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      host: this.serverConfig?.hostname ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
       telemetryConfig: this.telemetryConfig,
@@ -793,7 +819,7 @@ export class BaseCapability extends EventEmitter {
     return pino(pinoOptions, this.standardStreams?.stdout)
   }
 
-  _start () {
+  #setupSharedStartResources () {
     if (this.reuseTcpPorts) {
       if (!features.node.reusePort) {
         this.reuseTcpPorts = false
@@ -809,7 +835,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async _stop () {
+  async #cleanupSharedResources () {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
     }
@@ -830,6 +856,10 @@ export class BaseCapability extends EventEmitter {
       this.otlpBridge = null
     }
   }
+
+  async _start () {}
+
+  async _stop () {}
 
   async _collectMetrics () {
     if (this.#metricsCollected) {

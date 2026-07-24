@@ -21,7 +21,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/astro/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/astro/4.0.0.json",
   "application": {
     "basePath": "/frontend"
   }
@@ -30,15 +30,15 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Architecture
 
-When running in development mode, the Astro Vite development server is run a in worker thread in the same process of the Platformatic runtime. The server port is chosen randomly and it will override any user setting.
+When running in development mode, the Astro Vite development server runs in a worker thread in the same process as the Platformatic runtime.
 
-When running in production mode, a custom Fastify server will serve the static or dynamic (for SSR) application. The application is run a in worker thread in the same process of the Platformatic runtime and it will not start a TCP server unless it's the runtime entrypoint.
+When running in production mode, a custom Fastify server serves the static or dynamic (for SSR) application in a worker thread. The runtime-managed server is exposed by default; set `applications[].exposed` to `false` to keep it ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured.
 
-In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
+In both modes, an application that uses the `commands` property is responsible for starting its HTTP server.
 
 ## HTTPS
 
-When an Astro application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this Astro capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 ```json
 {
@@ -50,10 +50,6 @@ When an Astro application is the Watt entrypoint, configure HTTPS in the runtime
   }
 }
 ```
-
-In development mode, Platformatic forwards the HTTPS options to Astro's Vite development server. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves the built Astro application.
-
-If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ### Using custom commands
 

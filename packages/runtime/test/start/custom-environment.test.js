@@ -17,12 +17,13 @@ test('can start with a custom environment', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
-  const res = await request(entryUrl + '/env')
+  const { 'serviceApp:0': url } = await app.start()
+  const res = await request(url + '/env')
 
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), {
     A_CUSTOM_ENV_VAR: 'foobar',
+    PORT: '0',
     PLT_ENVIRONMENT: 'development',
     PLT_DEV: 'true',
     PLT_ROOT: join(fixturesDir, 'configs')

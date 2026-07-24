@@ -33,7 +33,7 @@ test('should enable the management API by default', async t => {
   strictEqual(statusCode, 200)
 
   const runtimeConfig = await body.json()
-  strictEqual(runtimeConfig.entrypoint, 'main')
+  strictEqual(runtimeConfig.server, undefined)
 })
 
 test('should disable the management API if requested to', async t => {
