@@ -20,3 +20,13 @@ export const NonZeroExitCode = createError(
   `${ERROR_PREFIX}_NON_ZERO_EXIT_CODE`,
   'Process exited with non zero exit code %d.'
 )
+
+export const FailedToLoadWorkerExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_LOAD_WORKER_EXTENSION`,
+  'Failed to load the worker extension "%s": %s.'
+)
+
+export const InvalidWorkerExtensionError = createError(
+  `${ERROR_PREFIX}_INVALID_WORKER_EXTENSION`,
+  'The worker extension "%s" must export a function as default.'
+)

@@ -202,6 +202,88 @@ For a complete worked example — enabling continuous profiling on every worker 
 restarted) and shipping the captured profiles — see the
 [Capture Flamegraphs on Health Events](../../guides/capture-flamegraphs-on-health-events.md) guide.
 
+### `workerExtensions`
+
+While `extensions` runs in the runtime main thread, `workerExtensions` runs in an individual
+application, next to where that application's entrypoint HTTP server runs. This is the worker thread
+for most applications, or the child process for applications started through a custom command. A
+worker extension can hook the entrypoint's responses, which the main-thread `extensions` cannot
+reach.
+
+`workerExtensions` is an application-level property: it is set on the `application` block of an
+application configuration, and accepts a path, an object with `path` and `options` properties, or an
+array of either.
+
+```json
+{
+  "application": {
+    "workerExtensions": [
+      {
+        "path": "./worker-extension.js",
+        "options": {
+          "cookieName": "__dpl"
+        }
+      }
+    ]
+  }
+}
+```
+
+Each file must default-export a setup function, invoked while the application starts. TypeScript
+files are supported out of the box via
+[Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
+
+The example below pins a browser session to the version that served it, by setting a cookie on the
+entrypoint's responses — useful behind a load balancer that cannot add response headers of its own.
+
+```js
+export default async function setup ({ options, onRequest }) {
+  const cookieName = options.cookieName ?? '__dpl'
+  const version = process.env.DEPLOYMENT_VERSION
+
+  onRequest(({ request, addResponseHeader }) => {
+    // Only set the cookie the first time, so it is not refreshed on every request.
+    if (version && !request.headers.cookie?.includes(`${cookieName}=`)) {
+      addResponseHeader('set-cookie', `${cookieName}=${version}; Path=/; HttpOnly`)
+    }
+  })
+
+  return {
+    async close () {
+      // Invoked when the application is closed
+    }
+  }
+}
+```
+
+The setup function receives a context object with the following properties:
+
+- **`applicationId`** - The id of the application the extension runs in.
+- **`entrypoint`** - `true` when the application is the runtime entrypoint. `onRequest` only fires for
+  the entrypoint, because only it serves external requests.
+- **`config`** - The resolved application configuration.
+- **`options`** - The `options` object specified in the configuration, if any.
+- **`logger`** - A child of the application logger.
+- **`capability`** - The capability serving the application. It is only available when the entrypoint
+  runs in the worker thread; for a capability that runs in a child process (for example one started
+  through a custom command) it is `undefined`.
+- **`onRequest(handler)`** - Registers a handler run at the start of every entrypoint request. The
+  handler receives:
+  - **`request`** - The incoming `http.IncomingMessage`.
+  - **`addResponseHeader(name, value)`** - Adds a response header. The value is written when the
+    application flushes its own headers, so a header the application already sets is preserved rather
+    than replaced. Adding response headers is the only response modification currently supported.
+
+The setup function can optionally return an object with a `close` method, invoked when the
+application is closed. When multiple worker extensions are configured, they are loaded in order and
+closed in reverse order.
+
+A worker extension that cannot be loaded — a missing file, a default export that is not a function,
+or a `setup` that throws — is logged as an error and skipped. The application still starts, without
+that extension, and the following extensions still load.
+
+Worker extensions are not loaded when building the applications.
+
 ### `applications`
 
 `applications` is an array of objects that defines the applications managed by the

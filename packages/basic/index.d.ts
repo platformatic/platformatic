@@ -1,10 +1,56 @@
 import type { ChildProcess } from 'node:child_process'
+import type { IncomingMessage } from 'node:http'
 import type { Server } from 'node:net'
 import type { URL } from 'node:url'
 import type { JSONSchemaType } from 'ajv'
 import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
+
+// A worker extension hooks the entrypoint's responses from the worker thread, or
+// the child process, wherever the entrypoint HTTP server runs. Its default
+// export is a WorkerExtension.
+export interface WorkerExtensionRequest {
+  request: IncomingMessage
+  // Adds a response header without replacing one the application sets itself;
+  // the value is written when the application flushes its headers.
+  addResponseHeader (name: string, value: string): void
+}
+
+export interface WorkerExtensionContext {
+  applicationId: string
+  entrypoint: boolean
+  config: Record<string, unknown>
+  options: Record<string, unknown>
+  logger: unknown
+  // The capability serving the application. Present only for an in-thread
+  // entrypoint; undefined when the capability runs in a child process.
+  capability?: unknown
+  // Registers a handler run at the start of every entrypoint request. A no-op on
+  // a non-entrypoint application.
+  onRequest (handler: (request: WorkerExtensionRequest) => void): void
+}
+
+export interface WorkerExtensionInstance {
+  close?: () => void | Promise<void>
+}
+
+export type WorkerExtension = (
+  context: WorkerExtensionContext
+) => void | WorkerExtensionInstance | Promise<void | WorkerExtensionInstance>
+
+export interface InstalledWorkerExtensions {
+  close (): Promise<void>
+}
+
+export declare function installWorkerExtensions (context: {
+  applicationId: string
+  entrypoint: boolean
+  config: Record<string, unknown>
+  logger: unknown
+  workerExtensions?: unknown
+  root?: string
+}): Promise<InstalledWorkerExtensions>
 
 export interface StartOptions {
   listen?: boolean | undefined

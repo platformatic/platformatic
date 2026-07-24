@@ -320,6 +320,11 @@ async function main () {
     }
   })
 
+  // Worker extensions for an in-thread entrypoint are installed in the ITC start
+  // handler, once the capability has started and it is known whether it serves
+  // in-thread or from a child process. A child-process capability installs them
+  // in its own bootstrap (@platformatic/basic) instead.
+
   // Setup interaction with parent port
   const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   updateGlobals({ itc })
