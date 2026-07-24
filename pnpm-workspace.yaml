@@ -21,8 +21,8 @@ minimumReleaseAgeExclude:
   - protobufjs@8.0.1
   # Renovate security update: fast-uri@3.1.2 || 4.1.1
   - fast-uri@3.1.2 || 4.1.1
-  # Renovate security update: next@16.2.5 || 16.2.6
-  - next@16.2.5 || 16.2.6
+  # Renovate security update: next@16.2.5 || 16.2.6 || 16.2.11
+  - next@16.2.5 || 16.2.6 || 16.2.11
   # Renovate security update: astro@6.4.6
   - astro@6.4.6
   # Renovate security update: tar@7.5.16
