@@ -9,7 +9,7 @@ The Platformatic DB SQL Mapper provides an `addEntityHooks(entityName, spec)` fu
 `addEntityHooks` accepts two arguments:
 
 1. A string representing the entity name (singularized), for example `'page'`.
-1. A key/value object where the key is one of the API methods (`find`, `insert`, `save`, `delete`) and the value is a callback function. The callback will be called with the _original_ API method and the options that were passed to that method. See the example below.
+1. A key/value object where the key is one of the API methods (`find`, `count`, `insert`, `save`, `delete`, `updateMany`) and the value is a callback function. The callback will be called with the _original_ API method and the options that were passed to that method. See the example below.
 
 ### Usage
 

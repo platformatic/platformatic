@@ -229,6 +229,76 @@ test('insert', async t => {
   }
 })
 
+test('updateMany', async t => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    t.after(() => db.dispose())
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+  }
+  const mapper = await connect({
+    log: fakeLogger,
+    ...connInfo,
+    onDatabaseLoad
+  })
+  const pageEntity = mapper.entities.page
+
+  const mq = MQEmitter()
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
+
+  const page1 = await pageEntity.save({
+    input: { title: 'fourth page' }
+  })
+
+  const page2 = await pageEntity.save({
+    input: { title: 'fifth page' }
+  })
+
+  // subscribe after the seed saves so the queue only sees the bulk update
+  const queue = await mapper.subscribe('/entity/page/save/+')
+  equal(mapper.mq, mq)
+
+  const expected = []
+
+  // update all pages in one go
+  const pages = await pageEntity.updateMany({
+    where: {
+      id: {
+        in: [page1.id, page2.id]
+      }
+    },
+    input: {
+      title: 'updated title'
+    }
+  })
+
+  for (const page of pages) {
+    expected.push({
+      topic: '/entity/page/save/' + page.id,
+      payload: {
+        id: page.id
+      }
+    })
+  }
+
+  for await (const ev of queue) {
+    same(ev, expected.shift())
+    if (expected.length === 0) {
+      break
+    }
+  }
+})
+
 test('more than one element for delete', async t => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -368,6 +438,21 @@ test('emit events when the primary key is not in the requested fields', async t 
     topic: '/entity/page/delete/' + found2.id,
     payload: {
       id: found2.id
+    }
+  })
+
+  // updateMany - without the primary key in the fields
+  const updated = await pageEntity.updateMany({
+    where: { id: { eq: found.id } },
+    input: { title: 'an updated page' },
+    fields: ['title']
+  })
+  same(updated, [{ title: 'an updated page' }], 'updateMany returns only the requested fields')
+
+  expected.push({
+    topic: '/entity/page/save/' + found.id,
+    payload: {
+      id: found.id
     }
   })
 
