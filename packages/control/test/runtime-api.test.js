@@ -18,6 +18,34 @@ function getRuntimeTmpDir (runtimeDir) {
   return join(platformaticTmpDir, runtimeDirHash)
 }
 
+test('should control runtime scheduler jobs', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  t.after(() => runtimeClient.close())
+  const { jobs } = await runtimeClient.getRuntimeSchedulerJobs(runtime.pid)
+  assert.equal(jobs.length, 1)
+  assert.equal(jobs[0].name, 'control-test')
+
+  const paused = await runtimeClient.pauseRuntimeSchedulerJob(runtime.pid, jobs[0].name)
+  assert.equal(paused.paused, true)
+
+  const result = await runtimeClient.runRuntimeSchedulerJob(runtime.pid, jobs[0].name)
+  assert.equal(result.success, true)
+
+  const resumed = await runtimeClient.resumeRuntimeSchedulerJob(runtime.pid, jobs[0].name)
+  assert.equal(resumed.paused, false)
+})
+
 test('should get runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')

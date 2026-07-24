@@ -20,6 +20,7 @@ import {
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
+  FailedToGetRuntimeScheduler,
   FailedToReloadRuntime,
   FailedToRemoveApplications,
   FailedToStartProfiling,
@@ -27,6 +28,7 @@ import {
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
   FailedToTakeHeapSnapshot,
+  FailedToUpdateRuntimeScheduler,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -191,6 +193,50 @@ export class RuntimeApiClient {
 
     const runtimeApplications = await body.json()
     return runtimeApplications
+  }
+
+  async getRuntimeSchedulerJobs (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/scheduler',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeScheduler(error)
+    }
+
+    return body.json()
+  }
+
+  async pauseRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'pause')
+  }
+
+  async resumeRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'resume')
+  }
+
+  async runRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'run')
+  }
+
+  async #updateRuntimeSchedulerJob (pid, name, action) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/scheduler/${encodeURIComponent(name)}/${action}`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToUpdateRuntimeScheduler(error)
+    }
+
+    return body.json()
   }
 
   async getRuntimeConfig (pid, metadata = false) {

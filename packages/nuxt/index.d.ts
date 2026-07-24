@@ -9,6 +9,12 @@ export interface NuxtContext extends BaseContext {}
 
 export type NuxtConfiguration = Configuration<PlatformaticNuxtConfig>
 
+export interface NuxtSchedule {
+  id: string
+  cron: string
+  tasks: string[]
+}
+
 export declare function loadConfiguration (
   root: string | PlatformaticNuxtConfig,
   source?: string | PlatformaticNuxtConfig,
@@ -26,6 +32,8 @@ export declare class NuxtCapability extends BaseCapability<
   BaseOptions<NuxtContext>
 > {
   constructor (root: string, config: PlatformaticNuxtConfig, context?: object)
+  getScheduledTasks (): Promise<NuxtSchedule[]>
+  runScheduledTasks (scheduleId: string, scheduledTime: number): Promise<unknown>
 }
 
 export declare const packageJson: Record<string, unknown>

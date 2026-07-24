@@ -1318,12 +1318,18 @@ importers:
 
   packages/nuxt:
     dependencies:
+      '@fastify/error':
+        specifier: ^4.0.0
+        version: 4.2.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/globals':
+        specifier: workspace:*
+        version: link:../globals
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite

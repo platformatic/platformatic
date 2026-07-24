@@ -72,6 +72,8 @@ export namespace errors {
   ) => FastifyError
   export const ExtensionHealthRoutesUnavailableError: () => FastifyError
   export const LastProfileTimeoutError: (id: string) => FastifyError
+  export const SchedulerJobNotFoundError: (name: string) => FastifyError
+  export const DuplicateSchedulerJobError: (name: string) => FastifyError
 }
 
 export namespace symbols {
@@ -145,6 +147,45 @@ export interface RuntimeSharedContextUpdateOptions extends SharedContextUpdateOp
   context?: object
 }
 
+export interface SchedulerJobBase {
+  name: string
+  cron: string
+  paused: boolean
+  maxRetries: number
+  lastExecutedAt?: string | null
+  lastStatus?: 'success' | 'failed' | null
+  nextRunAt?: string | null
+}
+
+export interface ConfiguredSchedulerJob extends SchedulerJobBase {
+  source: 'config'
+  callbackUrl: string
+  method: string
+  headers?: Record<string, string>
+  body?: string | Record<string, unknown>
+}
+
+export interface ApplicationSchedulerJob extends SchedulerJobBase {
+  source: 'application'
+  applicationId: string
+  scheduleId: string
+  tasks: string[]
+}
+
+export type SchedulerJob = ConfiguredSchedulerJob | ApplicationSchedulerJob
+
+export interface SchedulerRunResult {
+  name: string
+  success: boolean
+  executedAt: string
+}
+
+export interface ApplicationSchedule {
+  id: string
+  cron: string
+  tasks: string[]
+}
+
 export interface RuntimeMetadata {
   pid: number
   cwd: string
@@ -175,6 +216,10 @@ export declare class ManagementClient {
   getApplicationOpenapiSchema (id: string): Promise<unknown>
   getApplicationGraphqlSchema (id: string): Promise<unknown>
   getMetrics (format?: string): Promise<{ metrics: unknown }>
+  getSchedulerJobs (): Promise<SchedulerJob[]>
+  pauseSchedulerJob (name: string): Promise<SchedulerJob>
+  resumeSchedulerJob (name: string): Promise<SchedulerJob>
+  runSchedulerJob (name: string): Promise<SchedulerRunResult>
   startApplication (id: string): Promise<void>
   stopApplication (id: string): Promise<void>
   restartApplication (id: string): Promise<void>
@@ -341,7 +386,17 @@ export declare class Runtime extends EventEmitter {
   removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
   startApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<void>
   stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
-  getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<{ profile: Buffer, timestamp: number | null, preserved: boolean }>
+  getApplicationLastProfile (
+    id: string,
+    options?: Record<string, unknown>,
+    ensureStarted?: boolean
+  ): Promise<{ profile: Buffer; timestamp: number | null; preserved: boolean }>
+  getSchedulerJobs (): SchedulerJob[]
+  pauseSchedulerJob (name: string): Promise<SchedulerJob>
+  resumeSchedulerJob (name: string): Promise<SchedulerJob>
+  runSchedulerJob (name: string): Promise<SchedulerRunResult>
+  getApplicationScheduledTasks (id: string): Promise<ApplicationSchedule[]>
+  runApplicationScheduledTasks (id: string, scheduleId: string, scheduledTime: number): Promise<unknown>
 }
 
 export function wrapInRuntimeConfig (

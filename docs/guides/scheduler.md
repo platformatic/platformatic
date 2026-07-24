@@ -88,3 +88,80 @@ internal `notification` application (so exposed as `http://notification.plt.loca
     ]
   //..
 ```
+
+## External coordination
+
+Watt exposes its scheduler through the runtime management API. A coordinator can inspect jobs, pause Watt's local
+trigger, and execute a job on demand:
+
+| Operation | Management API |
+| --- | --- |
+| List jobs | `GET /api/v1/scheduler` |
+| Pause a job | `POST /api/v1/scheduler/:name/pause` |
+| Resume a job | `POST /api/v1/scheduler/:name/resume` |
+| Run a job | `POST /api/v1/scheduler/:name/run` |
+
+The same operations are available from the Watt CLI:
+
+```bash
+wattpm scheduler [runtime]
+wattpm scheduler:pause [runtime] <name>
+wattpm scheduler:resume [runtime] <name>
+wattpm scheduler:run [runtime] <name>
+```
+
+`scheduler` lists the jobs and their current pause and next-run state. The other commands pause, resume, or execute a
+job immediately. The runtime argument can be a process ID or runtime name and can be omitted when only one runtime is
+available.
+
+The runtime API exposes the same list as `getSchedulerJobs()`, returning `SchedulerJob[]`. The HTTP management API and
+control client wrap that list as `{ jobs: RuntimeSchedulerJob[] }`.
+
+Pausing a job stops future local triggers but does not cancel an execution that is already running. The coordinator
+should pause a job before taking ownership and resume it when returning ownership to Watt.
+
+Scheduler execution is at least once. HTTP retries, coordinator retries, or ownership changes around a cron tick can
+run a job more than once, so scheduled handlers should be idempotent.
+
+## Nuxt scheduled tasks
+
+Nuxt applications can hand their Nitro schedules to Watt by adding the Platformatic scheduler module:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['@platformatic/nuxt/scheduler']
+})
+```
+
+The module disables Nitro's in-process cron runner and reports the configured task groups to Watt. Watt registers
+them as application scheduler jobs and invokes the tasks through its internal communication channel. It does not add
+HTTP control routes to the Nuxt application.
+
+Without an external coordinator, Watt executes these jobs locally. An external coordinator uses the same Watt
+pause, resume, and run operations as it does for jobs from the runtime configuration.
+
+## Nitro scheduled tasks
+
+Nitro applications can use the same integration by adding the Platformatic scheduler module to `nitro.config`:
+
+```js
+import { defineNitroConfig } from 'nitropack/config'
+
+export default defineNitroConfig({
+  experimental: { tasks: true },
+  modules: ['@platformatic/nitro/scheduler'],
+  scheduledTasks: {
+    '0 0 1 1 *': ['smoke']
+  }
+})
+```
+
+Define tasks in Nitro's `tasks` directory. The module disables Nitro's in-process cron runner, reports the configured
+task groups to Watt, and writes a scheduler manifest to the production output. Watt registers the groups as application
+scheduler jobs and invokes the tasks through its internal communication channel.
+
+Nitro must have `experimental.tasks` enabled because Nitro scans task files before installing modules. The module also
+enables this option for Nitro versions that scan modules later in the build lifecycle.
+
+Without an external coordinator, Watt executes Nitro jobs locally. Coordinators can use Watt's pause, resume, and run
+operations described above. Scheduled execution is at least once, so Nitro task handlers should be idempotent.
