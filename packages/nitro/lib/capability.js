@@ -18,6 +18,7 @@ import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
+import { readSchedulerManifest } from './scheduled-tasks.js'
 
 export const supportedVersions = {
   nitro: '>=3.0.0-alpha.0 <4.0.0',
@@ -93,6 +94,9 @@ export class NitroCapability extends BaseCapability {
   #basePath
   #server
   #dispatcher
+  #scheduledTasks
+  #schedulerManifest
+  #scheduledTasksRunner
 
   constructor (root, config, context) {
     super('nitro', version, root, config, context)
@@ -122,6 +126,48 @@ export class NitroCapability extends BaseCapability {
       ? ensureTrailingSlash(cleanBasePath(this.config.application.basePath))
       : undefined
     this.registerGlobals({ basePath: this.#basePath })
+  }
+
+  async getScheduledTasks () {
+    if (!this.isProduction) {
+      return this.#scheduledTasks ?? []
+    }
+
+    this.#schedulerManifest ??= readSchedulerManifest(
+      resolve(this.root, this.config.nitro?.outputDirectory ?? this.config.application.outputDirectory ?? '.output')
+    )
+    this.#scheduledTasks ??= await this.#schedulerManifest
+    return this.#scheduledTasks
+  }
+
+  async runScheduledTasks (scheduleId, scheduledTime) {
+    if (this.childManager) {
+      if (!this.clientWs) {
+        throw new Error('The application has not started yet')
+      }
+
+      return this.childManager.send(this.clientWs, 'platformatic:nitro:run-scheduled-tasks', {
+        scheduleId,
+        scheduledTime
+      })
+    }
+
+    if (!this.#scheduledTasksRunner) {
+      throw new Error('The application does not use the @platformatic/nitro/scheduler module')
+    }
+
+    return this.#scheduledTasksRunner({ scheduleId, scheduledTime })
+  }
+
+  setScheduledTasksRunner (runner) {
+    this.#scheduledTasksRunner = runner
+  }
+
+  setupChildManagerEventsForwarding (childManager) {
+    super.setupChildManagerEventsForwarding(childManager)
+    childManager.on('platformatic:nitro:scheduled-tasks', scheduledTasks => {
+      this.#scheduledTasks = scheduledTasks
+    })
   }
 
   async start ({ listen }) {
@@ -370,6 +416,9 @@ export class NitroViteCapability extends ViteCapability {
   #basePath
   #server
   #dispatcher
+  #scheduledTasks
+  #schedulerManifest
+  #scheduledTasksRunner
 
   constructor (root, config, context) {
     super(root, config, context)
@@ -470,6 +519,48 @@ export class NitroViteCapability extends ViteCapability {
         needsRootTrailingSlash: false
       }
     }
+  }
+
+  async getScheduledTasks () {
+    if (!this.isProduction) {
+      return this.#scheduledTasks ?? []
+    }
+
+    this.#schedulerManifest ??= readSchedulerManifest(
+      resolve(this.root, this.config.nitro?.outputDirectory ?? this.config.application.outputDirectory ?? '.output')
+    )
+    this.#scheduledTasks ??= await this.#schedulerManifest
+    return this.#scheduledTasks
+  }
+
+  async runScheduledTasks (scheduleId, scheduledTime) {
+    if (this.childManager) {
+      if (!this.clientWs) {
+        throw new Error('The application has not started yet')
+      }
+
+      return this.childManager.send(this.clientWs, 'platformatic:nitro:run-scheduled-tasks', {
+        scheduleId,
+        scheduledTime
+      })
+    }
+
+    if (!this.#scheduledTasksRunner) {
+      throw new Error('The application does not use the @platformatic/nitro/scheduler module')
+    }
+
+    return this.#scheduledTasksRunner({ scheduleId, scheduledTime })
+  }
+
+  setScheduledTasksRunner (runner) {
+    this.#scheduledTasksRunner = runner
+  }
+
+  setupChildManagerEventsForwarding (childManager) {
+    super.setupChildManagerEventsForwarding(childManager)
+    childManager.on('platformatic:nitro:scheduled-tasks', scheduledTasks => {
+      this.#scheduledTasks = scheduledTasks
+    })
   }
 
   async _startProduction () {

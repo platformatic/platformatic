@@ -22,6 +22,7 @@ test('help - should show proper messages', async t => {
 
   const metricsHelp = await wattpm('help', 'metrics')
   ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
+
 })
 
 test('help - should print help for commands with options', async t => {

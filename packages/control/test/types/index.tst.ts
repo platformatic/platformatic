@@ -36,7 +36,7 @@ test('RuntimeApiClient methods', () => {
     Promise<string>
   >();
   expect(api.getRuntimes()).type.toBe<Promise<Runtime[]>>();
-  expect(api.getRuntimeScheduler(runtime.pid)).type.toBe<
+  expect(api.getRuntimeSchedulerJobs(runtime.pid)).type.toBe<
     Promise<{ jobs: RuntimeSchedulerJob[] }>
   >();
   expect(api.pauseRuntimeSchedulerJob(runtime.pid, 'job')).type.toBe<

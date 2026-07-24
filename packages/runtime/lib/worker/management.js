@@ -70,8 +70,8 @@ export class ManagementClient {
     return this.#send('getMetrics', { format })
   }
 
-  getScheduler () {
-    return this.#send('getScheduler')
+  getSchedulerJobs () {
+    return this.#send('getSchedulerJobs')
   }
 
   pauseSchedulerJob (name) {

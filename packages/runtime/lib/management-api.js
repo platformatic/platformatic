@@ -80,7 +80,7 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.get('/scheduler', async () => {
-    const jobs = await runtime.getScheduler()
+    const jobs = await runtime.getSchedulerJobs()
     return { jobs }
   })
 

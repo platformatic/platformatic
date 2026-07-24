@@ -195,7 +195,7 @@ export class RuntimeApiClient {
     return runtimeApplications
   }
 
-  async getRuntimeScheduler (pid) {
+  async getRuntimeSchedulerJobs (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({

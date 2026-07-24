@@ -19,7 +19,7 @@ const allOperations = [
   'getApplicationOpenapiSchema',
   'getApplicationGraphqlSchema',
   'getMetrics',
-  'getScheduler',
+  'getSchedulerJobs',
   'pauseSchedulerJob',
   'resumeSchedulerJob',
   'runSchedulerJob',
@@ -100,8 +100,8 @@ export function createManagementHandlers (runtime, allowedOperations) {
     return runtime.getMetrics(format)
   })
 
-  register('getScheduler', async () => {
-    return runtime.getScheduler()
+  register('getSchedulerJobs', async () => {
+    return runtime.getSchedulerJobs()
   })
 
   // Write operations

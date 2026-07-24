@@ -14,6 +14,7 @@ async function loadCommands () {
     'create',
     'execution',
     'applications',
+    'scheduler',
     'management',
     'admin',
     'logs',

@@ -216,7 +216,7 @@ export declare class ManagementClient {
   getApplicationOpenapiSchema (id: string): Promise<unknown>
   getApplicationGraphqlSchema (id: string): Promise<unknown>
   getMetrics (format?: string): Promise<{ metrics: unknown }>
-  getScheduler (): Promise<SchedulerJob[]>
+  getSchedulerJobs (): Promise<SchedulerJob[]>
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>
   runSchedulerJob (name: string): Promise<SchedulerRunResult>
@@ -265,10 +265,10 @@ export interface RuntimeExtensionMetrics {
 export type ExtensionHealthCheckResult =
   | boolean
   | {
-      status: boolean
-      statusCode?: number
-      body?: string | object
-    }
+    status: boolean
+    statusCode?: number
+    body?: string | object
+  }
 
 export type ExtensionHealthCheck = () => ExtensionHealthCheckResult | Promise<ExtensionHealthCheckResult>
 
@@ -391,7 +391,7 @@ export declare class Runtime extends EventEmitter {
     options?: Record<string, unknown>,
     ensureStarted?: boolean
   ): Promise<{ profile: Buffer; timestamp: number | null; preserved: boolean }>
-  getScheduler (): SchedulerJob[]
+  getSchedulerJobs (): SchedulerJob[]
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>
   runSchedulerJob (name: string): Promise<SchedulerRunResult>

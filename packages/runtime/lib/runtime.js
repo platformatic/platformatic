@@ -1991,7 +1991,7 @@ export class Runtime extends EventEmitter {
     return sendViaITC(application, 'runApplicationScheduledTasks', { scheduleId, scheduledTime })
   }
 
-  getScheduler () {
+  getSchedulerJobs () {
     return this.#scheduler?.getJobs() ?? []
   }
 

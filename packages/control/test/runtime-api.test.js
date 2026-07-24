@@ -32,7 +32,7 @@ test('should control runtime scheduler jobs', async t => {
 
   const runtimeClient = new RuntimeApiClient()
   t.after(() => runtimeClient.close())
-  const { jobs } = await runtimeClient.getRuntimeScheduler(runtime.pid)
+  const { jobs } = await runtimeClient.getRuntimeSchedulerJobs(runtime.pid)
   assert.equal(jobs.length, 1)
   assert.equal(jobs[0].name, 'control-test')
 
