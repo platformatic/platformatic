@@ -723,10 +723,11 @@ test('the final overload profile should survive a worker restart', async t => {
   // preserved overload profile is still retrievable from the main thread
   await app.restartApplication('service')
 
-  const { profile, timestamp, preserved } = await app.getApplicationLastProfile('service:0')
+  const { profile, timestamp, sampleCount, preserved } = await app.getApplicationLastProfile('service:0')
   assert.ok(profile instanceof Uint8Array, 'Preserved profile should be returned')
   assert.ok(profile.length > 0, 'Preserved profile should have content')
   assert.strictEqual(typeof timestamp, 'number', 'Preserved profile should carry its timestamp')
+  assert.ok(sampleCount > 0, 'Preserved profile should carry its sample count')
   assert.strictEqual(preserved, true, 'The result should be flagged as preserved')
 
   // Restart profiling on the replacement worker: until its first window
