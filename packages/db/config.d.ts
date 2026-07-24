@@ -420,7 +420,25 @@ export interface PlatformaticDatabaseConfig {
   plugins?: {
     [k: string]: unknown;
   };
-  application?: {};
+  application?: {
+    workerExtensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
+  };
   telemetry?: {
     enabled?: boolean | string;
     /**

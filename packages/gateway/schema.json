@@ -1672,7 +1672,61 @@
     },
     "application": {
       "type": "object",
-      "properties": {},
+      "properties": {
+        "workerExtensions": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolvePath": true
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "resolvePath": true
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       "additionalProperties": false,
       "required": [],
       "default": {}

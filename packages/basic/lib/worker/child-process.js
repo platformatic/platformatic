@@ -22,6 +22,7 @@ import {
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
+  isBuilding,
   isEntrypoint,
   updateGlobals
 } from '@platformatic/globals'
@@ -50,6 +51,7 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+import { installWorkerExtensions } from './extensions.js'
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -109,6 +111,7 @@ export class ChildProcess extends ITC {
   #otlpBridge
   #pendingMessages
   #replStream
+  #workerExtensions
 
   constructor (executable) {
     const events = getEvents()
@@ -142,7 +145,16 @@ export class ChildProcess extends ITC {
           // Forward health signals to the parent (ChildManager)
           this.notify('healthSignals', { workerId, signals })
         },
-        close: signal => {
+        close: async signal => {
+          // Run the worker-extension close hooks (reverse order) before the
+          // application closes, honouring the documented cleanup contract.
+          try {
+            await this.workerExtensionsReady
+            await this.#workerExtensions?.close()
+          } catch (error) {
+            this.#logger.error({ err: ensureLoggableError(error) }, 'Error while closing worker extensions.')
+          }
+
           let handled = false
 
           try {
@@ -673,6 +685,26 @@ export class ChildProcess extends ITC {
     if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
+
+    // Install worker extensions here, in the child process, where a
+    // child-process capability's entrypoint HTTP server runs. The worker-thread
+    // site in @platformatic/runtime does the same for in-thread capabilities.
+    // Skipped while building, matching the main-thread extensions. The promise
+    // is exposed so main() can await it before the user application runs, so the
+    // request hook is in place before the app's server accepts requests.
+    const config = getConfig({ throwOnMissing: false }) ?? {}
+    const workerExtensions = config.application?.workerExtensions
+    if (workerExtensions && isEntrypointApplication && !isBuilding({ throwOnMissing: false })) {
+      this.workerExtensionsReady = installWorkerExtensions({
+        applicationId: getApplicationId({ throwOnMissing: false }),
+        entrypoint: isEntrypointApplication,
+        config,
+        logger: this.#logger,
+        workerExtensions
+      })
+        .then(instance => { this.#workerExtensions = instance })
+        .catch(err => this.#logger.error({ err }, 'Failed to install worker extensions'))
+    }
   }
 
   #setupTcpPortsHandling () {
@@ -869,6 +901,11 @@ async function main () {
   const childProcess = new ChildProcess(executable)
   updateGlobals({ itc: childProcess })
   events.target = childProcess
+
+  // Node awaits this --import module before running the user application, so
+  // awaiting here guarantees the worker-extension request hook is installed
+  // before the application's server can accept requests.
+  await childProcess.workerExtensionsReady
 }
 
 await main()

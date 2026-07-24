@@ -285,7 +285,25 @@ export interface PlatformaticServiceConfig {
     | string;
   $schema?: string;
   module?: string;
-  application?: {};
+  application?: {
+    workerExtensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
+  };
   service?: {
     openapi?:
       | {

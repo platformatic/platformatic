@@ -42,7 +42,10 @@ import type {
   CancellablePromise,
   InjectViaRequestResponse,
   PlatformaticBasicConfig,
-  StartOptions
+  StartOptions,
+  WorkerExtension,
+  WorkerExtensionContext,
+  WorkerExtensionInstance
 } from '../../index.js';
 
 declare const server: Server;
@@ -317,4 +320,22 @@ test('watch config method', () => {
 test('private methods', () => {
   expect(capability._initializeLogger()).type.toBe<object>();
   expect(capability._collectMetrics()).type.toBe<Promise<void>>();
+});
+
+// Test the worker extension contract
+test('WorkerExtension contract', () => {
+  const extension: WorkerExtension = ({ applicationId, entrypoint, onRequest }: WorkerExtensionContext) => {
+    expect(applicationId).type.toBe<string>();
+    expect(entrypoint).type.toBe<boolean>();
+    onRequest(({ request, addResponseHeader }) => {
+      expect(request.headers).type.toBe<import('node:http').IncomingHttpHeaders>();
+      addResponseHeader('set-cookie', 'a=1');
+    });
+    return { close () {} };
+  };
+  expect(extension).type.toBeAssignableTo<WorkerExtension>();
+
+  // Returning nothing, or a promise, is allowed.
+  expect((() => {}) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
+  expect((async () => ({}) as WorkerExtensionInstance) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
 });
