@@ -337,7 +337,7 @@ export class BaseCapability extends EventEmitter {
     const workers = await itc.send('getWorkers')
 
     for (const worker of Object.values(workers)) {
-      if (this.dependencies.includes(worker.application) && worker.status === 'started') {
+      if (pending.has(worker.application) && worker.status === 'started') {
         pending.delete(worker.application)
       }
     }
