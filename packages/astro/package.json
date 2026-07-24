@@ -38,7 +38,7 @@
     "@platformatic/service": "workspace:*",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
-    "astro": "^6.1.4",
+    "astro": "^7.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
