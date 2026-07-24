@@ -70,6 +70,7 @@ An object with the following settings:
 - **`disableRequestLogging`** (`boolean`) -- if `true`, the request logger will be disabled
 - **`exposeHeadRoutes`** (`boolean`) -- if `true`, the router will expose HEAD routes
 - **`serializerOpts`** (`object`) -- the [serializer options](https://www.fastify.io/docs/latest/Reference/Server/#serializeropts)
+- **`ajv`** (`object`) -- options for the [request-validation Ajv instance](https://www.fastify.io/docs/latest/Reference/Server/#ajv). Only `customOptions` is configurable from the configuration file (Ajv `plugins` take functions, which cannot be expressed in a configuration file).
 - **`requestIdHeader`** (`string` or `false`) -- the name of the header that will contain the request id
 - **`requestIdLogLabel`** (`string`) -- Defines the label used for the request identifier when logging the request. default: `'reqId'`
 - **`jsonShorthand`** (`boolean`) -- default: `true` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#jsonshorthand) for more details
@@ -78,6 +79,18 @@ An object with the following settings:
 :::tip
 
 See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for more details.
+
+:::
+
+:::note
+
+Fastify enables Ajv type coercion (`coerceTypes: 'array'`) for request validation by
+default. On a body/query field that allows the `null` type alongside a non-string type
+(for example `number | null`), an empty string, `0` or `false` is coerced to `null`
+before validation runs, so such a value is accepted as `null` instead of being rejected
+(string-only fields are unaffected, because an empty string is already a valid string).
+Set `server.ajv.customOptions.coerceTypes` to `false` to opt out of this coercion for the
+whole service.
 
 :::
 
