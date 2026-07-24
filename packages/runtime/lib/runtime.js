@@ -1888,17 +1888,27 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationMeta (id) {
-    const application = await this.#getApplicationById(id)
+    const hasWorkerId = /^.+:\d+$/.test(id)
+    const attempts = hasWorkerId ? 1 : Math.max(1, this.#workers.getKeys(id).length)
 
-    try {
-      return await sendViaITC(application, 'getApplicationMeta')
-    } catch (e) {
-      // The application exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      const application = await this.#getApplicationById(id)
+
+      try {
+        return await sendViaITC(application, 'getApplicationMeta')
+      } catch (e) {
+        // The application exports no meta, return an empty object
+        if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+          return {}
+        }
+
+        // A parallel restart can stop the selected worker while metadata is
+        // being retrieved. Retry another worker unless one was requested
+        // explicitly or every worker available at the start has been tried.
+        if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT' || attempt === attempts - 1) {
+          throw e
+        }
       }
-
-      throw e
     }
   }
 
