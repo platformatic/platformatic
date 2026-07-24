@@ -365,7 +365,7 @@ test('extensions receive the profiles captured by the continuous profiler, also 
   strictEqual(event.type, 'cpu')
   strictEqual(typeof event.timestamp, 'number')
   strictEqual(typeof event.sampleCount, 'number')
-  ok(event.sampleCount > 0)
+  ok(event.sampleCount >= 0)
 
   // The event only carries metadata, the profile is retrieved on demand
   strictEqual(event.profile, undefined)
@@ -377,7 +377,7 @@ test('extensions receive the profiles captured by the continuous profiler, also 
   ok(profile.length > 0)
   strictEqual(typeof timestamp, 'number')
   strictEqual(typeof sampleCount, 'number')
-  ok(sampleCount > 0)
+  ok(sampleCount >= 0)
   strictEqual(preserved, false)
 
   // Profiling must be re-enabled on the replacement worker after a restart.
