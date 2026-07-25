@@ -984,45 +984,45 @@ export class Runtime extends EventEmitter {
 
     try {
       // Bound the whole retrieval with a single timeout budget: resolving the
-      // worker round-trips to it when ensureStarted is set, and the profile
-      // pull does too — both hang if the worker event loop is blocked. Attach
+      // workers round-trips to them when ensureStarted is set, and the profile
+      // pulls do too — both hang if a worker event loop is blocked. Attach
       // a noop handler so that a late settlement after the timeout does not
       // surface as an unhandled rejection.
-      const pull = (async () => {
-        const service = await this.#getApplicationById(id, ensureStarted)
-        const result = await sendViaITC(service, 'getLastProfile', {
-          ...options,
-          includeTimestamp: true,
-          includeSampleCount: true
-        })
-        return { service, result }
-      })()
+      const pull = this.#pullLastProfiles(id, options, ensureStarted)
       pull.catch(() => {})
 
       const outcome = await executeWithTimeout(pull, timeout, kTimeout)
 
       if (outcome !== kTimeout) {
-        const { service, result } = outcome
+        let best = null
 
-        // An older capture module which does not support includeTimestamp
-        // returns the raw profile.
-        const value = result instanceof Uint8Array
-          ? { profile: result, timestamp: null, sampleCount: null }
-          : { sampleCount: null, ...result }
+        for (const { service, result } of outcome) {
+          // An older capture module which does not support includeTimestamp
+          // returns the raw profile.
+          const value = result instanceof Uint8Array
+            ? { profile: result, timestamp: null, sampleCount: null }
+            : { sampleCount: null, ...result }
 
-        // A strictly newer live window supersedes the preserved overload
-        // profile: prune it so the preserved copy naturally expires once the
-        // worker is healthy again and its profiles are being consumed.
-        if (value.timestamp != null) {
-          const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
-          const preserved = this.#lastOverloadProfiles.get(key)
+          // A strictly newer live window supersedes the preserved overload
+          // profile: prune it so the preserved copy naturally expires once the
+          // worker is healthy again and its profiles are being consumed.
+          if (value.timestamp != null) {
+            const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
+            const preserved = this.#lastOverloadProfiles.get(key)
 
-          if (preserved && preserved.timestamp < value.timestamp) {
-            this.#lastOverloadProfiles.delete(key)
+            if (preserved && preserved.timestamp < value.timestamp) {
+              this.#lastOverloadProfiles.delete(key)
+            }
+          }
+
+          // For an application-level id the newest window across the workers
+          // wins, mirroring the preserved overload profile fallback below.
+          if (!best || (value.timestamp != null && (best.timestamp == null || value.timestamp > best.timestamp))) {
+            best = value
           }
         }
 
-        return { ...value, preserved: false }
+        return { ...best, preserved: false }
       }
 
       // The worker event loop is not responding (e.g. it is hard-blocked).
@@ -1049,6 +1049,62 @@ export class Runtime extends EventEmitter {
     }
 
     throw error
+  }
+
+  // Pulls the last profile from the addressed worker, or from every worker of
+  // the application when no explicit worker index is given: the application
+  // "last profile" is the newest window among its workers, so one arbitrary
+  // worker cannot answer for all of them. Per-worker failures with fallback
+  // codes are ignored as long as at least one worker yields a profile.
+  async #pullLastProfiles (id, options, ensureStarted) {
+    const pullOptions = { ...options, includeTimestamp: true, includeSampleCount: true }
+
+    const pullWorker = async service => {
+      const result = await sendViaITC(service, 'getLastProfile', pullOptions)
+      return { service, result }
+    }
+
+    if (/^.+:\d+$/.test(id)) {
+      return [await pullWorker(await this.#getApplicationById(id, ensureStarted))]
+    }
+
+    if (!this.#applications.has(id)) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const keys = this.#workers.getKeys(id)
+
+    // No worker is currently registered: resolve the id as usual so that the
+    // canonical error is raised.
+    if (keys.length === 0) {
+      return [await pullWorker(await this.#getApplicationById(id, ensureStarted))]
+    }
+
+    const settled = await Promise.allSettled(
+      keys.map(async key => {
+        const service = await this.#getWorkerByIdOrNext(id, key.split(':')[1], ensureStarted)
+        return pullWorker(service)
+      })
+    )
+
+    const profiles = []
+    let firstError
+
+    for (const outcome of settled) {
+      if (outcome.status === 'fulfilled') {
+        profiles.push(outcome.value)
+      } else if (!kLastProfileFallbackCodes.has(outcome.reason?.code)) {
+        throw outcome.reason
+      } else {
+        firstError ??= outcome.reason
+      }
+    }
+
+    if (profiles.length === 0) {
+      throw firstError
+    }
+
+    return profiles
   }
 
   // The final profile of an overload pause is pushed by the worker and
