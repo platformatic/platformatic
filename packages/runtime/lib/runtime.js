@@ -935,7 +935,11 @@ export class Runtime extends EventEmitter {
       // surface as an unhandled rejection.
       const pull = (async () => {
         const service = await this.#getApplicationById(id, ensureStarted)
-        const result = await sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
+        const result = await sendViaITC(service, 'getLastProfile', {
+          ...options,
+          includeTimestamp: true,
+          includeSampleCount: true
+        })
         return { service, result }
       })()
       pull.catch(() => {})
@@ -947,7 +951,9 @@ export class Runtime extends EventEmitter {
 
         // An older capture module which does not support includeTimestamp
         // returns the raw profile.
-        const value = result instanceof Uint8Array ? { profile: result, timestamp: null } : result
+        const value = result instanceof Uint8Array
+          ? { profile: result, timestamp: null, sampleCount: null }
+          : { sampleCount: null, ...result }
 
         // A strictly newer live window supersedes the preserved overload
         // profile: prune it so the preserved copy naturally expires once the
@@ -979,7 +985,12 @@ export class Runtime extends EventEmitter {
     if (preserved) {
       // The preserved flag lets consumers distinguish post-mortem evidence
       // from a live window and judge it together with the timestamp.
-      return { profile: preserved.profile, timestamp: preserved.timestamp, preserved: true }
+      return {
+        profile: preserved.profile,
+        timestamp: preserved.timestamp,
+        sampleCount: preserved.sampleCount,
+        preserved: true
+      }
     }
 
     throw error
@@ -2414,7 +2425,7 @@ export class Runtime extends EventEmitter {
     // The event only carries metadata: the profile can be retrieved on demand
     // via getApplicationLastProfile. We use emit instead of emitAndNotify since
     // other workers are not interested in this event.
-    worker[kITC].on('profile:captured', ({ type, timestamp }) => {
+    worker[kITC].on('profile:captured', ({ type, timestamp, sampleCount }) => {
       // A strictly newer completed window supersedes the preserved overload
       // profile: once the worker is past the overload and producing windows
       // again, its old evidence must not be served anymore.
@@ -2430,7 +2441,8 @@ export class Runtime extends EventEmitter {
         application: applicationId,
         worker: index,
         type,
-        timestamp
+        timestamp,
+        sampleCount: sampleCount ?? null
       })
     })
 
@@ -2492,8 +2504,12 @@ export class Runtime extends EventEmitter {
     // the worker can be retrieved (see getApplicationLastProfile) even while
     // the worker event loop is blocked, and it survives the worker being
     // replaced by the health checks.
-    worker[kITC].on('profile:overload', ({ type, timestamp, profile }) => {
-      this.#lastOverloadProfiles.set(`${workerId}:${type}`, { profile, timestamp })
+    worker[kITC].on('profile:overload', ({ type, timestamp, profile, sampleCount }) => {
+      this.#lastOverloadProfiles.set(`${workerId}:${type}`, {
+        profile,
+        timestamp,
+        sampleCount: sampleCount ?? null
+      })
     })
 
     // Preserved overload profiles outlive their worker only for a grace

@@ -52,6 +52,30 @@ test('should stop profiling for a service and return profile data', async t => {
   ok(profileData.length > 0, 'Profile data should not be empty')
 })
 
+test('should optionally return the profile sample count', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.startApplicationProfiling('with-logger', { intervalMicros: 1000 })
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  const result = await app.stopApplicationProfiling('with-logger', { includeSampleCount: true })
+
+  ok(
+    Buffer.isBuffer(result.profile) || result.profile instanceof Uint8Array,
+    'stopApplicationProfiling should return the encoded profile'
+  )
+  ok(result.profile.length > 0, 'Profile data should not be empty')
+  equal(typeof result.sampleCount, 'number', 'Sample count should describe the encoded profile')
+  ok(result.sampleCount >= 0, 'Sample count should not be negative')
+})
+
 test('should throw error when starting profiling on non-existent service', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
