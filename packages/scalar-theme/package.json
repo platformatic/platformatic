@@ -3,6 +3,7 @@
   "version": "3.63.0",
   "description": "Platformatic's Scalar theme for @scalar/fastify-api-reference",
   "main": "theme.js",
+  "types": "theme.d.ts",
   "type": "module",
   "homepage": "https://docs.platformatic.dev/",
   "scripts": {

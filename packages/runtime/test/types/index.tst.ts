@@ -1,11 +1,14 @@
 import { expect, test } from 'tstyche'
-import type { Configuration } from '@platformatic/foundation'
+import type { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import {
   create,
   loadConfiguration,
+  prepareApplication,
+  transform,
   type ApplicationsTopology,
   type Runtime,
   type RuntimeConfiguration,
+  type RuntimeCreateContext,
   type ApplicationDetails,
   type InjectParams,
   type InjectResponse,
@@ -17,6 +20,7 @@ import {
   type RuntimeMetadata,
   type WorkerDetails
 } from '../../index.js'
+import type { PlatformaticRuntimeConfig } from '../../config.js'
 
 const context = {} as Configuration
 
@@ -27,6 +31,34 @@ test('create', () => {
   expect(create('.', { baseUrl: 'http://localhost:3000' })).type.toBe<Promise<Runtime>>()
 
   expect(create('.', './config.json', context)).type.toBe<Promise<Runtime>>()
+
+  // isProduction/setupSignals are real, documented Runtime-only create()
+  // options; setupSignals is Runtime-only, isProduction lives on the shared
+  // ConfigurationOptions.
+  const runtimeContext: RuntimeCreateContext = { isProduction: true, setupSignals: false }
+  expect(create('.', './config.json', runtimeContext)).type.toBe<Promise<Runtime>>()
+
+  // The runtime invokes a caller-supplied transform hook with three
+  // arguments (config, schema, options), not just the config.
+  expect(create('.', './config.json', {
+    transform: async (config, schema, options) => {
+      expect(schema).type.toBe<object>()
+      expect(options).type.toBe<ConfigurationOptions<PlatformaticRuntimeConfig>>()
+      return config
+    }
+  })).type.toBe<Promise<Runtime>>()
+})
+
+test('prepareApplication', () => {
+  const config = {} as RuntimeConfiguration
+  expect(prepareApplication(config, {})).type.toBe<Promise<object>>()
+  expect(prepareApplication(config, {}, config.workers)).type.toBe<Promise<object>>()
+})
+
+test('transform', () => {
+  const config = {} as RuntimeConfiguration
+  expect(transform(config)).type.toBe<Promise<RuntimeConfiguration>>()
+  expect(transform(config, {}, context)).type.toBe<Promise<RuntimeConfiguration>>()
 })
 
 test('loadConfiguration', () => {
@@ -90,7 +122,17 @@ test('Runtime.getRuntimeEnv', () => {
 
 test('Runtime.getRuntimeConfig', () => {
   expect(runtime.getRuntimeConfig()).type.toBe<Record<string, unknown>>()
-  expect(runtime.getRuntimeConfig(true)).type.toBe<Record<string, unknown>>()
+  // Passing `true` returns the full merged Configuration (carrying the
+  // kMetadata symbol), not a plain Record.
+  expect(runtime.getRuntimeConfig(true)).type.toBe<RuntimeConfiguration>()
+})
+
+test('Runtime.setApplicationConfigPatch', () => {
+  expect(runtime.setApplicationConfigPatch('api', [{ op: 'replace', path: '/foo', value: 'bar' }])).type.toBe<void>()
+})
+
+test('Runtime.removeApplicationConfigPatch', () => {
+  expect(runtime.removeApplicationConfigPatch('api')).type.toBe<void>()
 })
 
 test('Runtime.getApplicationsIds', () => {

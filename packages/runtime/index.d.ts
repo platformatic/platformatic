@@ -9,7 +9,7 @@ import { EventEmitter } from 'node:events'
 import { Logger } from 'pino'
 import { PlatformaticRuntimeConfig } from './config.js'
 
-export type RuntimeConfiguration = Promise<Configuration<PlatformaticRuntimeConfig>>
+export type RuntimeConfiguration = Configuration<PlatformaticRuntimeConfig>
 
 export type ApplicationCommandContext = {
   colorette: typeof colorette
@@ -286,6 +286,11 @@ export declare class Runtime extends EventEmitter {
   getRuntimeStatus (): string
   getRuntimeMetadata (): Promise<RuntimeMetadata>
   getRuntimeEnv (): Record<string, string>
+  // `includeMeta: true` returns the full merged Configuration object (which
+  // carries the kMetadata symbol key: `{ root, path, env, module }`), not a
+  // plain Record; the argument-invariant overload below covers every other
+  // call.
+  getRuntimeConfig (includeMeta: true): RuntimeConfiguration
   getRuntimeConfig (includeMeta?: boolean): Record<string, unknown>
   getApplicationsIds (): string[]
   /**
@@ -345,6 +350,12 @@ export declare class Runtime extends EventEmitter {
   stopApplicationProfiling (id: string, options: Record<string, unknown> & { includeSampleCount: true }, ensureStarted?: boolean): Promise<{ profile: Buffer, sampleCount: number }>
   stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
   getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<{ profile: Buffer, timestamp: number | null, sampleCount: number | null, preserved: boolean }>
+
+  // Patches one application's resolved configuration through the same
+  // per-application JSON-Patch mechanism the runtime already applies during
+  // create()/start().
+  setApplicationConfigPatch (applicationId: string, patch: Array<Record<string, unknown>>): void
+  removeApplicationConfigPatch (applicationId: string): void
 }
 
 export function wrapInRuntimeConfig (
@@ -360,13 +371,27 @@ export declare function loadConfiguration (
   context?: ConfigurationOptions
 ): Promise<RuntimeConfiguration>
 
+// create() additionally accepts `setupSignals`, a Runtime-only option (it is
+// never read outside this package) that controls whether SIGUSR2/close-with-grace
+// handlers are installed.
+export interface RuntimeCreateContext extends ConfigurationOptions<PlatformaticRuntimeConfig> {
+  setupSignals?: boolean
+}
+
 export function create (
   root: string,
   source?: string | PlatformaticRuntimeConfig,
-  context?: ConfigurationOptions
+  context?: RuntimeCreateContext
 ): Promise<Runtime>
 
-export declare function prepareApplication (config: RuntimeConfiguration, application: object): object
+// The runtime's actual per-application preparation (worker defaults, paths,
+// telemetry hooks, capability resolution) also takes the resolved worker
+// count as a third argument, and is itself async.
+export declare function prepareApplication (
+  config: RuntimeConfiguration,
+  application: object,
+  workers?: PlatformaticRuntimeConfig['workers']
+): Promise<object>
 
 export declare function transform (
   config: RuntimeConfiguration,
