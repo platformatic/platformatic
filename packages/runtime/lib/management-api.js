@@ -203,8 +203,8 @@ export async function managementApiPlugin (app, opts) {
     app.log.debug('start profiling', { id })
 
     const options = request.body || {}
-    await runtime.startApplicationProfiling(id, options)
-    reply.code(200).send({})
+    const result = await runtime.startApplicationProfiling(id, options)
+    reply.code(200).send(result ?? {})
   })
 
   app.post('/applications/:id/pprof/stop', async (request, reply) => {
@@ -213,6 +213,19 @@ export async function managementApiPlugin (app, opts) {
 
     const options = request.body || {}
     const profileData = await runtime.stopApplicationProfiling(id, options)
+
+    // With allWorkers there is one profile per worker: return them as JSON
+    // with base64 encoded payloads since a single binary body cannot carry
+    // multiple profiles.
+    if (options.allWorkers && Array.isArray(profileData)) {
+      const profiles = profileData.map(({ workerIndex, profile }) => ({
+        workerIndex,
+        profile: Buffer.from(profile).toString('base64')
+      }))
+
+      return { profiles }
+    }
+
     reply.type('application/octet-stream').code(200).send(profileData)
   })
 

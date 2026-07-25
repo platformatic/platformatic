@@ -339,7 +339,9 @@ export declare class Runtime extends EventEmitter {
   restartApplication (id: string): Promise<void>
   addApplications (applications: unknown[], start?: boolean): Promise<ApplicationDetails[]>
   removeApplications (applications: string[], silent?: boolean): Promise<ApplicationDetails[]>
+  startApplicationProfiling (id: string, options: Record<string, unknown> & { allWorkers: true }, ensureStarted?: boolean): Promise<{ workers: number[] }>
   startApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<void>
+  stopApplicationProfiling (id: string, options: Record<string, unknown> & { allWorkers: true }, ensureStarted?: boolean): Promise<Array<{ workerIndex: number, profile: Buffer }>>
   stopApplicationProfiling (id: string, options: Record<string, unknown> & { includeSampleCount: true }, ensureStarted?: boolean): Promise<{ profile: Buffer, sampleCount: number }>
   stopApplicationProfiling (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<Buffer>
   getApplicationLastProfile (id: string, options?: Record<string, unknown>, ensureStarted?: boolean): Promise<{ profile: Buffer, timestamp: number | null, sampleCount: number | null, preserved: boolean }>

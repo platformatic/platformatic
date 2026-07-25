@@ -607,6 +607,10 @@ wattpm pprof start [id] [application]
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, profiles all applications if omitted)
 
+**Options:**
+
+- `--all-workers, -a` - Profile every worker of each application. By default only one worker per application is profiled to keep the overhead low.
+
 **Example:**
 
 ```bash
@@ -615,6 +619,7 @@ wattpm pprof start api-application          # Start profiling specific applicati
 wattpm pprof start my-app               # Start profiling all applications in specific app
 wattpm pprof start my-app api-application   # Start profiling specific application in specific app
 wattpm pprof start 12345 api-application    # Start profiling specific application using PID
+wattpm pprof start --all-workers api-application # Start profiling all workers of an application
 ```
 
 ### `wattpm pprof stop`
@@ -630,6 +635,11 @@ wattpm pprof stop [id] [application]
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, stops profiling all applications if omitted)
 
+**Options:**
+
+- `--all-workers, -a` - Stop profiling on every worker of each application and save one profile file per worker, named `pprof-{type}-{application}-{workerIndex}-{timestamp}.pb`.
+- `--dir, -d` - Directory to save the profile data to (default: current working directory).
+
 **Example:**
 
 ```bash
@@ -638,6 +648,7 @@ wattpm pprof stop api-application          # Stop profiling specific application
 wattpm pprof stop my-app               # Stop profiling all applications in specific app
 wattpm pprof stop my-app api-application   # Stop profiling specific application in specific app
 wattpm pprof stop 12345 api-application    # Stop profiling specific application using PID
+wattpm pprof stop --all-workers api-application  # Save one profile per worker
 ```
 
 ### `wattpm heap-snapshot`

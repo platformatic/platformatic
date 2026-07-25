@@ -347,7 +347,7 @@ export class RuntimeApiClient {
   async stopApplicationProfiling (pid, applicationId, options = {}) {
     const client = this.#getUndiciClient(pid)
 
-    const { statusCode, body } = await client.request({
+    const { statusCode, headers, body } = await client.request({
       path: `/api/v1/applications/${applicationId}/pprof/stop`,
       method: 'POST',
       headers: {
@@ -377,6 +377,21 @@ export class RuntimeApiClient {
       }
 
       throw new FailedToStopProfiling(applicationId, message)
+    }
+
+    if (options.allWorkers) {
+      // One profile per worker, JSON encoded with base64 payloads
+      if (headers['content-type']?.includes('application/json')) {
+        const { profiles } = await body.json()
+        return profiles.map(({ workerIndex, profile }) => ({
+          workerIndex,
+          profile: Buffer.from(profile, 'base64')
+        }))
+      }
+
+      // Older runtimes ignore the allWorkers option and return a single
+      // binary profile from one of the workers.
+      return [{ workerIndex: null, profile: Buffer.from(await body.arrayBuffer()) }]
     }
 
     // Return the binary profile data as ArrayBuffer
