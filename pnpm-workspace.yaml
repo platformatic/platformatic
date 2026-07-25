@@ -35,6 +35,8 @@ minimumReleaseAgeExclude:
   - "@astrojs/node@11.0.2"
   # Renovate security update: find-my-way@9.7.0
   - find-my-way@9.7.0
+  # Renovate security update: @fastify/static@10.1.2
+  - "@fastify/static@10.1.2"
 nodeLinker: hoisted
 packageImportMethod: copy
 preferSymlinkedExecutables: true
