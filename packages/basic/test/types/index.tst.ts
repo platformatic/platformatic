@@ -324,9 +324,9 @@ test('private methods', () => {
 
 // Test the worker extension contract
 test('WorkerExtension contract', () => {
-  const extension: WorkerExtension = ({ applicationId, entrypoint, onRequest }: WorkerExtensionContext) => {
+  const extension: WorkerExtension = ({ applicationId, capability, onRequest }: WorkerExtensionContext) => {
     expect(applicationId).type.toBe<string>();
-    expect(entrypoint).type.toBe<boolean>();
+    expect(capability).type.toBe<unknown>();
     onRequest(({ request, addResponseHeader }) => {
       expect(request.headers).type.toBe<import('node:http').IncomingHttpHeaders>();
       addResponseHeader('set-cookie', 'a=1');

@@ -19,15 +19,13 @@ export interface WorkerExtensionRequest {
 
 export interface WorkerExtensionContext {
   applicationId: string
-  entrypoint: boolean
   config: Record<string, unknown>
   options: Record<string, unknown>
   logger: unknown
   // The capability serving the application. Present only for an in-thread
   // entrypoint; undefined when the capability runs in a child process.
   capability?: unknown
-  // Registers a handler run at the start of every entrypoint request. A no-op on
-  // a non-entrypoint application.
+  // Registers a handler run at the start of every entrypoint request.
   onRequest (handler: (request: WorkerExtensionRequest) => void): void
 }
 
@@ -45,10 +43,10 @@ export interface InstalledWorkerExtensions {
 
 export declare function installWorkerExtensions (context: {
   applicationId: string
-  entrypoint: boolean
   config: Record<string, unknown>
   logger: unknown
   workerExtensions?: unknown
+  capability?: unknown
   root?: string
 }): Promise<InstalledWorkerExtensions>
 

@@ -26,13 +26,15 @@ function appendHeader (response, headers, name, value) {
 }
 
 // Loads and runs an application's worker extensions, wiring the one request
-// hook this process owns. Installed at both entrypoint sites: the worker thread
-// for in-thread capabilities and the child process for child-process ones,
-// because that is where the entrypoint HTTP server actually lives. The caller
-// passes its own logger, since the globals logger is not always available where
-// this runs (notably the child bootstrap).
+// hook this process owns. Only ever called for the entrypoint application (both
+// call sites gate on it), which is the only one that serves external requests.
+// Installed at both entrypoint sites: the worker thread for in-thread
+// capabilities and the child process for child-process ones, because that is
+// where the entrypoint HTTP server actually lives. The caller passes its own
+// logger, since the globals logger is not always available where this runs
+// (notably the child bootstrap).
 export async function installWorkerExtensions (context) {
-  const { entrypoint, workerExtensions, logger, ...rest } = context
+  const { workerExtensions, logger, ...rest } = context
 
   let list = workerExtensions
   if (!list) return { async close () {} }
@@ -73,12 +75,9 @@ export async function installWorkerExtensions (context) {
     try {
       const instance = await setup({
         ...rest,
-        entrypoint,
         logger: logger.child({ name: `worker-extension:${basename(path)}` }),
         options: options ?? {},
-        // Only the entrypoint has a public HTTP server; a hook on a
-        // non-entrypoint worker would fire on internal mesh traffic.
-        onRequest: entrypoint ? handler => handlers.push(handler) : () => {}
+        onRequest: handler => handlers.push(handler)
       })
       instances.push({ path, instance })
     } catch (err) {
@@ -87,7 +86,7 @@ export async function installWorkerExtensions (context) {
   }
 
   let onStart
-  if (entrypoint && handlers.length > 0) {
+  if (handlers.length > 0) {
     onStart = ({ request, response }) => {
       const pending = []
       const addResponseHeader = (name, value) => pending.push([name, value])

@@ -697,7 +697,6 @@ export class ChildProcess extends ITC {
     if (workerExtensions && isEntrypointApplication && !isBuilding({ throwOnMissing: false })) {
       this.workerExtensionsReady = installWorkerExtensions({
         applicationId: getApplicationId({ throwOnMissing: false }),
-        entrypoint: isEntrypointApplication,
         config,
         logger: this.#logger,
         workerExtensions

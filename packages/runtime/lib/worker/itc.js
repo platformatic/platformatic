@@ -220,7 +220,6 @@ export async function setupITC (controller, application, dispatcher, sharedConte
             const capabilityConfig = controller.capability.config ?? {}
             workerExtensions = await installWorkerExtensions({
               applicationId: controller.applicationConfig.id,
-              entrypoint: true,
               config: capabilityConfig,
               // Available only for an in-thread entrypoint; a child-process
               // capability runs elsewhere, so its extensions do not get it.

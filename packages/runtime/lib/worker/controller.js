@@ -215,7 +215,11 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.applicationConfig.useHttp
+    // The entrypoint always listens in listen(), never here, so that anything
+    // that must be in place before it accepts requests (for example worker
+    // extensions) can be set up between start() and listen(). Non-entrypoint
+    // useHttp applications still listen during start().
+    const listen = this.applicationConfig.entrypoint ? false : !!this.applicationConfig.useHttp
 
     try {
       await this.capability.start({ listen })
@@ -263,12 +267,13 @@ export class Controller extends EventEmitter {
   }
 
   async listen () {
-    // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
+    // This server is not an entrypoint or already listening. Behave as no-op.
+    if (!this.applicationConfig.entrypoint || this.#listening) {
       return
     }
 
     await this.capability.start({ listen: true })
+    this.#listening = true
   }
 
   async getMetrics ({ format }) {

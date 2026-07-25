@@ -26,26 +26,25 @@ async function writeExtension (contents) {
 
 test('with no extensions configured, install is a no-op', async () => {
   const logger = recordingLogger()
-  const installed = await installWorkerExtensions({ entrypoint: true, logger })
+  const installed = await installWorkerExtensions({ logger })
   await installed.close()
   strictEqual(logger.errors.length, 0)
 })
 
-test('a setup function runs and receives its options and entrypoint flag', async () => {
+test('a setup function runs and receives its options', async () => {
   const path = await writeExtension(`
-    export default function setup ({ entrypoint, options }) {
-      globalThis.__seen = { entrypoint, marker: options.marker }
+    export default function setup ({ options }) {
+      globalThis.__seen = { marker: options.marker }
     }
   `)
   const logger = recordingLogger()
 
   await installWorkerExtensions({
-    entrypoint: true,
     logger,
     workerExtensions: { path, options: { marker: 'x' } }
   })
 
-  deepStrictEqual(globalThis.__seen, { entrypoint: true, marker: 'x' })
+  deepStrictEqual(globalThis.__seen, { marker: 'x' })
   delete globalThis.__seen
 })
 
@@ -54,7 +53,6 @@ test('a missing extension is skipped, logged LOUDLY, and never throws', async ()
 
   // Must resolve, not reject: a bad extension does not crash the boot.
   const installed = await installWorkerExtensions({
-    entrypoint: true,
     logger,
     workerExtensions: { path: '/does/not/exist.mjs' }
   })
@@ -74,7 +72,7 @@ test('an extension whose default export is not a function is skipped and logged 
   const path = await writeExtension('export default 42')
   const logger = recordingLogger()
 
-  await installWorkerExtensions({ entrypoint: true, logger, workerExtensions: { path } })
+  await installWorkerExtensions({ logger, workerExtensions: { path } })
 
   strictEqual(logger.errors.length, 1)
   strictEqual(logger.errors[0].obj.err.code, 'PLT_BASIC_INVALID_WORKER_EXTENSION')
@@ -89,7 +87,6 @@ test('a setup that throws is skipped and logged loudly, and later extensions sti
   const logger = recordingLogger()
 
   await installWorkerExtensions({
-    entrypoint: true,
     logger,
     workerExtensions: [{ path: bad }, { path: good }]
   })
@@ -114,7 +111,6 @@ test('close runs each extension close in reverse order', async () => {
   const logger = recordingLogger()
 
   const installed = await installWorkerExtensions({
-    entrypoint: true,
     logger,
     workerExtensions: [{ path: a }, { path: b }]
   })
@@ -124,21 +120,18 @@ test('close runs each extension close in reverse order', async () => {
   delete globalThis.__order
 })
 
-test('onRequest is a no-op on a non-entrypoint application', async () => {
+test('an extension can register an onRequest handler during setup', async () => {
   const path = await writeExtension(`
     export default function ({ onRequest }) {
-      globalThis.__registered = false
-      onRequest(() => { globalThis.__registered = true })
-      // Registering does nothing off the entrypoint; the handler is never stored.
+      onRequest(() => {})
       globalThis.__onRequestReturned = true
     }
   `)
   const logger = recordingLogger()
 
-  await installWorkerExtensions({ entrypoint: false, logger, workerExtensions: { path } })
+  await installWorkerExtensions({ logger, workerExtensions: { path } })
 
   strictEqual(globalThis.__onRequestReturned, true)
   strictEqual(logger.errors.length, 0)
-  delete globalThis.__registered
   delete globalThis.__onRequestReturned
 })

@@ -1,9 +1,9 @@
 import { safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { createRuntime } from './helpers.js'
@@ -74,11 +74,11 @@ for (const entrypoint of ['node', 'node-child']) {
 
     const { statusCode, headers } = await request(url, { path: '/hello' })
     strictEqual(statusCode, 200)
-    strictEqual(headers['x-worker-extension'], `${entrypoint}:true`)
+    strictEqual(headers['x-worker-extension'], entrypoint)
   })
 }
 
-test('an extension receives its application id, entrypoint flag, config, options and logger', async t => {
+test('an extension receives its application id, config, options and logger', async t => {
   const { url } = await start(t, {
     entrypoint: 'node',
     extensions: { path: '../../extensions/context.mjs', options: { marker: 'hi' } }
@@ -88,7 +88,6 @@ test('an extension receives its application id, entrypoint flag, config, options
   const context = JSON.parse(Buffer.from(headers['x-extension-context'], 'base64').toString())
 
   strictEqual(context.applicationId, 'node')
-  strictEqual(context.entrypoint, true)
   strictEqual(context.hasConfig, true)
   strictEqual(context.option, 'hi')
   strictEqual(context.hasLogger, true)
@@ -185,14 +184,22 @@ test('worker extensions are not loaded while building', async t => {
   t.after(() => safeRemove(markerFile))
 
   // The entrypoint extension records that its setup ran.
-  const configFile = await prepareFixture(t, 'node', { path: '../../extensions/marker.mjs', options: { markerFile } })
+  const configFile = await prepareFixture(t, 'node-child', { path: '../../extensions/marker.mjs', options: { markerFile } })
+
+  // Give the entrypoint a build command so buildApplication() spawns a child
+  // process, which is where the child-side isBuilding guard runs.
+  const svcPath = join(dirname(configFile), 'services', 'node-child', 'watt.json')
+  const svc = JSON.parse(await readFile(svcPath, 'utf8'))
+  svc.application.commands.build = 'node --eval "process.exit(0)"'
+  await writeFile(svcPath, JSON.stringify(svc, null, 2))
 
   const runtimeApp = await createRuntime(configFile, undefined, { build: true })
   t.after(() => runtimeApp.close())
   await runtimeApp.init()
+  await runtimeApp.buildApplication('node-child')
 
-  // init() spawns the workers; if the build guard is missing, the extension
-  // setup would have run and written the marker.
+  // The build command runs in a child with isBuilding set; the child-side guard
+  // must skip the extension, so its setup never runs and the marker is absent.
   strictEqual(existsSync(markerFile), false)
 })
 
@@ -204,7 +211,7 @@ test('a non-entrypoint application does not fire the request hook', async t => {
   const { headers } = await request(url, { path: '/hello' })
   // The entrypoint (node-child) header is present; the non-entrypoint (node)
   // one never gets a public request to hook.
-  strictEqual(headers['x-worker-extension'], 'node-child:true')
+  strictEqual(headers['x-worker-extension'], 'node-child')
 })
 
 test('workerExtensions works in a wrapped single-application config', async t => {
@@ -220,7 +227,7 @@ test('workerExtensions works in a wrapped single-application config', async t =>
   strictEqual(statusCode, 200)
   // The standalone application's id comes from its package name; the entrypoint
   // flag is what matters here.
-  ok(headers['x-worker-extension']?.endsWith(':true'), `expected the extension header, got: ${headers['x-worker-extension']}`)
+  ok(headers['x-worker-extension'], `expected the extension header, got: ${headers['x-worker-extension']}`)
 })
 
 test('a TypeScript extension is loaded via type stripping', async t => {

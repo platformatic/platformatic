@@ -241,11 +241,14 @@ restarted) and shipping the captured profiles — see the
 
 ### `workerExtensions`
 
-While `extensions` runs in the runtime main thread, `workerExtensions` runs in an individual
-application, next to where that application's entrypoint HTTP server runs. This is the worker thread
-for most applications, or the child process for applications started through a custom command. A
-worker extension can hook the entrypoint's responses, which the main-thread `extensions` cannot
-reach.
+While `extensions` runs in the runtime main thread, `workerExtensions` runs next to where the
+runtime entrypoint's HTTP server runs. This is the worker thread for most applications, or the child
+process for an entrypoint started through a custom command. A worker extension can hook the
+entrypoint's responses, which the main-thread `extensions` cannot reach.
+
+Worker extensions run on the entrypoint application only, since only the entrypoint serves external
+requests. Configuring them on a non-entrypoint application has no effect; use `preload` to run code
+in every application worker.
 
 `workerExtensions` is an application-level property: it is set on the `application` block of an
 application configuration, and accepts a path, an object with `path` and `options` properties, or an
@@ -295,9 +298,7 @@ export default async function setup ({ options, onRequest }) {
 
 The setup function receives a context object with the following properties:
 
-- **`applicationId`** - The id of the application the extension runs in.
-- **`entrypoint`** - `true` when the application is the runtime entrypoint. `onRequest` only fires for
-  the entrypoint, because only it serves external requests.
+- **`applicationId`** - The id of the entrypoint application the extension runs in.
 - **`config`** - The resolved application configuration.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`logger`** - A child of the application logger.
