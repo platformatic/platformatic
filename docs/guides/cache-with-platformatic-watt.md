@@ -676,7 +676,7 @@ Instead of 3 separate cache layers, you get 1 unified cache that handles the ent
 
 Now that you have HTTP caching working with Watt's service mesh:
 
-- **[Monitor your cache](/docs/guides/monitoring)** - Track cache hit rates and performance
-- **[Deploy with caching](/docs/guides/deployment/)** - Production considerations for cached applications
-- **[Database optimization](/docs/guides/databases/)** - Combine caching with database best practices
-- **[Load testing](/docs/guides/performance/)** - Verify cache performance under load
+- **[Monitor your cache](/docs/guides/metrics)** - Track cache hit rates and performance
+- **[Deploy with caching](/docs/guides/deployment/dockerize-a-watt-app)** - Production considerations for cached applications
+- **[Database optimization](/docs/reference/db/overview)** - Combine caching with database best practices
+- **[Load testing](/docs/guides/profiling-with-watt)** - Verify cache performance under load

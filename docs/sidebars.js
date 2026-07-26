@@ -14,12 +14,18 @@
 // /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   docs: [
-    // Overview - What Platformatic is and core concepts
+    // Overview - What Platformatic is and core concepts (Diátaxis: Discovery & orientation)
     {
       type: 'category',
       label: 'Overview',
       collapsed: false,
-      items: ['Overview']
+      items: [
+        'Overview',
+        'overview/what-is-watt',
+        'overview/architecture-overview',
+        'overview/use-cases-and-examples',
+        'overview/comparison-with-alternatives'
+      ]
     },
 
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
@@ -28,6 +34,7 @@ const sidebars = {
       label: 'Getting Started',
       collapsed: false,
       items: [
+        'overview/getting-started',
         'getting-started/quick-start',
         'getting-started/port-your-app',
         {
@@ -51,6 +58,8 @@ const sidebars = {
           label: 'Application Development',
           collapsed: true,
           items: [
+            'guides/capabilities',
+            'guides/frameworks',
             'guides/build-modular-monolith',
             'guides/cache-with-platformatic-watt',
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',
@@ -70,6 +79,7 @@ const sidebars = {
           label: 'Deployment & Operations',
           collapsed: true,
           items: [
+            'guides/cli-managing',
             'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/k8s-readiness-liveness',
             'guides/deployment/compiling-typescript',
@@ -82,10 +92,12 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
+            'guides/logging',
             'guides/metrics',
             'guides/distributed-tracing',
             'guides/logging-to-elasticsearch',
             'guides/opentelemetry-logging',
+            'guides/opentelemetry-sdk-setup',
             'guides/profiling-with-watt',
             'guides/capture-flamegraphs-on-health-events',
             'guides/heap-snapshots',

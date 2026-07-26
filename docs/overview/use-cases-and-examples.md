@@ -409,22 +409,22 @@ Choose your path based on your use case:
 
 **🚀 Start Building Immediately**
 
-- [Quick Start Guide](/docs/getting-started/quick-start-watt) - Get running in 5 minutes
+- [Quick Start Guide](/docs/getting-started/quick-start) - Get running in 5 minutes
 - [Example Applications](https://github.com/platformatic/examples) - Explore working Watt application patterns
 
 **🔍 Deep Dive into Architecture**
 
 - [Architecture Overview](/docs/overview/architecture-overview) - Technical details
-- [Service Types Reference](/docs/reference/) - Fastify, HTTP, Composer services
+- [Service Types Reference](/docs/reference) - Fastify, HTTP, Composer services
 
 **🔄 Migrate Existing Applications**
 
 - [Migration Guide](/docs/getting-started/port-your-app) - Step-by-step porting
-- [Integration Patterns](/docs/guides/integrations/) - Connect existing systems
+- [Integration Patterns](/docs/guides) - Connect existing systems
 
 **📊 Production Deployment**
 
-- [Deployment Guide](/docs/guides/deployment/) - Docker, Kubernetes, cloud platforms
-- [Monitoring Setup](/docs/guides/monitoring/) - Metrics, logging, tracing
+- [Deployment Guide](/docs/guides/deployment/dockerize-a-watt-app) - Docker, Kubernetes, cloud platforms
+- [Monitoring Setup](/docs/guides/metrics) - Metrics, logging, tracing
 
 **Questions about your specific use case?** Join our [Discord community](https://discord.gg/platformatic) where the Watt team and community discuss real-world applications and architectural patterns.

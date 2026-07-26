@@ -13,17 +13,21 @@ content was written and merged in PR #4275 (`doc: Phase3 strategic content`), an
 updated. The real problem today is not missing content — it is **content that exists but is
 unreachable**.
 
-### The headline finding: `docs/overview/` is orphaned
+> **Status: the headline finding below was resolved by Phase 4 on 2026-07-26.** The audit is retained
+> because it explains why the roadmap is ordered the way it is, and because guideline 5 in
+> [Content Creation Guidelines](#content-creation-guidelines) exists to prevent a recurrence.
+
+### The headline finding: `docs/overview/` was orphaned
 
 All five planned overview pages exist on disk:
 
 | File | Lines | In sidebar? |
 | --- | --- | --- |
-| `docs/overview/what-is-watt.md` | 386 | ❌ No |
-| `docs/overview/getting-started.md` | 277 | ❌ No |
-| `docs/overview/architecture-overview.md` | 566 | ❌ No |
-| `docs/overview/use-cases-and-examples.md` | 430 | ❌ No |
-| `docs/overview/comparison-with-alternatives.md` | 811 | ❌ No |
+| `docs/overview/what-is-watt.md` | 386 | ✅ Fixed in Phase 4 |
+| `docs/overview/getting-started.md` | 277 | ✅ Fixed in Phase 4 |
+| `docs/overview/architecture-overview.md` | 566 | ✅ Fixed in Phase 4 |
+| `docs/overview/use-cases-and-examples.md` | 430 | ✅ Fixed in Phase 4 |
+| `docs/overview/comparison-with-alternatives.md` | 811 | ✅ Fixed in Phase 4 |
 
 `docs/sidebars.js` still exposes only the single legacy page `docs/Overview.md` (104 lines) under the
 "Overview" category. Roughly **2,470 lines of strategic content are invisible on the published site.**
@@ -118,38 +122,62 @@ reachable by clicking through, but they never appear in the sidebar tree.
 Phases 1 and 2 are complete and are archived at the bottom of this document. Phase 3 is complete on
 disk but undelivered to users. The work below is ordered by value per unit of effort.
 
-### Phase 4: Deliver What Already Exists 🔴 CRITICAL — DO THIS FIRST
+### Phase 4: Deliver What Already Exists ✅ COMPLETED (2026-07-26)
 
-**Effort: low. Value: very high.** No new prose required; this is wiring and link repair.
+**Effort: low. Value: very high.** No new prose required; this was wiring and link repair.
 
-- [ ] **Repair links in `docs/overview/*.md`**
-  - [ ] `/docs/getting-started/quick-start-watt` → `/docs/getting-started/quick-start`
-  - [ ] `/docs/reference/watt/` → `/docs/reference/wattpm/overview`
-  - [ ] Replace the five nonexistent `/docs/guides/<topic>/` directory links with links to real
-        guides, or to the `docs/guides.md` index
-  - [ ] Run the Docusaurus build to confirm zero broken-link warnings (this is how PR #4867 caught
-        the previous round)
-- [ ] **Add `docs/overview/` to `docs/sidebars.js`**
-  - [ ] Expand the "Overview" category to: `Overview` (landing), `overview/what-is-watt`,
+- [x] **Repaired links in `docs/overview/*.md`**
+  - [x] `/docs/getting-started/quick-start-watt` → `/docs/getting-started/quick-start`
+  - [x] `/docs/reference/watt/` → `/docs/reference/wattpm/overview`
+  - [x] Replaced the five nonexistent `/docs/guides/<topic>/` directory links with real targets
+- [x] **Added `docs/overview/` to `docs/sidebars.js`**
+  - [x] Overview category now: `Overview` (landing), `overview/what-is-watt`,
         `overview/architecture-overview`, `overview/use-cases-and-examples`,
         `overview/comparison-with-alternatives`
-  - [ ] Place `overview/getting-started` at the top of the "Getting Started" category as the path
-        chooser, above `getting-started/quick-start`
-  - [ ] Keep `collapsed: false` on Overview and Getting Started
-- [ ] **Wire up the orphaned guides**
-  - [ ] `guides/logging` → Monitoring & Observability
-  - [ ] `guides/opentelemetry-sdk-setup` → Monitoring & Observability
-  - [ ] `guides/capabilities`, `guides/frameworks` → Application Development
-  - [ ] `guides/cli-managing` → Deployment & Operations (or Application Development)
-- [ ] **Resolve `reference/wattpm/reference` vs `reference/wattpm/cli-commands`** — merge or wire up;
-      do not ship two overlapping CLI references
-- [ ] **Decide `docs/Overview.md` vs `docs/overview/what-is-watt.md`** — keep one canonical page,
-      redirect or trim the other
-- [ ] **Confirm `getting-started/new-api-project-instructions.md` is still imported as a partial**;
-      delete if dead
+  - [x] `overview/getting-started` placed at the top of Getting Started as the path chooser
+  - [x] `collapsed: false` retained on both
+- [x] **Wired up the orphaned guides** — `guides/logging` and `guides/opentelemetry-sdk-setup` into
+      Monitoring & Observability; `guides/capabilities` and `guides/frameworks` into Application
+      Development; `guides/cli-managing` into Deployment & Operations
+- [x] **Resolved the duplicate CLI reference** — `reference/wattpm/reference.md` (263 lines) deleted;
+      `reference/wattpm/cli-commands.md` (817 lines) covers every command it documented plus `repl`,
+      `pprof`, `heap-snapshot`, global options, and common workflows. `wattpm/overview.md` repointed.
+- [x] **Resolved `docs/Overview.md` vs `docs/overview/what-is-watt.md`** — kept both, with distinct
+      roles made explicit: `Overview.md` is the short landing/routing page and now links into the
+      Overview section; `what-is-watt.md` is the progressive-depth explainer. Also removed a
+      duplicated "What You Can Build" section from `Overview.md`.
+- [x] **Confirmed `getting-started/new-api-project-instructions.md` is a live MDX partial**
+      (imported by `learn/beginner/crud-application.md` and
+      `guides/generate-frontend-code-to-consume-platformatic-rest-api.md`) — correctly excluded
+      from the sidebar, as is `getting-started/issues.md`
 
-**Exit criteria:** every non-partial `.md` under `docs/` appears in `docs/sidebars.js`, and the
-Docusaurus build emits no broken-link warnings.
+**Beyond the original scope**, the link audit surfaced and fixed pre-existing breakage elsewhere:
+
+- 11 dead `/docs/guides/<category>/` links across `cache-with-platformatic-watt`,
+  `using-watt-with-node-config`, `use-watt-multiple-repository`, `environment-variables`, and
+  `k8s-readiness-liveness` — all "Next Steps" sections pointing at guide categories that were
+  planned in this document but never created
+- `/docs/reference/gateway/introduction` → `overview` (in `getting-started/quick-start.md`)
+- `/docs/reference/db/authorization/introduction` → `overview`, and `/docs/guides/jwt-auth0` →
+  `/docs/reference/db/jwt-auth0` (in `securing-platformatic-db.md`)
+- `reference/gateway/overview.md` pointed at `../watt/overview.md`, which never existed
+- `docs.platformatic.dev/docs/reference/{runtime,db}/introduction` self-links in
+  `build-modular-monolith.md`, converted to working relative routes
+- Four commented-out "Related Tutorials" links in `crud-application.md` restored as working links to
+  targets that exist today
+
+**Exit criteria met.** Verified mechanically:
+
+- Every non-partial `.md` under `docs/` appears in `docs/sidebars.js` (128 files on disk, 126
+  sidebar entries, difference = the 2 MDX partials)
+- Zero broken sidebar references
+- Zero broken absolute `/docs/…` links, relative `.md` links, or `docs.platformatic.dev` self-links
+
+**Known issue left open (code, not docs):** `packages/db/lib/application.js:102` prints
+`https://docs.platformatic.dev/docs/guides/debug-platformatic-db` in a migration warning, and that
+page does not exist. The 404 is reproduced verbatim in `build-modular-monolith.md` sample output,
+which was left faithful to actual program output. Fixing this requires a code change — either write
+the guide or repoint the warning.
 
 ### Phase 5: Terminology and Accuracy Pass 🟡 HIGH
 

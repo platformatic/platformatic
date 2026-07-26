@@ -79,22 +79,22 @@ Build a complete application with guided instructions.
 
 Migrate your existing Node.js application to Watt.
 
-## What You Can Build
+## Go Deeper
 
-Watt is perfect for:
+This page is a summary. For the full picture, work through the Overview section:
 
-- **Full-stack applications** with unified backend/frontend deployment
-- **Microservices** that need to run as a single unit
-- **Database-first APIs** with auto-generated endpoints
-- **Multi-tenant SaaS applications** with built-in authorization
-- **Real-time applications** with WebSocket and GraphQL subscriptions
+- **[What is Watt?](/docs/overview/what-is-watt)** - Progressive explanation, from a 30-second summary to a 15-minute deep dive
+- **[Architecture Overview](/docs/overview/architecture-overview)** - How the multithreaded application server is put together
+- **[Use Cases & Examples](/docs/overview/use-cases-and-examples)** - Real-world scenarios where Watt fits
+- **[Comparison with Alternatives](/docs/overview/comparison-with-alternatives)** - Watt vs. Express, Fastify, Next.js, and others
 
 ## Next Steps
 
+- **Not sure where to begin?** Use the [getting started path chooser](/docs/overview/getting-started)
 - **New to Node.js?** Start with our [beginner tutorial](/docs/learn/beginner/crud-application)
 - **Experienced developer?** Jump into the [quick start](/docs/getting-started/quick-start)
-- **Need specific help?** Browse our [how-to guides](/docs/guides/build-modular-monolith)
-- **Want technical details?** Check the [reference documentation](/docs/reference-overview)
+- **Need specific help?** Browse our [how-to guides](/docs/guides)
+- **Want technical details?** Check the [reference documentation](/docs/reference)
 
 ## Community & Support
 

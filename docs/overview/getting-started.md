@@ -26,7 +26,7 @@ Different developers learn best in different ways. Choose the path that matches 
 - See Watt orchestrating multiple applications in a single application server
 - Experience Watt's unified development workflow
 
-[**Start the Quick Start →**](/docs/getting-started/quick-start-watt)
+[**Start the Quick Start →**](/docs/getting-started/quick-start)
 
 ---
 
@@ -249,7 +249,7 @@ No. Watt provides wrapper patterns that let you integrate existing Express, Fast
 
 Yes. Watt allows you to integrate any existing app and is built on Fastify with production features like structured logging, metrics, health checks, and Kubernetes integration out of the box.
 
-**See production examples:** [Deployment Guide](/docs/guides/deployment/)
+**See production examples:** [Deployment Guide](/docs/guides/deployment/dockerize-a-watt-app)
 
 ### "What if I only need [database APIs/frontend hosting/etc.]?"
 

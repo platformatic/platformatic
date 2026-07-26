@@ -6,7 +6,7 @@ Everything runs in the runtime main thread: the extension triggers the built-in 
 
 ## Prerequisites
 
-1. A Watt application (see the [quick start](../getting-started/quick-start-watt.md))
+1. A Watt application (see the [quick start](../getting-started/quick-start.md))
 2. The profiler preload package and the AWS SDK:
 
 ```bash
