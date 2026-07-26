@@ -1775,6 +1775,134 @@ test('loadConfiguration - strictEnv should not throw when onMissingEnv provides 
   equal(result.host, 'default_MISSING_VAR')
 })
 
+test('loadConfiguration - strictEnv should warn about variables resolved by onMissingEnv', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{MISSING_VAR}' }
+  const warnings = []
+  const logger = {
+    warn (message) {
+      warnings.push(message)
+    }
+  }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    strictEnv: true,
+    onMissingEnv: key => `default_${key}`,
+    logger
+  })
+
+  // The value is still resolved by the fallback: reporting it must not change what can boot.
+  equal(result.host, 'default_MISSING_VAR')
+  deepEqual(warnings, [
+    'The configuration references the following environment variables which are not set and have been replaced by a fallback value: MISSING_VAR'
+  ])
+})
+
+test('loadConfiguration - strictEnv should report resolved and missing variables separately', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{RESOLVED_URL}', other: '{MISSING_VAR}' }
+  const warnings = []
+  const logger = {
+    warn (message) {
+      warnings.push(message)
+    }
+  }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    strictEnv: 'warn',
+    onMissingEnv: key => (key.endsWith('_URL') ? 'http://fallback.local' : undefined),
+    logger
+  })
+
+  equal(result.host, 'http://fallback.local')
+  equal(result.other, '')
+  deepEqual(warnings, [
+    'The configuration references the following environment variables which are not set and have been replaced by a fallback value: RESOLVED_URL',
+    'The configuration references the following environment variables which are not set: MISSING_VAR'
+  ])
+})
+
+test('loadConfiguration - strictEnv should warn about resolved variables before throwing on the missing ones', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{RESOLVED_URL}', other: '{MISSING_VAR}' }
+  const warnings = []
+  const logger = {
+    warn (message) {
+      warnings.push(message)
+    }
+  }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  await rejects(
+    async () => {
+      await loadConfiguration(configFile, null, {
+        ignoreProcessEnv: true,
+        strictEnv: true,
+        onMissingEnv: key => (key.endsWith('_URL') ? 'http://fallback.local' : undefined),
+        logger
+      })
+    },
+    {
+      code: 'PLT_MISSING_ENV_VARIABLES',
+      message: 'The configuration references the following environment variables which are not set: MISSING_VAR'
+    }
+  )
+
+  // The warning must survive the throw, otherwise the silently resolved variable stays invisible.
+  deepEqual(warnings, [
+    'The configuration references the following environment variables which are not set and have been replaced by a fallback value: RESOLVED_URL'
+  ])
+})
+
+test('loadConfiguration - variables resolved by onMissingEnv are not reported when strictEnv is disabled', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const configFile = join(tmpDir, 'config.json')
+  const config = { host: '{MISSING_VAR}' }
+  const warnings = []
+  const logger = {
+    warn (message) {
+      warnings.push(message)
+    }
+  }
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(configFile, JSON.stringify(config))
+
+  const result = await loadConfiguration(configFile, null, {
+    ignoreProcessEnv: true,
+    onMissingEnv: key => `default_${key}`,
+    logger
+  })
+
+  equal(result.host, 'default_MISSING_VAR')
+  deepEqual(warnings, [])
+})
+
 test('loadConfiguration - strictEnv should not throw when all variables are set', async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const configFile = join(tmpDir, 'config.json')
