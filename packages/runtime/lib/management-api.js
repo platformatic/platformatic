@@ -18,6 +18,53 @@ import { prepareApplication } from './config.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
+const loggerLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
+
+/*
+  Endpoints which are frequently polled by clients (the CLI, the dashboard or any other
+  monitoring tool) do not log the request/response pair to avoid flooding the runtime logs.
+*/
+const quiet = { logLevel: 'warn' }
+
+/*
+  The management API is closed after the runtime has been closed (see the "closed" event handler
+  in startManagementApi), so that the POST /stop endpoint can reply. By then the runtime logger
+  has been destroyed and writing to its destination throws.
+
+  To avoid that, the logger is never captured: it is resolved - and its children are recreated -
+  on each call, so that logging becomes a no-op as soon as the runtime replaces its logger with
+  the abstract one.
+*/
+function createRuntimeLoggerProxy (getParent, bindings, options) {
+  let parent
+  let logger
+
+  function resolve () {
+    const current = getParent()
+
+    if (current !== parent) {
+      parent = current
+      logger = bindings ? parent.child(bindings, options) : parent
+    }
+
+    return logger
+  }
+
+  const proxy = {
+    child (childBindings, childOptions) {
+      return createRuntimeLoggerProxy(resolve, childBindings, childOptions)
+    }
+  }
+
+  for (const level of loggerLevels) {
+    proxy[level] = function (...args) {
+      return resolve()[level](...args)
+    }
+  }
+
+  return proxy
+}
+
 export async function managementApiPlugin (app, opts) {
   app.register(fastifyAccepts)
 
@@ -43,16 +90,16 @@ export async function managementApiPlugin (app, opts) {
     return removed
   }
 
-  app.get('/status', async () => {
+  app.get('/status', quiet, async () => {
     const status = runtime.getRuntimeStatus()
     return { status }
   })
 
-  app.get('/metadata', async () => {
+  app.get('/metadata', quiet, async () => {
     return runtime.getRuntimeMetadata()
   })
 
-  app.get('/config', async request => {
+  app.get('/config', quiet, async request => {
     const metadata = request.query.metadata === 'true'
     const rawConfig = await runtime.getRuntimeConfig(metadata)
 
@@ -64,7 +111,7 @@ export async function managementApiPlugin (app, opts) {
     return rawConfig
   })
 
-  app.get('/env', async () => {
+  app.get('/env', quiet, async () => {
     return { ...process.env, ...runtime.getRuntimeEnv() }
   })
 
@@ -96,7 +143,7 @@ export async function managementApiPlugin (app, opts) {
     return runtime.runSchedulerJob(request.params.name)
   })
 
-  app.get('/applications', async () => {
+  app.get('/applications', quiet, async () => {
     return runtime.getApplications()
   })
 
@@ -144,9 +191,9 @@ export async function managementApiPlugin (app, opts) {
     return deleteApplications(request.body, reply)
   })
 
-  app.get('/applications/:id', async request => {
+  app.get('/applications/:id', quiet, async request => {
     const { id } = request.params
-    app.log.debug('get application details', { id })
+    app.log.debug({ id }, 'get application details')
     return runtime.getApplicationDetails(id)
   })
 
@@ -154,45 +201,45 @@ export async function managementApiPlugin (app, opts) {
     return deleteApplications([request.params.id], reply)
   })
 
-  app.get('/applications/:id/config', async request => {
+  app.get('/applications/:id/config', quiet, async request => {
     const { id } = request.params
-    app.log.debug('get application config', { id })
+    app.log.debug({ id }, 'get application config')
     return runtime.getApplicationConfig(id)
   })
 
-  app.get('/applications/:id/env', async request => {
+  app.get('/applications/:id/env', quiet, async request => {
     const { id } = request.params
-    app.log.debug('get application config', { id })
+    app.log.debug({ id }, 'get application env')
     return runtime.getApplicationEnv(id)
   })
 
-  app.get('/applications/:id/openapi-schema', async request => {
+  app.get('/applications/:id/openapi-schema', quiet, async request => {
     const { id } = request.params
-    app.log.debug('get openapi-schema', { id })
+    app.log.debug({ id }, 'get openapi-schema')
     return runtime.getApplicationOpenapiSchema(id)
   })
 
-  app.get('/applications/:id/graphql-schema', async request => {
+  app.get('/applications/:id/graphql-schema', quiet, async request => {
     const { id } = request.params
-    app.log.debug('get graphql-schema', { id })
+    app.log.debug({ id }, 'get graphql-schema')
     return runtime.getApplicationGraphqlSchema(id)
   })
 
   app.post('/applications/:id/start', async request => {
     const { id } = request.params
-    app.log.debug('start application', { id })
+    app.log.debug({ id }, 'start application')
     await runtime.startApplication(id)
   })
 
   app.post('/applications/:id/stop', async request => {
     const { id } = request.params
-    app.log.debug('stop application', { id })
+    app.log.debug({ id }, 'stop application')
     await runtime.stopApplication(id)
   })
 
-  app.all('/applications/:id/proxy/*', async (request, reply) => {
+  app.all('/applications/:id/proxy/*', quiet, async (request, reply) => {
     const { id, '*': requestUrl } = request.params
-    app.log.debug('proxy request', { id, requestUrl })
+    app.log.debug({ id, requestUrl }, 'proxy request')
 
     delete request.headers.connection
     delete request.headers['content-length']
@@ -217,7 +264,7 @@ export async function managementApiPlugin (app, opts) {
 
   app.post('/applications/:id/pprof/start', async (request, reply) => {
     const { id } = request.params
-    app.log.debug('start profiling', { id })
+    app.log.debug({ id }, 'start profiling')
 
     const options = request.body || {}
     const result = await runtime.startApplicationProfiling(id, options)
@@ -226,7 +273,7 @@ export async function managementApiPlugin (app, opts) {
 
   app.post('/applications/:id/pprof/stop', async (request, reply) => {
     const { id } = request.params
-    app.log.debug('stop profiling', { id })
+    app.log.debug({ id }, 'stop profiling')
 
     const options = request.body || {}
     const profileData = await runtime.stopApplicationProfiling(id, options)
@@ -248,14 +295,14 @@ export async function managementApiPlugin (app, opts) {
 
   app.post('/applications/:id/heap-snapshot', async (request, reply) => {
     const { id } = request.params
-    app.log.debug('take heap snapshot', { id })
+    app.log.debug({ id }, 'take heap snapshot')
 
     const stream = await runtime.takeApplicationHeapSnapshot(id)
     reply.type('application/octet-stream').send(stream)
     return reply
   })
 
-  app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
+  app.get('/metrics', quiet, async (req, reply) => {
     const config = await runtime.getRuntimeConfig()
 
     if (config.metrics?.enabled === false) {
@@ -280,7 +327,7 @@ export async function managementApiPlugin (app, opts) {
   })
 
   // TODO: Remove in next major version - deprecated endpoint
-  app.get('/metrics/live', { websocket: true }, async socket => {
+  app.get('/metrics/live', { ...quiet, websocket: true }, async socket => {
     const config = await runtime.getRuntimeConfig()
 
     if (config.metrics?.enabled === false) {
@@ -326,7 +373,7 @@ export async function managementApiPlugin (app, opts) {
     socket.on('close', cleanup)
   })
 
-  app.get('/logs/live', { websocket: true }, async socket => {
+  app.get('/logs/live', { ...quiet, websocket: true }, async socket => {
     runtime.addLoggerDestination(createWebSocketStream(socket))
   })
 
@@ -394,7 +441,11 @@ export async function startManagementApi (runtime, config) {
     socketPath = join(runtimePIDDir, 'socket')
   }
 
-  const managementApi = fastify()
+  const managementApi = fastify({
+    name: 'Management API',
+    loggerInstance: createRuntimeLoggerProxy(() => runtime.logger)
+  })
+
   managementApi.register(fastifyWebsocket)
   managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
 
