@@ -96,10 +96,10 @@ npx wattpm --help
 
 **Solution:**
 
-````bash
+```bash
 # Apply pending migrations
 wattpm db:migrations:apply
-K```
+```
 
 ### Application Discovery and Communication Issues
 
@@ -114,7 +114,7 @@ K```
    ```bash
    wattpm ps
    wattpm applications
-````
+   ```
 
 2. **Verify application configuration:**
 

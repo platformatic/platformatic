@@ -173,11 +173,24 @@ disk but undelivered to users. The work below is ordered by value per unit of ef
 - Zero broken sidebar references
 - Zero broken absolute `/docs/…` links, relative `.md` links, or `docs.platformatic.dev` self-links
 
-**Known issue left open (code, not docs):** `packages/db/lib/application.js:102` prints
-`https://docs.platformatic.dev/docs/guides/debug-platformatic-db` in a migration warning, and that
-page does not exist. The 404 is reproduced verbatim in `build-modular-monolith.md` sample output,
-which was left faithful to actual program output. Fixing this requires a code change — either write
-the guide or repoint the warning.
+**Follow-up completed (code):** the audit found that package code also emits documentation URLs, and
+eight of them 404'd. All source occurrences were repointed:
+
+| Emitted URL | Now points to | Source |
+| --- | --- | --- |
+| `guides/debug-platformatic-db` | `reference/troubleshooting#database-connection-issues` | `db/lib/application.js` |
+| `db/configuration` | `reference/db/configuration` | `wattpm-utils`, 4 × `db/lib/commands/` |
+| `application/configuration` | `reference/service/configuration` | `wattpm-utils/lib/commands/external.js` |
+| `db/overview` | `reference/db/overview` | `db/lib/templates.js` (generated README) |
+| `gateway/overview` | `reference/gateway/overview` | `gateway/lib/generator.js` (generated README) |
+| `service/overview` | `reference/service/overview` | `service/lib/generator.js` (generated README) |
+
+Most were simply missing the `reference/` path segment. Three stale URLs remain in
+`packages/*/test/fixtures/` — inert recorded data, deliberately left alone.
+
+**Lesson to carry forward:** documentation URLs are emitted from product code, not just written in
+`docs/`. Any future docs reorganisation must grep `packages/` for `docs.platformatic.dev` before
+moving or renaming a page, otherwise CLI warnings and generated READMEs start pointing at 404s.
 
 ### Phase 5: Terminology and Accuracy Pass 🟡 HIGH
 
