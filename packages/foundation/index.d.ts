@@ -78,7 +78,17 @@ export interface ValidationError {
 export type ConfigurationOptions<T = {}> = Partial<{
   validate: boolean
   validationOptions: object
-  transform: (config: Configuration<T>) => Promise<Configuration<T>> | Configuration<T>
+  // Read directly off the context by every capability package (astro, basic,
+  // next, node, service, ...) to pick a development/production code path.
+  isProduction: boolean
+  // loadConfiguration() always invokes the caller-supplied transform hook
+  // with all three arguments (config, schema, options), mirroring the
+  // exported transform() function's own parameter list.
+  transform: (
+    config: Configuration<T>,
+    schema: object,
+    options: ConfigurationOptions<T>
+  ) => Promise<Configuration<T>> | Configuration<T>
   upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
   ignoreProcessEnv: boolean
@@ -155,9 +165,13 @@ export declare function replaceEnv (
   onMissingEnv?: (key: string) => string | undefined,
   ignore?: string[]
 ): RawConfiguration
+// `config` also accepts an array: the exported `applications` schema is a
+// JSONSchemaType<object[]> (an ARRAY schema), and validate() is called with
+// a matching array of application configs before they are handed to
+// prepareApplication()/addApplications().
 export declare function validate (
   schema: JSONSchemaType<any>,
-  config: RawConfiguration,
+  config: RawConfiguration | RawConfiguration[],
   validationOptions?: object,
   fixPaths?: boolean,
   root?: string
@@ -167,7 +181,22 @@ export declare function loadConfiguration (
   schema?: any,
   options?: ConfigurationOptions
 ): Promise<Configuration>
-export declare function loadConfigurationModule (root: string, config: RawConfiguration | ModuleWithVersion): any
+
+// The capability module object returned by loadConfigurationModule(): the
+// object a capability exports (its shape is otherwise capability-defined,
+// hence the index signature).
+export interface ConfigurationModule {
+  loadConfiguration?: (configPath: string) => Promise<unknown>
+  skipTelemetryHooks?: boolean
+  createCommands?: (applicationId: string) => unknown
+  modulesToLoad?: string[]
+  [key: string]: unknown
+}
+export declare function loadConfigurationModule (
+  root: string,
+  config: RawConfiguration | ModuleWithVersion,
+  pkg?: string
+): Promise<ConfigurationModule>
 
 // Error types
 export declare const ERROR_PREFIX: string
