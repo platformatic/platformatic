@@ -27,8 +27,90 @@ This guide shows you how to:
 3. Invalidate cache by specific routes or tags
 4. Test your caching implementation
 
-MISSING CONTENT: this guide should explain why we have implemented CLIENT based caching and how it works underneath.
-The content for this is provided in blog posts, so we can fetch it from there.
+## Why the cache lives on the client side
+
+Most HTTP caches are **server-side**: a reverse proxy, a CDN, or middleware sitting in front of your
+application, caching what the outside world asks for. Watt caches on the **client** side instead —
+the cache intercepts outgoing requests, not incoming ones. That choice follows directly from how
+applications talk to each other inside Watt.
+
+In a Watt application, the applications call each other over the internal mesh, using ordinary
+`fetch()` against `*.plt.local` addresses. A single external request often fans out into several
+internal hops:
+
+```
+External request → gateway → api.plt.local → data-service.plt.local
+```
+
+A server-side cache placed in front of the entrypoint can only cache the outermost response. It sees
+nothing of the hops behind it, so if two different endpoints both call `data-service.plt.local`, that
+work is repeated every time. Worse, the entrypoint's response is often the *least* cacheable thing in
+the chain — it is personalised, or aggregates several upstreams with different lifetimes — while the
+inner calls it depends on are highly cacheable.
+
+Caching on the client side inverts this. Because the cache sits on the request path of every
+application, it works at **every hop**, and gives you three properties that a reverse proxy in front
+of the entrypoint cannot:
+
+- **Internal calls are cached.** `api` calling `data-service` is a cache lookup, not a repeated
+  computation, even when the outer response cannot be cached at all.
+- **External APIs are cached too.** The same interceptor covers calls leaving your application to
+  third-party services, with no extra setup.
+- **It is framework-agnostic.** The cache sits below `fetch()`, so Express, Fastify, Koa, Next.js and
+  plain `node:http` all get it without changing application code. You control it with standard
+  response headers — `Cache-Control`, `Age` — rather than a proprietary caching API.
+
+## How it works underneath
+
+Watt's HTTP cache is an [undici](https://undici.nodejs.org/) dispatcher interceptor, built on
+undici's built-in `interceptors.cache()`. When a worker thread starts, Watt composes the interceptor
+into that thread's global undici dispatcher, and mirrors it onto the global dispatcher used by
+built-in `fetch()`. From that point every outgoing HTTP request made by the application — whatever
+library or framework issued it — passes through the cache.
+
+The part specific to Watt is **where the cached data lives**. The cache store inside a worker thread
+holds no data of its own. It is a proxy that forwards every read, write and delete over Watt's
+inter-thread communication channel (ITC) to the **main runtime thread**, which owns the single real
+store:
+
+```
+worker thread (api)      worker thread (data-service)
+   undici dispatcher         undici dispatcher
+   └─ cache interceptor      └─ cache interceptor
+      └─ proxy store            └─ proxy store
+            │                         │
+            └─────────ITC─────────────┘
+                       │
+             main thread: shared store
+```
+
+This is why the cache is genuinely unified rather than merely present everywhere. Watt runs your
+applications across multiple worker threads, and each application can run several workers. With a
+per-thread cache, every thread would keep its own copy of the same entry and every new thread would
+start cold. Because the store is shared, a response cached by one thread is immediately served to all
+of them, and memory is not multiplied by the worker count.
+
+The shared store defaults to an in-memory implementation
+(`@platformatic/undici-cache-memory`) bounded by the `maxSize`, `maxEntrySize` and `maxCount` options.
+Setting `httpCache.store` to a module path swaps in your own implementation — for example one backed
+by Redis or Valkey when you need the cache to survive restarts or be shared across containers.
+
+A few consequences worth knowing:
+
+- **Freshness is standard HTTP.** Entries are stored and revalidated according to the response's
+  `Cache-Control` directives. `cacheByDefault` supplies a fallback lifetime, in seconds, for
+  upstreams that send no expiration headers at all.
+- **`GET` and `HEAD` are cached by default**, configurable through `methods`. The `origins` option
+  restricts caching to a whitelist of upstreams, and accepts regular expressions.
+- **`type` selects the HTTP cache semantics**: `shared` behaves like a proxy cache and will not store
+  responses marked `private`; `private` behaves like a browser cache.
+- **Invalidation is exact, not time-based.** Because the main thread owns the store, it can delete
+  entries directly, either by cache key or by the tags parsed from the header named in
+  `cacheTagsHeader`. There is no default tag header — this guide configures `X-Cache-Tags` in
+  [Step 5](#step-5-enable-http-cache-in-watt) and uses it in [Step 6](#step-6-implement-cache-invalidation).
+- **Cache activity is observable.** Every cached response carries an `x-plt-http-cache-id` header, and
+  when telemetry is enabled the client span records `http.cache.id` and `http.cache.hit`, so a cache
+  hit is visible in a distributed trace rather than being an invisible absence of work.
 
 ## Prerequisites
 
