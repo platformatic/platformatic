@@ -56,6 +56,33 @@ test('should stop profiling on the same worker even when other operations rotate
   ok(profileData.length > 0, 'Profile data should not be empty')
 })
 
+test('should pull the last profile from the same worker when no worker index is specified', async t => {
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.startApplicationProfiling('with-logger', {
+    durationMillis: 100,
+    intervalMicros: 1000,
+    maxELU: false
+  })
+  await sleep(250)
+
+  // Two application-level pulls exercise both workers when routed through
+  // the general round-robin. Both must instead address the profiled worker.
+  const first = await app.getApplicationLastProfile('with-logger')
+  const second = await app.getApplicationLastProfile('with-logger')
+
+  ok(profileBuffer(first).length > 0, 'First profile pull should not be empty')
+  ok(profileBuffer(second).length > 0, 'Second profile pull should not be empty')
+
+  await app.stopApplicationProfiling('with-logger')
+})
+
 test('should profile a specific worker using the application:worker syntax', async t => {
   const app = await createRuntime(configFile)
 

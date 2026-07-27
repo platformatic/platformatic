@@ -989,7 +989,7 @@ export class Runtime extends EventEmitter {
       // a noop handler so that a late settlement after the timeout does not
       // surface as an unhandled rejection.
       const pull = (async () => {
-        const service = await this.#getApplicationById(id, ensureStarted)
+        const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
         const result = await sendViaITC(service, 'getLastProfile', {
           ...options,
           includeTimestamp: true,
