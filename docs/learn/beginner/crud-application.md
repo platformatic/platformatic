@@ -382,12 +382,12 @@ Now that you understand Watt's unified approach, you can expand your application
 
 ### Explore Watt's Full Capabilities
 
-<!-- ### Related Tutorials -->
+### Related Documentation
 
-<!-- - [Connect to PostgreSQL/MySQL](../../guides/databases/postgresql-setup.md) - Switch to your enterprise database -->
-<!-- - [Add Authentication to Your API](../intermediate/authentication.md) -->
-<!-- - [Build a Full-Stack App with Next.js](../examples/nextjs-integration.md) -->
-<!-- - [Deploy Your API to Production](../advanced/production-deployment.md) -->
+- [Database Application Reference](../../reference/db/overview.md) - Connect to PostgreSQL, MySQL, or MariaDB
+- [Authorization](../../reference/db/authorization/overview.md) - Add authentication and access rules to your API
+- [Next.js Capability](../../reference/next/overview.md) - Build a full-stack app on top of this API
+- [Dockerize a Watt App](../../guides/deployment/dockerize-a-watt-app.md) - Deploy your API to production
 
 ### Get Help
 

@@ -172,7 +172,7 @@ test('do not run migrations by default', async t => {
     const { msg } = JSON.parse(out)
     assert.equal(
       msg,
-      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
+      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/reference/troubleshooting#database-connection-issues'
     )
   }
 

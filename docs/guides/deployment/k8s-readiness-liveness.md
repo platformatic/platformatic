@@ -1030,7 +1030,7 @@ kubectl exec <pod-name> -- ps aux | grep node
 
 Now that you have robust Kubernetes health checks:
 
-- **[Configure monitoring](/docs/guides/monitoring)** - Track health check metrics with Prometheus
+- **[Configure monitoring](/docs/guides/metrics)** - Track health check metrics with Prometheus
 - **[Set up logging](/docs/guides/logging)** - Centralize health check logs for debugging
 - **[Container deployment guide](/docs/guides/deployment/dockerize-a-watt-app)** - Optimize your Docker setup
 - **[TypeScript compilation](/docs/guides/deployment/compiling-typescript)** - Production builds and optimization

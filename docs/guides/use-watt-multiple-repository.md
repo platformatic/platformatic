@@ -389,13 +389,13 @@ Pin specific application versions by using Git tags in URLs:
 
 Now that you have multi-repository applications working:
 
-- **[Set up monitoring](/docs/guides/monitoring)** - Monitor all applications from one place
-- **[Configure deployment](/docs/guides/deployment/)** - Deploy your multi-application application
-- **[Add inter-application communication](/docs/guides/application-communication/)** - Enable applications to communicate securely
-- **[Implement application discovery](/docs/guides/application-mesh/)** - Advanced application orchestration patterns
+- **[Set up monitoring](/docs/guides/metrics)** - Monitor all applications from one place
+- **[Configure deployment](/docs/guides/deployment/dockerize-a-watt-app)** - Deploy your multi-application application
+- **[Add inter-application communication](/docs/guides/build-modular-monolith)** - Enable applications to communicate securely
+- **[Implement application discovery](/docs/reference/runtime/overview)** - Advanced application orchestration patterns
 
 ## Additional Resources
 
 - [wattpm-resolve sample application](https://github.com/platformatic/wattpm-resolve) - Complete working example
-- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
-- [Application Development Guide](/docs/guides/application-development/) - Best practices for individual applications
+- [Watt Setup Guide](/docs/getting-started/quick-start) - Basic Watt application setup
+- [Application Development Guide](/docs/guides) - Best practices for individual applications

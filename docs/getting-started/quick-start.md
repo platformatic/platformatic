@@ -6,7 +6,7 @@ This guide will help you set up and run an application composed of the following
 - [Next.js](https://nextjs.org/) frontend, to render our frontend
 - Generic `node:http` [`createServer`](https://nodejs.org/docs/latest/api/http.html#httpcreateserveroptions-requestlistener),
   to showcase how to add an existing Node.js app
-- [Platformatic Gateway](/docs/reference/gateway/introduction), to coordinate/expose them all.
+- [Platformatic Gateway](/docs/reference/gateway/overview), to coordinate/expose them all.
 
 :::note
 In this guide, we will use `Next.js` as our frontend framework, but Watt supports many more frameworks including Astro, Remix, Vite, and NestJS. See our [Framework Integration Guides](/docs/guides/frameworks) for complete details and setup instructions for all supported frameworks.

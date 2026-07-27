@@ -314,13 +314,12 @@ npm run dev
 
 Now that you have sophisticated configuration management:
 
-- **[Set up monitoring](/docs/guides/monitoring)** - Monitor configuration across environments
-- **[Deploy with multiple environments](/docs/guides/deployment/)** - Production deployment patterns
-- **[Add configuration validation](/docs/guides/validation/)** - Ensure configuration correctness
-- **[Implement feature flags](/docs/guides/feature-flags/)** - Dynamic configuration management
+- **[Set up monitoring](/docs/guides/metrics)** - Monitor configuration across environments
+- **[Deploy with multiple environments](/docs/guides/deployment/dockerize-a-watt-app)** - Production deployment patterns
+- **[Use environment variables](/docs/learn/beginner/environment-variables)** - Combine node-config with environment-based overrides
 
 ## Additional Resources
 
-- [Watt Setup Guide](/docs/getting-started/quick-start-watt) - Basic Watt application setup
+- [Watt Setup Guide](/docs/getting-started/quick-start) - Basic Watt application setup
 - [Node-config Documentation](https://www.npmjs.com/package/config) - Complete configuration patterns and options
 - [Environment Variables Guide](/docs/learn/beginner/environment-variables) - Basic environment variable usage with Watt

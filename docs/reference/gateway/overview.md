@@ -53,7 +53,7 @@ For application-specific configuration and advanced usage, see the [Configuratio
 
 ## Command Line usage (CLI)
 
-When using [Watt](../watt/overview.md), `@platformatic/gateway` applications will make some additional commands available on the terminal.
+When using [Watt](../wattpm/overview.md), `@platformatic/gateway` applications will make some additional commands available on the terminal.
 
 All the commands will be prefixed by the application id. For instance, if your application id is `main`, then you will have the following commands available:
 

@@ -767,7 +767,7 @@ npm start
 
 **Next Steps:**
 
-1. [Quick Start Guide](/docs/getting-started/quick-start-watt)
+1. [Quick Start Guide](/docs/getting-started/quick-start)
 2. [Architecture Overview](/docs/overview/architecture-overview)
 3. [Migration Guide](/docs/getting-started/port-your-app)
 
