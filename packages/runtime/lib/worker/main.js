@@ -11,12 +11,14 @@ import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
+import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
 import { hostname } from 'node:os'
 import { join, resolve } from 'node:path'
 import { setDefaultHighWaterMark } from 'node:stream'
 import { pathToFileURL } from 'node:url'
+import { parseEnv } from 'node:util'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
@@ -240,8 +242,21 @@ async function main () {
   const logger = getLogger()
   logger.debug({ envfile }, 'Loading envfile...')
 
+  // Note that process.loadEnvFile is not used here as it never overrides an already defined
+  // variable. The worker environment is seeded from the environment the runtime resolved, which
+  // might contain values coming from an env file of the runtime. Those are only defaults, so the
+  // env file of this application, which is more specific, is allowed to override them. Real
+  // environment variables are never overridden.
+  const envFileFallbackKeys = new Set(workerData.envFileFallbackKeys ?? [])
+
   try {
-    process.loadEnvFile(envfile)
+    const applicationEnv = parseEnv(await readFile(envfile, 'utf-8'))
+
+    for (const [key, value] of Object.entries(applicationEnv)) {
+      if (!(key in process.env) || envFileFallbackKeys.has(key)) {
+        process.env[key] = value
+      }
+    }
   } catch {
     // Ignore if the file doesn't exist, similar to dotenv behavior
   }

@@ -18,7 +18,7 @@ import {
 } from './errors.js'
 import { isFileAccessible } from './file-system.js'
 import { loadModule, splitModuleFromVersion } from './module.js'
-import { kMetadata } from './symbols.js'
+import { kEnvFileFallbackKeys, kMetadata } from './symbols.js'
 
 const { parse: parseJSON5, stringify: rawStringifyJSON5 } = JSON5
 const { parse: parseTOML, stringify: stringifyTOML } = toml
@@ -386,11 +386,21 @@ export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {
   // The env file provides fallback defaults: variables already set in the real
   // environment (and explicit programmatic values) take precedence over it,
   // matching the dotenv/docker-compose/Vite convention.
-  return {
+  const env = {
     ...envFromFile,
     ...baseEnv,
     ...additionalEnv
   }
+
+  // Keys whose only source is the env file are not real environment variables, they are defaults:
+  // a more specific env file, like the one of a single application inside a runtime, must still be
+  // able to override them. The list is attached non enumerably, so spreading, Object.keys,
+  // JSON.stringify and structuredClone of the returned environment are all unchanged.
+  const fallbackKeys = Object.keys(envFromFile).filter(key => !(key in baseEnv) && !(key in additionalEnv))
+
+  Object.defineProperty(env, kEnvFileFallbackKeys, { value: fallbackKeys, enumerable: false })
+
+  return env
 }
 
 export function replaceEnv (config, env, onMissingEnv, ignore) {

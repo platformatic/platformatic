@@ -6,6 +6,7 @@ import { LevelWithSilentOrString, Logger } from 'pino'
 
 // Symbols
 export declare const kCanceled: unique symbol
+export declare const kEnvFileFallbackKeys: unique symbol
 export declare const kFailedImport: unique symbol
 export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
