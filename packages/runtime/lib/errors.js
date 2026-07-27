@@ -140,6 +140,17 @@ export const MessagingError = createError(
   'Cannot send a message to application "%s": %s'
 )
 
+export const SchedulerJobNotFoundError = createError(
+  `${ERROR_PREFIX}_SCHEDULER_JOB_NOT_FOUND`,
+  'Scheduler "%s" not found',
+  404
+)
+
+export const DuplicateSchedulerJobError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_SCHEDULER_JOB`,
+  'Scheduler "%s" is already registered'
+)
+
 export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
   'Please install @platformatic/wattpm-pprof-capture'

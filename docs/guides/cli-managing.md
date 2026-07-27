@@ -173,3 +173,21 @@ gateway   1         gateway  yes
 ```
 
 You can list all applications in a running application by specifying either its PID or its name.
+
+### Managing scheduled jobs
+
+To inspect and control scheduler jobs in a running runtime, use the scheduler commands:
+
+```bash
+wattpm scheduler [<PID> | <NAME>]
+wattpm scheduler:pause [<PID> | <NAME>] <JOB>
+wattpm scheduler:resume [<PID> | <NAME>] <JOB>
+wattpm scheduler:run [<PID> | <NAME>] <JOB>
+```
+
+The runtime argument can be omitted when only one runtime is running. `scheduler` lists the registered jobs and their
+next run, while `pause`, `resume`, and `run` control an individual job. Pausing stops future local triggers without
+cancelling an execution already in progress. A paused job can still be run explicitly.
+
+See the [Watt CLI command reference](../reference/wattpm/cli-commands.md#scheduler-commands) for all arguments and
+the [scheduler guide](./scheduler.md) for external coordination and HTTP API details.

@@ -71,6 +71,27 @@ node .output/server/index.mjs
 
 Deploy the full `.output` directory, not only `.output/server/index.mjs`. Nitro bundles the application server, public assets, and any copied runtime dependencies inside `.output`.
 
+## Scheduled tasks
+
+Nuxt scheduled tasks can be managed by Watt by adding `@platformatic/nuxt/scheduler` to `nuxt.config`:
+
+```js
+export default defineNuxtConfig({
+  modules: ['@platformatic/nuxt/scheduler'],
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: {
+      '0 * * * *': ['cleanup']
+    }
+  }
+})
+```
+
+Define the task handler in `server/tasks/cleanup.js`. The module transfers scheduling to Watt, so the task runs locally
+when no external coordinator is present and can be paused or triggered through Watt's scheduler controls when a
+coordinator is used. See the [scheduler guide](../../guides/scheduler.md) for the complete configuration and
+coordination flow.
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.
