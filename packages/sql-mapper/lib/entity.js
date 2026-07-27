@@ -604,6 +604,16 @@ export function buildEntity (
       schemaList?.length > 0 ? schemaList.includes(constraint.foreign_table_schema) : true
     /* istanbul ignore if */
     if (constraint.constraint_type === 'FOREIGN KEY' && isForeignKeySchemaInConfig) {
+      /* istanbul ignore next */
+      if (!constraint.foreign_table_name) {
+        // The referenced side of the foreign key could not be resolved by the introspection
+        // query. Ignore the relation rather than failing the whole boot.
+        log.warn(
+          { constraint },
+          `Could not resolve the table referenced by the foreign key "${constraint.constraint_name}" on "${constraint.table_name}.${constraint.column_name}". The relation will be ignored.`
+        )
+        continue
+      }
       field.foreignKey = true
       const foreignEntityName = singularize(
         camelcase(
