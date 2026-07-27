@@ -18,7 +18,11 @@ import {
   type RuntimeExtensionMetrics,
   type RuntimeExtensionSharedContext,
   type RuntimeMetadata,
-  type WorkerDetails
+  type WorkerDetails,
+  type WorkerLifecycleEvent,
+  type ProfileCapturedEvent,
+  type RuntimeHealthSignal,
+  type HealthMetricsEvent
 } from '../../index.js'
 import type { PlatformaticRuntimeConfig } from '../../config.js'
 
@@ -289,3 +293,83 @@ test('RuntimeExtension', () => {
   expect(instance.stop).type.toBe<(() => void | Promise<void>) | undefined>()
   expect(instance.close).type.toBe<(() => void | Promise<void>) | undefined>()
 })
+
+test('WorkerLifecycleEvent', () => {
+  const event: WorkerLifecycleEvent = { application: 'api', worker: 0 }
+  expect(event).type.toBe<WorkerLifecycleEvent>()
+
+  const withWorkersCount: WorkerLifecycleEvent = { application: 'api', worker: 0, workersCount: 2 }
+  expect(withWorkersCount).type.toBe<WorkerLifecycleEvent>()
+})
+
+test('ProfileCapturedEvent', () => {
+  const event: ProfileCapturedEvent = {
+    application: 'api',
+    worker: 0,
+    id: 'api:0',
+    type: 'cpu',
+    timestamp: Date.now(),
+    sampleCount: null
+  }
+  expect(event).type.toBe<ProfileCapturedEvent>()
+})
+
+test('RuntimeHealthSignal', () => {
+  const signal: RuntimeHealthSignal = { type: 'eventLoopDelay', max: 10, mean: 5, p99: 8 }
+  expect(signal).type.toBe<RuntimeHealthSignal>()
+
+  const minimal: RuntimeHealthSignal = { type: 'custom' }
+  expect(minimal).type.toBe<RuntimeHealthSignal>()
+})
+
+test('HealthMetricsEvent', () => {
+  const event: HealthMetricsEvent = {
+    application: 'api',
+    worker: 0,
+    id: 'api:0',
+    healthSignals: [{ type: 'eventLoopDelay', p99: 8 }]
+  }
+  expect(event).type.toBe<HealthMetricsEvent>()
+})
+
+test('Runtime.on — application:worker:started', () => {
+  const handler = (event: WorkerLifecycleEvent) => {
+    expect(event.application).type.toBe<string>()
+    expect(event.worker).type.toBe<number>()
+  }
+  runtime.on('application:worker:started', handler)
+})
+
+test('Runtime.on — application:worker:exited', () => {
+  const handler = (event: WorkerLifecycleEvent) => {
+    expect(event.application).type.toBe<string>()
+    expect(event.worker).type.toBe<number>()
+  }
+  runtime.on('application:worker:exited', handler)
+})
+
+test('Runtime.on — application:worker:profile:captured', () => {
+  const handler = (event: ProfileCapturedEvent) => {
+    expect(event.id).type.toBe<string>()
+    expect(event.type).type.toBe<string>()
+    expect(event.timestamp).type.toBe<number>()
+    expect(event.sampleCount).type.toBe<number | null>()
+  }
+  runtime.on('application:worker:profile:captured', handler)
+})
+
+test('Runtime.on — application:worker:health:metrics', () => {
+  const handler = (event: HealthMetricsEvent) => {
+    expect(event.id).type.toBe<string>()
+    expect(event.healthSignals).type.toBe<RuntimeHealthSignal[]>()
+  }
+  runtime.on('application:worker:health:metrics', handler)
+})
+
+test('Runtime.off — typed event removal', () => {
+  const handler = (event: WorkerLifecycleEvent) => {}
+  runtime.off('application:worker:started', handler)
+  runtime.off('application:worker:exited', handler)
+})
+
+
