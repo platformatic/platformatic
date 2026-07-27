@@ -99,20 +99,20 @@ This created a Fastify app that will autoload the routes.
 
 ## Step 2: Add Multiple Services for Demonstration
 
-Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a composer and a data service:
+Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a gateway and a data service:
 
 ```bash
 npx create wattpm
 ```
 
-Choose `@platformatic/composer` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
+Choose `@platformatic/gateway` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
 
 ```
 my-cache-app/
 ├── watt.json
 ├── package.json
 └── web/
-    ├── composer/           # API gateway (entrypoint)
+    ├── gateway/           # API gateway (entrypoint)
     ├── api/                # Your main API service
     └── data-service/       # Backend data service
 ```
@@ -125,7 +125,7 @@ By default, this setup will expose the `api` service as `/api` and `data-service
 
 - Internal Service Mesh: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
 - Zero Network Overhead: Internal calls don't go through the network stack
-- Reverse-Proxy: the `@platformatic/composer` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
+- Reverse-Proxy: the `@platformatic/gateway` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
 
 ## Step 3: Add Cache Headers to Your Responses
 
@@ -227,39 +227,43 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 - Tag by both specific resource and category
 - Consider using UUIDs for guaranteed uniqueness
 
-## Step 4: Configure Composer Gateway
+## Step 4: Configure the Gateway
 
-The composer acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
+The gateway acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
 
 ```js
-// web/composer/watt.json
+// web/gateway/watt.json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/3.0.0.json",
-  "composer": {
-    "services": [
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
       {
         "id": "api",
-        "prefix": "/api"
+        "proxy": {
+          "prefix": "/api"
+        }
       },
       {
         "id": "data-service",
-        "prefix": "/data"
+        "proxy": {
+          "prefix": "/data"
+        }
       }
     ]
   }
 }
 ```
 
-**How Composer + Caching Works:**
+**How Gateway + Caching Works:**
 
-- External requests go to composer (e.g., `GET /api/cached-counter`)
-- Composer forwards to internal service (`http://api.plt.local/cached-counter`)
+- External requests go to gateway (e.g., `GET /api/cached-counter`)
+- Gateway forwards to internal service (`http://api.plt.local/cached-counter`)
 - API service calls data service (`http://data-service.plt.local/counter`)
-- Watt caches the entire response chain at the composer level
+- Watt caches the entire response chain at the gateway level
 - Subsequent requests return cached data without hitting any services
 - **Unified Caching**: All services share the same HTTP cache layer
 
-## Step 4: Enable HTTP Cache in Watt
+## Step 5: Enable HTTP Cache in Watt
 
 Add HTTP caching configuration to your root-level `watt.json` file:
 
@@ -326,7 +330,7 @@ You can fine-tune the cache behavior with additional options:
 - **`maxEntrySize`**: Maximum size of a single cache entry in bytes (default: 5MB)
 - **`maxCount`**: Maximum number of cache entries (default: 1024)
 
-## Step 5: Implement Cache Invalidation
+## Step 6: Implement Cache Invalidation
 
 ### Method 1: Invalidate by Specific Route
 
@@ -345,7 +349,7 @@ export default async function  (fastify) {
     await invalidateHttpCache({
       keys: [
         {
-          origin: 'http://composer.plt.local',
+          origin: 'http://gateway.plt.local',
           path: '/api/cached-counter',
           method: 'GET'
         }
@@ -446,7 +450,7 @@ export default async function  (fastify) {
 }
 ```
 
-## Step 6: Verification and Testing
+## Step 7: Verification and Testing
 
 ### Test Cache Behavior
 
@@ -456,9 +460,9 @@ export default async function  (fastify) {
 npm run dev
 ```
 
-This starts all services (composer, api, data-service) with Watt handling the service mesh and caching.
+This starts all services (gateway, api, data-service) with Watt handling the service mesh and caching.
 
-**2. Test cached responses through the composer gateway:**
+**2. Test cached responses through the gateway gateway:**
 
 ```bash
 # First request - cache miss (hits data-service)
@@ -467,7 +471,7 @@ curl -i http://localhost:3042/api/cached-counter
 # Second request - cache hit (returns cached data, no service calls)
 curl -i http://localhost:3042/api/cached-counter
 
-# Test direct access to data service through composer
+# Test direct access to data service through gateway
 curl -i http://localhost:3042/data/counter
 ```
 
@@ -656,7 +660,7 @@ When service A calls service B, cache headers from B are automatically preserved
 
 ### 4. **Service Mesh + Caching Integration**
 
-The composer automatically handles routing and caching for complex multi-service requests without additional configuration.
+The gateway automatically handles routing and caching for complex multi-service requests without additional configuration.
 
 ### 5. **Framework Agnostic**
 
@@ -665,7 +669,7 @@ The same caching APIs work whether you're using Fastify, Express, Koa, or any ot
 **Real-world Example:**
 
 ```
-External Request → Composer → API Service → Data Service
+External Request → Gateway → API Service → Data Service
                      ↓
                  Single Cache Entry
 ```

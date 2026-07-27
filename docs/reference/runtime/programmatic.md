@@ -4,7 +4,9 @@ import Issues from '../../getting-started/issues.md';
 
 The `@platformatic/runtime` package can be used to start, control, and inspect a Platformatic application from Node.js code, without going through the CLI. This is useful for tests, custom tooling, and embedding Platformatic in another application.
 
-The API works with all Platformatic application types — `service`, `db`, `gateway`, `composer`, and `runtime` itself. Configurations that are not already a `runtime` configuration are automatically wrapped in one.
+The API works with all Platformatic application types — `service`, `db`, `gateway`, and `runtime` itself. Configurations that are not already a `runtime` configuration are automatically wrapped in one.
+
+The legacy `composer` type is still accepted as a deprecated alias for `gateway`, and will be removed in v4. See [Gateway](../gateway/overview.md) for details.
 
 ## Getting started
 
@@ -49,7 +51,7 @@ https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json
 https://schemas.platformatic.dev/@platformatic/service/3.54.0.json
 https://schemas.platformatic.dev/@platformatic/db/3.54.0.json
 https://schemas.platformatic.dev/@platformatic/gateway/3.54.0.json
-https://schemas.platformatic.dev/@platformatic/composer/3.54.0.json
+https://schemas.platformatic.dev/@platformatic/composer/3.54.0.json  # deprecated alias for gateway
 ```
 
 By default `create()` installs signal handlers (`SIGTERM`/`SIGINT` via `close-with-grace`, and `SIGUSR2` to trigger `runtime.restart()`). Pass `context: { setupSignals: false }` to opt out — recommended when embedding the runtime in tests or another process that owns its own signal handling.
@@ -74,7 +76,7 @@ You must call `prepareApplication()` before adding an application at runtime —
 
 ### `wrapInRuntimeConfig(config, context?)`
 
-Wraps a single-application configuration (service, db, gateway, composer) into a synthetic one-application runtime configuration. Called automatically by `create()` and `loadConfiguration()`; exported for advanced use cases.
+Wraps a single-application configuration (service, db, gateway, or the deprecated composer alias) into a synthetic one-application runtime configuration. Called automatically by `create()` and `loadConfiguration()`; exported for advanced use cases.
 
 ### `loadApplicationsCommands(executableName?)`
 

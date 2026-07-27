@@ -115,7 +115,7 @@ Configure your `watt.json` to include applications from multiple repositories:
 
 **Configuration explanation:**
 
-- **Local applications** (like `composer`) use direct paths
+- **Local applications** (like `gateway`) use direct paths
 - **Remote applications** use environment variables for paths + Git URLs
 - **Environment variables** allow flexible local vs. remote resolution
 - **Git URLs** define where to fetch applications when not available locally
