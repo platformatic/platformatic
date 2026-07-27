@@ -752,6 +752,67 @@ test('composite foreign keys inherit each referenced column output type', { skip
   strictEqual(typeof registration.code, 'number')
 })
 
+test('foreign keys referencing a bare unique index are resolved', { skip: !isPg }, async t => {
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      t.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+
+      // The uniqueness of categories.code is backed by an index and not by a constraint,
+      // which is what Prisma emits for a `@unique` field. PostgreSQL accepts it as a
+      // foreign key target, but information_schema has no constraint to name for it.
+      await db.query(sql`
+        CREATE TABLE categories (
+          id SERIAL PRIMARY KEY,
+          code TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX categories_code_uidx ON categories (code);
+        CREATE TABLE pages (
+          id SERIAL PRIMARY KEY,
+          category_id INTEGER REFERENCES categories (id),
+          category_code TEXT REFERENCES categories (code)
+        );
+      `)
+    },
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+
+  const relations = pageEntity.relations
+    .map(relation => ({
+      column: relation.column_name,
+      foreignTable: relation.foreign_table_name,
+      foreignColumn: relation.foreign_column_name,
+      foreignSchema: relation.foreign_table_schema
+    }))
+    .sort((a, b) => a.column.localeCompare(b.column))
+
+  deepEqual(relations, [
+    { column: 'category_code', foreignTable: 'categories', foreignColumn: 'code', foreignSchema: 'public' },
+    { column: 'category_id', foreignTable: 'categories', foreignColumn: 'id', foreignSchema: 'public' }
+  ])
+
+  strictEqual(pageEntity.fields.category_id.foreignKey, true)
+  strictEqual(pageEntity.fields.category_code.foreignKey, true)
+  // Only the foreign key referencing a primary key is stringified on output
+  strictEqual(pageEntity.fields.category_id.stringifyOutput, true)
+  strictEqual(pageEntity.fields.category_code.stringifyOutput, undefined)
+
+  const category = await mapper.entities.category.save({ input: { code: 'fiction' } })
+  const page = await pageEntity.save({ input: { categoryId: category.id, categoryCode: category.code } })
+
+  strictEqual(page.categoryId, category.id)
+  strictEqual(typeof page.categoryId, 'string')
+  strictEqual(page.categoryCode, 'fiction')
+})
+
 test('only include wanted fields - with foreign', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
