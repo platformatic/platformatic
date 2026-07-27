@@ -172,6 +172,9 @@ test('Runtime.removeApplications', () => {
 test('Runtime.startApplicationProfiling', () => {
   expect(runtime.startApplicationProfiling('api')).type.toBe<Promise<void>>()
   expect(runtime.startApplicationProfiling('api', { type: 'cpu' }, true)).type.toBe<Promise<void>>()
+  expect(runtime.startApplicationProfiling('api', { type: 'cpu', allWorkers: true }, true)).type.toBe<
+    Promise<{ workers: number[] }>
+  >()
 })
 
 test('Runtime.stopApplicationProfiling', () => {
@@ -179,6 +182,9 @@ test('Runtime.stopApplicationProfiling', () => {
   expect(runtime.stopApplicationProfiling('api', { type: 'cpu' }, true)).type.toBe<Promise<Buffer>>()
   expect(runtime.stopApplicationProfiling('api', { type: 'cpu', includeSampleCount: true }, true)).type.toBe<
     Promise<{ profile: Buffer, sampleCount: number }>
+  >()
+  expect(runtime.stopApplicationProfiling('api', { type: 'cpu', allWorkers: true }, true)).type.toBe<
+    Promise<Array<{ workerIndex: number, profile: Buffer }>>
   >()
 })
 

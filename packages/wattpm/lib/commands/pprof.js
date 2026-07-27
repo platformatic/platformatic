@@ -4,6 +4,33 @@ import { bold } from 'colorette'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
+async function startApplicationProfiling (client, logger, runtime, applicationId, options, type) {
+  const result = await client.startApplicationProfiling(runtime.pid, applicationId, options)
+
+  const workers = Array.isArray(result?.workers) && result.workers.length > 0 ? ` (workers ${result.workers.join(', ')})` : ''
+  logger.info(`${type.toUpperCase()} profiling started for application ${bold(applicationId)}${workers}`)
+}
+
+async function stopApplicationProfiling (client, logger, runtime, applicationId, options, type, outputDir, timestamp) {
+  const result = await client.stopApplicationProfiling(runtime.pid, applicationId, options)
+
+  // With allWorkers the client returns one profile per worker
+  const profiles = Array.isArray(result) ? result : [{ workerIndex: null, profile: result }]
+
+  for (const { workerIndex, profile } of profiles) {
+    const workerSuffix = workerIndex === null ? '' : `-${workerIndex}`
+    const filename = `pprof-${type}-${applicationId}${workerSuffix}-${timestamp}.pb`
+    const filepath = resolve(outputDir, filename)
+    await writeFile(filepath, Buffer.from(profile))
+
+    const target = workerIndex === null ? applicationId : `${applicationId}:${workerIndex}`
+    logger.info(
+      `${type.toUpperCase()} profiling stopped for application ${bold(target)}, profile saved to ${bold(filepath)}`
+    )
+    logger.info(`Run ${bold(`npx @platformatic/flame generate ${filepath}`)} to generate the flamegraph`)
+  }
+}
+
 export async function pprofStartCommand (context, logger, args) {
   const client = new RuntimeApiClient({ logger, socket: context.socket })
 
@@ -13,7 +40,8 @@ export async function pprofStartCommand (context, logger, args) {
       {
         type: { type: 'string', short: 't', default: 'cpu' },
         'source-maps': { type: 'boolean', short: 's', default: false },
-        'node-modules-source-maps': { type: 'string', short: 'n' }
+        'node-modules-source-maps': { type: 'string', short: 'n' },
+        'all-workers': { type: 'boolean', short: 'a', default: false }
       },
       false
     )
@@ -42,6 +70,11 @@ export async function pprofStartCommand (context, logger, args) {
       options.nodeModulesSourceMaps = values['node-modules-source-maps'].split(',').map(s => s.trim())
     }
 
+    // Profile every worker of each application instead of a single one
+    if (values['all-workers']) {
+      options.allWorkers = true
+    }
+
     if (applicationId) {
       // Start profiling for specific application
       const application = runtimeApplications.find(s => s.id === applicationId)
@@ -49,14 +82,12 @@ export async function pprofStartCommand (context, logger, args) {
         return logFatalError(logger, `Application not found: ${applicationId}`)
       }
 
-      await client.startApplicationProfiling(runtime.pid, applicationId, options)
-      logger.info(`${type.toUpperCase()} profiling started for application ${bold(applicationId)}`)
+      await startApplicationProfiling(client, logger, runtime, applicationId, options, type)
     } else {
       // Start profiling for all applications
       for (const application of runtimeApplications) {
         try {
-          await client.startApplicationProfiling(runtime.pid, application.id, options)
-          logger.info(`${type.toUpperCase()} profiling started for application ${bold(application.id)}`)
+          await startApplicationProfiling(client, logger, runtime, application.id, options, type)
         } catch (error) {
           logger.warn(`Failed to start profiling for application ${application.id}: ${error.message}`)
         }
@@ -83,7 +114,8 @@ export async function pprofStopCommand (context, logger, args) {
       args,
       {
         type: { type: 'string', short: 't', default: 'cpu' },
-        dir: { type: 'string', short: 'd' }
+        dir: { type: 'string', short: 'd' },
+        'all-workers': { type: 'boolean', short: 'a', default: false }
       },
       false
     )
@@ -104,6 +136,11 @@ export async function pprofStopCommand (context, logger, args) {
 
     const options = { type }
 
+    // Stop profiling on every worker of each application instead of a single one
+    if (values['all-workers']) {
+      options.allWorkers = true
+    }
+
     if (applicationId) {
       // Stop profiling for specific application
       const application = runtimeApplications.find(s => s.id === applicationId)
@@ -111,26 +148,12 @@ export async function pprofStopCommand (context, logger, args) {
         return logFatalError(logger, `Application not found: ${applicationId}`)
       }
 
-      const profileData = await client.stopApplicationProfiling(runtime.pid, applicationId, options)
-      const filename = `pprof-${type}-${applicationId}-${timestamp}.pb`
-      const filepath = resolve(outputDir, filename)
-      await writeFile(filepath, Buffer.from(profileData))
-      logger.info(
-        `${type.toUpperCase()} profiling stopped for application ${bold(applicationId)}, profile saved to ${bold(filepath)}`
-      )
-      logger.info(`Run ${bold(`npx @platformatic/flame generate ${filepath}`)} to generate the flamegraph`)
+      await stopApplicationProfiling(client, logger, runtime, applicationId, options, type, outputDir, timestamp)
     } else {
       // Stop profiling for all applications
       for (const application of runtimeApplications) {
         try {
-          const profileData = await client.stopApplicationProfiling(runtime.pid, application.id, options)
-          const filename = `pprof-${type}-${application.id}-${timestamp}.pb`
-          const filepath = resolve(outputDir, filename)
-          await writeFile(filepath, Buffer.from(profileData))
-          logger.info(
-            `${type.toUpperCase()} profiling stopped for application ${bold(application.id)}, profile saved to ${bold(filepath)}`
-          )
-          logger.info(`Run ${bold(`npx @platformatic/flame generate ${filepath}`)} to generate the flamegraph`)
+          await stopApplicationProfiling(client, logger, runtime, application.id, options, type, outputDir, timestamp)
         } catch (error) {
           logger.warn(`Failed to stop profiling for application ${application.id}: ${error.message}`)
         }
@@ -184,6 +207,11 @@ export const help = {
         usage: '--dir, -d',
         description:
           'Directory to save the profile data to (default: current working directory). Only used with "stop" subcommand.'
+      },
+      {
+        usage: '--all-workers, -a',
+        description:
+          'Profile all workers of each application instead of a single one. With "stop", saves one profile file per worker.'
       }
     ],
     args: [
@@ -209,8 +237,10 @@ export const help = {
       '  wattpm pprof start --source-maps my-app                           # Start CPU profiling with source maps\n' +
       '  wattpm pprof start --type=cpu --source-maps my-app                # Start CPU profiling with source maps\n' +
       '  wattpm pprof start -s -n next,@next/next-server my-app            # Profile with Next.js source maps\n' +
+      '  wattpm pprof start --all-workers my-app                           # Start CPU profiling on all workers\n' +
       '  wattpm pprof stop --type=cpu my-app                               # Stop CPU profiling\n' +
       '  wattpm pprof stop --type=heap my-app                              # Stop heap profiling\n' +
+      '  wattpm pprof stop --all-workers my-app                            # Save one profile per worker\n' +
       '  wattpm pprof stop --dir=/tmp/profiles my-app                      # Save profile to specific directory'
   }
 }

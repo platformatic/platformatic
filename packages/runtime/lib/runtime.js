@@ -116,6 +116,10 @@ const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by th
 
 const MAX_LISTENERS_COUNT = 100
 
+function hasWorkerIndex (applicationId) {
+  return /^.+:\d+$/.test(applicationId)
+}
+
 function parseOrigins (origins) {
   if (!origins) return undefined
 
@@ -907,17 +911,68 @@ export class Runtime extends EventEmitter {
   }
 
   async startApplicationProfiling (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'startProfiling', options)
+    const { allWorkers, ...profilingOptions } = options
+
+    if (!allWorkers || hasWorkerIndex(id)) {
+      const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
+      return sendViaITC(service, 'startProfiling', profilingOptions)
+    }
+
+    const started = []
+    const alreadyProfiling = []
+    let firstError
+
+    for (const { workerIndex, worker } of await this.#getApplicationWorkersForProfiling(id, ensureStarted)) {
+      try {
+        await sendViaITC(worker, 'startProfiling', profilingOptions)
+        started.push(workerIndex)
+      } catch (error) {
+        // A worker which is already being profiled is considered covered, but
+        // if no other worker could be started the error is still reported.
+        if (error.code === 'PLT_PPROF_PROFILING_ALREADY_STARTED') {
+          alreadyProfiling.push(workerIndex)
+        }
+
+        firstError ??= error
+      }
+    }
+
+    if (started.length === 0 && firstError) {
+      throw firstError
+    }
+
+    return { workers: started.concat(alreadyProfiling).sort((a, b) => a - b) }
   }
 
   async stopApplicationProfiling (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'stopProfiling', options)
+    const { allWorkers, ...profilingOptions } = options
+
+    if (!allWorkers || hasWorkerIndex(id)) {
+      const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
+      return sendViaITC(service, 'stopProfiling', profilingOptions)
+    }
+
+    const profiles = []
+    let firstError
+
+    for (const { workerIndex, worker } of await this.#getApplicationWorkersForProfiling(id, ensureStarted)) {
+      try {
+        const profile = await sendViaITC(worker, 'stopProfiling', profilingOptions)
+        profiles.push({ workerIndex, profile })
+      } catch (error) {
+        firstError ??= error
+      }
+    }
+
+    if (profiles.length === 0 && firstError) {
+      throw firstError
+    }
+
+    return profiles
   }
 
   async getApplicationLastProfile (id, options = {}, ensureStarted = true) {
@@ -3412,6 +3467,37 @@ export class Runtime extends EventEmitter {
     }
 
     return this.#getWorkerByIdOrNext(applicationId, workerId, ensureStarted, mustExist)
+  }
+
+  // Profiling start and stop must address the same worker: resolve an id
+  // without an explicit worker index to the first worker deterministically,
+  // as the round-robin used by #getApplicationById would rotate to a
+  // different worker between the two calls.
+  async #getApplicationWorkerForProfiling (applicationId, ensureStarted) {
+    if (hasWorkerIndex(applicationId)) {
+      return this.#getApplicationById(applicationId, ensureStarted)
+    }
+
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
+    const [firstWorker] = this.#workers.getKeys(applicationId)
+    return this.#getWorkerByIdOrNext(applicationId, firstWorker?.split(':')[1], ensureStarted)
+  }
+
+  async #getApplicationWorkersForProfiling (applicationId, ensureStarted) {
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
+    const workers = []
+    for (const key of this.#workers.getKeys(applicationId)) {
+      const workerIndex = parseInt(key.split(':')[1], 10)
+      workers.push({ workerIndex, worker: await this.#getWorkerByIdOrNext(applicationId, workerIndex, ensureStarted) })
+    }
+
+    return workers
   }
 
   // This method can work in two modes: when workerId is provided, it will return the specific worker

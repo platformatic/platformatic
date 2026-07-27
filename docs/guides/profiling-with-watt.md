@@ -71,7 +71,12 @@ wattpm pprof start 12345 api-application
 
 # Using short option syntax
 wattpm pprof start -t heap api-application
+
+# Profile every worker of the application instead of a single one
+wattpm pprof start --all-workers api-application
 ```
+
+When an application runs multiple workers, only one worker is profiled by default to keep the overhead low. Use `--all-workers` (`-a`) to profile every worker: remember to pass the same flag to `wattpm pprof stop` to collect one profile file per worker.
 
 When profiling starts successfully, you'll see output like:
 
@@ -115,6 +120,9 @@ wattpm pprof stop 12345 api-application
 
 # Using short option syntax
 wattpm pprof stop -t heap api-application
+
+# Stop profiling every worker and save one profile file per worker
+wattpm pprof stop --all-workers api-application
 ```
 
 Profile files are saved in your current directory with names that include the profile type:
@@ -123,6 +131,13 @@ Profile files are saved in your current directory with names that include the pr
 pprof-cpu-api-application-2024-01-15T10-30-45-123Z.pb
 pprof-heap-api-application-2024-01-15T10-30-45-124Z.pb
 pprof-cpu-database-application-2024-01-15T10-30-45-125Z.pb
+```
+
+With `--all-workers`, the worker index is included in each file name:
+
+```
+pprof-cpu-api-application-0-2024-01-15T10-30-45-123Z.pb
+pprof-cpu-api-application-1-2024-01-15T10-30-45-123Z.pb
 ```
 
 ### Generating Flame Graphs
