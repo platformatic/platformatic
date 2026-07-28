@@ -12,6 +12,7 @@ import {
   findConfigurationFileRecursive,
   getParser,
   getStringifier,
+  kEnvFileFallbackKeys,
   kMetadata,
   knownConfigurationFilesExtensions,
   knownConfigurationFilesSchemas,
@@ -670,6 +671,44 @@ test('loadEnv - additionalEnv should take precedence over both process.env and t
 
   const result = await loadEnv(tmpDir, false, { PLT_PRECEDENCE_TEST: 'from-additional' })
   equal(result.PLT_PRECEDENCE_TEST, 'from-additional')
+})
+
+test('loadEnv - should mark as fallback the keys only provided by the .env file', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const envFile = join(tmpDir, '.env')
+
+  process.env.PLT_PRECEDENCE_TEST = 'from-process'
+
+  t.after(async () => {
+    delete process.env.PLT_PRECEDENCE_TEST
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(envFile, 'PLT_PRECEDENCE_TEST=from-file\nPLT_FILE_ONLY_TEST=from-file')
+
+  const result = await loadEnv(tmpDir, false, { PLT_ADDITIONAL_TEST: 'from-additional' })
+
+  // Only the key whose sole source is the discovered file is a fallback
+  deepEqual(result[kEnvFileFallbackKeys], ['PLT_FILE_ONLY_TEST'])
+
+  // The marker is not enumerable, so the shape of the returned environment is unchanged
+  equal(Object.getOwnPropertyDescriptor(result, kEnvFileFallbackKeys).enumerable, false)
+  deepEqual(Object.getOwnPropertySymbols({ ...result }), [])
+})
+
+test('loadEnv - should mark as fallback the keys provided by a custom env file', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const customEnvFile = join(tmpDir, 'custom.env')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(customEnvFile, 'PLT_FILE_ONLY_TEST=from-file')
+
+  const result = await loadEnv(tmpDir, true, {}, customEnvFile)
+  equal(result.PLT_FILE_ONLY_TEST, 'from-file')
+  deepEqual(result[kEnvFileFallbackKeys], ['PLT_FILE_ONLY_TEST'])
 })
 
 test('loadEnv - should return process.env when no .env file exists', async t => {

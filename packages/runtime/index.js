@@ -69,6 +69,8 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 
   if (config.envfile) {
+    // The context is optional, so it might not have been provided at all
+    context ??= {}
     context.envFile = config.envfile
   }
 
