@@ -181,6 +181,7 @@ const TS_CONFIG = `
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "skipLibCheck": true
   },
   "watchOptions": {

@@ -10,6 +10,7 @@
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": ".",
     "skipLibCheck": true
   },
   "watchOptions": {

@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import type { EventEmitter } from 'node:events'
 import type { MessagePort } from 'node:worker_threads'
 import { expect, test } from 'tstyche'
