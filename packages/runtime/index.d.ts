@@ -208,7 +208,7 @@ export interface WorkerLifecycleEvent {
 
 export interface ProfileCapturedEvent extends WorkerLifecycleEvent {
   id: string
-  type: string
+  type: 'cpu' | 'heap'
   timestamp: number
   sampleCount: number | null
 }
@@ -222,9 +222,15 @@ export interface RuntimeHealthSignal {
   [key: string]: unknown
 }
 
+export interface WorkerCurrentHealth {
+  elu: number
+  heapUsed?: number | null
+  heapTotal?: number | null
+}
+
 export interface HealthMetricsEvent extends WorkerLifecycleEvent {
   id: string
-  currentHealth: object | null
+  currentHealth: WorkerCurrentHealth | null
   healthSignals: RuntimeHealthSignal[]
 }
 

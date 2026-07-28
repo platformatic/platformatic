@@ -22,6 +22,7 @@ import {
   type WorkerLifecycleEvent,
   type ProfileCapturedEvent,
   type RuntimeHealthSignal,
+  type WorkerCurrentHealth,
   type HealthMetricsEvent
 } from '../../index.js'
 import type { PlatformaticRuntimeConfig } from '../../config.js'
@@ -312,6 +313,17 @@ test('ProfileCapturedEvent', () => {
     sampleCount: null
   }
   expect(event).type.toBe<ProfileCapturedEvent>()
+  expect(event.type).type.toBe<'cpu' | 'heap'>()
+
+  const heap: ProfileCapturedEvent = {
+    application: 'api',
+    worker: 0,
+    id: 'api:0',
+    type: 'heap',
+    timestamp: Date.now(),
+    sampleCount: 12
+  }
+  expect(heap).type.toBe<ProfileCapturedEvent>()
 })
 
 test('RuntimeHealthSignal', () => {
@@ -322,12 +334,23 @@ test('RuntimeHealthSignal', () => {
   expect(minimal).type.toBe<RuntimeHealthSignal>()
 })
 
+test('WorkerCurrentHealth', () => {
+  const health: WorkerCurrentHealth = { elu: 0.1, heapUsed: 1024, heapTotal: 2048 }
+  expect(health).type.toBe<WorkerCurrentHealth>()
+
+  const partial: WorkerCurrentHealth = { elu: 0.2, heapUsed: null, heapTotal: null }
+  expect(partial).type.toBe<WorkerCurrentHealth>()
+
+  const eluOnly: WorkerCurrentHealth = { elu: 0.3 }
+  expect(eluOnly).type.toBe<WorkerCurrentHealth>()
+})
+
 test('HealthMetricsEvent', () => {
   const event: HealthMetricsEvent = {
     application: 'api',
     worker: 0,
     id: 'api:0',
-    currentHealth: { elu: 0.1 },
+    currentHealth: { elu: 0.1, heapUsed: 1024, heapTotal: 2048 },
     healthSignals: [{ type: 'eventLoopDelay', p99: 8 }]
   }
   expect(event).type.toBe<HealthMetricsEvent>()
@@ -340,7 +363,7 @@ test('HealthMetricsEvent', () => {
     healthSignals: []
   }
   expect(failed).type.toBe<HealthMetricsEvent>()
-  expect(failed.currentHealth).type.toBe<object | null>()
+  expect(failed.currentHealth).type.toBe<WorkerCurrentHealth | null>()
 })
 
 test('Runtime.on — application:worker:started', () => {
@@ -362,7 +385,7 @@ test('Runtime.on — application:worker:exited', () => {
 test('Runtime.on — application:worker:profile:captured', () => {
   const handler = (event: ProfileCapturedEvent) => {
     expect(event.id).type.toBe<string>()
-    expect(event.type).type.toBe<string>()
+    expect(event.type).type.toBe<'cpu' | 'heap'>()
     expect(event.timestamp).type.toBe<number>()
     expect(event.sampleCount).type.toBe<number | null>()
   }
@@ -372,7 +395,7 @@ test('Runtime.on — application:worker:profile:captured', () => {
 test('Runtime.on — application:worker:health:metrics', () => {
   const handler = (event: HealthMetricsEvent) => {
     expect(event.id).type.toBe<string>()
-    expect(event.currentHealth).type.toBe<object | null>()
+    expect(event.currentHealth).type.toBe<WorkerCurrentHealth | null>()
     expect(event.healthSignals).type.toBe<RuntimeHealthSignal[]>()
   }
   runtime.on('application:worker:health:metrics', handler)
