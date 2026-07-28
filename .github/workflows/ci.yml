@@ -1018,6 +1018,34 @@ jobs:
           command: pnpm install --frozen-lockfile
       - name: Run nitro package test suite
         run: cd packages/nitro && pnpm test && pnpm run lint
+
+  nuxt:
+    name: 'nuxt - ${{ matrix.os }} - ${{ matrix.node }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'nuxt' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run nuxt package test suite
+        run: cd packages/nuxt && pnpm test && pnpm run lint
+
   tanstack:
     name: 'tanstack - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup

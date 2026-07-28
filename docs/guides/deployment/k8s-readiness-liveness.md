@@ -635,7 +635,7 @@ graph TB
             end
 
             subgraph "Services"
-                Gateway["Gateway Service<br/>(Composer)<br/>:3001"]
+                Gateway["Gateway Application<br/>:3001"]
                 API["API Service<br/>(Backend)<br/>:3002"]
                 Worker["Worker Service<br/>(Background)<br/>:3003"]
             end
@@ -681,7 +681,7 @@ graph TB
 1. **Kubernetes Health Probes** → Metrics server (`:9090/ready`, `:9090/status`)
 2. **Metrics Server** → Individual services for health verification
 3. **Inter-Service Health Checks** → Via `.plt.local` domain (e.g., `http://api.plt.local/health`)
-4. **External Traffic** → Gateway service (composer) for API aggregation
+4. **External Traffic** → Gateway application for API aggregation
 
 ### Internal Fetch with Automatic Service Discovery
 
@@ -700,7 +700,7 @@ setCustomHealthCheck(async () => {
       // Background worker service health check
       fetch('http://worker.plt.local/health', { timeout: 2000 }),
 
-      // Composer gateway health check
+      // Gateway health check
       fetch('http://gateway.plt.local/health', { timeout: 2000 })
     ])
 

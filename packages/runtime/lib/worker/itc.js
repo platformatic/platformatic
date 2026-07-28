@@ -205,7 +205,16 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
 
         dispatcher.replaceServer(await controller.capability.getDispatchTarget())
-        return application.entrypoint ? controller.capability.getUrl() : null
+
+        const scheduledTasks =
+          typeof controller.capability.getScheduledTasks === 'function'
+            ? await controller.capability.getScheduledTasks()
+            : []
+
+        return {
+          url: application.entrypoint ? controller.capability.getUrl() : null,
+          scheduledTasks
+        }
       },
 
       async stop ({ force, dependents }) {
@@ -303,6 +312,22 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         } catch (err) {
           throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
+      },
+
+      async getApplicationScheduledTasks () {
+        if (typeof controller.capability.getScheduledTasks !== 'function') {
+          return []
+        }
+
+        return controller.capability.getScheduledTasks()
+      },
+
+      async runApplicationScheduledTasks ({ scheduleId, scheduledTime }) {
+        if (typeof controller.capability.runScheduledTasks !== 'function') {
+          throw new Error(`Application "${application.id}" does not support scheduled task execution`)
+        }
+
+        return controller.capability.runScheduledTasks(scheduleId, scheduledTime)
       },
 
       async getApplicationMeta () {

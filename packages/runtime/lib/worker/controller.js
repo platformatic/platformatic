@@ -24,7 +24,7 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
+import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
 import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
@@ -43,7 +43,7 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
   logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${event} event.`)
 
   // Give some time to the listeners, logger and ITC notifications to land before shutting down
-  setTimeout(() => process.exit(1), timeout)
+  setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), timeout)
 
   for (const listener of listeners) {
     try {

@@ -15,6 +15,7 @@ import { applicationsCommand, configCommand, envCommand, psCommand } from './lib
 import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
+import { schedulerCommand, schedulerPauseCommand, schedulerResumeCommand, schedulerRunCommand } from './lib/commands/scheduler.js'
 import { heapSnapshotCommand } from './lib/commands/snapshot.js'
 import { version } from './lib/schema.js'
 
@@ -122,6 +123,18 @@ export async function main () {
       break
     case 'applications':
       command = applicationsCommand
+      break
+    case 'scheduler':
+      command = schedulerCommand
+      break
+    case 'scheduler:pause':
+      command = schedulerPauseCommand
+      break
+    case 'scheduler:resume':
+      command = schedulerResumeCommand
+      break
+    case 'scheduler:run':
+      command = schedulerRunCommand
       break
     case 'config':
       command = configCommand

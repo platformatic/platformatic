@@ -33,7 +33,7 @@ The Watt boundary contains the entrypoint and all downstream applications. Clien
 outside Watt and reach the application through the entrypoint.
 
 In this pattern, the top application is the public boundary. It can be a frontend, an
-API gateway, a composer, or another HTTP application. The downstream applications own
+API gateway, or another HTTP application. The downstream applications own
 separate domains or tasks.
 
 ### When to Use Pyramid Architecture

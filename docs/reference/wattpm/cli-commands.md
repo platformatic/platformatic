@@ -427,6 +427,49 @@ The example above will install the latest version. But you can provide a version
 }
 ```
 
+## Scheduler Commands
+
+Scheduler commands inspect and control jobs in a running Watt runtime. The optional `runtime` argument is the runtime
+process ID or name. It can be omitted when only one runtime is available.
+
+### `wattpm scheduler`
+
+Lists the scheduler jobs registered by the runtime and its applications.
+
+```bash
+wattpm scheduler [runtime]
+```
+
+The output includes the job name, cron expression, source, paused state, and next scheduled run.
+
+### `wattpm scheduler:pause`
+
+Pauses a scheduler job. This stops future local triggers but does not cancel an execution already in progress.
+
+```bash
+wattpm scheduler:pause [runtime] <name>
+```
+
+### `wattpm scheduler:resume`
+
+Resumes a paused scheduler job so that its local cron trigger can run again.
+
+```bash
+wattpm scheduler:resume [runtime] <name>
+```
+
+### `wattpm scheduler:run`
+
+Runs a scheduler job immediately. The job can be run while paused, which allows an external coordinator to trigger a
+job without returning local ownership to the runtime.
+
+```bash
+wattpm scheduler:run [runtime] <name>
+```
+
+The `name` argument is the unique scheduler job name from the runtime `scheduler` configuration or an application
+scheduled-task group.
+
 ## Debugging and Inspection Commands
 
 ### `wattpm logs`

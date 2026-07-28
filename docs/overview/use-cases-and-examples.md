@@ -415,7 +415,7 @@ Choose your path based on your use case:
 **🔍 Deep Dive into Architecture**
 
 - [Architecture Overview](/docs/overview/architecture-overview) - Technical details
-- [Service Types Reference](/docs/reference) - Fastify, HTTP, Composer services
+- [Service Types Reference](/docs/reference) - Fastify, HTTP, and Gateway applications
 
 **🔄 Migrate Existing Applications**
 

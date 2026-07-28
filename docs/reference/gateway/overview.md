@@ -8,6 +8,22 @@ The Gateway Service aggregates APIs from multiple sources - whether they're othe
 
 For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
+:::info[Previously called Composer]
+
+Gateway was named **Composer** throughout the v1 and v2 lines, and was distributed as `@platformatic/composer`. It was renamed to Gateway in **v3.0.0**; the documentation, the package name, and the configuration key all use `gateway` from that release onward.
+
+`@platformatic/composer` still exists in v3 as a deprecated alias that re-exports Gateway, so existing applications keep working, but it logs a deprecation warning on startup and **will be removed in v4.0.0**.
+
+To migrate:
+
+- Replace the `@platformatic/composer` dependency with `@platformatic/gateway`
+- Point `$schema` at `https://schemas.platformatic.dev/@platformatic/gateway/<version>.json`
+- Rename the top-level `composer` configuration key to `gateway`
+
+The properties nested under that key are unchanged, so no other edits are needed.
+
+:::
+
 ## Features
 
 - **Service Discovery**: Automatically discover and compose APIs from multiple applications in your Watt application
