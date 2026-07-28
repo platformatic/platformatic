@@ -96,7 +96,7 @@ export class ServiceCapability extends BaseCapability {
   async _start () {
     const listen = this.applicationConfig.exposed !== false
 
-    await super._start({ listen })
+    await super._start()
 
     // Create the application if needed
     if (!this.#app) {

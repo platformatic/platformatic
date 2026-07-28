@@ -374,7 +374,8 @@ export class ViteSSRCapability extends NodeCapability {
       }
     }
 
-    await super._start({ listen: this.applicationConfig.exposed !== false })
+    await super._start()
+    await super._listen()
   }
 
   async build () {

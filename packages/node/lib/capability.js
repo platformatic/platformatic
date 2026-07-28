@@ -207,7 +207,7 @@ export class NodeCapability extends BaseCapability {
           await this._listen()
         }
       }
-    } else if (this.#hasServer() && this.applicationConfig.exposed !== false) {
+    } else if (this.#hasServer()) {
       // User blackbox function, we wait for it to listen on a port
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]
@@ -388,6 +388,10 @@ export class NodeCapability extends BaseCapability {
   }
 
   async _listen () {
+    if (this.url) {
+      return this.url
+    }
+
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 

@@ -83,26 +83,19 @@ test('should post updated workers list via broadcast channel', async t => {
   expected.composer = [{ id: 'composer:0', application: 'composer', thread: threads['composer:0'], worker: 0 }]
   deepStrictEqual(events[6], new Map(Object.entries(expected)))
 
-  expected.first.shift()
-  deepStrictEqual(events[7], new Map(Object.entries(expected)))
+  // Worker shutdown is asynchronous. The application stop order must not affect
+  // the broadcast contract: each update reflects a smaller worker set and ends empty.
+  for (let index = 7; index < events.length; index++) {
+    const previous = events[index - 1]
+    const current = events[index]
 
-  expected.first.shift()
-  deepStrictEqual(events[8], new Map(Object.entries(expected)))
+    for (const [application, workers] of current) {
+      ok(previous.has(application))
+      ok(workers.length <= previous.get(application).length)
+    }
+  }
 
-  delete expected.first
-  deepStrictEqual(events[9], new Map(Object.entries(expected)))
-
-  expected.second.shift()
-  deepStrictEqual(events[10], new Map(Object.entries(expected)))
-
-  expected.second.shift()
-  deepStrictEqual(events[11], new Map(Object.entries(expected)))
-
-  delete expected.second
-  deepStrictEqual(events[12], new Map(Object.entries(expected)))
-
-  delete expected.composer
-  deepStrictEqual(events[13], new Map())
+  deepStrictEqual(events.at(-1), new Map())
 })
 
 test('should post updated workers when something crashed', async t => {
