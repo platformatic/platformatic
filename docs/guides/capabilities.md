@@ -114,6 +114,18 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Full-stack web applications with focus on web standards
 - **Features**: Nested routing, data loading, form handling, progressive enhancement
 
+##### [`@platformatic/react-router`](../reference/react-router/overview.md)
+
+- **Description**: React Router application integration
+- **Use Case**: React applications built on React Router, run unmodified as a Watt application
+- **Features**: Nested routing, data loading, server-side rendering, Vite-powered development
+
+##### [`@platformatic/tanstack`](../reference/tanstack/overview.md)
+
+- **Description**: TanStack Start application integration
+- **Use Case**: Full-stack React applications built with TanStack Start, run unmodified as a Watt application
+- **Features**: Type-safe routing, server functions, streaming SSR, Vite-powered development
+
 ##### [`@platformatic/nest`](../reference/nest/overview.md)
 
 - **Description**: NestJS framework integration

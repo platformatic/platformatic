@@ -631,7 +631,7 @@ The main `watt` application has a shared logger configuration that is used by al
     "timestamp": "isoTime"
   },
   "autoload": {
-    "path": "services"
+    "path": "applications"
   }
 }
 ```

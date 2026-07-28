@@ -128,12 +128,12 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Services & APIs',
+          label: 'Applications & APIs',
           collapsed: true,
           items: [
             {
               type: 'category',
-              label: 'HTTP Service',
+              label: 'HTTP Application',
               collapsed: true,
               items: [
                 'reference/service/overview',
@@ -144,7 +144,7 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'API Gateway (Composer)',
+              label: 'API Gateway',
               collapsed: true,
               items: [
                 'reference/gateway/overview',
@@ -157,7 +157,7 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'Database Service',
+              label: 'Database Application',
               collapsed: true,
               items: [
                 'reference/db/overview',

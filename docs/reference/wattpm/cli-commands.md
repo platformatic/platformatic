@@ -384,7 +384,7 @@ When manually editing your configuration file to add applications with git URLs,
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "https://github.com/user/repo.git#develop"
@@ -405,7 +405,7 @@ You can specify npm packages, including version, by using the `npm:` protocol in
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "npm:myapp"
@@ -418,7 +418,7 @@ The example above will install the latest version. But you can provide a version
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "npm:myapp@0.2.0"

@@ -47,7 +47,7 @@ npm start                  # Everything runs together
 
 **🎨 Framework Integration**
 
-- Native support for Next.js, Astro, Remix, Vite, NestJS applications
+- Native support for Astro, Next.js, Nitro, Nuxt, React Router, Remix, TanStack Start, Vite and NestJS applications
 - Integrates any existing Express, Fastify, or Node.js application
 - Unified routing and middleware across all applications
 
@@ -87,7 +87,7 @@ Watt fundamentally reimagines Node.js application architecture by providing a **
 
 **Worker Thread Applications** (Fast startup, low overhead):
 
-- **Next.js/Astro/Remix applications** - Frontend frameworks with SSR
+- **Frontend framework applications** - Next.js, Astro, Nuxt, Remix, React Router, TanStack Start and more, with SSR
 - **HTTP Applications** - Custom APIs built on Fastify
 - **Database Applications** - Auto-generated APIs from SQL schemas via Platformatic DB
 
