@@ -327,9 +327,20 @@ test('HealthMetricsEvent', () => {
     application: 'api',
     worker: 0,
     id: 'api:0',
+    currentHealth: { elu: 0.1 },
     healthSignals: [{ type: 'eventLoopDelay', p99: 8 }]
   }
   expect(event).type.toBe<HealthMetricsEvent>()
+
+  const failed: HealthMetricsEvent = {
+    application: 'api',
+    worker: 0,
+    id: 'api:0',
+    currentHealth: null,
+    healthSignals: []
+  }
+  expect(failed).type.toBe<HealthMetricsEvent>()
+  expect(failed.currentHealth).type.toBe<object | null>()
 })
 
 test('Runtime.on — application:worker:started', () => {
@@ -361,6 +372,7 @@ test('Runtime.on — application:worker:profile:captured', () => {
 test('Runtime.on — application:worker:health:metrics', () => {
   const handler = (event: HealthMetricsEvent) => {
     expect(event.id).type.toBe<string>()
+    expect(event.currentHealth).type.toBe<object | null>()
     expect(event.healthSignals).type.toBe<RuntimeHealthSignal[]>()
   }
   runtime.on('application:worker:health:metrics', handler)
@@ -370,4 +382,12 @@ test('Runtime.off — typed event removal', () => {
   const handler = (event: WorkerLifecycleEvent) => {}
   runtime.off('application:worker:started', handler)
   runtime.off('application:worker:exited', handler)
+})
+
+test('Runtime.on/off — catch-all keeps other events usable', () => {
+  const handler = (...args: any[]) => {}
+  runtime.on('application:worker:health', handler)
+  runtime.on(Symbol('custom'), handler)
+  runtime.off('application:worker:health', handler)
+  runtime.off(Symbol('custom'), handler)
 })

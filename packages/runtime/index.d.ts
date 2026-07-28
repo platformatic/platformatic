@@ -224,7 +224,7 @@ export interface RuntimeHealthSignal {
 
 export interface HealthMetricsEvent extends WorkerLifecycleEvent {
   id: string
-  currentHealth?: object
+  currentHealth: object | null
   healthSignals: RuntimeHealthSignal[]
 }
 
@@ -429,16 +429,19 @@ export declare class Runtime extends EventEmitter {
   setApplicationConfigPatch (applicationId: string, patch: Array<Record<string, unknown>>): void
   removeApplicationConfigPatch (applicationId: string): void
 
-  // Typed worker lifecycle events
+  // Typed worker lifecycle events. Catch-all overloads preserve EventEmitter's
+  // open event surface so listeners for other runtime events still type-check.
   on (event: 'application:worker:started', listener: (event: WorkerLifecycleEvent) => void): this
   on (event: 'application:worker:exited', listener: (event: WorkerLifecycleEvent) => void): this
   on (event: 'application:worker:profile:captured', listener: (event: ProfileCapturedEvent) => void): this
   on (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
+  on (event: string | symbol, listener: (...args: any[]) => void): this
 
   off (event: 'application:worker:started', listener: (event: WorkerLifecycleEvent) => void): this
   off (event: 'application:worker:exited', listener: (event: WorkerLifecycleEvent) => void): this
   off (event: 'application:worker:profile:captured', listener: (event: ProfileCapturedEvent) => void): this
   off (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
+  off (event: string | symbol, listener: (...args: any[]) => void): this
 
   getSchedulerJobs (): SchedulerJob[]
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
