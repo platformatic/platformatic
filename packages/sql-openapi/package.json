@@ -13,7 +13,8 @@
     "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "test:types": "tstyche"
+    "test:types": "tstyche",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
