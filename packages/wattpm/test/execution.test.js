@@ -92,9 +92,10 @@ test('dev - should restart an application if files are changed', async t => {
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
+  const mainApplication = config.applications.find(application => application.id === 'main')
+
   ok(config.watch)
-  deepStrictEqual(config.applications[1].id, 'main')
-  ok(config.applications[0].watch)
+  ok(mainApplication.watch)
 
   const indexFile = resolve(applicationDir, 'index.js')
   const originalContents = await readFile(indexFile, 'utf-8')
@@ -333,10 +334,10 @@ test('start - should start in production mode', async t => {
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
+  const mainApplication = config.applications.find(application => application.id === 'main')
 
   ok(config.watch === false)
-  deepStrictEqual(config.applications[1].id, 'main')
-  ok(config.applications[0].watch === false)
+  ok(mainApplication.watch === false)
 
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))

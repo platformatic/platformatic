@@ -38,6 +38,7 @@ test('supports https server options', async t => {
 
   const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
     config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
+    config.applications[0].server ??= {}
     config.applications[0].server.https = {
       key: { path: resolve(root, 'https.key') },
       cert: { path: resolve(root, 'https.crt') }

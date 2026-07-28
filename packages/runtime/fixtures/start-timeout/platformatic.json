@@ -9,7 +9,8 @@
     {
       "id": "node",
       "path": "./node",
-      "config": "platformatic.json"
+      "config": "platformatic.json",
+      "exposed": true
     }
   ],
   "logger": {

@@ -1,4 +1,3 @@
-import { features } from '@platformatic/foundation'
 import { ok, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -122,24 +121,12 @@ test('can collect metrics with worker label', async t => {
       received.add(`${applicationId}:${workerId}`)
       switch (applicationId) {
         case 'composer':
-          if (features.node.reusePort) {
-            return typeof workerId === 'number' && workerId >= 0 && workerId < 3
-          } else {
-            return workerId === 0 || typeof workerId === 'undefined'
-          }
+          return typeof workerId === 'number' && workerId >= 0 && workerId < 3
 
         case 'application':
-          if (features.node.reusePort) {
-            return typeof workerId === 'number' && workerId >= 0 && workerId < 3
-          } else {
-            return workerId === 0 || typeof workerId === 'undefined'
-          }
+          return typeof workerId === 'number' && workerId >= 0 && workerId < 3
         case 'node':
-          if (features.node.reusePort) {
-            return typeof workerId === 'number' && workerId >= 0 && workerId < 5
-          } else {
-            return workerId === 0 || typeof workerId === 'undefined'
-          }
+          return typeof workerId === 'number' && workerId >= 0 && workerId < 5
         default:
           // No applicationId, all good
           return true
@@ -194,9 +181,7 @@ test('text metrics contain a single HELP/TYPE block per metric family across all
   for (const match of metrics.matchAll(/applicationId="node",workerId="(\d+)"/g)) {
     nodeWorkerIds.add(match[1])
   }
-  if (features.node.reusePort) {
-    ok(nodeWorkerIds.size > 1, `Expected metrics from multiple node workers, found ${nodeWorkerIds.size}`)
-  }
+  ok(nodeWorkerIds.size > 1, `Expected metrics from multiple node workers, found ${nodeWorkerIds.size}`)
 })
 
 test('worker threads have correct threadName property set', async t => {

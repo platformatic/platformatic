@@ -295,6 +295,28 @@ test('config - should list configuration for the runtime', async t => {
     preload: [resolve('../wattpm-pprof-capture/index.js')],
     applications: [
       {
+        id: 'main',
+        type: '@platformatic/node',
+        path: mainApplicationDir,
+        config: resolve(mainApplicationDir, 'watt.json'),
+        exposed: true,
+        server: {
+          hostname: '127.0.0.1'
+        },
+        enabled: true,
+        gitBranch: 'main',
+        portEnv: 'PORT',
+        reuseTcpPorts: true,
+        health: {},
+        watch: false,
+        workers: {
+          dynamic: false,
+          static: 1
+        },
+        dependencies: [],
+        localUrl: 'http://main.plt.local'
+      },
+      {
         id: 'alternative',
         type: '@platformatic/node',
         path: alternativeApplicationDir,
@@ -306,19 +328,6 @@ test('config - should list configuration for the runtime', async t => {
         },
         dependencies: [],
         localUrl: 'http://alternative.plt.local'
-      },
-      {
-        id: 'main',
-        type: '@platformatic/node',
-        path: mainApplicationDir,
-        config: resolve(mainApplicationDir, 'watt.json'),
-        watch: false,
-        workers: {
-          dynamic: false,
-          static: 1
-        },
-        dependencies: [],
-        localUrl: 'http://main.plt.local'
       }
     ],
     applicationTimeout: 300000,

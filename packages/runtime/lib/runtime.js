@@ -589,12 +589,16 @@ export class Runtime extends EventEmitter {
     const toStart = []
     for (const application of applications) {
       const workers = application.workers
+      const configuredPort = Number(application.server?.port)
+      const environmentPort = Number(this.#env[application.portEnv ?? 'PORT'])
+      const effectivePort = configuredPort > 0 ? configuredPort : environmentPort
 
       if (
         (workers.static > 1 || workers.minimum > 1) &&
         application.exposed !== false &&
         !features.node.reusePort &&
-        application.server?.portAssignment !== 'perWorkerIncrement'
+        application.server?.portAssignment !== 'perWorkerIncrement' &&
+        effectivePort > 0
       ) {
         this.logger.warn(
           `"${application.id}" listens on a shared port, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
@@ -1668,7 +1672,7 @@ export class Runtime extends EventEmitter {
   }
 
   getApplicationsIds () {
-    return Array.from(this.#applications.keys())
+    return Array.from(this.#applications.keys()).sort()
   }
 
   async getApplications (allowUnloaded = false) {
@@ -3042,6 +3046,7 @@ export class Runtime extends EventEmitter {
         // If some processes were scheduled to restart
         // but the runtime is stopped, ignore it
         if (!this.#status.startsWith('start')) {
+          resolve()
           return
         }
 
@@ -3081,6 +3086,7 @@ export class Runtime extends EventEmitter {
           // The runtime was stopped while the restart was happening, ignore any error.
           if (!this.#status.startsWith('start')) {
             resolve()
+            return
           }
 
           reject(err)

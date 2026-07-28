@@ -1,6 +1,7 @@
 import { rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { loadConfiguration, Runtime } from '../../index.js'
 import { createRuntime } from '../helpers.js'
 import { waitForEvents } from '../multiple-workers/helper.js'
 
@@ -24,4 +25,17 @@ test('can start timeout when applications dont start', async t => {
 
   await app.stop()
   await waitPromise
+})
+
+test('does not wait for an unexposed black-box application to listen', async t => {
+  const configFile = join(fixturesDir, 'start-timeout/platformatic.json')
+  const config = await loadConfiguration(configFile)
+  config.applications.find(application => application.id === 'node').exposed = false
+  const app = new Runtime(config)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
 })

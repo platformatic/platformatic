@@ -98,11 +98,16 @@ export class DynamicWorkersScaler {
 
   async add (application) {
     const config = {}
+    const runtimeEnv = this.#runtime.getRuntimeEnv?.() ?? {}
+    const configuredPort = Number(application.server?.port)
+    const environmentPort = Number(runtimeEnv[application.portEnv ?? 'PORT'])
+    const effectivePort = configuredPort > 0 ? configuredPort : environmentPort
 
     if (
       application.exposed !== false &&
       application.server?.portAssignment !== 'perWorkerIncrement' &&
-      !features.node.reusePort
+      !features.node.reusePort &&
+      effectivePort > 0
     ) {
       this.#runtime.logger.warn(
         `The "${application.id}" application cannot be scaled because it listens on a shared port and the "reusePort" feature is not available in your OS.`

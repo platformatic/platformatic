@@ -1,4 +1,3 @@
-import { features } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -36,7 +35,7 @@ test('return workers information in the management API when starting in producti
   json.applications.sort((a, b) => a.id.localeCompare(b.id))
 
   deepStrictEqual(json.applications[0].id, 'composer')
-  deepStrictEqual(json.applications[0].workers, features.node.reusePort ? 3 : 1)
+  deepStrictEqual(json.applications[0].workers, 3)
   deepStrictEqual(json.applications[1].id, 'node')
   deepStrictEqual(json.applications[1].workers, 5)
   deepStrictEqual(json.applications[2].id, 'service')

@@ -345,7 +345,7 @@ export async function transform (config, _, context) {
         }
 
         const scaleConfig = config.verticalScaler.applications[appId]
-        const workersConfig = appConfig.workers
+        const workersConfig = appConfig.workers ??= {}
 
         workersConfig.minimum ??= scaleConfig.minWorkers ?? config.workers.minimum
         workersConfig.maximum ??= scaleConfig.maxWorkers ?? config.workers.maximum

@@ -291,7 +291,7 @@ jobs:
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'runtime' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 55
+    timeout-minutes: 30
     strategy:
       # Do not cancel the other 29 matrix jobs when a single job hits a flaky
       # failure (e.g. one-off V8 crashes in worker threads), so that reruns
@@ -316,14 +316,7 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run runtime package test suite
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 2
-          timeout_minutes: 25
-          retry_on: error
-          # The default shell on Windows is PowerShell 5.1, which does not support &&
-          shell: bash
-          command: cd packages/runtime && pnpm run test:${{ matrix.suite }}
+        run: cd packages/runtime && pnpm run test:${{ matrix.suite }}
 
   service:
     name: 'service - ${{ matrix.os }} - ${{ matrix.node }}'

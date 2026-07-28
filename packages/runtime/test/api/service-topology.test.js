@@ -39,6 +39,17 @@ test('should get applications topology', async t => {
         sourceMaps: false
       },
       {
+        id: 'multi-plugin-service',
+        type: 'service',
+        status: 'started',
+        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
+        version,
+        localUrl: 'http://multi-plugin-service.plt.local',
+        dependencies: [],
+        sourceMaps: false
+      },
+      {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
@@ -57,17 +68,6 @@ test('should get applications topology', async t => {
         path: resolve(monorepo, 'serviceAppWithLogger'),
         version,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: [],
-        sourceMaps: false
-      },
-      {
-        id: 'multi-plugin-service',
-        type: 'service',
-        status: 'started',
-        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
-        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
-        version,
-        localUrl: 'http://multi-plugin-service.plt.local',
         dependencies: [],
         sourceMaps: false
       }
@@ -119,6 +119,17 @@ test('should get applications topology (gateway)', async t => {
         sourceMaps: false
       },
       {
+        id: 'multi-plugin-service',
+        type: 'service',
+        status: 'started',
+        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
+        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
+        version,
+        localUrl: 'http://multi-plugin-service.plt.local',
+        dependencies: [],
+        sourceMaps: false
+      },
+      {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
@@ -137,17 +148,6 @@ test('should get applications topology (gateway)', async t => {
         path: resolve(monorepo, 'serviceAppWithLogger'),
         version,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: [],
-        sourceMaps: false
-      },
-      {
-        id: 'multi-plugin-service',
-        type: 'service',
-        status: 'started',
-        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'platformatic.service.json'),
-        path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
-        version,
-        localUrl: 'http://multi-plugin-service.plt.local',
         dependencies: [],
         sourceMaps: false
       }

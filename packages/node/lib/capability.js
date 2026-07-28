@@ -154,10 +154,8 @@ export class NodeCapability extends BaseCapability {
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig)
     })
 
-    // The server promise must be created before requiring the entrypoint even if it's not going to be used
-    // at all. Otherwise there is chance we miss the listen event.
+    // Create the promise before requiring the entrypoint so we do not miss its listen event.
     const serverOptions = this.serverConfig
-
     const serverPromise = createServerListener(
       serverOptions?.port ?? true,
       serverOptions?.hostname ?? true,
@@ -209,7 +207,7 @@ export class NodeCapability extends BaseCapability {
           await this._listen()
         }
       }
-    } else if (this.#hasServer()) {
+    } else if (this.#hasServer() && this.applicationConfig.exposed !== false) {
       // User blackbox function, we wait for it to listen on a port
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]
@@ -220,7 +218,7 @@ export class NodeCapability extends BaseCapability {
     await this._collectMetrics()
 
     // No need to keep the server promise around anymore, we either have the URL or we are a background service
-    serverPromise.cancel()
+    serverPromise?.cancel()
     return this.url
   }
 

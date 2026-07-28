@@ -2,14 +2,16 @@ import { deepStrictEqual } from 'node:assert'
 import { test } from 'node:test'
 import { upgrade } from '../../lib/upgrade.js'
 
-test('remove only the root entrypoint and server', async () => {
+test('migrates the root entrypoint and server to the exposed application', async () => {
   const config = {
     entrypoint: 'main',
     server: { port: 3042 },
     applications: [
       {
-        id: 'main',
-        entrypoint: true
+        id: 'main'
+      },
+      {
+        id: 'internal'
       }
     ],
     custom: {
@@ -22,7 +24,12 @@ test('remove only the root entrypoint and server', async () => {
     applications: [
       {
         id: 'main',
-        entrypoint: true
+        exposed: true,
+        server: { port: 3042 }
+      },
+      {
+        id: 'internal',
+        exposed: false
       }
     ],
     custom: {
@@ -30,4 +37,33 @@ test('remove only the root entrypoint and server', async () => {
       server: { port: 3044 }
     }
   })
+})
+
+test('preserves the root entrypoint and server for autoloaded applications', async () => {
+  const config = {
+    entrypoint: 'main',
+    server: { port: 3042 },
+    autoload: { path: './web' }
+  }
+
+  deepStrictEqual(await upgrade(null, config, '3.0.0'), {
+    applications: [
+      {
+        id: 'main',
+        path: './web/main',
+        exposed: true,
+        server: { port: 3042 }
+      }
+    ],
+    autoload: { path: './web' }
+  })
+})
+
+test('removes root entrypoint and server when no applications are configured', async () => {
+  const config = {
+    entrypoint: 'main',
+    server: { port: 3042 }
+  }
+
+  deepStrictEqual(await upgrade(null, config, '3.0.0'), {})
 })
