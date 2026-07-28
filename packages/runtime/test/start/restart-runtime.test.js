@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { features } from '@platformatic/foundation'
 import { transform } from '../../lib/config.js'
 import { createRuntime, getTempDir } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
@@ -90,6 +91,7 @@ test('will restart applications in parallel', async t => {
   })
 
   const events = []
+  const workerEvents = []
 
   {
     const res = await request(url + '/application-1')
@@ -110,6 +112,17 @@ test('will restart applications in parallel', async t => {
       events.push([event, id])
     })
   }
+
+  app.on('application:worker:started', ({ worker }) => {
+    if (worker >= 3) {
+      workerEvents.push('started')
+    }
+  })
+  app.on('application:worker:stopped', ({ worker }) => {
+    if (worker < 3) {
+      workerEvents.push('stopped')
+    }
+  })
 
   await app.restart()
   url = (await app.getApplicationDetails('composer')).url
@@ -138,6 +151,12 @@ test('will restart applications in parallel', async t => {
     events.findLastIndex(e => e[0] === 'application:restarting') <
       events.findIndex(e => e[0] === 'application:restarted')
   )
+
+  if (features.node.reusePort) {
+    strictEqual(workerEvents.filter(event => event === 'started').length, 9)
+    strictEqual(workerEvents.filter(event => event === 'stopped').length, 9)
+    strictEqual(workerEvents.lastIndexOf('started') < workerEvents.indexOf('stopped'), true)
+  }
 })
 
 test('restartApplication restarts each original worker exactly once', async t => {

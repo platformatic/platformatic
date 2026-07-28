@@ -27,13 +27,13 @@ async function waitForStatus (url, statusCode) {
   throw new Error(`Expected ${url} to return ${statusCode}`)
 }
 
-async function getApplicationUrl () {
+async function getApplicationUrl (previousUrl) {
   const client = new RuntimeApiClient()
   try {
     for (let attempt = 0; attempt < 50; attempt++) {
       const [runtime] = await getMatchingRuntime(client, [])
       const url = Object.entries(runtime.urls).find(([workerId]) => workerId.startsWith('composer:'))?.[1]
-      if (url) {
+      if (url && url !== previousUrl) {
         return url
       }
 
@@ -86,8 +86,7 @@ test('applications:add - should add application to an existing app', { skip: isW
   // Now add the application
   const addProcess = await wattpm('applications:add', 'add.json')
   ok(addProcess.stdout.includes('Successfully added 1 application to the application.'))
-  await sleep(1000)
-  url = await getApplicationUrl()
+  url = await getApplicationUrl(url)
 
   // Verify that the new application is running
   {
@@ -290,8 +289,7 @@ test('applications:remove - should remove applications from an existing app', { 
   // Now add the application
   const removeProcess = await wattpm('applications:remove', 'application-2', 'application-3')
   ok(removeProcess.stdout.includes('Successfully removed 2 applications from the application.'))
-  await sleep(1000)
-  url = await getApplicationUrl()
+  url = await getApplicationUrl(url)
 
   // Verify that the application-1 not running anymore
   {

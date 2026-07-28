@@ -725,13 +725,39 @@ export class Runtime extends EventEmitter {
   }
 
   async restartApplications (applicationsToRestart) {
-    const restartInvocations = []
+    const restartInvocations = applicationsToRestart.map(application => [application, true])
+    const restarts = await executeInParallel(
+      this.restartApplication.bind(this),
+      restartInvocations,
+      this.#concurrency,
+      false
+    )
+    const failed = restarts.filter(result => result instanceof Error)
+    const succeeded = restarts.filter(result => result && !(result instanceof Error))
 
-    for (const application of applicationsToRestart) {
-      restartInvocations.push([application])
+    if (failed.length > 0) {
+      await Promise.allSettled(succeeded.map(restart => restart.discard()))
+      throw failed[0]
     }
 
-    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+    const results = await executeInParallel(
+      retirement => retirement.retire(),
+      succeeded.flatMap(({ retirements }) => retirements.map(retirement => [retirement])),
+      this.#concurrency,
+      false
+    )
+
+    const error = results.find(result => result instanceof Error)
+    if (error) {
+      for (const restart of succeeded) {
+        restart.release()
+      }
+      throw error
+    }
+
+    for (const restart of succeeded) {
+      restart.complete()
+    }
   }
 
   async startApplication (id, silent = false) {
@@ -784,7 +810,7 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:stopped', id)
   }
 
-  async restartApplication (id) {
+  async restartApplication (id, deferOldWorkerRetirement = false) {
     const applicationConfig = this.#applications.get(id)
 
     if (!applicationConfig) {
@@ -803,6 +829,8 @@ export class Runtime extends EventEmitter {
     }
 
     this.#restartingApplications.add(id)
+    const retirements = []
+    let deferred = false
 
     try {
       const config = this.#config
@@ -820,13 +848,44 @@ export class Runtime extends EventEmitter {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
+        const retirement = await this.#replaceWorker(
+          config,
+          applicationConfig,
+          workersCount,
+          id,
+          workerIndex,
+          worker,
+          true,
+          deferOldWorkerRetirement
+        )
+        if (retirement) {
+          retirements.push(retirement)
+        }
+      }
+
+      if (deferOldWorkerRetirement) {
+        deferred = true
+        return {
+          retirements,
+          release: () => this.#restartingApplications.delete(id),
+          discard: async () => {
+            await Promise.allSettled(retirements.map(retirement => retirement.discard()))
+            this.#restartingApplications.delete(id)
+          },
+          complete: () => {
+            this.#incrementApplicationRestartCount(id)
+            this.emitAndNotify('application:restarted', id)
+            this.#restartingApplications.delete(id)
+          }
+        }
       }
 
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
-      this.#restartingApplications.delete(id)
+      if (!deferred) {
+        this.#restartingApplications.delete(id)
+      }
     }
   }
 
@@ -3104,7 +3163,16 @@ export class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
+  async #replaceWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    oldIndex,
+    worker,
+    silent,
+    deferOldWorkerRetirement = false
+  ) {
     const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
     let newWorker
 
@@ -3189,6 +3257,13 @@ export class Runtime extends EventEmitter {
     }
 
     if (!stopBeforeStart) {
+      if (deferOldWorkerRetirement) {
+        return {
+          discard: () => this.#discardWorker(newWorker),
+          retire: () => this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        }
+      }
+
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
   }
