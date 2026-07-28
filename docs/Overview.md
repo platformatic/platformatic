@@ -17,7 +17,7 @@ Watt is a complete Node.js application server that handles the complex infrastru
 - ⚡ **Built-in Observability** - Automatic logging, metrics, and distributed tracing
 - 🔧 **Zero Configuration** - Sensible defaults that work out of the box
 - 📊 **Auto-Generated APIs** - REST and GraphQL endpoints from your database schema
-- 🎨 **Framework Agnostic** - Works with Next.js, React, Vue, Express, Fastify, and more
+- 🎨 **Framework Agnostic** - Ten framework integrations, plus any existing Express, Fastify or plain Node.js application
 
 ## Why Choose Watt?
 
@@ -42,9 +42,9 @@ Modern Node.js development is fragmented. You need separate tools for databases,
 Watt provides a comprehensive set of capabilities:
 
 - **Database APIs** - Auto-generated REST and GraphQL endpoints from SQL databases (Platformatic DB)
-- **HTTP Services** - Custom application logic and APIs built on Fastify
+- **HTTP Applications** - Custom application logic and APIs built on Fastify
 - **API Gateways** - Aggregate multiple applications into unified endpoints
-- **Framework Integration** - [Next.js, Astro, Remix, Vite, NestJS applications](/docs/guides/frameworks)
+- **Framework Integration** - [Astro, Next.js, Nitro, Nuxt, React Router, Remix, TanStack Start, Vite and NestJS](/docs/guides/frameworks)
 - **Microservice Orchestration** - Multi-application deployments as single units
 - **Built-in Authorization** - Role-based access control and JWT authentication
 - **Real-time Features** - WebSocket and GraphQL subscriptions

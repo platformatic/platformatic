@@ -33,15 +33,16 @@ npx wattpm create
 Which will output:
 
 ```
-Hello YOURNAME, welcome to Watt 3.0.0!
+Hello YOURNAME, welcome to Watt!
 ? Where would you like to create your project? .
 ? Which package manager do you want to use? npm
 ? Which kind of application do you want to create? @platformatic/node
-✔ Installing @platformatic/node@^3.0.0 using npm ...
+✔ Installing @platformatic/node using npm ...
 ? What is the name of the application? node
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
 ? What port do you want to use? 3042
+? Do you want to init the git repository? no
 ```
 
 Dependencies are going to be installed. Your application is located in `web/node`.
@@ -122,10 +123,11 @@ npx wattpm create
 This will output:
 
 ```
-Hello YOURNAME, welcome to Watt 3.0.0!
+Hello YOURNAME, welcome to Watt!
 Using existing configuration ...
+? Which package manager do you want to use? npm
 ? Which kind of application do you want to create? @platformatic/gateway
-✔ Installing @platformatic/gateway@^3.0.0 using npm ...
+✔ Installing @platformatic/gateway using npm ...
 ? What is the name of the application? gateway
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
@@ -198,6 +200,29 @@ Which will output:
 ✔ Would you like to use App Router? (recommended) … Yes
 ✔ Would you like to customize the import alias (`@/*` by default)? … No
 ```
+
+:::caution[Name your Next.js workspace package something other than `next`]
+
+`create-next-app web/next` names the generated package after its directory, so `web/next/package.json`
+gets `"name": "next"`. A Watt project declares `"workspaces": ["web/*"]`, so npm then links
+`node_modules/next` to `web/next` — and that symlink **shadows the Next.js framework itself**.
+Resolving `next` from the project root returns your application instead of Next.js, and the dev server
+fails with a cascade of `Module not found: Can't resolve 'react'` and
+`Can't resolve '@swc/helpers/...'` errors.
+
+Before importing, open `web/next/package.json` and change the `name` field to something that is not an
+npm package name you depend on, for example:
+
+```json
+{
+  "name": "frontend"
+}
+```
+
+The directory can stay `web/next` — Watt derives the application id from the directory, so the `/next`
+prefix used below is unaffected. Only the package `name` needs to change.
+
+:::
 
 Then, let's import it to our Watt server:
 

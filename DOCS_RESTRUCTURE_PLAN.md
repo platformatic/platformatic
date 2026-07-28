@@ -223,13 +223,64 @@ moving or renaming a page, otherwise CLI warnings and generated READMEs start po
     checked-in example did not run. Directory renamed to `applications/`, and `composer/` within it
     to `gateway/`.
   - `guides/cache-with-platformatic-watt.md` had two sections both numbered "Step 4"; renumbered.
-- [ ] **Services → Applications.** Align `docs/Overview.md`, `docs/overview/*.md`, and the sidebar
-      with the runtime docs' "applications" terminology.
-- [ ] **Complete the capability coverage.** Overview and architecture pages should reflect all ten
-      shipped capabilities, not the original three.
-- [ ] **Verify tutorials still run end-to-end.** `learn/beginner/crud-application.md` and
-      `getting-started/quick-start.md` have both drifted through many releases since their last
-      verification.
+- [x] **Services → Applications** ✅ 2026-07-28. The CLI is fully migrated (`wattpm applications`,
+      "Builds all applications of the project"), so the docs were the laggard. Changed:
+  - Every legacy runtime config key in examples — `"services": []` and `"web": []` → `"applications": []`.
+    All three keys are still concatenated by `runtime/lib/config.js`, so the old ones are not broken,
+    but `applications` is the current name. Each migrated example was validated against
+    `packages/runtime/schema.json`.
+  - Sidebar labels: `Services & APIs` → `Applications & APIs`, `HTTP Service` → `HTTP Application`,
+    `Database Service` → `Database Application`. Also caught `API Gateway (Composer)`, a leftover the
+    previous pass missed.
+  - Reference headings: `# HTTP Service` → `# HTTP Application`, `# Database Service` →
+    `# Database Application`, `# API Gateway (Gateway Service)` → `# API Gateway`, and the "Gateway
+    Service" prose throughout `reference/gateway/overview.md`.
+  - **Deliberately left alone:** "microservices", "service discovery", "service mesh",
+    "service-to-service", and references to external/non-Node services. These are industry terms in
+    passages comparing Watt to other architectures, not names for the units running inside Watt.
+    A blanket rename would have mangled them.
+  - Fixed a regression from the previous PR: `guides/logging.md` still showed
+    `"autoload": { "path": "services" }` after the logger example directory was renamed to
+    `applications/`, so the snippet contradicted the checked-in example.
+- [x] **Complete the capability coverage** ✅ 2026-07-28. `guides/frameworks.md` already listed all
+      ten; `guides/capabilities.md` was missing React Router and TanStack, now added. The framework
+      lists in `Overview.md`, `overview/what-is-watt.md`, `overview/comparison-with-alternatives.md`
+      and `README.md` named four or five and are now complete. Note `Overview.md` previously claimed
+      integration with "React, Vue" — neither is a capability — which is now corrected.
+- [~] **Verify tutorials run end-to-end** — partially done, and it found real bugs. See below.
+
+#### Tutorial verification results (2026-07-28)
+
+`getting-started/quick-start.md` was executed against Watt 3.64.0 on Node 24.14.1, driving the
+interactive generator through `PLT_USER_INPUT_HANDLER` so the real prompts could be captured.
+
+**Verified working:** project creation, the generated `web/node/index.js` (matches the documented
+snippet exactly), `npm start`, and `curl localhost:3042` → `{"hello":"world"}`. Then the Gateway step:
+creation, and `curl localhost:3042/node` → `{"hello":"world"}` routed through the gateway. The
+documented gateway config shape (`gateway.applications[].proxy.prefix`) is correct.
+
+**Fixed:** three transcript inaccuracies. The first run's transcript was missing the
+`Do you want to init the git repository?` prompt; the second run's was missing
+`Which package manager do you want to use?`; and both hard-coded version `3.0.0`, now genericised so
+the transcript does not go stale on every release.
+
+**Found — a real bug, now documented:** `npx create-next-app web/next` names the generated workspace
+package `next`. Because a Watt project sets `"workspaces": ["web/*"]`, npm links `node_modules/next`
+to `web/next`, and that symlink shadows the Next.js framework. Confirmed directly:
+`node_modules/next -> ../web/next`, and resolving `next` from the project root returned the
+application (version `0.1.0`) rather than Next.js `16.2.12`. The dev server then fails with dozens of
+`Module not found: Can't resolve 'react'` / `@swc/helpers` errors. This reproduces **outside Watt** —
+running `npx next dev` directly in `web/next` fails identically — so it is a naming collision, not a
+runtime bug. A `:::caution` block in the tutorial now explains it and the remedy.
+
+**Still open:** after renaming the workspace package, module resolution is correct
+(`node_modules/next` resolves to Next.js 16.2.12) but the `next` worker still exits with code 1 and no
+diagnostic output, so the Next.js half of the quick start was **not** verified working end to end.
+`@platformatic/next` declares support for `^16.0.0`, so this is not a declared-version mismatch. This
+needs a product decision rather than a docs change, and the tutorial has not been rewritten to claim
+the Next.js flow works.
+
+**Not attempted:** `learn/beginner/crud-application.md`, which needs a database.
 
 ### Phase 6: Fill the Diátaxis Gaps 🟢 MEDIUM
 

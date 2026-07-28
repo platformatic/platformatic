@@ -89,7 +89,7 @@ Configure your `watt.json` to include applications from multiple repositories:
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "web": [
+  "applications": [
     {
       "id": "gateway",
       "path": "web/gateway"
@@ -375,7 +375,7 @@ Pin specific application versions by using Git tags in URLs:
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "user-application",
       "path": "web/user-application",

@@ -494,7 +494,7 @@ When using multiple applications in a Watt runtime, each inherits the logger con
   "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
   "entrypoint": "gateway",
   "autoload": {
-    "path": "services"
+    "path": "applications"
   },
   "logger": {
     "level": "info",

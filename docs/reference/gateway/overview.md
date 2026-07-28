@@ -1,10 +1,10 @@
 import Issues from '../../getting-started/issues.md';
 
-# API Gateway (Gateway Service)
+# API Gateway
 
-The Gateway Service is an API Gateway that runs within Watt (the Node.js Application Server). It automatically integrates multiple microservices into a unified API ecosystem, providing a single public endpoint for clients while managing routing, composition, and conflict resolution behind the scenes.
+The Gateway is an API Gateway application that runs within Watt (the Node.js Application Server). It automatically integrates multiple microservices into a unified API ecosystem, providing a single public endpoint for clients while managing routing, composition, and conflict resolution behind the scenes.
 
-The Gateway Service aggregates APIs from multiple sources - whether they're other applications in your Watt application, external APIs, or legacy systems - presenting them as a cohesive, well-documented API to your clients.
+The Gateway aggregates APIs from multiple sources - whether they're other applications in your Watt application, external APIs, or legacy systems - presenting them as a cohesive, well-documented API to your clients.
 
 For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
@@ -36,9 +36,9 @@ The properties nested under that key are unchanged, so no other edits are needed
 - **Dynamic Updates**: Real-time schema updates when underlying applications change (in development mode)
 - **Custom Logic**: Extend with Fastify plugins for authentication, rate limiting, or request transformation
 
-## When to Use Gateway Service
+## When to Use the Gateway
 
-Gateway Service is ideal for:
+The Gateway is ideal for:
 
 - **Microservices Architecture**: Present a unified API from multiple independent services
 - **API Aggregation**: Combine internal and external APIs into a single public interface
@@ -49,7 +49,7 @@ Gateway Service is ideal for:
 
 ## Quick Start
 
-Create a Gateway Service within a Watt application:
+Create a Gateway within a Watt application:
 
 ```bash
 # Create a new Watt application
@@ -63,7 +63,7 @@ cd my-gateway
 wattpm dev
 ```
 
-Your Gateway Service will automatically discover other applications in your Watt application and create a unified API. Visit `http://localhost:3042/documentation` to see the composed API documentation.
+Your Gateway will automatically discover other applications in your Watt application and create a unified API. Visit `http://localhost:3042/documentation` to see the composed API documentation.
 
 For application-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
 
