@@ -61,7 +61,7 @@ custom commands that applications can invoke from their worker threads.
 }
 ```
 
-Each file must default-export a setup function, which is invoked during the runtime initialization,
+Each file must export a setup function, which is invoked during the runtime initialization,
 before any application is started. TypeScript files are supported out of the box via
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
@@ -116,6 +116,43 @@ export default async function setup ({ runtime, itc, sharedContext, logger, opti
   }
 }
 ```
+
+#### How the setup function is resolved
+
+The setup function can be exported either as the default export or as a named `setup` export, so
+both of the following are valid:
+
+```js
+// Default export
+export default async function setup (context) {}
+```
+
+```js
+// Named export
+export async function setup (context) {}
+```
+
+Extensions are also commonly shipped as CommonJS or as "faux ESM" modules, in which a transpiler or a
+bundler puts the real exports on `module.exports` together with an `__esModule` marker. In those
+modules Node.js exposes the whole `module.exports` object as the ESM default export, so the setup
+function ends up one level deeper. Runtime transparently unwraps that extra level, which means all of
+these work as well:
+
+```js
+// CommonJS, transpiled default export: module.exports.default is the setup function
+exports.__esModule = true
+exports.default = async function setup (context) {}
+```
+
+```js
+// CommonJS, named setup export: module.exports.setup is the setup function
+exports.setup = async function setup (context) {}
+```
+
+The resolution order is: the default export, the named `setup` export, then the same two properties
+of the default export. The first one that is a function wins, so a module exporting both a default
+function and a named `setup` function uses the default export. If none of them is a function, the
+runtime fails to start with `PLT_RUNTIME_INVALID_EXTENSION`.
 
 The setup function receives a context object with the following properties:
 
