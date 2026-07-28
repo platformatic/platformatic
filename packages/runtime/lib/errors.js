@@ -178,7 +178,7 @@ export const FailedToStopExtensionError = createError(
 
 export const InvalidExtensionError = createError(
   `${ERROR_PREFIX}_INVALID_EXTENSION`,
-  'The extension "%s" must export a setup function as its default export'
+  'The extension "%s" must export a setup function as its default export or as a named "setup" export'
 )
 
 export const ReservedITCHandlerNameError = createError(

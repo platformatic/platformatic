@@ -281,6 +281,105 @@ test('repeated stop and close are idempotent for extension hooks', async t => {
   ])
 })
 
+test('extensions can export the setup function as a named setup export', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-named-setup.json')
+  const app = await createRuntime(configFile)
+
+  t.after(() => {
+    return app.close()
+  })
+
+  await app.start()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'named-setup', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'named-setup' }
+  ])
+
+  await app.close()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'named-setup', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'named-setup' },
+    { event: 'stop', extension: 'named-setup' },
+    { event: 'close', extension: 'named-setup' }
+  ])
+})
+
+test('extensions can expose the setup function as a faux ESM default export', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-faux-esm-default.json')
+  const app = await createRuntime(configFile)
+
+  t.after(() => {
+    return app.close()
+  })
+
+  await app.start()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'faux-esm-default', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'faux-esm-default' }
+  ])
+
+  await app.close()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'faux-esm-default', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'faux-esm-default' },
+    { event: 'stop', extension: 'faux-esm-default' },
+    { event: 'close', extension: 'faux-esm-default' }
+  ])
+})
+
+test('extensions can expose the setup function as a faux ESM setup export', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-faux-esm-setup.json')
+  const app = await createRuntime(configFile)
+
+  t.after(() => {
+    return app.close()
+  })
+
+  await app.start()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'faux-esm-setup', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'faux-esm-setup' }
+  ])
+
+  await app.close()
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'faux-esm-setup', options: { greeting: 'hello' } },
+    { event: 'start', extension: 'faux-esm-setup' },
+    { event: 'stop', extension: 'faux-esm-setup' },
+    { event: 'close', extension: 'faux-esm-setup' }
+  ])
+})
+
+test('the default export takes precedence over the named setup export', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-both-exports.json')
+  const app = await createRuntime(configFile)
+  await app.start()
+
+  t.after(() => {
+    return app.close()
+  })
+
+  deepStrictEqual(globalThis.__pltExtensionEvents, [{ event: 'setup', extension: 'both-exports-default' }])
+})
+
 test('extensions can be written in TypeScript', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
@@ -566,6 +665,27 @@ test('an extension without a default exported function fails the startup', async
     () => app.init(),
     err => {
       strictEqual(err.code, 'PLT_RUNTIME_INVALID_EXTENSION')
+      return true
+    }
+  )
+})
+
+test('an extension exporting an object without any setup function fails the startup', async t => {
+  cleanExtensionGlobals()
+  process.env.PORT = 0
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-invalid-object.json')
+  const app = await createRuntime(configFile)
+
+  t.after(() => {
+    return app.close()
+  })
+
+  await rejects(
+    () => app.init(),
+    err => {
+      strictEqual(err.code, 'PLT_RUNTIME_INVALID_EXTENSION')
+      ok(err.message.includes('setup function'))
       return true
     }
   )

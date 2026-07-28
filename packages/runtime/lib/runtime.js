@@ -147,6 +147,24 @@ function formatMetricValue (value) {
   return `${value}`
 }
 
+// Resolves the setup function of a runtime extension out of its module namespace.
+//
+// The canonical form is a default export, but transpilers and bundlers emit
+// faux ESM modules, in which the real exports are properties of `module.exports`
+// and therefore only reachable via an additional `default` hop. The setup
+// function can also be exported as a named `setup` export, at both levels.
+function resolveExtensionSetup (imported) {
+  const candidates = [imported?.default, imported?.setup, imported?.default?.default, imported?.default?.setup]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'function') {
+      return candidate
+    }
+  }
+
+  return null
+}
+
 // Always run operations in parallel to avoid deadlocks when services have dependencies
 const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
@@ -4280,12 +4298,14 @@ export class Runtime extends EventEmitter {
     for (const extension of extensions) {
       const { path, options } = typeof extension === 'string' ? { path: extension } : extension
 
-      let setup
+      let imported
       try {
-        setup = (await import(pathToFileURL(path))).default
+        imported = await import(pathToFileURL(path))
       } catch (e) {
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
       }
+
+      const setup = resolveExtensionSetup(imported)
 
       if (typeof setup !== 'function') {
         throw new InvalidExtensionError(path)
