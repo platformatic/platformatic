@@ -2,11 +2,17 @@
 
 ## Introduction
 
+:::note
+This guide builds a modular monolith. For what the term means, why Watt's boundaries are enforced
+rather than conventional, and when you should extract an application into its own deployment, see
+[The Modular Monolith](../concepts/modular-monolith.md).
+:::
+
 In this guide we'll create a "modular monolith" Library application. It will be a Watt project which contains multiple Platformatic DB and Gateway applications. We'll learn how to:
 
 - Create and configure a [Platformatic Runtime](/docs/reference/runtime/overview) app with multiple applications
   - Three [Platformatic DB](/docs/reference/db/overview) applications, each with their own databases
-  - A [Platformatic Gateway](https://docs.platformatic.dev/docs/reference/gateway/overview) application which aggregates multiple application's REST APIs into a composed API
+  - A [Platformatic Gateway](/docs/reference/gateway/overview) application which aggregates multiple application's REST APIs into a composed API
 - Customise the composed API that's automatically generated in a Gateway application
 - Generate a client for an application's REST API and use it in a Watt application to make API requests
 - Add custom functionality to a Gateway application's composed API by modifying its routes and responses
@@ -85,7 +91,7 @@ npm start
 We'll see a warning message displayed like this in our terminal:
 
 ```
-[17:56:00.807] WARN (people-service/8615): No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db
+[17:56:00.807] WARN (people-service/8615): No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/reference/troubleshooting#database-connection-issues
 ```
 
 <!-- SCREENSHOT: start-the-runtime-app-01.png -->
@@ -181,7 +187,7 @@ Created person: {
 [18:06:05] INFO: seeding complete
 ```
 
-> You can learn more about seeding the database for a Platformatic DB app [in this guide](https://docs.platformatic.dev/docs/reference/db/seed).
+> You can learn more about seeding the database for a Platformatic DB app [in this guide](/docs/reference/db/seed).
 
 ### Test the People application
 
@@ -840,7 +846,7 @@ If we open up the API documentation for our Media application at http://127.0.0.
 
 ![Make the Composed Media Application API Read Only - 01](./build-modular-monolith-images/make-the-composed-media-service-api-read-only-01.png)
 
-> As well as allowing us to ignore specific routes, Platformatic Gateway also supports aliasing for route paths and the renaming of route response fields. See the [Gateway OpenAPI](https://docs.platformatic.dev/docs/reference/gateway/configuration?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog#openapi-configuration) documentation to learn more.
+> As well as allowing us to ignore specific routes, Platformatic Gateway also supports aliasing for route paths and the renaming of route response fields. See the [Gateway OpenAPI](/docs/reference/gateway/configuration#openapi-configuration) documentation to learn more.
 
 ### Add People data to Media application responses
 
@@ -901,7 +907,7 @@ app.platformatic.addGatewayOnRouteHook('/books/', ['GET'], function (routeOption
 
 With the code above, when Gateway registers the `GET` route for `/books/` in the composed API, it will call the `onRoute` hook function. Then when the Media application receives a response for that route from the downstream application, it will run our `onGatewayResponse` callback function. We can add code inside the `onGatewayResponse` which modifies the response that is returned back to the client that made the original request.
 
-> To get a clearer picture of how this works, take a look at our [Gateway API modification](https://docs.platformatic.dev/docs/reference/gateway/api-modification/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) documentation.
+> To get a clearer picture of how this works, take a look at our [Gateway API modification](/docs/reference/gateway/api-modification) documentation.
 
 Let's now apply what we've just learnt about Gateway hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `web/media-application/plugin.js`:
 
@@ -1056,7 +1062,7 @@ curl localhost:3042/movies/3 | grep 'Name'
 
 ### Configure a service proxy to debug the People application API
 
-Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`applications[].proxy`](https://docs.platformatic.dev/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
+Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`applications[].proxy`](/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
 
 Let's try this out by adding another application to the `applications` in `platformatic.json`:
 

@@ -525,7 +525,7 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
     - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.
+      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](https://github.com/platformatic/graphql-composer/blob/main/lib/utils.js) will be used.
     - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
   - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
   - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.

@@ -101,19 +101,20 @@ reachable by clicking through, but they never appear in the sidebar tree.
    lines, a path-chooser with decision tree and success criteria). These serve different Diátaxis
    purposes and both are useful — but they need explicit cross-linking and distinct titles, or users
    will land on the wrong one.
-2. **The Explanation quadrant does not exist.** There is no `docs/concepts/`. Explanation-type content
-   is scattered across `guides/watt-architecture-patterns.md`,
-   `reference/runtime/multithread-architecture.md`, and `overview/architecture-overview.md` —
-   i.e. filed under How-to and Reference, violating Diátaxis separation.
-3. **`docs/learn/` never grew.** It still contains exactly two beginner tutorials
-   (`crud-application`, `environment-variables`). The planned `quick-start/`, `tutorials/`,
-   `examples/`, and `migrations/` subtrees do not exist. Every migration guide the plan called for
-   (Express, Fastify, monolith) is still missing — while `getting-started/port-your-app.md` covers
-   some of that ground and should be the seed for it.
+2. ~~**The Explanation quadrant does not exist.**~~ **Resolved in Phase 6.** `docs/concepts/` now
+   exists with four pages and its own sidebar category. The pre-existing explanation-flavoured pages
+   (`guides/watt-architecture-patterns.md`, `reference/runtime/multithread-architecture.md`,
+   `overview/architecture-overview.md`) were left in place and cross-linked rather than moved —
+   they are genuinely how-to and reference content; what was missing was the understanding-oriented
+   layer above them.
+3. ~~**`docs/learn/` never grew.**~~ **Partially resolved in Phase 6.** `learn/migrations/` now exists
+   with `from-express.md` and `from-fastify.md`. `learn/examples/` remains deliberately unbuilt (no
+   CI-tested example set to point at). The two beginner tutorials are unchanged.
 4. **`docs/Overview.md` vs `docs/overview/what-is-watt.md`** are near-duplicates in intent. Pick one
    as the canonical landing page.
-5. **TypeScript compilation guide split** — never done; `docs/guides/deployment/compiling-typescript.md`
-   remains a single file. Re-evaluate whether the split is still worth it (see Phase 6).
+5. ~~**TypeScript compilation guide split**~~ — **closed in Phase 6: will not do.** The commands the
+   split was designed around (`plt service compile`, `plt runtime compile`) no longer exist, so the
+   single file is now the correct shape.
 
 ---
 
@@ -301,65 +302,157 @@ diagnosable in seconds rather than requiring a bisect.
 
 **Not attempted:** `learn/beginner/crud-application.md`, which needs a database.
 
-### Phase 6: Fill the Diátaxis Gaps 🟢 MEDIUM
+### Phase 6: Fill the Diátaxis Gaps ✅ COMPLETED (2026-07-28)
 
-**Effort: high. Value: medium — do not start before Phases 4 and 5.**
+**Effort: high. Value: medium.**
 
-- [ ] **Create `docs/concepts/`** (the missing Explanation quadrant) and relocate/derive:
-  - [ ] `concepts/watt-architecture.md` — seed from `overview/architecture-overview.md` and
-        `guides/watt-architecture-patterns.md`
-  - [ ] `concepts/multithread-model.md` — seed from `reference/runtime/multithread-architecture.md`
-  - [ ] `concepts/application-lifecycle.md`
-  - [ ] `concepts/modular-monolith.md` — the positioning the README already leads with
-- [ ] **Grow `docs/learn/`**
-  - [ ] `learn/migrations/from-express.md`, `from-fastify.md` — seed from
-        `getting-started/port-your-app.md`
-  - [ ] Example gallery, if and only if the examples are CI-tested; an untested example gallery is a
-        net negative
-- [ ] **Re-evaluate the TypeScript guide split.** The original rationale (separating plain Node.js
-      compilation from `plt service compile` / `plt runtime compile`) may no longer hold given
-      current tooling. Confirm the commands still exist before splitting.
+- [x] **Created `docs/concepts/`** — the Explanation quadrant now exists and is in the sidebar as its
+      own top-level category between How-to Guides and Reference:
+  - [x] `concepts/watt-architecture.md` — why the platform is shaped this way: the problem being
+        solved, the thread-per-application decision, why `.plt.local` is not a network call, what the
+        runtime owns, and an explicit "what this architecture is not good at" section
+  - [x] `concepts/multithread-model.md` — threads vs processes vs single event loop, an isolated/not-isolated
+        table, shared-nothing consequences, multiple workers, and the process-boundary failure mode
+  - [x] `concepts/application-lifecycle.md` — the two nested lifecycles, dependency-level startup,
+        why shutdown stops the entrypoint first, crash restart vs unhealthy replacement
+  - [x] `concepts/modular-monolith.md` — what the term means, why the boundaries are enforced rather
+        than conventional, the full trade table, and explicit "when to stop" criteria
+- [x] **Grew `docs/learn/`**
+  - [x] `learn/migrations/from-express.md` and `from-fastify.md`, staged (wrap → export `build` →
+        runtime logger → split into applications), both **verified end to end** rather than written
+        from the seed doc
+  - [x] Example gallery — **not done, deliberately.** The condition was "if and only if the examples
+        are CI-tested". There is no `examples/` directory in this repo and no CI job referencing one,
+        so the precondition is unmet. The CI-tested fixtures under `packages/node/test/fixtures/`
+        served as the source of truth for the migration guides instead.
+- [x] **Re-evaluated the TypeScript guide split — decision: do not split.** The original rationale was
+      separating plain Node.js compilation from `plt service compile` / `plt runtime compile`. Those
+      commands **no longer exist**: `grep` across `packages/cli`, `packages/wattpm/lib/commands/`, and
+      `packages/wattpm-utils/lib/commands/` returns no `compile` command. The current story is a
+      single, simpler one — Node.js type stripping for server-side capabilities, the framework's own
+      pipeline for frontend capabilities, and `wattpm build` for production — which
+      `guides/deployment/compiling-typescript.md` already covers in 108 lines. Splitting it would
+      manufacture two thin pages out of one coherent one.
+
+**Verified, not asserted.** Every claim in the concepts pages was read out of source rather than
+paraphrased from the existing docs, and the migration guides were executed:
+
+| Claim | How it was checked |
+| --- | --- |
+| Dependency-level startup, parallel within a level | `runtime.js` `startApplications` → `topologicalSort` + `topologicalLevels` in `lib/utils.js`; observed live as `orders` starting before `gateway` |
+| A gateway declares its composed applications as dependencies | `packages/gateway/lib/capability.js` `getDependencies()` |
+| Shutdown stops the entrypoint first | `runtime.js` `stop()`, with the "so that no new requests are accepted" comment |
+| 5 bootstrap attempts, 5000 ms in dev / immediate in production | `MAX_BOOTSTRAP_ATTEMPTS`, `IMMEDIATE_RESTART_MAX_THRESHOLD`, `config.js` production branch |
+| Health defaults (30 s interval, 30 s grace, 10 checks, 0.99 ELU, 4 GB) | `packages/foundation/lib/schema.js` `health` |
+| Round-robin has a randomised start offset | `worker/round-robin-map.js` `next()` |
+| `.plt.local` is a `MessagePort` hop, not DNS | `worker/interceptors.js` `wire({ domain: '.plt.local' })` |
+| Express wraps with zero code changes | ran `create-wattpm` on a real Express 5 app; `GET /health` → 200 |
+| Mesh call between two applications | built a two-application project; `GET /users/42` returned data fetched over `notifier.plt.local` |
+| Gateway strips the prefix by default | `GET /orders/health` reached the app as `/health` → 200; prefixed routes → 404 |
+| `node.absoluteUrl: true` delivers the full path | `packages/node/lib/schema.js` (default `false`) plus the CI fixtures that set it |
+
+**The prefix behaviour is the finding most worth having written down.** By default the gateway strips
+its prefix before the request reaches the application, so a migrated application keeps its original
+routes unchanged — and adding the prefix to route definitions produces a 404 that reads like a
+routing bug. The opposite mode (`node.absoluteUrl: true`) requires prefixed routes. Mixing them fails
+in both directions. This was not documented anywhere outside the test fixtures.
+
+**Link hygiene, beyond scope.** Phase 4 claimed zero broken links; a stricter sweep (one that also
+rejects links resolving to a bare directory with no page behind it) found seven survivors, now fixed:
+
+| Link | File | Fix |
+| --- | --- | --- |
+| `reference/runtime/configuration.md#application` | `guides/capabilities.md` | missing `../` |
+| `monitoring.md` | `guides/profiling-with-watt.md` | → `metrics.md` (no monitoring guide exists) |
+| `../reference/db/authorization/introduction#user-metadata` | `reference/db/jwt-auth0.md` | → `./authorization/user-roles-metadata.md#user-metadata` |
+| `lib/utils.js#L3` | `reference/gateway/configuration.md` | → the graphql-composer GitHub URL |
+| `../api` | `reference/sql-mapper/entities/hooks.md` | → `./api.md` |
+| `../learn/` | `guides/frameworks.md` | bare directory → `../learn/beginner/crud-application.md` |
+| `../guides/deployment/` | `overview/architecture-overview.md` | bare directory → `dockerize-a-watt-app.md` |
+
+The remaining `docs.platformatic.dev/docs/...` self-links were also converted to routes (dropping
+`utm_*` tracking params), except one inside a quoted log transcript — which was itself **stale**: it
+showed the pre-Phase-4 `guides/debug-platformatic-db` URL, while `packages/db/lib/application.js` now
+emits `reference/troubleshooting#database-connection-issues`. Transcripts of program output are
+documentation too, and they drift silently.
+
+**Cross-links added** so the new pages are reachable from where readers already are:
+`overview/architecture-overview.md`, `guides/watt-architecture-patterns.md`,
+`reference/runtime/multithread-architecture.md`, `guides/build-modular-monolith.md`, and
+`getting-started/port-your-app.md`.
 
 ### Explicitly Not Doing
 
 - Splitting the monitoring/observability guide — the file no longer exists.
+- Splitting the TypeScript compilation guide — the commands that motivated the split are gone
+  (closed in Phase 6).
+- An example gallery under `learn/examples/` — the plan's own condition was "if and only if the
+  examples are CI-tested", and there is no `examples/` directory or CI job to satisfy it.
 - The success-metrics dashboard (bounce rates, completion rates, analytics tracking) from the
   original plan. This repo has no analytics pipeline; these were aspirational and unmeasurable.
 - Assigning named documentation roles.
 
 ---
 
-## Target Structure (Revised)
+## Remaining Work After Phase 6
 
-Reflects current package names and shipped capabilities.
+The restructure is complete. Two items are open, both carried forward rather than forgotten:
+
+1. **`learn/beginner/crud-application.md` is unverified.** It needs a database, so it was never run.
+   Given that the quick start had two blocking bugs when finally executed, this tutorial should be
+   treated as unverified rather than assumed working.
+2. **Product follow-up, not a docs fix:** the runtime reports `exited prematurely with error code 1`
+   without the child's stderr, even at `PLT_SERVER_LOGGER_LEVEL=trace`. Recovering the real error
+   during Phase 5 required bypassing Watt entirely. Surfacing child stderr on startup failure would
+   turn a bisect into a glance. Not filed as an issue yet.
+
+---
+
+## Target Structure — Reached (2026-07-28)
+
+Reflects current package names and shipped capabilities. All four Diátaxis quadrants now exist and
+every page below is reachable from `docs/sidebars.js`.
 
 ```
 docs/
 ├── Overview.md                        # Canonical landing page
-├── overview/                          # Discovery & orientation  [EXISTS, ORPHANED]
+├── overview/                          # Discovery & orientation  [DELIVERED — Phase 4]
 │   ├── what-is-watt.md
 │   ├── getting-started.md             # Path chooser
 │   ├── architecture-overview.md
 │   ├── use-cases-and-examples.md
 │   └── comparison-with-alternatives.md
 ├── getting-started/                   # Hands-on entry
-│   ├── quick-start.md
+│   ├── quick-start.md                 # verified end to end — Phase 5
 │   └── port-your-app.md
-├── learn/                             # Tutorials  [THIN — 2 files]
+├── learn/                             # Tutorials
 │   ├── beginner/
-│   └── migrations/                    # [MISSING]
+│   │   ├── crud-application.md        # NOT verified — needs a database
+│   │   └── environment-variables.md
+│   └── migrations/                    # [ADDED — Phase 6, both verified]
+│       ├── from-express.md
+│       └── from-fastify.md
+├── concepts/                          # Explanation  [ADDED — Phase 6]
+│   ├── watt-architecture.md
+│   ├── multithread-model.md
+│   ├── application-lifecycle.md
+│   └── modular-monolith.md
 ├── guides/                            # How-to  [HEALTHY]
 │   ├── deployment/
 │   └── ...
-├── reference/                         # Information-oriented  [HEALTHY]
-│   ├── wattpm/                        # Watt — primary product
-│   ├── runtime/
-│   ├── service/  gateway/  db/        # Applications
-│   ├── astro/ nest/ next/ nitro/ node/ nuxt/
-│   │   react-router/ remix/ tanstack/ vite/   # Capabilities
-│   └── sql-mapper/ sql-graphql/ sql-openapi/ sql-events/
-└── concepts/                          # Explanation  [MISSING ENTIRELY]
+└── reference/                         # Information-oriented  [HEALTHY]
+    ├── wattpm/                        # Watt — primary product
+    ├── runtime/
+    ├── service/  gateway/  db/        # Applications
+    ├── astro/ nest/ next/ nitro/ node/ nuxt/
+    │   react-router/ remix/ tanstack/ vite/   # Capabilities
+    └── sql-mapper/ sql-graphql/ sql-openapi/ sql-events/
 ```
+
+**Current state:** 137 `.md` files on disk, 132 sidebar entries. The difference is exactly the four
+MDX partials plus `getting-started/issues.md`, all deliberately excluded. Zero broken links, zero
+links resolving to a bare directory, zero `docs.platformatic.dev` self-links outside quoted program
+output.
 
 ---
 

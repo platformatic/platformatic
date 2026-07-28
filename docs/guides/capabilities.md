@@ -9,7 +9,7 @@ A capability is essentially a Node.js package that implements the Platformatic c
 - **Single Capability Applications**: Simple applications with one primary function (e.g., a Next.js frontend or a database API)
 - **Multi-Capability Applications**: Complex applications that combine multiple capabilities (e.g., a database backend with a React frontend and an API gateway)
 
-Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](reference/runtime/configuration.md#application) properties.
+Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#application) properties.
 
 Each application gets its own folder and the capability is determined by looking at the `$schema` property of the application `watt.json`.
 
