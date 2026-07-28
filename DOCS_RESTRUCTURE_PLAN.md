@@ -273,12 +273,31 @@ application (version `0.1.0`) rather than Next.js `16.2.12`. The dev server then
 running `npx next dev` directly in `web/next` fails identically — so it is a naming collision, not a
 runtime bug. A `:::caution` block in the tutorial now explains it and the remedy.
 
-**Still open:** after renaming the workspace package, module resolution is correct
-(`node_modules/next` resolves to Next.js 16.2.12) but the `next` worker still exits with code 1 and no
-diagnostic output, so the Next.js half of the quick start was **not** verified working end to end.
-`@platformatic/next` declares support for `^16.0.0`, so this is not a declared-version mismatch. This
-needs a product decision rather than a docs change, and the tutorial has not been rewritten to claim
-the Next.js flow works.
+**Found — a second, independent bug, now documented:** with the name collision avoided, the `next`
+worker still exited with code 1 and no diagnostic output. Running Next's dev binary directly with
+stderr captured produced the real error, which the runtime was swallowing:
+
+```
+Next.js inferred your workspace root, but it may not be correct.
+We couldn't find the Next.js package (next/package.json) from the project directory
+```
+
+Next.js 16 builds with Turbopack by default. Turbopack infers a workspace root, and because npm
+workspaces hoists `next` to the Watt project root it cannot resolve `next/package.json` from the
+application directory. Setting `turbopack.root` to the Watt project root fixes it. Verified: before,
+five consecutive `exited prematurely with error code 1` retries; after, `Started the worker 0` plus
+`✓ Ready`, and `GET /` through Watt returns **200** with ~16KB of rendered Next.js markup. This also
+reproduces with plain `next dev` outside Watt, so like the name collision it is an npm workspace
+resolution problem rather than a Watt runtime bug.
+
+**The Next.js half of the quick start is now verified working end to end** with both adjustments
+documented in a `:::caution` block.
+
+**Worth a product follow-up (not a docs fix):** the runtime reported only
+`exited prematurely with error code 1` with no stderr from the child, even at
+`PLT_SERVER_LOGGER_LEVEL=trace`. The underlying Next.js error was recoverable only by bypassing Watt
+and running the binary directly. Surfacing child stderr on a startup failure would have made this
+diagnosable in seconds rather than requiring a bisect.
 
 **Not attempted:** `learn/beginner/crud-application.md`, which needs a database.
 

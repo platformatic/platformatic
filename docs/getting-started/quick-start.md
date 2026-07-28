@@ -201,17 +201,19 @@ Which will output:
 ✔ Would you like to customize the import alias (`@/*` by default)? … No
 ```
 
-:::caution[Name your Next.js workspace package something other than `next`]
+:::caution[Two adjustments are needed for npm workspaces]
 
-`create-next-app web/next` names the generated package after its directory, so `web/next/package.json`
-gets `"name": "next"`. A Watt project declares `"workspaces": ["web/*"]`, so npm then links
-`node_modules/next` to `web/next` — and that symlink **shadows the Next.js framework itself**.
-Resolving `next` from the project root returns your application instead of Next.js, and the dev server
-fails with a cascade of `Module not found: Can't resolve 'react'` and
-`Can't resolve '@swc/helpers/...'` errors.
+A Watt project declares `"workspaces": ["web/*"]`, and that hoists dependencies to the project root.
+Two things need adjusting before the Next.js application will start.
 
-Before importing, open `web/next/package.json` and change the `name` field to something that is not an
-npm package name you depend on, for example:
+**1. Rename the workspace package.** `create-next-app web/next` names the generated package after its
+directory, so `web/next/package.json` gets `"name": "next"`. npm then links `node_modules/next` to
+`web/next`, and that symlink **shadows the Next.js framework itself** — resolving `next` from the
+project root returns your application instead of Next.js. The dev server fails with a cascade of
+`Module not found: Can't resolve 'react'` and `Can't resolve '@swc/helpers/...'` errors.
+
+Open `web/next/package.json` and change the `name` field to something that is not a package you depend
+on:
 
 ```json
 {
@@ -221,6 +223,42 @@ npm package name you depend on, for example:
 
 The directory can stay `web/next` — Watt derives the application id from the directory, so the `/next`
 prefix used below is unaffected. Only the package `name` needs to change.
+
+**2. Set `turbopack.root`.** Next.js 16 builds with Turbopack by default. Turbopack infers a workspace
+root, and because npm hoisted `next` to the Watt project root it cannot resolve `next/package.json`
+from the application directory. It fails with:
+
+```
+Next.js inferred your workspace root, but it may not be correct.
+We couldn't find the Next.js package (next/package.json) from the project directory
+```
+
+Inside Watt this surfaces as the worker exiting during startup:
+
+```
+Failed to start worker 0 of the application "next": The worker 0 of the
+application "next" exited prematurely with error code 1
+```
+
+Point Turbopack at the Watt project root in `web/next/next.config.mjs`:
+
+```js
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  turbopack: {
+    // The Watt project root, where npm workspaces hoists the `next` package.
+    root: resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+  }
+}
+
+export default nextConfig
+```
+
+Both issues are npm workspace resolution problems rather than Watt runtime bugs — the Turbopack one
+reproduces with plain `next dev`, outside Watt entirely.
 
 :::
 
