@@ -371,5 +371,3 @@ test('Runtime.off — typed event removal', () => {
   runtime.off('application:worker:started', handler)
   runtime.off('application:worker:exited', handler)
 })
-
-
