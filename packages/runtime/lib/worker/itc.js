@@ -167,6 +167,10 @@ export async function setupITC (controller, application, dispatcher, sharedConte
     }
   })
 
+  // ITC handlers run concurrently, so later start/stop requests must wait for
+  // the actual in-flight start operation rather than a controller event.
+  let controllerStartPromise
+
   const itc = new ITC({
     name: controller.applicationConfig.id + '-worker',
     port: parentPort,
@@ -175,14 +179,15 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         const status = controller.getStatus()
 
         if (status === 'starting') {
-          await once(controller, 'start')
+          await controllerStartPromise
         } else {
           // This gives a chance to a capability to perform custom logic
           const events = getEvents()
           events.emit('start')
 
           try {
-            await controller.start()
+            controllerStartPromise = controller.start()
+            await controllerStartPromise
           } catch (e) {
             await controller.stop(true)
 
@@ -222,7 +227,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           const status = controller.getStatus()
 
           if (!force && status === 'starting') {
-            await once(controller, 'start')
+            await controllerStartPromise
           }
 
           if (force || status.startsWith('start')) {
