@@ -299,7 +299,23 @@ documented in a `:::caution` block.
 and running the binary directly. Surfacing child stderr on a startup failure would have made this
 diagnosable in seconds rather than requiring a bisect.
 
-**Not attempted:** `learn/beginner/crud-application.md`, which needs a database.
+**Not attempted at the time:** `learn/beginner/crud-application.md`, which needs a database.
+**Now verified (2026-07-28)** against PostgreSQL 15 in Docker and against the default SQLite path.
+It contained five defects, all fixed:
+
+| Defect | Effect |
+| --- | --- |
+| Steps numbered 2, 4, 5, 6, 7 | No Step 1 or Step 3 anywhere in the tutorial |
+| PostgreSQL section says to set `DATABASE_URL` | Silent no-op — the variable is `PLT_DB_DATABASE_URL`, named after the application id. Migrations keep going to SQLite with no error. |
+| `DATETIME` in the migration SQL | Fails on PostgreSQL: `type "datetime" does not exist` |
+| `BOOLEAN DEFAULT 0` | Fails on PostgreSQL: default expression is of type integer |
+| `INTEGER PRIMARY KEY` | Creates fine on PostgreSQL but is **not** auto-increment; the tutorial's own "Test Your API" step then fails with a not-null violation |
+| CORS block placed in the root `watt.json` | **Crashes the whole runtime** — `/server: must NOT have additional properties`. `cors` belongs in the application config (`web/db/watt.json`). |
+
+The lesson matches Phase 5's: the failures cluster where the tutorial branches away from the path the
+author actually walked. The SQLite main line was fine; everything offered as an alternative was
+broken, and the silent-`DATABASE_URL` one is the worst kind of defect because it produces no error at
+all.
 
 ### Phase 6: Fill the Diátaxis Gaps 🟢 MEDIUM
 
