@@ -53,7 +53,7 @@ Using Watt to run your app(s) brings the following advantages:
 
 **🫂 Microservice Consolidation:** run services that are frequently orchestrated together (think BFFs, microfrontends) all in the same process, eliminating costly network calls that add complexity and degrade performance. 
 
-🧱 Composable Architecture \- HTTP services, API composers, frontend frameworks, and data services
+🧱 Composable Architecture \- HTTP services, API gateways, frontend frameworks, and data services
 
 🧩 Framework Integration \- Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js.
 

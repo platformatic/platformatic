@@ -613,7 +613,7 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ## Setting up a Watt application with logging configuration
 
-Let's see an example of a Watt configuration with `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Watt configuration with `gateway`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
 
 The main `watt` application has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` application ensures that the logs will be consistent across all the applications.
 

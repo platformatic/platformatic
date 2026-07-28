@@ -376,7 +376,7 @@ Now that you understand Watt's unified approach, you can expand your application
 1. **Connect to Your Enterprise Database**: Switch from SQLite to PostgreSQL, MySQL, or your production database
 2. **Add a Frontend Application**: Add a Next.js, Astro, or React capability to your Watt application
 3. **Add Custom HTTP Applications**: Create additional applications for business logic that work alongside your database application
-4. **Add a Composer Application**: Create an API gateway that aggregates multiple applications
+4. **Add a Gateway Application**: Create an API gateway that aggregates multiple applications
 5. **Experience Multi-Application Deployment**: Deploy your entire application stack with one command
 6. **Add Authentication**: Implement authentication that works across all applications in your Watt application
 

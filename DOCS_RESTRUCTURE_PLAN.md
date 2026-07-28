@@ -192,13 +192,37 @@ Most were simply missing the `reference/` path segment. Three stale URLs remain 
 `docs/`. Any future docs reorganisation must grep `packages/` for `docs.platformatic.dev` before
 moving or renaming a page, otherwise CLI warnings and generated READMEs start pointing at 404s.
 
-### Phase 5: Terminology and Accuracy Pass 🟡 HIGH
+### Phase 5: Terminology and Accuracy Pass 🟡 IN PROGRESS
 
 **Effort: medium. Value: high.** Users currently hit contradictory names for the same thing.
 
-- [ ] **Composer → Gateway.** Audit the 8 docs files still saying "composer". Establish and apply one
-      rule: Gateway is the product name; mention Composer only where naming history matters for
-      migration.
+- [x] **Composer → Gateway** ✅ 2026-07-27. Gateway is now the product name everywhere in prose,
+      headings, config keys, example directories and internal hostnames. Composer survives only
+      where it is factually required:
+  - A `:::info[Previously called Composer]` note on `reference/gateway/overview.md` recording that
+    the product was Composer through the v1 and v2 lines, was renamed in **v3.0.0**, that
+    `@platformatic/composer` remains a deprecated alias in v3, and that it is removed in v4.0.0 —
+    with the three-step migration (dependency, `$schema`, config key)
+  - `reference/runtime/programmatic.md`, which legitimately documents `composer` as an accepted
+    application type; the mentions are kept but annotated as a deprecated alias rather than deleted,
+    because removing them would make the page wrong
+  - `packages/composer/README.md`, which now carries an explicit deprecation banner
+  - Two things that must never be renamed and were deliberately left alone: PHP's `composer.json`
+    in `guides/use-watt-with-ai-agents.md`, and the external `graphql-composer` package in
+    `reference/gateway/configuration.md`
+
+  The rename also reached `README.md`, `CONTRIBUTING.md` and `CLAUDE.md`.
+
+  **Config-shape bugs found and fixed while renaming** — these were broken independently of
+  terminology, and validating the examples against `packages/gateway/schema.json` proved it:
+  - `guides/cache-with-platformatic-watt.md` used `gateway.services[].prefix`. The schema declares
+    `additionalProperties: false`, exposes `applications` (not `services`), and puts `prefix` inside
+    `proxy`. The example could never have validated. Corrected and verified against the real schema.
+  - `guides/logger/` had the same `services`-instead-of-`applications` error, and its runtime
+    config set `autoload.path: "applications"` while the directory on disk was `services/` — so the
+    checked-in example did not run. Directory renamed to `applications/`, and `composer/` within it
+    to `gateway/`.
+  - `guides/cache-with-platformatic-watt.md` had two sections both numbered "Step 4"; renumbered.
 - [ ] **Services → Applications.** Align `docs/Overview.md`, `docs/overview/*.md`, and the sidebar
       with the runtime docs' "applications" terminology.
 - [ ] **Complete the capability coverage.** Overview and architecture pages should reflect all ten

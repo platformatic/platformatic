@@ -102,14 +102,14 @@ Watt fundamentally reimagines Node.js application architecture by providing a **
 // Internal application-to-application communication
 const response = await fetch('http://api.plt.local/users')
 
-// External API exposure through Composer
+// External API exposure through the Gateway
 GET /users -> routes to -> http://api.plt.local/users
 ```
 
 Watt provides:
 
 - **Internal DNS resolution** (`application.plt.local`) for inter-application communication
-- **Unified external routing** through Platformatic Composer
+- **Unified external routing** through Platformatic Gateway
 - **Automatic load balancing** and health checking
 - **Request/response transformation** and API aggregation
 
@@ -380,7 +380,7 @@ Now that you understand what Watt is and how it works, choose your next step:
 ### 📖 **Deep Understanding**
 
 - [Watt Reference](/docs/reference/wattpm/overview) - Complete configuration options
-- [Application Types](/docs/reference) - Database, HTTP, Composer applications
+- [Application Types](/docs/reference) - Database, HTTP, and Gateway applications
 - [Production Deployment](/docs/guides/deployment/dockerize-a-watt-app) - Kubernetes, Docker, monitoring
 
 **Questions?** Join our [Discord community](https://discord.gg/platformatic) or check [GitHub Discussions](https://github.com/platformatic/platformatic/discussions) for real-time help from the Watt team and community.
