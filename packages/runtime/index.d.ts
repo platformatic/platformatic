@@ -200,6 +200,40 @@ export interface RuntimeMetadata {
   platformaticVersion: string
 }
 
+export interface WorkerLifecycleEvent {
+  application: string
+  worker: number
+  workersCount?: number
+}
+
+export interface ProfileCapturedEvent extends WorkerLifecycleEvent {
+  id: string
+  type: 'cpu' | 'heap'
+  timestamp: number
+  sampleCount: number | null
+}
+
+export interface RuntimeHealthSignal {
+  type: string
+  max?: number
+  mean?: number
+  p99?: number
+  timestamp?: number
+  [key: string]: unknown
+}
+
+export interface WorkerCurrentHealth {
+  elu: number
+  heapUsed?: number | null
+  heapTotal?: number | null
+}
+
+export interface HealthMetricsEvent extends WorkerLifecycleEvent {
+  id: string
+  currentHealth: WorkerCurrentHealth | null
+  healthSignals: RuntimeHealthSignal[]
+}
+
 export declare class ManagementClient {
   constructor (allowedOperations?: string[])
 
@@ -400,6 +434,21 @@ export declare class Runtime extends EventEmitter {
   // create()/start().
   setApplicationConfigPatch (applicationId: string, patch: Array<Record<string, unknown>>): void
   removeApplicationConfigPatch (applicationId: string): void
+
+  // Typed worker lifecycle events. Catch-all overloads preserve EventEmitter's
+  // open event surface so listeners for other runtime events still type-check.
+  on (event: 'application:worker:started', listener: (event: WorkerLifecycleEvent) => void): this
+  on (event: 'application:worker:exited', listener: (event: WorkerLifecycleEvent) => void): this
+  on (event: 'application:worker:profile:captured', listener: (event: ProfileCapturedEvent) => void): this
+  on (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
+  on (event: string | symbol, listener: (...args: any[]) => void): this
+
+  off (event: 'application:worker:started', listener: (event: WorkerLifecycleEvent) => void): this
+  off (event: 'application:worker:exited', listener: (event: WorkerLifecycleEvent) => void): this
+  off (event: 'application:worker:profile:captured', listener: (event: ProfileCapturedEvent) => void): this
+  off (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
+  off (event: string | symbol, listener: (...args: any[]) => void): this
+
   getSchedulerJobs (): SchedulerJob[]
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>
