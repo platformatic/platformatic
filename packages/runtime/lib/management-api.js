@@ -442,8 +442,7 @@ export async function startManagementApi (runtime, config) {
   }
 
   const managementApi = fastify({
-    name: 'Management API',
-    loggerInstance: createRuntimeLoggerProxy(() => runtime.logger)
+    loggerInstance: createRuntimeLoggerProxy(() => runtime.logger, { name: 'management-api' })
   })
 
   managementApi.register(fastifyWebsocket)
@@ -467,7 +466,26 @@ export async function startManagementApi (runtime, config) {
   */
   for (let i = 0; i < 5; i++) {
     try {
-      await managementApi.listen({ path: socketPath })
+      // Fastify always logs listen() at info. The management API binds a private unix
+      // socket/pipe, so that message is noise and also breaks helpers that treat the first
+      // "listening at" log as the application URL. Downgrade it to debug for this call.
+      const { log } = managementApi
+      const originalInfo = log.info
+      log.info = function (...args) {
+        const text = typeof args[0] === 'string' ? args[0] : args[1]
+        if (typeof text === 'string' && text.startsWith('Server listening at')) {
+          return log.debug(...args)
+        }
+
+        return originalInfo.apply(this, args)
+      }
+
+      try {
+        await managementApi.listen({ path: socketPath })
+      } finally {
+        log.info = originalInfo
+      }
+
       break
     } catch (e) {
       if (i === 5) {
