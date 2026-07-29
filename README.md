@@ -55,7 +55,7 @@ Using Watt to run your app(s) brings the following advantages:
 
 🧱 Composable Architecture \- HTTP services, API gateways, frontend frameworks, and data services
 
-🧩 Framework Integration \- Works with Next.js, Astro, Remix, Vite, NestJS, and plain Node.js.
+🧩 Framework Integration \- Works with Astro, Next.js, Nitro, Nuxt, React Router, Remix, TanStack Start, Vite, NestJS, and plain Node.js.
 
 📦 Production Ready \- Docker deployment, environment configuration, and scaling built-in.
 

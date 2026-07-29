@@ -310,7 +310,7 @@ export default async function  (app) {
 
 ```json
 {
-  "services": [
+  "applications": [
     { "path": "./storefront", "id": "storefront" },
     { "path": "./admin", "id": "admin" },
     { "path": "./products", "id": "products" },
