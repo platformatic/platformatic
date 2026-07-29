@@ -362,6 +362,12 @@ Controls what happens when a `{PLT_*}` environment variable placeholder referenc
 - `true`: loading the configuration fails at startup with an error listing all the missing variables.
 - `"warn"`: a warning listing the missing variables is logged, but the placeholders are still replaced with an empty string.
 
+Not every unset variable is reported as missing. When loading the configuration of an application, the
+runtime resolves any variable whose name ends in `_URL` to the internal URL of that application, so such
+a variable gets a value even when it is not set. When `strictEnv` is enabled, these variables are listed
+in a separate warning. They are never turned into an error, not even when `strictEnv` is `true`, because
+they do resolve to a value and failing on them would change which configurations are able to boot.
+
 The value is also applied when loading the configuration files of the applications in the runtime.
 
 ```json
