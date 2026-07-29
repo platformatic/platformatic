@@ -419,7 +419,7 @@ export async function startManagementApi (runtime, config) {
       await managementApi.listen({ path: socketPath })
       break
     } catch (e) {
-      if (i === 5) {
+      if (i === 4) {
         throw e
       }
 
