@@ -488,7 +488,7 @@ export async function startManagementApi (runtime, config) {
 
       break
     } catch (e) {
-      if (i === 5) {
+      if (i === 4) {
         throw e
       }
 
