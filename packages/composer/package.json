@@ -12,7 +12,8 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint",
     "gen-schema": "node scripts/schema.js > schema.json",
-    "gen-types": "json2ts > config.d.ts < schema.json"
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {

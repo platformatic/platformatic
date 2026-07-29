@@ -17,6 +17,7 @@ pnpm run global-links  # Link CLI tools globally for development
 pnpm test              # Run all tests (uses Docker for databases)
 pnpm run build         # Build all packages
 pnpm run lint          # Lint all packages
+pnpm run lint:fix      # Auto-fix lint issues across all packages (runs eslint --fix)
 pnpm run gen-schema    # Generate JSON schemas
 pnpm run gen-types     # Generate TypeScript types
 

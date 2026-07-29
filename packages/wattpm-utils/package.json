@@ -18,7 +18,8 @@
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "build": "node scripts/list-package.js > lib/packages.js",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "bin": {
     "watt-utils": "./bin/cli.js",

@@ -11,6 +11,7 @@
     "gen-types": "pnpm -r --workspace-concurrency=1 run --if-present gen-types",
     "build": "pnpm -r --workspace-concurrency=1 run --if-present build",
     "lint": "pnpm -r --workspace-concurrency=1 --if-present lint",
+    "lint:fix": "pnpm -r --workspace-concurrency=1 --if-present lint:fix",
     "lint:markdown": "markdownlint-cli2",
     "lint:updated-only": "node ./scripts/lint-updated-packages.js",
     "gen-schemas-types": "node ./scripts/gen-schemas-types.js",
