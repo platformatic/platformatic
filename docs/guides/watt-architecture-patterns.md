@@ -155,6 +155,8 @@ use metrics, tracing, and profiling to tune worker counts.
 
 ## Related Guides
 
+- [Watt Architecture](../concepts/watt-architecture.md) — the reasoning behind the runtime design
+- [The Modular Monolith](../concepts/modular-monolith.md) — when to keep applications together, and when to split them out
 - [Build and deploy a modular monolith](./build-modular-monolith.md)
 - [Use Watt with multiple repository applications](./use-watt-multiple-repository.md)
 - [Dynamic Workers](./dynamic-workers.md)

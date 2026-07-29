@@ -393,7 +393,7 @@ After profiling your application:
 
 For more advanced performance optimization techniques, consider:
 
-- [Monitoring](monitoring.md)
+- [Metrics](metrics.md)
 - [Caching with Watt Guide](cache-with-platformatic-watt.md)
 - [Node.js Performance Best Practices](https://nodejs.org/en/docs/guides/simple-profiling/)
 

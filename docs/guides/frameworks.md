@@ -112,5 +112,5 @@ All framework integrations provide:
 - **Migrating an existing app?** See [Running Your Project in Watt](/docs/getting-started/port-your-app)
 - **Framework-specific issues?** Check the individual framework reference pages above
 - **Technical details?** Browse the complete [Reference Documentation](../reference/) 
-- **Step-by-step tutorials?** Visit our [Learning Tutorials](../learn/)
+- **Step-by-step tutorials?** Visit our [Learning Tutorials](../learn/beginner/crud-application.md)
 - **Community support?** Join our [Discord Community](https://discord.gg/platformatic)

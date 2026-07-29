@@ -42,6 +42,12 @@ const sidebars = {
           label: 'Tutorials',
           collapsed: true,
           items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
+        },
+        {
+          type: 'category',
+          label: 'Migrations',
+          collapsed: true,
+          items: ['learn/migrations/from-express', 'learn/migrations/from-fastify']
         }
       ]
     },
@@ -104,6 +110,19 @@ const sidebars = {
             'guides/debugging-with-repl'
           ]
         }
+      ]
+    },
+
+    // Concepts - Why Watt works the way it does (Diátaxis: Understanding-oriented)
+    {
+      type: 'category',
+      label: 'Concepts',
+      collapsed: true,
+      items: [
+        'concepts/watt-architecture',
+        'concepts/multithread-model',
+        'concepts/application-lifecycle',
+        'concepts/modular-monolith'
       ]
     },
 

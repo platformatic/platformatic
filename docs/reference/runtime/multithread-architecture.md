@@ -2,6 +2,12 @@
 
 This document describes the multithread system architecture in Platformatic Runtime, which enables horizontal scaling of applications through worker threads.
 
+:::note
+This is the component-level reference. If you are looking for *why* Watt uses worker threads, what
+isolation they actually provide, and how that shapes application design, read
+[The Multithread Model](../../concepts/multithread-model.md) first.
+:::
+
 ## Overview
 
 Platformatic Runtime implements a sophisticated multithread architecture that allows applications to be scaled horizontally by running multiple worker instances. This system is built on Node.js Worker Threads and provides automatic load balancing, health monitoring, and fault tolerance.
