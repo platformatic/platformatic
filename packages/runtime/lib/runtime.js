@@ -2825,7 +2825,7 @@ export class Runtime extends EventEmitter {
       if (attempt === MAX_BOOTSTRAP_ATTEMPTS) {
         const error = new RuntimeAbortedError({ cause: e })
         error.message = `Unable to initialize the ${errorLabel}.`
-        throw e
+        throw error
       }
 
       if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {
