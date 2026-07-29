@@ -46,7 +46,10 @@ export async function start (...args) {
 
           const message = JSON.parse(line)
 
-          const mo = message.msg?.match(/server listening at (.+)/i)
+          // Ignore internal sockets (e.g. management API); only HTTP(S) app URLs count.
+          const mo =
+            message.msg?.match(/Platformatic is now listening at (https?:\/\/.+)/i) ??
+            message.msg?.match(/server listening at (https?:\/\/.+)/i)
 
           if (!serverStarted && mo) {
             clearTimeout(errorTimeout)
