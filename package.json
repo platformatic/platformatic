@@ -13,6 +13,8 @@
     "lint": "pnpm -r --workspace-concurrency=1 --if-present lint",
     "lint:markdown": "markdownlint-cli2",
     "lint:updated-only": "node ./scripts/lint-updated-packages.js",
+    "license-check": "node ./scripts/license-check.js",
+    "license-list": "node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md",
     "gen-schemas-types": "node ./scripts/gen-schemas-types.js",
     "postinstall": "node ./scripts/postinstall.js",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
