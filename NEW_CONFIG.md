@@ -39,6 +39,12 @@ export default defineConfig({
 })
 ```
 
+Be precise about what this is: **TypeScript-authored serializable data**, not
+unrestricted TypeScript. The evaluated result must be plain data (it crosses a
+worker boundary — see the serializability contract), and files load through Node's
+native type stripping: erasable syntax only, no enums/namespaces, no `tsconfig`
+`paths`, no `.ts` presets from `node_modules`.
+
 Everything the JSON system can express remains expressible. The runtime's internal
 config model — the normalized object that `transform()` produces and workers consume —
 is unchanged; what changes is how it is authored, where it is evaluated, and how it
@@ -165,13 +171,11 @@ import { gateway } from '@platformatic/gateway'
 import { node } from '@platformatic/node'
 import { next } from '@platformatic/next'
 
-const production = process.env.NODE_ENV === 'production'
-
-export default defineConfig({
+export default defineConfig(({ env, production }) => ({
   entrypoint: 'gateway',
-  server: { port: Number(process.env.PORT ?? 3042) },
+  server: { port: Number(env.PORT ?? 3042) },
   logger: { level: production ? 'warn' : 'info' },
-  metrics: production && { port: 9090 },
+  metrics: production ? { port: 9090 } : false,
 
   applications: [
     {
@@ -196,8 +200,11 @@ export default defineConfig({
     },
     { id: 'frontend', path: 'web/frontend', config: next({ trailingSlash: true }) }
   ]
-})
+}))
 ```
+
+The functional form receives the command-aware context (`production` is `true`
+under `start`/`build`); config never branches on ambient `NODE_ENV`.
 
 Note the boundary: `workers`, `health`, `env`, `dependencies` and the other
 orchestration properties live **on the entry**; everything the capability understands
@@ -286,9 +293,19 @@ property — no symbols, no classes:
 ```ts
 interface ApplicationDefinition {
   module: string          // '@platformatic/next'
+  version: string         // stamped by the factory from its own package.json
   // …normalized per-app configuration (v3-internal shape)
 }
 ```
+
+The stamped `version` closes the root/app skew hole: a root-inline factory resolves
+from the root's copy of the capability, while validation and the worker
+implementation resolve from the *app's* copy — with pnpm those can be different
+versions (`next@4.1` factory, `next@4.0` runtime). The eval worker compares the
+stamp against the app-resolved package version and fails with an error naming both
+resolved paths and versions on mismatch (covered by an integration test). Same
+major+minor is required; hand-written `{ module }` objects carry no stamp and skip
+the check.
 
 Duck-typing on `module` (rather than a symbol tag) is deliberate: dependency-free
 plain-object configs must be first-class, and symbol identity breaks across duplicated
@@ -338,28 +355,35 @@ Search order in a directory (first hit wins):
 3. `watt.config.js`
 4. `watt.config.mjs`
 
-There is no other supported format. When the search finds only a `.json`
-configuration file (`watt.json`, `platformatic.json`, or any v3 candidate name), the
-runtime exits:
+There is no other supported format. Legacy detection covers the **complete v3
+candidate set, not just `.json`**: when no `watt.config.*` is found, the search
+checks every v3 candidate filename — `watt.*` / `platformatic.*` and the suffixed
+variants (`*.runtime.*`, `*.application.*`, `*.service.*`, `*.db.*`, `*.gateway.*`,
+`*.composer.*`) across all six v3 extensions (`json`, `json5`, `yaml`, `yml`,
+`toml`, `tml`) — and refuses if any is present, naming the file it found:
 
 ```
-✗ watt.json is a v3-era configuration. Watt v4 uses watt.config.ts.
+✗ watt.yaml is a v3-era configuration. Watt v4 uses watt.config.ts.
   Run:  npx wattpm migrate
 ```
 
-This makes legacy detection an extension check — no shape heuristics, no placeholder
-scanning. The `--config` / `-c` flag accepts any of the four names.
+Without this, a `watt.yaml`-only project would fall through to zero-config
+synthesis and boot with inferred defaults while silently ignoring its real
+configuration — worse than any hard failure. Detection remains a pure filename
+check — no parsing, no shape heuristics. The `--config` / `-c` flag accepts any of
+the four v4 names.
 
 We use `watt.config.*`, not `watt.ts`, following the `vite.config.ts` /
 `next.config.ts` convention and avoiding collisions with app source files.
 
-**Root and per-app files share the same filename; the export discriminates.** The
-classification rules, in precedence order:
+**Root and per-app files share the same filename; the export discriminates.**
+Classification runs the **conflict check first**, then falls through:
 
 1. a **function** export is always a root config (factories return objects);
-2. an object with `module` is an `ApplicationDefinition` (per-app);
-3. an object with `applications`, `autoload`, or `entrypoint` is a root config;
-4. an object with both `module` and a root-only key is an **error**;
+2. an object with **both** `module` and a root-only key (`applications`,
+   `autoload`, `entrypoint`) is an **error** naming the clashing keys;
+3. an object with `module` is an `ApplicationDefinition` (per-app);
+4. an object with `applications`, `autoload`, or `entrypoint` is a root config;
 5. an empty/other object is a root config (all defaults).
 
 **The upward walk evaluates candidates.** v3's walk read each candidate's `$schema`
@@ -418,20 +442,29 @@ per load:
    `.env`) — the runtime seeds every app worker's environment from it, exactly as v3
    seeded from `kMetadata.env`. After evaluation the worker diffs its live
    `process.env` against that snapshot: mutated keys produce a boot warning naming
-   each key and its origin, pointing at the explicit `env:` property as the
-   sanctioned cross-boundary channel:
+   each key, pointing at the explicit `env:` property as the sanctioned
+   cross-boundary channel:
 
    ```
-   ⚠ watt.config.ts mutated process.env during evaluation; these keys do NOT
-     propagate to applications:
-       CACHE_PREFIX                 (watt.config.ts:8)
-       OTEL_EXPORTER_OTLP_ENDPOINT  (import of @vendor/telemetry-sdk)
+   ⚠ configuration evaluation mutated process.env; these keys do NOT propagate
+     to applications: CACHE_PREFIX, OTEL_EXPORTER_OTLP_ENDPOINT
      Use: defineConfig({ env: { CACHE_PREFIX: … } })
    ```
 
-   Mutations still work *within* the evaluation (it's one thread, one env); they
-   just never silently cross into the runtime. Third-party import side effects warn
-   rather than fail. `--debug-config` applies the same diff and warning in-process.
+   The warning reports **keys only** — a snapshot diff cannot attribute writes to a
+   module or line, and the diagnostics must not claim otherwise. (Per-write
+   attribution via a `process.env` Proxy installed during evaluation is a possible
+   later enhancement, not a v4.0 commitment.) Mutations still work *within* the
+   evaluation (it's one thread, one env); they just never silently cross into the
+   runtime. Third-party import side effects warn rather than fail.
+   `--debug-config` applies the same diff and warning in-process, and **snapshots
+   and restores the main process's `process.env`** afterwards — otherwise the
+   "does not propagate" statement would be false in debug mode.
+
+   Evaluation runs under a **configurable deadline** (default 30 s,
+   `--config-timeout`): a config that never resolves — an awaited fetch to a dead
+   host, a forgotten promise — terminates the worker and fails the load with a
+   targeted timeout error instead of hanging boot forever.
 
 The result then enters the pipeline in the main process: **serializability check**
 (functions, class instances, symbols → `InvalidConfigValueError` naming the JSON
@@ -448,7 +481,11 @@ Why a throwaway worker instead of a plain `import()` in the main process: the ES
 module cache is not invalidatable, so same-process re-import would silently return
 stale config on every dev reload — and the recorded import list is what lets the
 watcher cover helper files (`./config/shared.ts`), not just the root file. It also
-isolates `.env` mutation and config crashes/hangs from the main process.
+isolates `.env` mutation and config crashes/hangs from the main process. The
+watcher consumes a **filtered** import list: project/workspace-local files only —
+`node_modules` paths (Watt itself, capability packages, transitive dependencies)
+are recorded but never watched, so dependency churn cannot trigger reloads or
+exhaust watcher limits.
 
 The costs are real and accepted: one worker spawn + type stripping per load
 (order tens of milliseconds), paid at boot and on each dev reload — and CLI
@@ -484,10 +521,20 @@ Consequence to document: per-app config files are evaluated with the *root's*
 environment. Per-application `env`/`envfile` configure the worker's runtime
 environment, never config evaluation.
 
-**Serializability is the v4.0 contract.** Function-shaped needs (logger transports,
-gateway handlers, `deduplication.key`) stay expressible as file paths loaded
-worker-side, exactly as in v3. Re-evaluating per-app files inside workers to allow
-inline functions remains possible in a later 4.x, but we make no public commitment.
+**Serializability is the v4.0 contract, and it is deterministic:**
+
+- object properties whose value is `undefined` are **omitted** (JSON.stringify
+  semantics) — so `cache: { url: process.env.REDIS_URL }` with the variable unset
+  yields `cache: {}` and the schema's defaults/required rules speak, rather than an
+  error or a silent `undefined` crossing the boundary;
+- `undefined` inside **arrays**, non-finite numbers (`NaN`, `Infinity`), `bigint`,
+  circular references, functions, symbols, and non-plain instances are **hard
+  errors** naming the JSON path.
+
+Function-shaped needs (logger transports, gateway handlers, `deduplication.key`)
+stay expressible as file paths loaded worker-side, exactly as in v3. Re-evaluating
+per-app files inside workers to allow inline functions remains possible in a later
+4.x, but we make no public commitment.
 
 **TypeScript constraints** (Node type stripping): erasable syntax only — no enums,
 namespaces, or parameter properties; `tsconfig` `paths` are not applied; `.ts` config
@@ -558,10 +605,12 @@ deliberately saner:
   precedence ladder is explicit:
 
   ```
-  real environment  >  env block  >  injected  >  .env files
+  real environment  >  entry env block  >  root env block  >  injected  >  .env files
   ```
 
-  The runtime skips injection when the key exists in its **own real environment**
+  (Both `env` blocks exist — the root-level one applied to all applications and the
+  per-entry one — and the entry's wins, matching v3's application order.) The
+  runtime skips injection when the key exists in its **own real environment**
   (container/k8s overrides work, with zero provenance machinery — the runtime's
   `process.env` *is* the oracle); the injected mesh URL overrides anything sourced
   from a `.env` file, which makes the `PLT_*_URL` lines v3 generators wrote into
@@ -607,7 +656,9 @@ export default {
 ```
 
 - The stamped `$schema` **property** is mandatory for machine writers. The loader
-  reads it for version detection only (never module selection); a stale v3 URL
+  reads it for version detection only (never module selection) and **strips it
+  before AJV validation** — the v4 root schema does not admit it, and without the
+  strip every machine-generated config would fail validation. A stale v3 URL
   refuses with the migrate hint. This is the version marker that keeps the next
   major's migration tractable.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
@@ -619,6 +670,15 @@ export default {
   `runtime.getRuntimeConfig()`. The management API's HTTP `GET /config` endpoint is
   **removed** in v4 (its only known consumer, watt-admin, migrates off it —
   cross-repo coordination noted in the plan).
+- **The programmatic payloads are a versioned public DTO, and they change shape.**
+  `getRuntimeConfig()` and `getApplicationDetails()` consumers observing
+  `applications[].config` received a *file path* in v3; in v4 each entry carries
+  **both** `configPath` (the per-app file path, or absent for inline definitions)
+  and `resolvedConfig` (the validated raw object). Payload compatibility and patch-
+  document compatibility are **separate contracts**: patch documents stay
+  byte-compatible (below), while the payload change is a declared breaking change
+  coordinated with every consumer (watt-extra reads `applications[].type`, which is
+  unchanged).
 
 ### Config patching (ICC integration)
 
@@ -638,9 +698,13 @@ export default {
 - **`wattpm applications:add` / `applications:remove`** keep their live half —
   hot-adding/removing apps on the running runtime via `POST`/`DELETE /applications`,
   which no ruling touches. The runtime root they need for path resolution comes from
-  the existing `GET /metadata` endpoint (extended with `root`/`configPath`). The
-  `--save` flag is **dropped**: persistence is a manual edit of the readable code
-  config, and the commands print an informational hint after the live change.
+  the existing `GET /metadata` endpoint (extended with `root`/`configPath`).
+  **Requirement: `--save` is retained**, implemented on the same magicast machinery
+  as `wattpm import` — the canonical scaffolded shape (literal `defineConfig`
+  object, literal `applications` array; for removal, also appending to a literal
+  `autoload.exclude`) is edited in place, and non-static shapes get the paste-ready
+  snippet fallback. Shipping magicast for `import` while dropping `--save` would be
+  an avoidable regression.
 - **Capability CLI commands** (`db:migrations:apply`, `db:seed`, `db:types`,
   `gateway:*`, `next:*`) move to a **data contract**: `createCommands` becomes part
   of the v4 capability contract, and each command receives `{ root, config }` — the
@@ -695,24 +759,43 @@ exactly as production v3 would in memory, then:
    `runtime` blocks (treating the schema-accidental `runtime.services` like
    `runtime.applications`, with a warning), merging the `web`/`services`/`applications`
    aliases, and converting `{PLT_X}` placeholders into typed values:
-   `process.env.PLT_X` references with `??` defaults from `.env.sample`, wrapped per
-   the audit's target-type table (`Number(...)`, boolean tests), or literal
-   `http://<id>.plt.local` for app-id URL placeholders. `{PLT_ROOT}` gets its own
-   rule: `{PLT_ROOT}/x` becomes `join(import.meta.dirname, 'x')` (adding the
-   `node:path` import) — correct in migrate's per-app output, where
-   `import.meta.dirname` *is* the app root; the docs flag that the expression must
-   be rewritten if later moved into a root-inline entry.
-2. Warn for every `.env` key defined in both the root and an app `.env` (the
+   `process.env.PLT_X` references wrapped per the audit's target-type table
+   (`Number(...)`, boolean tests), or literal `http://<id>.plt.local` for app-id URL
+   placeholders. `.env.sample` values are **suggestions, not runtime truth** — v3
+   never loaded that file, so turning samples into executable `??` defaults would
+   change behavior when the real variable is absent; migrate emits them as defaults
+   only under an explicit `--use-sample-defaults` flag, and otherwise notes them as
+   comments. `{PLT_ROOT}` gets its own rule: `{PLT_ROOT}/x` becomes
+   `join(import.meta.dirname, 'x')` (adding the `node:path` import) — correct in
+   migrate's per-app output, where `import.meta.dirname` *is* the app root; the docs
+   flag that the expression must be rewritten if later moved into a root-inline
+   entry.
+2. **Audit every capability dependency before writing anything.** The emitted
+   per-app files import v4 factories, but the project's `package.json` may pin
+   `@platformatic/next@^3` — whose package has no factory export and follows the
+   dead v3 contract; a config codemod cannot fix a v3 capability. For
+   `@platformatic/*` dependencies, migrate updates the version range in place to
+   the current major after confirmation (a range bump — dependency *placement* is
+   still never touched) and prints the package-manager install command. For
+   third-party capabilities without a v4-compatible release, migrate **stops before
+   modifying any file**, naming the packages that block it.
+3. Warn for every `.env` key defined in both the root and an app `.env` (the
    two-valued precedence change).
-3. Scan application sources for references to the config files about to be deleted
+4. **Validate before any cleanup**: load the generated configuration through the
+   real v4 loader (eval worker, validation, transform); if it fails, report and
+   leave everything in place — the input files are untouched until the output
+   provably works.
+5. Scan application sources for references to the config files about to be deleted
    (v3 scaffolded test helpers do
    `JSON.parse(await readFile(…, 'watt.json'))`): any hit downgrades that file's
    deletion to a warning with the file/line of the reference, since the codemod
    cannot safely rewrite user code.
-4. Delete the unreferenced old files (`--keep` to retain all) and print a diff
+6. Delete the unreferenced old files (`--keep` to retain all) and print a diff
    summary.
 
-Because migration emits the per-app style, it never edits `package.json`.
+Because migration emits the per-app style, dependency *placement* is never
+changed — the only `package.json` edits are the consented `@platformatic/*` version
+range bumps from step 2.
 
 ---
 
@@ -737,8 +820,8 @@ Because migration emits the per-app style, it never edits `package.json`.
    `setApplicationConfigPatch` API stays, with byte-compatible patch documents
    (applied pre-transform, as in v3).
 9a. `wattpm config`: removed (`--debug-config` is the local inspection tool).
-9b. `wattpm applications:add`/`applications:remove`: the `--save` flag is removed
-    (live hot-add/remove unchanged).
+9b. `wattpm applications:add`/`applications:remove`: live hot-add/remove unchanged;
+    `--save` is retained via magicast (snippet fallback for non-static shapes).
 9c. Capability CLI commands (`db:*`, `gateway:*`, `next:*`): the `createCommands`
     contract changes from config-file-path to `{ root, config }` data; commands no
     longer self-load config, and the `utimesSync` restart trick is replaced by a
@@ -751,8 +834,10 @@ Because migration emits the per-app style, it never edits `package.json`.
     "config file path" changes accordingly: the application entry's `config`
     property no longer accepts a path (it takes an inline definition),
     `autoload.mappings[].config` (a filename) is removed, and
-    `getApplicationDetails` payloads carry the resolved object instead of a path —
-    a type change for every management-API consumer.
+    `getRuntimeConfig`/`getApplicationDetails` payloads carry `configPath` +
+    `resolvedConfig` as a versioned DTO instead of a bare path — a declared type
+    change for every management-API consumer, separate from patch-document
+    compatibility (which is preserved).
 12. Capability packages must implement the v4 create contract (resolved config as
     data) and should export a factory (all in-tree capabilities get both); plain
     `{ module }` objects cover v4-contract capabilities without factories.
