@@ -241,21 +241,25 @@ restarted) and shipping the captured profiles — see the
 
 ### `workerExtensions`
 
-While `extensions` runs in the runtime main thread, `workerExtensions` runs next to where the
-runtime entrypoint's HTTP server runs. This is the worker thread for most applications, or the child
-process for an entrypoint started through a custom command. A worker extension can hook the
-entrypoint's responses, which the main-thread `extensions` cannot reach.
+While `extensions` runs in the runtime main thread, `workerExtensions` runs code in the process that
+serves the runtime entrypoint — the worker thread for most applications, or the child process for an
+entrypoint started through a custom command. This is a general mechanism: it runs your code where the
+entrypoint lives and gives it a lifecycle, but it is not tied to HTTP. An extension can do whatever it
+needs there; observing or altering the entrypoint's responses is one use case, supported through an
+optional helper (below).
 
 Worker extensions run on the entrypoint application only, since only the entrypoint serves external
 requests. Configuring them on a non-entrypoint application has no effect; use `preload` to run code
 in every application worker.
 
-`workerExtensions` is an application-level property: it is set on the `application` block of an
-application configuration, and accepts a path, an object with `path` and `options` properties, or an
-array of either.
+`workerExtensions` is set under the `application` block. Every capability (`@platformatic/node`,
+`@platformatic/next`, `@platformatic/vite`, and so on) accepts an `application` block, so the property
+is available in any application's configuration. It accepts a path, an object with `path` and
+`options` properties, or an array of either.
 
 ```json
 {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
   "application": {
     "workerExtensions": [
       {
@@ -269,32 +273,9 @@ array of either.
 }
 ```
 
-Each file must default-export a setup function, invoked while the application starts. TypeScript
-files are supported out of the box via
+Each file either default-exports a setup function or exports one named `setup`, invoked while the
+application starts. TypeScript files are supported out of the box via
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
-
-The example below pins a browser session to the version that served it, by setting a cookie on the
-entrypoint's responses — useful behind a load balancer that cannot add response headers of its own.
-
-```js
-export default async function setup ({ options, onRequest }) {
-  const cookieName = options.cookieName ?? '__dpl'
-  const version = process.env.DEPLOYMENT_VERSION
-
-  onRequest(({ request, addResponseHeader }) => {
-    // Only set the cookie the first time, so it is not refreshed on every request.
-    if (version && !request.headers.cookie?.includes(`${cookieName}=`)) {
-      addResponseHeader('set-cookie', `${cookieName}=${version}; Path=/; HttpOnly`)
-    }
-  })
-
-  return {
-    async close () {
-      // Invoked when the application is closed
-    }
-  }
-}
-```
 
 The setup function receives a context object with the following properties:
 
@@ -305,22 +286,97 @@ The setup function receives a context object with the following properties:
 - **`capability`** - The capability serving the application. It is only available when the entrypoint
   runs in the worker thread; for a capability that runs in a child process (for example one started
   through a custom command) it is `undefined`.
-- **`onRequest(handler)`** - Registers a handler run at the start of every entrypoint request. The
-  handler receives:
-  - **`request`** - The incoming `http.IncomingMessage`.
-  - **`addResponseHeader(name, value)`** - Adds a response header. The value is written when the
-    application flushes its own headers, so a header the application already sets is preserved rather
-    than replaced. Adding response headers is the only response modification currently supported.
 
-The setup function can optionally return an object with a `close` method, invoked when the
-application is closed. When multiple worker extensions are configured, they are loaded in order and
-closed in reverse order.
+It can optionally return an object with a `close` method, invoked when the application is closed. When
+multiple worker extensions are configured, they are loaded in order and closed in reverse order.
 
-A worker extension that cannot be loaded — a missing file, a default export that is not a function,
-or a `setup` that throws — is logged as an error and skipped. The application still starts, without
-that extension, and the following extensions still load.
+A worker extension that cannot be loaded — a missing file, a module that exports no setup function, or
+a `setup` that throws — is logged as an error and skipped. The application still starts, without that
+extension, and the following extensions still load. Extensions are not loaded when building the
+applications.
 
-Worker extensions are not loaded when building the applications.
+Because the mechanism is not HTTP-specific, an extension can do anything the process allows. The
+example below periodically refreshes a cache and stops the timer on close; nothing about it touches
+requests or responses.
+
+```js
+export default async function setup ({ applicationId, logger }) {
+  logger.info({ applicationId }, 'warming cache before serving')
+
+  async function refresh () {
+    // ... populate a shared cache, ping a dependency, emit a metric, etc.
+  }
+
+  await refresh()
+  const timer = setInterval(refresh, 60_000)
+
+  return {
+    close () {
+      clearInterval(timer)
+    }
+  }
+}
+```
+
+#### Observing the entrypoint's requests
+
+To observe requests or add response headers, `@platformatic/basic` exports the `onEntrypointRequest`
+helper. The extension is installed before the runtime reports the application ready. Most capabilities
+also defer listening until then, so the handler is in place before the entrypoint serves its first
+request; a few in-thread frameworks bind their own server during startup and may accept a request or
+two before the hook is installed, so a handler should not assume it observes every request from the
+very first one. The handler must be synchronous. It receives the incoming request and an
+`addResponseHeader(name, value)` function that appends when the application flushes its own headers,
+so a header the application sets is preserved rather than replaced. It returns a function that removes
+the hook.
+
+The example below pins a browser session to the version that served it, by setting a cookie on the
+entrypoint's responses — useful behind a load balancer that cannot add response headers of its own.
+
+```js
+import { onEntrypointRequest } from '@platformatic/basic'
+
+export function setup ({ options }) {
+  const cookieName = options.cookieName ?? '__dpl'
+  const version = process.env.DEPLOYMENT_VERSION
+
+  const unsubscribe = onEntrypointRequest(({ request, addResponseHeader }) => {
+    // Only set the cookie the first time, so it is not refreshed on every request.
+    if (version && !request.headers.cookie?.includes(`${cookieName}=`)) {
+      addResponseHeader('set-cookie', `${cookieName}=${version}; Path=/; HttpOnly`)
+    }
+  })
+
+  return {
+    close () {
+      unsubscribe()
+    }
+  }
+}
+```
+
+Another HTTP use case: read a header off the incoming request and echo it back on the response. The
+example below propagates a request id, so a client or proxy can correlate its logs with the
+entrypoint's, even behind a load balancer that does not do it itself.
+
+```js
+import { onEntrypointRequest } from '@platformatic/basic'
+
+export function setup () {
+  const unsubscribe = onEntrypointRequest(({ request, addResponseHeader }) => {
+    const requestId = request.headers['x-request-id']
+    if (requestId) {
+      addResponseHeader('x-request-id', requestId)
+    }
+  })
+
+  return {
+    close () {
+      unsubscribe()
+    }
+  }
+}
+```
 
 ### `applications`
 

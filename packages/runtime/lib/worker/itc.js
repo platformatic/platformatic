@@ -216,6 +216,12 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           // this thread. A child-process capability installs in its own
           // bootstrap, where its server runs; installing here too would run
           // every extension's setup a second time.
+          //
+          // The controller defers the entrypoint listen to listen() below so
+          // this runs first. A capability that ignores that and binds its own
+          // server during start() (some in-thread frameworks) may accept a few
+          // requests before the hook is in place, but only within the startup
+          // window before the application is ready to receive traffic.
           if (!workerData.build && !controller.capability.childManager) {
             const capabilityConfig = controller.capability.config ?? {}
             workerExtensions = await installWorkerExtensions({

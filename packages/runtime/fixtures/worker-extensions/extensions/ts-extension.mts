@@ -1,10 +1,9 @@
-// A TypeScript worker extension, to prove Node type stripping loads it.
-interface Ctx {
-  onRequest: (h: (a: { addResponseHeader: (n: string, v: string) => void }) => void) => void
-}
+import { onEntrypointRequest } from '@platformatic/basic'
 
-export default function setup ({ onRequest }: Ctx): void {
-  onRequest(({ addResponseHeader }) => {
+// A TypeScript worker extension, to prove Node type stripping loads it. It uses
+// a named `setup` export rather than a default one, covering both forms.
+export function setup (): void {
+  onEntrypointRequest(({ addResponseHeader }: { addResponseHeader: (n: string, v: string) => void }) => {
     addResponseHeader('x-ts-extension', 'ok')
   })
 }

@@ -38,5 +38,5 @@ export const FailedToLoadWorkerExtensionError = createError(
 
 export const InvalidWorkerExtensionError = createError(
   `${ERROR_PREFIX}_INVALID_WORKER_EXTENSION`,
-  'The worker extension "%s" must export a function as default.'
+  'The worker extension "%s" must export a setup function, as its default export or named "setup".'
 )

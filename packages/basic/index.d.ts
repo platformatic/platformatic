@@ -7,16 +7,9 @@ import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
 
-// A worker extension hooks the entrypoint's responses from the worker thread, or
-// the child process, wherever the entrypoint HTTP server runs. Its default
-// export is a WorkerExtension.
-export interface WorkerExtensionRequest {
-  request: IncomingMessage
-  // Adds a response header without replacing one the application sets itself;
-  // the value is written when the application flushes its headers.
-  addResponseHeader (name: string, value: string): void
-}
-
+// A worker extension runs in the process that serves the entrypoint, with a
+// context and a close lifecycle, and does nothing HTTP-specific on its own. Its
+// default export, or a named `setup` export, is a WorkerExtension.
 export interface WorkerExtensionContext {
   applicationId: string
   config: Record<string, unknown>
@@ -25,8 +18,6 @@ export interface WorkerExtensionContext {
   // The capability serving the application. Present only for an in-thread
   // entrypoint; undefined when the capability runs in a child process.
   capability?: unknown
-  // Registers a handler run at the start of every entrypoint request.
-  onRequest (handler: (request: WorkerExtensionRequest) => void): void
 }
 
 export interface WorkerExtensionInstance {
@@ -49,6 +40,17 @@ export declare function installWorkerExtensions (context: {
   capability?: unknown
   root?: string
 }): Promise<InstalledWorkerExtensions>
+
+// Optional helper for a worker extension that wants to observe the entrypoint's
+// requests or add response headers. addResponseHeader appends when the
+// application flushes its own headers, so a header it sets is not replaced.
+// Returns a function that removes the hook.
+export interface EntrypointRequest {
+  request: IncomingMessage
+  addResponseHeader (name: string, value: string): void
+}
+
+export declare function onEntrypointRequest (handler: (request: EntrypointRequest) => void): () => void
 
 export interface StartOptions {
   listen?: boolean | undefined

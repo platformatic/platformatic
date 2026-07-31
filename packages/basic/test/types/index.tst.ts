@@ -36,6 +36,7 @@ import {
   validationOptions,
   version
 } from '../../index.js';
+import { onEntrypointRequest } from '../../index.js';
 import type {
   BaseContext,
   BaseOptions,
@@ -324,13 +325,9 @@ test('private methods', () => {
 
 // Test the worker extension contract
 test('WorkerExtension contract', () => {
-  const extension: WorkerExtension = ({ applicationId, capability, onRequest }: WorkerExtensionContext) => {
+  const extension: WorkerExtension = ({ applicationId, capability }: WorkerExtensionContext) => {
     expect(applicationId).type.toBe<string>();
     expect(capability).type.toBe<unknown>();
-    onRequest(({ request, addResponseHeader }) => {
-      expect(request.headers).type.toBe<import('node:http').IncomingHttpHeaders>();
-      addResponseHeader('set-cookie', 'a=1');
-    });
     return { close () {} };
   };
   expect(extension).type.toBeAssignableTo<WorkerExtension>();
@@ -338,4 +335,13 @@ test('WorkerExtension contract', () => {
   // Returning nothing, or a promise, is allowed.
   expect((() => {}) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
   expect((async () => ({}) as WorkerExtensionInstance) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
+});
+
+// Test the optional HTTP helper
+test('onEntrypointRequest helper', () => {
+  const unsubscribe = onEntrypointRequest(({ request, addResponseHeader }) => {
+    expect(request.headers).type.toBe<import('node:http').IncomingHttpHeaders>();
+    addResponseHeader('set-cookie', 'a=1');
+  });
+  expect(unsubscribe).type.toBe<() => void>();
 });

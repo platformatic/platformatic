@@ -1,6 +1,8 @@
+import { onEntrypointRequest } from '@platformatic/basic'
+
 // Reports its context back through a response header, so a test can assert what
 // a worker extension receives.
-export default function setup ({ applicationId, config, options, logger, capability, onRequest }) {
+export default function setup ({ applicationId, config, options, logger, capability }) {
   const received = {
     applicationId,
     hasConfig: typeof config === 'object' && config !== null,
@@ -9,7 +11,7 @@ export default function setup ({ applicationId, config, options, logger, capabil
     hasCapability: capability != null
   }
 
-  onRequest(({ addResponseHeader }) => {
+  onEntrypointRequest(({ addResponseHeader }) => {
     addResponseHeader('x-extension-context', Buffer.from(JSON.stringify(received)).toString('base64'))
   })
 }
