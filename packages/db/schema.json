@@ -1430,6 +1430,10 @@
                 "options": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "build": {
+                  "type": "boolean",
+                  "default": false
                 }
               }
             },
@@ -1455,6 +1459,10 @@
                       "options": {
                         "type": "object",
                         "additionalProperties": true
+                      },
+                      "build": {
+                        "type": "boolean",
+                        "default": false
                       }
                     }
                   }

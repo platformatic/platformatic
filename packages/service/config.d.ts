@@ -348,6 +348,7 @@ export interface PlatformaticServiceConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -356,6 +357,7 @@ export interface PlatformaticServiceConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

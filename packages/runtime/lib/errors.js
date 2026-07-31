@@ -191,6 +191,11 @@ export const DuplicateITCHandlerNameError = createError(
   'The ITC command "%s" has already been registered'
 )
 
+export const RuntimeExtensionBuildAlreadyCalledError = createError(
+  `${ERROR_PREFIX}_EXTENSION_BUILD_ALREADY_CALLED`,
+  'The build function can only be called once by each runtime extension.'
+)
+
 export const MetricFamilyCollisionError = createError(
   `${ERROR_PREFIX}_METRIC_FAMILY_COLLISION`,
   'Extension "%s" registered metric family "%s" which collides with %s'

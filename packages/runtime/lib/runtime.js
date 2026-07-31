@@ -54,6 +54,7 @@ import {
   MissingPprofCapture,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
+  RuntimeExtensionBuildAlreadyCalledError,
   WorkerInterceptorJoinTimeoutError,
   WorkerNotFoundError
 } from './errors.js'
@@ -921,19 +922,63 @@ export class Runtime extends EventEmitter {
 
   async buildApplication (id) {
     const application = await this.#getApplicationById(id)
+    const applicationConfig = this.#applications.get(id)
+    const context = Object.freeze({
+      applicationId: id,
+      applicationPath: applicationConfig.path
+    })
 
     this.emitAndNotify('application:building', id)
-    try {
-      await sendViaITC(application, 'build')
-      this.emitAndNotify('application:built', id)
-    } catch (e) {
-      // The application exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
+    for (const extension of this.#extensions) {
+      await extension.instance?.preBuild?.(context)
     }
+
+    let buildHandlerMissing = false
+    const build = this.#extensions.reduceRight(
+      (next, extension) => {
+        if (typeof extension.instance?.onBuild !== 'function') {
+          return next
+        }
+
+        return () => {
+          let called = false
+          const build = () => {
+            if (called) {
+              throw new RuntimeExtensionBuildAlreadyCalledError()
+            }
+
+            called = true
+            return next()
+          }
+
+          return extension.instance.onBuild(context, build)
+        }
+      },
+      async () => {
+        try {
+          return await sendViaITC(application, 'build')
+        } catch (e) {
+          // The application exports no meta, return an empty object
+          if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+            buildHandlerMissing = true
+            return {}
+          }
+
+          throw e
+        }
+      }
+    )
+
+    const result = await build()
+
+    for (const extension of [...this.#extensions].reverse()) {
+      await extension.instance?.postBuild?.(context, result)
+    }
+
+    if (!buildHandlerMissing) {
+      this.emitAndNotify('application:built', id)
+    }
+    return result
   }
 
   async startApplicationProfiling (id, options = {}, ensureStarted = true) {
@@ -4343,8 +4388,7 @@ export class Runtime extends EventEmitter {
   async #loadExtensions () {
     let extensions = this.#config.extensions
 
-    // Do not load extensions when building applications
-    if (!extensions || this.#context.build) {
+    if (!extensions) {
       return
     }
 
@@ -4353,7 +4397,14 @@ export class Runtime extends EventEmitter {
     }
 
     for (const extension of extensions) {
-      const { path, options } = typeof extension === 'string' ? { path: extension } : extension
+      const { path, options, build } = typeof extension === 'string' ? { path: extension } : extension
+
+      // Runtime extensions historically were not loaded by `wattpm build`.
+      // Preserve that behavior unless an extension explicitly opts into the
+      // build lifecycle.
+      if (this.#context.build && !build) {
+        continue
+      }
 
       let imported
       try {

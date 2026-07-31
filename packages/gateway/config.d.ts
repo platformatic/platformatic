@@ -460,6 +460,7 @@ export interface PlatformaticGatewayConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -468,6 +469,7 @@ export interface PlatformaticGatewayConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

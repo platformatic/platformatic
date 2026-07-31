@@ -17,6 +17,7 @@ export type PlatformaticRuntimeConfig = {
         options?: {
           [k: string]: unknown;
         };
+        build?: boolean;
       }
     | (
         | string
@@ -25,6 +26,7 @@ export type PlatformaticRuntimeConfig = {
             options?: {
               [k: string]: unknown;
             };
+            build?: boolean;
           }
       )[];
   entrypoint?: string;

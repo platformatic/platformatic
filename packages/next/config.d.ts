@@ -137,6 +137,7 @@ export interface PlatformaticNextJsConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -145,6 +146,7 @@ export interface PlatformaticNextJsConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

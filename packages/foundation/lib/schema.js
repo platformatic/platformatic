@@ -111,6 +111,10 @@ const extension = {
         options: {
           type: 'object',
           additionalProperties: true
+        },
+        build: {
+          type: 'boolean',
+          default: false
         }
       }
     }
