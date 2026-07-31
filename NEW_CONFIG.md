@@ -1,14 +1,17 @@
 # NEW_CONFIG: `watt.config.ts` — one config model for Watt v4
 
-**Status:** Proposal — open questions resolved (see “Resolved decisions”)
+**Status:** Proposal, revision 2 — incorporates the adversarial review (see `REVIEW.md`)
 **Target:** v4 (breaking), with a gated experimental preview in a late v3 minor
 **Author:** Platformatic team
 
 ## Summary
 
 Watt v4 replaces the JSON-with-`$schema` configuration system with a single, code-first
-configuration file — `watt.config.ts` (or `.js`) — loaded natively by Node.js via type
-stripping, with full TypeScript types provided by `wattpm` and by each capability package.
+configuration format — `watt.config.ts` / `.js` / `.mts` / `.mjs` — loaded natively by
+Node.js via type stripping, with full TypeScript types provided by `wattpm` and by each
+capability package. **It is the only configuration format**: any `.json` configuration
+file found is, by definition, a v3-era file and is refused with an instruction to run
+`npx wattpm migrate`.
 
 The core structural change is that **there is exactly one configuration dialect**: the
 runtime dialect. The distinction between "a single-app config with a nested `runtime`
@@ -22,15 +25,24 @@ import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
 export default defineConfig({
-  server: { port: 3042 },
+  server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
-  applications: [next({ cache: { adapter: 'redis', url: process.env.REDIS_URL } })]
+  applications: [
+    {
+      workers: 2,
+      config: next({
+        trailingSlash: true,
+        cache: { adapter: 'redis', url: process.env.REDIS_URL }
+      })
+    }
+  ]
 })
 ```
 
-Everything the JSON system can express remains expressible. Nothing about the runtime's
-internals changes: the config file evaluates to the same normalized object the runtime
-consumes today, and AJV validation, `transform()`, and the worker boot path stay intact.
+Everything the JSON system can express remains expressible. The runtime's internal
+config model — the normalized object that `transform()` produces and workers consume —
+is unchanged; what changes is how it is authored, where it is evaluated, and how it
+reaches the workers.
 
 ---
 
@@ -69,68 +81,62 @@ This is the single worst piece of DX in the platform:
 - The `runtime` block's schema (`wrappedRuntime` in `packages/foundation/lib/schema.js`)
   is defined **by exclusion lists** (`runtimeUnwrappablePropertiesList`,
   `applicationsUnwrappablePropertiesList`). Nobody — including us — can say from memory
-  which properties are legal inside it. It even contains a nested `application` object
-  that is *itself* the application schema minus another exclusion list.
+  which properties are legal inside it. (The lists are themselves buggy: `applications`
+  is excluded twice while `services` is not excluded at all, so `runtime.services` is
+  schema-legal today.)
 - The same setting lives at different depths depending on project shape. `logger` is
   top-level in a runtime config, `runtime.logger` in a wrapped config, and *also*
-  top-level in the capability config as the per-app logger. Users guess, paste from the
-  wrong doc page, and get silent misconfiguration (via lax coercion) or confusing AJV
-  errors.
+  top-level in the capability config as the per-app logger.
 - Growing from one app to two forces a full config rewrite: unwrap the `runtime` block,
-  invert the nesting, create a new root file, move the capability options. The runtime
-  performs the same inversion at boot (`wrapInRuntimeConfig`,
-  `packages/runtime/lib/config.js:131`) — machinery that exists only to bridge the two
-  dialects.
-- The docs mirror the split: every capability page needs the
-  `_runtime-in-capabilities.md` include to explain the wrapped subset.
+  invert the nesting, create a new root file. The runtime performs the same inversion
+  at boot (`wrapInRuntimeConfig`, `packages/runtime/lib/config.js:131`) — machinery
+  that exists only to bridge the two dialects.
 
 ### Problem 2 — JSON + `{PLT_X}` interpolation is a poor programming language
 
-- Conditional config (dev vs prod, per-environment ports, optional telemetry) is
-  impossible without env-var contortions: `"watch": "{PLT_WATCH}"` plus a `.env`, a
-  `.env.sample`, and string-to-boolean coercion rules users must learn.
-- `{PLT_X}` placeholders are stringly-typed, fail closed to `""` by default, and need
-  the `strictEnv` option, the `?` YAML quoting pre-pass, the `kEnvFileFallbackKeys`
-  precedence machinery, and the special `*_URL` `onMissingEnv` fallback — all of which
-  is invisible to users until it bites.
-- No composition, no reuse, no comments in plain JSON, no types while editing beyond
-  what `$schema`-aware editors offer.
+- Conditional config (dev vs prod, optional telemetry) is impossible without env-var
+  contortions and string-to-boolean coercion rules.
+- `{PLT_X}` placeholders are stringly-typed, fail closed to `""`, and need `strictEnv`,
+  a YAML brace-quoting pre-pass, and fallback-key machinery — all invisible until it
+  bites. The schemas are saturated with `anyOf: [T, string]` unions that exist *only*
+  to admit placeholders, poisoning validation and any types generated from them.
+- No composition, no reuse, no comments in plain JSON.
 
 ### Problem 3 — `$schema` URLs as a versioning and identity mechanism
 
-The `$schema` URL does triple duty: editor autocomplete, capability module selection
-(`extractModuleFromSchemaUrl`), and config version detection for `semgrator` upgrades.
-It is verbose, version-pinned (goes stale on every release), exists in three historical
-URL formats, and is the thing users most frequently delete or mangle. In a code-first
-config, the imported package *is* the identity and the version.
+The `$schema` URL does triple duty: editor autocomplete, capability module selection,
+and config version detection. It is verbose, goes stale on every release, exists in
+three historical URL formats, and is the thing users most frequently delete or mangle.
+In a code-first config, the imported package is the identity, and version markers are
+explicit where still needed (see "Machine-generated configs").
 
-### Non-problems (explicit non-goals)
+### Non-goals
 
-- **The runtime's internal config model.** The normalized object (what
-  `transform()` produces and workers consume) is good. We keep it.
-- **Validation.** AJV validation of the normalized object stays; TypeScript types are
-  an authoring aid, not the enforcement layer.
-- **Zero-config boot.** `wattpm dev` in a bare Next/Vite/Node repo with no config file
-  at all must keep working (via `detectApplicationType`). v4 makes this *better*: no
-  more auto-writing a `watt.json` with `?autogenerated=true` into the user's tree.
+- **The runtime's internal config model** stays. `transform()` output is unchanged.
+- **AJV validation** stays authoritative; TypeScript types are an authoring aid.
+- **Zero-config boot** stays: `wattpm dev` in a bare Next/Vite/Node repo with no config
+  file keeps working via `detectApplicationType`, and v4 stops writing an
+  auto-generated `watt.json` into the user's tree — the synthesized config lives only
+  in memory.
 
 ---
 
 ## Goals
 
-1. One configuration dialect. The `runtime` wrapped block, `wrapInRuntimeConfig`, and
-   the `web`/`services` aliases are removed.
-2. `watt.config.ts` / `watt.config.js` as the canonical format, loaded with **zero new
-   dependencies** (Node ≥ 22.19 type stripping is already our floor).
-3. Full typed autocomplete: `defineConfig` from `wattpm`, one typed factory per
-   capability (`next()`, `node()`, `gateway()`, `service()`, `db()`, `vite()`, …).
-4. Single-app → multi-app is a file move, not a rewrite.
+1. One configuration dialect and **one configuration format**. The `runtime` wrapped
+   block, `wrapInRuntimeConfig`, the `web`/`services` aliases, and all non-code config
+   formats are removed.
+2. `watt.config.{ts,js,mts,mjs}` loaded with **zero new dependencies** (Node ≥ 22.19
+   type stripping is already our floor).
+3. Full typed autocomplete backed by **tightened schemas**: the placeholder-string
+   unions are audited out in v4.0, so generated types are strict at launch.
+4. Single-app → multi-app is a file move; migration never edits `package.json`.
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
-   the config file is evaluated.
-6. A `wattpm migrate` codemod that converts any v2/v3 JSON/YAML/TOML tree into v4
-   `watt.config.ts` files automatically.
-7. Everything downstream of config loading (validation, transform, workers, ITC,
-   management API) is untouched.
+   the config file is evaluated and a simplified, documented precedence.
+6. A `wattpm migrate` codemod that converts anything that boots on v3 into v4 config
+   files automatically.
+7. ICC integration points (`setApplicationConfigPatch`, `getRuntimeConfig`) are
+   preserved with identical semantics.
 
 ---
 
@@ -142,39 +148,22 @@ config, the imported package *is* the identity and the version.
 auto-detected from `package.json` dependencies, defaults apply. Nothing is written to
 disk.
 
-**Level 1 — single app.** One file at the project root:
-
-```ts
-// watt.config.ts
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
-
-export default defineConfig({
-  server: { port: 3042 },
-  logger: { level: 'info' },
-  applications: [
-    next({
-      // path defaults to the config file's directory
-      cache: { adapter: 'redis', url: process.env.REDIS_URL },
-      trailingSlash: true,
-      workers: 2
-    })
-  ]
-})
-```
-
-Every runtime option (`server`, `logger`, `health`, `metrics`, `telemetry`, `undici`,
+**Level 1 — single app.** One file at the project root (see Summary above). Every
+runtime option (`server`, `logger`, `health`, `metrics`, `telemetry`, `undici`,
 `httpCache`, `gracefulShutdown`, …) is top-level — exactly where it is in a multi-app
 config. **The `runtime` block does not exist in v4.**
 
-**Level 2 — multi-app.** Same shape, more entries:
+**Level 2 — multi-app.** Same shape, more entries. The application entry carries the
+orchestration properties; the capability configuration attaches through the entry's
+`config` property, which accepts a capability factory call inline (it accepted a file
+path in v3):
 
 ```ts
 // watt.config.ts
 import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
-import { node } from '@platformatic/node'
 import { gateway } from '@platformatic/gateway'
+import { node } from '@platformatic/node'
+import { next } from '@platformatic/next'
 
 const production = process.env.NODE_ENV === 'production'
 
@@ -185,23 +174,41 @@ export default defineConfig({
   metrics: production && { port: 9090 },
 
   applications: [
-    gateway({
+    {
       id: 'gateway',
       path: 'web/gateway',
-      applications: [
-        { id: 'api', proxy: { prefix: '/api' } },
-        { id: 'frontend', proxy: { prefix: '/' } }
-      ]
-    }),
-    node({ id: 'api', path: 'web/api', workers: production ? 4 : 1 }),
-    next({ id: 'frontend', path: 'web/frontend' })
+      config: gateway({
+        applications: [
+          { id: 'api', proxy: { prefix: '/api' } },
+          { id: 'frontend', proxy: { prefix: '/' } }
+        ]
+      })
+    },
+    {
+      id: 'api',
+      path: 'web/api',
+      workers: production ? 4 : 1,
+      telemetry: { instrumentations: ['pg'] },
+      config: node({
+        main: 'server.js',
+        telemetry: { applicationName: 'api', exporter: { type: 'otlp' } }
+      })
+    },
+    { id: 'frontend', path: 'web/frontend', config: next({ trailingSlash: true }) }
   ]
 })
 ```
 
+Note the boundary: `workers`, `health`, `env`, `dependencies` and the other
+orchestration properties live **on the entry**; everything the capability understands
+lives **inside the factory**. The two never merge into one bag, which is what keeps
+same-named properties (`telemetry` above; `server`, `logger`, `watch`) structurally
+unambiguous — the adversarial review showed that flattening them together is unsound
+(REVIEW.md B1).
+
 **Level 2b — monorepo with per-app config files.** `autoload` survives, and per-app
-configuration moves into the app's own `watt.config.ts`, which exports a **capability
-instance** — the same expression that would appear inline at the root:
+configuration moves into the app's own `watt.config.ts`, which exports **the identical
+factory expression** that would appear as the entry's `config` at the root:
 
 ```ts
 // watt.config.ts (root)
@@ -224,11 +231,15 @@ export default next({
 })
 ```
 
-This is the unification punchline: **a root single-app config and a per-app config in
-a monorepo are the same expression.** Promoting a standalone project into a monorepo
-app means moving its `watt.config.ts` into the app folder, deleting the runtime-level
-options from it (TypeScript flags them — they don't exist on the capability factory's
-per-app type), and listing it from the root. No dialect change, no re-nesting.
+This is the unification punchline: the value of a root entry's `config` and a per-app
+file's default export are the same expression. Promoting a standalone project into a
+monorepo app means moving that expression — and because the per-app file imports the
+capability from the app's own directory, where its dependency already lives, **no
+`package.json` changes are ever required** (see "Dependency resolution").
+
+When both a root inline entry and a per-app file exist for the same app id, they are
+merged **shallowly, per-key, root winning** — the v3 `autoload.mappings` semantics —
+and a root-provided `config` value replaces the per-app file's export wholesale.
 
 ### Functional form for environment-dependent config
 
@@ -242,12 +253,9 @@ export default defineConfig(({ env, production, root }) => ({
 }))
 ```
 
-- `env` — `process.env` after `.env` merging (see “Env files” below).
-- `production` — `true` when running under `wattpm start` / `--production`.
+- `env` — `process.env` after `.env` merging (see "Env files").
+- `production` — `true` under `wattpm start` / `--production`.
 - `root` — absolute directory of the config file.
-
-The async form enables config that reads files or fetches secrets at boot; we document
-it but discourage slow work here.
 
 ### Capability factories
 
@@ -255,54 +263,52 @@ Each capability package exports one typed factory plus its option types:
 
 ```ts
 // from @platformatic/next
-export function next (options?: NextApplicationOptions): ApplicationDefinition
+export function next (options?: NextConfigOptions): ApplicationDefinition
 ```
 
-Factory options are the **flattened merge** of:
+Factory options are the capability's per-app configuration — what lived in the app's
+own config file in v3 — with the capability's namespaced block flattened into the top
+level (`next.trailingSlash` → `trailingSlash`) and the shared blocks (`logger`,
+`server`, `watch`, `cache`, `application`) kept at their v3 positions. The
+`application` block deliberately stays nested: several capabilities (remix, nuxt,
+nitro, react-router) define their own `outputDirectory` alongside
+`application.outputDirectory`, and hoisting both would collide (REVIEW.md B1).
 
-1. Orchestration properties of an application entry (`id`, `path`, `workers`, `health`,
-   `env`, `envfile`, `dependencies`, `preload`, `nodeOptions`, `permissions`,
-   `restartOnError`, `packageManager`, `sourceMaps`, `telemetry.instrumentations`, …).
-2. The capability's own options, hoisted out of today's namespaced block
-   (`next.trailingSlash` → `trailingSlash`, `node.main` → `main`,
-   `vite.ssr` → `ssr`, plus shared blocks like `cache`, `application.commands` →
-   `commands`, per-app `logger`).
+Factories do **not** accept orchestration properties; those belong to the application
+entry. TypeScript enforces the split in both directions.
 
-TypeScript makes the flattening safe: collisions are impossible to author because the
-factory's option type is a single interface, and we control both halves. Internally the
-factory returns a small tagged object:
+The factory returns a plain, JSON-serializable object discriminated by its `module`
+property — no symbols, no classes:
 
 ```ts
 interface ApplicationDefinition {
-  [kApplication]: true
   module: string          // '@platformatic/next'
-  version: string         // capability package version, for diagnostics
-  options: object         // normalized back into the v3-internal per-app shape
+  // …normalized per-app configuration (v3-internal shape)
 }
 ```
 
-The normalization back to the current internal shape (namespaced capability block etc.)
-happens inside the factory, so **the runtime and worker code see the same object they
-see today**. Capabilities implement their factory with a helper from
-`@platformatic/basic` (`defineCapabilityFactory(module, schema, mapOptions)`), so adding
-one is ~20 lines per package.
-
-External/community capabilities that don't ship a factory remain usable with the
-generic escape hatch:
-
-```ts
-import { application } from 'wattpm'
-
-application({ id: 'php', path: 'web/php', module: '@platformatic/php', config: { /* raw */ } })
-```
-
-### Generic per-app entries and remote apps
-
-Non-capability orchestration entries keep working inline:
+Duck-typing on `module` (rather than a symbol tag) is deliberate: dependency-free
+plain-object configs must be first-class, and symbol identity breaks across duplicated
+`@platformatic/basic` copies in non-hoisted layouts. A hand-written
+`{ module: '@platformatic/php' }` object is exactly as valid as a factory result —
+that is also the escape hatch for capabilities that don't ship a factory:
 
 ```ts
 applications: [
-  application({ id: 'legacy', url: 'https://github.com/org/legacy.git', gitBranch: 'main' })
+  { id: 'php', path: 'web/php', config: { module: '@platformatic/php' } }
+]
+```
+
+Capabilities implement their factory with a helper from `@platformatic/basic`
+(`defineCapabilityFactory(module, schema, mapOptions)`), ~20 lines per package.
+
+### Remote apps
+
+Non-capability orchestration entries keep working:
+
+```ts
+applications: [
+  { id: 'legacy', url: 'https://github.com/org/legacy.git', gitBranch: 'main' }
 ]
 ```
 
@@ -320,269 +326,346 @@ Search order in a directory (first hit wins):
 2. `watt.config.mts`
 3. `watt.config.js`
 4. `watt.config.mjs`
-5. `watt.json` — **v4 shape only** (see “JSON in v4”)
 
-There is no compatibility loader in v4. When the search finds only a v2/v3-shaped file
-(detected by `$schema`/`module` or the presence of removed properties like `runtime`,
-`web`, `services`) or a YAML/JSON5/TOML file, the runtime exits with a clear error
-pointing at `wattpm migrate`.
+There is no other supported format. When the search finds only a `.json`
+configuration file (`watt.json`, `platformatic.json`, or any v3 candidate name), the
+runtime exits:
 
-The recursive upward search (`findConfigurationFileRecursive`) keeps its semantics but
-matches on the new filenames. The `--config` / `-c` flag accepts any of these.
+```
+✗ watt.json is a v3-era configuration. Watt v4 uses watt.config.ts.
+  Run:  npx wattpm migrate
+```
 
-We deliberately use `watt.config.*`, not `watt.ts`, following the `vite.config.ts` /
+This makes legacy detection an extension check — no shape heuristics, no placeholder
+scanning. The recursive upward search (`findConfigurationFileRecursive`) keeps its
+semantics over the new filenames. The `--config` / `-c` flag accepts any of them.
+
+We use `watt.config.*`, not `watt.ts`, following the `vite.config.ts` /
 `next.config.ts` convention and avoiding collisions with app source files.
 
-### Loading mechanism
+### Loading mechanism: the eval worker
 
-- `import(pathToFileURL(configPath))` in the runtime's **main process**, before any
-  worker is spawned. `.ts`/`.mts` work through Node's built-in type stripping — no
-  `jiti`, no `esbuild`, no compile step. This is the same mechanism the runtime already
-  uses for `extensions` (`runtime.js` `#loadExtensions`).
-- The default export is unwrapped: a plain object, a function (called with the context
-  described above), or a bare `ApplicationDefinition` (auto-wrapped as
-  `{ applications: [def] }` so `export default next({ … })` alone is a valid root
-  config).
-- The evaluated result is **normalized to a plain JSON-serializable object** and then
-  enters the existing pipeline in `loadConfiguration` at the *validate* step: AJV
-  (`useDefaults`, `coerceTypes`) → `transform()` → `kMetadata` attachment. `replaceEnv`
-  and `upgrade` are skipped for code configs — env is the user's job, versioning is the
-  package manager's job.
-- Serializability is enforced with a clear error (functions, class instances, symbols →
-  `InvalidConfigValueError` naming the JSON path). Config still crosses the
-  `workerData` boundary, so this constraint is load-bearing. Function-shaped needs
-  (logger transports, gateway handlers, `deduplication.key`) stay expressible as file
-  paths loaded worker-side, exactly as in v3. A future 4.x minor can relax this by
-  re-evaluating per-app config files inside workers — the file layout already supports
-  that — but we make no public commitment in v4.0 (decision: see “Resolved
-  decisions”).
-- Per-app `watt.config.ts` files are evaluated the same way by the worker controller
-  (replacing the "scan for recognized files, read `$schema`" dance in
-  `worker/controller.js`): import, expect an `ApplicationDefinition`, hand its
-  normalized options to `pkg.create()`.
+All configuration is evaluated in a **short-lived evaluation worker thread**, spawned
+per load:
 
-**Precedence when both exist:** an inline root entry and a per-app file for the same
-app id are deep-merged, root winning — the root config is the orchestration source of
-truth, mirroring today's `autoload.mappings` behavior.
+1. The eval worker resolves the root, runs `loadEnv` (the `.env` upward walk), and
+   applies the result to its own `process.env` — the main process env is never
+   touched.
+2. It imports the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's
+   built-in type stripping, the same mechanism the runtime already uses for
+   `extensions`), unwraps the default export (object, function called with the context
+   above, or a bare `ApplicationDefinition` auto-wrapped as
+   `{ applications: [{ config: def }] }`), and expands `autoload` by importing **every
+   per-app `watt.config.ts` in the same pass**.
+3. A `module.register` resolve hook records every file URL the evaluation transitively
+   imported.
+4. The worker posts back `{ config, importedFiles }` and exits.
+
+The result then enters the pipeline in the main process: **serializability check**
+(functions, class instances, symbols → `InvalidConfigValueError` naming the JSON
+path) → AJV validation (`useDefaults`, `coerceTypes`) → `kMetadata` attachment →
+`transform()`. The check runs before metadata attachment because `kMetadata` is
+symbol-keyed and non-JSON by design.
+
+Why a throwaway worker instead of a plain `import()` in the main process: the ESM
+module cache is not invalidatable, so same-process re-import would silently return
+stale config on every dev reload — and the recorded import list is what lets the
+watcher cover helper files (`./config/shared.ts`), not just the root file. It also
+isolates `.env` mutation and config crashes/hangs from the main process.
+
+**Config code runs exactly once per load.** Workers never import configuration:
+
+- v3: each worker re-parsed its app's config file (`worker/controller.js`); harmless
+  for JSON, wrong for code (an app with `workers: 4` would evaluate user code 5
+  times, async configs would fetch secrets 5 times, and views could diverge).
+- v4: each app worker receives its fully-resolved config as **data** —
+  `applicationConfig.resolvedConfig` in `workerData` replaces the `config` file path.
+  The worker controller's file-scanning and `$schema` resolution are deleted.
+
+Consequence to document: per-app config files are evaluated with the *root's*
+environment. Per-application `env`/`envfile` configure the worker's runtime
+environment, never config evaluation.
+
+**Serializability is the v4.0 contract.** Function-shaped needs (logger transports,
+gateway handlers, `deduplication.key`) stay expressible as file paths loaded
+worker-side, exactly as in v3. Re-evaluating per-app files inside workers to allow
+inline functions remains possible in a later 4.x, but we make no public commitment.
+
+**TypeScript constraints** (Node type stripping): erasable syntax only — no enums,
+namespaces, or parameter properties; `tsconfig` `paths` are not applied; `.ts` config
+presets cannot be imported from `node_modules`. Scaffolding and `migrate` emit
+`watt.config.mts` when the target package has `"type": "commonjs"`, `.ts` otherwise.
+
+### Dependency resolution
+
+Factory imports follow **standard ESM resolution from the importing file** — no
+loader hooks, no magic; editor and runtime always agree:
+
+- **Per-app files** import the capability from the app directory, where its dependency
+  already lives in v3. Nothing changes for any existing workflow, under any package
+  manager. This is the default style: `migrate` and scaffolding emit per-app files
+  plus a thin autoload root, so migration never touches `package.json`.
+- **Root-inline factories** are a new, opt-in style with one plain rule: the
+  capability must be resolvable from the root (add it to the root `package.json`).
+  Under pnpm's strict layout an app-local dependency is not visible from the root, so
+  the failure gets a targeted error naming both fixes:
+
+  ```
+  ✗ Cannot resolve '@platformatic/next' from watt.config.ts.
+    Add it to the root package.json, or configure the application in
+    web/frontend/watt.config.ts instead.
+  ```
+
+Runtime resolution of capability *implementations* (workers loading the capability
+from the app's deps, with the runtime-bundled fallback) is unchanged.
 
 ### Env files
 
-`.env` handling is preserved but simplified and made *ambient*:
+1. Before config evaluation, the eval worker runs the `.env` upward walk and applies
+   the result to its `process.env` (file values never overriding real env). The
+   config file just reads `process.env` / the `env` context argument.
+2. **Precedence is simplified to two-valued** (a deliberate breaking change):
+   `real env > root .env > app .env`. Once loaded, the root `.env` is
+   indistinguishable from the real environment, so an application's own `.env` no
+   longer overrides root-file defaults (in v3 it could, via the `kEnvFileFallbackKeys`
+   machinery, which is deleted). `wattpm migrate` warns for every key present in both
+   a root and an app `.env`; the runtime logs a one-time boot warning when an app
+   `.env` key is shadowed.
+3. Per-application `env` / `envfile` (the worker's runtime environment) are unchanged.
+4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`, and the YAML brace-quoting
+   pre-pass do not exist in v4; they survive only inside `wattpm migrate`'s legacy
+   reader.
 
-1. Before importing the config file, the loader runs today's `loadEnv` walk-up and
-   **applies the result to `process.env`** (file values never overriding real env, as
-   today).
-2. The config file then just reads `process.env` / the `env` context argument.
-3. `{PLT_X}` interpolation, `strictEnv`, `envfile` at the root level, and the YAML
-   brace-quoting pre-pass no longer exist in the v4 runtime — they survive only inside
-   `wattpm migrate`'s legacy reader. Per-application `env` / `envfile` (which configure
-   the *worker's* environment, not the config file's) are unchanged.
-4. `wattpm` exports a tiny `requireEnv(name: string): string` helper that throws a
-   descriptive error — the code-first replacement for `strictEnv: true`.
-5. The `*_URL` magic (`onMissingEnv` resolving `{FOO_URL}` to an app's internal URL)
-   is config-time-only today and dies with interpolation. Its runtime equivalent —
-   workers resolving sibling URLs via `http://<id>.plt.local` and the injected
-   `PLT_<ID>_URL` worker env vars — is unaffected.
+### Inter-application URLs
 
-### Validation and types
+v3 resolved unset `{FOO_URL}` placeholders to `http://<appid>.plt.local` at
+config-parse time (`onMissingEnv`). That machinery dies with interpolation, and its
+replacement is explicit:
 
-- **AJV stays authoritative.** The v4 schemas are the v3 schemas minus: `$schema`
-  (optional, ignored), `module` at root, `runtime` (wrapped block), `web`, `services`,
-  `verticalScaler` (already migrated into `workers`), and the deprecated
-  `healthChecksTimeouts`.
-- TypeScript types for `WattConfig` and every factory's options are **generated from
-  the schemas** by the existing `gen-types` pipeline, so types and validation cannot
-  drift. Hand-written wrapper types add only the ergonomic layer (function form,
-  factory flattening).
-- Editor experience: JSON users had `$schema` autocomplete; TS users get strictly more
-  — types, inline docs (schema `description` fields become TSDoc), and go-to-definition.
+- **In config**: write the literal virtual hostname — `origin: 'http://api.plt.local'`.
+  These hostnames are resolved by the mesh at request time; no config-time knowledge
+  is needed. `migrate` emits the literal for placeholders whose name matches a
+  declared app id, and `process.env.X` otherwise.
+- **In application code**: the runtime injects `PLT_<ID>_URL` environment variables
+  into every worker (one per sibling application, uppercased id, non-alphanumerics →
+  `_`; an explicitly configured variable of the same name wins). Existing app code
+  reading `process.env.PLT_API_URL` keeps working.
 
-### What replaces `$schema`
+### Validation, types, and the schema audit
 
-| `$schema` role today | v4 replacement |
-|---|---|
-| Capability module selection | the imported factory (`next()` carries `module`) |
-| Config version for `semgrator` upgrades | the installed package version; code configs are never auto-upgraded — breaking config changes are breaking package changes, surfaced by TypeScript |
-| Editor autocomplete | TypeScript |
-| `?autogenerated=true` marker | gone — zero-config no longer writes files |
+- **AJV stays authoritative**, but the v4 schemas are **audited, not just pruned**.
+  Beyond removing `$schema`, root `module`, `runtime` (wrapped block), `web`,
+  `services`, `verticalScaler`, and `healthChecksTimeouts`, every `anyOf`/`oneOf`
+  union across foundation and the capability schemas (~120 sites) is classified:
+  - *placeholder-only unions* (the 14 `overridableValue` sites, `logger.level`'s
+    `^\{.+\}$` pattern branch, the string forms of `workers`, `watch`,
+    `restartOnError`, …) — **string branch deleted**;
+  - *genuine unions* (`managementApi`'s socket-path string, `preload`'s
+    string-or-array, `enabled`'s per-environment object) — kept;
+  - judgment calls — decided and recorded in the schema.
 
-The `module` property escape hatch survives inside `application({ module })` for
-non-factory capabilities.
+  v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
+  correctly-typed values (its per-property target-type table is a byproduct of the
+  audit). Tightening later would break real configs in minors.
+- TypeScript types for `WattConfig` and factory options are **generated from the
+  audited schemas** by the existing `gen-types` pipeline (schema `description` fields
+  become TSDoc), so types, validation, and docs agree at launch: `workers?: number |
+  WorkersOptions`, `level?: 'fatal' | 'error' | …` — no stringly unions.
+
+### Machine-generated configs
+
+There is no JSON config in v4, and none is needed: `defineConfig` is optional and the
+loader unwraps any plain-object default export, so a dependency-free generated config
+is JSON plus a prefix:
+
+```js
+// generated by pack / install / deployment tooling — no imports required
+export default {
+  $schema: 'https://schemas.platformatic.dev/wattpm/4.0.0.json',
+  applications: [{ id: 'api', path: '.', config: { module: '@platformatic/node' } }]
+}
+```
+
+- The stamped `$schema` **property** is mandatory for machine writers. The loader
+  reads it for version detection only (never module selection); a stale v3 URL
+  refuses with the migrate hint. This is the version marker that keeps the next
+  major's migration tractable.
+- Writers converted in v4: `next pack` (bundle config; gains a test asserting the
+  bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
+  `wattpm migrate` output, and the documented pattern for ICC-style platforms
+  (`'export default ' + JSON.stringify(config)`).
+- Reading configs without executing them: the plain-object form is trivially
+  AST-parseable, and running systems expose the resolved config via the programmatic
+  `runtime.getRuntimeConfig()`. The management API's HTTP `GET /config` endpoint is
+  **removed** in v4 (its only known consumer, watt-admin, migrates off it —
+  cross-repo coordination noted in the plan).
+
+### Config patching (ICC integration)
+
+- The programmatic API `runtime.setApplicationConfigPatch(id, ops)` /
+  `removeApplicationConfigPatch(id)` **survives with identical semantics** — it is
+  load-bearing for ICC via watt-extra, which feature-detects and calls it. Under the
+  eval-worker design, patches are applied with `fast-json-patch` to the resolved
+  per-app object at worker-spawn time instead of worker-side.
+- The `wattpm patch-config` CLI command (file rewriting) is **removed**: no consumers
+  exist in-tree, in watt-extra, or in icc-3.
 
 ### Config-writing tooling
 
-Three code paths write config files today: `wattpm create` (scaffolding),
-`wattpm import` (append an application entry), and the CLI's temporary-config fallback.
-
-- **`wattpm create` / `create-wattpm`**: scaffolds `watt.config.ts` (or `.js` on
-  request) from templates. Straightforward — generators already template files. The
-  generated root config is finally *readable*:
-
-  ```ts
-  import { defineConfig } from 'wattpm'
-
-  export default defineConfig({
-    server: { port: Number(process.env.PORT ?? 3042) },
-    logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? 'info' },
-    autoload: { path: 'web' }
-  })
-  ```
-
-  Per-app scaffold: `export default node()` — or no file at all, since defaults need
-  no file.
-- **`wattpm import` and other mutators**: use [`magicast`](https://github.com/unjs/magicast)
-  (AST-level edit that preserves formatting) to append to the `applications` array when
-  the config is code. When the edit is not statically safe (config is a function, or
-  the array is computed), print the exact snippet to paste and exit 0 with a notice.
-  `magicast` is a devDependency-weight addition to `wattpm-utils` only.
-- **Temporary-config fallback** (`fallbackToTemporaryConfigFile`): removed. Zero-config
-  boot synthesizes the config in memory; nothing is written into the user's tree.
-- `saveConfigurationFile` remains for the legacy JSON path and for machine-managed
-  files (`.env`, scaffold output).
-
-### JSON in v4 — and the hard cliff for everything else
-
-JSON does not disappear — it becomes a *serialization of the same single dialect*:
-
-- `watt.json` containing v4-shape config (runtime dialect, no `runtime` block, no
-  `$schema` required; `module` allowed per application entry) loads fine. This is the
-  story for machine-generated configs and for users who genuinely prefer JSON.
-- **There is no compatibility path in the v4 runtime.** v2/v3 shapes and the
-  YAML/JSON5/TOML formats are refused outright with an error that names the file and
-  says to run `npx wattpm migrate`. The `migrate` command (which bundles the legacy
-  parsing/upgrade machinery) is the only code that reads old configs.
-
-This is a deliberate trade: a sharper upgrade cliff in exchange for the largest
-possible deletion from the v4 codebase. `replaceEnv` and the `{PLT_X}` interpolation
-loop, the YAML brace-quoting pre-pass, `strictEnv` normalization,
-`kEnvFileFallbackKeys`, the `$schema` URL regexes and `extractModuleFromSchemaUrl`,
-the `web`/`services` alias merging, `wrapInRuntimeConfig`, and the in-hot-path
-`semgrator` wiring all move out of `foundation`/`runtime` and into the
-`wattpm migrate` implementation (or are deleted). The v4 loader is: find file →
-import or `JSON.parse` → validate → transform.
+- **`wattpm create` / `create-wattpm`**: scaffolds `watt.config.ts` (`.mts`/`.js`
+  variants per the rules above) from templates — a thin autoload root plus per-app
+  factory files.
+- **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
+  formatting) when the shape is statically safe — literal `defineConfig` object,
+  literal `applications` array; otherwise prints a paste-ready snippet and exits 0
+  with a notice. magicast is a dependency of `wattpm-utils` only. In a configless
+  tree, `import` scaffolds a thin autoload root first (replacing the v3
+  `?autogenerated=true` marker dance, whose producer and consumer are both gone).
+- **Temporary-config fallback** (`fallbackToTemporaryConfigFile`): removed;
+  zero-config synthesizes in memory.
 
 ### `wattpm migrate`
 
-A one-shot codemod, shipped in `wattpm-utils`. **Scope: v3-era configs only.** A config
-whose detected version is older than 3.0.0 is refused with instructions to upgrade the
-project to Platformatic v3 first (whose loader upgrades v1/v2 shapes via its own
-`semgrator` chains); v4 carries none of the pre-v3 upgrade machinery.
+A one-shot codemod in `wattpm-utils`, and **the only code in v4 that can read legacy
+configs**. Scope: anything that boots on v3. To guarantee that without forking any
+machinery, `wattpm-utils@4` depends on **`@platformatic/foundation@3`** (and the v3
+upgrade chains) and runs the real v3 `loadConfiguration` — all formats (JSON, JSON5,
+YAML, TOML), all `$schema` URL generations, and the v1/v2→v3 `semgrator` upgrades,
+exactly as production v3 applies them in memory. Then:
 
-1. Recursively find all v3 config files from the project root (reusing
-   `findConfigurationFileRecursive` + `listRecognizedConfigurationFiles`).
-2. Detect the version from `$schema`/`module`; refuse pre-3.0.0 with the
-   "upgrade to v3 first" error.
-3. For the root: unwrap `runtime` blocks (the `wrapInRuntimeConfig` inversion, applied
-   once, at migration time, forever), merge `web`/`services`/`applications`, and emit
-   `watt.config.ts` with capability factory imports. `{PLT_X}` placeholders become
-   `process.env.PLT_X` references (with `??` defaults pulled from `.env.sample` when
-   present).
-4. For each app: emit `export default <capability>({ … })` or delete the file when it
-   would contain only defaults.
-5. Delete the old files (with `--keep` to retain them) and print a diff summary.
+1. Emit per-app `watt.config.ts` files (factory expression per app; file omitted when
+   it would contain only defaults) and a thin root `watt.config.ts` — unwrapping
+   `runtime` blocks (treating the schema-accidental `runtime.services` like
+   `runtime.applications`, with a warning), merging the `web`/`services`/`applications`
+   aliases, and converting `{PLT_X}` placeholders into typed values:
+   `process.env.PLT_X` references with `??` defaults from `.env.sample`, wrapped per
+   the audit's target-type table (`Number(...)`, boolean tests), or literal
+   `http://<id>.plt.local` for app-id URL placeholders.
+2. Warn for every `.env` key defined in both the root and an app `.env` (the
+   two-valued precedence change).
+3. Delete the old files (`--keep` to retain) and print a diff summary.
 
-Because the v3 loader machinery already parses and understands every v3 shape, the
-codemod is mostly plumbing we own. With the hard-cliff decision, `migrate` is also the
-*only* home of that machinery in v4 — but only the v3-era slice of it: the
-YAML/JSON5/TOML parsers, `replaceEnv`, the v3 `$schema` URL detection, the
-`runtime`-block unwrapping, and the alias merging live inside (or are depended on by)
-`wattpm migrate` exclusively. The v1/v2 `semgrator` version chains and the legacy
-`platformatic.dev/schemas/v*` URL format are **not** carried into v4 at all.
+Because migration emits the per-app style, it never edits `package.json`.
 
 ---
 
 ## Breaking changes (v4)
 
-1. `runtime` wrapped block in capability configs: **removed** (root options are
-   top-level; `wrapInRuntimeConfig`, `wrappedRuntime`, `runtimeUnwrappablePropertiesList`,
-   `applicationsUnwrappablePropertiesList`, and `_runtime-in-capabilities.md` are deleted).
+1. `runtime` wrapped block in capability configs: **removed** (`wrapInRuntimeConfig`,
+   `wrappedRuntime`, both exclusion lists, and `_runtime-in-capabilities.md` deleted).
 2. `web` and `services` aliases: **removed**; `applications` only.
-3. `$schema`-based module/version detection: **removed** from the runtime; understood
-   only by `wattpm migrate`.
-4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed** from the runtime;
-   converted by `wattpm migrate`.
-5. YAML/JSON5/TOML configs: **refused** by the runtime; converted by `wattpm migrate`.
-6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema (both already
-   deprecated/migrated).
-7. Auto-written `watt.json` (`?autogenerated=true`): removed.
-8. Capability packages must export a factory (added by us to all in-tree capabilities;
-   external ones keep working via `application({ module })`).
+3. **All non-code config formats removed** — JSON included. Any `.json` config file is
+   refused with the migrate hint. `getParser`/`getStringifier` and the format
+   machinery are deleted from the loader.
+4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed**; `wattpm migrate`
+   converts them.
+5. `.env` precedence simplifies to `real env > root .env > app .env`; app `.env` no
+   longer overrides root-file defaults (`kEnvFileFallbackKeys` deleted; migrate + boot
+   warnings cover the transition).
+6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema.
+7. Schema audit: placeholder-string unions removed from every schema (validation is
+   stricter; migrate emits typed values).
+8. Auto-written `watt.json` (`?autogenerated=true`): removed.
+9. `wattpm patch-config` (CLI): removed. The programmatic
+   `setApplicationConfigPatch` API stays.
+10. Management API `GET /config` endpoint: removed (watt-admin coordination required).
+11. Worker boot protocol: workers receive `resolvedConfig` (data) instead of a config
+    file path; per-worker config parsing is deleted.
+12. Capability packages should export a factory (all in-tree capabilities get one);
+    plain `{ module }` objects cover the rest.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
-error (`npx wattpm migrate`). The migration story is the codemod, not a compat layer.
+error. The migration story is the codemod, not a compat layer.
 
 ---
 
 ## Implementation plan
 
-Roughly ordered; steps 1–4 are the critical path.
+Roughly ordered; steps 1–5 are the critical path.
 
-1. **foundation**: add `loadCodeConfigurationFile` (import + unwrap + serializability
-   check + context injection); teach `findConfigurationFile`/`findConfigurationFileRecursive`
-   the new filenames; make `loadEnv` results ambient before code-config evaluation;
-   route code configs into `loadConfiguration` skipping `replaceEnv`/`upgrade`. In the
-   v4 branch, additionally *remove* `replaceEnv`, the YAML pre-pass, the non-JSON
-   parsers, `strictEnv`, and the `$schema` regex machinery from the loader (they move
-   under `wattpm migrate`); add the v2/v3-shape detection that produces the
-   "run `npx wattpm migrate`" error.
-2. **basic**: `defineCapabilityFactory` helper; `ApplicationDefinition` tag symbol;
-   flatten/unflatten mapping between factory options and the internal per-app shape;
-   worker-side per-app `watt.config.ts` loading in place of the `$schema` scan.
-3. **runtime**: delete `wrapInRuntimeConfig` and alias merging; v4 schema pruning;
-   accept `ApplicationDefinition` entries in `applications` and bare-definition root
-   exports; in-memory zero-config synthesis.
-4. **wattpm**: export `defineConfig`, `application`, `requireEnv`, `WattConfig` types;
-   type generation from schemas (TSDoc from `description`).
-5. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
-   tanstack, nuxt, service, db, gateway): add the factory (~20 lines each via the
-   helper) + option types.
-6. **wattpm-utils**: `wattpm migrate` (absorbing the legacy parsing/upgrade machinery);
-   `wattpm import` via magicast with snippet fallback; `create` templates emit
-   `watt.config.ts`.
-7. **create-wattpm**: wizard output switches to `.ts` (`.js` when the user opts out of
-   TypeScript); drop `.env.sample` boilerplate for values now defaulted in code.
-8. **docs**: collapse the runtime/capability split pages into one configuration
-   reference; migration guide; keep a single legacy-format appendix.
+1. **foundation**: the eval-worker loader (fresh ESM cache per load, `.env` applied
+   in-worker, import-graph collection via `module.register`, serializability check →
+   validate → `kMetadata` → `transform` order); new filename resolution; `.json` →
+   migrate-hint error; delete `replaceEnv`, the YAML pre-pass, all non-code parsers,
+   `strictEnv`, and the `$schema` URL machinery (they move under `wattpm migrate` via
+   the `foundation@3` dependency).
+2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
+   placeholder-only branches, regenerate `schema.json` + types; produce the
+   per-property target-type table for migrate.
+3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
+   (`module` property, no symbols); capability-block flattening with `application`
+   kept nested; delete worker-side config resolution.
+4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
+   accepts inline definitions; single-pass evaluation incl. autoload'd per-app files;
+   `resolvedConfig` through `workerData`; `setApplicationConfigPatch` applied
+   pre-spawn via `fast-json-patch`; `PLT_<ID>_URL` injection into worker envs; remove
+   `GET /config` from the management API; shallow root-wins merge (v3 semantics);
+   in-memory zero-config synthesis.
+5. **wattpm**: export `defineConfig`, `WattConfig` and factory types generated from
+   the audited schemas.
+6. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
+   tanstack, nuxt, service, db, gateway): factory + option types (~20 lines each via
+   the helper); `next pack` emits the plain-object v4 form + bundle boot test.
+7. **wattpm-utils**: `wattpm migrate` (depending on `@platformatic/foundation@3`);
+   `wattpm import` via magicast with snippet fallback; external/install flow emits
+   v4 per-app files; `create` templates emit `watt.config.ts`; remove `patch-config`.
+8. **create-wattpm**: wizard output switches to `.ts` (`.mts`/`.js` per package
+   type); fixture conversion codemod for the ~868 in-tree JSON fixtures.
+9. **cross-repo**: watt-admin migrates off `GET /config`; ICC guidance for generating
+   plain-object configs.
+10. **docs**: one configuration reference; migration guide; erasable-TS constraints;
+    env precedence; the machine-generated config pattern.
 
-Steps 1–3 land first behind the **gated v3 preview**: the loader and factories ship in
-a late v3 minor behind an explicit opt-in (`wattpm dev --experimental-config` or
-`PLT_EXPERIMENTAL_CONFIG=true`), enforcing **strict v4 shape** (no `runtime` block, no
-aliases honored in code configs), clearly labeled as subject to change. This gives the
-factory API real-world contact before v4.0 freezes it, at the cost of maintaining the
-v4-shape validation in the v3 branch until the cut.
+Steps 1–5 land first behind the **gated v3 preview**: `wattpm dev
+--experimental-config` (or `PLT_EXPERIMENTAL_CONFIG=true`) in a late v3 minor,
+enforcing strict v4 shape, clearly labeled as subject to change — real-world contact
+for the factory API before v4.0 freezes it.
 
 ---
 
 ## Resolved decisions
 
-Formerly the open questions; resolved 2026-07-30.
+First round (2026-07-30), amended by the adversarial review round (2026-07-31);
+details and evidence in `REVIEW.md`.
 
 1. **`applications`, not `apps`.** Matches v3 canonical naming, the internal model,
-   the management API, and existing docs; the codemod collapses `web`/`services` into
-   it. No internal renaming.
-2. **Serializable-only config in v4.0.** Non-serializable values are a hard error
-   naming the JSON path. Functions remain expressible as file paths loaded worker-side
-   (as in v3). Worker-side re-evaluation of per-app config files is designed-for but
-   **not publicly committed** — we keep the option for a 4.x minor without promising it.
-3. **magicast + snippet fallback for config mutators.** `wattpm import` AST-edits
-   `watt.config.ts` when the shape is statically safe (literal `defineConfig` object,
-   literal `applications` array); otherwise it prints a paste-ready snippet and exits
-   0 with a notice. magicast is a dependency of `wattpm-utils` only.
-4. **Gated v3 preview.** Experimental opt-in in a late v3 minor, strict v4 shape, no
-   ungated availability before v4.0.
-5. **Flattened factory options.** Capability-specific properties are hoisted to the
-   factory's top level (`next({ trailingSlash: true })`); orchestration properties and
-   shared blocks (`logger`, `cache`, `commands`) sit alongside. The factory owns the
-   mapping back to the internal namespaced shape. We accept the permanent
-   no-collision discipline between capability and orchestration property names —
-   enforced by a test in `basic` that checks every in-tree capability's option keys
-   against the orchestration key set.
-6. **Hard cliff for legacy formats.** The v4 runtime loads only `watt.config.*` and
-   v4-shape `watt.json`. Old shapes and YAML/JSON5/TOML are refused with a
-   "run `npx wattpm migrate`" error; the codemod is the only reader of old configs.
-   No deprecation window inside v4. **`migrate` supports v3-era configs only** —
-   pre-v3 projects must upgrade to Platformatic v3 first; none of the v1/v2 upgrade
-   machinery ships in v4.
+   and existing docs.
+2. **Serializable-only config in v4.0.** Functions stay file paths; worker-side
+   re-evaluation kept open for 4.x, not publicly committed.
+3. **magicast + snippet fallback** for config mutators (`wattpm-utils` only).
+4. **Gated v3 preview** (`--experimental-config`), strict v4 shape.
+5. **Factory shape (amended by review B1):** orchestration properties live on the
+   application entry; the entry's `config` property accepts a factory result inline;
+   the factory carries only per-app capability configuration, with the capability
+   block flattened and `application` kept nested. Root `config` wins wholesale over a
+   per-app file.
+6. **Hard cliff (amended):** v4 loads only `watt.config.{ts,js,mts,mjs}`. **JSON is
+   dropped entirely** — machine writers emit dependency-free plain-object configs
+   with a mandatory stamped `$schema` property (version detection only). Any `.json`
+   config = legacy = migrate hint; detection is an extension check.
+7. **Migrate scope (amended by review B3):** anything that boots on v3, via a
+   dependency on the real v3 loader (`@platformatic/foundation@3`); the v1/v2
+   upgrade chains ride along inside the codemod only.
+8. **Config reload (review B2):** throwaway eval worker per load; import-graph
+   collection drives the watcher; main-process env and module cache are never touched.
+9. **Evaluation site (review M3):** single main-side pass in the eval worker; workers
+   receive `resolvedConfig` as data and never import config.
+10. **Env (review M1/M2):** two-valued precedence (`real env > root .env > app .env`),
+    fallback-keys machinery deleted, migrate + boot warnings; inter-app URLs are
+    literal `http://<id>.plt.local` in config plus injected `PLT_<ID>_URL` worker env
+    vars for application code.
+11. **Patching (review M4):** `setApplicationConfigPatch` API preserved (ICC/watt-extra
+    depends on it), applied pre-spawn; `patch-config` CLI removed (zero consumers
+    found); management API `GET /config` removed.
+12. **Schema audit in v4.0 (review M7):** all placeholder unions out at launch; the
+    only free moment.
+13. **Dependency resolution (review M5):** standard ESM from the importing file;
+    per-app files are the default style (v3 placement unchanged, migration never
+    edits `package.json`); root-inline is opt-in with a targeted error.
+14. **Mechanical batch (review m1–m6):** erasable-TS constraints documented +
+    `.mts`-for-CJS rule; corrected pipeline order; shallow root-wins merge; duck-typed
+    `module` discriminator; `runtime.services` handled by migrate + v3-branch list
+    fix; `import` scaffolds a root config in configless trees.
 
 ---
 
@@ -593,10 +676,10 @@ Formerly the open questions; resolved 2026-07-30.
 export interface WattConfig {
   entrypoint?: string
   basePath?: string
-  applications?: Array<ApplicationDefinition | ApplicationEntry>
-  autoload?: { path: string, exclude?: string[], mappings?: Record<string, ApplicationOverrides> }
+  applications?: ApplicationEntry[]
+  autoload?: { path: string, exclude?: string[], mappings?: Record<string, ApplicationEntryOverrides> }
   server?: ServerOptions
-  logger?: LoggerOptions
+  logger?: RuntimeLoggerOptions
   workers?: number | WorkersOptions
   health?: HealthOptions
   healthProbes?: boolean | HealthProbesOptions
@@ -609,7 +692,7 @@ export interface WattConfig {
   startTimeout?: number
   startupConcurrency?: number
   watch?: boolean
-  managementApi?: boolean | ManagementApiOptions
+  managementApi?: boolean | string | ManagementApiOptions
   scheduler?: SchedulerJob[]
   policies?: { deny?: Record<string, string | string[]> }
   preload?: string | string[]
@@ -617,30 +700,48 @@ export interface WattConfig {
   env?: Record<string, string>
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
-  // …complete list generated from the v4 runtime schema
+  // …complete list generated from the audited v4 runtime schema
+}
+
+export interface ApplicationEntry {
+  id?: string
+  path?: string
+  url?: string
+  gitBranch?: string
+  config?: ApplicationDefinition          // factory result, plain { module } object
+  workers?: number | ApplicationWorkersOptions
+  health?: ApplicationHealthOptions
+  env?: Record<string, string>
+  envfile?: string
+  dependencies?: string[]
+  telemetry?: { instrumentations?: InstrumentationEntry[] }
+  preload?: string | string[]
+  nodeOptions?: string
+  permissions?: PermissionsOptions
+  packageManager?: 'npm' | 'pnpm' | 'yarn'
+  // …
 }
 
 export type ConfigContext = { env: NodeJS.ProcessEnv, production: boolean, root: string }
 
 export function defineConfig (config: WattConfig): WattConfig
 export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
-export function application (entry: GenericApplicationOptions): ApplicationDefinition
-export function requireEnv (name: string): string
 ```
 
 ```ts
-// @platformatic/next
-export interface NextApplicationOptions extends ApplicationOrchestrationOptions {
-  // orchestration (shared): id?, path?, workers?, health?, env?, dependencies?, …
-  trailingSlash?: boolean
+// @platformatic/next — factory options are per-app capability config ONLY
+export interface NextConfigOptions {
+  trailingSlash?: boolean          // flattened from the v3 `next` block
   standalone?: boolean
   useExperimentalAdapter?: boolean
   imageOptimizer?: ImageOptimizerOptions
   cache?: NextCacheOptions
-  logger?: LoggerOptions
-  commands?: BuildCommands
+  logger?: AppLoggerOptions        // shared blocks at v3 positions
+  server?: AppServerOptions
+  watch?: WatchOptions
+  application?: BuildableApplicationOptions   // nested on purpose (outputDirectory)
 }
-export function next (options?: NextApplicationOptions): ApplicationDefinition
+export function next (options?: NextConfigOptions): ApplicationDefinition
 ```
 
 ## Appendix B — before/after: the wrapped single-app config
@@ -661,10 +762,7 @@ export function next (options?: NextApplicationOptions): ApplicationDefinition
 }
 ```
 
-Plus `.env`, `.env.sample`, and the knowledge of which runtime properties are legal in
-the wrapped block.
-
-**v4 (one dialect):**
+**v4 (one dialect, one format):**
 
 ```ts
 import { defineConfig } from 'wattpm'
@@ -674,14 +772,17 @@ export default defineConfig({
   server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
   applications: [
-    next({
+    {
       workers: 2,
-      trailingSlash: true,
-      cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
-    })
+      config: next({
+        trailingSlash: true,
+        cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
+      })
+    }
   ]
 })
 ```
 
 And when this project later joins a monorepo, the `next({ … })` expression moves
-verbatim into `web/frontend/watt.config.ts`.
+verbatim into `web/frontend/watt.config.ts` as its default export — no dependency
+moves, no dialect change.
