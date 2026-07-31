@@ -37,6 +37,7 @@ test('get application config via capability api', async t => {
     },
     server: {
       hostname: '127.0.0.1',
+      port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
       logger: {

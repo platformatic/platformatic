@@ -169,12 +169,7 @@ npm install -D @platformatic/tsconfig
   },
   "runtime": {
     "application": {
-      "execArgv": ["-r", "ts-node/register"],
-      "exposed": true,
-      "portEnv": "APP_PORT",
-      "env": {
-        "APP_PORT": "3000"
-      }
+      "execArgv": ["-r", "ts-node/register"]
     }
   }
 }
@@ -188,8 +183,6 @@ Key configuration details:
 - `node.disableBuildInDevelopment: true` ensures TypeScript runs directly in dev mode without needing to build first
 - `runtime.application.execArgv` configures how Node.js runs your TypeScript files:
   - `"-r", "ts-node/register"` registers ts-node for CommonJS module loading
-- `runtime.application.exposed: true` allows the runtime-managed capability to open an HTTP listener (this is the default)
-- `runtime.application.portEnv: "APP_PORT"` selects the fallback port source when the capability's `server.port` is not configured
 
 This configuration provides maximum compatibility - it works whether your TypeScript compiles to CommonJS or ESM, automatically handling both module systems.
 

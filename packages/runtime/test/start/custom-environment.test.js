@@ -23,7 +23,6 @@ test('can start with a custom environment', async t => {
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), {
     A_CUSTOM_ENV_VAR: 'foobar',
-    PORT: '0',
     PLT_ENVIRONMENT: 'development',
     PLT_DEV: 'true',
     PLT_ROOT: join(fixturesDir, 'configs')
@@ -93,7 +92,6 @@ test('should load custom env file when envfile is configured on the runtime conf
 
   const envFile = join(root, 'custom.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 
@@ -125,7 +123,6 @@ test('should prefer the config envfile over the envFile option', async t => {
   const envFile = join(root, 'custom.env')
   const overrideEnvFile = join(root, 'override.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 

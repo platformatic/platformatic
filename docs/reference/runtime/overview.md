@@ -40,40 +40,18 @@ or as a Platformatic Runtime application. Runtime application enables certain co
 
 ## Inter-application communication
 
-Platformatic Runtime allows multiple microservice applications to run within a single process. A
-runtime-managed capability is exposed by default and binds to an operating system port. Set an
-application's `exposed` option to `false` to keep it ITC-only while retaining runtime injection and
-`.plt.local` communication.
+Platformatic Runtime allows multiple microservice applications to run within a single process. Each capability or application owns its HTTP listener. A managed capability opens a listener only when its capability-level configuration defines `server.port`; custom commands and black-box Node.js applications are responsible for deciding whether to call `listen()` themselves.
 
-Each capability configures its listener in its own `server` object. When that object omits `port`, the
-runtime uses the fallback environment variable named by `portEnv`, which defaults to `PORT`.
-Applications that use the same fallback port environment variable must override it with a distinct value:
+Runtime observes listening servers so that management APIs can report their URLs, but it does not choose ports, write `PORT`, or rewrite listener options. Applications can reference environment variables directly from their capability configuration:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
-  "applications": [
-    {
-      "id": "api",
-      "path": "./applications/api",
-      "exposed": false
-    },
-    {
-      "id": "gateway",
-      "path": "./applications/gateway",
-      "env": { "PORT": 3043 }
-    }
-  ]
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{HTTP_PORT}"
+  }
 }
 ```
-
-The Gateway configuration can continue to use `"port": "{PORT}"`. Generated Watt Service, Gateway,
-and DB applications use an application-specific `PORT` variable. Set `portEnv` to another name, such
-as `HTTP_PORT`, when an application uses a different fallback environment variable.
-
-The runtime can control listeners created by managed capabilities. It cannot enforce `exposed: false`
-for a black-box Node.js application that calls `listen()` itself; that application remains responsible
-for whether and where it listens.
 
 Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection

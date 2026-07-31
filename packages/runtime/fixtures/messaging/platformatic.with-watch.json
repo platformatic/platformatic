@@ -28,5 +28,6 @@
   "logger": {
     "level": "info"
   },
-  "workers": 3
+  "workers": 3,
+  "healthProbes": false
 }

@@ -24,7 +24,7 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, InvalidArgumentError, RuntimeNotStartedError } from '../errors.js'
+import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
 import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
@@ -59,13 +59,12 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
 export class Controller extends EventEmitter {
   #starting
   #started
-  #listening
   #watch
   #fileWatcher
   #debouncedRestart
   #context
 
-  constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
+  constructor (runtimeConfig, applicationConfig, workerId, metricsConfig) {
     super()
     this.runtimeConfig = runtimeConfig
     this.applicationConfig = applicationConfig
@@ -74,7 +73,6 @@ export class Controller extends EventEmitter {
     this.#watch = !!runtimeConfig.watch
     this.#starting = false
     this.#started = false
-    this.#listening = false
     this.capability = null
     this.#fileWatcher = null
 
@@ -90,7 +88,6 @@ export class Controller extends EventEmitter {
       telemetryConfig: this.applicationConfig.telemetry,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
-      serverConfig,
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
@@ -144,12 +141,10 @@ export class Controller extends EventEmitter {
           onMissingEnv: this.#context.fetchApplicationUrl,
           strictEnv: this.#context.strictEnv
         })
-        this.#configurePort(unvalidatedConfig.server)
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
         // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
-        this.#configurePort()
         const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
@@ -191,10 +186,6 @@ export class Controller extends EventEmitter {
     try {
       await this.capability.init?.()
 
-      if (this.applicationConfig.exposed !== false && this.#context.serverConfig) {
-        this.capability.serverConfig.port = this.#context.serverConfig.port
-      }
-
       this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
@@ -225,7 +216,6 @@ export class Controller extends EventEmitter {
       if (refreshGlobalDispatcher()) {
         this.#updateDispatcher()
       }
-      this.#listening = this.applicationConfig.exposed !== false
       /* c8 ignore next 5 */
     } catch (err) {
       this.emit('start:error', err)
@@ -258,7 +248,6 @@ export class Controller extends EventEmitter {
 
     this.#started = false
     this.#starting = false
-    this.#listening = false
 
     this.emit('stopped')
   }
@@ -387,38 +376,5 @@ export class Controller extends EventEmitter {
         })
       }
     })
-  }
-
-  #configurePort (serverConfig) {
-    if (this.applicationConfig.exposed === false || !workerData?.worker || !this.#context.serverConfig) {
-      return
-    }
-
-    const effectiveServerConfig = { ...this.#context.serverConfig, ...serverConfig }
-    const portEnv = this.applicationConfig.portEnv ?? 'PORT'
-    const configuredPort = Number(workerData.worker.portOverride ?? effectiveServerConfig.port)
-    const environmentPort = Number(process.env[portEnv])
-    const basePort =
-      Number.isInteger(configuredPort) && configuredPort > 0
-        ? configuredPort
-        : Number.isInteger(environmentPort) && environmentPort >= 0
-          ? environmentPort
-          : Number.isInteger(configuredPort) && configuredPort >= 0
-            ? configuredPort
-            : 0
-    if (effectiveServerConfig.portAssignment === 'perWorkerIncrement' && basePort <= 0) {
-      throw new InvalidArgumentError(
-        `server.port or ${portEnv} must be a positive port when server.portAssignment is "perWorkerIncrement"`
-      )
-    }
-
-    const port = effectiveServerConfig.portAssignment === 'perWorkerIncrement' ? basePort + workerData.worker.portOffset : basePort
-
-    if (port > 65535) {
-      throw new InvalidArgumentError('server.portAssignment "perWorkerIncrement" exceeds the maximum TCP port')
-    }
-
-    process.env[portEnv] = String(port)
-    this.#context.serverConfig = { ...effectiveServerConfig, port }
   }
 }

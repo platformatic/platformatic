@@ -38,7 +38,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 When running in development mode, the Vite development server instrumented with [@remix-run/dev](https://www.npmjs.com/package/@remix-run/dev) runs in a worker thread in the same process as the Platformatic runtime.
 
-When running in production mode, a custom Fastify server serves the built application in a worker thread. The runtime-managed server is exposed by default; set `applications[].exposed` to `false` to keep it ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured.
+When running in production mode, a custom Fastify server serves the built application in a worker thread. The Remix capability owns this listener and uses its capability-level `server` configuration.
 
 In both modes, an application that uses the `commands` property is responsible for starting its HTTP server.
 

@@ -86,7 +86,7 @@ export class BaseCapability extends EventEmitter {
     this.applicationId = this.context.applicationId
     this.workerId = this.context.worker.index
     this.telemetryConfig = this.context.telemetryConfig
-    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
+    this.serverConfig = deepmerge({}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
@@ -102,7 +102,12 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
-    this.reuseTcpPorts = (this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts) && features.node.reusePort
+    const reuseTcpPorts = [
+      this.config.reuseTcpPorts,
+      this.applicationConfig.reuseTcpPorts,
+      this.runtimeConfig.reuseTcpPorts
+    ]
+    this.reuseTcpPorts = !reuseTcpPorts.includes(false) && reuseTcpPorts.includes(true) && features.node.reusePort
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 

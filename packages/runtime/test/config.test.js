@@ -145,17 +145,19 @@ test('does not use application useHttp configuration', async t => {
   )
 
   const config = await loadConfiguration(configFile)
-  strictEqual(config.applications[0].exposed, true)
+  strictEqual(config.applications[0].exposed, undefined)
 })
 
-test('defaults application exposed to true', async t => {
+test('does not add application listener configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
   const configFile = join(directory, 'platformatic.runtime.json')
 
   await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
 
   const config = await loadConfiguration(configFile)
-  strictEqual(config.applications[0].exposed, true)
+  strictEqual(config.applications[0].exposed, undefined)
+  strictEqual(config.applications[0].portEnv, undefined)
+  strictEqual(config.applications[0].server, undefined)
 })
 
 test('correctly loads the watch value from a string', async () => {
@@ -259,13 +261,11 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       config: configFile,
       dependencies: [],
       enabled: true,
-      exposed: true,
       gitBranch: 'main',
       health: {},
       id: 'main',
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
-      portEnv: 'PORT',
       reuseTcpPorts: true,
       type: '@platformatic/db',
       watch: false,
@@ -278,13 +278,11 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     {
       dependencies: [],
       enabled: true,
-      exposed: true,
       gitBranch: 'main',
       health: {},
       id: 'another',
       localUrl: 'http://another.plt.local',
       path: resolve(dirname(configFile), 'another'),
-      portEnv: 'PORT',
       reuseTcpPorts: true,
       type: 'unknown',
       watch: false,

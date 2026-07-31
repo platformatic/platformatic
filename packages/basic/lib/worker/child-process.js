@@ -6,14 +6,11 @@ import {
   mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
 import {
-  getAdditionalServerOptions,
   getApplicationId,
   getConfig,
   getEvents,
-  getHost,
   getITC,
   getLogger,
-  getPort,
   getPrometheus,
   getReuseTcpPorts,
   getRuntimeBasePath,
@@ -594,26 +591,6 @@ export class ChildProcess extends ITC {
           return
         }
 
-        let port = getPort()
-        const host = getHost()
-        const additionalOptions = getAdditionalServerOptions()
-
-        if (typeof port !== 'number' && port !== false) {
-          port = 0
-        }
-
-        // Check if we need to override the port only if a static port is being requested
-        if (port !== false && port !== 0) {
-          if (options.port !== port) {
-            options.port = port
-          }
-        }
-
-        if (typeof host === 'string') {
-          options.host = host
-        }
-
-        Object.assign(options, additionalOptions)
         const events = getEvents({ throwOnMissing: false })
         if (events) {
           events.emitAndNotify('serverOptions', options)

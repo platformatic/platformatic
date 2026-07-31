@@ -168,10 +168,6 @@ export interface PlatformaticServiceConfig {
       strictPreflight?: boolean;
       hideOptionsRoute?: boolean;
     };
-    /**
-     * Configures how server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker uses its own port, starting from port (worker 0).
-     */
-    portAssignment?: "shared" | "perWorkerIncrement";
   };
   plugins?: {
     [k: string]: unknown;
@@ -909,8 +905,6 @@ export interface PlatformaticServiceConfig {
           directory?: string;
         };
     application?: {
-      exposed?: boolean;
-      portEnv?: string;
       reuseTcpPorts?: boolean;
       workers?:
         | number

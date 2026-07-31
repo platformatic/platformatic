@@ -130,7 +130,7 @@ By default, Watt will run on random port. If you want to choose a specific port,
 
 ## Common Issues and Solutions
 
-- **Port conflicts**: If the specified port is already in use, Watt will try the next one.
+- **Port conflicts**: If the specified port is already in use, the application fails to start. Choose another port in the capability configuration.
 - **Missing scripts**: If you use a custom start script, insert into the `watt.json` file in the section `application.commands.production`. See the step 3 above for more informations.
 - **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `wattpm build` to compile your TypeScript files.
 - **Environment variables**: Confirm that all required environment variables are available.

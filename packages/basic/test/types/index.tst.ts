@@ -65,7 +65,6 @@ test('BaseContext interface', () => {
     directory: '/path/to/dir',
     telemetryConfig: { enabled: true },
     metricsConfig: { port: 3000 },
-    serverConfig: { host: 'localhost' },
     hasManagementApi: true
   }).type.toBeAssignableTo<BaseContext>();
 });
@@ -134,6 +133,7 @@ test('utility exports', () => {
   expect(buildListenOptions({ port: 3042, hostname: '127.0.0.1' })).type.toBe<{
     port: number | string;
     host?: string;
+    backlog?: number;
   }>();
   expect(buildAdditionalServerOptions({ backlog: 128 })).type.toBe<Promise<Record<string, unknown>>>();
   expect(buildFastifyOptions({ http2: true })).type.toBe<Promise<Record<string, unknown>>>();

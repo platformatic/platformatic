@@ -22,7 +22,7 @@ test('Nuxt version is not checked in production', async t => {
     await swapVersion(t, import.meta.dirname, 'nuxt', '', '3.0.0')
   })
 
-  await rejects(runtime.start())
+  await runtime.start()
   const logs = await getLogsFromFile(root)
 
   ok(!logs.some(l => l.err?.message.includes('nuxt version 3.0.0 is not supported')))

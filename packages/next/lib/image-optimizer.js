@@ -1,8 +1,8 @@
 import {
   BaseCapability,
   buildListenOptions,
-  errors as basicErrors,
   createServerListener,
+  errors as basicErrors,
   getServerUrl,
   importFile,
   resolvePackageViaCJS
@@ -92,25 +92,27 @@ export class NextImageOptimizerCapability extends BaseCapability {
     this.#dispatcher = this.#app.listeners('request')[0]
     await this.#queue.start()
 
-    if (this.applicationConfig.exposed !== false) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
 
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-        listenOptions.backlog = serverOptions.backlog
-      }
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
 
-      this.#server = await new Promise((resolve, reject) => {
+    const [server] = await Promise.all([
+      new Promise((resolve, reject) => {
         return this.#app
           .listen(listenOptions, function () {
             resolve(this)
           })
           .on('error', reject)
-      })
+      }),
+      serverPromise
+    ])
+    this.#server = server
 
-      this.url = getServerUrl(this.#server)
-    }
+    this.url = getServerUrl(this.#server)
   }
 
   async _stop () {

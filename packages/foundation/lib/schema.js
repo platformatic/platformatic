@@ -393,11 +393,6 @@ export const server = {
     port: {
       anyOf: [{ type: 'integer' }, { type: 'string' }]
     },
-    portAssignment: {
-      type: 'string',
-      enum: ['shared', 'perWorkerIncrement'],
-      description: 'Configures how server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker uses its own port, starting from port (worker 0).'
-    },
     backlog: {
       type: 'integer',
       description: 'The maximum length of the queue of pending connections'
@@ -878,14 +873,6 @@ export const application = {
     gitBranch: {
       type: 'string',
       default: 'main'
-    },
-    exposed: {
-      type: 'boolean',
-      default: true
-    },
-    portEnv: {
-      type: 'string',
-      default: 'PORT'
     },
     reuseTcpPorts: {
       type: 'boolean',

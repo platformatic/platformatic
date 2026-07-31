@@ -4,6 +4,7 @@
     "paths": ["./plugin.js"]
   },
   "server": {
+    "port": 0,
     "logger": {
       "level": "error"
     }

@@ -7,7 +7,12 @@ import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/h
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should make a request with a custom interceptor from a middleware', async t => {
-  const { runtime } = await prepareRuntime(t, 'middleware', true)
+  const { runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/middleware'),
+    production: true,
+    port: 0
+  })
   const url = await startRuntime(t, runtime, false, ['frontend'])
 
   const { statusCode, body } = await request(url)
@@ -29,7 +34,12 @@ test('should make a request with a custom interceptor from a middleware', async 
 })
 
 test('should make a request with a custom interceptor from a middleware (child process)', async t => {
-  const { runtime } = await prepareRuntime(t, 'middleware-child-process', true)
+  const { runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/middleware-child-process'),
+    production: true,
+    port: 0
+  })
   const url = await startRuntime(t, runtime, false, ['frontend'])
 
   const { statusCode, body } = await request(url)

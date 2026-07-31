@@ -17,12 +17,18 @@ export async function prepareRuntimeWithBackend (
   applicationsToBuild = false,
   additionalSetup = null
 ) {
-  const { runtime, root } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-      recursive: true
-    })
+  const { runtime, root } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, '../fixtures', configuration),
+    production,
+    port: 0,
+    additionalSetup: async (root, config, args) => {
+      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
+        recursive: true
+      })
 
-    await additionalSetup?.(root, config, args)
+      await additionalSetup?.(root, config, args)
+    }
   })
 
   const url = await startRuntime(t, runtime, pauseAfterCreation, applicationsToBuild)

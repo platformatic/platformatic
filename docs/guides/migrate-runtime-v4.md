@@ -4,7 +4,7 @@ title: Migrate Runtime Configuration to v4
 
 # Migrate Runtime Configuration to v4
 
-Runtime v4 removes the runtime-level HTTP listener. Each capability owns its listener configuration, while the runtime application descriptor controls whether that listener is exposed.
+Runtime v4 removes the runtime-level HTTP listener. Each capability or application owns whether it listens and all of its listener configuration. Runtime observes listening servers to report their URLs, but it does not select ports or rewrite listener options.
 
 ## Move listener configuration to the capability
 
@@ -29,11 +29,11 @@ After, in `platformatic.runtime.json`:
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
-  "applications": [{ "id": "api", "path": "./api", "exposed": true }]
+  "applications": [{ "id": "api", "path": "./api" }]
 }
 ```
 
-Add a capability-level `server` configuration only when you need to preserve the previous listener address or settings. Otherwise, it is optional. To preserve the v3 listener in this example, configure `platformatic.service.json`, `platformatic.db.json`, or the configuration file for the relevant capability:
+To preserve the v3 listener in this example, configure `platformatic.service.json`, `platformatic.db.json`, or the configuration file for the relevant capability:
 
 ```json
 {
@@ -44,34 +44,29 @@ Add a capability-level `server` configuration only when you need to preserve the
 }
 ```
 
-Do not add `server` to an `applications` entry. It belongs to the capability configuration. Settings such as HTTPS, `backlog`, and `portAssignment` move with it.
+Do not add `server` to an `applications` entry. It belongs to the capability configuration. Settings such as HTTPS move with it; `backlog` is applied when the capability's underlying server API supports that option.
 
-`exposed` defaults to `true`. Set it to `false` for runtime-managed applications that should communicate only through ITC. If an application was intentionally internal before the migration, set `exposed: false` explicitly. This does not prevent an external or black-box application from opening its own listener.
+The v4 configuration upgrade removes root `entrypoint` and `server` and emits a warning when a root server configuration is discarded. Runtime cannot move that configuration automatically because capability configuration is stored in a separate file.
 
-The v4 configuration upgrade removes root `entrypoint` and `server`. Review the result and add the required capability-level `server` configuration; a root listener cannot be assigned automatically when multiple applications exist.
+## Let applications own custom listeners
 
-## Use a custom port environment variable
+Platformatic-managed capabilities start their own servers only when their capability-level configuration defines `server.port`. Omit `server.port` when the application should not open a managed listener, or set it to `0` to request an ephemeral port.
 
-Use `portEnv` on the application descriptor when the capability does not set `server.port` and reads a port from an environment variable other than `PORT`.
+Node.js applications without a `create()` or `build()` factory, and applications started through custom commands, are responsible for calling `listen()` themselves. Runtime observes the address they select without changing it. A Node.js factory that returns a server keeps the existing managed lifecycle: `@platformatic/node` starts the returned server using its capability configuration.
+
+Runtime no longer uses an application-level port environment setting and does not write `PORT`. Applications and capability configuration can still read environment variables directly:
 
 ```json
 {
-  "applications": [
-    {
-      "id": "api",
-      "path": "./api",
-      "portEnv": "API_PORT",
-      "workers": 2
-    }
-  ]
+  "server": {
+    "port": "{HTTP_PORT}"
+  }
 }
 ```
 
-`portEnv` defaults to `PORT`. The runtime resolves the capability `server.port` first, then `process.env[portEnv]`, and finally uses an ephemeral port. Each worker receives its resolved port in its own `process.env[portEnv]`. When `server.portAssignment` uses `perWorkerIncrement`, the worker offset is applied after resolving a positive base port from `server.port` or `portEnv`; a missing or zero base port is invalid.
-
 ## Update programmatic startup code
 
-`runtime.start()` and `runtime.getUrls()` return URLs keyed by worker ID. The key format is `applicationId:workerId`.
+`runtime.start()` and `runtime.getUrls()` return observed URLs keyed by worker ID. The key format is `applicationId:workerId`.
 
 Before:
 
@@ -86,11 +81,11 @@ After:
 const { 'api:0': url } = await runtime.start()
 ```
 
-For every running exposed worker:
+For every running worker with a listening server:
 
 ```js
 const urls = runtime.getUrls()
-// { 'api:0': 'http://127.0.0.1:3042', 'api:1': 'http://127.0.0.1:3043' }
+// { 'api:0': 'http://127.0.0.1:3042', 'api:1': 'http://127.0.0.1:3042' }
 ```
 
 Pass an application ID to select only its workers:

@@ -54,6 +54,8 @@ test('applications are started with multiple workers when Node.js supports reuse
   })
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
+    contents.metrics = { port: 0 }
+    contents.services[0].workers = features.node.reusePort ? 5 : 1
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })

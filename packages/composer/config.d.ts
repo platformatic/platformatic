@@ -11,10 +11,6 @@ export interface PlatformaticComposerConfig {
     hostname?: string;
     port?: number | string;
     /**
-     * Configures how server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker uses its own port, starting from port (worker 0).
-     */
-    portAssignment?: "shared" | "perWorkerIncrement";
-    /**
      * The maximum length of the queue of pending connections
      */
     backlog?: number;
@@ -754,8 +750,6 @@ export interface PlatformaticComposerConfig {
           directory?: string;
         };
     application?: {
-      exposed?: boolean;
-      portEnv?: string;
       reuseTcpPorts?: boolean;
       workers?:
         | number

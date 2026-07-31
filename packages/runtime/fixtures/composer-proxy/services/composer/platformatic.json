@@ -1,6 +1,8 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.48.0.json",
   "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
     "healthCheck": true
   },
   "gateway": {

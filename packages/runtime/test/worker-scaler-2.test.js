@@ -32,7 +32,6 @@ test('should remove pending initial updates by application ID', async t => {
 
   await scaler.add({
     id: 'application-1',
-    exposed: false,
     workers: { minimum: 2, maximum: 2 }
   })
   scaler.remove('application-1')

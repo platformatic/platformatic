@@ -2,5 +2,9 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.6.0.json",
   "node": {
     "main": "server.cjs"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

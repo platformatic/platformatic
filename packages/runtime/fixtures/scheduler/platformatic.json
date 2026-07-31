@@ -11,8 +11,5 @@
   "scheduler": [],
   "logger": {
     "level": "silent"
-  },
-  "server": {
-    "port": 16667
   }
 }

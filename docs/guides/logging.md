@@ -628,13 +628,13 @@ The main `watt` application has a shared logger configuration that is used by al
   },
   "applications": [
     { "id": "composer", "path": "./services/composer" },
-    { "id": "backend", "path": "./services/backend", "exposed": false },
-    { "id": "next", "path": "./services/next", "exposed": false }
+    { "id": "backend", "path": "./services/backend" },
+    { "id": "next", "path": "./services/next" }
   ]
 }
 ```
 
-The applications have their own configuration. The `composer` application owns the public server; `backend` and `next` are ITC-only, while `backend` has a redaction configuration:
+The applications have their own configuration. The `composer` application is the intended public ingress, while `backend` has a redaction configuration:
 
 `composer/platformatic.json`
 

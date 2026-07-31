@@ -25,6 +25,10 @@ export function buildListenOptions (serverConfig) {
     options.host = serverConfig.hostname
   }
 
+  if (typeof serverConfig?.backlog === 'number') {
+    options.backlog = serverConfig.backlog
+  }
+
   return options
 }
 

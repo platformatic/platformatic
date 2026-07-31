@@ -2,7 +2,14 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
   "runtime": {
     "application": {
-      "execArgv": ["--import", "./fixtures/exec-argv/applications/main/import.js"]
+      "execArgv": [
+        "--import",
+        "./fixtures/exec-argv/applications/main/import.js"
+      ]
     }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

@@ -28,18 +28,24 @@ function decodeHtmlEntities (str) {
 }
 
 test('fetch() should work with string URL and Request object in TanStack app', async t => {
-  const { runtime, root } = await prepareRuntime(t, 'fetch-test', true, null, async (root) => {
-    // Copy backend and composer services from common fixtures
-    for (const type of ['backend', 'composer']) {
-      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-        recursive: true
+  const { runtime, root } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/fetch-test'),
+    production: true,
+    port: 0,
+    additionalSetup: async root => {
+      // Copy backend and composer services from common fixtures
+      for (const type of ['backend', 'composer']) {
+        await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
+          recursive: true
+        })
+      }
+
+      // Update the composer routes to expose frontend at /frontend prefix
+      await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+        return contents.replace('$PREFIX', '/frontend')
       })
     }
-
-    // Update the composer routes to expose frontend at /frontend prefix
-    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
-      return contents.replace('$PREFIX', '/frontend')
-    })
   })
 
   // Build the runtime

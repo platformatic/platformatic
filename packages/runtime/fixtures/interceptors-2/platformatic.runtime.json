@@ -4,10 +4,6 @@
   "autoload": {
     "path": "./services"
   },
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": "{{PORT}}"
-  },
   "logger": {
     "level": "info"
   },
@@ -18,7 +14,9 @@
         "options": {
           "idpTokenUrl": "{{PLT_IDP_TOKEN_URL}}",
           "refreshToken": "{{PLT_REFRESH_TOKEN}}",
-          "urls": ["{{PLT_EXTERNAL_SERVICE}}"],
+          "urls": [
+            "{{PLT_EXTERNAL_SERVICE}}"
+          ],
           "clientId": "my-client-id"
         }
       }

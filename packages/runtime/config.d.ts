@@ -41,8 +41,6 @@ export type PlatformaticRuntimeConfig = {
               [k: string]: boolean;
             };
         config?: string;
-        exposed?: boolean;
-        portEnv?: string;
         reuseTcpPorts?: boolean;
         workers?:
           | number

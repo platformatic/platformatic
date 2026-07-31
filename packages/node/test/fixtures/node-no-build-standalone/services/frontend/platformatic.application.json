@@ -9,5 +9,8 @@
   },
   "watch": {
     "enabled": true
+  },
+  "server": {
+    "port": 0
   }
 }

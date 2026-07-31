@@ -128,14 +128,6 @@
               "config": {
                 "type": "string"
               },
-              "exposed": {
-                "type": "boolean",
-                "default": true
-              },
-              "portEnv": {
-                "type": "string",
-                "default": "PORT"
-              },
               "reuseTcpPorts": {
                 "type": "boolean",
                 "default": true
@@ -565,14 +557,6 @@
             "type": "string",
             "default": "main"
           },
-          "exposed": {
-            "type": "boolean",
-            "default": true
-          },
-          "portEnv": {
-            "type": "string",
-            "default": "PORT"
-          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -1000,14 +984,6 @@
             "type": "string",
             "default": "main"
           },
-          "exposed": {
-            "type": "boolean",
-            "default": true
-          },
-          "portEnv": {
-            "type": "string",
-            "default": "PORT"
-          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -1434,14 +1410,6 @@
           "gitBranch": {
             "type": "string",
             "default": "main"
-          },
-          "exposed": {
-            "type": "boolean",
-            "default": true
-          },
-          "portEnv": {
-            "type": "string",
-            "default": "PORT"
           },
           "reuseTcpPorts": {
             "type": "boolean",

@@ -25,7 +25,6 @@ export type BaseContext = Partial<{
   directory: string
   telemetryConfig: object
   metricsConfig: object
-  serverConfig: object
   hasManagementApi: boolean
 }>
 
@@ -97,9 +96,14 @@ export declare namespace errors {
 
 export declare function getServerUrl (server: Server): string
 
-export declare function buildListenOptions (serverConfig?: { port?: number | string; hostname?: string }): {
+export declare function buildListenOptions (serverConfig?: {
+  port?: number | string
+  hostname?: string
+  backlog?: number
+}): {
   port: number | string
   host?: string
+  backlog?: number
 }
 
 export declare function buildAdditionalServerOptions (

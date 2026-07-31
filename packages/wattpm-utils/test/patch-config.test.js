@@ -31,6 +31,7 @@ test('patch-config - should patch requested runtime and applications config', as
   deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true })
   deepStrictEqual(mainApplicationConfigPatched, {
     $schema: mainApplicationConfigOriginal.$schema,
+    server: mainApplicationConfigOriginal.server,
     application: { basePath: '/' }
   })
   deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
@@ -115,6 +116,7 @@ test('patch-config - should apply patch when the config is not set in the main c
   deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true })
   deepStrictEqual(mainApplicationConfigPatched, {
     $schema: mainApplicationConfigOriginal.$schema,
+    server: mainApplicationConfigOriginal.server,
     application: { basePath: '/' }
   })
   deepStrictEqual(alternateApplicationConfigPatched, alternateApplicationConfigOriginal)
