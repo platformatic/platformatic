@@ -543,7 +543,13 @@ exactly as production v3 applies them in memory. Then:
    `http://<id>.plt.local` for app-id URL placeholders.
 2. Warn for every `.env` key defined in both the root and an app `.env` (the
    two-valued precedence change).
-3. Delete the old files (`--keep` to retain) and print a diff summary.
+3. Scan application sources for references to the config files about to be deleted
+   (v3 scaffolded test helpers do
+   `JSON.parse(await readFile(…, 'watt.json'))`): any hit downgrades that file's
+   deletion to a warning with the file/line of the reference, since the codemod
+   cannot safely rewrite user code.
+4. Delete the unreferenced old files (`--keep` to retain all) and print a diff
+   summary.
 
 Because migration emits the per-app style, it never edits `package.json`.
 
@@ -609,8 +615,10 @@ Roughly ordered; steps 1–5 are the critical path.
 7. **wattpm-utils**: `wattpm migrate` (depending on `@platformatic/foundation@3`);
    `wattpm import` via magicast with snippet fallback; external/install flow emits
    v4 per-app files; `create` templates emit `watt.config.ts`; remove `patch-config`.
-8. **create-wattpm**: wizard output switches to `.ts` (`.mts`/`.js` per package
-   type); fixture conversion codemod for the ~868 in-tree JSON fixtures.
+8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
+   package type); scaffolded test helpers import the config module instead of
+   `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
+   JSON fixtures.
 9. **cross-repo**: watt-admin migrates off `GET /config`; ICC guidance for generating
    plain-object configs.
 10. **docs**: one configuration reference; migration guide; erasable-TS constraints;
