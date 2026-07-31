@@ -1,7 +1,7 @@
 # NEW_CONFIG: `watt.config.ts` — one config model for Watt v4
 
-**Status:** Proposal, revision 2 — incorporates the adversarial review findings
-**Target:** v4 (breaking), with a gated experimental preview in a late v3 minor
+**Status:** Proposal, revision 3 — incorporates the adversarial review findings; clean-cut implementation
+**Target:** v4 (breaking) — no v3 preview; feedback via v4.0 alphas/RCs
 **Author:** Platformatic team
 
 ## Summary
@@ -590,12 +590,17 @@ error. The migration story is the codemod, not a compat layer.
 
 Roughly ordered; steps 1–5 are the critical path.
 
-1. **foundation**: the eval-worker loader (fresh ESM cache per load, `.env` applied
-   in-worker, import-graph collection via `module.register`, serializability check →
-   validate → `kMetadata` → `transform` order); new filename resolution; `.json` →
-   migrate-hint error; delete `replaceEnv`, the YAML pre-pass, all non-code parsers,
-   `strictEnv`, and the `$schema` URL machinery (they move under `wattpm migrate` via
-   the `foundation@3` dependency).
+1. **foundation — a fresh loader, not a refactor.** The v4 loader is written new for
+   v4: the eval-worker (fresh ESM cache per load, `.env` applied in-worker,
+   import-graph collection via `module.register`), filename resolution, the `.json` →
+   migrate-hint error, and the serializability check → validate → `kMetadata` →
+   `transform` pipeline are a clean implementation with its own tests. The v3
+   `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
+   URL machinery) is **deleted wholesale in the v4 branch, not incrementally carved
+   down** — it lives on only in the v3 branch, where `wattpm migrate` consumes it via
+   the `@platformatic/foundation@3` dependency. Only deliberately-kept pieces are
+   carried over as code (AJV custom keywords, `loadEnv`'s upward walk, `transform`
+   hooks), each by explicit decision rather than by surviving a refactor.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
    per-property target-type table for migrate.
@@ -613,9 +618,13 @@ Roughly ordered; steps 1–5 are the critical path.
 6. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
    tanstack, nuxt, service, db, gateway): factory + option types (~20 lines each via
    the helper); `next pack` emits the plain-object v4 form + bundle boot test.
-7. **wattpm-utils**: `wattpm migrate` (depending on `@platformatic/foundation@3`);
-   `wattpm import` via magicast with snippet fallback; external/install flow emits
-   v4 per-app files; `create` templates emit `watt.config.ts`; remove `patch-config`.
+7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
+   external/install flow emits v4 per-app files; `create` templates emit
+   `watt.config.ts`; remove `patch-config`. **`wattpm migrate` lives here too but is
+   decoupled from the v4 critical path**: it is the only code depending on
+   `@platformatic/foundation@3`, it shares nothing with the v4 loader, and it can be
+   developed and released on its own cadence — v4.0 of the runtime does not block on
+   it (though shipping them together remains the goal for launch messaging).
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
    package type); scaffolded test helpers import the config module instead of
    `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
@@ -625,10 +634,9 @@ Roughly ordered; steps 1–5 are the critical path.
 10. **docs**: one configuration reference; migration guide; erasable-TS constraints;
     env precedence; the machine-generated config pattern.
 
-Steps 1–5 land first behind the **gated v3 preview**: `wattpm dev
---experimental-config` (or `PLT_EXPERIMENTAL_CONFIG=true`) in a late v3 minor,
-enforcing strict v4 shape, clearly labeled as subject to change — real-world contact
-for the factory API before v4.0 freezes it.
+There is **no v3 preview**: nothing ships on the v3 branch (clean cut). Real-world
+contact for the factory API comes from v4.0 alphas and release candidates, which are
+cheap to iterate because the loader is new code with no v3 entanglement.
 
 ---
 
@@ -641,7 +649,8 @@ First round (2026-07-30), amended by the adversarial review round (2026-07-31).
 2. **Serializable-only config in v4.0.** Functions stay file paths; worker-side
    re-evaluation kept open for 4.x, not publicly committed.
 3. **magicast + snippet fallback** for config mutators (`wattpm-utils` only).
-4. **Gated v3 preview** (`--experimental-config`), strict v4 shape.
+4. **No v3 preview** (supersedes the earlier gated-preview decision, 2026-07-31):
+   clean cut — nothing ships on the v3 branch; v4.0 alphas/RCs are the feedback loop.
 5. **Factory shape (amended by review B1):** orchestration properties live on the
    application entry; the entry's `config` property accepts a factory result inline;
    the factory carries only per-app capability configuration, with the capability
@@ -653,7 +662,9 @@ First round (2026-07-30), amended by the adversarial review round (2026-07-31).
    config = legacy = migrate hint; detection is an extension check.
 7. **Migrate scope (amended by review B3):** anything that boots on v3, via a
    dependency on the real v3 loader (`@platformatic/foundation@3`); the v1/v2
-   upgrade chains ride along inside the codemod only.
+   upgrade chains ride along inside the codemod only. Migrate lives in
+   `wattpm-utils` but is **decoupled from the v4 critical path** — it shares no code
+   with the v4 loader and does not block the v4.0 release.
 8. **Config reload (review B2):** throwaway eval worker per load; import-graph
    collection drives the watcher; main-process env and module cache are never touched.
 9. **Evaluation site (review M3):** single main-side pass in the eval worker; workers
@@ -670,7 +681,11 @@ First round (2026-07-30), amended by the adversarial review round (2026-07-31).
 13. **Dependency resolution (review M5):** standard ESM from the importing file;
     per-app files are the default style (v3 placement unchanged, migration never
     edits `package.json`); root-inline is opt-in with a targeted error.
-14. **Mechanical batch (review m1–m6):** erasable-TS constraints documented +
+14. **Fresh loader implementation (2026-07-31):** the v4 loader is written new, with
+    its own tests; v3's `configuration.js` is deleted in v4, never refactored. Pieces
+    worth keeping (AJV keywords, `loadEnv` walk, `transform` hooks) are carried over
+    by explicit decision.
+15. **Mechanical batch (review m1–m6):** erasable-TS constraints documented +
     `.mts`-for-CJS rule; corrected pipeline order; shallow root-wins merge; duck-typed
     `module` discriminator; `runtime.services` handled by migrate + v3-branch list
     fix; `import` scaffolds a root config in configless trees.
