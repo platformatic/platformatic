@@ -1,6 +1,6 @@
 # NEW_CONFIG: `watt.config.ts` — one config model for Watt v4
 
-**Status:** Proposal, revision 2 — incorporates the adversarial review (see `REVIEW.md`)
+**Status:** Proposal, revision 2 — incorporates the adversarial review findings
 **Target:** v4 (breaking), with a gated experimental preview in a late v3 minor
 **Author:** Platformatic team
 
@@ -204,7 +204,8 @@ orchestration properties live **on the entry**; everything the capability unders
 lives **inside the factory**. The two never merge into one bag, which is what keeps
 same-named properties (`telemetry` above; `server`, `logger`, `watch`) structurally
 unambiguous — the adversarial review showed that flattening them together is unsound
-(REVIEW.md B1).
+(`telemetry` means two incompatible things for service/db/gateway, and several
+capabilities collide even within themselves).
 
 **Level 2b — monorepo with per-app config files.** `autoload` survives, and per-app
 configuration moves into the app's own `watt.config.ts`, which exports **the identical
@@ -272,7 +273,7 @@ level (`next.trailingSlash` → `trailingSlash`) and the shared blocks (`logger`
 `server`, `watch`, `cache`, `application`) kept at their v3 positions. The
 `application` block deliberately stays nested: several capabilities (remix, nuxt,
 nitro, react-router) define their own `outputDirectory` alongside
-`application.outputDirectory`, and hoisting both would collide (REVIEW.md B1).
+`application.outputDirectory`, and hoisting both would collide.
 
 Factories do **not** accept orchestration properties; those belong to the application
 entry. TypeScript enforces the split in both directions.
@@ -633,8 +634,7 @@ for the factory API before v4.0 freezes it.
 
 ## Resolved decisions
 
-First round (2026-07-30), amended by the adversarial review round (2026-07-31);
-details and evidence in `REVIEW.md`.
+First round (2026-07-30), amended by the adversarial review round (2026-07-31).
 
 1. **`applications`, not `apps`.** Matches v3 canonical naming, the internal model,
    and existing docs.
