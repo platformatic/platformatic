@@ -10,6 +10,14 @@
 
 **Message:** %s version %s is not supported. Please use version %s.
 
+### PLT_BASIC_SCHEDULED_TASK_GROUP_NOT_FOUND
+
+**Message:** Scheduled task group "%s" not found
+
+### PLT_BASIC_SCHEDULED_TASK_NOT_FOUND
+
+**Message:** Scheduled task "%s" not found
+
 ## @platformatic/gateway
 
 ### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG

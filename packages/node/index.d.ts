@@ -38,4 +38,6 @@ export declare const version: string
 export declare class NodeCapability extends BaseCapability<PlatformaticNodeJsConfig, BaseOptions<NodeContext>> {
   constructor (root: string, config: PlatformaticNodeJsConfig, context?: object)
   closeServer (): Promise<void> | undefined
+  getScheduledTasks (): Promise<Array<{ id: string, cron: string, tasks: string[] }>>
+  runScheduledTasks (scheduleId: string, scheduledTime: number): Promise<unknown[]>
 }
