@@ -744,8 +744,8 @@ Because migration emits the per-app style, it never edits `package.json`.
     longer self-load config, and the `utimesSync` restart trick is replaced by a
     management-API restart.
 10. Management API `GET /config` and `GET /api/v1/applications/:id/config`
-    endpoints: removed (watt-admin coordination required; the fate of the `wattpm`
-    commands built on them is an open decision — REVIEW.md D3).
+    endpoints: removed (watt-admin coordination required; the `wattpm` commands
+    built on them are handled per items 9a–9c).
 11. Worker boot protocol: workers receive `resolvedConfig` (data) instead of a config
     file path; per-worker config parsing is deleted. Everything typed as
     "config file path" changes accordingly: the application entry's `config`
@@ -887,7 +887,7 @@ First round (2026-07-30), amended by the adversarial review round (2026-07-31).
     `module` discriminator; `runtime.services` handled by migrate + v3-branch list
     fix; `import` scaffolds a root config in configless trees.
 
-Second review round (2026-07-31); findings and evidence in `REVIEW.md`.
+Second review round (2026-07-31).
 
 16. **Root/per-app discrimination (round-2 B1):** one filename; the export
     discriminates via specified duck-typing precedence; the walk evaluates
